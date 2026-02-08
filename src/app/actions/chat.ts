@@ -1,18 +1,13 @@
 "use server";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import fs from 'fs';
-import path from 'path';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import dbConnect from '@/lib/db';
+import QaPair from '@/models/QaPair';
+import Guardrail from '@/models/Guardrail';
 
 const API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-const KB_FILE = path.join(process.cwd(), 'data/knowledge_base.json');
-const GUARD_FILE = path.join(process.cwd(), 'data/guardrails.json');
-
-// --- Helper Types ---
-type QaPair = { id: string; question: string; answer: string; type: 'text' | 'url'; tags: string[] };
-type Guardrail = { id: string; rule: string; type: 'banned_topic' | 'safety_check'; active: boolean };
 
 // --- Connection Check ---
 export async function checkGeminiConnection() {
@@ -20,12 +15,11 @@ export async function checkGeminiConnection() {
 }
 
 // --- Guardrails ---
-const checkGuardrails = (prompt: string): string | null => {
-    if (!fs.existsSync(GUARD_FILE)) return null;
-    const rules: Guardrail[] = JSON.parse(fs.readFileSync(GUARD_FILE, 'utf-8'));
+const checkGuardrails = async (prompt: string): Promise<string | null> => {
+    await dbConnect();
+    const rules = await Guardrail.find({ active: true }).lean();
 
-    const activeRules = rules.filter(r => r.active);
-    for (const r of activeRules) {
+    for (const r of rules as any[]) {
         // Simple keyword blocking for demo (production would use semantic classifer)
         if (r.type === 'banned_topic' && prompt.toLowerCase().includes(r.rule.toLowerCase())) {
             return "I cannot answer this question due to safety guidelines regarding: " + r.rule;
@@ -36,11 +30,11 @@ const checkGuardrails = (prompt: string): string | null => {
 
 // --- Knowledge Base ---
 const queryKnowledgeBase = async (prompt: string) => {
-    if (!fs.existsSync(KB_FILE)) return null;
-    const kbs: QaPair[] = JSON.parse(fs.readFileSync(KB_FILE, 'utf-8'));
+    await dbConnect();
+    const kbs = await QaPair.find({}).lean();
 
     // 1. Exact/Fuzzy Match (Simple keyword overlap for now)
-    const match = kbs.find(kb =>
+    const match = (kbs as any[]).find(kb =>
         prompt.toLowerCase().includes(kb.question.toLowerCase()) ||
         kb.question.toLowerCase().includes(prompt.toLowerCase())
     );

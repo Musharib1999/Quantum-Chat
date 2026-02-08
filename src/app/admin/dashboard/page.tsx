@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import {
     getQaPairs, addQaPair, deleteQaPair,
     getGuardrails, addGuardrail, toggleGuardrail as toggleGuardrailAction,
-    type QaPair, type Guardrail
+    type QaPairType as QaPair, type GuardrailType as Guardrail
 } from '../../actions/admin';
 
 export default function AdminDashboard() {
