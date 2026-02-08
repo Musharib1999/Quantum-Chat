@@ -127,6 +127,7 @@ export default function AdminDashboard() {
                         {activeTab === 'knowledge_base' && <MessageSquare className="text-blue-600" />}
                         {activeTab === 'guardrails' && <ShieldAlert className="text-red-600" />}
                         {activeTab === 'analytics' && <BarChart3 className="text-purple-600" />}
+                        {activeTab === 'logs' && <MessageSquare className="text-purple-600" />}
                         {activeTab.replace('_', ' ')}
                     </h2>
 
@@ -167,7 +168,7 @@ export default function AdminDashboard() {
                                         </select>
                                         <input
                                             className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder={newType === 'text' ? "AI Answer..." : "https://example.com/info-page"}
+                                            placeholder={newType === 'text' ? "Assistant Answer..." : "https://example.com/info-page"}
                                             value={newA}
                                             onChange={e => setNewA(e.target.value)}
                                         />
@@ -192,7 +193,7 @@ export default function AdminDashboard() {
                                                 <span className="text-gray-400 font-normal text-sm">Q:</span> {qa.question}
                                             </p>
                                             <p className="text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                <span className="text-gray-400 font-bold text-xs mr-2">AI:</span> {qa.answer}
+                                                <span className="text-gray-400 font-bold text-xs mr-2">Groq:</span> {qa.answer}
                                             </p>
                                         </div>
                                         <button

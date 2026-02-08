@@ -1,6 +1,6 @@
 "use server";
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import dbConnect from '@/lib/db';
@@ -8,10 +8,12 @@ import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
 
-const API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const API_KEY = process.env.GROQ_API_KEY;
+const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 
 // --- Connection Check ---
 export async function checkGeminiConnection() {
+    // Keeping function name for compatibility, but checking Groq key
     return !!API_KEY;
 }
 
@@ -21,7 +23,6 @@ const checkGuardrails = async (prompt: string): Promise<string | null> => {
     const rules = await Guardrail.find({ active: true }).lean();
 
     for (const r of rules as any[]) {
-        // Simple keyword blocking for demo (production would use semantic classifer)
         if (r.type === 'banned_topic' && prompt.toLowerCase().includes(r.rule.toLowerCase())) {
             return "I cannot answer this question due to safety guidelines regarding: " + r.rule;
         }
@@ -34,7 +35,6 @@ const queryKnowledgeBase = async (prompt: string) => {
     await dbConnect();
     const kbs = await QaPair.find({}).lean();
 
-    // 1. Exact/Fuzzy Match (Simple keyword overlap for now)
     const match = (kbs as any[]).find(kb =>
         prompt.toLowerCase().includes(kb.question.toLowerCase()) ||
         kb.question.toLowerCase().includes(prompt.toLowerCase())
@@ -46,14 +46,10 @@ const queryKnowledgeBase = async (prompt: string) => {
         }
         if (match.type === 'url') {
             try {
-                // Fetch URL content
                 const { data } = await axios.get(match.answer);
                 const $ = cheerio.load(data);
-
-                // Extract main text (simplified)
                 $('script, style, nav, footer').remove();
-                const pageText = $('body').text().replace(/\s+/g, ' ').substring(0, 5000); // Limit context
-
+                const pageText = $('body').text().replace(/\s+/g, ' ').substring(0, 5000);
                 return { type: 'context', text: pageText, source: match.answer };
             } catch (e) {
                 console.error("Failed to fetch URL:", match.answer);
@@ -65,68 +61,68 @@ const queryKnowledgeBase = async (prompt: string) => {
 };
 
 export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'chat', lang: 'en' | 'hi' = 'en') {
+    // Keeping name for frontend compatibility
     if (!API_KEY) {
-        return { error: "API Key missing. Please set GEMINI_API_KEY in environment variables." };
+        return { error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
     }
+
+    const groq = new Groq({ apiKey: API_KEY });
 
     // 1. Guardrails Check
-    const violation = checkGuardrails(prompt);
-    if (violation) return { text: `🛡️ **Safety Alert**: ${violation}` };
+    const violation = await checkGuardrails(prompt);
+    if (violation) {
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: violation,
+            source: 'blocked'
+        });
+        return { text: violation };
+    }
 
-    // 2. Knowledge Base Check
+    // 2. KB / RAG Check
     const kbResult = await queryKnowledgeBase(prompt);
 
-    // Setup Gemini
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    if (kbResult?.type === 'direct') {
+        const text = kbResult.text;
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: text,
+            source: 'kb_direct'
+        });
+        return { text };
+    }
 
-    let systemInstructions = type === 'draft'
-        ? `You are an expert legal aide for the Bihar Panchayati Raj Department. 
-       Task: Draft a formal grievance letter. Language: ${lang === 'hi' ? 'Hindi' : 'English'}.`
-        : `You are Sahayak AI, assistant for the Bihar Panchayati Raj Department.
-       Language: ${lang === 'hi' ? 'Hindi' : 'English'}.
-       Tone: Official, polite, concise.`;
-
+    // 3. Main LLM Logic
+    let systemInstructions = "You are Sahayak, an AI assistant for the Bihar Government. Be helpful, professional, and answer in a way that citizens can understand.";
     let finalPrompt = prompt;
 
-    // 3. Inject Context if URL Match found
     if (kbResult?.type === 'context') {
-        systemInstructions += `\n\nSOURCE MATERIAL: The user is asking about a topic found in official records. 
-        Use the following scraped text to answer: "${kbResult.text}"
-        
-        Cite the source: ${kbResult.source}`;
-        finalPrompt = `Based on the source material provided, answer: ${prompt}`;
-    }
-    // 4. Return Direct Answer if Text Match found (Skip Gemini Generation for speed/cost?)
-    // Actually, let's have Gemini rephrase it nicely so it feels like a conversation.
-    else if (kbResult?.type === 'direct') {
-        systemInstructions += `\n\nOFFICIAL ANSWER: The database has a direct answer for this: "${kbResult.text}". 
-        Restate this answer politely to the user.`;
+        systemInstructions += "\n\nUse the following official context to answer the user's question accurately. If the answer is not in the context, say you don't know and advise checking official sources.";
+        finalPrompt = `Context: ${kbResult.text}\n\nUser Question: ${prompt}`;
     }
 
     try {
-        const chat = model.startChat({
-            history: [
-                { role: "user", parts: [{ text: `System: ${systemInstructions}` }] },
-                { role: "model", parts: [{ text: "Understood. Ready." }] },
+        const completion = await groq.chat.completions.create({
+            messages: [
+                { role: "system", content: systemInstructions },
+                { role: "user", content: finalPrompt },
             ],
+            model: DEFAULT_MODEL,
         });
 
-        const result = await chat.sendMessage(finalPrompt);
-        const response = await result.response;
-        const text = response.text();
+        const text = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
 
         // --- Log Interaction ---
         await ChatLog.create({
             userQuery: prompt,
             aiResponse: text,
-            source: kbResult?.type === 'direct' ? 'kb_direct' : kbResult?.type === 'context' ? 'kb_context' : 'gemini',
+            source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
             context: kbResult?.type === 'context' ? kbResult.source : undefined
         });
 
         return { text };
     } catch (error: any) {
-        console.error("Gemini Server Error:", error);
-        return { error: "Failed to process request. Please try again later." };
+        console.error("Groq Server Error:", error);
+        return { error: "Failed to process request with Groq. Please try again later." };
     }
 }
