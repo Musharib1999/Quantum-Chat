@@ -261,7 +261,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+    <div className="flex h-screen w-full bg-gray-50 font-sans overflow-hidden">
       {/* Connection Warning Banner */}
       {!isConnected && (
         <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[10px] md:text-xs font-bold px-4 py-2 text-center z-[60] flex items-center justify-center gap-2">
@@ -339,10 +339,10 @@ export default function App() {
       </div>
 
       {/* --- Main Chat Area --- */}
-      <div className="flex-1 flex flex-col h-full relative">
+      <div className="flex-1 flex flex-col h-full relative min-w-0 w-full overflow-hidden">
 
         {/* Header */}
-        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm z-10 shrink-0">
+        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm z-10 shrink-0 w-full overflow-hidden">
           <div className="flex items-center min-w-0">
             <button onClick={() => setIsSidebarOpen(true)} className="mr-3 md:hidden text-gray-600 hover:bg-gray-100 p-2 rounded-full flex-shrink-0">
               <Menu size={20} />
@@ -370,7 +370,7 @@ export default function App() {
         </header>
 
         {/* Messages List */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-4 lg:p-6 bg-[#f3f4f6]">
+        <main className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 bg-[#f3f4f6] min-w-0 w-full overflow-x-hidden">
           <div className="w-full max-w-3xl mx-auto space-y-6">
 
             {/* Disclaimer */}
@@ -528,8 +528,8 @@ export default function App() {
         </main>
 
         {/* Suggestions */}
-        <div className="bg-[#f3f4f6] px-4 pb-1 overflow-hidden shrink-0">
-          <div className="w-full max-w-3xl mx-auto flex gap-2 overflow-x-auto overflow-y-hidden no-scrollbar py-2">
+        <div className="bg-[#f3f4f6] px-4 pb-1 overflow-hidden shrink-0 w-full">
+          <div className="w-full max-w-3xl mx-auto flex gap-2 overflow-x-auto overflow-y-hidden no-scrollbar py-2 touch-pan-x">
             {(lang === 'en' ? SUGGESTIONS : HINDI_SUGGESTIONS).map((suggestion, idx) => (
               <button
                 key={idx}
@@ -543,8 +543,8 @@ export default function App() {
         </div>
 
         {/* Input Area */}
-        <footer className="bg-white p-2 md:p-4 border-t border-gray-200 shrink-0 mt-auto">
-          <div className="w-full max-w-3xl mx-auto relative">
+        <footer className="bg-white p-2 md:p-4 border-t border-gray-200 shrink-0 mt-auto w-full">
+          <div className="w-full max-w-3xl mx-auto relative px-1">
             <div className="flex items-end gap-1 md:gap-2 bg-gray-50 border border-gray-300 rounded-2xl p-1.5 md:p-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all shadow-sm">
 
               <button className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 transition-colors">
