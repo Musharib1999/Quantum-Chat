@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { chatWithGemini, checkGeminiConnection } from './actions/chat';
+import { getQaPairs } from './actions/admin';
 import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 
 // --- Assets & Constants ---
@@ -130,7 +131,15 @@ export default function App() {
   const [lang, setLang] = useState<'en' | 'hi'>('en'); // 'en' or 'hi'
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [dynamicForms, setDynamicForms] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getQaPairs().then(pairs => {
+      const forms = pairs.filter((p: any) => p.type === 'form');
+      setDynamicForms(forms);
+    });
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -215,6 +224,29 @@ export default function App() {
     setIsLoading(false);
   };
 
+  const handleSidebarFormClick = (form: any) => {
+    // 1. Add user message
+    const userMsg: Message = {
+      id: Date.now(),
+      text: `I want to fill the ${form.question} form`,
+      sender: 'user',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    // 2. Add bot message with the form
+    const botMsg: Message = {
+      id: Date.now() + 1,
+      text: form.answer,
+      sender: 'bot',
+      type: 'kb_form',
+      form: form.formConfig,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setMessages(prev => [...prev, userMsg, botMsg]);
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  };
+
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   const toggleLang = () => {
@@ -262,10 +294,9 @@ export default function App() {
           <SidebarGroup
             icon={<FileText size={18} />}
             label={lang === 'en' ? "Forms" : "फॉर्म्स"}
-            items={[
-              { label: lang === 'en' ? "Grievance Redressal" : "शिकायत निवारण" },
-              { label: lang === 'en' ? "Land Mutation Form" : "दाखिल-खारिज फॉर्म" },
-              { label: lang === 'en' ? "Property Tax" : "संपत्ति कर" }
+            items={dynamicForms.length > 0 ? dynamicForms.map(f => ({ label: f.question, onClick: () => handleSidebarFormClick(f) })) : [
+              { label: lang === 'en' ? "Grievance Redressal" : "शिकायत निवारण", onClick: () => { } },
+              { label: lang === 'en' ? "Land Mutation Form" : "दाखिल-खारिज फॉर्म", onClick: () => { } }
             ]}
           />
 
@@ -585,7 +616,7 @@ function SidebarItem({ icon, label, active = false }: { icon: React.ReactNode, l
 }
 
 // Helper Component for Sidebar Dropdown Groups
-function SidebarGroup({ icon, label, items }: { icon: React.ReactNode, label: string, items: { label: string }[] }) {
+function SidebarGroup({ icon, label, items }: { icon: React.ReactNode, label: string, items: { label: string, onClick?: () => void }[] }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div>
@@ -600,7 +631,7 @@ function SidebarGroup({ icon, label, items }: { icon: React.ReactNode, label: st
       {isOpen && (
         <div className="ml-9 mt-1 space-y-1 border-l border-gray-100">
           {items.map((item, idx) => (
-            <button key={idx} className="w-full text-left px-4 py-2 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-r-md transition-colors">
+            <button key={idx} onClick={item.onClick} className="w-full text-left px-4 py-2 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-r-md transition-colors">
               {item.label}
             </button>
           ))}
