@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { chatWithGemini } from './actions/chat';
-import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2 } from 'lucide-react';
+import { chatWithGemini, checkGeminiConnection } from './actions/chat';
+import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 
 // --- Assets & Constants ---
 const GOV_LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Seal_of_Bihar.svg/1200px-Seal_of_Bihar.svg.png";
@@ -75,9 +75,15 @@ export default function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const [isConnected, setIsConnected] = useState(true);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    checkGeminiConnection().then(setIsConnected);
+  }, []);
 
   // --- GEMINI API INTEGRATION (Server Action) ---
   const callGemini = async (prompt: string, type: 'chat' | 'draft' = 'chat') => {
@@ -164,6 +170,13 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+      {/* Connection Warning Banner */}
+      {!isConnected && (
+        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold px-4 py-2 text-center z-50 flex items-center justify-center gap-2">
+          <AlertTriangle size={14} />
+          <span>Warning: GEMINI_API_KEY is missing. The AI will not function. Please configure it in Vercel settings.</span>
+        </div>
+      )}
 
       {/* --- Sidebar (Mobile Responsive) --- */}
       <div className={`fixed inset-y-0 left-0 z-30 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static flex flex-col`}>

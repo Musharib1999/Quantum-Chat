@@ -4,6 +4,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
+export async function checkGeminiConnection() {
+    return !!API_KEY;
+}
+
 export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'chat', lang: 'en' | 'hi' = 'en') {
     if (!API_KEY) {
         return { error: "API Key missing. Please set GEMINI_API_KEY in environment variables." };
