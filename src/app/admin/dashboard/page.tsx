@@ -242,7 +242,7 @@ export default function AdminDashboard() {
                                             </div>
                                             <div>
                                                 <p className={`font-medium ${g.active ? 'text-gray-800' : 'text-gray-500 line-through'}`}>{g.rule}</p>
-                                                <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">{g.type.replace('_', ' ')}</span>
+                                                <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">{g.type?.replace('_', ' ') || 'GENERAL'}</span>
                                             </div>
                                         </div>
 

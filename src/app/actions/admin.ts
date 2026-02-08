@@ -37,8 +37,8 @@ export async function getQaPairs() {
         id: p._id.toString(),
         question: p.question,
         answer: p.answer,
-        type: p.type,
-        tags: p.tags
+        type: p.type || 'text',
+        tags: p.tags || []
     }));
 }
 
@@ -61,8 +61,8 @@ export async function getGuardrails() {
     return rules.map((r: any) => ({
         id: r._id.toString(),
         rule: r.rule,
-        type: r.type,
-        active: r.active
+        type: r.type || 'banned_topic',
+        active: r.active ?? true
     }));
 }
 
