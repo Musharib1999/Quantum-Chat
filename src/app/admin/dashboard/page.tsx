@@ -1,54 +1,73 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
     LogOut, Search, ChevronDown, CheckCircle, AlertTriangle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-// Mock Data Types
-type QaPair = { id: string; question: string; answer: string; tags: string[] };
-type Guardrail = { id: string; rule: string; type: 'banned_topic' | 'safety_check' | 'pii_masking'; active: boolean };
+import {
+    getQaPairs, addQaPair, deleteQaPair,
+    getGuardrails, addGuardrail, toggleGuardrail as toggleGuardrailAction,
+    type QaPair, type Guardrail
+} from '../../actions/admin';
 
 export default function AdminDashboard() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState("knowledge_base");
 
     // Knowledge Base State
-    const [qaPairs, setQaPairs] = useState<QaPair[]>([
-        { id: '1', question: "What is the pension age?", answer: "The pension age under Indira Gandhi National Old Age Pension Scheme is 60 years.", tags: ['pension', 'eligibility'] },
-        { id: '2', question: "How to apply for ration card?", answer: "You can apply for a ration card via the EPDS Bihar portal or at your local block office.", tags: ['ration', 'service'] }
-    ]);
+    const [qaPairs, setQaPairs] = useState<QaPair[]>([]);
     const [newQ, setNewQ] = useState("");
     const [newA, setNewA] = useState("");
+    const [newType, setNewType] = useState<'text' | 'url'>('text');
 
     // Guardrails State
-    const [guardrails, setGuardrails] = useState<Guardrail[]>([
-        { id: '1', rule: "Do not answer questions about political opinions.", type: 'banned_topic', active: true },
-        { id: '2', rule: "Mask all Aadhar numbers in chat output.", type: 'pii_masking', active: true },
-        { id: '3', rule: "Redirect medical emergencies to 108.", type: 'safety_check', active: true }
-    ]);
+    const [guardrails, setGuardrails] = useState<Guardrail[]>([]);
     const [newRule, setNewRule] = useState("");
 
-    const handleAddQa = () => {
+    useEffect(() => {
+        // Load initial data
+        getQaPairs().then(setQaPairs);
+        getGuardrails().then(setGuardrails);
+    }, []);
+
+    const handleAddQa = async () => {
         if (!newQ || !newA) return;
-        setQaPairs([...qaPairs, { id: Date.now().toString(), question: newQ, answer: newA, tags: [] }]);
+        const newPair: QaPair = {
+            id: Date.now().toString(),
+            question: newQ,
+            answer: newA,
+            type: newType,
+            tags: []
+        };
+        await addQaPair(newPair);
+        setQaPairs([...qaPairs, newPair]);
         setNewQ("");
         setNewA("");
     };
 
-    const handleDeleteQa = (id: string) => {
+    const handleDeleteQa = async (id: string) => {
+        await deleteQaPair(id);
         setQaPairs(qaPairs.filter(q => q.id !== id));
     };
 
-    const handleAddRule = () => {
+    const handleAddRule = async () => {
         if (!newRule) return;
-        setGuardrails([...guardrails, { id: Date.now().toString(), rule: newRule, type: 'banned_topic', active: true }]);
+        const rule: Guardrail = {
+            id: Date.now().toString(),
+            rule: newRule,
+            type: 'banned_topic',
+            active: true
+        };
+        await addGuardrail(rule);
+        setGuardrails([...guardrails, rule]);
         setNewRule("");
     };
 
-    const toggleGuardrail = (id: string) => {
+    const handleToggleGuardrail = async (id: string) => {
+        await toggleGuardrailAction(id);
         setGuardrails(guardrails.map(g => g.id === id ? { ...g, active: !g.active } : g));
     };
 
@@ -120,12 +139,22 @@ export default function AdminDashboard() {
                                         value={newQ}
                                         onChange={e => setNewQ(e.target.value)}
                                     />
-                                    <input
-                                        className="p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="AI Answer (e.g., 'Scheme X provides...')"
-                                        value={newA}
-                                        onChange={e => setNewA(e.target.value)}
-                                    />
+                                    <div className="flex gap-2">
+                                        <select
+                                            className="p-3 border border-gray-300 rounded-xl bg-white outline-none"
+                                            value={newType}
+                                            onChange={(e) => setNewType(e.target.value as 'text' | 'url')}
+                                        >
+                                            <option value="text">Direct Answer</option>
+                                            <option value="url">URL Source</option>
+                                        </select>
+                                        <input
+                                            className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder={newType === 'text' ? "AI Answer..." : "https://example.com/info-page"}
+                                            value={newA}
+                                            onChange={e => setNewA(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="mt-4 text-right">
                                     <button
@@ -201,10 +230,10 @@ export default function AdminDashboard() {
                                         </div>
 
                                         <button
-                                            onClick={() => toggleGuardrail(g.id)}
+                                            onClick={() => handleToggleGuardrail(g.id)}
                                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${g.active
-                                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                                                 }`}
                                         >
                                             {g.active ? 'Active' : 'Disabled'}
@@ -236,8 +265,8 @@ function SidebarLink({ icon, label, active, onClick }: { icon: any, label: strin
         <button
             onClick={onClick}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
         >
             {icon}

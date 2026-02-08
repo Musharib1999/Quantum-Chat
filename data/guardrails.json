@@ -1,0 +1,20 @@
+[
+    {
+        "id": "1",
+        "rule": "Do not answer questions about political opinions.",
+        "type": "banned_topic",
+        "active": true
+    },
+    {
+        "id": "2",
+        "rule": "Mask all Aadhar numbers in chat output.",
+        "type": "pii_masking",
+        "active": true
+    },
+    {
+        "id": "3",
+        "rule": "Redirect medical emergencies to 108.",
+        "type": "safety_check",
+        "active": true
+    }
+]

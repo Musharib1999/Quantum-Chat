@@ -1,0 +1,22 @@
+[
+    {
+        "id": "1",
+        "question": "What is the pension age?",
+        "answer": "The pension age under Indira Gandhi National Old Age Pension Scheme is 60 years.",
+        "type": "text",
+        "tags": [
+            "pension",
+            "eligibility"
+        ]
+    },
+    {
+        "id": "2",
+        "question": "How to apply for ration card?",
+        "answer": "You can apply for a ration card via the EPDS Bihar portal or at your local block office.",
+        "type": "text",
+        "tags": [
+            "ration",
+            "service"
+        ]
+    }
+]
