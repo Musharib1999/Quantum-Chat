@@ -370,22 +370,22 @@ export default function App() {
         </header>
 
         {/* Messages List */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-[#f3f4f6]">
-          <div className="max-w-3xl mx-auto space-y-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-4 lg:p-6 bg-[#f3f4f6]">
+          <div className="w-full max-w-3xl mx-auto space-y-6">
 
             {/* Disclaimer */}
-            <div className="flex justify-center">
-              <div className="bg-yellow-50 border border-yellow-100 text-yellow-800 text-xs px-4 py-2 rounded-lg text-center max-w-md">
+            <div className="flex justify-center w-full">
+              <div className="w-full max-w-md bg-yellow-50 border border-yellow-100 text-yellow-800 text-[11px] md:text-xs px-4 py-2 rounded-lg text-center shadow-sm capitalize">
                 {lang === 'en'
-                  ? "Note: Sahayak AI is an AI assistant. Please verify official records at state.bihar.gov.in/prd."
-                  : "नोट: सहायक एआई एक एआई असिस्टेंट है। कृपया state.bihar.gov.in/prd पर आधिकारिक रिकॉर्ड देखें।"
+                  ? "Sahayak AI is an AI assistant. Verify official records at state.bihar.gov.in/prd."
+                  : "सहायक एआई एक एआई असिस्टेंट है। कृपया state.bihar.gov.in/prd पर आधिकारिक रिकॉर्ड देखें।"
                 }
               </div>
             </div>
 
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex max-w-[90%] lg:max-w-[80%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
+              <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`flex max-w-[95%] md:max-w-[85%] lg:max-w-[80%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
 
                   {/* Avatar */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.sender === 'user' ? 'bg-blue-600' : 'bg-white border border-gray-200'}`}>
@@ -528,8 +528,8 @@ export default function App() {
         </main>
 
         {/* Suggestions */}
-        <div className="bg-[#f3f4f6] px-4 pb-1">
-          <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar py-2">
+        <div className="bg-[#f3f4f6] px-4 pb-1 overflow-hidden shrink-0">
+          <div className="w-full max-w-3xl mx-auto flex gap-2 overflow-x-auto overflow-y-hidden no-scrollbar py-2">
             {(lang === 'en' ? SUGGESTIONS : HINDI_SUGGESTIONS).map((suggestion, idx) => (
               <button
                 key={idx}
@@ -544,7 +544,7 @@ export default function App() {
 
         {/* Input Area */}
         <footer className="bg-white p-2 md:p-4 border-t border-gray-200 shrink-0 mt-auto">
-          <div className="max-w-3xl mx-auto relative">
+          <div className="w-full max-w-3xl mx-auto relative">
             <div className="flex items-end gap-1 md:gap-2 bg-gray-50 border border-gray-300 rounded-2xl p-1.5 md:p-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all shadow-sm">
 
               <button className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 transition-colors">
