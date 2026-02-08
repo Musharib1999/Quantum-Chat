@@ -254,15 +254,38 @@ export default function App() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 ml-2">Quick Services</div>
-          <SidebarItem icon={<FileText size={18} />} label={lang === 'en' ? "Gram Katchry" : "ग्राम कचहरी"} active />
-          <SidebarItem icon={<Download size={18} />} label={lang === 'en' ? "Nal Jal Yojana" : "नल जल योजना"} />
-          <SidebarItem icon={<MapPin size={18} />} label={lang === 'en' ? "Gali-Nali Yojana" : "गली-नाली योजना"} />
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 ml-2">Main Menu</div>
+          <SidebarItem icon={<Globe size={18} />} label={lang === 'en' ? "Home" : "होम"} active />
+
+          <div className="mt-6 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 ml-2">Services</div>
+
+          <SidebarGroup
+            icon={<FileText size={18} />}
+            label={lang === 'en' ? "Forms" : "फॉर्म्स"}
+            items={[
+              { label: lang === 'en' ? "Grievance Redressal" : "शिकायत निवारण" },
+              { label: lang === 'en' ? "Land Mutation Form" : "दाखिल-खारिज फॉर्म" },
+              { label: lang === 'en' ? "Property Tax" : "संपत्ति कर" }
+            ]}
+          />
+
+          <SidebarGroup
+            icon={<MapPin size={18} />}
+            label={lang === 'en' ? "Schemes" : "योजनाएं"}
+            items={[
+              { label: lang === 'en' ? "Nal Jal Yojana" : "नल जल योजना" },
+              { label: lang === 'en' ? "Gali-Nali Yojana" : "गली-नाली योजना" },
+              { label: lang === 'en' ? "Solar Street Light" : "सोलर स्ट्रीट लाइट" }
+            ]}
+          />
+
+          <div className="mt-8 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 ml-2">Quick Access</div>
+          <SidebarItem icon={<FileText size={18} />} label={lang === 'en' ? "Gram Katchry" : "ग्राम कचहरी"} />
           <SidebarItem icon={<User size={18} />} label={lang === 'en' ? "Panchayat Sarkar Bhawan" : "पंचायत सरकार भवन"} />
 
           <div className="mt-8 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 ml-2">Support</div>
           <SidebarItem icon={<HelpCircle size={18} />} label={lang === 'en' ? "Help Center" : "सहायता केंद्र"} />
-          <SidebarItem icon={<Phone size={18} />} label={lang === 'en' ? "Emergency Contact" : "आपातकालीन संपर्क"} />
+          <SidebarItem icon={<Phone size={18} />} label={lang === 'en' ? "Emergency" : "आपातकालीन"} />
         </nav>
 
         <div className="p-4 border-t border-gray-100 bg-gray-50">
@@ -558,5 +581,31 @@ function SidebarItem({ icon, label, active = false }: { icon: React.ReactNode, l
       <span className="text-sm">{label}</span>
       {active && <ChevronRight size={14} className="ml-auto" />}
     </button>
+  );
+}
+
+// Helper Component for Sidebar Dropdown Groups
+function SidebarGroup({ icon, label, items }: { icon: React.ReactNode, label: string, items: { label: string }[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
+      >
+        <span className="text-gray-400 group-hover:text-blue-600">{icon}</span>
+        <span className="text-sm font-medium">{label}</span>
+        <ChevronRight size={14} className={`ml-auto transition-transform text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="ml-9 mt-1 space-y-1 border-l border-gray-100">
+          {items.map((item, idx) => (
+            <button key={idx} className="w-full text-left px-4 py-2 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-r-md transition-colors">
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
