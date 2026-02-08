@@ -16,6 +16,11 @@ const ChatLogSchema = new mongoose.Schema({
     context: {
         type: String, // The snippet used for RAG, if any
     },
+    guardrailsStatus: {
+        type: String, // 'passed', 'violated'
+        default: 'passed'
+    },
+    activeGuardrails: [String], // List of rules checked
     timestamp: {
         type: Date,
         default: Date.now,

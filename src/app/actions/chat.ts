@@ -18,11 +18,14 @@ export async function checkGeminiConnection() {
 }
 
 // --- Guardrails ---
-const checkGuardrails = async (prompt: string): Promise<string | null> => {
+const getActiveGuardrails = async () => {
     await dbConnect();
     const rules = await Guardrail.find({ active: true }).lean();
+    return rules as any[];
+};
 
-    for (const r of rules as any[]) {
+const checkGuardrails = (prompt: string, rules: any[]): string | null => {
+    for (const r of rules) {
         if (r.type === 'banned_topic' && prompt.toLowerCase().includes(r.rule.toLowerCase())) {
             return "I cannot answer this question due to safety guidelines regarding: " + r.rule;
         }
@@ -70,13 +73,19 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
 
     const groq = new Groq({ apiKey: API_KEY });
 
-    // 1. Guardrails Check
-    const violation = await checkGuardrails(prompt);
+    // 0. Fetch Active Rules for both logging and prompt injection
+    const activeRules = await getActiveGuardrails();
+    const ruleTexts = activeRules.map(r => r.rule);
+
+    // 1. Guardrails Pre-Check (Hard Block)
+    const violation = checkGuardrails(prompt, activeRules);
     if (violation) {
         await ChatLog.create({
             userQuery: prompt,
             aiResponse: violation,
-            source: 'blocked'
+            source: 'blocked',
+            guardrailsStatus: 'violated',
+            activeGuardrails: ruleTexts
         });
         return { text: violation };
     }
@@ -89,13 +98,20 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
         await ChatLog.create({
             userQuery: prompt,
             aiResponse: text,
-            source: 'kb_direct'
+            source: 'kb_direct',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
         });
         return { text };
     }
 
     // 3. Main LLM Logic
-    let systemInstructions = "You are Sahayak, an AI assistant for the Bihar Government. Be helpful, professional, and answer in a way that citizens can understand.";
+    let systemInstructions = `You are Sahayak, an AI assistant for the Bihar Government. Be helpful, professional, and answer in a way that citizens can understand.
+    
+    CRITICAL SAFETY RULES:
+    ${ruleTexts.length > 0 ? "You MUST NOT discuss or provide information about: " + ruleTexts.join(", ") : "Follow general government safety guidelines."}
+    If a user asks about these topics, politely decline to answer.`;
+
     let finalPrompt = prompt;
 
     if (kbResult?.type === 'context') {
@@ -119,7 +135,9 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
             userQuery: prompt,
             aiResponse: text,
             source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
-            context: kbResult?.type === 'context' ? kbResult.source : undefined
+            context: kbResult?.type === 'context' ? kbResult.source : undefined,
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
         });
 
         return { text };
@@ -131,7 +149,9 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
         await ChatLog.create({
             userQuery: prompt,
             aiResponse: error.message || errorMsg,
-            source: 'error'
+            source: 'error',
+            guardrailsStatus: 'passed', // Logic still passed guardrails
+            activeGuardrails: ruleTexts
         });
 
         return { error: errorMsg };

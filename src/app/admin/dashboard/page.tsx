@@ -275,6 +275,7 @@ export default function AdminDashboard() {
                                             <th className="p-4">Time</th>
                                             <th className="p-4">User Query</th>
                                             <th className="p-4">AI Response</th>
+                                            <th className="p-4">Guardrails</th>
                                             <th className="p-4">Source</th>
                                         </tr>
                                     </thead>
@@ -290,6 +291,19 @@ export default function AdminDashboard() {
                                                 <td className="p-4 text-sm text-gray-600 max-w-md truncate" title={log.aiResponse}>
                                                     {log.aiResponse}
                                                 </td>
+                                                <td className="p-4 whitespace-nowrap">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full w-fit ${log.guardrailsStatus === 'violated'
+                                                            ? 'bg-red-100 text-red-700'
+                                                            : 'bg-green-100 text-green-700'
+                                                            }`}>
+                                                            {log.guardrailsStatus?.toUpperCase() || 'PASSED'}
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-400">
+                                                            {log.activeGuardrails?.length || 0} rules checked
+                                                        </span>
+                                                    </div>
+                                                </td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${log.source === 'gemini' ? 'bg-blue-100 text-blue-700' :
                                                         log.source.includes('kb') ? 'bg-green-100 text-green-700' :
@@ -302,7 +316,7 @@ export default function AdminDashboard() {
                                         ))}
                                         {chatLogs.length === 0 && (
                                             <tr>
-                                                <td colSpan={4} className="p-8 text-center text-gray-400">No logs found.</td>
+                                                <td colSpan={5} className="p-8 text-center text-gray-400">No logs found.</td>
                                             </tr>
                                         )}
                                     </tbody>
@@ -320,8 +334,8 @@ export default function AdminDashboard() {
                         </div>
                     )}
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }
 

@@ -26,6 +26,8 @@ export type ChatLogType = {
     userQuery: string;
     aiResponse: string;
     source: string;
+    guardrailsStatus?: string;
+    activeGuardrails?: string[];
     timestamp: string;
 };
 
@@ -91,6 +93,8 @@ export async function getChatLogs() {
         userQuery: l.userQuery,
         aiResponse: l.aiResponse,
         source: l.source,
+        guardrailsStatus: l.guardrailsStatus,
+        activeGuardrails: l.activeGuardrails,
         timestamp: l.timestamp.toISOString(),
     }));
 }
