@@ -62,6 +62,8 @@ const queryKnowledgeBase = async (prompt: string) => {
 
 export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'chat', lang: 'en' | 'hi' = 'en') {
     // Keeping name for frontend compatibility
+    await dbConnect(); // Ensure connection early
+
     if (!API_KEY) {
         return { error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
     }
@@ -123,6 +125,15 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
         return { text };
     } catch (error: any) {
         console.error("Groq Server Error:", error);
-        return { error: "Failed to process request with Groq. Please try again later." };
+
+        // Log the error response as well
+        const errorMsg = "Failed to process request with Groq. Please try again later.";
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: error.message || errorMsg,
+            source: 'error'
+        });
+
+        return { error: errorMsg };
     }
 }
