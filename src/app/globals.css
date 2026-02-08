@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Ethereal Warmth Theme - Deep Earth */
+  --background: #e6dfd5;
+  /* Warm Taupe/Stone */
+  --foreground: #3d3028;
+  /* Dark Coffee */
+
+  --card: rgba(255, 254, 250, 0.45);
+  /* More transparent, less white */
+  --card-foreground: #3d3028;
+
+  --popover: rgba(255, 254, 250, 0.7);
+  --popover-foreground: #3d3028;
+
+  --primary: #c27a4b;
+  /* Deeper Terra Cotta */
+  --primary-foreground: #ffffff;
+
+  --secondary: #dcd3c5;
+  --secondary-foreground: #3d3028;
+
+  --muted: rgba(160, 140, 120, 0.3);
+  --muted-foreground: #7a6a5e;
+
+  --accent: rgba(194, 122, 75, 0.15);
+  --accent-foreground: #c27a4b;
+
+  --destructive: #cc5555;
+  --destructive-foreground: #ffffff;
+
+  --border: rgba(160, 140, 120, 0.3);
+  --input: rgba(255, 255, 255, 0.4);
+  --ring: rgba(194, 122, 75, 0.3);
+
+  --radius: 1.5rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 8px);
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --shadow-warm: 0 10px 40px -10px rgba(208, 139, 91, 0.2), 0 0 20px rgba(0, 0, 0, 0.02);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  --shadow-sidebar: 20px 0 40px -10px rgba(0, 0, 0, 0.1);
+  /* Deep shadow for sidebar depth */
+  --shadow-button: 0 10px 20px -5px rgba(208, 139, 91, 0.4);
+  /* Glow shadow for primary buttons */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Ken Burns Effect */
+@keyframes ken-burns {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.1);
   }
 }
 
+.animate-ken-burns {
+  animation: ken-burns 20s infinite alternate linear;
+}
+
 body {
-  background: var(--background);
+  background: radial-gradient(circle at 50% 0%, #ede6dc 0%, #e6dfd5 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-deep {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #2d241f 0%, #D08B5B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
 }
