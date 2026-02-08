@@ -10,7 +10,8 @@ import { useRouter } from 'next/navigation';
 import {
     getQaPairs, addQaPair, deleteQaPair,
     getGuardrails, addGuardrail, toggleGuardrail as toggleGuardrailAction,
-    type QaPairType as QaPair, type GuardrailType as Guardrail
+    getChatLogs,
+    type QaPairType as QaPair, type GuardrailType as Guardrail, type ChatLogType
 } from '../../actions/admin';
 
 export default function AdminDashboard() {
@@ -27,10 +28,14 @@ export default function AdminDashboard() {
     const [guardrails, setGuardrails] = useState<Guardrail[]>([]);
     const [newRule, setNewRule] = useState("");
 
+    // Logs State
+    const [chatLogs, setChatLogs] = useState<ChatLogType[]>([]);
+
     useEffect(() => {
         // Load initial data
         getQaPairs().then(setQaPairs);
         getGuardrails().then(setGuardrails);
+        getChatLogs().then(setChatLogs);
     }, []);
 
     const handleAddQa = async () => {
@@ -71,6 +76,17 @@ export default function AdminDashboard() {
         setGuardrails(guardrails.map(g => g.id === id ? { ...g, active: !g.active } : g));
     };
 
+    // Assuming SidebarItem is a component defined elsewhere or a placeholder
+    const SidebarItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) => (
+        <button
+            onClick={onClick}
+            className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-colors ${active ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+        >
+            {icon}
+            <span className="font-medium">{label}</span>
+        </button>
+    );
+
     return (
         <div className="flex h-screen bg-gray-50 font-sans">
 
@@ -85,9 +101,10 @@ export default function AdminDashboard() {
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
-                    <SidebarLink icon={<MessageSquare size={20} />} label="Knowledge Base" active={activeTab === 'knowledge_base'} onClick={() => setActiveTab('knowledge_base')} />
-                    <SidebarLink icon={<ShieldAlert size={20} />} label="Guardrails" active={activeTab === 'guardrails'} onClick={() => setActiveTab('guardrails')} />
-                    <SidebarLink icon={<BarChart3 size={20} />} label="Analytics" active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
+                    <SidebarItem icon={<FileText size={20} />} label="Knowledge Base" active={activeTab === 'knowledge_base'} onClick={() => setActiveTab('knowledge_base')} />
+                    <SidebarItem icon={<ShieldAlert size={20} />} label="Guardrails" active={activeTab === 'guardrails'} onClick={() => setActiveTab('guardrails')} />
+                    <SidebarItem icon={<MessageSquare size={20} />} label="Chat Logs" active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} />
+                    <SidebarItem icon={<BarChart3 size={20} />} label="Analytics" active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">
@@ -244,6 +261,55 @@ export default function AdminDashboard() {
                         </div>
                     )}
 
+                    {/* LOGS TAB */}
+                    {activeTab === 'logs' && (
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                <MessageSquare className="text-purple-600" /> Interaction Logs
+                            </h2>
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-50 text-gray-600 font-medium border-b border-gray-200">
+                                            <th className="p-4">Time</th>
+                                            <th className="p-4">User Query</th>
+                                            <th className="p-4">AI Response</th>
+                                            <th className="p-4">Source</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {chatLogs.map((log) => (
+                                            <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50/50">
+                                                <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                                                    {new Date(log.timestamp).toLocaleString()}
+                                                </td>
+                                                <td className="p-4 text-sm text-gray-800 font-medium max-w-xs truncate" title={log.userQuery}>
+                                                    {log.userQuery}
+                                                </td>
+                                                <td className="p-4 text-sm text-gray-600 max-w-md truncate" title={log.aiResponse}>
+                                                    {log.aiResponse}
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${log.source === 'gemini' ? 'bg-blue-100 text-blue-700' :
+                                                        log.source.includes('kb') ? 'bg-green-100 text-green-700' :
+                                                            'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                        {log.source}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {chatLogs.length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="p-8 text-center text-gray-400">No logs found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     {/* ANALYTICS TAB (Placeholder) */}
                     {activeTab === 'analytics' && (
                         <div className="flex flex-col items-center justify-center h-full text-gray-400">
@@ -252,7 +318,6 @@ export default function AdminDashboard() {
                             <p className="text-sm">Usage statistics and query insights coming soon.</p>
                         </div>
                     )}
-
                 </div>
             </main>
         </div>

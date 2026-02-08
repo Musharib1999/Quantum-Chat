@@ -6,6 +6,7 @@ import * as cheerio from 'cheerio';
 import dbConnect from '@/lib/db';
 import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
+import ChatLog from '@/models/ChatLog';
 
 const API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
@@ -113,7 +114,17 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
 
         const result = await chat.sendMessage(finalPrompt);
         const response = await result.response;
-        return { text: response.text() };
+        const text = response.text();
+
+        // --- Log Interaction ---
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: text,
+            source: kbResult?.type === 'direct' ? 'kb_direct' : kbResult?.type === 'context' ? 'kb_context' : 'gemini',
+            context: kbResult?.type === 'context' ? kbResult.source : undefined
+        });
+
+        return { text };
     } catch (error: any) {
         console.error("Gemini Server Error:", error);
         return { error: "Failed to process request. Please try again later." };

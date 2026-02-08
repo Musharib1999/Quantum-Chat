@@ -3,6 +3,7 @@
 import dbConnect from '@/lib/db';
 import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
+import ChatLog from '@/models/ChatLog';
 
 // --- Types (Re-exported for Client) ---
 export type QaPairType = {
@@ -18,6 +19,14 @@ export type GuardrailType = {
     rule: string;
     type: 'banned_topic' | 'safety_check' | 'pii_masking';
     active: boolean;
+};
+
+export type ChatLogType = {
+    id: string;
+    userQuery: string;
+    aiResponse: string;
+    source: string;
+    timestamp: string;
 };
 
 // --- Knowledge Base Actions ---
@@ -71,4 +80,17 @@ export async function toggleGuardrail(id: string) {
         await rule.save();
     }
     return { success: true };
+}
+
+// --- Chat Logs Actions ---
+export async function getChatLogs() {
+    await dbConnect();
+    const logs = await ChatLog.find({}).sort({ timestamp: -1 }).limit(50).lean();
+    return logs.map((l: any) => ({
+        id: l._id.toString(),
+        userQuery: l.userQuery,
+        aiResponse: l.aiResponse,
+        source: l.source,
+        timestamp: l.timestamp.toISOString(),
+    }));
 }
