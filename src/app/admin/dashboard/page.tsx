@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
-    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle
+    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -17,6 +17,7 @@ import {
 export default function AdminDashboard() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState("knowledge_base");
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Knowledge Base State
     const [qaPairs, setQaPairs] = useState<QaPair[]>([]);
@@ -99,48 +100,92 @@ export default function AdminDashboard() {
     );
 
     return (
-        <div className="flex h-screen bg-gray-50 font-sans">
+        <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+            {/* Mobile Sidebar Overlay */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
 
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-white flex flex-col">
-                <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold">S</div>
-                    <div>
-                        <h1 className="font-bold text-lg tracking-wide">Sahayak Admin</h1>
-                        <p className="text-xs text-slate-400">AI Control Center</p>
+            <aside className={`
+                fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out
+                md:relative md:translate-x-0
+                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
+                <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold">S</div>
+                        <div>
+                            <h1 className="font-bold text-lg tracking-wide">Sahayak Admin</h1>
+                            <p className="text-xs text-slate-400">AI Control Center</p>
+                        </div>
                     </div>
+                    <button className="md:hidden p-2 hover:bg-slate-800 rounded-lg" onClick={() => setIsMobileMenuOpen(false)}>
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2">
-                    <SidebarItem icon={<FileText size={20} />} label="Knowledge Base" active={activeTab === 'knowledge_base'} onClick={() => setActiveTab('knowledge_base')} />
-                    <SidebarItem icon={<ShieldAlert size={20} />} label="Guardrails" active={activeTab === 'guardrails'} onClick={() => setActiveTab('guardrails')} />
-                    <SidebarItem icon={<MessageSquare size={20} />} label="Chat Logs" active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} />
-                    <SidebarItem icon={<BarChart3 size={20} />} label="Analytics" active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
+                <nav className="flex-1 p-4 space-y-2 mt-4">
+                    <SidebarItem
+                        icon={<FileText size={20} />}
+                        label="Knowledge Base"
+                        active={activeTab === 'knowledge_base'}
+                        onClick={() => { setActiveTab('knowledge_base'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarItem
+                        icon={<ShieldAlert size={20} />}
+                        label="Guardrails"
+                        active={activeTab === 'guardrails'}
+                        onClick={() => { setActiveTab('guardrails'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarItem
+                        icon={<MessageSquare size={20} />}
+                        label="Chat Logs"
+                        active={activeTab === 'logs'}
+                        onClick={() => { setActiveTab('logs'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarItem
+                        icon={<BarChart3 size={20} />}
+                        label="Analytics"
+                        active={activeTab === 'analytics'}
+                        onClick={() => { setActiveTab('analytics'); setIsMobileMenuOpen(false); }}
+                    />
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">
                     <button
                         onClick={() => router.push('/admin/login')}
-                        className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
+                        className="flex items-center gap-3 w-full px-4 py-3 text-slate-400 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-all font-medium"
                     >
                         <LogOut size={20} />
-                        <span className="font-medium">Logout</span>
+                        Logout
                     </button>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-                {/* Header */}
-                <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm">
-                    <h2 className="text-xl font-bold text-gray-800 capitalize flex items-center gap-2">
-                        {activeTab === 'knowledge_base' && <MessageSquare className="text-blue-600" />}
-                        {activeTab === 'guardrails' && <ShieldAlert className="text-red-600" />}
-                        {activeTab === 'analytics' && <BarChart3 className="text-purple-600" />}
-                        {activeTab === 'logs' && <MessageSquare className="text-purple-600" />}
-                        {activeTab.replace('_', ' ')}
-                    </h2>
+                {/* Desktop/Mobile Header */}
+                <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-30">
+                    <div className="flex items-center gap-4">
+                        <button
+                            className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                            onClick={() => setIsMobileMenuOpen(true)}
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <h2 className="font-bold text-gray-800 flex items-center gap-2 text-sm md:text-base capitalize">
+                            {activeTab === 'knowledge_base' && <MessageSquare className="text-blue-600" />}
+                            {activeTab === 'guardrails' && <ShieldAlert className="text-red-600" />}
+                            {activeTab === 'analytics' && <BarChart3 className="text-purple-600" />}
+                            {activeTab === 'logs' && <MessageSquare className="text-purple-600" />}
+                            {activeTab.replace('_', ' ')}
+                        </h2>
+                    </div>
 
                     <div className="flex items-center gap-4">
                         <div className="text-sm text-right">
@@ -152,7 +197,7 @@ export default function AdminDashboard() {
                 </header>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-auto p-8 bg-gray-50">
+                <div className="flex-1 overflow-auto p-4 md:p-8 bg-gray-50">
 
                     {/* KNOWLEDGE BASE TAB */}
                     {activeTab === 'knowledge_base' && (
@@ -292,59 +337,61 @@ export default function AdminDashboard() {
                             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                                 <MessageSquare className="text-purple-600" /> Interaction Logs
                             </h2>
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-gray-50 text-gray-600 font-medium border-b border-gray-200">
-                                            <th className="p-4">Time</th>
-                                            <th className="p-4">User Query</th>
-                                            <th className="p-4">AI Response</th>
-                                            <th className="p-4">Guardrails</th>
-                                            <th className="p-4">Source</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {chatLogs.map((log) => (
-                                            <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50/50">
-                                                <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
-                                                    {new Date(log.timestamp).toLocaleString()}
-                                                </td>
-                                                <td className="p-4 text-sm text-gray-800 font-medium max-w-xs truncate" title={log.userQuery}>
-                                                    {log.userQuery}
-                                                </td>
-                                                <td className="p-4 text-sm text-gray-600 max-w-md truncate" title={log.aiResponse}>
-                                                    {log.aiResponse}
-                                                </td>
-                                                <td className="p-4 whitespace-nowrap">
-                                                    <div className="flex flex-col gap-1">
-                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full w-fit ${log.guardrailsStatus === 'violated'
-                                                            ? 'bg-red-100 text-red-700'
-                                                            : 'bg-green-100 text-green-700'
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-gray-50 border-b border-gray-100">
+                                            <tr className="text-gray-500 font-bold text-xs uppercase tracking-wider">
+                                                <th className="p-4">Time</th>
+                                                <th className="p-4">User Query</th>
+                                                <th className="p-4">AI Response</th>
+                                                <th className="p-4">Guardrails</th>
+                                                <th className="p-4">Source</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {chatLogs.map((log) => (
+                                                <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50/50">
+                                                    <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                                                        {new Date(log.timestamp).toLocaleString()}
+                                                    </td>
+                                                    <td className="p-4 text-sm text-gray-800 font-medium max-w-[150px] md:max-w-xs truncate" title={log.userQuery}>
+                                                        {log.userQuery}
+                                                    </td>
+                                                    <td className="p-4 text-sm text-gray-600 max-w-[150px] md:max-w-md truncate" title={log.aiResponse}>
+                                                        {log.aiResponse}
+                                                    </td>
+                                                    <td className="p-4 whitespace-nowrap text-xs">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full w-fit ${log.guardrailsStatus === 'violated'
+                                                                ? 'bg-red-100 text-red-700'
+                                                                : 'bg-green-100 text-green-700'
+                                                                }`}>
+                                                                {log.guardrailsStatus?.toUpperCase() || 'PASSED'}
+                                                            </span>
+                                                            <span className="text-[10px] text-gray-400">
+                                                                {log.activeGuardrails?.length || 0} rules
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 whitespace-nowrap">
+                                                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${log.source === 'gemini' ? 'bg-blue-100 text-blue-700' :
+                                                            log.source.includes('kb') ? 'bg-green-100 text-green-700' :
+                                                                'bg-gray-100 text-gray-600'
                                                             }`}>
-                                                            {log.guardrailsStatus?.toUpperCase() || 'PASSED'}
+                                                            {log.source === 'gemini' ? 'Groq' : log.source}
                                                         </span>
-                                                        <span className="text-[10px] text-gray-400">
-                                                            {log.activeGuardrails?.length || 0} rules checked
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${log.source === 'gemini' ? 'bg-blue-100 text-blue-700' :
-                                                        log.source.includes('kb') ? 'bg-green-100 text-green-700' :
-                                                            'bg-gray-100 text-gray-600'
-                                                        }`}>
-                                                        {log.source}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {chatLogs.length === 0 && (
-                                            <tr>
-                                                <td colSpan={5} className="p-8 text-center text-gray-400">No logs found.</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {chatLogs.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={5} className="p-8 text-center text-gray-400">No logs found.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -358,8 +405,8 @@ export default function AdminDashboard() {
                         </div>
                     )}
                 </div>
-            </main >
-        </div >
+            </div>
+        </div>
     );
 }
 
