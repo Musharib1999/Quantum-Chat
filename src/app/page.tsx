@@ -264,23 +264,31 @@ export default function App() {
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       {/* Connection Warning Banner */}
       {!isConnected && (
-        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold px-4 py-2 text-center z-50 flex items-center justify-center gap-2">
-          <AlertTriangle size={14} />
-          <span>Warning: GEMINI_API_KEY is missing. The AI will not function. Please configure it in Vercel settings.</span>
+        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[10px] md:text-xs font-bold px-4 py-2 text-center z-[60] flex items-center justify-center gap-2">
+          <AlertTriangle size={12} className="shrink-0" />
+          <span>Warning: GEMINI_API_KEY is missing. AI will not function.</span>
         </div>
       )}
 
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* --- Sidebar (Mobile Responsive) --- */}
-      <div className={`fixed inset-y-0 left-0 z-30 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static flex flex-col`}>
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static flex flex-col shadow-2xl md:shadow-none`}>
+        <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img src={GOV_LOGO_URL} alt="Bihar Emblem" className="h-12 w-12 object-contain" />
+            <img src={GOV_LOGO_URL} alt="Bihar Emblem" className="h-10 w-10 md:h-12 md:w-12 object-contain" />
             <div>
-              <h1 className="font-bold text-gray-800 text-lg leading-tight">Sahayak AI</h1>
-              <p className="text-xs text-gray-500">Govt. of Bihar</p>
+              <h1 className="font-bold text-gray-800 text-base md:text-lg leading-tight">Sahayak AI</h1>
+              <p className="text-[10px] md:text-xs text-gray-500">Govt. of Bihar</p>
             </div>
           </div>
-          <button onClick={toggleSidebar} className="md:hidden text-gray-500 hover:bg-gray-100 p-1 rounded">
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:bg-gray-100 p-2 rounded-lg">
             <X size={20} />
           </button>
         </div>
@@ -334,28 +342,28 @@ export default function App() {
       <div className="flex-1 flex flex-col h-full relative">
 
         {/* Header */}
-        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm z-10">
-          <div className="flex items-center">
-            <button onClick={toggleSidebar} className="mr-4 md:hidden text-gray-600 hover:bg-gray-100 p-2 rounded-full">
+        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm z-10 shrink-0">
+          <div className="flex items-center min-w-0">
+            <button onClick={() => setIsSidebarOpen(true)} className="mr-3 md:hidden text-gray-600 hover:bg-gray-100 p-2 rounded-full flex-shrink-0">
               <Menu size={20} />
             </button>
-            <div className="flex flex-col">
-              <span className="font-semibold text-gray-800 flex items-center gap-2">
-                {lang === 'en' ? "Panchayati Raj Department" : "पंचायती राज विभाग"}
-                <span className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide">Beta</span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-gray-800 flex items-center gap-1.5 text-sm md:text-base whitespace-nowrap overflow-hidden">
+                <span className="truncate">{lang === 'en' ? "Panchayati Raj Dept" : "पंचायती राज विभाग"}</span>
+                <span className="bg-blue-100 text-blue-800 text-[9px] md:text-[10px] px-1.5 md:px-2 py-0.5 rounded-full uppercase font-bold tracking-wide flex-shrink-0">Beta</span>
               </span>
-              <span className="text-xs text-green-600 flex items-center gap-1">
+              <span className="text-[10px] text-green-600 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                 Online
               </span>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <button
               onClick={toggleLang}
-              className="flex items-center space-x-1 px-3 py-1.5 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-sm font-medium transition-colors"
+              className="flex items-center space-x-1 px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-[11px] md:text-sm font-medium transition-colors"
             >
-              <Globe size={14} className="text-gray-500" />
+              <Globe size={12} className="text-gray-500 md:block hidden" />
               <span>{lang === 'en' ? "English" : "हिंदी"}</span>
             </button>
           </div>
@@ -520,13 +528,13 @@ export default function App() {
         </main>
 
         {/* Suggestions */}
-        <div className="bg-[#f3f4f6] px-4 pb-2">
-          <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar pb-2">
+        <div className="bg-[#f3f4f6] px-4 pb-1">
+          <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar py-2">
             {(lang === 'en' ? SUGGESTIONS : HINDI_SUGGESTIONS).map((suggestion, idx) => (
               <button
                 key={idx}
                 onClick={() => setInputText(suggestion)}
-                className="flex-shrink-0 bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full text-xs hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all whitespace-nowrap shadow-sm"
+                className="flex-shrink-0 bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full text-[11px] md:text-xs hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all whitespace-nowrap shadow-sm"
               >
                 {suggestion}
               </button>
@@ -535,13 +543,13 @@ export default function App() {
         </div>
 
         {/* Input Area */}
-        <footer className="bg-white p-4 border-t border-gray-200">
+        <footer className="bg-white p-2 md:p-4 border-t border-gray-200 shrink-0 mt-auto">
           <div className="max-w-3xl mx-auto relative">
-            <div className="flex items-end gap-2 bg-gray-50 border border-gray-300 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all shadow-sm">
+            <div className="flex items-end gap-1 md:gap-2 bg-gray-50 border border-gray-300 rounded-2xl p-1.5 md:p-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all shadow-sm">
 
-              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-lg pb-1">+</span>
+              <button className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <div className="w-5 h-5 md:w-6 md:h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                  <span className="text-base md:text-lg pb-1">+</span>
                 </div>
               </button>
 
@@ -554,43 +562,41 @@ export default function App() {
                     handleSend('chat');
                   }
                 }}
-                placeholder={lang === 'en' ? "Ask about land records, mutation..." : "जमीन रिकॉर्ड, दाखिल-खारिज के बारे में पूछें..."}
+                placeholder={lang === 'en' ? "Ask Sahayak..." : "सहायक से पूछें..."}
                 className="flex-1 bg-transparent border-none focus:ring-0 text-gray-800 placeholder-gray-400 resize-none max-h-32 py-2 text-sm"
                 rows={1}
               />
 
               {inputText.trim() ? (
-                <>
-                  {/* Draft Feature Button */}
+                <div className="flex items-center gap-1 md:gap-2">
                   <button
                     onClick={() => handleSend('draft')}
-                    className="p-2 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200 transition-all shadow-sm flex items-center gap-1 text-xs font-bold"
-                    title={lang === 'en' ? "Draft Formal Application" : "आवेदन ड्राफ्ट करें"}
+                    className="p-1.5 md:p-2 bg-purple-100 text-purple-600 rounded-xl hover:bg-purple-200 transition-all shadow-sm flex items-center gap-1 text-[10px] md:text-xs font-bold"
                   >
-                    <Sparkles size={16} />
-                    <span className="hidden sm:inline">{lang === 'en' ? "Draft" : "ड्राफ्ट"}</span>
+                    <Sparkles size={14} className="md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">Draft</span>
                   </button>
 
                   <button
                     onClick={() => handleSend('chat')}
-                    className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md transform active:scale-95"
+                    className="p-1.5 md:p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md transform active:scale-95"
                   >
-                    <Send size={18} />
+                    <Send size={16} className="md:w-[18px] md:h-[18px]" />
                   </button>
-                </>
+                </div>
               ) : (
                 <button
                   onClick={() => setIsRecording(!isRecording)}
-                  className={`p-2 rounded-xl transition-all ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                  className={`p-1.5 md:p-2 rounded-xl transition-all ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
                 >
-                  <Mic size={18} />
+                  <Mic size={16} className="md:w-[18px] md:h-[18px]" />
                 </button>
               )}
             </div>
 
-            <div className="text-center mt-2">
-              <p className="text-[10px] text-gray-400">
-                Powered by Sahayak AI • Protected by Bihar Data Privacy Policy
+            <div className="text-center mt-1.5">
+              <p className="text-[9px] md:text-[10px] text-gray-400">
+                Sahayak AI • Bihar Government Digital Assistant
               </p>
             </div>
           </div>
