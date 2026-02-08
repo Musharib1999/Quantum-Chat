@@ -11,8 +11,12 @@ const QaPairSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['text', 'url'],
+        enum: ['text', 'url', 'form'],
         default: 'text',
+    },
+    formConfig: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
     },
     tags: {
         type: [String],

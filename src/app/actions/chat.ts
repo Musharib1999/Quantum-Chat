@@ -11,6 +11,25 @@ import ChatLog from '@/models/ChatLog';
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 
+// --- Types ---
+export interface AIResponse {
+    text: string;
+    sourceUrl?: string;
+    form?: {
+        id: string;
+        title: string;
+        fields: Array<{
+            label: string;
+            type: 'text' | 'number' | 'email' | 'select';
+            options?: string[];
+        }>;
+    };
+    source?: string;
+    error?: string;
+    guardrailsStatus?: string;
+    activeGuardrails?: string[];
+}
+
 // --- Connection Check ---
 export async function checkGeminiConnection() {
     // Keeping function name for compatibility, but checking Groq key
@@ -56,19 +75,26 @@ const queryKnowledgeBase = async (prompt: string) => {
                 return { type: 'context', text: pageText, source: match.answer };
             } catch (e) {
                 console.error("Failed to fetch URL:", match.answer);
-                return null;
+                return { type: 'url_only', sourceUrl: match.answer };
             }
+        }
+        if (match.type === 'form') {
+            return {
+                type: 'form',
+                text: match.answer,
+                form: match.formConfig
+            };
         }
     }
     return null;
 };
 
-export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'chat', lang: 'en' | 'hi' = 'en') {
+export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'chat', lang: 'en' | 'hi' = 'en'): Promise<AIResponse> {
     // Keeping name for frontend compatibility
     await dbConnect(); // Ensure connection early
 
     if (!API_KEY) {
-        return { error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
+        return { text: "", error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
     }
 
     const groq = new Groq({ apiKey: API_KEY });
@@ -87,7 +113,7 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
             guardrailsStatus: 'violated',
             activeGuardrails: ruleTexts
         });
-        return { text: violation };
+        return { text: violation, guardrailsStatus: 'violated', activeGuardrails: ruleTexts };
     }
 
     // 2. KB / RAG Check
@@ -102,7 +128,35 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
             guardrailsStatus: 'passed',
             activeGuardrails: ruleTexts
         });
-        return { text };
+        return { text, source: 'kb_direct', guardrailsStatus: 'passed', activeGuardrails: ruleTexts };
+    }
+
+    if (kbResult?.type === 'form') {
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: kbResult.text,
+            source: 'kb_form',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        });
+        return {
+            text: kbResult.text,
+            form: kbResult.form,
+            source: 'kb_form',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        };
+    }
+
+    if (kbResult?.type === 'url_only') {
+        const text = "I found an official portal that might help you.";
+        return {
+            text,
+            sourceUrl: kbResult.sourceUrl,
+            source: 'kb_url',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        };
     }
 
     // 3. Main LLM Logic
@@ -140,7 +194,13 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
             activeGuardrails: ruleTexts
         });
 
-        return { text };
+        return {
+            text,
+            source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
+            sourceUrl: kbResult?.type === 'context' ? kbResult.source : undefined,
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        };
     } catch (error: any) {
         console.error("Groq Server Error:", error);
 
@@ -154,6 +214,6 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
             activeGuardrails: ruleTexts
         });
 
-        return { error: errorMsg };
+        return { text: "", error: errorMsg };
     }
 }

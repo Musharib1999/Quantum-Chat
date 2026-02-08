@@ -22,7 +22,8 @@ export default function AdminDashboard() {
     const [qaPairs, setQaPairs] = useState<QaPair[]>([]);
     const [newQ, setNewQ] = useState("");
     const [newA, setNewA] = useState("");
-    const [newType, setNewType] = useState<'text' | 'url'>('text');
+    const [newType, setNewType] = useState<'text' | 'url' | 'form'>('text');
+    const [newFormConfig, setNewFormConfig] = useState<string>('{\n "title": "Grievance Form",\n "fields": [\n  {"label": "Name", "type": "text"},\n  {"label": "Email", "type": "email"},\n  {"label": "Issue Type", "type": "select", "options": ["Water Supply", "Road Connection", "Street Light"]}\n ]\n}');
 
     // Guardrails State
     const [guardrails, setGuardrails] = useState<Guardrail[]>([]);
@@ -40,11 +41,21 @@ export default function AdminDashboard() {
 
     const handleAddQa = async () => {
         if (!newQ || !newA) return;
+        let config = null;
+        if (newType === 'form') {
+            try {
+                config = JSON.parse(newFormConfig);
+            } catch (e) {
+                alert("Invalid JSON in Form Config");
+                return;
+            }
+        }
         const newPair: QaPair = {
             id: Date.now().toString(),
             question: newQ,
             answer: newA,
             type: newType,
+            formConfig: config,
             tags: []
         };
         await addQaPair(newPair);
@@ -161,19 +172,32 @@ export default function AdminDashboard() {
                                         <select
                                             className="p-3 border border-gray-300 rounded-xl bg-white outline-none"
                                             value={newType}
-                                            onChange={(e) => setNewType(e.target.value as 'text' | 'url')}
+                                            onChange={(e) => setNewType(e.target.value as 'text' | 'url' | 'form')}
                                         >
                                             <option value="text">Direct Answer</option>
                                             <option value="url">URL Source</option>
+                                            <option value="form">Smart Form</option>
                                         </select>
                                         <input
                                             className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder={newType === 'text' ? "Assistant Answer..." : "https://example.com/info-page"}
+                                            placeholder={newType === 'text' ? "Assistant Answer..." : newType === 'url' ? "https://example.com/info-page" : "Help text for the form..."}
                                             value={newA}
                                             onChange={e => setNewA(e.target.value)}
                                         />
                                     </div>
                                 </div>
+
+                                {newType === 'form' && (
+                                    <div className="mt-4">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Form Settings (JSON Configuration)</label>
+                                        <textarea
+                                            className="w-full p-4 border border-gray-300 rounded-xl font-mono text-xs bg-slate-900 text-green-400 h-40 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                                            value={newFormConfig}
+                                            onChange={e => setNewFormConfig(e.target.value)}
+                                        />
+                                        <p className="text-[10px] text-gray-400 italic mt-1 font-medium">Define your form fields using the JSON structure above.</p>
+                                    </div>
+                                )}
                                 <div className="mt-4 text-right">
                                     <button
                                         onClick={handleAddQa}

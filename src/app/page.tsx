@@ -21,6 +21,65 @@ const HINDI_SUGGESTIONS = [
   "PRI सदस्य विवरण"
 ];
 
+const SmartForm = ({ config }: { config: any }) => {
+  const [formData, setFormData] = React.useState<Record<string, string>>({});
+  const [isSubmitted, setIsSubmitted] = React.useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+  };
+
+  if (isSubmitted) {
+    return (
+      <div className="mt-3 bg-green-50 border border-green-200 rounded-2xl p-6 text-center shadow-inner">
+        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <Sparkles className="text-green-600" size={24} />
+        </div>
+        <h4 className="text-green-800 font-bold mb-1">Application Submitted!</h4>
+        <p className="text-[11px] text-green-600">Your request has been received. Reference ID: PRD-{Math.floor(Math.random() * 89999 + 10000)}</p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-3 bg-white rounded-2xl p-4 border border-gray-200 shadow-sm w-full space-y-3">
+      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100 text-blue-700">
+        <FileText size={18} />
+        <span className="font-bold text-sm">{config.title || "Official Form"}</span>
+      </div>
+
+      {config.fields?.map((field: any, idx: number) => (
+        <div key={idx} className="space-y-1">
+          <label className="text-xs text-gray-500 font-medium pl-1">{field.label}</label>
+          {field.type === 'select' ? (
+            <select
+              required
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+              onChange={e => setFormData(prev => ({ ...prev, [field.label]: e.target.value }))}
+            >
+              <option value="">Select Option</option>
+              {field.options?.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+          ) : (
+            <input
+              required
+              type={field.type || 'text'}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              placeholder={`Enter ${field.label}...`}
+              onChange={e => setFormData(prev => ({ ...prev, [field.label]: e.target.value }))}
+            />
+          )}
+        </div>
+      ))}
+
+      <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-md active:scale-[0.98] mt-2">
+        Submit Request
+      </button>
+    </form>
+  );
+};
+
 // --- Mock Backend Responses for "Database" Lookups ---
 const MOCK_DB_RESPONSES: Record<string, { type: string, data: any }> = {
   mutation: {
@@ -53,6 +112,8 @@ interface Message {
   timestamp: string;
   type?: string;
   data?: any;
+  sourceUrl?: string; // NEW
+  form?: any;       // NEW
 }
 
 export default function App() {
@@ -88,10 +149,7 @@ export default function App() {
   // --- GEMINI API INTEGRATION (Server Action) ---
   const callGemini = async (prompt: string, type: 'chat' | 'draft' = 'chat') => {
     const response = await chatWithGemini(prompt, type, lang);
-    if (response.error) {
-      return lang === 'hi' ? "क्षमा करें, अभी सेवा उपलब्ध नहीं है।" : "Sorry, I am currently facing connectivity issues.";
-    }
-    return response.text || "No response.";
+    return response;
   };
 
   const handleSend = async (mode: 'chat' | 'draft' = 'chat') => {
@@ -145,9 +203,11 @@ export default function App() {
 
     const botResponse: Message = {
       id: messages.length + 2,
-      text: llmResponse,
+      text: llmResponse.error ? (lang === 'hi' ? "क्षमा करें, अभी सेवा उपलब्ध नहीं है।" : "Sorry, I am currently facing connectivity issues.") : llmResponse.text,
       sender: 'bot',
-      type: 'text', // Simple text from LLM
+      type: llmResponse.source || 'text',
+      sourceUrl: llmResponse.sourceUrl,
+      form: llmResponse.form,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -353,6 +413,34 @@ export default function App() {
                           </div>
                         </div>
                       </div>
+                    )}
+
+                    {/* NEW: URL/Link Card */}
+                    {(msg.sourceUrl || msg.type === 'kb_url') && (
+                      <div className="mt-3 bg-white/40 backdrop-blur-md rounded-2xl p-4 border border-white/50 shadow-sm overflow-hidden w-full group">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-blue-600 p-2 rounded-xl text-white shadow-md">
+                            <Globe size={20} />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-bold text-gray-800 mb-1">Official Resource Found</h4>
+                            <p className="text-xs text-gray-500 mb-3 truncate max-w-[200px]">{msg.sourceUrl}</p>
+                            <a
+                              href={msg.sourceUrl}
+                              target="_blank"
+                              className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95"
+                            >
+                              Visit Official Portal
+                              <ChevronRight size={14} />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* NEW: Smart Form Box */}
+                    {msg.form && (
+                      <SmartForm config={msg.form} />
                     )}
 
                     {/* Timestamp */}

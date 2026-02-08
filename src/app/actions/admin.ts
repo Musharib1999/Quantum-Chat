@@ -10,7 +10,8 @@ export type QaPairType = {
     id: string;
     question: string;
     answer: string;
-    type: 'text' | 'url';
+    type: 'text' | 'url' | 'form';
+    formConfig?: any;
     tags: string[];
 };
 
@@ -40,6 +41,7 @@ export async function getQaPairs() {
         question: p.question,
         answer: p.answer,
         type: p.type || 'text',
+        formConfig: p.formConfig,
         tags: p.tags || []
     }));
 }
