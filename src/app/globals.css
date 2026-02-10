@@ -1,42 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  /* Quantum Dark Theme - Futuristic Deep Space */
-  --background: #020617;
-  /* Deepest Navy */
-  --foreground: #f8fafc;
-  /* Slate White */
+  /* Obsidian & Steel - Premium Monochromatic Theme */
+  --background: #000000;
+  /* Absolute Black */
+  --foreground: #f4f4f5;
+  /* Zinc 100 */
 
-  --card: rgba(15, 23, 42, 0.6);
-  /* Semi-transparent Slate 900 */
-  --card-foreground: #f8fafc;
+  --card: rgba(24, 24, 27, 0.8);
+  /* Zinc 900 semi-transparent */
+  --card-foreground: #f4f4f5;
 
-  --popover: rgba(15, 23, 42, 0.9);
-  --popover-foreground: #f8fafc;
+  --popover: rgba(18, 18, 18, 0.95);
+  --popover-foreground: #f4f4f5;
 
-  --primary: #22d3ee;
-  /* Bright Cyan */
-  --primary-foreground: #020617;
+  --primary: #ffffff;
+  /* Pure White for contrast */
+  --primary-foreground: #000000;
 
-  --secondary: #1e1b4b;
-  /* Indigo 950 */
-  --secondary-foreground: #e2e8f0;
+  --secondary: #27272a;
+  /* Zinc 800 */
+  --secondary-foreground: #e4e4e7;
+  /* Zinc 200 */
 
-  --muted: rgba(30, 41, 59, 0.5);
-  --muted-foreground: #94a3b8;
+  --muted: rgba(39, 39, 42, 0.5);
+  --muted-foreground: #a1a1aa;
+  /* Zinc 400 */
 
-  --accent: rgba(34, 211, 238, 0.15);
-  --accent-foreground: #22d3ee;
+  --accent: rgba(255, 255, 255, 0.1);
+  --accent-foreground: #ffffff;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: rgba(30, 64, 175, 0.4);
-  /* Blue 800 semi-transparent */
-  --input: rgba(15, 23, 42, 0.6);
-  --ring: rgba(34, 211, 238, 0.5);
+  --border: rgba(255, 255, 255, 0.1);
+  /* Subtle white border */
+  --input: rgba(24, 24, 27, 0.8);
+  --ring: rgba(255, 255, 255, 0.3);
 
-  --radius: 1rem;
+  --radius: 0.75rem;
+  /* Slightly tighter radius for professional feel */
 }
 
 @theme inline {
@@ -66,12 +69,12 @@
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --shadow-warm: 0 10px 40px -10px rgba(6, 182, 212, 0.1), 0 0 20px rgba(0, 0, 0, 0.5);
-  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --shadow-sidebar: 20px 0 40px -10px rgba(0, 0, 0, 0.4);
-  /* Deep shadow for sidebar depth */
-  --shadow-button: 0 10px 20px -5px rgba(34, 211, 238, 0.3);
-  /* glow shadow for cyan buttons */
+  --shadow-warm: 0 10px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.01);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  --shadow-sidebar: 1px 0 0 0 rgba(255, 255, 255, 0.1);
+  /* Crisp border instead of heavy shadow */
+  /* Professional clean look */
+  --shadow-button: 0 4px 14px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Ken Burns Effect */
@@ -86,11 +89,11 @@
 }
 
 .animate-ken-burns {
-  animation: ken-burns 20s infinite alternate linear;
+  animation: ken-burns 30s infinite alternate ease-in-out;
 }
 
 body {
-  background: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%);
+  background: radial-gradient(circle at 50% 0%, #18181b 0%, #000000 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -113,7 +116,7 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #22d3ee 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

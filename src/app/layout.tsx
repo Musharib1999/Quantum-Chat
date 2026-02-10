@@ -1,9 +1,10 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Quantum-Chat - Futuristic AI Assistant",
-  description: "AI-powered Conversations for the Future",
+  title: "Quantum Guru Chat",
+  description: "Turning Quantum Complexity into Clear Intelligence",
 };
 
 export default function RootLayout({
