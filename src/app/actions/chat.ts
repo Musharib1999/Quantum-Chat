@@ -89,7 +89,7 @@ const queryKnowledgeBase = async (prompt: string) => {
     return null;
 };
 
-export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'chat', lang: 'en' | 'hi' = 'en'): Promise<AIResponse> {
+export async function chatWithGroq(prompt: string, type: 'chat' | 'draft' = 'chat', lang: 'en' | 'hi' = 'en'): Promise<AIResponse> {
     // Keeping name for frontend compatibility
     await dbConnect(); // Ensure connection early
 

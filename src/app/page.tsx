@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { chatWithGemini, checkGeminiConnection } from './actions/chat';
+import { chatWithGroq, checkGeminiConnection } from './actions/chat';
 import { getQaPairs } from './actions/admin';
-import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2, AlertTriangle, TrendingUp, ArrowUp } from 'lucide-react';
 import QuantumBackground from '../components/QuantumBackground';
 
 // --- Assets & Constants ---
@@ -40,7 +40,7 @@ const SmartForm = ({ config }: { config: any }) => {
           <Sparkles className="text-green-600" size={24} />
         </div>
         <h4 className="text-green-800 font-bold mb-1">Application Submitted!</h4>
-        <p className="text-[11px] text-green-600">Your request has been received. Reference ID: PRD-{Math.floor(Math.random() * 89999 + 10000)}</p>
+        <p className="text-[11px] text-green-600">Your request has been received. Reference ID: QG-{Math.floor(Math.random() * 89999 + 10000)}</p>
       </div>
     );
   }
@@ -120,14 +120,7 @@ interface Message {
 }
 
 export default function App() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: "System Online. I am Quantum Guru AI, your intelligence interface. How can I assist with your computations today?",
-      sender: 'bot',
-      timestamp: "System Start"
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [lang, setLang] = useState<'en' | 'hi'>('en'); // 'en' or 'hi'
@@ -159,7 +152,7 @@ export default function App() {
 
   // --- GEMINI API INTEGRATION (Server Action) ---
   const callGemini = async (prompt: string, type: 'chat' | 'draft' = 'chat') => {
-    const response = await chatWithGemini(prompt, type, lang);
+    const response = await chatWithGroq(prompt, type, lang);
     return response;
   };
 
@@ -344,10 +337,8 @@ export default function App() {
       {/* --- Main Chat Area --- */}
       <div className="flex-1 flex flex-col h-full relative min-w-0 w-full overflow-hidden z-10 bg-transparent">
 
-
-
-        {/* Messages List */}
-        <main className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 bg-transparent min-w-0 w-full overflow-x-hidden">
+        {/* Messages List - Transitions smoothy */}
+        <main className={`overflow-y-auto bg-transparent min-w-0 w-full overflow-x-hidden transition-all duration-700 ease-in-out ${messages.length === 0 ? 'flex-[0.001] opacity-0 py-0' : 'flex-1 p-3 md:p-4 lg:p-6 opacity-100'}`}>
           <div className="w-full max-w-3xl mx-auto space-y-6">
 
 
@@ -357,16 +348,21 @@ export default function App() {
                 <div className={`flex max-w-[95%] md:max-w-[85%] lg:max-w-[80%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
 
                   {/* Avatar */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.sender === 'user' ? 'bg-blue-600' : 'bg-white border border-gray-200'}`}>
-                    {msg.sender === 'user' ? <User size={14} className="text-white" /> : <img src={GOV_LOGO_URL} className="w-5 h-5" alt="Bot" />}
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${msg.sender === 'user'
+                    ? 'bg-zinc-800 border border-white/10 shadow-lg shadow-black/20'
+                    : 'bg-white/5 border border-white/10 shadow-lg shadow-white/5'
+                    }`}>
+                    {msg.sender === 'user' ? <User size={14} className="text-white" /> : (
+                      <span className="text-[10px] font-bold text-white">QG</span>
+                    )}
                   </div>
 
                   {/* Bubble */}
                   <div className={`rounded-2xl px-5 py-4 shadow-sm text-base leading-relaxed whitespace-pre-wrap ${msg.sender === 'user'
-                    ? 'bg-white text-black rounded-br-none shadow-[0_0_20px_rgba(255,255,255,0.1)]'
+                    ? 'bg-zinc-800/80 backdrop-blur-md text-zinc-100 border border-white/10 rounded-br-none shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
                     : msg.sender === 'system'
-                      ? 'bg-secondary text-secondary-foreground text-sm text-center w-full rounded-lg'
-                      : 'bg-card text-foreground border border-border rounded-bl-none shadow-sm'
+                      ? 'bg-zinc-900/50 text-zinc-400 text-sm text-center w-full rounded-lg border border-white/5'
+                      : 'bg-white/5 backdrop-blur-md text-zinc-200 border border-white/10 rounded-bl-none shadow-sm'
                     }`}>
                     {msg.text}
 
@@ -448,34 +444,27 @@ export default function App() {
 
                     {/* NEW: URL/Link Card */}
                     {(msg.sourceUrl || msg.type === 'kb_url') && (
-                      <div className="mt-3 bg-white/40 backdrop-blur-md rounded-2xl p-4 border border-white/50 shadow-sm overflow-hidden w-full group">
-                        <div className="flex items-start gap-3">
-                          <div className="bg-blue-600 p-2 rounded-xl text-white shadow-md">
-                            <Globe size={20} />
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <a
+                          href={msg.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors bg-blue-50/50 p-2 rounded-lg group"
+                        >
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-105 transition-transform">
+                            <Globe size={12} />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-bold text-gray-800 mb-1">Official Resource Found</h4>
-                            <p className="text-xs text-gray-500 mb-3 truncate max-w-[200px]">{msg.sourceUrl}</p>
-                            <a
-                              href={msg.sourceUrl}
-                              target="_blank"
-                              className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95"
-                            >
-                              Visit Official Portal
-                              <ChevronRight size={14} />
-                            </a>
-                          </div>
-                        </div>
+                          <span className="text-xs font-medium truncate flex-1">{msg.sourceUrl}</span>
+                          <ChevronRight size={14} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                        </a>
                       </div>
                     )}
 
                     {/* NEW: Smart Form Box */}
-                    {msg.form && (
-                      <SmartForm config={msg.form} />
-                    )}
+                    {msg.type === 'form' && <SmartForm config={msg.data} />}
 
                     {/* Timestamp */}
-                    <div className={`text-[10px] mt-1 ${msg.sender === 'user' ? 'text-blue-100 text-right' : 'text-gray-400'}`}>
+                    <div className={`text-[10px] mt-1 ${msg.sender === 'user' ? 'text-zinc-500 text-right' : 'text-zinc-600'}`}>
                       {msg.timestamp}
                     </div>
                   </div>
@@ -485,9 +474,13 @@ export default function App() {
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-card border border-border rounded-2xl rounded-bl-none px-4 py-3 shadow-sm flex items-center gap-2">
-                  <Loader2 size={16} className="text-white animate-spin" />
-                  <span className="text-xs text-muted-foreground italic">Processing...</span>
+                <div className="bg-card border border-border text-foreground px-4 py-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce delay-150"></div>
+                    <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce delay-300"></div>
+                  </div>
+                  <span className="text-xs text-zinc-500 uppercase font-medium tracking-wide">Processing</span>
                 </div>
               </div>
             )}
@@ -498,66 +491,67 @@ export default function App() {
 
 
 
-        {/* Input Area */}
-        <footer className="bg-card p-2 md:p-4 border-t border-border shrink-0 mt-auto w-full">
-          <div className="w-full max-w-3xl mx-auto relative px-1">
-            <div className="flex items-end gap-1 md:gap-2 bg-background/50 border border-border rounded-2xl p-1.5 md:p-2 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent transition-all shadow-inner">
+        {/* --- Input Area Container --- */}
+        <div className={`transition-all duration-700 ease-in-out flex flex-col items-center w-full px-4 z-20 ${messages.length === 0
+          ? 'flex-1 justify-center'
+          : 'flex-none justify-end pb-6 pt-4'
+          }`}>
 
-              <button className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <div className="w-5 h-5 md:w-6 md:h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-base md:text-lg pb-1">+</span>
-                </div>
+          {/* Initial Greeting - Only visible when no messages */}
+          <div className={`transition-all duration-500 text-center space-y-2 mb-8 ${messages.length === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10 hidden'
+            }`}>
+            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md shadow-[0_0_30px_rgba(255,255,255,0.05)] border border-white/5">
+              <span className="text-2xl font-bold text-white">QG</span>
+            </div>
+            <p className="text-lg md:text-xl text-zinc-400 font-light max-w-md mx-auto leading-relaxed">
+              System Online. I am <span className="text-white font-medium">Quantum Guru AI</span>, your intelligence interface.
+              How can I assist with your computations today?
+            </p>
+          </div>
+
+          <div className="w-full max-w-3xl relative">
+            <div className={`relative flex items-center bg-card/80 backdrop-blur-xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.2)] transition-all duration-300 group ${messages.length === 0 ? 'rounded-2xl p-2' : 'rounded-full p-1.5'
+              }`}>
+              <button className={`p-3 text-zinc-400 hover:text-white transition-colors rounded-full hover:bg-white/5 ${messages.length === 0 ? '' : 'hidden md:block'
+                }`}>
+                <Sparkles size={20} />
               </button>
 
-              <textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => {
+              <input
+                type="text"
+                value={inputText} // Assuming inputText is the state variable for the input
+                onChange={(e) => setInputText(e.target.value)} // Assuming setInputText is the setter
+                onKeyDown={(e) => { // Assuming handleKeyPress is replaced by this inline logic
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    handleSend('chat');
+                    handleSend('chat'); // Assuming handleSend is the function to send messages
                   }
                 }}
-                placeholder={lang === 'en' ? "Ask Quantum..." : "क्वांटम से पूछें..."}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-foreground placeholder-muted-foreground resize-none max-h-32 py-2 text-base"
-                rows={1}
+                placeholder={messages.length === 0 ? "Ask Quantum Guru..." : "Type your query..."}
+                className="flex-1 bg-transparent text-foreground placeholder:text-zinc-600 px-4 py-3 outline-none text-base md:text-lg font-light tracking-wide w-full"
               />
 
-              {inputText.trim() ? (
-                <div className="flex items-center gap-1 md:gap-2">
-                  <button
-                    onClick={() => handleSend('draft')}
-                    className="p-1.5 md:p-2 bg-zinc-800 text-zinc-400 rounded-lg hover:bg-zinc-700 transition-all border border-white/5 flex items-center gap-1 text-[10px] md:text-xs font-bold"
-                  >
-                    <Sparkles size={14} className="md:w-4 md:h-4 text-white" />
-                    <span className="hidden sm:inline">ANALYZE</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSend('chat')}
-                    className="p-1.5 md:p-2 bg-white text-black rounded-lg hover:bg-zinc-200 transition-all shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95"
-                  >
-                    <Send size={16} className="md:w-[18px] md:h-[18px]" />
-                  </button>
-                </div>
-              ) : (
+              <div className="flex items-center gap-1 pr-2">
                 <button
-                  onClick={() => setIsRecording(!isRecording)}
-                  className={`p-1.5 md:p-2 rounded-xl transition-all ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                  onClick={() => handleSend('chat')} // Assuming handleSend is the function to send messages
+                  disabled={!inputText.trim() || isLoading} // Assuming inputText and isLoading are state variables
+                  className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${inputText.trim() // Assuming inputText is the state variable for the input
+                    ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95'
+                    : 'bg-zinc-800 text-zinc-600'
+                    }`}
                 >
-                  <Mic size={16} className="md:w-[18px] md:h-[18px]" />
+                  <ArrowUp size={18} className="md:w-[20px] md:h-[20px]" />
                 </button>
-              )}
+              </div>
             </div>
 
-            <div className="text-center mt-1.5">
-              <p className="text-[9px] md:text-[10px] text-gray-400">
+            <div className="text-center mt-3">
+              <p className="text-[10px] md:text-[11px] text-zinc-500 font-medium tracking-wide">
                 Quantum Guru • Turning Quantum Complexity into Clear Intelligence
               </p>
             </div>
           </div>
-        </footer>
-
+        </div>
       </div>
     </div>
   );
