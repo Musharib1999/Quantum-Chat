@@ -7,7 +7,8 @@ import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, Chevron
 import QuantumBackground from '../components/QuantumBackground';
 
 // --- Assets & Constants ---
-const GOV_LOGO_URL = "/logo.png?v=5";
+// --- Assets & Constants ---
+const GOV_LOGO_URL = "/logo.png?v=7";
 
 const SUGGESTIONS = [
   "Check Application Status",
@@ -285,7 +286,9 @@ export default function App() {
       <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static flex flex-col shadow-2xl md:shadow-none`}>
         <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center justify-center w-full py-4">
-            <img src={GOV_LOGO_URL} alt="Quantum Guru Chat" className="h-16 w-auto object-contain" />
+            <h1 className="font-bold text-3xl md:text-4xl tracking-tight text-gradient py-2 text-center leading-tight">
+              Quantum Guru
+            </h1>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:bg-gray-100 p-2 rounded-lg">
             <X size={20} />
