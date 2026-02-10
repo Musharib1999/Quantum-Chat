@@ -279,6 +279,14 @@ export default function App() {
         </div>
       )}
 
+      {/* Mobile Menu Trigger (Floating) */}
+      <button
+        onClick={() => setIsSidebarOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-zinc-900/50 backdrop-blur-md border border-white/10 rounded-lg text-white shadow-lg active:scale-95 transition-all"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div
