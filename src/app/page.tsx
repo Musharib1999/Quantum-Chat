@@ -284,9 +284,9 @@ export default function App() {
 
       {/* --- Sidebar (Mobile Responsive) --- */}
       <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static flex flex-col shadow-2xl md:shadow-none`}>
-        <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between">
+        <div className="p-4 md:p-6 pb-[25px] border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center justify-center w-full py-4">
-            <h1 className="font-bold text-3xl md:text-4xl tracking-tight text-gradient py-2 text-center leading-tight">
+            <h1 className="font-bold text-xl md:text-2xl tracking-wide text-gradient py-2 text-center leading-tight">
               Quantum Guru
             </h1>
           </div>
@@ -296,7 +296,7 @@ export default function App() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">CORE SYSTEMS</div>
+
           <div className="mt-6 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">Services</div>
 
           <SidebarGroup
