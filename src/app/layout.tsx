@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gramin Sahayak - Rural Grievance Reporting",
-  description: "Voice-first grievance reporting for rural India",
+  title: "Quantum-Chat - Futuristic AI Assistant",
+  description: "AI-powered Conversations for the Future",
 };
 
 export default function RootLayout({

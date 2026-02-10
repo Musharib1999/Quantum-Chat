@@ -160,10 +160,10 @@ export async function chatWithGemini(prompt: string, type: 'chat' | 'draft' = 'c
     }
 
     // 3. Main LLM Logic
-    let systemInstructions = `You are Sahayak, an AI assistant for the Bihar Government. Be helpful, professional, and answer in a way that citizens can understand.
+    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant for Quantum Systems. Be helpful, professional, and efficient.
     
     CRITICAL SAFETY RULES:
-    ${ruleTexts.length > 0 ? "You MUST NOT discuss or provide information about: " + ruleTexts.join(", ") : "Follow general government safety guidelines."}
+    ${ruleTexts.length > 0 ? "You MUST NOT discuss or provide information about: " + ruleTexts.join(", ") : "Follow general safety guidelines."}
     If a user asks about these topics, politely decline to answer.`;
 
     let finalPrompt = prompt;

@@ -6,13 +6,13 @@ import { getQaPairs } from './actions/admin';
 import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 
 // --- Assets & Constants ---
-const GOV_LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Seal_of_Bihar.svg/1200px-Seal_of_Bihar.svg.png";
+const GOV_LOGO_URL = "https://img.icons8.com/parakeet/512/FFFFFF/quantum-computing.png";
 
 const SUGGESTIONS = [
   "Check Application Status",
   "Mukhyamantri Nischay Yojna",
   "Jan Shikayat",
-  "PRIs Members Details"
+  "Quantum Computing Status",
 ];
 
 const HINDI_SUGGESTIONS = [
@@ -261,7 +261,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-gray-50 font-sans overflow-hidden">
+    <div className="flex h-screen w-full bg-background font-sans overflow-hidden text-foreground">
       {/* Connection Warning Banner */}
       {!isConnected && (
         <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[10px] md:text-xs font-bold px-4 py-2 text-center z-[60] flex items-center justify-center gap-2">
@@ -279,13 +279,13 @@ export default function App() {
       )}
 
       {/* --- Sidebar (Mobile Responsive) --- */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static flex flex-col shadow-2xl md:shadow-none`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static flex flex-col shadow-2xl md:shadow-none`}>
         <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <img src={GOV_LOGO_URL} alt="Bihar Emblem" className="h-10 w-10 md:h-12 md:w-12 object-contain" />
             <div>
-              <h1 className="font-bold text-gray-800 text-base md:text-lg leading-tight">Sahayak AI</h1>
-              <p className="text-[10px] md:text-xs text-gray-500">Govt. of Bihar</p>
+              <h1 className="font-bold text-foreground text-base md:text-lg leading-tight text-gradient">Quantum Chat</h1>
+              <p className="text-[10px] md:text-xs text-muted-foreground text-glow-cyan">Quantum Intelligence</p>
             </div>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:bg-gray-100 p-2 rounded-lg">
@@ -327,11 +327,11 @@ export default function App() {
           <SidebarItem icon={<Phone size={18} />} label={lang === 'en' ? "Emergency" : "आपातकालीन"} />
         </nav>
 
-        <div className="p-4 border-t border-gray-100 bg-gray-50">
-          <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg border border-green-100">
+        <div className="p-4 border-t border-border bg-card/20">
+          <div className="flex items-center justify-between bg-secondary/50 p-3 rounded-lg border border-border">
             <div className="flex flex-col">
-              <span className="text-xs text-green-800 font-medium">Gram Swaraj Abhiyan</span>
-              <span className="text-[10px] text-green-600">Active until Sep 2026</span>
+              <span className="text-xs text-secondary-foreground font-medium">Quantum Initiative</span>
+              <span className="text-[10px] text-muted-foreground">Active until 2077</span>
             </div>
             <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
           </div>
@@ -342,15 +342,15 @@ export default function App() {
       <div className="flex-1 flex flex-col h-full relative min-w-0 w-full overflow-hidden">
 
         {/* Header */}
-        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm z-10 shrink-0 w-full overflow-hidden">
+        <header className="bg-card/50 backdrop-blur-md h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 shadow-sm z-10 shrink-0 w-full overflow-hidden">
           <div className="flex items-center min-w-0">
             <button onClick={() => setIsSidebarOpen(true)} className="mr-3 md:hidden text-gray-600 hover:bg-gray-100 p-2 rounded-full flex-shrink-0">
               <Menu size={20} />
             </button>
             <div className="flex flex-col min-w-0">
-              <span className="font-semibold text-gray-800 flex items-center gap-1.5 text-sm md:text-base whitespace-nowrap overflow-hidden">
-                <span className="truncate">{lang === 'en' ? "Panchayati Raj Dept" : "पंचायती राज विभाग"}</span>
-                <span className="bg-blue-100 text-blue-800 text-[9px] md:text-[10px] px-1.5 md:px-2 py-0.5 rounded-full uppercase font-bold tracking-wide flex-shrink-0">Beta</span>
+              <span className="font-semibold text-foreground flex items-center gap-1.5 text-sm md:text-base whitespace-nowrap overflow-hidden">
+                <span className="truncate">{lang === 'en' ? "Quantum Systems" : "क्वांटम सिस्टम्स"}</span>
+                <span className="bg-primary/20 text-primary text-[9px] md:text-[10px] px-1.5 md:px-2 py-0.5 rounded-full uppercase font-bold tracking-wide flex-shrink-0 animate-pulse">Core</span>
               </span>
               <span className="text-[10px] text-green-600 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -370,15 +370,15 @@ export default function App() {
         </header>
 
         {/* Messages List */}
-        <main className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 bg-[#f3f4f6] min-w-0 w-full overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 bg-background min-w-0 w-full overflow-x-hidden">
           <div className="w-full max-w-3xl mx-auto space-y-6">
 
             {/* Disclaimer */}
             <div className="flex justify-center w-full">
               <div className="w-full max-w-md bg-yellow-50 border border-yellow-100 text-yellow-800 text-[11px] md:text-xs px-4 py-2 rounded-lg text-center shadow-sm capitalize">
                 {lang === 'en'
-                  ? "Sahayak AI is an AI assistant. Verify official records at state.bihar.gov.in/prd."
-                  : "सहायक एआई एक एआई असिस्टेंट है। कृपया state.bihar.gov.in/prd पर आधिकारिक रिकॉर्ड देखें।"
+                  ? "Quantum AI is an AI assistant. Verify official records at quantum-chat.io."
+                  : "क्वांटम एआई एक एआई असिस्टेंट है। कृपया quantum-chat.io पर आधिकारिक रिकॉर्ड देखें।"
                 }
               </div>
             </div>
@@ -394,10 +394,10 @@ export default function App() {
 
                   {/* Bubble */}
                   <div className={`rounded-2xl px-5 py-3 shadow-sm text-sm leading-relaxed whitespace-pre-wrap ${msg.sender === 'user'
-                    ? 'bg-blue-600 text-white rounded-br-none'
+                    ? 'bg-primary text-primary-foreground rounded-br-none shadow-lg shadow-primary/20'
                     : msg.sender === 'system'
-                      ? 'bg-gray-200 text-gray-600 text-xs text-center w-full rounded-lg'
-                      : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
+                      ? 'bg-secondary text-secondary-foreground text-xs text-center w-full rounded-lg'
+                      : 'bg-card text-foreground border border-border rounded-bl-none shadow-sm'
                     }`}>
                     {msg.text}
 
@@ -516,9 +516,9 @@ export default function App() {
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm flex items-center gap-2">
-                  <Loader2 size={16} className="text-blue-600 animate-spin" />
-                  <span className="text-xs text-gray-500">Sahayak AI is typing...</span>
+                <div className="bg-card border border-border rounded-2xl rounded-bl-none px-4 py-3 shadow-sm flex items-center gap-2">
+                  <Loader2 size={16} className="text-primary animate-spin" />
+                  <span className="text-xs text-muted-foreground">Quantum AI is calculating...</span>
                 </div>
               </div>
             )}
@@ -534,7 +534,7 @@ export default function App() {
               <button
                 key={idx}
                 onClick={() => setInputText(suggestion)}
-                className="flex-shrink-0 bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full text-[11px] md:text-xs hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all whitespace-nowrap shadow-sm"
+                className="flex-shrink-0 bg-card border border-border text-foreground px-3 py-1.5 rounded-full text-[11px] md:text-xs hover:bg-primary/20 hover:border-primary hover:text-primary transition-all whitespace-nowrap shadow-sm"
               >
                 {suggestion}
               </button>
@@ -543,9 +543,9 @@ export default function App() {
         </div>
 
         {/* Input Area */}
-        <footer className="bg-white p-2 md:p-4 border-t border-gray-200 shrink-0 mt-auto w-full">
+        <footer className="bg-card p-2 md:p-4 border-t border-border shrink-0 mt-auto w-full">
           <div className="w-full max-w-3xl mx-auto relative px-1">
-            <div className="flex items-end gap-1 md:gap-2 bg-gray-50 border border-gray-300 rounded-2xl p-1.5 md:p-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all shadow-sm">
+            <div className="flex items-end gap-1 md:gap-2 bg-background/50 border border-border rounded-2xl p-1.5 md:p-2 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent transition-all shadow-inner">
 
               <button className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 transition-colors">
                 <div className="w-5 h-5 md:w-6 md:h-6 bg-gray-200 rounded-full flex items-center justify-center">
@@ -562,8 +562,8 @@ export default function App() {
                     handleSend('chat');
                   }
                 }}
-                placeholder={lang === 'en' ? "Ask Sahayak..." : "सहायक से पूछें..."}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-gray-800 placeholder-gray-400 resize-none max-h-32 py-2 text-sm"
+                placeholder={lang === 'en' ? "Ask Quantum..." : "क्वांटम से पूछें..."}
+                className="flex-1 bg-transparent border-none focus:ring-0 text-foreground placeholder-muted-foreground resize-none max-h-32 py-2 text-sm"
                 rows={1}
               />
 
@@ -596,7 +596,7 @@ export default function App() {
 
             <div className="text-center mt-1.5">
               <p className="text-[9px] md:text-[10px] text-gray-400">
-                Sahayak AI • Bihar Government Digital Assistant
+                Quantum AI • Quantum Systems Digital Assistant
               </p>
             </div>
           </div>
@@ -611,8 +611,8 @@ export default function App() {
 function SidebarItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
   return (
     <button className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${active
-      ? 'bg-blue-50 text-blue-700 font-medium'
-      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+      ? 'bg-primary/20 text-primary font-medium'
+      : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
       }`}>
       <span className={active ? 'text-blue-600' : 'text-gray-400'}>{icon}</span>
       <span className="text-sm">{label}</span>
@@ -628,7 +628,7 @@ function SidebarGroup({ icon, label, items }: { icon: React.ReactNode, label: st
     <div>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
+        className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-white/5 transition-all"
       >
         <span className="text-gray-400 group-hover:text-blue-600">{icon}</span>
         <span className="text-sm font-medium">{label}</span>
@@ -637,7 +637,7 @@ function SidebarGroup({ icon, label, items }: { icon: React.ReactNode, label: st
       {isOpen && (
         <div className="ml-9 mt-1 space-y-1 border-l border-gray-100">
           {items.map((item, idx) => (
-            <button key={idx} onClick={item.onClick} className="w-full text-left px-4 py-2 text-xs text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-r-md transition-colors">
+            <button key={idx} onClick={item.onClick} className="w-full text-left px-4 py-2 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-r-md transition-colors">
               {item.label}
             </button>
           ))}

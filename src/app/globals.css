@@ -1,40 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  /* Ethereal Warmth Theme - Deep Earth */
-  --background: #e6dfd5;
-  /* Warm Taupe/Stone */
-  --foreground: #3d3028;
-  /* Dark Coffee */
+  /* Quantum Dark Theme - Futuristic Deep Space */
+  --background: #020617;
+  /* Deepest Navy */
+  --foreground: #f8fafc;
+  /* Slate White */
 
-  --card: rgba(255, 254, 250, 0.45);
-  /* More transparent, less white */
-  --card-foreground: #3d3028;
+  --card: rgba(15, 23, 42, 0.6);
+  /* Semi-transparent Slate 900 */
+  --card-foreground: #f8fafc;
 
-  --popover: rgba(255, 254, 250, 0.7);
-  --popover-foreground: #3d3028;
+  --popover: rgba(15, 23, 42, 0.9);
+  --popover-foreground: #f8fafc;
 
-  --primary: #c27a4b;
-  /* Deeper Terra Cotta */
-  --primary-foreground: #ffffff;
+  --primary: #22d3ee;
+  /* Bright Cyan */
+  --primary-foreground: #020617;
 
-  --secondary: #dcd3c5;
-  --secondary-foreground: #3d3028;
+  --secondary: #1e1b4b;
+  /* Indigo 950 */
+  --secondary-foreground: #e2e8f0;
 
-  --muted: rgba(160, 140, 120, 0.3);
-  --muted-foreground: #7a6a5e;
+  --muted: rgba(30, 41, 59, 0.5);
+  --muted-foreground: #94a3b8;
 
-  --accent: rgba(194, 122, 75, 0.15);
-  --accent-foreground: #c27a4b;
+  --accent: rgba(34, 211, 238, 0.15);
+  --accent-foreground: #22d3ee;
 
-  --destructive: #cc5555;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: rgba(160, 140, 120, 0.3);
-  --input: rgba(255, 255, 255, 0.4);
-  --ring: rgba(194, 122, 75, 0.3);
+  --border: rgba(30, 64, 175, 0.4);
+  /* Blue 800 semi-transparent */
+  --input: rgba(15, 23, 42, 0.6);
+  --ring: rgba(34, 211, 238, 0.5);
 
-  --radius: 1.5rem;
+  --radius: 1rem;
 }
 
 @theme inline {
@@ -64,12 +66,12 @@
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --shadow-warm: 0 10px 40px -10px rgba(208, 139, 91, 0.2), 0 0 20px rgba(0, 0, 0, 0.02);
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-  --shadow-sidebar: 20px 0 40px -10px rgba(0, 0, 0, 0.1);
+  --shadow-warm: 0 10px 40px -10px rgba(6, 182, 212, 0.1), 0 0 20px rgba(0, 0, 0, 0.5);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sidebar: 20px 0 40px -10px rgba(0, 0, 0, 0.4);
   /* Deep shadow for sidebar depth */
-  --shadow-button: 0 10px 20px -5px rgba(208, 139, 91, 0.4);
-  /* Glow shadow for primary buttons */
+  --shadow-button: 0 10px 20px -5px rgba(34, 211, 238, 0.3);
+  /* glow shadow for cyan buttons */
 }
 
 /* Ken Burns Effect */
@@ -88,7 +90,7 @@
 }
 
 body {
-  background: radial-gradient(circle at 50% 0%, #ede6dc 0%, #e6dfd5 100%);
+  background: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -100,18 +102,18 @@ body {
   background: var(--card);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .glass-deep {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #2d241f 0%, #D08B5B 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #22d3ee 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
