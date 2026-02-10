@@ -141,6 +141,7 @@ export default function App() {
   };
 
   const [isConnected, setIsConnected] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     scrollToBottom();
@@ -205,9 +206,19 @@ export default function App() {
     // 2. Fallback to Gemini LLM for General Queries or Drafting
     const llmResponse = await callGemini(inputText, mode);
 
+
+
+    if (llmResponse.error) {
+      setConnectionError(llmResponse.error);
+      setIsConnected(false);
+    } else {
+      setConnectionError(null);
+      setIsConnected(true);
+    }
+
     const botResponse: Message = {
       id: messages.length + 2,
-      text: llmResponse.error ? (lang === 'hi' ? "क्षमा करें, अभी सेवा उपलब्ध नहीं है।" : "Sorry, I am currently facing connectivity issues.") : llmResponse.text,
+      text: llmResponse.error ? (lang === 'hi' ? "क्षमा करें, अभी सेवा उपलब्ध नहीं है।" : "System Offline. Please check connection.") : llmResponse.text,
       sender: 'bot',
       type: llmResponse.source || 'text',
       sourceUrl: llmResponse.sourceUrl,
@@ -260,10 +271,11 @@ export default function App() {
       <QuantumBackground />
       {/* --- Sidebar (Desktop & Mobile) --- */}
       {/* Connection Warning Banner */}
-      {!isConnected && (
-        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[10px] md:text-xs font-bold px-4 py-2 text-center z-[60] flex items-center justify-center gap-2">
-          <AlertTriangle size={12} className="shrink-0" />
-          <span>Warning: GEMINI_API_KEY is missing. AI will not function.</span>
+      {/* Connection Warning Banner */}
+      {(!isConnected || connectionError) && (
+        <div className="fixed top-0 left-0 right-0 bg-red-500/90 backdrop-blur-md text-white text-[10px] md:text-xs font-bold px-4 py-3 text-center z-[60] flex items-center justify-center gap-2 shadow-lg animate-in slide-in-from-top-full duration-500">
+          <AlertTriangle size={14} className="shrink-0 animate-pulse" />
+          <span className="uppercase tracking-wide">{connectionError || "System Warning: Database or AI Model Unreachable"}</span>
         </div>
       )}
 
