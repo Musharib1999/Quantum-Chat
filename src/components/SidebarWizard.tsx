@@ -15,11 +15,12 @@ interface SidebarWizardProps {
 }
 
 const INDUSTRIES = [
-    { id: 'finance', label: 'Finance', icon: '💰' },
-    { id: 'healthcare', label: 'Healthcare', icon: '🏥' },
-    { id: 'cybersecurity', label: 'Cybersecurity', icon: '🛡️' },
-    { id: 'logistics', label: 'Logistics', icon: '🚚' },
-    { id: 'energy', label: 'Energy', icon: '⚡' },
+    { id: 'biochem', label: 'Biochemistry', icon: '🧬' },
+    // { id: 'finance', label: 'Finance', icon: '💰' },
+    // { id: 'healthcare', label: 'Healthcare', icon: '🏥' },
+    // { id: 'cybersecurity', label: 'Cybersecurity', icon: '🛡️' },
+    // { id: 'logistics', label: 'Logistics', icon: '🚚' },
+    // { id: 'energy', label: 'Energy', icon: '⚡' },
 ];
 
 const SERVICES = [
@@ -45,10 +46,10 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
             onClick={() => !isLocked && onSelect(type, item.label)}
             disabled={isLocked}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm border ${isSelected
-                    ? 'bg-primary/10 border-primary text-primary font-medium'
-                    : isLocked
-                        ? 'opacity-40 cursor-not-allowed border-transparent text-muted-foreground'
-                        : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground'
+                ? 'bg-primary/10 border-primary text-primary font-medium'
+                : isLocked
+                    ? 'opacity-40 cursor-not-allowed border-transparent text-muted-foreground'
+                    : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground'
                 }`}
         >
             <span className="text-base">{item.icon}</span>
