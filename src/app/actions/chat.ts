@@ -89,7 +89,12 @@ const queryKnowledgeBase = async (prompt: string) => {
     return null;
 };
 
-export async function chatWithGroq(prompt: string, type: 'chat' | 'draft' = 'chat', lang: 'en' | 'hi' = 'en'): Promise<AIResponse> {
+export async function chatWithGroq(
+    prompt: string,
+    type: 'chat' | 'draft' = 'chat',
+    lang: 'en' | 'hi' = 'en',
+    sessionConfig?: { industry: string | null, service: string | null, hardware: string | null }
+): Promise<AIResponse> {
     // Keeping name for frontend compatibility
     await dbConnect(); // Ensure connection early
 
@@ -160,9 +165,16 @@ export async function chatWithGroq(prompt: string, type: 'chat' | 'draft' = 'cha
     }
 
     // 3. Main LLM Logic
-    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant for Quantum Systems. Be helpful, professional, and efficient.
-    
-    CRITICAL SAFETY RULES:
+    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant for Quantum Systems. Be helpful, professional, and efficient.`;
+
+    if (sessionConfig) {
+        const { industry, service, hardware } = sessionConfig;
+        if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
+        if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;
+        if (hardware) systemInstructions += `\nHARDWARE CONTEXT: The target quantum hardware is ${hardware}. Optimize your responses for this architecture.`;
+    }
+
+    systemInstructions += `\n\nCRITICAL SAFETY RULES:
     ${ruleTexts.length > 0 ? "You MUST NOT discuss or provide information about: " + ruleTexts.join(", ") : "Follow general safety guidelines."}
     If a user asks about these topics, politely decline to answer.`;
 

@@ -161,7 +161,7 @@ export default function App() {
 
   // --- GEMINI API INTEGRATION (Server Action) ---
   const callGemini = async (prompt: string, type: 'chat' | 'draft' = 'chat') => {
-    const response = await chatWithGroq(prompt, type, lang);
+    const response = await chatWithGroq(prompt, type, lang, sessionConfig);
     return response;
   };
 
