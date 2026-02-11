@@ -133,8 +133,8 @@ export default function App() {
 
 
   // -- Session Onboarding State --
-  const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, hardware: string | null }>({ industry: null, service: null, hardware: null });
-  const [sidebarStep, setSidebarStep] = useState<'industry' | 'service' | 'hardware' | 'ready'>('industry');
+  const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null }>({ industry: 'Biochemistry', service: null, problem: null, hardware: null });
+  const [sidebarStep, setSidebarStep] = useState<'industry' | 'service' | 'problem' | 'hardware' | 'ready'>('service');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -276,7 +276,7 @@ export default function App() {
   };
 
   // --- Session Wizard Handlers ---
-  const handleWizardSelection = (type: 'industry' | 'service' | 'hardware', value: string) => {
+  const handleWizardSelection = (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => {
     setSessionConfig(prev => ({ ...prev, [type]: value }));
 
     // Add User Selection Message
@@ -288,9 +288,14 @@ export default function App() {
     };
 
     // Add System Confirmation
+    let sysText = `Context Updated: ${value}`;
+    if (type === 'service') sysText += ' module loaded. Identifying relevant problems...';
+    if (type === 'problem') sysText += ' selected. Configuring solver parameters...';
+    if (type === 'hardware') sysText += ' Processor Selected. System Initialized.';
+
     const sysMsg: Message = {
       id: Date.now() + 1,
-      text: `Context Updated: ${value} ${type === 'hardware' ? 'Processor Selected. System Initialized.' : 'module loaded.'}`,
+      text: sysText,
       sender: 'system',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -299,7 +304,8 @@ export default function App() {
 
     // Advance Step
     if (type === 'industry') setSidebarStep('service');
-    if (type === 'service') setSidebarStep('hardware');
+    if (type === 'service') setSidebarStep('problem');
+    if (type === 'problem') setSidebarStep('hardware');
     if (type === 'hardware') setSidebarStep('ready');
   };
 

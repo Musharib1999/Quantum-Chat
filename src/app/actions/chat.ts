@@ -93,7 +93,7 @@ export async function chatWithGroq(
     prompt: string,
     type: 'chat' | 'draft' = 'chat',
     lang: 'en' | 'hi' = 'en',
-    sessionConfig?: { industry: string | null, service: string | null, hardware: string | null }
+    sessionConfig?: { industry: string | null, service: string | null, problem: string | null, hardware: string | null }
 ): Promise<AIResponse> {
     // Keeping name for frontend compatibility
     await dbConnect(); // Ensure connection early
@@ -168,9 +168,10 @@ export async function chatWithGroq(
     let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant for Quantum Systems. Be helpful, professional, and efficient.`;
 
     if (sessionConfig) {
-        const { industry, service, hardware } = sessionConfig;
+        const { industry, service, problem, hardware } = sessionConfig;
         if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
         if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;
+        if (problem) systemInstructions += `\nPROBLEM CONTEXT: The specific problem being addressed is ${problem}.`;
         if (hardware) systemInstructions += `\nHARDWARE CONTEXT: The target quantum hardware is ${hardware}. Optimize your responses for this architecture.`;
     }
 

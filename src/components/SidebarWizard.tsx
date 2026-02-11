@@ -4,14 +4,38 @@ import React from 'react';
 import { Check, ChevronRight, Briefcase, Zap, Cpu } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
+// Define Problems mapped by Service ID
+const PROBLEMS: Record<string, { id: string, label: string }[]> = {
+    'Optimization': [
+        { id: 'protein_folding', label: 'Protein Folding' },
+        { id: 'molecular_docking', label: 'Molecular Docking' },
+        { id: 'gene_sequencing', label: 'Gene Sequencing Alignment' }
+    ],
+    'Simulation': [
+        { id: 'chemical_dynamics', label: 'Chemical Dynamics' },
+        { id: 'reaction_pathways', label: 'Reaction Pathways' },
+        { id: 'enzyme_catalysis', label: 'Enzyme Catalysis' }
+    ],
+    'Quantum ML': [
+        { id: 'biomarker_discovery', label: 'Biomarker Discovery' },
+        { id: 'patient_classification', label: 'Patient Classification' },
+        { id: 'genomic_analysis', label: 'Genomic Analysis' }
+    ],
+    'Encryption': [
+        { id: 'secure_records', label: 'Secure Health Records' },
+        { id: 'data_privacy', label: 'Patient Data Privacy' }
+    ]
+};
+
 interface SidebarWizardProps {
-    step: 'industry' | 'service' | 'hardware' | 'ready';
+    step: 'industry' | 'service' | 'problem' | 'hardware' | 'ready';
     config: {
         industry: string | null;
         service: string | null;
+        problem: string | null;
         hardware: string | null;
     };
-    onSelect: (type: 'industry' | 'service' | 'hardware', value: string) => void;
+    onSelect: (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => void;
 }
 
 const INDUSTRIES = [
@@ -40,7 +64,7 @@ const HARDWARE = [
 export default function SidebarWizard({ step, config, onSelect }: SidebarWizardProps) {
     const { theme } = useTheme();
 
-    const renderItem = (item: any, type: 'industry' | 'service' | 'hardware', isLocked: boolean, isSelected: boolean) => (
+    const renderItem = (item: any, type: 'industry' | 'service' | 'problem' | 'hardware', isLocked: boolean, isSelected: boolean) => (
         <button
             key={item.id}
             onClick={() => !isLocked && onSelect(type, item.label)}
@@ -52,7 +76,7 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
                     : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground'
                 }`}
         >
-            <span className="text-base">{item.icon}</span>
+            <span className="text-base">{item.icon || '🔸'}</span>
             <span className="flex-1 text-left">{item.label}</span>
             {isSelected && <Check size={14} className="text-primary animate-in fade-in zoom-in" />}
         </button>
@@ -61,39 +85,57 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
     return (
         <div className="space-y-6 animate-in slide-in-from-left duration-500">
 
-            {/* Step 1: Industry */}
+            {/* Step 1: Industry (Fixed/Pre-selected) */}
             <div className="space-y-2">
                 <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     <Briefcase size={12} />
-                    <span>Select Industry</span>
+                    <span>Industry (Active)</span>
                 </div>
                 <div className="space-y-1">
-                    {INDUSTRIES.map(item => renderItem(item, 'industry', step === 'ready', config.industry === item.label))}
+                    {INDUSTRIES.map(item => (
+                        <div key={item.id} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 border border-primary text-primary font-medium text-sm">
+                            <span className="text-base">{item.icon}</span>
+                            <span className="flex-1 text-left">{item.label}</span>
+                            <Check size={14} className="text-primary" />
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            {/* Step 2: Service */}
-            {(config.industry || step === 'service' || step === 'hardware' || step === 'ready') && (
+            {/* Step 2: Service (Always Visible) */}
+            <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
+                <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    <Zap size={12} />
+                    <span>Select Service</span>
+                </div>
+                <div className="space-y-1">
+                    {SERVICES.map(item => renderItem(item, 'service', false, config.service === item.label))}
+                </div>
+            </div>
+
+            {/* Step 3: Problem (Dependent on Service) */}
+            {(config.service || step === 'problem' || step === 'hardware' || step === 'ready') && (
                 <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
                     <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        <Zap size={12} />
-                        <span>Select Service</span>
+                        <Briefcase size={12} /> {/* Reusing Briefcase for Problem */}
+                        <span>Select Problem</span>
                     </div>
                     <div className="space-y-1">
-                        {SERVICES.map(item => renderItem(item, 'service', !config.industry || step === 'ready' || step === 'industry', config.service === item.label))}
+                        {config.service && PROBLEMS[config.service]?.map(item => renderItem(item, 'problem', !config.service, config.problem === item.label))}
+                        {!config.service && <div className="text-xs text-muted-foreground px-3 italic">Select a service first...</div>}
                     </div>
                 </div>
             )}
 
-            {/* Step 3: Hardware */}
-            {(config.service || step === 'hardware' || step === 'ready') && (
+            {/* Step 4: Hardware (Dependent on Problem) */}
+            {(config.problem || step === 'hardware' || step === 'ready') && (
                 <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
                     <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         <Cpu size={12} />
                         <span>Select Hardware</span>
                     </div>
                     <div className="space-y-1">
-                        {HARDWARE.map(item => renderItem(item, 'hardware', !config.service || step === 'ready' || step === 'industry' || step === 'service', config.hardware === item.label))}
+                        {HARDWARE.map(item => renderItem(item, 'hardware', !config.problem, config.hardware === item.label))}
                     </div>
                 </div>
             )}
