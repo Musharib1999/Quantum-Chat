@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import QuantumBackground from './QuantumBackground';
 import ThemeToggle from './ThemeToggle';
@@ -14,6 +14,29 @@ interface AppLayoutProps {
 export default function AppLayout({ children, sidebarContent, currentMode }: AppLayoutProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+    // --- Responsive Logic ---
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 768; // md breakpoint
+            setIsMobile(mobile);
+            if (mobile) {
+                setIsSidebarOpen(false); // Default closed on mobile
+            } else {
+                setIsSidebarOpen(true); // Default open on desktop
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
     return (
         <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-purple-500/30">
             {/* Background Effects */}
@@ -22,14 +45,27 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
             </div>
             <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none backdrop-blur-[1px]"></div>
 
+            {/* --- Mobile Overlay (only visible when sidebar is open on mobile) --- */}
+            {isMobile && isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 animate-in fade-in duration-300"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* --- Left Sidebar (Dynamic) --- */}
+            {/* 
+                Desktop: relative, pushes content.
+                Mobile: fixed, overlays content.
+            */}
             <aside className={`
-                relative z-10 bg-black/20 backdrop-blur-2xl border-r border-white/5 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+                z-40 bg-black/20 backdrop-blur-2xl border-r border-white/5 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+                ${isMobile ? 'fixed inset-y-0 left-0 h-full shadow-2xl' : 'relative h-full'}
                 ${isSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 -translate-x-10 opacity-0 overflow-hidden'}
             `}>
                 {/* Toggle Button */}
                 <button
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    onClick={toggleSidebar}
                     className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-border/50 hover:bg-purple-500 hover:text-white rounded-r-xl flex items-center justify-center transition-all z-50 backdrop-blur-md border border-l-0 border-white/10 shadow-lg"
                     aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
                 >
@@ -65,6 +101,20 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                     </div>
                 </div>
             </aside>
+
+            {/* --- Mobile Header / Toggle (Visible only when sidebar is closed on mobile) --- */}
+            {isMobile && !isSidebarOpen && (
+                <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="absolute top-4 left-4 z-50 w-10 h-10 bg-zinc-900/80 backdrop-blur-md border border-white/10 rounded-xl flex items-center justify-center text-white shadow-lg"
+                >
+                    <div className="w-5 h-5 flex flex-col justify-center gap-1">
+                        <div className="w-full h-0.5 bg-white rounded-full"></div>
+                        <div className="w-full h-0.5 bg-white rounded-full"></div>
+                        <div className="w-full h-0.5 bg-white rounded-full"></div>
+                    </div>
+                </button>
+            )}
 
             {/* --- Main Chat Area --- */}
             <main className="flex-1 flex flex-col h-full relative min-w-0 w-full overflow-hidden z-10 bg-transparent">
