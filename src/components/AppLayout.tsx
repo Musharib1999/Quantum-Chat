@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import QuantumBackground from './QuantumBackground';
 import ThemeToggle from './ThemeToggle';
 
 interface AppLayoutProps {
@@ -38,12 +37,10 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     return (
-        <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-purple-500/30">
+        <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-zinc-500/30">
             {/* Background Effects */}
-            <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-100 transition-opacity duration-500">
-                <QuantumBackground />
-            </div>
-            <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none backdrop-blur-[1px]"></div>
+            <div className="fixed inset-0 bg-background z-0 pointer-events-none"></div>
+            <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none"></div>
 
             {/* --- Mobile Overlay (only visible when sidebar is open on mobile) --- */}
             {isMobile && isSidebarOpen && (
@@ -66,19 +63,18 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                 {/* Toggle Button */}
                 <button
                     onClick={toggleSidebar}
-                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-border/50 hover:bg-purple-500 hover:text-white rounded-r-xl flex items-center justify-center transition-all z-50 backdrop-blur-md border border-l-0 border-white/10 shadow-lg"
+                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-zinc-900/80 hover:bg-zinc-800 hover:text-white rounded-r-xl flex items-center justify-center transition-all z-50 backdrop-blur-md border border-l-0 border-white/10 shadow-lg"
                     aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
                 >
                     <ChevronLeft size={14} className={`transition-transform duration-500 ${!isSidebarOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Brand Header */}
                 <div className="p-6 border-b border-white/5 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                        <span className="font-bold text-white text-xs">QG</span>
+                    <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-white/10 flex items-center justify-center shadow-lg shadow-black/20">
+                        <span className="font-bold text-white text-xs text-zinc-400">QG</span>
                     </div>
                     <div>
-                        <h1 className="font-bold text-lg tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">Quantum Guru</h1>
+                        <h1 className="font-bold text-lg tracking-wide text-zinc-100">Quantum Guru</h1>
                         <div className="flex items-center gap-1.5">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>

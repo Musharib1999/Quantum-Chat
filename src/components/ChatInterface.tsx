@@ -181,10 +181,7 @@ export default function ChatInterface({ mode, initialMessage, contextConfig, pla
             {/* Input Area - Integrated & Sleek */}
             <footer className="p-4 md:p-6 bg-transparent relative z-20">
                 <div className="max-w-3xl mx-auto relative group">
-                    {/* Glow Effect */}
-                    <div className={`absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-1000 blur-md ${isTyping ? 'opacity-50 animate-pulse' : ''}`}></div>
-
-                    <div className="relative flex items-end gap-2 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 transition-all focus-within:ring-1 focus-within:ring-white/20 focus-within:border-white/20 focus-within:bg-zinc-900/95">
+                    <div className="relative flex items-end gap-2 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 transition-all focus-within:ring-1 focus-within:ring-zinc-700/50 focus-within:border-zinc-700/50 focus-within:bg-zinc-900/95">
                         <textarea
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
@@ -198,7 +195,7 @@ export default function ChatInterface({ mode, initialMessage, contextConfig, pla
                         <button
                             onClick={handleSendMessage}
                             disabled={!inputValue.trim() || isTyping}
-                            className="p-3 rounded-xl bg-white text-black hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-white/20 hover:scale-105 active:scale-95 mb-0.5"
+                            className="p-3 rounded-xl bg-zinc-100 text-zinc-950 hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95 mb-0.5 font-bold"
                         >
                             {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}
                         </button>
