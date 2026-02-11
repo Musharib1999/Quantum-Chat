@@ -40,6 +40,9 @@
 
   --radius: 0.75rem;
   /* Slightly tighter radius for professional feel */
+
+  --gradient-start: #ffffff;
+  --gradient-end: #a1a1aa;
 }
 
 [data-theme="light"] {
@@ -79,6 +82,9 @@
   /* Zinc 300 */
 
   --shadow-glass: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  --gradient-start: #18181b;
+  --gradient-end: #52525b;
 }
 
 @theme inline {
@@ -156,9 +162,11 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
 }
 
 @keyframes spin-slow {
