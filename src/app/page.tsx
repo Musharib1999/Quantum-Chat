@@ -277,32 +277,22 @@ export default function App() {
 
   // --- Session Wizard Handlers ---
   const handleWizardSelection = (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => {
-    setSessionConfig(prev => ({ ...prev, [type]: value }));
+    setSessionConfig(prev => {
+      // Smart Reset Logic: Changing upstream selection clears downstream options
+      const newConfig = { ...prev, [type]: value };
 
-    // Add User Selection Message
-    const userMsg: Message = {
-      id: Date.now(),
-      text: `Select ${type.charAt(0).toUpperCase() + type.slice(1)}: ${value}`,
-      sender: 'user',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+      if (type === 'service') {
+        newConfig.problem = null;
+        newConfig.hardware = null;
+      }
+      if (type === 'problem') {
+        newConfig.hardware = null;
+      }
 
-    // Add System Confirmation
-    let sysText = `Context Updated: ${value}`;
-    if (type === 'service') sysText += ' module loaded. Identifying relevant problems...';
-    if (type === 'problem') sysText += ' selected. Configuring solver parameters...';
-    if (type === 'hardware') sysText += ' Processor Selected. System Initialized.';
+      return newConfig;
+    });
 
-    const sysMsg: Message = {
-      id: Date.now() + 1,
-      text: sysText,
-      sender: 'system',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages(prev => [...prev, userMsg, sysMsg]);
-
-    // Advance Step
+    // Advance Step (Auto-open next section if not already set, but don't force close)
     if (type === 'industry') setSidebarStep('service');
     if (type === 'service') setSidebarStep('problem');
     if (type === 'problem') setSidebarStep('hardware');

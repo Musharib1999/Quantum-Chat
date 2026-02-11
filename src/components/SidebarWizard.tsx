@@ -102,7 +102,7 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
                 </div>
             </div>
 
-            {/* Step 2: Service (Always Visible) */}
+            {/* Step 2: Service (Always Visible & Editable) */}
             <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
                 <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     <Zap size={12} />
@@ -113,29 +113,28 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
                 </div>
             </div>
 
-            {/* Step 3: Problem (Dependent on Service) */}
-            {(config.service || step === 'problem' || step === 'hardware' || step === 'ready') && (
+            {/* Step 3: Problem (Dependent on Service, Editable if Service set) */}
+            {(config.service) && (
                 <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
                     <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         <Briefcase size={12} /> {/* Reusing Briefcase for Problem */}
                         <span>Select Problem</span>
                     </div>
                     <div className="space-y-1">
-                        {config.service && PROBLEMS[config.service]?.map(item => renderItem(item, 'problem', !config.service, config.problem === item.label))}
-                        {!config.service && <div className="text-xs text-muted-foreground px-3 italic">Select a service first...</div>}
+                        {config.service && PROBLEMS[config.service]?.map(item => renderItem(item, 'problem', false, config.problem === item.label))}
                     </div>
                 </div>
             )}
 
-            {/* Step 4: Hardware (Dependent on Problem) */}
-            {(config.problem || step === 'hardware' || step === 'ready') && (
+            {/* Step 4: Hardware (Dependent on Problem, Editable if Problem set) */}
+            {(config.problem) && (
                 <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
                     <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         <Cpu size={12} />
                         <span>Select Hardware</span>
                     </div>
                     <div className="space-y-1">
-                        {HARDWARE.map(item => renderItem(item, 'hardware', !config.problem, config.hardware === item.label))}
+                        {HARDWARE.map(item => renderItem(item, 'hardware', false, config.hardware === item.label))}
                     </div>
                 </div>
             )}
