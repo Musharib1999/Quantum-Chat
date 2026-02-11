@@ -25,7 +25,7 @@ export default function ModeSwitcher({ }: ModeSwitcherProps) {
 
     return (
         <div className="w-16 bg-black/40 border-r border-border flex flex-col items-center py-4 gap-4 z-20 backdrop-blur-xl">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center font-bold text-white shadow-lg mb-4">
+            <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center font-bold text-white shadow-lg mb-4 border border-white/10">
                 Q
             </div>
 
@@ -34,14 +34,14 @@ export default function ModeSwitcher({ }: ModeSwitcherProps) {
                     key={mode.id}
                     href={mode.href}
                     className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group ${isActive(mode.href)
-                            ? 'bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]'
-                            : 'text-muted-foreground hover:bg-white/5 hover:text-white'
+                        ? 'bg-white/10 text-white'
+                        : 'text-muted-foreground hover:bg-white/5 hover:text-white'
                         }`}
                     title={mode.label}
                 >
                     {mode.icon}
                     {isActive(mode.href) && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-purple-500 rounded-r-full" />
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r-full" />
                     )}
 
                     {/* Tooltip */}

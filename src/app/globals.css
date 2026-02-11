@@ -146,6 +146,12 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Selection Utility */
+::selection {
+  background-color: rgba(113, 113, 122, 0.3); /* Zinc 500 / 30% */
+  color: inherit;
+}
+
 /* Glassmorphism Utilities */
 .glass {
   background: var(--card);
@@ -162,7 +168,7 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #71717a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

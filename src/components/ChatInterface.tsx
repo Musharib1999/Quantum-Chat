@@ -151,7 +151,7 @@ export default function ChatInterface({ mode, initialMessage, contextConfig, pla
                                         <MarkdownRenderer content={msg.text} />
                                     ) : (
                                         <span className="flex items-center justify-center gap-2">
-                                            {mode === 'market' ? <TrendingUp size={14} /> : mode === 'article' ? <BookOpen size={14} /> : <ShieldCheck size={14} />}
+                                            {mode === 'market' ? <TrendingUp size={14} className="text-zinc-400" /> : mode === 'article' ? <BookOpen size={14} className="text-zinc-400" /> : <ShieldCheck size={14} className="text-zinc-400" />}
                                             {msg.text}
                                         </span>
                                     )}

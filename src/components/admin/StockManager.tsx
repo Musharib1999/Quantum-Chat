@@ -72,20 +72,20 @@ export default function StockManager() {
                         placeholder="Stock Name (e.g. IonQ Inc.)"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
                     />
                     <input
                         type="text"
                         placeholder="Analysis URL"
                         value={newUrl}
                         onChange={(e) => setNewUrl(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
                     />
                 </div>
                 <button
                     type="submit"
                     disabled={isSubmitting || !newName || !newUrl}
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-white hover:bg-zinc-200 text-black px-4 py-2 rounded text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
                 >
                     {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                     Add Stock
@@ -110,12 +110,12 @@ export default function StockManager() {
                                 <tr key={stock._id} className="hover:bg-white/5 transition-colors">
                                     <td className="px-4 py-3">{stock.name}</td>
                                     <td className="px-4 py-3">
-                                        <a href={stock.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                                        <a href={stock.url} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white flex items-center gap-1 transition-colors">
                                             View <ExternalLink size={12} />
                                         </a>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <button onClick={() => handleDelete(stock._id)} className="text-red-400 hover:text-red-300 p-1 hover:bg-red-500/10 rounded">
+                                        <button onClick={() => handleDelete(stock._id)} className="text-zinc-500 hover:text-zinc-200 p-1 hover:bg-white/5 rounded transition-colors">
                                             <Trash size={14} />
                                         </button>
                                     </td>

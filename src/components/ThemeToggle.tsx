@@ -10,7 +10,7 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
     return (
         <button
             onClick={toggleTheme}
-            className={`p-2 rounded-full transition-all duration-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-orange-500 dark:hover:text-blue-400 ${className}`}
+            className={`p-2 rounded-full transition-all duration-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white ${className}`}
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
             {theme === 'dark' ? (

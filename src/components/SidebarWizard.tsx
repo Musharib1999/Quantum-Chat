@@ -39,7 +39,7 @@ interface SidebarWizardProps {
 }
 
 const INDUSTRIES = [
-    { id: 'biochem', label: 'Biochemistry', icon: '🧬' },
+    { id: 'biochem', label: 'Biochemistry', icon: null },
     // { id: 'finance', label: 'Finance', icon: '💰' },
     // { id: 'healthcare', label: 'Healthcare', icon: '🏥' },
     // { id: 'cybersecurity', label: 'Cybersecurity', icon: '🛡️' },
@@ -48,17 +48,17 @@ const INDUSTRIES = [
 ];
 
 const SERVICES = [
-    { id: 'optimization', label: 'Optimization', icon: '📈' },
-    { id: 'simulation', label: 'Simulation', icon: '🧪' },
-    { id: 'ml', label: 'Quantum ML', icon: '🤖' },
-    { id: 'security', label: 'Encryption', icon: '🔒' },
+    { id: 'optimization', label: 'Optimization', icon: null },
+    { id: 'simulation', label: 'Simulation', icon: null },
+    { id: 'ml', label: 'Quantum ML', icon: null },
+    { id: 'security', label: 'Encryption', icon: null },
 ];
 
 const HARDWARE = [
-    { id: 'ibm', label: 'IBM Qiskit', icon: '⚛️' },
-    { id: 'dwave', label: 'D-Wave', icon: '🌊' },
-    { id: 'ionq', label: 'IonQ', icon: '🔋' },
-    { id: 'rigetti', label: 'Rigetti', icon: '📡' },
+    { id: 'ibm', label: 'IBM Qiskit', icon: null },
+    { id: 'dwave', label: 'D-Wave', icon: null },
+    { id: 'ionq', label: 'IonQ', icon: null },
+    { id: 'rigetti', label: 'Rigetti', icon: null },
 ];
 
 export default function SidebarWizard({ step, config, onSelect }: SidebarWizardProps) {
@@ -69,16 +69,16 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
             key={item.id}
             onClick={() => !isLocked && onSelect(type, item.label)}
             disabled={isLocked}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm border ${isSelected
-                ? 'bg-primary/10 border-primary text-primary font-medium'
-                : isLocked
-                    ? 'opacity-40 cursor-not-allowed border-transparent text-muted-foreground'
-                    : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground'
-                }`}
+            className={`w - full flex items - center gap - 3 px - 3 py - 2.5 rounded - lg transition - all duration - 200 text - sm border ${isSelected
+                    ? 'bg-white/10 border-white/20 text-white font-medium'
+                    : isLocked
+                        ? 'opacity-40 cursor-not-allowed border-transparent text-muted-foreground'
+                        : 'border-transparent text-muted-foreground hover:bg-white/5 hover:text-foreground'
+                } `}
         >
-            <span className="text-base">{item.icon || '🔸'}</span>
+            {item.icon && <span className="text-base">{item.icon}</span>}
             <span className="flex-1 text-left">{item.label}</span>
-            {isSelected && <Check size={14} className="text-primary animate-in fade-in zoom-in" />}
+            {isSelected && <Check size={14} className="text-white animate-in fade-in zoom-in" />}
         </button>
     );
 
@@ -93,10 +93,10 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
                 </div>
                 <div className="space-y-1">
                     {INDUSTRIES.map(item => (
-                        <div key={item.id} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 border border-primary text-primary font-medium text-sm">
-                            <span className="text-base">{item.icon}</span>
+                        <div key={item.id} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white font-medium text-sm">
+                            {item.icon && <span className="text-base">{item.icon}</span>}
                             <span className="flex-1 text-left">{item.label}</span>
-                            <Check size={14} className="text-primary" />
+                            <Check size={14} className="text-white" />
                         </div>
                     ))}
                 </div>
