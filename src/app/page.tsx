@@ -6,6 +6,7 @@ import { getQaPairs } from './actions/admin';
 import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2, AlertTriangle, TrendingUp, ArrowUp } from 'lucide-react';
 import QuantumBackground from '../components/QuantumBackground';
 import ThemeToggle from '../components/ThemeToggle';
+import SidebarWizard from '../components/SidebarWizard';
 
 // --- Assets & Constants ---
 // --- Assets & Constants ---
@@ -128,6 +129,12 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [dynamicForms, setDynamicForms] = useState<any[]>([]);
+
+
+  // -- Session Onboarding State --
+  const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, hardware: string | null }>({ industry: null, service: null, hardware: null });
+  const [sidebarStep, setSidebarStep] = useState<'industry' | 'service' | 'hardware' | 'ready'>('industry');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -267,6 +274,37 @@ export default function App() {
     }]);
   };
 
+  // --- Session Wizard Handlers ---
+  const handleWizardSelection = (type: 'industry' | 'service' | 'hardware', value: string) => {
+    setSessionConfig(prev => ({ ...prev, [type]: value }));
+
+    // Add User Selection Message
+    const userMsg: Message = {
+      id: Date.now(),
+      text: `Select ${type.charAt(0).toUpperCase() + type.slice(1)}: ${value}`,
+      sender: 'user',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    // Add System Confirmation
+    const sysMsg: Message = {
+      id: Date.now() + 1,
+      text: `Context Updated: ${value} ${type === 'hardware' ? 'Processor Selected. System Initialized.' : 'module loaded.'}`,
+      sender: 'system',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setMessages(prev => [...prev, userMsg, sysMsg]);
+
+    // Advance Step
+    if (type === 'industry') setSidebarStep('service');
+    if (type === 'service') setSidebarStep('hardware');
+    if (type === 'hardware') setSidebarStep('ready');
+  };
+
+
+
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-white/20 relative">
       <div className="fixed inset-0 z-0 pointer-events-none opacity-100 transition-opacity duration-500">
@@ -312,38 +350,7 @@ export default function App() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-
-          <div className="mt-6 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 ml-2">Services</div>
-
-          <SidebarGroup
-            icon={<FileText size={18} />}
-            label={lang === 'en' ? "SDKs & Frameworks" : "SDK और फ्रेमवर्क"}
-            items={[
-              { label: "QISKIT (IBM Quantum)", onClick: () => { } },
-              { label: "CIRQ (Google Quantum)", onClick: () => { } }
-            ]}
-          />
-
-          <SidebarGroup
-            icon={<MapPin size={18} />}
-            label={lang === 'en' ? "Optimization" : "इष्टतमीकरण"}
-            items={[
-              { label: "QUBO Models" },
-              { label: "Graph Partitioning" },
-              { label: "Portfolio Optimization" }
-            ]}
-          />
-
-          <div className="mt-8 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 ml-2">Hardware</div>
-          <SidebarItem icon={<Sparkles size={18} />} label="D-WAVE System" />
-          <SidebarItem icon={<User size={18} />} label="Quantum Annealer" />
-
-          <div className="mt-8 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 ml-2">Market Intelligence</div>
-          <SidebarItem icon={<TrendingUp size={18} />} label="IONQ (IonQ Inc.)" />
-          <SidebarItem icon={<TrendingUp size={18} />} label="QBTS (D-Wave)" />
-          <SidebarItem icon={<TrendingUp size={18} />} label="RGTI (Rigetti)" />
-
-
+          <SidebarWizard step={sidebarStep} config={sessionConfig} onSelect={handleWizardSelection} />
         </nav>
 
         <div className="p-4 border-t border-border bg-card/20 space-y-3">
@@ -554,14 +561,15 @@ export default function App() {
                     handleSend('chat'); // Assuming handleSend is the function to send messages
                   }
                 }}
-                placeholder={messages.length === 0 ? "Ask Quantum Guru..." : "Type your query..."}
-                className="flex-1 bg-transparent text-foreground placeholder:text-zinc-600 px-4 py-3 outline-none text-base md:text-lg font-light tracking-wide w-full"
+                placeholder={sidebarStep !== 'ready' ? `Please complete session setup in sidebar...` : (messages.length === 0 ? "Ask Quantum Guru..." : "Type your query...")}
+                disabled={sidebarStep !== 'ready'}
+                className={`flex-1 bg-transparent text-foreground placeholder:text-zinc-600 px-4 py-3 outline-none text-base md:text-lg font-light tracking-wide w-full transition-all ${sidebarStep !== 'ready' ? 'opacity-50 cursor-not-allowed italic' : ''}`}
               />
 
               <div className="flex items-center gap-1 pr-2">
                 <button
                   onClick={() => handleSend('chat')} // Assuming handleSend is the function to send messages
-                  disabled={!inputText.trim() || isLoading} // Assuming inputText and isLoading are state variables
+                  disabled={!inputText.trim() || isLoading || sidebarStep !== 'ready'} // Assuming inputText and isLoading are state variables
                   className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${inputText.trim()
                     ? 'bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95 hover:shadow-xl'
                     : 'bg-secondary text-muted-foreground cursor-not-allowed'
