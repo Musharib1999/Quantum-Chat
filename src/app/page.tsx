@@ -355,13 +355,7 @@ export default function App() {
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Appearance</span>
             <ThemeToggle />
           </div>
-          <div className="flex items-center justify-between bg-secondary/50 p-3 rounded-lg border border-border">
-            <div className="flex flex-col">
-              <span className="text-xs text-secondary-foreground font-medium">Quantum Initiative</span>
-              <span className="text-[10px] text-muted-foreground">Active until 2077</span>
-            </div>
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-          </div>
+
         </div>
       </div>
 
