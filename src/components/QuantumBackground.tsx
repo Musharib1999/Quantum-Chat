@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
+import { useTheme } from './ThemeContext';
 
 const QuantumBackground = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const { theme } = useTheme();
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -17,6 +19,11 @@ const QuantumBackground = () => {
 
         canvas.width = width;
         canvas.height = height;
+
+        // Theme-aware colors
+        const particleColor = theme === 'dark' ? '255, 255, 255' : '24, 24, 27'; // White vs Zinc-900
+        const lineOpacityFactor = theme === 'dark' ? 0.08 : 0.15; // Slightly stronger lines in light mode
+        const particleOpacityFactor = theme === 'dark' ? 0.5 : 0.6;
 
         const particles: Particle[] = [];
         const particleCount = Math.min(Math.floor(width * height / 15000), 100); // Responsive count
@@ -52,7 +59,7 @@ const QuantumBackground = () => {
                 if (!ctx) return;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha * 0.5})`; // Very faint white
+                ctx.fillStyle = `rgba(${particleColor}, ${this.alpha * particleOpacityFactor})`;
                 ctx.fill();
             }
         }
@@ -79,9 +86,9 @@ const QuantumBackground = () => {
                     const distance = Math.sqrt(dx * dx + dy * dy);
 
                     if (distance < connectionDistance) {
-                        const opacity = (1 - distance / connectionDistance) * 0.08; // Extremely subtle lines
+                        const opacity = (1 - distance / connectionDistance) * lineOpacityFactor;
                         ctx.beginPath();
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                        ctx.strokeStyle = `rgba(${particleColor}, ${opacity})`;
                         ctx.lineWidth = 0.5;
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
@@ -106,7 +113,7 @@ const QuantumBackground = () => {
         return () => {
             window.removeEventListener('resize', handleResize);
         };
-    }, []);
+    }, [theme]); // Re-run effect when theme changes
 
     return (
         <canvas

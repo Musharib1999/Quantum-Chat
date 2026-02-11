@@ -269,7 +269,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-white/20 relative">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-100 transition-opacity duration-500">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-100 transition-opacity duration-500">
         <QuantumBackground />
       </div>
       {/* --- Sidebar (Desktop & Mobile) --- */}
