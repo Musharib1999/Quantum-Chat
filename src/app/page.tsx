@@ -562,9 +562,9 @@ export default function App() {
                 <button
                   onClick={() => handleSend('chat')} // Assuming handleSend is the function to send messages
                   disabled={!inputText.trim() || isLoading} // Assuming inputText and isLoading are state variables
-                  className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${inputText.trim() // Assuming inputText is the state variable for the input
-                    ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95'
-                    : 'bg-zinc-800 text-zinc-600'
+                  className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${inputText.trim()
+                    ? 'bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95 hover:shadow-xl'
+                    : 'bg-secondary text-muted-foreground cursor-not-allowed'
                     }`}
                 >
                   <ArrowUp size={18} className="md:w-[20px] md:h-[20px]" />
