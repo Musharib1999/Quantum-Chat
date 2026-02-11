@@ -93,7 +93,7 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-zinc-500/30">
+        <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-purple-500/30">
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-100 transition-opacity duration-500">
                 <QuantumBackground />
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
             `}>
                 <div className="p-6 border-b border-border flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white text-black border border-white/10 rounded-lg flex items-center justify-center font-bold shadow-lg">QG</div>
+                        <div className="w-8 h-8 bg-gradient-to-br from-secondary to-secondary/50 border border-border rounded-lg flex items-center justify-center font-bold text-foreground shadow-lg">QG</div>
                         <div>
                             <h1 className="font-bold text-lg tracking-wide text-foreground">Quantum Admin</h1>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Control Center</p>
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
                 <div className="p-4 border-t border-border">
                     <button
                         onClick={() => router.push('/admin/login')}
-                        className="flex items-center gap-3 w-full px-4 py-3 text-zinc-500 hover:bg-white/5 hover:text-white rounded-lg transition-all font-medium group"
+                        className="flex items-center gap-3 w-full px-4 py-3 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-all font-medium group"
                     >
                         <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
                         Logout
@@ -190,12 +190,12 @@ export default function AdminDashboard() {
                             <Menu size={24} />
                         </button>
                         <h2 className="font-bold text-foreground flex items-center gap-2 text-sm md:text-base capitalize">
-                            {activeTab === 'knowledge_base' && <MessageSquare className="text-zinc-400" />}
-                            {activeTab === 'guardrails' && <ShieldAlert className="text-zinc-400" />}
-                            {activeTab === 'analytics' && <BarChart3 className="text-zinc-400" />}
-                            {activeTab === 'logs' && <MessageSquare className="text-zinc-400" />}
-                            {activeTab === 'stocks' && <TrendingUp className="text-zinc-400" />}
-                            {activeTab === 'articles' && <BookOpen className="text-zinc-400" />}
+                            {activeTab === 'knowledge_base' && <MessageSquare className="text-blue-400" />}
+                            {activeTab === 'guardrails' && <ShieldAlert className="text-red-400" />}
+                            {activeTab === 'analytics' && <BarChart3 className="text-purple-400" />}
+                            {activeTab === 'logs' && <MessageSquare className="text-purple-400" />}
+                            {activeTab === 'stocks' && <TrendingUp className="text-green-400" />}
+                            {activeTab === 'articles' && <BookOpen className="text-blue-400" />}
                             {activeTab.replace('_', ' ')}
                         </h2>
                     </div>
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
                         <ThemeToggle />
                         <div className="text-sm text-right">
                             <p className="font-bold text-muted-foreground dark:text-zinc-200">Administrator</p>
-                            <p className="text-[10px] text-zinc-400 font-medium tracking-widest uppercase">● System Online</p>
+                            <p className="text-[10px] text-green-500 font-medium tracking-widest uppercase">● System Online</p>
                         </div>
                         <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-foreground border border-border font-bold">A</div>
                     </div>
@@ -218,11 +218,11 @@ export default function AdminDashboard() {
                         <div className="max-w-5xl mx-auto space-y-6">
                             <div className="bg-card/70 backdrop-blur-md p-6 rounded-2xl border border-border shadow-xl">
                                 <h3 className="font-bold text-foreground mb-4 flex items-center gap-2 text-lg">
-                                    <Plus className="w-5 h-5 text-zinc-400" /> Add New Q&A Pair
+                                    <Plus className="w-5 h-5 text-green-400" /> Add New Q&A Pair
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <input
-                                        className="p-3 bg-secondary/30 border border-border rounded-xl focus:border-zinc-500 outline-none text-foreground placeholder:text-muted-foreground transition-all font-light"
+                                        className="p-3 bg-secondary/30 border border-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-foreground placeholder:text-muted-foreground transition-all font-light"
                                         placeholder="User Question (e.g., 'What is scheme X?')"
                                         value={newQ}
                                         onChange={e => setNewQ(e.target.value)}
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
                                             <option value="form" className="bg-card text-foreground">Smart Form</option>
                                         </select>
                                         <input
-                                            className="flex-1 p-3 bg-secondary/30 border border-border rounded-xl focus:border-zinc-500 outline-none text-foreground placeholder:text-muted-foreground transition-all font-light"
+                                            className="flex-1 p-3 bg-secondary/30 border border-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-foreground placeholder:text-muted-foreground transition-all font-light"
                                             placeholder={newType === 'text' ? "Assistant Answer..." : newType === 'url' ? "https://example.com/info-page" : "Help text for the form..."}
                                             value={newA}
                                             onChange={e => setNewA(e.target.value)}
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
                                     <div className="mt-4">
                                         <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Form Settings (JSON Configuration)</label>
                                         <textarea
-                                            className="w-full p-4 border border-border rounded-xl font-mono text-xs bg-black/80 dark:bg-black/50 text-zinc-300 h-40 outline-none focus:border-zinc-500 shadow-inner"
+                                            className="w-full p-4 border border-border rounded-xl font-mono text-xs bg-black/80 dark:bg-black/50 text-green-400 h-40 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
                                             value={newFormConfig}
                                             onChange={e => setNewFormConfig(e.target.value)}
                                         />
@@ -281,7 +281,7 @@ export default function AdminDashboard() {
                                         </div>
                                         <button
                                             onClick={() => handleDeleteQa(qa.id)}
-                                            className="p-2 text-zinc-600 hover:text-zinc-200 hover:bg-white/5 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                            className="p-2 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                                         >
                                             <Trash2 size={20} />
                                         </button>
@@ -294,23 +294,23 @@ export default function AdminDashboard() {
                     {/* GUARDRAILS TAB */}
                     {activeTab === 'guardrails' && (
                         <div className="max-w-4xl mx-auto space-y-6">
-                            <div className="bg-white/5 p-6 rounded-2xl border border-white/10 mb-8 backdrop-blur-md">
-                                <h3 className="flex items-center gap-2 font-bold text-zinc-200 text-lg">
+                            <div className="bg-gradient-to-r from-red-900/20 to-orange-900/20 p-6 rounded-2xl border border-red-500/20 mb-8 backdrop-blur-md">
+                                <h3 className="flex items-center gap-2 font-bold text-red-400 text-lg">
                                     <ShieldAlert size={24} /> Safety & Compliance
                                 </h3>
-                                <p className="text-zinc-400 text-sm mt-1">Define strict boundaries for the AI. These rules override all other knowledge retrieval.</p>
+                                <p className="text-red-300/80 text-sm mt-1">Define strict boundaries for the AI. These rules override all other knowledge retrieval.</p>
                             </div>
 
                             <div className="flex gap-4 mb-6">
                                 <input
-                                    className="flex-1 p-4 bg-zinc-800/50 border border-white/10 rounded-xl shadow-sm outline-none focus:border-zinc-500 text-white placeholder:text-zinc-500 transition-colors"
+                                    className="flex-1 p-4 bg-zinc-800/50 border border-white/10 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-red-500/50 text-white placeholder:text-zinc-500"
                                     placeholder="Enter a new guardrail rule (e.g., 'Do not discuss politics')"
                                     value={newRule}
                                     onChange={e => setNewRule(e.target.value)}
                                 />
                                 <button
                                     onClick={handleAddRule}
-                                    className="bg-white hover:bg-zinc-200 text-black px-6 rounded-xl font-bold transition-all shadow-lg"
+                                    className="bg-red-600/80 hover:bg-red-600 backdrop-blur-sm text-white px-6 rounded-xl font-bold transition-all shadow-lg shadow-red-900/20"
                                 >
                                     Add Rule
                                 </button>
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
                                     <div key={g.id} className={`p-4 rounded-xl border flex items-center justify-between transition-all backdrop-blur-sm ${g.active ? 'bg-zinc-900/60 border-white/10 shadow-sm' : 'bg-zinc-900/20 border-white/5 opacity-60'
                                         }`}>
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-lg ${g.active ? 'bg-white/10 text-white border border-white/20' : 'bg-zinc-800 text-zinc-600'}`}>
+                                            <div className={`p-2 rounded-lg ${g.active ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-zinc-800 text-zinc-600'}`}>
                                                 <Lock size={20} />
                                             </div>
                                             <div>
@@ -333,7 +333,7 @@ export default function AdminDashboard() {
                                         <button
                                             onClick={() => handleToggleGuardrail(g.id)}
                                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${g.active
-                                                ? 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                                                ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
                                                 : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
                                                 }`}
                                         >
@@ -353,7 +353,7 @@ export default function AdminDashboard() {
                     {activeTab === 'logs' && (
                         <div className="space-y-6">
                             <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                <MessageSquare className="text-zinc-400" /> Interaction Logs
+                                <MessageSquare className="text-purple-400" /> Interaction Logs
                             </h2>
                             <div className="bg-card/60 backdrop-blur-md rounded-2xl shadow-xl border border-border overflow-hidden">
                                 <div className="overflow-x-auto">
@@ -382,8 +382,8 @@ export default function AdminDashboard() {
                                                     <td className="p-4 whitespace-nowrap text-xs">
                                                         <div className="flex flex-col gap-1">
                                                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full w-fit ${log.guardrailsStatus === 'violated'
-                                                                ? 'bg-white/20 text-white border border-white/30'
-                                                                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                                                                ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                                                : 'bg-green-500/20 text-green-400 border border-green-500/30'
                                                                 }`}>
                                                                 {log.guardrailsStatus?.toUpperCase() || 'PASSED'}
                                                             </span>
@@ -393,11 +393,11 @@ export default function AdminDashboard() {
                                                         </div>
                                                     </td>
                                                     <td className="p-4 whitespace-nowrap">
-                                                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${log.source === 'groq' ? 'bg-white/10 text-white border-white/20' :
-                                                            log.source.includes('kb') ? 'bg-white/5 text-zinc-300 border-white/10' :
+                                                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${log.source === 'gemini' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                            log.source.includes('kb') ? 'bg-green-500/10 text-green-400 border-green-500/20' :
                                                                 'bg-zinc-800 text-zinc-500 border-zinc-700'
                                                             }`}>
-                                                            {log.source === 'groq' ? 'Groq' : log.source}
+                                                            {log.source === 'gemini' ? 'Groq' : log.source}
                                                         </span>
                                                     </td>
                                                 </tr>

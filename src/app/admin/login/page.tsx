@@ -29,7 +29,7 @@ export default function AdminLogin() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4 font-sans relative overflow-hidden selection:bg-zinc-500/30">
+        <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4 font-sans relative overflow-hidden selection:bg-purple-500/30">
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <QuantumBackground />
@@ -43,8 +43,8 @@ export default function AdminLogin() {
                     <div className="bg-gradient-to-b from-white/5 to-transparent p-8 text-center border-b border-white/5 relative">
                         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[length:16px_16px]" />
                         <div className="relative">
-                            <div className="w-20 h-20 bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/10 shadow-2xl group-hover:scale-105 transition-transform duration-500">
-                                <ShieldCheck className="text-white w-10 h-10" />
+                            <div className="w-20 h-20 bg-gradient-to-br from-white/10 to-transparent rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/10 shadow-2xl shadow-purple-500/10 group-hover:scale-105 transition-transform duration-500">
+                                <ShieldCheck className="text-white w-10 h-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
                             </div>
                             <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400 mb-2 tracking-tight">Quantum Guru</h1>
                             <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] font-medium">Administration Portal</p>
@@ -56,8 +56,8 @@ export default function AdminLogin() {
                         <form onSubmit={handleLogin} className="space-y-5">
 
                             {error && (
-                                <div className="bg-white/5 text-zinc-200 text-sm p-4 rounded-xl flex items-center gap-3 border border-white/10 animate-in fade-in slide-in-from-top-2 backdrop-blur-sm shadow-inner">
-                                    <AlertCircle size={18} className="shrink-0 text-zinc-400" />
+                                <div className="bg-red-500/10 text-red-200 text-sm p-4 rounded-xl flex items-center gap-3 border border-red-500/20 animate-in fade-in slide-in-from-top-2 backdrop-blur-sm shadow-inner">
+                                    <AlertCircle size={18} className="shrink-0 text-red-400" />
                                     {error}
                                 </div>
                             )}

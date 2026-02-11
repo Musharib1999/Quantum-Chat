@@ -76,12 +76,12 @@ export default function ArticleManager() {
                         placeholder="Article Title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="md:col-span-1 bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                        className="md:col-span-1 bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
                     />
                     <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
                     >
                         {CATEGORIES.map(c => <option key={c} value={c} className="bg-zinc-900">{c}</option>)}
                     </select>
@@ -90,13 +90,13 @@ export default function ArticleManager() {
                         placeholder="Source URL"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors"
+                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
                     />
                 </div>
                 <button
                     type="submit"
                     disabled={isSubmitting || !title || !url}
-                    className="bg-white hover:bg-zinc-200 text-black px-4 py-2 rounded text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                     {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                     Add Article
@@ -121,7 +121,7 @@ export default function ArticleManager() {
                                 <tr key={article._id} className="hover:bg-white/5 transition-colors">
                                     <td className="px-4 py-3">
                                         <div className="font-medium text-zinc-200">{article.title}</div>
-                                        <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-500 hover:text-white underline underline-offset-2 transition-colors">
+                                        <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2">
                                             {article.url}
                                         </a>
                                     </td>
@@ -129,7 +129,7 @@ export default function ArticleManager() {
                                         <span className="bg-white/10 px-2 py-0.5 rounded text-xs text-zinc-300">{article.category}</span>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <button onClick={() => handleDelete(article._id)} className="text-zinc-500 hover:text-zinc-200 p-1 hover:bg-white/5 rounded transition-colors">
+                                        <button onClick={() => handleDelete(article._id)} className="text-red-400 hover:text-red-300 p-1 hover:bg-red-500/10 rounded">
                                             <Trash size={14} />
                                         </button>
                                     </td>

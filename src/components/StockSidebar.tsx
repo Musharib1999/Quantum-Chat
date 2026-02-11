@@ -33,12 +33,12 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border">
                 <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                    <TrendingUp className="text-zinc-400" size={18} /> Market Intelligence
+                    <TrendingUp className="text-green-400" size={18} /> Market Intelligence
                 </h3>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <input
-                        className="w-full bg-secondary/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm text-foreground focus:outline-none focus:border-white/20 transition-colors"
+                        className="w-full bg-secondary/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm text-foreground focus:outline-none focus:border-green-500/50 transition-colors"
                         placeholder="Search assets..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -54,13 +54,13 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                         key={stock._id}
                         onClick={() => onSelect(stock)}
                         className={`w-full text-left px-3 py-3 rounded-lg border transition-all group ${activeStockId === stock._id
-                            ? 'bg-white/10 border-white/20 text-white'
-                            : 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'
+                                ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                                : 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         <div className="flex items-center justify-between">
                             <span className="font-medium text-sm">{stock.name}</span>
-                            {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                            {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
                         </div>
                         {stock.url && (
                             <div className="text-[10px] opacity-50 mt-1 truncate hover:underline" onClick={e => {

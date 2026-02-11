@@ -7,7 +7,7 @@ import QuantumBackground from '@/components/QuantumBackground';
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-screen bg-background font-sans text-foreground relative selection:bg-zinc-500/30 overflow-hidden">
+    <div className="flex min-h-screen bg-background font-sans text-foreground relative selection:bg-purple-500/30 overflow-hidden">
 
       {/* Background Effects */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-100 transition-opacity duration-500">
@@ -39,7 +39,7 @@ export default function LandingPage() {
                 <Beaker size={28} />
               </div>
 
-              <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-zinc-100 transition-colors">Quantum Industry</h3>
+              <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors">Quantum Industry</h3>
               <p className="text-zinc-400 text-sm leading-relaxed mb-8 flex-1">
                 Guided problem-solving wizard for industrial applications, hardware selection, and use-case analysis.
               </p>
@@ -56,7 +56,7 @@ export default function LandingPage() {
                 <TrendingUp size={28} />
               </div>
 
-              <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-zinc-100 transition-colors">Market Intelligence</h3>
+              <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-green-300 transition-colors">Market Intelligence</h3>
               <p className="text-zinc-400 text-sm leading-relaxed mb-8 flex-1">
                 Real-time analysis of financial assets, stock trends, and deep market insights powered by quantum algorithms.
               </p>
@@ -73,7 +73,7 @@ export default function LandingPage() {
                 <BookOpen size={28} />
               </div>
 
-              <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-zinc-100 transition-colors">Research Lab</h3>
+              <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors">Research Lab</h3>
               <p className="text-zinc-400 text-sm leading-relaxed mb-8 flex-1">
                 Explore curated scientific papers, articles, and educational resources in the quantum domain.
               </p>
