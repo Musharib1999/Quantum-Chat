@@ -23,7 +23,7 @@ export default function LandingPage() {
             Q
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-zinc-400">
-            Quantum Intelligence Suite
+            Quantum Guru
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
             Select your specialized interface to begin.
@@ -96,7 +96,7 @@ export default function LandingPage() {
         </div>
 
         <footer className="mt-20 text-center text-xs text-zinc-600 font-medium">
-          <p className="uppercase tracking-widest">Quantum Intelligence System • System V2.5.0</p>
+          <p className="uppercase tracking-widest">Quantum Guru • System V2.5.0</p>
         </footer>
 
       </div>
