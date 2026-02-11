@@ -47,19 +47,19 @@ const SmartForm = ({ config }: { config: any }) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-3 bg-white rounded-2xl p-4 border border-gray-200 shadow-sm w-full space-y-3">
-      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100 text-blue-700">
+    <form onSubmit={handleSubmit} className="mt-3 bg-card rounded-2xl p-4 border border-border shadow-sm w-full space-y-3">
+      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border text-blue-600 dark:text-blue-400">
         <FileText size={18} />
         <span className="font-bold text-sm">{config.title || "Official Form"}</span>
       </div>
 
       {config.fields?.map((field: any, idx: number) => (
         <div key={idx} className="space-y-1">
-          <label className="text-xs text-gray-500 font-medium pl-1">{field.label}</label>
+          <label className="text-xs text-muted-foreground font-medium pl-1">{field.label}</label>
           {field.type === 'select' ? (
             <select
               required
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+              className="w-full bg-secondary border border-border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer text-foreground"
               onChange={e => setFormData(prev => ({ ...prev, [field.label]: e.target.value }))}
             >
               <option value="">Select Option</option>
@@ -69,7 +69,7 @@ const SmartForm = ({ config }: { config: any }) => {
             <input
               required
               type={field.type || 'text'}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full bg-secondary border border-border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all text-foreground placeholder:text-muted-foreground"
               placeholder={`Enter ${field.label}...`}
               onChange={e => setFormData(prev => ({ ...prev, [field.label]: e.target.value }))}
             />
@@ -313,7 +313,7 @@ export default function App() {
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
 
-          <div className="mt-6 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">Services</div>
+          <div className="mt-6 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 ml-2">Services</div>
 
           <SidebarGroup
             icon={<FileText size={18} />}
@@ -334,11 +334,11 @@ export default function App() {
             ]}
           />
 
-          <div className="mt-8 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">Hardware</div>
+          <div className="mt-8 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 ml-2">Hardware</div>
           <SidebarItem icon={<Sparkles size={18} />} label="D-WAVE System" />
           <SidebarItem icon={<User size={18} />} label="Quantum Annealer" />
 
-          <div className="mt-8 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">Market Intelligence</div>
+          <div className="mt-8 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 ml-2">Market Intelligence</div>
           <SidebarItem icon={<TrendingUp size={18} />} label="IONQ (IonQ Inc.)" />
           <SidebarItem icon={<TrendingUp size={18} />} label="QBTS (D-Wave)" />
           <SidebarItem icon={<TrendingUp size={18} />} label="RGTI (Rigetti)" />
@@ -380,7 +380,7 @@ export default function App() {
                     : 'bg-white/5 border border-white/10 shadow-lg shadow-white/5'
                     }`}>
                     {msg.sender === 'user' ? <User size={14} className="text-white" /> : (
-                      <span className="text-[10px] font-bold text-white">QG</span>
+                      <span className="text-[10px] font-bold text-white dark:text-white text-zinc-800">QG</span>
                     )}
                   </div>
 
@@ -388,8 +388,8 @@ export default function App() {
                   <div className={`rounded-2xl px-5 py-4 shadow-sm text-base leading-relaxed whitespace-pre-wrap ${msg.sender === 'user'
                     ? 'bg-zinc-800/80 backdrop-blur-md text-zinc-100 border border-white/10 rounded-br-none shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
                     : msg.sender === 'system'
-                      ? 'bg-zinc-900/50 text-zinc-400 text-sm text-center w-full rounded-lg border border-white/5'
-                      : 'bg-white/5 backdrop-blur-md text-zinc-200 border border-white/10 rounded-bl-none shadow-sm'
+                      ? 'bg-secondary/50 text-muted-foreground text-sm text-center w-full rounded-lg border border-border'
+                      : 'bg-card/60 backdrop-blur-md text-card-foreground border border-border rounded-bl-none shadow-sm'
                     }`}>
                     {msg.text}
 
@@ -527,19 +527,19 @@ export default function App() {
           {/* Initial Greeting - Only visible when no messages */}
           <div className={`transition-all duration-500 text-center space-y-2 mb-8 ${messages.length === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10 hidden'
             }`}>
-            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md shadow-[0_0_30px_rgba(255,255,255,0.05)] border border-white/5">
-              <span className="text-2xl font-bold text-white">QG</span>
+            <div className="w-16 h-16 bg-white/10 dark:bg-white/10 bg-zinc-900/10 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md shadow-[0_0_30px_rgba(255,255,255,0.05)] border border-white/5">
+              <span className="text-2xl font-bold text-foreground">QG</span>
             </div>
-            <p className="text-lg md:text-xl text-zinc-400 font-light max-w-md mx-auto leading-relaxed">
-              System Online. I am <span className="text-white font-medium">Quantum Guru AI</span>, your intelligence interface.
+            <p className="text-lg md:text-xl text-muted-foreground font-light max-w-md mx-auto leading-relaxed">
+              System Online. I am <span className="text-foreground font-medium">Quantum Guru AI</span>, your intelligence interface.
               How can I assist with your computations today?
             </p>
           </div>
 
           <div className="w-full max-w-3xl relative">
-            <div className={`relative flex items-center bg-card/80 backdrop-blur-xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.2)] transition-all duration-300 group ${messages.length === 0 ? 'rounded-2xl p-2' : 'rounded-full p-1.5'
+            <div className={`relative flex items-center bg-card/80 backdrop-blur-xl border border-border shadow-[0_0_40px_rgba(0,0,0,0.2)] transition-all duration-300 group ${messages.length === 0 ? 'rounded-2xl p-2' : 'rounded-full p-1.5'
               }`}>
-              <button className={`p-3 text-zinc-400 hover:text-white transition-colors rounded-full hover:bg-white/5 ${messages.length === 0 ? '' : 'hidden md:block'
+              <button className={`p-3 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary ${messages.length === 0 ? '' : 'hidden md:block'
                 }`}>
                 <Sparkles size={20} />
               </button>
@@ -588,12 +588,12 @@ export default function App() {
 function SidebarItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
   return (
     <button className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${active
-      ? 'bg-white/10 text-foreground font-medium shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/5'
-      : 'text-muted-foreground hover:bg-white/5 hover:text-foreground border border-transparent'
+      ? 'bg-secondary text-foreground font-medium shadow-sm border border-border'
+      : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground border border-transparent'
       }`}>
-      <span className={active ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}>{icon}</span>
+      <span className={active ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}>{icon}</span>
       <span className="text-base flex-1 text-left">{label}</span>
-      <Sparkles size={10} className={`opacity-0 group-hover:opacity-40 transition-opacity ${active ? 'text-white opacity-100' : 'text-zinc-500'}`} />
+      <Sparkles size={10} className={`opacity-0 group-hover:opacity-40 transition-opacity ${active ? 'text-foreground opacity-100' : 'text-muted-foreground'}`} />
     </button>
   );
 }
@@ -605,13 +605,13 @@ function SidebarGroup({ icon, label, items }: { icon: React.ReactNode, label: st
     <div>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-white/5 transition-all group"
+        className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-secondary/50 transition-all group"
       >
-        <span className="text-zinc-500 group-hover:text-zinc-300">{icon}</span>
+        <span className="text-muted-foreground group-hover:text-foreground">{icon}</span>
         <span className="text-base font-medium flex-1 text-left">{label}</span>
         <div className="flex items-center gap-2">
-          <Sparkles size={10} className="text-zinc-800 group-hover:text-zinc-600 transition-colors opacity-0 group-hover:opacity-100" />
-          <ChevronRight size={14} className={`transition-transform text-zinc-600 ${isOpen ? 'rotate-90' : ''}`} />
+          <Sparkles size={10} className="text-muted-foreground group-hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" />
+          <ChevronRight size={14} className={`transition-transform text-muted-foreground ${isOpen ? 'rotate-90' : ''}`} />
         </div>
       </button>
       {isOpen && (

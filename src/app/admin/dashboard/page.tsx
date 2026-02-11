@@ -123,16 +123,16 @@ export default function AdminDashboard() {
                 md:relative md:translate-x-0
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
-                <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div className="p-6 border-b border-border flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-white/20 to-white/5 border border-white/10 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">QG</div>
+                        <div className="w-8 h-8 bg-gradient-to-br from-secondary to-secondary/50 border border-border rounded-lg flex items-center justify-center font-bold text-foreground shadow-lg">QG</div>
                         <div>
-                            <h1 className="font-bold text-lg tracking-wide text-white">Quantum Admin</h1>
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Control Center</p>
+                            <h1 className="font-bold text-lg tracking-wide text-foreground">Quantum Admin</h1>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Control Center</p>
                         </div>
                     </div>
-                    <button className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                        <X size={20} />
+                    <button className="md:hidden p-2 hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                        <X size={20} className="text-foreground" />
                     </button>
                 </div>
 
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
                     />
                 </nav>
 
-                <div className="p-4 border-t border-white/5">
+                <div className="p-4 border-t border-border">
                     <button
                         onClick={() => router.push('/admin/login')}
                         className="flex items-center gap-3 w-full px-4 py-3 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-all font-medium group"
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
 
                 {/* Desktop/Mobile Header */}
-                <header className="bg-transparent border-b border-white/5 h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-30 backdrop-blur-md">
+                <header className="bg-transparent border-b border-border h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-30 backdrop-blur-md">
                     <div className="flex items-center gap-4">
                         <button
                             className="md:hidden p-2 text-muted-foreground hover:bg-white/5 rounded-lg transition-colors"
@@ -198,10 +198,10 @@ export default function AdminDashboard() {
                     <div className="flex items-center gap-4">
                         <ThemeToggle />
                         <div className="text-sm text-right">
-                            <p className="font-bold text-zinc-500 dark:text-zinc-200">Administrator</p>
+                            <p className="font-bold text-muted-foreground dark:text-zinc-200">Administrator</p>
                             <p className="text-[10px] text-green-500 font-medium tracking-widest uppercase">● System Online</p>
                         </div>
-                        <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white border border-white/5 font-bold">A</div>
+                        <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-foreground border border-border font-bold">A</div>
                     </div>
                 </header>
 
@@ -211,29 +211,29 @@ export default function AdminDashboard() {
                     {/* KNOWLEDGE BASE TAB */}
                     {activeTab === 'knowledge_base' && (
                         <div className="max-w-5xl mx-auto space-y-6">
-                            <div className="bg-zinc-900/40 backdrop-blur-md p-6 rounded-2xl border border-white/10 shadow-xl">
-                                <h3 className="font-bold text-zinc-100 mb-4 flex items-center gap-2 text-lg">
+                            <div className="bg-card/70 backdrop-blur-md p-6 rounded-2xl border border-border shadow-xl">
+                                <h3 className="font-bold text-foreground mb-4 flex items-center gap-2 text-lg">
                                     <Plus className="w-5 h-5 text-green-400" /> Add New Q&A Pair
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <input
-                                        className="p-3 bg-zinc-800/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white placeholder:text-zinc-500 transition-all font-light"
+                                        className="p-3 bg-secondary/30 border border-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-foreground placeholder:text-muted-foreground transition-all font-light"
                                         placeholder="User Question (e.g., 'What is scheme X?')"
                                         value={newQ}
                                         onChange={e => setNewQ(e.target.value)}
                                     />
                                     <div className="flex gap-2">
                                         <select
-                                            className="p-3 bg-zinc-800/50 border border-white/10 rounded-xl outline-none text-white cursor-pointer"
+                                            className="p-3 bg-secondary/30 border border-border rounded-xl outline-none text-foreground cursor-pointer"
                                             value={newType}
                                             onChange={(e) => setNewType(e.target.value as 'text' | 'url' | 'form')}
                                         >
-                                            <option value="text" className="bg-zinc-900">Direct Answer</option>
-                                            <option value="url" className="bg-zinc-900">URL Source</option>
-                                            <option value="form" className="bg-zinc-900">Smart Form</option>
+                                            <option value="text" className="bg-card text-foreground">Direct Answer</option>
+                                            <option value="url" className="bg-card text-foreground">URL Source</option>
+                                            <option value="form" className="bg-card text-foreground">Smart Form</option>
                                         </select>
                                         <input
-                                            className="flex-1 p-3 bg-zinc-800/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white placeholder:text-zinc-500 transition-all font-light"
+                                            className="flex-1 p-3 bg-secondary/30 border border-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-foreground placeholder:text-muted-foreground transition-all font-light"
                                             placeholder={newType === 'text' ? "Assistant Answer..." : newType === 'url' ? "https://example.com/info-page" : "Help text for the form..."}
                                             value={newA}
                                             onChange={e => setNewA(e.target.value)}
@@ -243,19 +243,19 @@ export default function AdminDashboard() {
 
                                 {newType === 'form' && (
                                     <div className="mt-4">
-                                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Form Settings (JSON Configuration)</label>
+                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Form Settings (JSON Configuration)</label>
                                         <textarea
-                                            className="w-full p-4 border border-white/10 rounded-xl font-mono text-xs bg-black/50 text-green-400 h-40 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                                            className="w-full p-4 border border-border rounded-xl font-mono text-xs bg-black/80 dark:bg-black/50 text-green-400 h-40 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
                                             value={newFormConfig}
                                             onChange={e => setNewFormConfig(e.target.value)}
                                         />
-                                        <p className="text-[10px] text-zinc-500 italic mt-1 font-medium">Define your form fields using the JSON structure above.</p>
+                                        <p className="text-[10px] text-muted-foreground italic mt-1 font-medium">Define your form fields using the JSON structure above.</p>
                                     </div>
                                 )}
                                 <div className="mt-4 text-right">
                                     <button
                                         onClick={handleAddQa}
-                                        className="bg-white/10 hover:bg-white/20 border border-white/5 text-white px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ml-auto shadow-lg hover:shadow-xl active:scale-95"
+                                        className="bg-secondary hover:bg-secondary/80 border border-border text-foreground px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ml-auto shadow-lg hover:shadow-xl active:scale-95"
                                     >
                                         <Save size={18} /> Save Mapping
                                     </button>
@@ -263,15 +263,15 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="space-y-4">
-                                <h4 className="font-bold text-zinc-500 uppercase text-xs tracking-wider">Existing Mappings ({qaPairs.length})</h4>
+                                <h4 className="font-bold text-muted-foreground uppercase text-xs tracking-wider">Existing Mappings ({qaPairs.length})</h4>
                                 {qaPairs.map(qa => (
-                                    <div key={qa.id} className="bg-zinc-900/40 backdrop-blur-sm p-5 rounded-2xl border border-white/5 hover:border-white/10 shadow-sm flex items-start justify-between group transition-all hover:bg-zinc-900/60">
+                                    <div key={qa.id} className="bg-card/70 backdrop-blur-sm p-5 rounded-2xl border border-border hover:border-border/80 shadow-sm flex items-start justify-between group transition-all hover:bg-card/90">
                                         <div className="space-y-2">
-                                            <p className="font-medium text-white text-lg flex items-center gap-2">
-                                                <span className="text-zinc-600 font-normal text-sm">Q:</span> {qa.question}
+                                            <p className="font-medium text-foreground text-lg flex items-center gap-2">
+                                                <span className="text-muted-foreground font-normal text-sm">Q:</span> {qa.question}
                                             </p>
-                                            <div className="text-zinc-400 leading-relaxed bg-black/20 p-3 rounded-lg border border-white/5">
-                                                <span className="text-zinc-600 font-bold text-xs mr-2 uppercase">AI Response:</span> {qa.answer}
+                                            <div className="text-muted-foreground leading-relaxed bg-secondary/30 p-3 rounded-lg border border-border">
+                                                <span className="text-foreground font-bold text-xs mr-2 uppercase">AI Response:</span> {qa.answer}
                                             </div>
                                         </div>
                                         <button
@@ -343,14 +343,14 @@ export default function AdminDashboard() {
                     {/* LOGS TAB */}
                     {activeTab === 'logs' && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
                                 <MessageSquare className="text-purple-400" /> Interaction Logs
                             </h2>
-                            <div className="bg-zinc-900/40 backdrop-blur-md rounded-2xl shadow-xl border border-white/5 overflow-hidden">
+                            <div className="bg-card/60 backdrop-blur-md rounded-2xl shadow-xl border border-border overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
-                                        <thead className="bg-white/5 border-b border-white/5">
-                                            <tr className="text-zinc-500 font-bold text-xs uppercase tracking-wider">
+                                        <thead className="bg-secondary/30 border-b border-border">
+                                            <tr className="text-muted-foreground font-bold text-xs uppercase tracking-wider">
                                                 <th className="p-4">Time</th>
                                                 <th className="p-4">User Query</th>
                                                 <th className="p-4">AI Response</th>
@@ -358,16 +358,16 @@ export default function AdminDashboard() {
                                                 <th className="p-4">Source</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-white/5">
+                                        <tbody className="divide-y divide-border">
                                             {chatLogs.map((log) => (
-                                                <tr key={log.id} className="hover:bg-white/5 transition-colors">
-                                                    <td className="p-4 text-xs text-zinc-500 whitespace-nowrap font-mono">
+                                                <tr key={log.id} className="hover:bg-secondary/10 transition-colors">
+                                                    <td className="p-4 text-xs text-muted-foreground whitespace-nowrap font-mono">
                                                         {new Date(log.timestamp).toLocaleString()}
                                                     </td>
-                                                    <td className="p-4 text-sm text-zinc-300 font-medium max-w-[150px] md:max-w-xs truncate" title={log.userQuery}>
+                                                    <td className="p-4 text-sm text-foreground font-medium max-w-[150px] md:max-w-xs truncate" title={log.userQuery}>
                                                         {log.userQuery}
                                                     </td>
-                                                    <td className="p-4 text-sm text-zinc-400 max-w-[150px] md:max-w-md truncate" title={log.aiResponse}>
+                                                    <td className="p-4 text-sm text-muted-foreground max-w-[150px] md:max-w-md truncate" title={log.aiResponse}>
                                                         {log.aiResponse}
                                                     </td>
                                                     <td className="p-4 whitespace-nowrap text-xs">
@@ -430,8 +430,8 @@ function SidebarLink({ icon, label, active, onClick }: { icon: any, label: strin
         <button
             onClick={onClick}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${active
-                ? 'bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] border-white/10'
-                : 'text-zinc-500 hover:bg-white/5 hover:text-white border-transparent'
+                ? 'bg-secondary text-foreground shadow-[0_0_15px_rgba(255,255,255,0.05)] border-border'
+                : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground border-transparent'
                 }`}
         >
             {icon}
