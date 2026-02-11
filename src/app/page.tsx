@@ -5,6 +5,7 @@ import { chatWithGroq, checkGeminiConnection } from './actions/chat';
 import { getQaPairs } from './actions/admin';
 import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2, AlertTriangle, TrendingUp, ArrowUp } from 'lucide-react';
 import QuantumBackground from '../components/QuantumBackground';
+import ThemeToggle from '../components/ThemeToggle';
 
 // --- Assets & Constants ---
 // --- Assets & Constants ---
@@ -268,7 +269,9 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-white/20 relative">
-      <QuantumBackground />
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-100 transition-opacity duration-500">
+        <QuantumBackground />
+      </div>
       {/* --- Sidebar (Desktop & Mobile) --- */}
       {/* Connection Warning Banner */}
       {/* Connection Warning Banner */}
@@ -343,7 +346,11 @@ export default function App() {
 
         </nav>
 
-        <div className="p-4 border-t border-border bg-card/20">
+        <div className="p-4 border-t border-border bg-card/20 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Appearance</span>
+            <ThemeToggle />
+          </div>
           <div className="flex items-center justify-between bg-secondary/50 p-3 rounded-lg border border-border">
             <div className="flex flex-col">
               <span className="text-xs text-secondary-foreground font-medium">Quantum Initiative</span>

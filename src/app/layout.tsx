@@ -1,6 +1,6 @@
-
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeProvider } from "../components/ThemeContext";
 
 export const metadata: Metadata = {
   title: "Quantum Guru Chat",
@@ -15,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased select-none">
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

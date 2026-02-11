@@ -14,6 +14,7 @@ import {
     type QaPairType as QaPair, type GuardrailType as Guardrail, type ChatLogType
 } from '../../actions/admin';
 import QuantumBackground from '../../../components/QuantumBackground';
+import ThemeToggle from '../../../components/ThemeToggle';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -101,12 +102,12 @@ export default function AdminDashboard() {
     );
 
     return (
-        <div className="flex h-screen bg-zinc-950 font-sans overflow-hidden text-zinc-200 relative selection:bg-purple-500/30">
+        <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-purple-500/30">
             {/* Background Effects */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-100 transition-opacity duration-500">
                 <QuantumBackground />
             </div>
-            <div className="fixed inset-0 bg-zinc-950/80 z-0 pointer-events-none backdrop-blur-[1px]" />
+            <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none backdrop-blur-[1px]" />
 
             {/* Mobile Sidebar Overlay */}
             {isMobileMenuOpen && (
@@ -180,12 +181,12 @@ export default function AdminDashboard() {
                 <header className="bg-transparent border-b border-white/5 h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-30 backdrop-blur-md">
                     <div className="flex items-center gap-4">
                         <button
-                            className="md:hidden p-2 text-zinc-400 hover:bg-white/5 rounded-lg transition-colors"
+                            className="md:hidden p-2 text-muted-foreground hover:bg-white/5 rounded-lg transition-colors"
                             onClick={() => setIsMobileMenuOpen(true)}
                         >
                             <Menu size={24} />
                         </button>
-                        <h2 className="font-bold text-white flex items-center gap-2 text-sm md:text-base capitalize">
+                        <h2 className="font-bold text-foreground flex items-center gap-2 text-sm md:text-base capitalize">
                             {activeTab === 'knowledge_base' && <MessageSquare className="text-blue-400" />}
                             {activeTab === 'guardrails' && <ShieldAlert className="text-red-400" />}
                             {activeTab === 'analytics' && <BarChart3 className="text-purple-400" />}
@@ -195,8 +196,9 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        <ThemeToggle />
                         <div className="text-sm text-right">
-                            <p className="font-bold text-zinc-200">Administrator</p>
+                            <p className="font-bold text-zinc-500 dark:text-zinc-200">Administrator</p>
                             <p className="text-[10px] text-green-500 font-medium tracking-widest uppercase">● System Online</p>
                         </div>
                         <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white border border-white/5 font-bold">A</div>
