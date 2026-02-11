@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import ModeSwitcher from './ModeSwitcher';
 import QuantumBackground from './QuantumBackground';
 import ThemeToggle from './ThemeToggle';
 
@@ -22,11 +21,6 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                 <QuantumBackground />
             </div>
             <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none backdrop-blur-[1px]"></div>
-
-            {/* --- Mode Switcher (Far Left) --- */}
-            <div className="relative z-20 h-full flex-shrink-0">
-                <ModeSwitcher currentMode={currentMode} />
-            </div>
 
             {/* --- Left Sidebar (Dynamic) --- */}
             <aside className={`
