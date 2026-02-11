@@ -7,6 +7,7 @@ import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, Chevron
 import QuantumBackground from '../components/QuantumBackground';
 import ThemeToggle from '../components/ThemeToggle';
 import SidebarWizard from '../components/SidebarWizard';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 // --- Assets & Constants ---
 // --- Assets & Constants ---
@@ -396,9 +397,13 @@ export default function App() {
                     ? 'bg-zinc-800/80 backdrop-blur-md text-zinc-100 border border-white/10 rounded-br-none shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
                     : msg.sender === 'system'
                       ? 'bg-secondary/50 text-muted-foreground text-sm text-center w-full rounded-lg border border-border'
-                      : 'bg-card/60 backdrop-blur-md text-card-foreground border border-border rounded-bl-none shadow-sm'
+                      : 'bg-card/60 backdrop-blur-md text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden'
                     }`}>
-                    {msg.text}
+                    {msg.sender === 'bot' || msg.sender === 'user' ? (
+                      <MarkdownRenderer content={msg.text} />
+                    ) : (
+                      msg.text
+                    )}
 
                     {/* Rich UI Components based on message type */}
                     {msg.type === 'status_card' && (
@@ -587,8 +592,8 @@ export default function App() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
 
