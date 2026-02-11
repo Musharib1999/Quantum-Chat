@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
-    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X
+    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -15,6 +15,8 @@ import {
 } from '../../actions/admin';
 import QuantumBackground from '../../../components/QuantumBackground';
 import ThemeToggle from '../../../components/ThemeToggle';
+import StockManager from '../../../components/admin/StockManager';
+import ArticleManager from '../../../components/admin/ArticleManager';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -90,17 +92,6 @@ export default function AdminDashboard() {
         setGuardrails(guardrails.map(g => g.id === id ? { ...g, active: !g.active } : g));
     };
 
-    // Assuming SidebarItem is a component defined elsewhere or a placeholder
-    const SidebarItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) => (
-        <button
-            onClick={onClick}
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-colors ${active ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-        >
-            {icon}
-            <span className="font-medium">{label}</span>
-        </button>
-    );
-
     return (
         <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-purple-500/30">
             {/* Background Effects */}
@@ -136,26 +127,38 @@ export default function AdminDashboard() {
                     </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2 mt-4">
-                    <SidebarItem
+                <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
+                    <SidebarLink
                         icon={<FileText size={20} />}
                         label="Knowledge Base"
                         active={activeTab === 'knowledge_base'}
                         onClick={() => { setActiveTab('knowledge_base'); setIsMobileMenuOpen(false); }}
                     />
-                    <SidebarItem
+                    <SidebarLink
                         icon={<ShieldAlert size={20} />}
                         label="Guardrails"
                         active={activeTab === 'guardrails'}
                         onClick={() => { setActiveTab('guardrails'); setIsMobileMenuOpen(false); }}
                     />
-                    <SidebarItem
+                    <SidebarLink
+                        icon={<TrendingUp size={20} />}
+                        label="Stocks"
+                        active={activeTab === 'stocks'}
+                        onClick={() => { setActiveTab('stocks'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
+                        icon={<BookOpen size={20} />}
+                        label="Articles"
+                        active={activeTab === 'articles'}
+                        onClick={() => { setActiveTab('articles'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<MessageSquare size={20} />}
                         label="Chat Logs"
                         active={activeTab === 'logs'}
                         onClick={() => { setActiveTab('logs'); setIsMobileMenuOpen(false); }}
                     />
-                    <SidebarItem
+                    <SidebarLink
                         icon={<BarChart3 size={20} />}
                         label="Analytics"
                         active={activeTab === 'analytics'}
@@ -191,6 +194,8 @@ export default function AdminDashboard() {
                             {activeTab === 'guardrails' && <ShieldAlert className="text-red-400" />}
                             {activeTab === 'analytics' && <BarChart3 className="text-purple-400" />}
                             {activeTab === 'logs' && <MessageSquare className="text-purple-400" />}
+                            {activeTab === 'stocks' && <TrendingUp className="text-green-400" />}
+                            {activeTab === 'articles' && <BookOpen className="text-blue-400" />}
                             {activeTab.replace('_', ' ')}
                         </h2>
                     </div>
@@ -339,6 +344,10 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     )}
+
+                    {/* NEW TABS */}
+                    {activeTab === 'stocks' && <StockManager />}
+                    {activeTab === 'articles' && <ArticleManager />}
 
                     {/* LOGS TAB */}
                     {activeTab === 'logs' && (

@@ -93,7 +93,7 @@ export async function chatWithGroq(
     prompt: string,
     type: 'chat' | 'draft' = 'chat',
     lang: 'en' | 'hi' = 'en',
-    sessionConfig?: { industry: string | null, service: string | null, problem: string | null, hardware: string | null }
+    contextConfig?: any // Flexible context for Industry, Market, or Article modes
 ): Promise<AIResponse> {
     // Keeping name for frontend compatibility
     await dbConnect(); // Ensure connection early
@@ -121,7 +121,7 @@ export async function chatWithGroq(
         return { text: violation, guardrailsStatus: 'violated', activeGuardrails: ruleTexts };
     }
 
-    // 2. KB / RAG Check
+    // 2. KB / RAG Check (Standard for all modes, but could be scoped later)
     const kbResult = await queryKnowledgeBase(prompt);
 
     if (kbResult?.type === 'direct') {
@@ -165,14 +165,33 @@ export async function chatWithGroq(
     }
 
     // 3. Main LLM Logic
-    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant for Quantum Systems. Be helpful, professional, and efficient.`;
+    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant. Be helpful, professional, and efficient.`;
 
-    if (sessionConfig) {
-        const { industry, service, problem, hardware } = sessionConfig;
-        if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
-        if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;
-        if (problem) systemInstructions += `\nPROBLEM CONTEXT: The specific problem being addressed is ${problem}.`;
-        if (hardware) systemInstructions += `\nHARDWARE CONTEXT: The target quantum hardware is ${hardware}. Optimize your responses for this architecture.`;
+    // --- Dynamic Context Injection ---
+    if (contextConfig) {
+        // Mode: Market Intelligence
+        if (contextConfig.mode === 'market') {
+            systemInstructions += `\n\nMODE: MARKET INTELLIGENCE`;
+            if (contextConfig.stockName) systemInstructions += `\nFOCUS ASSET: ${contextConfig.stockName}`;
+            if (contextConfig.stockUrl) systemInstructions += `\nREFERENCE URL: ${contextConfig.stockUrl}`;
+            systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset.`;
+        }
+        // Mode: Research Lab (Articles)
+        else if (contextConfig.mode === 'article') {
+            systemInstructions += `\n\nMODE: RESEARCH LAB`;
+            if (contextConfig.articleTitle) systemInstructions += `\nCURRENT PAPER/ARTICLE: ${contextConfig.articleTitle}`;
+            if (contextConfig.articleCategory) systemInstructions += `\nCATEGORY: ${contextConfig.articleCategory}`;
+            if (contextConfig.articleUrl) systemInstructions += `\nSOURCE URL: ${contextConfig.articleUrl}`;
+            systemInstructions += `\nTASK: Summarize, analyze, or answer questions based on the specific research article provided.`;
+        }
+        // Mode: Industry (Default / Legacy)
+        else {
+            const { industry, service, problem, hardware } = contextConfig;
+            if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
+            if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;
+            if (problem) systemInstructions += `\nPROBLEM CONTEXT: The specific problem being addressed is ${problem}.`;
+            if (hardware) systemInstructions += `\nHARDWARE CONTEXT: The target quantum hardware is ${hardware}. Optimize your responses for this architecture.`;
+        }
     }
 
     systemInstructions += `\n\nCRITICAL SAFETY RULES:
@@ -181,6 +200,7 @@ export async function chatWithGroq(
 
     let finalPrompt = prompt;
 
+    // Integrate KB Context if found
     if (kbResult?.type === 'context') {
         systemInstructions += "\n\nUse the following official context to answer the user's question accurately. If the answer is not in the context, say you don't know and advise checking official sources.";
         finalPrompt = `Context: ${kbResult.text}\n\nUser Question: ${prompt}`;

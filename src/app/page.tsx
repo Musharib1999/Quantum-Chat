@@ -1,279 +1,70 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { chatWithGroq, checkGeminiConnection } from './actions/chat';
-import { getQaPairs } from './actions/admin';
-import { Send, Mic, Menu, X, FileText, MapPin, HelpCircle, Phone, Globe, ChevronRight, User, Share2, Download, Sparkles, Loader2, AlertTriangle, TrendingUp, ArrowUp } from 'lucide-react';
-import QuantumBackground from '../components/QuantumBackground';
-import ThemeToggle from '../components/ThemeToggle';
-import SidebarWizard from '../components/SidebarWizard';
-import MarkdownRenderer from '../components/MarkdownRenderer';
+import React, { useState, useEffect, useRef } from 'react';
+import { Settings, Send, User, ChevronLeft, StopCircle, RefreshCw, Key, ShieldCheck, Database, Loader2, TrendingUp, BookOpen } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
 
-// --- Assets & Constants ---
-// --- Assets & Constants ---
-const GOV_LOGO_URL = "/logo.png?v=7";
-
-const SUGGESTIONS = [
-  "Check Application Status",
-  "Mukhyamantri Nischay Yojna",
-  "Jan Shikayat",
-  "Quantum Computing Status",
-];
-
-const HINDI_SUGGESTIONS = [
-  "आवेदन स्थिति देखें",
-  "मुख्यमंत्री निश्चय योजना",
-  "जन शिकायत",
-  "PRI सदस्य विवरण"
-];
-
-const SmartForm = ({ config }: { config: any }) => {
-  const [formData, setFormData] = React.useState<Record<string, string>>({});
-  const [isSubmitted, setIsSubmitted] = React.useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitted(true);
-  };
-
-  if (isSubmitted) {
-    return (
-      <div className="mt-3 bg-green-50 border border-green-200 rounded-2xl p-6 text-center shadow-inner">
-        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-          <Sparkles className="text-green-600" size={24} />
-        </div>
-        <h4 className="text-green-800 font-bold mb-1">Application Submitted!</h4>
-        <p className="text-[11px] text-green-600">Your request has been received. Reference ID: QG-{Math.floor(Math.random() * 89999 + 10000)}</p>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="mt-3 bg-card rounded-2xl p-4 border border-border shadow-sm w-full space-y-3">
-      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border text-blue-600 dark:text-blue-400">
-        <FileText size={18} />
-        <span className="font-bold text-sm">{config.title || "Official Form"}</span>
-      </div>
-
-      {config.fields?.map((field: any, idx: number) => (
-        <div key={idx} className="space-y-1">
-          <label className="text-xs text-muted-foreground font-medium pl-1">{field.label}</label>
-          {field.type === 'select' ? (
-            <select
-              required
-              className="w-full bg-secondary border border-border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer text-foreground"
-              onChange={e => setFormData(prev => ({ ...prev, [field.label]: e.target.value }))}
-            >
-              <option value="">Select Option</option>
-              {field.options?.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          ) : (
-            <input
-              required
-              type={field.type || 'text'}
-              className="w-full bg-secondary border border-border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all text-foreground placeholder:text-muted-foreground"
-              placeholder={`Enter ${field.label}...`}
-              onChange={e => setFormData(prev => ({ ...prev, [field.label]: e.target.value }))}
-            />
-          )}
-        </div>
-      ))}
-
-      <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-md active:scale-[0.98] mt-2">
-        Submit Request
-      </button>
-    </form>
-  );
-};
-
-// --- Mock Backend Responses for "Database" Lookups ---
-const MOCK_DB_RESPONSES: Record<string, { type: string, data: any }> = {
-  mutation: {
-    type: 'status_card',
-    data: {
-      caseNo: "2024/25/00142",
-      applicant: "Rajesh Kumar Singh",
-      circle: "Patna Sadar",
-      status: "Under Review (CO Level)",
-      date: "02 Feb 2026",
-      step: 3
-    }
-  },
-  details: {
-    type: 'record_card',
-    data: {
-      ryot: "Suresh Prasad Yadav",
-      khata: "124",
-      khesra: "442",
-      area: "12 Dismil",
-      type: "Rayati"
-    }
-  }
-};
+import QuantumBackground from '@/components/QuantumBackground';
+import SidebarWizard from '@/components/SidebarWizard';
+import { chatWithGroq } from './actions/chat';
+import ThemeToggle from '@/components/ThemeToggle';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { getChatLogs } from './actions/admin';
+import ModeSwitcher from '@/components/ModeSwitcher';
+import StockSidebar from '@/components/StockSidebar';
+import ArticleSidebar from '@/components/ArticleSidebar';
 
 interface Message {
   id: number;
   text: string;
   sender: 'user' | 'bot' | 'system';
   timestamp: string;
-  type?: string;
-  data?: any;
-  sourceUrl?: string; // NEW
-  form?: any;       // NEW
+  isStreaming?: boolean;
 }
 
-export default function App() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [lang, setLang] = useState<'en' | 'hi'>('en'); // 'en' or 'hi'
-  const [isRecording, setIsRecording] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [dynamicForms, setDynamicForms] = useState<any[]>([]);
-
-
-  // -- Session Onboarding State --
+export default function Home() {
   const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null }>({ industry: 'Biochemistry', service: null, problem: null, hardware: null });
   const [sidebarStep, setSidebarStep] = useState<'industry' | 'service' | 'problem' | 'hardware' | 'ready'>('service');
-
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
 
+  // --- Multi-Interface State ---
+  const [currentMode, setCurrentMode] = useState<'industry' | 'market' | 'article'>('industry');
+  const [selectedStock, setSelectedStock] = useState<{ _id: string, name: string, url: string } | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<{ _id: string, title: string, category: string, url: string } | null>(null);
+
+
+  // Initial System Message
   useEffect(() => {
-    getQaPairs().then(pairs => {
-      const forms = pairs.filter((p: any) => p.type === 'form');
-      setDynamicForms(forms);
-    });
-  }, []);
+    // Only set initial message if empty
+    if (messages.length === 0) {
+      setTimeout(() => {
+        setMessages([{
+          id: 1,
+          text: "Quantum Interface Initialized. Systems Online.\n\nPlease complete the configuration sequence in the sidebar to begin your session.",
+          sender: 'bot',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+      }, 1000);
+    }
+  }, []); // Run once on mount
 
+  // Auto-scroll
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const [isConnected, setIsConnected] = useState(true);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isTyping]);
 
-  useEffect(() => {
-    checkGeminiConnection().then(setIsConnected);
-  }, []);
-
-  // --- GEMINI API INTEGRATION (Server Action) ---
-  const callGemini = async (prompt: string, type: 'chat' | 'draft' = 'chat') => {
-    const response = await chatWithGroq(prompt, type, lang, sessionConfig);
-    return response;
-  };
-
-  const handleSend = async (mode: 'chat' | 'draft' = 'chat') => {
-    if (!inputText.trim()) return;
-
-    const newMsg: Message = {
-      id: messages.length + 1,
-      text: inputText,
-      sender: 'user',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages(prev => [...prev, newMsg]);
-    setInputText("");
-    setIsLoading(true);
-
-    // --- Hybrid Logic: Rule-Based for "Database" vs LLM for Chat ---
-
-    // 1. Check for "Database" Keywords (Simulation)
-    const lowerInput = inputText.toLowerCase();
-    let dbMatch: string | null = null;
-
-    // Only do DB lookup if NOT in draft mode
-    if (mode === 'chat') {
-      if (lowerInput.includes('mutation') && (lowerInput.includes('status') || lowerInput.includes('check'))) {
-        dbMatch = 'mutation';
-      } else if ((lowerInput.includes('khata') || lowerInput.includes('khesra')) && lowerInput.includes('124')) {
-        dbMatch = 'details';
-      }
-    }
-
-    if (dbMatch) {
-      // Simulate network delay for DB lookup
-      setTimeout(() => {
-        const botResponse: Message = {
-          id: messages.length + 2,
-          text: lang === 'en' ? "Here are the details found in our records:" : "हमारे रिकॉर्ड में निम्नलिखित विवरण मिले:",
-          sender: 'bot',
-          type: MOCK_DB_RESPONSES[dbMatch!].type,
-          data: MOCK_DB_RESPONSES[dbMatch!].data,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages(prev => [...prev, botResponse]);
-        setIsLoading(false);
-      }, 1000);
-      return;
-    }
-
-    // 2. Fallback to Gemini LLM for General Queries or Drafting
-    const llmResponse = await callGemini(inputText, mode);
-
-
-
-    if (llmResponse.error) {
-      setConnectionError(llmResponse.error);
-      setIsConnected(false);
-    } else {
-      setConnectionError(null);
-      setIsConnected(true);
-    }
-
-    const botResponse: Message = {
-      id: messages.length + 2,
-      text: llmResponse.error ? (lang === 'hi' ? "क्षमा करें, अभी सेवा उपलब्ध नहीं है।" : "System Offline. Please check connection.") : llmResponse.text,
-      sender: 'bot',
-      type: llmResponse.source || 'text',
-      sourceUrl: llmResponse.sourceUrl,
-      form: llmResponse.form,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages(prev => [...prev, botResponse]);
-    setIsLoading(false);
-  };
-
-  const handleSidebarFormClick = (form: any) => {
-    // 1. Add user message
-    const userMsg: Message = {
-      id: Date.now(),
-      text: `I want to fill the ${form.question} form`,
-      sender: 'user',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    // 2. Add bot message with the form
-    const botMsg: Message = {
-      id: Date.now() + 1,
-      text: form.answer,
-      sender: 'bot',
-      type: 'kb_form',
-      form: form.formConfig,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages(prev => [...prev, userMsg, botMsg]);
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
-  };
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
-  const toggleLang = () => {
-    const newLang = lang === 'en' ? 'hi' : 'en';
-    setLang(newLang);
-    setMessages(prev => [...prev, {
-      id: Date.now(),
-      text: newLang === 'hi' ? "भाषा हिंदी में बदल दी गई है।" : "Language switched to English.",
-      sender: 'system',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }]);
-  };
 
   // --- Session Wizard Handlers ---
   const handleWizardSelection = (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => {
@@ -299,55 +90,174 @@ export default function App() {
     if (type === 'hardware') setSidebarStep('ready');
   };
 
+  // --- Mode Handling ---
+  const handleModeSwitch = (mode: 'industry' | 'market' | 'article') => {
+    setCurrentMode(mode);
+    setIsSidebarOpen(true);
+
+    // Optional: Add a system message when switching modes
+    const modeName = mode === 'industry' ? 'Quantum Industry' : mode === 'market' ? 'Market Intelligence' : 'Research Lab';
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      text: `Switched Mode to: **${modeName}**`,
+      sender: 'system',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+  };
+
+  const handleStockSelect = (stock: any) => {
+    setSelectedStock(stock);
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      text: `Asset Selected: **${stock.name}**\nAnalysis Context Loaded.`,
+      sender: 'system',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+  };
+
+  const handleArticleSelect = (article: any) => {
+    setSelectedArticle(article);
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      text: `Research Loaded: **${article.title}**\nCategory: ${article.category}`,
+      sender: 'system',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+  };
 
 
+  // --- Chat Logic ---
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
+
+    const userMsg: Message = {
+      id: Date.now(),
+      text: inputValue,
+      sender: 'user',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInputValue("");
+    setIsTyping(true);
+
+    try {
+      // Build Context based on Mode
+      let contextConfig: any = {};
+
+      if (currentMode === 'industry') {
+        contextConfig = sessionConfig;
+      } else if (currentMode === 'market' && selectedStock) {
+        contextConfig = {
+          mode: 'market',
+          stockName: selectedStock.name,
+          stockUrl: selectedStock.url
+        };
+      } else if (currentMode === 'article' && selectedArticle) {
+        contextConfig = {
+          mode: 'article',
+          articleTitle: selectedArticle.title,
+          articleCategory: selectedArticle.category,
+          articleUrl: selectedArticle.url
+        };
+      }
+
+      const response = await chatWithGroq(userMsg.text, 'chat', 'en', contextConfig);
+
+      // Simulate Streaming Effect
+      const botMsgId = Date.now() + 1;
+      setStreamingMessageId(botMsgId);
+
+      setMessages(prev => [...prev, {
+        id: botMsgId,
+        text: "", // Start empty
+        sender: 'bot',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isStreaming: true
+      }]);
+
+      let currentText = "";
+      const words = response.text.split(" ");
+
+      // typing effect 
+      for (let i = 0; i < words.length; i++) {
+        currentText += words[i] + " ";
+        setMessages(prev => prev.map(msg =>
+          msg.id === botMsgId ? { ...msg, text: currentText } : msg
+        ));
+        await new Promise(resolve => setTimeout(resolve, 20)); // Adjust speed here
+      }
+
+      setMessages(prev => prev.map(msg =>
+        msg.id === botMsgId ? { ...msg, isStreaming: false } : msg
+      ));
+      setStreamingMessageId(null);
+
+    } catch (error) {
+      console.error("Chat Error:", error);
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        text: "Error: Neural link unstable. Please retry transmission.",
+        sender: 'bot',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-white/20 relative">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-100 transition-opacity duration-500">
+    <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-purple-500/30">
+
+      {/* Background Effects */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-100 transition-opacity duration-500">
         <QuantumBackground />
       </div>
-      {/* --- Sidebar (Desktop & Mobile) --- */}
-      {/* Connection Warning Banner */}
-      {/* Connection Warning Banner */}
-      {(!isConnected || connectionError) && (
-        <div className="fixed top-0 left-0 right-0 bg-red-500/90 backdrop-blur-md text-white text-[10px] md:text-xs font-bold px-4 py-3 text-center z-[60] flex items-center justify-center gap-2 shadow-lg animate-in slide-in-from-top-full duration-500">
-          <AlertTriangle size={14} className="shrink-0 animate-pulse" />
-          <span className="uppercase tracking-wide">{connectionError || "System Warning: Database or AI Model Unreachable"}</span>
-        </div>
-      )}
+      <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none backdrop-blur-[1px]"></div>
 
-      {/* Mobile Menu Trigger (Floating) */}
-      <button
-        onClick={() => setIsSidebarOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-zinc-900/50 backdrop-blur-md border border-white/10 rounded-lg text-white shadow-lg active:scale-95 transition-all"
-      >
-        <Menu size={20} />
-      </button>
+      {/* --- Mode Switcher (Far Left) --- */}
+      <div className="relative z-20 h-full flex-shrink-0">
+        <ModeSwitcher currentMode={currentMode} onSwitch={handleModeSwitch} />
+      </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden transition-opacity"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      {/* --- Left Sidebar (Dynamic) --- */}
+      <div className={`
+        relative z-10 bg-black/20 backdrop-blur-2xl border-r border-white/5 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+        ${isSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 -translate-x-10 opacity-0 overflow-hidden'}
+      `}>
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-border/50 hover:bg-purple-500 hover:text-white rounded-r-xl flex items-center justify-center transition-all z-50 backdrop-blur-md border border-l-0 border-white/10 shadow-lg"
+          aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          <ChevronLeft size={14} className={`transition-transform duration-500 ${!isSidebarOpen ? 'rotate-180' : ''}`} />
+        </button>
 
-      {/* --- Sidebar (Mobile Responsive) --- */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static flex flex-col shadow-2xl md:shadow-none`}>
-        <div className="p-4 md:p-6 pb-[25px] border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center justify-center w-full py-4">
-            <h1 className="font-bold text-xl md:text-2xl tracking-wide text-gradient py-2 text-center leading-tight">
-              Quantum Guru
-            </h1>
-          </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:bg-gray-100 p-2 rounded-lg">
-            <X size={20} />
-          </button>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-          <SidebarWizard step={sidebarStep} config={sessionConfig} onSelect={handleWizardSelection} />
+        {/* Dynamic Sidebar Content */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+          {currentMode === 'industry' && (
+            <div className="p-4 space-y-2">
+              <SidebarWizard step={sidebarStep} config={sessionConfig} onSelect={handleWizardSelection} />
+            </div>
+          )}
+          {currentMode === 'market' && (
+            <div className="h-full">
+              <StockSidebar onSelect={handleStockSelect} activeStockId={selectedStock?._id} />
+            </div>
+          )}
+          {currentMode === 'article' && (
+            <div className="h-full">
+              <ArticleSidebar onSelect={handleArticleSelect} activeArticleId={selectedArticle?._id} />
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-border bg-card/20 space-y-3">
@@ -355,7 +265,6 @@ export default function App() {
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Appearance</span>
             <ThemeToggle />
           </div>
-
         </div>
       </div>
 
@@ -365,8 +274,6 @@ export default function App() {
         {/* Messages List - Transitions smoothy */}
         <main className={`overflow-y-auto bg-transparent min-w-0 w-full overflow-x-hidden transition-all duration-700 ease-in-out ${messages.length === 0 ? 'flex-[0.001] opacity-0 py-0' : 'flex-1 p-3 md:p-4 lg:p-6 opacity-100'}`}>
           <div className="w-full max-w-3xl mx-auto space-y-6">
-
-
 
             {messages.map((msg) => (
               <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -392,240 +299,66 @@ export default function App() {
                     {msg.sender === 'bot' || msg.sender === 'user' ? (
                       <MarkdownRenderer content={msg.text} />
                     ) : (
-                      msg.text
+                      <span className="flex items-center justify-center gap-2">
+                        {currentMode === 'market' ? <TrendingUp size={14} /> : currentMode === 'article' ? <BookOpen size={14} /> : <ShieldCheck size={14} />}
+                        {msg.text}
+                      </span>
                     )}
-
-                    {/* Rich UI Components based on message type */}
-                    {msg.type === 'status_card' && (
-                      <div className="mt-3 bg-gray-50 rounded-xl p-4 border border-gray-200 w-full min-w-[280px]">
-                        <div className="flex justify-between items-start mb-2 pb-2 border-b border-gray-200">
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase font-semibold">Case No</span>
-                            <div className="font-mono text-blue-700 font-medium">{msg.data.caseNo}</div>
-                          </div>
-                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-medium">{msg.data.status}</span>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Applicant:</span>
-                            <span className="font-medium">{msg.data.applicant}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Circle:</span>
-                            <span className="font-medium">{msg.data.circle}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Last Update:</span>
-                            <span className="font-medium">{msg.data.date}</span>
-                          </div>
-                        </div>
-
-                        {/* Status Stepper */}
-                        <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400">
-                          <div className="flex flex-col items-center gap-1">
-                            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
-                            <span>Apply</span>
-                          </div>
-                          <div className="h-0.5 flex-1 bg-green-500 mx-1"></div>
-                          <div className="flex flex-col items-center gap-1">
-                            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
-                            <span>Verify</span>
-                          </div>
-                          <div className="h-0.5 flex-1 bg-gray-300 mx-1"></div>
-                          <div className="flex flex-col items-center gap-1">
-                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">3</div>
-                            <span>CO</span>
-                          </div>
-                        </div>
-
-                        <button className="w-full mt-4 bg-white border border-blue-600 text-blue-600 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-50 transition-colors">
-                          View Full Details
-                        </button>
-                      </div>
-                    )}
-
-                    {msg.type === 'record_card' && (
-                      <div className="mt-3 bg-gradient-to-br from-green-50 to-white rounded-xl p-0 border border-green-100 overflow-hidden w-full">
-                        <div className="bg-green-600 px-4 py-2 text-white text-xs font-bold uppercase tracking-wider flex justify-between items-center">
-                          <span>Jamabandi Record</span>
-                          <Share2 size={12} />
-                        </div>
-                        <div className="p-4 grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <p className="text-gray-500 text-xs">Ryot Name</p>
-                            <p className="font-medium text-gray-800">{msg.data.ryot}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 text-xs">Land Type</p>
-                            <p className="font-medium text-gray-800">{msg.data.type}</p>
-                          </div>
-                          <div className="bg-white p-2 rounded border border-gray-100">
-                            <p className="text-gray-500 text-xs">Khata No</p>
-                            <p className="font-mono font-bold text-lg text-green-700">{msg.data.khata}</p>
-                          </div>
-                          <div className="bg-white p-2 rounded border border-gray-100">
-                            <p className="text-gray-500 text-xs">Khesra No</p>
-                            <p className="font-mono font-bold text-lg text-green-700">{msg.data.khesra}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* NEW: URL/Link Card */}
-                    {(msg.sourceUrl || msg.type === 'kb_url') && (
-                      <div className="mt-2 pt-2 border-t border-gray-100">
-                        <a
-                          href={msg.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors bg-blue-50/50 p-2 rounded-lg group"
-                        >
-                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-105 transition-transform">
-                            <Globe size={12} />
-                          </div>
-                          <span className="text-xs font-medium truncate flex-1">{msg.sourceUrl}</span>
-                          <ChevronRight size={14} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                        </a>
-                      </div>
-                    )}
-
-                    {/* NEW: Smart Form Box */}
-                    {msg.type === 'form' && <SmartForm config={msg.data} />}
-
-                    {/* Timestamp */}
-                    <div className={`text-[10px] mt-1 ${msg.sender === 'user' ? 'text-zinc-500 text-right' : 'text-zinc-600'}`}>
-                      {msg.timestamp}
-                    </div>
                   </div>
                 </div>
               </div>
             ))}
 
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-card border border-border text-foreground px-4 py-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce delay-150"></div>
-                    <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce delay-300"></div>
+            {isTyping && (
+              <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="flex flex-row items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <span className="text-[10px] font-bold text-white">...</span>
                   </div>
-                  <span className="text-xs text-zinc-500 uppercase font-medium tracking-wide">Processing</span>
+                  <div className="flex space-x-1 pl-2">
+                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce"></div>
+                  </div>
                 </div>
               </div>
             )}
-
             <div ref={messagesEndRef} />
           </div>
         </main>
 
+        {/* Input Area - Integrated & Sleek */}
+        <footer className="p-4 md:p-6 bg-transparent relative z-20">
+          <div className="max-w-3xl mx-auto relative group">
+            {/* Glow Effect */}
+            <div className={`absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-1000 blur-md ${isTyping ? 'opacity-50 animate-pulse' : ''}`}></div>
 
-
-        {/* --- Input Area Container --- */}
-        <div className={`transition-all duration-700 ease-in-out flex flex-col items-center w-full px-4 z-20 ${messages.length === 0
-          ? 'flex-1 justify-center'
-          : 'flex-none justify-end pb-6 pt-4'
-          }`}>
-
-          {/* Initial Greeting - Only visible when no messages */}
-          <div className={`transition-all duration-500 text-center space-y-2 mb-8 ${messages.length === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10 hidden'
-            }`}>
-            <div className="w-16 h-16 bg-white/10 dark:bg-white/10 bg-zinc-900/10 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md shadow-[0_0_30px_rgba(255,255,255,0.05)] border border-white/5">
-              <span className="text-2xl font-bold text-foreground">QG</span>
-            </div>
-            <p className="text-lg md:text-xl text-muted-foreground font-light max-w-md mx-auto leading-relaxed">
-              System Online. I am <span className="text-foreground font-medium">Quantum Guru AI</span>, your intelligence interface.
-              How can I assist with your computations today?
-            </p>
-          </div>
-
-          <div className="w-full max-w-3xl relative">
-            <div className={`relative flex items-center bg-card/80 backdrop-blur-xl border border-border shadow-[0_0_40px_rgba(0,0,0,0.2)] transition-all duration-300 group ${messages.length === 0 ? 'rounded-2xl p-2' : 'rounded-full p-1.5'
-              }`}>
-              <button className={`p-3 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary ${messages.length === 0 ? '' : 'hidden md:block'
-                }`}>
-                <Sparkles size={20} />
-              </button>
-
-              <input
-                type="text"
-                value={inputText} // Assuming inputText is the state variable for the input
-                onChange={(e) => setInputText(e.target.value)} // Assuming setInputText is the setter
-                onKeyDown={(e) => { // Assuming handleKeyPress is replaced by this inline logic
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend('chat'); // Assuming handleSend is the function to send messages
-                  }
-                }}
-                placeholder={sidebarStep !== 'ready' ? `Please complete session setup in sidebar...` : (messages.length === 0 ? "Ask Quantum Guru..." : "Type your query...")}
-                disabled={sidebarStep !== 'ready'}
-                className={`flex-1 bg-transparent text-foreground placeholder:text-zinc-600 px-4 py-3 outline-none text-base md:text-lg font-light tracking-wide w-full transition-all ${sidebarStep !== 'ready' ? 'opacity-50 cursor-not-allowed italic' : ''}`}
+            <div className="relative flex items-end gap-2 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 transition-all focus-within:ring-1 focus-within:ring-white/20 focus-within:border-white/20 focus-within:bg-zinc-900/95">
+              <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={`Ask Quantum Assistant (${currentMode === 'industry' ? 'Industry Mode' : currentMode === 'market' ? 'Market Intelligence' : 'Research Lab'})...`}
+                rows={1}
+                className="flex-1 max-h-32 bg-transparent text-zinc-100 placeholder:text-zinc-500 text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
+                style={{ minHeight: '52px' }}
               />
 
-              <div className="flex items-center gap-1 pr-2">
-                <button
-                  onClick={() => handleSend('chat')} // Assuming handleSend is the function to send messages
-                  disabled={!inputText.trim() || isLoading || sidebarStep !== 'ready'} // Assuming inputText and isLoading are state variables
-                  className={`p-3 rounded-full transition-all duration-300 flex items-center justify-center ${inputText.trim()
-                    ? 'bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95 hover:shadow-xl'
-                    : 'bg-secondary text-muted-foreground cursor-not-allowed'
-                    }`}
-                >
-                  <ArrowUp size={18} className="md:w-[20px] md:h-[20px]" />
-                </button>
-              </div>
+              <button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isTyping}
+                className="p-3 rounded-xl bg-white text-black hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-white/20 hover:scale-105 active:scale-95 mb-0.5"
+              >
+                {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}
+              </button>
             </div>
-
-            <div className="text-center mt-3">
-              <p className="text-[10px] md:text-[11px] text-zinc-500 font-medium tracking-wide">
-                Quantum Guru • Turning Quantum Complexity into Clear Intelligence
-              </p>
-            </div>
+            <p className="text-center text-[10px] text-zinc-600 mt-3 font-medium tracking-wide">
+              QUANTUM SECURE CONNECTION • END-TO-END ENCRYPTED
+            </p>
           </div>
-        </div>
-      </div >
-    </div >
-  );
-}
+        </footer>
 
-// Helper Component for Sidebar Items
-function SidebarItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
-  return (
-    <button className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${active
-      ? 'bg-secondary text-foreground font-medium shadow-sm border border-border'
-      : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground border border-transparent'
-      }`}>
-      <span className={active ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}>{icon}</span>
-      <span className="text-base flex-1 text-left">{label}</span>
-      <Sparkles size={10} className={`opacity-0 group-hover:opacity-40 transition-opacity ${active ? 'text-foreground opacity-100' : 'text-muted-foreground'}`} />
-    </button>
-  );
-}
-
-// Helper Component for Sidebar Dropdown Groups
-function SidebarGroup({ icon, label, items }: { icon: React.ReactNode, label: string, items: { label: string, onClick?: () => void }[] }) {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-secondary/50 transition-all group"
-      >
-        <span className="text-muted-foreground group-hover:text-foreground">{icon}</span>
-        <span className="text-base font-medium flex-1 text-left">{label}</span>
-        <div className="flex items-center gap-2">
-          <Sparkles size={10} className="text-muted-foreground group-hover:text-foreground transition-colors opacity-0 group-hover:opacity-100" />
-          <ChevronRight size={14} className={`transition-transform text-muted-foreground ${isOpen ? 'rotate-90' : ''}`} />
-        </div>
-      </button>
-      {isOpen && (
-        <div className="ml-9 mt-1 space-y-1 border-l border-gray-100">
-          {items.map((item, idx) => (
-            <button key={idx} onClick={item.onClick} className="w-full text-left px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-r-md transition-colors">
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
