@@ -7,6 +7,7 @@ import dbConnect from '@/lib/db';
 import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
+import Experiment from '@/models/Experiment';
 import { execSync } from 'child_process';
 import path from 'path';
 
@@ -276,6 +277,28 @@ Success: ${executionResult.success}
                 });
 
                 const finalExplanation = completion2.choices[0]?.message?.content || "Simulation complete.";
+
+                // --- SAVE EXPERIMENT TO HISTORY ---
+                try {
+                    await Experiment.create({
+                        industry,
+                        service,
+                        problem,
+                        hardware,
+                        parameters: formData,
+                        qiskitCode,
+                        results: executionResult, // Simulation output
+                        analysis: finalExplanation,
+                        chartData: executionResult.counts ? {
+                            type: "bar",
+                            data: Object.entries(executionResult.counts).map(([k, v]) => ({ name: k, value: v }))
+                        } : null,
+                        timestamp: new Date()
+                    });
+                } catch (saveError) {
+                    console.error("Failed to save experiment history:", saveError);
+                    // Don't block the response, just log the error
+                }
 
                 await ChatLog.create({
                     userQuery: prompt,
