@@ -100,4 +100,3 @@ export default function SidebarWizard({ step, config, metadata, onSelect }: Side
         </div>
     );
 }
-鼓, Complexity: 1, Description:
