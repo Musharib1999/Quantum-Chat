@@ -20,7 +20,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <div className="text-center mb-16 space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-700">
           <div className="w-16 h-16 rounded-2xl bg-zinc-900/60 border border-white/10 flex items-center justify-center font-bold text-zinc-100 shadow-2xl mx-auto mb-6 text-2xl">
-            Q
+            QG
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white">
             Quantum Guru
