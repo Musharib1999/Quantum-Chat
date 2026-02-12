@@ -29,6 +29,19 @@ async function executeQuantumCircuit(circuitCode: string) {
     }
 }
 
+async function executeDWaveAnnealer(code: string) {
+    try {
+        const scriptPath = path.join(process.cwd(), 'scripts', 'dwave_simulator.py');
+        const escapedCode = code.replace(/"/g, '\\"').replace(/\n/g, ' ');
+        const cmd = `python3 "${scriptPath}" "${escapedCode}"`;
+        const output = execSync(cmd).toString();
+        return JSON.parse(output);
+    } catch (e: any) {
+        console.error("D-Wave Execution Fail:", e);
+        return { success: false, error: e.message };
+    }
+}
+
 // --- Types ---
 export interface AIResponse {
     text: string;
@@ -233,8 +246,40 @@ export async function chatWithGroq(
             if (formData && Object.keys(formData).length > 0) {
                 // --- SPECIAL: MULTI-PASS QUANTUM WORKFLOW ---
 
-                // Pass 1: Generate Qiskit Code
-                const genPrompt = `Generate a Python Qiskit circuit for the following problem:
+                // Determine Backend Type
+                const isDWave = hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer');
+                let codePrompt = "";
+                let executionResult: any = {};
+                let generatedCode = "";
+
+                if (isDWave) {
+                    // --- D-WAVE WORKFLOW ---
+                    codePrompt = `Generate a Python script using 'dimod' for D-Wave Quantum Annealing for the following problem:
+Industry: ${industry}
+Service: ${service}
+Problem: ${problem}
+Parameters: ${JSON.stringify(formData)}
+
+Requirements:
+1. Define a BinaryQuadraticModel (BQM) representing the problem.
+2. Store the BQM in a variable named 'bqm'.
+3. Do NOT run the sampler yourself; just define 'bqm'.
+4. Do NOT use 'dwave.system' or cloud samplers; use 'dimod'.
+5. Return ONLY the Python code.`;
+
+                    const completion1 = await groq.chat.completions.create({
+                        messages: [{ role: "system", content: "You are a D-Wave/Ocean Expert. Return only code." }, { role: "user", content: codePrompt }],
+                        model: DEFAULT_MODEL,
+                    });
+
+                    generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
+
+                    // Execute D-Wave Simulator
+                    executionResult = await executeDWaveAnnealer(generatedCode);
+
+                } else {
+                    // --- QISKIT WORKFLOW (Default) ---
+                    codePrompt = `Generate a Python Qiskit circuit for the following problem:
 Industry: ${industry}
 Service: ${service}
 Problem: ${problem}
@@ -243,20 +288,21 @@ Parameters: ${JSON.stringify(formData)}
 
 Return ONLY the Python code. Define a variable 'circuit' which is the QuantumCircuit object. Do not include any other text.`;
 
-                const completion1 = await groq.chat.completions.create({
-                    messages: [{ role: "system", content: "You are a Qiskit Expert. Return only code." }, { role: "user", content: genPrompt }],
-                    model: DEFAULT_MODEL,
-                });
+                    const completion1 = await groq.chat.completions.create({
+                        messages: [{ role: "system", content: "You are a Qiskit Expert. Return only code." }, { role: "user", content: codePrompt }],
+                        model: DEFAULT_MODEL,
+                    });
 
-                const qiskitCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
+                    generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
 
-                // Execution Step
-                const executionResult = await executeQuantumCircuit(qiskitCode);
+                    // Execute Qiskit Simulator
+                    executionResult = await executeQuantumCircuit(generatedCode);
+                }
 
                 // Pass 2: Interpret and Format
-                const interpretPrompt = `Analyze these Quantum Execution results:
+                const interpretPrompt = `Analyze these Quantum Execution results (${isDWave ? 'D-Wave Annealing' : 'Gate-Model Circuit'}):
 Problem: ${problem}
-Counts: ${JSON.stringify(executionResult.counts)}
+Results: ${JSON.stringify(executionResult)}
 Success: ${executionResult.success}
 
 1. Provide a professional, human-friendly explanation of these results in the context of ${industry}.
@@ -264,7 +310,7 @@ Success: ${executionResult.success}
 [CHART_DATA]
 {
   "type": "bar",
-  "data": [ {"name": "00", "value": 450}, {"name": "11", "value": 574} ]
+  "data": [ {"name": "Solution A", "value": 450}, {"name": "Solution B", "value": 574} ]
 }
 [/CHART_DATA]`;
 
@@ -286,7 +332,7 @@ Success: ${executionResult.success}
                         problem,
                         hardware,
                         parameters: formData,
-                        qiskitCode,
+                        qiskitCode: generatedCode,
                         results: executionResult, // Simulation output
                         analysis: finalExplanation,
                         chartData: executionResult.counts ? {
