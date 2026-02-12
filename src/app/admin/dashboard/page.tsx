@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
-    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen
+    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -18,10 +18,13 @@ import QuantumBackground from '../../../components/QuantumBackground';
 import ThemeToggle from '../../../components/ThemeToggle';
 import StockManager from '../../../components/admin/StockManager';
 import ArticleManager from '../../../components/admin/ArticleManager';
+import FormArchitect from '../../../components/admin/FormArchitect';
 
 export default function AdminDashboard() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState("knowledge_base");
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const initialTab = searchParams?.get('tab') || "knowledge_base";
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Knowledge Base State
@@ -163,6 +166,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('stocks'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<Plus size={20} />}
+                        label="Form Architect"
+                        active={activeTab === 'forms'}
+                        onClick={() => { setActiveTab('forms'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<BookOpen size={20} />}
                         label="Articles"
                         active={activeTab === 'articles'}
@@ -212,6 +221,7 @@ export default function AdminDashboard() {
                             {activeTab === 'logs' && <MessageSquare className="text-purple-400" />}
                             {activeTab === 'stocks' && <TrendingUp className="text-green-400" />}
                             {activeTab === 'articles' && <BookOpen className="text-blue-400" />}
+                            {activeTab === 'forms' && <Layers className="text-primary" />}
                             {activeTab.replace('_', ' ')}
                         </h2>
                     </div>
@@ -398,6 +408,7 @@ export default function AdminDashboard() {
                     {/* NEW TABS */}
                     {activeTab === 'stocks' && <StockManager />}
                     {activeTab === 'articles' && <ArticleManager />}
+                    {activeTab === 'forms' && <FormArchitect />}
 
                     {/* LOGS TAB */}
                     {activeTab === 'logs' && (
