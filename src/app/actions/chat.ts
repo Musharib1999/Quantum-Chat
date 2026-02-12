@@ -229,9 +229,9 @@ export async function chatWithGroq(
             }
             systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset.`;
         }
-        // Mode: Research Lab (Articles)
+        // Mode: Article & Learn
         else if (contextConfig.mode === 'article') {
-            systemInstructions += `\n\nMODE: RESEARCH LAB`;
+            systemInstructions += `\n\nMODE: ARTICLE & LEARN`;
             if (contextConfig.articleTitle) systemInstructions += `\nCURRENT PAPER/ARTICLE: ${contextConfig.articleTitle}`;
             if (contextConfig.articleCategory) systemInstructions += `\nCATEGORY: ${contextConfig.articleCategory}`;
             if (contextConfig.articleUrl) {

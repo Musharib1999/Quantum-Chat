@@ -30,7 +30,7 @@ export default function ArticlePage() {
             <ChatInterface
                 mode="article"
                 contextConfig={contextConfig}
-                placeholder="Ask Research Lab..."
+                placeholder="Ask Article & Learn..."
             />
         </AppLayout>
     );

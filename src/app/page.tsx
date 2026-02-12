@@ -73,13 +73,13 @@ export default function LandingPage() {
                 <BookOpen size={28} />
               </div>
 
-              <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors">Research Lab</h3>
+              <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors">Article & Learn</h3>
               <p className="text-zinc-400 text-sm leading-relaxed mb-8 flex-1">
-                Explore curated scientific papers, articles, and educational resources in the quantum domain.
+                Stay updated with curated scientific papers, tutorials, and latest news in the quantum domain.
               </p>
 
               <div className="flex items-center text-sm font-bold text-zinc-100 group-hover:gap-2 transition-all">
-                Enter Lab <ArrowRight size={16} className="ml-2 group-hover:ml-0" />
+                Start Learning <ArrowRight size={16} className="ml-2 group-hover:ml-0" />
               </div>
             </div>
           </Link>

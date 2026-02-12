@@ -39,7 +39,7 @@ export default function ArticleSidebar({ onSelect, activeArticleId }: ArticleSid
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border space-y-4">
                 <h3 className="font-bold text-foreground flex items-center gap-2">
-                    <BookOpen className="text-blue-400" size={18} /> Research Lab
+                    <BookOpen className="text-blue-400" size={18} /> Article & Learn
                 </h3>
 
                 <div className="relative">
@@ -58,8 +58,8 @@ export default function ArticleSidebar({ onSelect, activeArticleId }: ArticleSid
                             key={cat}
                             onClick={() => setFilter(cat)}
                             className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${filter === cat
-                                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                                    : 'bg-secondary/20 text-muted-foreground border-transparent hover:bg-secondary/40'
+                                ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                : 'bg-secondary/20 text-muted-foreground border-transparent hover:bg-secondary/40'
                                 }`}
                         >
                             {cat}
@@ -76,8 +76,8 @@ export default function ArticleSidebar({ onSelect, activeArticleId }: ArticleSid
                         key={article._id}
                         onClick={() => onSelect(article)}
                         className={`w-full text-left px-3 py-3 rounded-lg border transition-all group ${activeArticleId === article._id
-                                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-                                : 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'
+                            ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                            : 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         <div className="flex items-start gap-3">
