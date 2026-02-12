@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Save, Layers, Settings2, Search, Edit3, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Save, Layers, Settings2, Search, Edit3, CheckCircle2, Code2 } from 'lucide-react';
 import axios from 'axios';
 
 interface IField {
@@ -27,7 +27,7 @@ export default function FormArchitect() {
     const [industry, setIndustry] = useState('');
     const [service, setService] = useState('');
     const [problem, setProblem] = useState('');
-    const [fields, setFields] = useState<IField[]>([]);
+    const [jsonFields, setJsonFields] = useState('[]');
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('');
 
@@ -52,36 +52,30 @@ export default function FormArchitect() {
         }
     };
 
-    const addField = () => {
-        setFields([...fields, { label: '', key: '', type: 'text' }]);
-    };
-
-    const removeField = (index: number) => {
-        setFields(fields.filter((_, i) => i !== index));
-    };
-
-    const updateField = (index: number, key: keyof IField, value: any) => {
-        const newFields = [...fields];
-        if (key === 'options' && typeof value === 'string') {
-            newFields[index][key] = value.split(',').map(s => s.trim());
-        } else {
-            (newFields[index] as any)[key] = value;
-        }
-        setFields(newFields);
-    };
-
     const handleSave = async () => {
         setLoading(true);
         setStatus('Saving...');
         try {
+            let parsedFields;
+            try {
+                parsedFields = JSON.parse(jsonFields);
+                if (!Array.isArray(parsedFields)) {
+                    throw new Error("Fields must be an array of objects.");
+                }
+            } catch (e: any) {
+                setStatus('Error: ' + (e.message || 'Invalid JSON format'));
+                setLoading(false);
+                return;
+            }
+
             await axios.post('/api/quantum-forms', {
                 industry,
                 service,
                 problem,
-                fields,
+                fields: parsedFields,
                 active: true
             });
-            setStatus('Form Mapped Successfully!');
+            setStatus('Form Saved Successfully!');
             fetchInitialData();
             setTimeout(() => setView('overview'), 1500);
         } catch (error: any) {
@@ -95,7 +89,7 @@ export default function FormArchitect() {
         setIndustry(form.industry);
         setService(form.service);
         setProblem(form.problem);
-        setFields(form.fields || []);
+        setJsonFields(JSON.stringify(form.fields || [], null, 2));
         setView('editor');
     };
 
@@ -103,7 +97,7 @@ export default function FormArchitect() {
         setIndustry('');
         setService('');
         setProblem('');
-        setFields([]);
+        setJsonFields('[\n  {\n    "label": "Example Label",\n    "key": "example_key",\n    "type": "text"\n  }\n]');
         setView('editor');
     };
 
@@ -181,7 +175,7 @@ export default function FormArchitect() {
                                 disabled={loading || !industry || !service || !problem}
                                 className="bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 shadow-xl"
                             >
-                                <Save size={18} /> {loading ? 'Saving...' : 'Publish Module'}
+                                <Save size={18} /> {loading ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </div>
@@ -233,101 +227,30 @@ export default function FormArchitect() {
                     <div className="space-y-6 pt-6">
                         <div className="flex items-center justify-between border-b border-border pb-4">
                             <h2 className="text-xl font-black text-foreground flex items-center gap-2 tracking-tight">
-                                <Settings2 size={20} className="text-muted-foreground" /> Parameter Field Definitions
+                                <Code2 size={20} className="text-muted-foreground" /> Parameter Field Definitions (JSON)
                             </h2>
-                            <button
-                                onClick={addField}
-                                className="bg-secondary/50 border border-border px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center gap-2 transition-all"
-                            >
-                                <Plus size={14} /> Add Parameter
-                            </button>
                         </div>
 
-                        <div className="space-y-4">
-                            {fields.map((field, idx) => (
-                                <div key={idx} className="bg-secondary/10 border border-border p-6 rounded-[2rem] group hover:border-primary/20 transition-all">
-                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-                                        <div className="md:col-span-3 space-y-2">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Display Label</label>
-                                            <input
-                                                value={field.label}
-                                                onChange={(e) => updateField(idx, 'label', e.target.value)}
-                                                placeholder="e.g. Iterations"
-                                                className="w-full bg-transparent border-b border-border py-2 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-all"
-                                            />
-                                        </div>
-                                        <div className="md:col-span-3 space-y-2">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Internal ID (Key)</label>
-                                            <input
-                                                value={field.key}
-                                                onChange={(e) => updateField(idx, 'key', e.target.value)}
-                                                placeholder="e.g. shots"
-                                                className="w-full bg-transparent border-b border-border py-2 text-sm text-muted-foreground font-mono focus:outline-none focus:border-primary/50"
-                                            />
-                                        </div>
-                                        <div className="md:col-span-2 space-y-2">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Input Type</label>
-                                            <select
-                                                value={field.type}
-                                                onChange={(e) => updateField(idx, 'type', e.target.value)}
-                                                className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none"
-                                            >
-                                                <option value="text">Text Input</option>
-                                                <option value="number">Numeric</option>
-                                                <option value="range">Range Slider</option>
-                                                <option value="select">Dropdown Selection</option>
-                                            </select>
-                                        </div>
-                                        <div className="md:col-span-3 space-y-2">
-                                            {field.type === 'select' && (
-                                                <>
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Dropdown Options</label>
-                                                    <input
-                                                        value={field.options?.join(', ')}
-                                                        onChange={(e) => updateField(idx, 'options', e.target.value)}
-                                                        placeholder="Op1, Op2, Op3"
-                                                        className="w-full bg-transparent border-b border-border py-2 text-[10px] text-muted-foreground focus:outline-none"
-                                                    />
-                                                </>
-                                            )}
-                                            {(field.type === 'number' || field.type === 'range') && (
-                                                <>
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Default Value</label>
-                                                    <input
-                                                        value={field.defaultValue}
-                                                        onChange={(e) => updateField(idx, 'defaultValue', e.target.value)}
-                                                        placeholder="e.g. 1024"
-                                                        className="w-full bg-transparent border-b border-border py-2 text-[10px] text-muted-foreground focus:outline-none"
-                                                    />
-                                                </>
-                                            )}
-                                        </div>
-                                        <div className="md:col-span-1 flex justify-end">
-                                            <button
-                                                onClick={() => removeField(idx)}
-                                                className="text-muted-foreground hover:text-destructive transition-all p-2 bg-secondary/20 rounded-xl border border-border hover:border-destructive/20"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
+                        <div className="bg-black/40 rounded-[2.5rem] border border-border p-8 shadow-inner group transition-all hover:border-primary/20">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-4 block">Schema Definition</label>
+                            <textarea
+                                value={jsonFields}
+                                onChange={(e) => setJsonFields(e.target.value)}
+                                placeholder='[{"label": "Iterations", "key": "iters", "type": "number"}]'
+                                className="w-full h-96 bg-transparent font-mono text-sm text-primary/80 focus:text-primary outline-none resize-none transition-all scrollbar-hide py-2"
+                                spellCheck={false}
+                            />
+                            <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
+                                <div className="flex gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500/50 pulse"></div>
+                                        <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Valid JSON Structure Required</span>
                                     </div>
                                 </div>
-                            ))}
-                            {fields.length === 0 && (
-                                <div className="text-center py-20 border-2 border-dashed border-border rounded-[3rem] bg-secondary/10">
-                                    <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4 border border-border">
-                                        <Settings2 className="text-muted-foreground" size={32} />
-                                    </div>
-                                    <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px]">No Parameters Defined</p>
-                                    <p className="text-muted-foreground/60 text-sm mt-1 max-w-xs mx-auto">Add parameter fields to create a specialized input form for this quantum workflow.</p>
-                                    <button
-                                        onClick={addField}
-                                        className="mt-6 px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg"
-                                    >
-                                        Add First Parameter
-                                    </button>
+                                <div className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-tighter">
+                                    Fields: label, key, type [text|number|range|select], options[], defaultValue
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -335,3 +258,4 @@ export default function FormArchitect() {
         </div>
     );
 }
+鼓, Complexity: 1, Description:
