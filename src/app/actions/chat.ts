@@ -13,85 +13,43 @@ import path from 'path';
 
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+const QUANTUM_API_URL = process.env.QUANTUM_API_URL || "http://127.0.0.1:8000";
 
 // --- Quantum Execution Helper ---
 async function executeQuantumCircuit(circuitCode: string) {
     try {
-        const scriptPath = path.join(process.cwd(), 'scripts', 'quantum_simulator.py');
-        const escapedCode = circuitCode.replace(/"/g, '\\"').replace(/\n/g, ' ');
+        console.log(`[Quantum Sim] Sending request to: ${QUANTUM_API_URL}/api/simulate/qiskit`);
 
-        let pythonPath: string | null = null;
-        const attempts = [
-            'which python3',
-            'which python',
-            'echo /Library/Frameworks/Python.framework/Versions/3.13/bin/python3', // Hardcoded fallback
-            'echo python3' // Last resort: just try the command
-        ];
+        const response = await axios.post(`${QUANTUM_API_URL}/api/simulate/qiskit`, {
+            code: circuitCode,
+            shots: 1024
+        }, { timeout: 20000 }); // 20s timeout for network + execution
 
-        for (const attempt of attempts) {
-            try {
-                const path = execSync(attempt).toString().trim();
-                if (path && !path.includes('not found')) {
-                    pythonPath = path;
-                    break;
-                }
-            } catch (e) {
-                // Continue to next attempt
-            }
-        }
-
-        if (!pythonPath) {
-            throw new Error("Could not locate Python interpreter.");
-        }
-
-        const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
-        console.log(`[Quantum Sim] Using Python: ${pythonPath}`);
-        console.log(`[Quantum Sim] Executing: ${cmd}`);
-
-        const output = execSync(cmd, { timeout: 10000 }).toString(); // 10s timeout
-        return JSON.parse(output);
+        return response.data;
     } catch (e: any) {
-        console.error("Simulator Execution Fail:", e);
-        return { success: false, error: `Python execution failed: ${e.message}. CMD: ${e.cmd || 'N/A'}` };
+        console.error("Simulator Execution Fail:", e.message);
+        if (e.code === 'ECONNREFUSED') {
+            return { success: false, error: "Quantum Backend is offline. Please ensure the Python service is running." };
+        }
+        return { success: false, error: `Quantum Service Error: ${e.message}` };
     }
 }
 
 async function executeDWaveAnnealer(code: string) {
     try {
-        const scriptPath = path.join(process.cwd(), 'scripts', 'dwave_simulator.py');
-        const escapedCode = code.replace(/"/g, '\\"').replace(/\n/g, ' ');
+        console.log(`[DWave Sim] Sending request to: ${QUANTUM_API_URL}/api/simulate/dwave`);
 
-        let pythonPath: string | null = null;
-        const attempts = [
-            'which python3',
-            'which python',
-            'echo /Library/Frameworks/Python.framework/Versions/3.13/bin/python3',
-            'echo python3'
-        ];
+        const response = await axios.post(`${QUANTUM_API_URL}/api/simulate/dwave`, {
+            code: code
+        }, { timeout: 20000 });
 
-        for (const attempt of attempts) {
-            try {
-                const path = execSync(attempt).toString().trim();
-                if (path) {
-                    pythonPath = path;
-                    break;
-                }
-            } catch (e) {
-                // Continue
-            }
-        }
-
-        if (!pythonPath) pythonPath = "python3"; // Fallback default
-
-        const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
-        console.log(`[DWave Sim] Using Python: ${pythonPath}`);
-        console.log(`[DWave Sim] Executing: ${cmd}`);
-
-        const output = execSync(cmd, { timeout: 10000 }).toString(); // 10s timeout
-        return JSON.parse(output);
+        return response.data;
     } catch (e: any) {
-        console.error("D-Wave Execution Fail:", e);
-        return { success: false, error: `D-Wave execution failed: ${e.message}. CMD: ${e.cmd || 'N/A'}` };
+        console.error("D-Wave Execution Fail:", e.message);
+        if (e.code === 'ECONNREFUSED') {
+            return { success: false, error: "Quantum Backend is offline. Please ensure the Python service is running." };
+        }
+        return { success: false, error: `Quantum Service Error: ${e.message}` };
     }
 }
 
