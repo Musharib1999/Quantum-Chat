@@ -93,6 +93,22 @@ export default function FormArchitect() {
         setView('editor');
     };
 
+    const handleJsonChange = (value: string) => {
+        setJsonFields(value);
+        try {
+            const parsed = JSON.parse(value);
+            // Smart Paste: If user pastes a full config object, extract fields only
+            if (!Array.isArray(parsed) && typeof parsed === 'object' && parsed !== null && parsed.fields && Array.isArray(parsed.fields)) {
+                // Remove metadata auto-fill as per user request
+                // Replace textarea content with just the fields array
+                setJsonFields(JSON.stringify(parsed.fields, null, 2));
+                setStatus('✨ Extracted fields from JSON configuration!');
+            }
+        } catch (e) {
+            // Ignore parsing errors while typing
+        }
+    };
+
     const resetForm = () => {
         setIndustry('');
         setService('');
@@ -216,11 +232,15 @@ export default function FormArchitect() {
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Problem Context</label>
                             <input
+                                list="problems"
                                 value={problem}
                                 onChange={(e) => setProblem(e.target.value)}
                                 placeholder="e.g. Protein Folding"
                                 className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             />
+                            <datalist id="problems">
+                                {(metadata.problemMapping[service] || []).map((p: any) => <option key={p.id} value={p.label} />)}
+                            </datalist>
                         </div>
                     </div>
 
@@ -235,7 +255,7 @@ export default function FormArchitect() {
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-4 block">Schema Definition</label>
                             <textarea
                                 value={jsonFields}
-                                onChange={(e) => setJsonFields(e.target.value)}
+                                onChange={(e) => handleJsonChange(e.target.value)}
                                 placeholder='[{"label": "Iterations", "key": "iters", "type": "number"}]'
                                 className="w-full h-96 bg-transparent font-mono text-sm text-primary/80 focus:text-primary outline-none resize-none transition-all scrollbar-hide py-2"
                                 spellCheck={false}
