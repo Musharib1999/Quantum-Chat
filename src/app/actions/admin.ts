@@ -86,6 +86,18 @@ export async function toggleGuardrail(id: string) {
     return { success: true };
 }
 
+export async function deleteGuardrail(id: string) {
+    await dbConnect();
+    await Guardrail.findByIdAndDelete(id);
+    return { success: true };
+}
+
+export async function updateGuardrail(id: string, rule: string) {
+    await dbConnect();
+    await Guardrail.findByIdAndUpdate(id, { rule });
+    return { success: true };
+}
+
 // --- Chat Logs Actions ---
 export async function getChatLogs() {
     await dbConnect();

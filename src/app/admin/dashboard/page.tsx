@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import {
     getQaPairs, addQaPair, deleteQaPair,
     getGuardrails, addGuardrail, toggleGuardrail as toggleGuardrailAction,
+    deleteGuardrail as deleteGuardrailAction, updateGuardrail as updateGuardrailAction,
     getChatLogs,
     type QaPairType as QaPair, type GuardrailType as Guardrail, type ChatLogType
 } from '../../actions/admin';
@@ -33,6 +34,8 @@ export default function AdminDashboard() {
     // Guardrails State
     const [guardrails, setGuardrails] = useState<Guardrail[]>([]);
     const [newRule, setNewRule] = useState("");
+    const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
+    const [editingRuleText, setEditingRuleText] = useState("");
 
     // Logs State
     const [chatLogs, setChatLogs] = useState<ChatLogType[]>([]);
@@ -90,6 +93,19 @@ export default function AdminDashboard() {
     const handleToggleGuardrail = async (id: string) => {
         await toggleGuardrailAction(id);
         setGuardrails(guardrails.map(g => g.id === id ? { ...g, active: !g.active } : g));
+    };
+
+    const handleDeleteRule = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this guardrail?")) return;
+        await deleteGuardrailAction(id);
+        setGuardrails(guardrails.filter(g => g.id !== id));
+    };
+
+    const handleUpdateRule = async (id: string) => {
+        if (!editingRuleText.trim()) return;
+        await updateGuardrailAction(id, editingRuleText);
+        setGuardrails(guardrails.map(g => g.id === id ? { ...g, rule: editingRuleText } : g));
+        setEditingRuleId(null);
     };
 
     return (
@@ -320,25 +336,59 @@ export default function AdminDashboard() {
                                 {guardrails.map(g => (
                                     <div key={g.id} className={`p-4 rounded-xl border flex items-center justify-between transition-all backdrop-blur-sm ${g.active ? 'bg-zinc-900/60 border-white/10 shadow-sm' : 'bg-zinc-900/20 border-white/5 opacity-60'
                                         }`}>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-4 flex-1">
                                             <div className={`p-2 rounded-lg ${g.active ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-zinc-800 text-zinc-600'}`}>
                                                 <Lock size={20} />
                                             </div>
-                                            <div>
-                                                <p className={`font-medium ${g.active ? 'text-zinc-200' : 'text-zinc-500 line-through'}`}>{g.rule}</p>
+                                            <div className="flex-1">
+                                                {editingRuleId === g.id ? (
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            className="flex-1 p-2 bg-zinc-800 border border-white/10 rounded-lg text-white"
+                                                            value={editingRuleText}
+                                                            onChange={e => setEditingRuleText(e.target.value)}
+                                                            autoFocus
+                                                        />
+                                                        <button onClick={() => handleUpdateRule(g.id)} className="p-2 text-green-400 hover:bg-green-500/10 rounded-lg">
+                                                            <Save size={18} />
+                                                        </button>
+                                                        <button onClick={() => setEditingRuleId(null)} className="p-2 text-zinc-400 hover:bg-zinc-500/10 rounded-lg">
+                                                            <X size={18} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <p className={`font-medium ${g.active ? 'text-zinc-200' : 'text-zinc-500 line-through'}`}>{g.rule}</p>
+                                                )}
                                                 <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-wider">{g.type?.replace('_', ' ') || 'GENERAL'}</span>
                                             </div>
                                         </div>
 
-                                        <button
-                                            onClick={() => handleToggleGuardrail(g.id)}
-                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${g.active
-                                                ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
-                                                : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
-                                                }`}
-                                        >
-                                            {g.active ? 'Active' : 'Disabled'}
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setEditingRuleId(g.id);
+                                                    setEditingRuleText(g.rule);
+                                                }}
+                                                className="p-2 text-zinc-600 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                            >
+                                                <FileText size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteRule(g.id)}
+                                                className="p-2 text-zinc-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleGuardrail(g.id)}
+                                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${g.active
+                                                    ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
+                                                    : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
+                                                    }`}
+                                            >
+                                                {g.active ? 'Active' : 'Disabled'}
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
