@@ -14,6 +14,7 @@ import path from 'path';
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 const QUANTUM_API_URL = process.env.QUANTUM_API_URL || "http://127.0.0.1:8000";
+const QUANTUM_API_SECRET = process.env.QUANTUM_API_SECRET || "default-dev-key"; // Shared secret
 
 // --- Quantum Execution Helper ---
 async function executeQuantumCircuit(circuitCode: string) {
@@ -23,7 +24,10 @@ async function executeQuantumCircuit(circuitCode: string) {
         const response = await axios.post(`${QUANTUM_API_URL}/api/simulate/qiskit`, {
             code: circuitCode,
             shots: 1024
-        }, { timeout: 20000 }); // 20s timeout for network + execution
+        }, {
+            timeout: 20000,
+            headers: { 'X-API-Key': QUANTUM_API_SECRET }
+        });
 
         return response.data;
     } catch (e: any) {
@@ -41,7 +45,10 @@ async function executeDWaveAnnealer(code: string) {
 
         const response = await axios.post(`${QUANTUM_API_URL}/api/simulate/dwave`, {
             code: code
-        }, { timeout: 20000 });
+        }, {
+            timeout: 20000,
+            headers: { 'X-API-Key': QUANTUM_API_SECRET }
+        });
 
         return response.data;
     } catch (e: any) {

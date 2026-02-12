@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 import sys
 import io
@@ -8,6 +8,13 @@ import os
 
 # Initialize FastAPI
 app = FastAPI(title="Quantum Calculation Backend")
+
+# Security
+API_SECRET = os.getenv("API_SECRET_KEY", "default-dev-key")
+
+async def verify_api_key(x_api_key: str = Header(None)):
+    if x_api_key != API_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
 
 # Data Models
 class QiskitRequest(BaseModel):
@@ -20,7 +27,7 @@ class DWaveRequest(BaseModel):
 # -----------------
 # Qiskit Execution
 # -----------------
-@app.post("/api/simulate/qiskit")
+@app.post("/api/simulate/qiskit", dependencies=[Depends(verify_api_key)])
 async def simulate_qiskit(request: QiskitRequest):
     try:
         # Import Qiskit libraries inside the function to ensure isolation
@@ -71,7 +78,7 @@ async def simulate_qiskit(request: QiskitRequest):
 # -----------------
 # D-Wave Execution
 # -----------------
-@app.post("/api/simulate/dwave")
+@app.post("/api/simulate/dwave", dependencies=[Depends(verify_api_key)])
 async def simulate_dwave(request: DWaveRequest):
     try:
         import dimod
