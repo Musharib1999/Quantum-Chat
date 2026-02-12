@@ -19,8 +19,9 @@ async function executeQuantumCircuit(circuitCode: string) {
     try {
         const scriptPath = path.join(process.cwd(), 'scripts', 'quantum_simulator.py');
         const escapedCode = circuitCode.replace(/"/g, '\\"').replace(/\n/g, ' ');
-        // Use a more robust execution method if needed, but execSync is fine for a playground
-        const cmd = `python3 "${scriptPath}" "${escapedCode}"`;
+        // Use absolute path to ensure python3 is found
+        const pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+        const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
         const output = execSync(cmd).toString();
         return JSON.parse(output);
     } catch (e: any) {
@@ -33,7 +34,8 @@ async function executeDWaveAnnealer(code: string) {
     try {
         const scriptPath = path.join(process.cwd(), 'scripts', 'dwave_simulator.py');
         const escapedCode = code.replace(/"/g, '\\"').replace(/\n/g, ' ');
-        const cmd = `python3 "${scriptPath}" "${escapedCode}"`;
+        const pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+        const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
         const output = execSync(cmd).toString();
         return JSON.parse(output);
     } catch (e: any) {
