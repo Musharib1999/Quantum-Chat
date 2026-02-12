@@ -80,13 +80,6 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                     </div>
 
                     <div className="pt-4 border-t border-white/5 space-y-2">
-                        <Link
-                            href="/admin/dashboard?tab=forms"
-                            className="flex items-center gap-3 px-3 py-2 rounded-xl text-zinc-500 hover:text-white hover:bg-white/5 transition-all text-sm group"
-                        >
-                            <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-                            <span>Form Architect</span>
-                        </Link>
                         <div className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-white/5 border border-white/5">
                             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black font-black text-xs">US</div>
                             <div className="flex-1 overflow-hidden">
