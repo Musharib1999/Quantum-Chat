@@ -52,6 +52,25 @@ const checkGuardrails = (prompt: string, rules: any[]): string | null => {
     return null;
 };
 
+// --- Web Scraping Helper ---
+async function scrapeUrl(url: string) {
+    try {
+        const { data } = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            },
+            timeout: 10000
+        });
+        const $ = cheerio.load(data);
+        $('script, style, nav, footer, iframe, ads').remove();
+        const pageText = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 10000); // Increased limit
+        return pageText;
+    } catch (e) {
+        console.error("Failed to fetch URL:", url);
+        return null;
+    }
+}
+
 // --- Knowledge Base ---
 const queryKnowledgeBase = async (prompt: string) => {
     await dbConnect();
@@ -67,14 +86,10 @@ const queryKnowledgeBase = async (prompt: string) => {
             return { type: 'direct', text: match.answer };
         }
         if (match.type === 'url') {
-            try {
-                const { data } = await axios.get(match.answer);
-                const $ = cheerio.load(data);
-                $('script, style, nav, footer').remove();
-                const pageText = $('body').text().replace(/\s+/g, ' ').substring(0, 5000);
+            const pageText = await scrapeUrl(match.answer);
+            if (pageText) {
                 return { type: 'context', text: pageText, source: match.answer };
-            } catch (e) {
-                console.error("Failed to fetch URL:", match.answer);
+            } else {
                 return { type: 'url_only', sourceUrl: match.answer };
             }
         }
@@ -168,12 +183,17 @@ export async function chatWithGroq(
     let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant. Be helpful, professional, and efficient.`;
 
     // --- Dynamic Context Injection ---
+    let autonomousContext = "";
     if (contextConfig) {
         // Mode: Market Intelligence
         if (contextConfig.mode === 'market') {
             systemInstructions += `\n\nMODE: MARKET INTELLIGENCE`;
             if (contextConfig.stockName) systemInstructions += `\nFOCUS ASSET: ${contextConfig.stockName}`;
-            if (contextConfig.stockUrl) systemInstructions += `\nREFERENCE URL: ${contextConfig.stockUrl}`;
+            if (contextConfig.stockUrl) {
+                systemInstructions += `\nREFERENCE URL: ${contextConfig.stockUrl}`;
+                const scrapedData = await scrapeUrl(contextConfig.stockUrl);
+                if (scrapedData) autonomousContext = scrapedData;
+            }
             systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset.`;
         }
         // Mode: Research Lab (Articles)
@@ -181,7 +201,11 @@ export async function chatWithGroq(
             systemInstructions += `\n\nMODE: RESEARCH LAB`;
             if (contextConfig.articleTitle) systemInstructions += `\nCURRENT PAPER/ARTICLE: ${contextConfig.articleTitle}`;
             if (contextConfig.articleCategory) systemInstructions += `\nCATEGORY: ${contextConfig.articleCategory}`;
-            if (contextConfig.articleUrl) systemInstructions += `\nSOURCE URL: ${contextConfig.articleUrl}`;
+            if (contextConfig.articleUrl) {
+                systemInstructions += `\nSOURCE URL: ${contextConfig.articleUrl}`;
+                const scrapedData = await scrapeUrl(contextConfig.articleUrl);
+                if (scrapedData) autonomousContext = scrapedData;
+            }
             systemInstructions += `\nTASK: Summarize, analyze, or answer questions based on the specific research article provided.`;
         }
         // Mode: Industry (Default / Legacy)
@@ -200,10 +224,13 @@ export async function chatWithGroq(
 
     let finalPrompt = prompt;
 
-    // Integrate KB Context if found
-    if (kbResult?.type === 'context') {
-        systemInstructions += "\n\nUse the following official context to answer the user's question accurately. If the answer is not in the context, say you don't know and advise checking official sources.";
-        finalPrompt = `Context: ${kbResult.text}\n\nUser Question: ${prompt}`;
+    // Integrate KB or Autonomous Context if found
+    const integratedContext = kbResult?.type === 'context' ? kbResult.text : autonomousContext;
+    const contextSource = kbResult?.type === 'context' ? kbResult.source : (contextConfig?.stockUrl || contextConfig?.articleUrl);
+
+    if (integratedContext) {
+        systemInstructions += "\n\nUse the following official context to answer the user's question accurately. Provide summaries of trends, market news, and stock prices if applicable. If information is missing, state what is available.";
+        finalPrompt = `Web-Scraped Context from ${contextSource}: ${integratedContext}\n\nUser Question/Request: ${prompt}`;
     }
 
     try {

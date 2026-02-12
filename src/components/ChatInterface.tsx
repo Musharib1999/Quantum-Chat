@@ -35,13 +35,33 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
         scrollToBottom();
     }, [messages, isTyping]);
 
+    // --- Automated Analysis Trigger ---
+    useEffect(() => {
+        const targetUrl = mode === 'market' ? contextConfig?.stockUrl : mode === 'article' ? contextConfig?.articleUrl : null;
+        const targetName = mode === 'market' ? contextConfig?.stockName : mode === 'article' ? contextConfig?.articleTitle : null;
 
-    const handleSendMessage = async () => {
-        if (!inputValue.trim()) return;
+        if (targetUrl && (messages.length === 0 || (messages.length > 0 && messages[messages.length - 1].sender === 'user'))) {
+            // Check if we should trigger (new selection or starting fresh)
+            const triggerMessage = mode === 'market'
+                ? `Analyze latest trends, market news, and stock prices for ${targetName}.`
+                : `Provide a detailed summary and latest insights for the research article: ${targetName}.`;
+
+            // Artificial delay to feel "real"
+            const timer = setTimeout(() => {
+                handleSendMessage(triggerMessage);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [contextConfig?.stockUrl, contextConfig?.articleUrl, mode, messages]);
+
+
+    const handleSendMessage = async (text?: string) => {
+        const messageToSend = text || inputValue;
+        if (!messageToSend.trim()) return;
 
         const userMsg: Message = {
             id: Date.now(),
-            text: inputValue,
+            text: messageToSend,
             sender: 'user',
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
@@ -133,7 +153,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                                         : 'bg-card/60 backdrop-blur-md text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden'
                                     }`}>
                                     {msg.sender === 'bot' || msg.sender === 'user' ? (
-                                        <MarkdownRenderer content={msg.text} />
+                                        <MarkdownRenderer content={msg.text} hideLinks={mode === 'market'} />
                                     ) : (
                                         <span className="flex items-center justify-center gap-2">
                                             {mode === 'market' ? <TrendingUp size={14} /> : mode === 'article' ? <BookOpen size={14} /> : <ShieldCheck size={14} />}
@@ -185,7 +205,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                         <textarea
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={handleKeyDown}
+                            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                             placeholder={placeholder || "Initialize quantum query..."}
                             rows={1}
                             className="flex-1 max-h-32 bg-transparent text-zinc-100 placeholder:text-zinc-500 text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
@@ -193,7 +213,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                         />
 
                         <button
-                            onClick={handleSendMessage}
+                            onClick={() => handleSendMessage()}
                             disabled={!inputValue.trim() || isTyping}
                             className="p-3 rounded-xl bg-zinc-100 text-zinc-950 hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95 mb-0.5 font-bold"
                         >

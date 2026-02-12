@@ -54,22 +54,14 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                         key={stock._id}
                         onClick={() => onSelect(stock)}
                         className={`w-full text-left px-3 py-3 rounded-lg border transition-all group ${activeStockId === stock._id
-                                ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                                : 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'
+                            ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                            : 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         <div className="flex items-center justify-between">
                             <span className="font-medium text-sm">{stock.name}</span>
                             {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
                         </div>
-                        {stock.url && (
-                            <div className="text-[10px] opacity-50 mt-1 truncate hover:underline" onClick={e => {
-                                e.stopPropagation();
-                                window.open(stock.url, '_blank');
-                            }}>
-                                {stock.url}
-                            </div>
-                        )}
                     </button>
                 ))}
             </div>

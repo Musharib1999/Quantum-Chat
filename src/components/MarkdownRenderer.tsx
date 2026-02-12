@@ -19,9 +19,10 @@ SyntaxHighlighter.registerLanguage('json', json);
 
 interface MarkdownRendererProps {
     content: string;
+    hideLinks?: boolean;
 }
 
-export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, hideLinks }: MarkdownRendererProps) {
     return (
         <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent">
             <ReactMarkdown
@@ -68,7 +69,11 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
                             {children}
                         </div>
                     ),
-                    a: ({ href, children }) => (
+                    a: ({ href, children }) => hideLinks ? (
+                        <span className="text-zinc-200 border-b border-zinc-700/50">
+                            {children}
+                        </span>
+                    ) : (
                         <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4 decoration-blue-400/30 transition-colors">
                             {children}
                         </a>
