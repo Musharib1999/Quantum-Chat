@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import QuantumForm from '@/models/QuantumForm';
 
-// GET: Fetch mapped form
+// GET: Fetch mapped form(s)
 export async function GET(req: Request) {
     try {
         await dbConnect();
@@ -10,6 +10,12 @@ export async function GET(req: Request) {
         const industry = searchParams.get('industry');
         const service = searchParams.get('service');
         const problem = searchParams.get('problem');
+
+        // If no params, return all for Admin Overview
+        if (!industry && !service && !problem) {
+            const allForms = await QuantumForm.find({}).sort({ createdAt: -1 });
+            return NextResponse.json(allForms);
+        }
 
         if (!industry || !service || !problem) {
             return NextResponse.json({ error: 'Missing mapping parameters' }, { status: 400 });
