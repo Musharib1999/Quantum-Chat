@@ -31,10 +31,6 @@ export default function ArticlePage() {
                 mode="article"
                 contextConfig={contextConfig}
                 placeholder="Ask Research Lab..."
-                initialMessage={selectedArticle
-                    ? `Research Loaded: **${selectedArticle.title}**\nCategory: ${selectedArticle.category}`
-                    : "Research Lab Module Loaded.\n\nSelect an article from the library to begin."
-                }
             />
         </AppLayout>
     );

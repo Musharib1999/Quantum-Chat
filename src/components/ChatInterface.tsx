@@ -15,31 +15,16 @@ interface Message {
 
 interface ChatInterfaceProps {
     mode: 'industry' | 'market' | 'article';
-    initialMessage?: string;
     contextConfig?: any; // The payload to send to chatWithGroq
     placeholder?: string;
 }
 
-export default function ChatInterface({ mode, initialMessage, contextConfig, placeholder }: ChatInterfaceProps) {
+export default function ChatInterface({ mode, contextConfig, placeholder }: ChatInterfaceProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
-
-    // Initial Message
-    useEffect(() => {
-        if (messages.length === 0 && initialMessage) {
-            setTimeout(() => {
-                setMessages([{
-                    id: 1,
-                    text: initialMessage,
-                    sender: 'bot',
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }]);
-            }, 500);
-        }
-    }, [initialMessage]);
 
     // Auto-scroll
     const scrollToBottom = () => {

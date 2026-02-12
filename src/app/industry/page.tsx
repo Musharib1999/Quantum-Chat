@@ -41,7 +41,6 @@ export default function IndustryPage() {
                 mode="industry"
                 contextConfig={sessionConfig}
                 placeholder="Ask Quantum Assistant (Industry Mode)..."
-                initialMessage="Quantum Interface Initialized. Systems Online.\n\nPlease complete the configuration sequence in the sidebar to begin your session."
             />
         </AppLayout>
     );

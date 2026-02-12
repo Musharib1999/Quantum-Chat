@@ -30,10 +30,6 @@ export default function MarketPage() {
                 mode="market"
                 contextConfig={contextConfig}
                 placeholder="Ask Market Intelligence..."
-                initialMessage={selectedStock
-                    ? `Asset Selected: **${selectedStock.name}**\nAnalysis Context Loaded.`
-                    : "Market Intelligence Module Loaded.\n\nSelect an asset from the sidebar to begin analysis."
-                }
             />
         </AppLayout>
     );
