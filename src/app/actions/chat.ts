@@ -19,15 +19,25 @@ async function executeQuantumCircuit(circuitCode: string) {
     try {
         const scriptPath = path.join(process.cwd(), 'scripts', 'quantum_simulator.py');
         const escapedCode = circuitCode.replace(/"/g, '\\"').replace(/\n/g, ' ');
-        // Use absolute path to ensure python3 is found
-        const pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+
+        let pythonPath: string;
+        try {
+            // Try to find python3 in path
+            pythonPath = execSync('which python3').toString().trim();
+        } catch (e) {
+            // Fallback to absolute path or just 'python3' command
+            pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+        }
+
         const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
+        console.log(`[Quantum Sim] Using Python: ${pythonPath}`);
         console.log(`[Quantum Sim] Executing: ${cmd}`);
+
         const output = execSync(cmd, { timeout: 10000 }).toString(); // 10s timeout
         return JSON.parse(output);
     } catch (e: any) {
         console.error("Simulator Execution Fail:", e);
-        return { success: false, error: e.message };
+        return { success: false, error: `Python execution failed: ${e.message}. CMD: ${e.cmd || 'N/A'}` };
     }
 }
 
@@ -35,14 +45,23 @@ async function executeDWaveAnnealer(code: string) {
     try {
         const scriptPath = path.join(process.cwd(), 'scripts', 'dwave_simulator.py');
         const escapedCode = code.replace(/"/g, '\\"').replace(/\n/g, ' ');
-        const pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+
+        let pythonPath: string;
+        try {
+            pythonPath = execSync('which python3').toString().trim();
+        } catch (e) {
+            pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+        }
+
         const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
+        console.log(`[DWave Sim] Using Python: ${pythonPath}`);
         console.log(`[DWave Sim] Executing: ${cmd}`);
+
         const output = execSync(cmd, { timeout: 10000 }).toString(); // 10s timeout
         return JSON.parse(output);
     } catch (e: any) {
         console.error("D-Wave Execution Fail:", e);
-        return { success: false, error: e.message };
+        return { success: false, error: `D-Wave execution failed: ${e.message}. CMD: ${e.cmd || 'N/A'}` };
     }
 }
 
