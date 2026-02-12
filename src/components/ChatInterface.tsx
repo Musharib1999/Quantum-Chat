@@ -260,7 +260,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                     {messages.length === 0 && (
                         <div className="mb-12 text-center animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000">
                             <div className="w-20 h-20 rounded-3xl bg-zinc-900/60 border border-white/10 flex items-center justify-center font-bold text-white shadow-2xl mx-auto mb-8 text-4xl group-hover:scale-105 transition-transform duration-500">
-                                Q
+                                QG
                             </div>
                             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-4">
                                 Quantum Guru
