@@ -22,7 +22,8 @@ async function executeQuantumCircuit(circuitCode: string) {
         // Use absolute path to ensure python3 is found
         const pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
         const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
-        const output = execSync(cmd).toString();
+        console.log(`[Quantum Sim] Executing: ${cmd}`);
+        const output = execSync(cmd, { timeout: 10000 }).toString(); // 10s timeout
         return JSON.parse(output);
     } catch (e: any) {
         console.error("Simulator Execution Fail:", e);
@@ -36,7 +37,8 @@ async function executeDWaveAnnealer(code: string) {
         const escapedCode = code.replace(/"/g, '\\"').replace(/\n/g, ' ');
         const pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
         const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
-        const output = execSync(cmd).toString();
+        console.log(`[DWave Sim] Executing: ${cmd}`);
+        const output = execSync(cmd, { timeout: 10000 }).toString(); // 10s timeout
         return JSON.parse(output);
     } catch (e: any) {
         console.error("D-Wave Execution Fail:", e);
