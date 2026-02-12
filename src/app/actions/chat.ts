@@ -20,13 +20,28 @@ async function executeQuantumCircuit(circuitCode: string) {
         const scriptPath = path.join(process.cwd(), 'scripts', 'quantum_simulator.py');
         const escapedCode = circuitCode.replace(/"/g, '\\"').replace(/\n/g, ' ');
 
-        let pythonPath: string;
-        try {
-            // Try to find python3 in path
-            pythonPath = execSync('which python3').toString().trim();
-        } catch (e) {
-            // Fallback to absolute path or just 'python3' command
-            pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+        let pythonPath: string | null = null;
+        const attempts = [
+            'which python3',
+            'which python',
+            'echo /Library/Frameworks/Python.framework/Versions/3.13/bin/python3', // Hardcoded fallback
+            'echo python3' // Last resort: just try the command
+        ];
+
+        for (const attempt of attempts) {
+            try {
+                const path = execSync(attempt).toString().trim();
+                if (path && !path.includes('not found')) {
+                    pythonPath = path;
+                    break;
+                }
+            } catch (e) {
+                // Continue to next attempt
+            }
+        }
+
+        if (!pythonPath) {
+            throw new Error("Could not locate Python interpreter.");
         }
 
         const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
@@ -46,12 +61,27 @@ async function executeDWaveAnnealer(code: string) {
         const scriptPath = path.join(process.cwd(), 'scripts', 'dwave_simulator.py');
         const escapedCode = code.replace(/"/g, '\\"').replace(/\n/g, ' ');
 
-        let pythonPath: string;
-        try {
-            pythonPath = execSync('which python3').toString().trim();
-        } catch (e) {
-            pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+        let pythonPath: string | null = null;
+        const attempts = [
+            'which python3',
+            'which python',
+            'echo /Library/Frameworks/Python.framework/Versions/3.13/bin/python3',
+            'echo python3'
+        ];
+
+        for (const attempt of attempts) {
+            try {
+                const path = execSync(attempt).toString().trim();
+                if (path) {
+                    pythonPath = path;
+                    break;
+                }
+            } catch (e) {
+                // Continue
+            }
         }
+
+        if (!pythonPath) pythonPath = "python3"; // Fallback default
 
         const cmd = `"${pythonPath}" "${scriptPath}" "${escapedCode}"`;
         console.log(`[DWave Sim] Using Python: ${pythonPath}`);
