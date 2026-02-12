@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import QuantumForm from '@/models/QuantumForm';
 
+export const dynamic = 'force-dynamic';
+
 // GET: Fetch mapped form(s)
 export async function GET(req: Request) {
     try {
