@@ -7,9 +7,26 @@ import dbConnect from '@/lib/db';
 import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
+import { execSync } from 'child_process';
+import path from 'path';
 
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+
+// --- Quantum Execution Helper ---
+async function executeQuantumCircuit(circuitCode: string) {
+    try {
+        const scriptPath = path.join(process.cwd(), 'scripts', 'quantum_simulator.py');
+        const escapedCode = circuitCode.replace(/"/g, '\\"').replace(/\n/g, ' ');
+        // Use a more robust execution method if needed, but execSync is fine for a playground
+        const cmd = `python3 "${scriptPath}" "${escapedCode}"`;
+        const output = execSync(cmd).toString();
+        return JSON.parse(output);
+    } catch (e: any) {
+        console.error("Simulator Execution Fail:", e);
+        return { success: false, error: e.message };
+    }
+}
 
 // --- Types ---
 export interface AIResponse {
@@ -208,9 +225,75 @@ export async function chatWithGroq(
             }
             systemInstructions += `\nTASK: Summarize, analyze, or answer questions based on the specific research article provided.`;
         }
-        // Mode: Industry (Default / Legacy)
-        else {
-            const { industry, service, problem, hardware } = contextConfig;
+        // Mode: Industry (Modular / Robust)
+        else if (contextConfig.mode === 'industry') {
+            const { industry, service, problem, hardware, formData } = contextConfig;
+
+            if (formData && Object.keys(formData).length > 0) {
+                // --- SPECIAL: MULTI-PASS QUANTUM WORKFLOW ---
+
+                // Pass 1: Generate Qiskit Code
+                const genPrompt = `Generate a Python Qiskit circuit for the following problem:
+Industry: ${industry}
+Service: ${service}
+Problem: ${problem}
+Hardware: ${hardware}
+Parameters: ${JSON.stringify(formData)}
+
+Return ONLY the Python code. Define a variable 'circuit' which is the QuantumCircuit object. Do not include any other text.`;
+
+                const completion1 = await groq.chat.completions.create({
+                    messages: [{ role: "system", content: "You are a Qiskit Expert. Return only code." }, { role: "user", content: genPrompt }],
+                    model: DEFAULT_MODEL,
+                });
+
+                const qiskitCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
+
+                // Execution Step
+                const executionResult = await executeQuantumCircuit(qiskitCode);
+
+                // Pass 2: Interpret and Format
+                const interpretPrompt = `Analyze these Quantum Execution results:
+Problem: ${problem}
+Counts: ${JSON.stringify(executionResult.counts)}
+Success: ${executionResult.success}
+
+1. Provide a professional, human-friendly explanation of these results in the context of ${industry}.
+2. Generate a JSON block for a chart like this:
+[CHART_DATA]
+{
+  "type": "bar",
+  "data": [ {"name": "00", "value": 450}, {"name": "11", "value": 574} ]
+}
+[/CHART_DATA]`;
+
+                const completion2 = await groq.chat.completions.create({
+                    messages: [
+                        { role: "system", content: "You are a Quantum Analysis expert." },
+                        { role: "user", content: interpretPrompt }
+                    ],
+                    model: DEFAULT_MODEL,
+                });
+
+                const finalExplanation = completion2.choices[0]?.message?.content || "Simulation complete.";
+
+                await ChatLog.create({
+                    userQuery: prompt,
+                    aiResponse: finalExplanation,
+                    source: 'quantum_workflow',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts
+                });
+
+                return {
+                    text: finalExplanation,
+                    source: 'quantum_workflow',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts
+                };
+            }
+
+            // Normal Industry Context (Existing logic)
             if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
             if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;
             if (problem) systemInstructions += `\nPROBLEM CONTEXT: The specific problem being addressed is ${problem}.`;

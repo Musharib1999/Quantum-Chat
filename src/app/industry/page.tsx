@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import ChatInterface from '@/components/ChatInterface';
 import SidebarWizard from '@/components/SidebarWizard';
+import QuantumFormFetcher from '@/components/QuantumFormFetcher';
 
 export default function IndustryPage() {
-    const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null }>({ industry: 'Biochemistry', service: null, problem: null, hardware: null });
+    const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null, formData?: any }>({ industry: 'Biochemistry', service: null, problem: null, hardware: null });
     const [sidebarStep, setSidebarStep] = useState<'industry' | 'service' | 'problem' | 'hardware' | 'ready'>('service');
+    const [formSubmitted, setFormSubmitted] = useState(false);
 
     const handleWizardSelection = (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => {
         setSessionConfig(prev => {
@@ -27,6 +29,9 @@ export default function IndustryPage() {
         if (type === 'problem') setSidebarStep('hardware');
         if (type === 'hardware') setSidebarStep('ready');
     };
+    const handleFormSubmit = (formData: any) => {
+        setSessionConfig(prev => ({ ...prev, formData }));
+    };
 
     return (
         <AppLayout
@@ -37,11 +42,28 @@ export default function IndustryPage() {
                 </div>
             }
         >
-            <ChatInterface
-                mode="industry"
-                contextConfig={sessionConfig}
-                placeholder="Ask Quantum Assistant (Industry Mode)..."
-            />
+            <div className="flex flex-col h-full">
+                {sidebarStep === 'ready' && !sessionConfig.formData && (
+                    <div className="p-4 md:p-8 flex-1 flex items-center justify-center overflow-y-auto">
+                        <div className="max-w-2xl w-full">
+                            <QuantumFormFetcher
+                                industry={sessionConfig.industry!}
+                                service={sessionConfig.service!}
+                                problem={sessionConfig.problem!}
+                                onSubmit={handleFormSubmit}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {(sidebarStep !== 'ready' || sessionConfig.formData) && (
+                    <ChatInterface
+                        mode="industry"
+                        contextConfig={sessionConfig}
+                        placeholder="Ask Quantum Assistant (Industry Mode)..."
+                    />
+                )}
+            </div>
         </AppLayout>
     );
 }

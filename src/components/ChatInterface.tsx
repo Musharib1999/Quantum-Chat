@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, StopCircle, ShieldCheck, TrendingUp, BookOpen } from 'lucide-react';
 import MarkdownRenderer from './MarkdownRenderer';
+import QuantumChart from './QuantumChart';
 import { chatWithGroq, AIResponse } from '@/app/actions/chat';
 
 interface Message {
@@ -11,6 +12,7 @@ interface Message {
     sender: 'user' | 'bot' | 'system';
     timestamp: string;
     isStreaming?: boolean;
+    chartData?: any;
 }
 
 interface ChatInterfaceProps {
@@ -23,6 +25,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
+    const [processingStep, setProcessingStep] = useState<'generating' | 'simulating' | 'interpreting' | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
     const lastTriggeredUrlRef = useRef<string | null>(null);
@@ -35,6 +38,8 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
     useEffect(() => {
         scrollToBottom();
     }, [messages, isTyping]);
+
+    const lastTriggeredFormRef = useRef<string | null>(null);
 
     // --- Automated Analysis Trigger ---
     useEffect(() => {
@@ -55,10 +60,21 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [contextConfig?.stockUrl, contextConfig?.articleUrl, mode]);
+
+        // --- SPECIAL: INDUSTRY WORKFLOW TRIGGER ---
+        if (mode === 'industry' && contextConfig?.formData) {
+            const formString = JSON.stringify(contextConfig.formData);
+            if (formString !== lastTriggeredFormRef.current) {
+                lastTriggeredFormRef.current = formString;
+                const triggerMessage = `Execute Quantum Workflow for ${contextConfig.problem} in ${contextConfig.industry} using ${contextConfig.hardware}.`;
+                const timer = setTimeout(() => handleSendMessage(triggerMessage), 500);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [contextConfig?.stockUrl, contextConfig?.articleUrl, contextConfig?.formData, mode]);
 
 
-    const handleSendMessage = async (text?: string) => {
+    const handleSendMessage = async (text?: string, customConfig?: any) => {
         const messageToSend = text || inputValue;
         if (!messageToSend.trim()) return;
 
@@ -73,11 +89,36 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
         setInputValue("");
         setIsTyping(true);
 
+        // --- Step-based visibility for Industry Workflow ---
+        if (mode === 'industry' && (customConfig?.formData || contextConfig?.formData)) {
+            setProcessingStep('generating');
+        }
+
         try {
             // Include mode in context config if not present
-            const fullConfig = { ...contextConfig, mode };
+            const fullConfig = { ...contextConfig, ...customConfig, mode };
+
+            // Simulate Pipeline progress if form is active
+            if (fullConfig.formData) {
+                setTimeout(() => setProcessingStep('simulating'), 2000);
+                setTimeout(() => setProcessingStep('interpreting'), 4000);
+            }
 
             const response = await chatWithGroq(userMsg.text, 'chat', 'en', fullConfig);
+            setProcessingStep(null);
+
+            // Parse Chart Data if present
+            let chartData = null;
+            let cleanText = response.text;
+            const chartMatch = response.text.match(/\[CHART_DATA\]([\s\S]*?)\[\/CHART_DATA\]/);
+            if (chartMatch) {
+                try {
+                    chartData = JSON.parse(chartMatch[1]);
+                    cleanText = response.text.replace(/\[CHART_DATA\][\s\S]*?\[\/CHART_DATA\]/, '').trim();
+                } catch (e) {
+                    console.error("Failed to parse chart data");
+                }
+            }
 
             // Simulate Streaming Effect
             const botMsgId = Date.now() + 1;
@@ -88,11 +129,12 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                 text: "", // Start empty
                 sender: 'bot',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isStreaming: true
+                isStreaming: true,
+                chartData
             }]);
 
             let currentText = "";
-            const words = response.text.split(" ");
+            const words = cleanText.split(" ");
 
             // typing effect 
             for (let i = 0; i < words.length; i++) {
@@ -110,6 +152,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
 
         } catch (error) {
             console.error("Chat Error:", error);
+            setProcessingStep(null);
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 text: "Error: Neural link unstable. Please retry transmission.",
@@ -156,7 +199,10 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                                         : 'bg-card/60 backdrop-blur-md text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden'
                                     }`}>
                                     {msg.sender === 'bot' || msg.sender === 'user' ? (
-                                        <MarkdownRenderer content={msg.text} hideLinks={mode === 'market'} />
+                                        <>
+                                            <MarkdownRenderer content={msg.text} hideLinks={mode === 'market'} />
+                                            {msg.chartData && <QuantumChart data={msg.chartData.data} />}
+                                        </>
                                     ) : (
                                         <span className="flex items-center justify-center gap-2">
                                             {mode === 'market' ? <TrendingUp size={14} /> : mode === 'article' ? <BookOpen size={14} /> : <ShieldCheck size={14} />}
@@ -178,6 +224,28 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                                     <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                                     <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                                     <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce"></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {processingStep && (
+                        <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 w-full max-w-md flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Quantum Pipeline Active</div>
+                                    <div className="text-sm font-bold text-white">
+                                        {processingStep === 'generating' ? 'Generating Pulse Code...' :
+                                            processingStep === 'simulating' ? 'Running Circuit on Simulator...' :
+                                                'Interpreting Quantum Output...'}
+                                    </div>
+                                </div>
+                                <div className="flex gap-1">
+                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'generating' ? 'bg-white' : 'bg-zinc-800'}`}></div>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'simulating' ? 'bg-white' : 'bg-zinc-800'}`}></div>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'interpreting' ? 'bg-white' : 'bg-zinc-800'}`}></div>
                                 </div>
                             </div>
                         </div>
