@@ -25,6 +25,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
+    const lastTriggeredUrlRef = useRef<string | null>(null);
 
     // Auto-scroll
     const scrollToBottom = () => {
@@ -40,7 +41,9 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
         const targetUrl = mode === 'market' ? contextConfig?.stockUrl : mode === 'article' ? contextConfig?.articleUrl : null;
         const targetName = mode === 'market' ? contextConfig?.stockName : mode === 'article' ? contextConfig?.articleTitle : null;
 
-        if (targetUrl && (messages.length === 0 || (messages.length > 0 && messages[messages.length - 1].sender === 'user'))) {
+        if (targetUrl && targetUrl !== lastTriggeredUrlRef.current) {
+            lastTriggeredUrlRef.current = targetUrl;
+
             // Check if we should trigger (new selection or starting fresh)
             const triggerMessage = mode === 'market'
                 ? `Analyze latest trends, market news, and stock prices for ${targetName}.`
@@ -52,7 +55,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [contextConfig?.stockUrl, contextConfig?.articleUrl, mode, messages]);
+    }, [contextConfig?.stockUrl, contextConfig?.articleUrl, mode]);
 
 
     const handleSendMessage = async (text?: string) => {
