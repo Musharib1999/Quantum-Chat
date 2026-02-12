@@ -87,7 +87,7 @@ export default function LandingPage() {
         </div>
 
         <footer className="mt-20 text-center text-xs text-zinc-600 font-medium">
-          <p className="uppercase tracking-widest">Quantum Guru • System V2.5.0</p>
+          <p className="uppercase tracking-widest">Quantum Guru</p>
         </footer>
 
       </div>
