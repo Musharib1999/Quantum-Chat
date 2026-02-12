@@ -1,15 +1,35 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import ChatInterface from '@/components/ChatInterface';
 import SidebarWizard from '@/components/SidebarWizard';
 import QuantumFormFetcher from '@/components/QuantumFormFetcher';
+import axios from 'axios';
 
 export default function IndustryPage() {
-    const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null, formData?: any }>({ industry: 'Biochemistry', service: null, problem: null, hardware: null });
-    const [sidebarStep, setSidebarStep] = useState<'industry' | 'service' | 'problem' | 'hardware' | 'ready'>('service');
-    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null, formData?: any }>({ industry: null, service: null, problem: null, hardware: null });
+    const [sidebarStep, setSidebarStep] = useState<'industry' | 'service' | 'problem' | 'hardware' | 'ready'>('industry');
+    const [metadata, setMetadata] = useState<any>({ industries: [], services: [], problemMapping: {} });
+    const [loadingMetadata, setLoadingMetadata] = useState(true);
+
+    useEffect(() => {
+        const fetchMetadata = async () => {
+            try {
+                const { data } = await axios.get('/api/quantum-forms/metadata');
+                setMetadata(data);
+                if (data.industries.length > 0) {
+                    setSessionConfig(prev => ({ ...prev, industry: data.industries[0].label }));
+                    setSidebarStep('service');
+                }
+            } catch (error) {
+                console.error("Failed to fetch industry metadata:", error);
+            } finally {
+                setLoadingMetadata(false);
+            }
+        };
+        fetchMetadata();
+    }, []);
 
     const handleWizardSelection = (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => {
         setSessionConfig(prev => {
@@ -38,7 +58,22 @@ export default function IndustryPage() {
             currentMode="industry"
             sidebarContent={
                 <div className="p-4 space-y-2">
-                    <SidebarWizard step={sidebarStep} config={sessionConfig} onSelect={handleWizardSelection} />
+                    {loadingMetadata ? (
+                        <div className="p-4 animate-pulse space-y-4">
+                            <div className="h-4 bg-white/5 rounded w-1/2"></div>
+                            <div className="space-y-2">
+                                <div className="h-10 bg-white/5 rounded"></div>
+                                <div className="h-10 bg-white/5 rounded"></div>
+                            </div>
+                        </div>
+                    ) : (
+                        <SidebarWizard
+                            step={sidebarStep}
+                            config={sessionConfig}
+                            metadata={metadata}
+                            onSelect={handleWizardSelection}
+                        />
+                    )}
                 </div>
             }
         >

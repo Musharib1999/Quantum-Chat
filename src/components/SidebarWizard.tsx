@@ -1,31 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Check, ChevronRight, Briefcase, Zap, Cpu } from 'lucide-react';
-import { useTheme } from './ThemeContext';
-
-// Define Problems mapped by Service ID
-const PROBLEMS: Record<string, { id: string, label: string }[]> = {
-    'Optimization': [
-        { id: 'protein_folding', label: 'Protein Folding' },
-        { id: 'molecular_docking', label: 'Molecular Docking' },
-        { id: 'gene_sequencing', label: 'Gene Sequencing Alignment' }
-    ],
-    'Simulation': [
-        { id: 'chemical_dynamics', label: 'Chemical Dynamics' },
-        { id: 'reaction_pathways', label: 'Reaction Pathways' },
-        { id: 'enzyme_catalysis', label: 'Enzyme Catalysis' }
-    ],
-    'Quantum ML': [
-        { id: 'biomarker_discovery', label: 'Biomarker Discovery' },
-        { id: 'patient_classification', label: 'Patient Classification' },
-        { id: 'genomic_analysis', label: 'Genomic Analysis' }
-    ],
-    'Encryption': [
-        { id: 'secure_records', label: 'Secure Health Records' },
-        { id: 'data_privacy', label: 'Patient Data Privacy' }
-    ]
-};
+import { Check, Zap, Briefcase, Cpu } from 'lucide-react';
 
 interface SidebarWizardProps {
     step: 'industry' | 'service' | 'problem' | 'hardware' | 'ready';
@@ -35,24 +11,13 @@ interface SidebarWizardProps {
         problem: string | null;
         hardware: string | null;
     };
+    metadata: {
+        industries: { id: string, label: string, icon?: string }[];
+        services: { id: string, label: string, icon?: string }[];
+        problemMapping: Record<string, { id: string, label: string }[]>;
+    };
     onSelect: (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => void;
 }
-
-const INDUSTRIES = [
-    { id: 'biochem', label: 'Biochemistry', icon: '🧬' },
-    // { id: 'finance', label: 'Finance', icon: '💰' },
-    // { id: 'healthcare', label: 'Healthcare', icon: '🏥' },
-    // { id: 'cybersecurity', label: 'Cybersecurity', icon: '🛡️' },
-    // { id: 'logistics', label: 'Logistics', icon: '🚚' },
-    // { id: 'energy', label: 'Energy', icon: '⚡' },
-];
-
-const SERVICES = [
-    { id: 'optimization', label: 'Optimization', icon: '📈' },
-    { id: 'simulation', label: 'Simulation', icon: '🧪' },
-    { id: 'ml', label: 'Quantum ML', icon: '🤖' },
-    { id: 'security', label: 'Encryption', icon: '🔒' },
-];
 
 const HARDWARE = [
     { id: 'ibm', label: 'IBM Qiskit', icon: '⚛️' },
@@ -61,8 +26,7 @@ const HARDWARE = [
     { id: 'rigetti', label: 'Rigetti', icon: '📡' },
 ];
 
-export default function SidebarWizard({ step, config, onSelect }: SidebarWizardProps) {
-    const { theme } = useTheme();
+export default function SidebarWizard({ step, config, metadata, onSelect }: SidebarWizardProps) {
 
     const renderItem = (item: any, type: 'industry' | 'service' | 'problem' | 'hardware', isLocked: boolean, isSelected: boolean) => (
         <button
@@ -85,48 +49,42 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
     return (
         <div className="space-y-6 animate-in slide-in-from-left duration-500">
 
-            {/* Step 1: Industry (Fixed/Pre-selected) */}
+            {/* Step 1: Industry */}
             <div className="space-y-2">
                 <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     <Briefcase size={12} />
-                    <span>Industry (Active)</span>
+                    <span>Select Industry</span>
                 </div>
                 <div className="space-y-1">
-                    {INDUSTRIES.map(item => (
-                        <div key={item.id} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 border border-primary text-primary font-medium text-sm">
-                            <span className="text-base">{item.icon}</span>
-                            <span className="flex-1 text-left">{item.label}</span>
-                            <Check size={14} className="text-primary" />
-                        </div>
-                    ))}
+                    {metadata.industries.map(item => renderItem(item, 'industry', false, config.industry === item.label))}
                 </div>
             </div>
 
-            {/* Step 2: Service (Always Visible & Editable) */}
+            {/* Step 2: Service */}
             <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
                 <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     <Zap size={12} />
                     <span>Select Service</span>
                 </div>
                 <div className="space-y-1">
-                    {SERVICES.map(item => renderItem(item, 'service', false, config.service === item.label))}
+                    {metadata.services.map(item => renderItem(item, 'service', false, config.service === item.label))}
                 </div>
             </div>
 
-            {/* Step 3: Problem (Dependent on Service, Editable if Service set) */}
+            {/* Step 3: Problem */}
             {(config.service) && (
                 <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
                     <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        <Briefcase size={12} /> {/* Reusing Briefcase for Problem */}
+                        <Briefcase size={12} />
                         <span>Select Problem</span>
                     </div>
                     <div className="space-y-1">
-                        {config.service && PROBLEMS[config.service]?.map(item => renderItem(item, 'problem', false, config.problem === item.label))}
+                        {metadata.problemMapping[config.service]?.map(item => renderItem(item, 'problem', false, config.problem === item.label))}
                     </div>
                 </div>
             )}
 
-            {/* Step 4: Hardware (Dependent on Problem, Editable if Problem set) */}
+            {/* Step 4: Hardware */}
             {(config.problem) && (
                 <div className="space-y-2 animate-in slide-in-from-left duration-500 fade-in">
                     <div className="flex items-center gap-2 px-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -142,3 +100,4 @@ export default function SidebarWizard({ step, config, onSelect }: SidebarWizardP
         </div>
     );
 }
+鼓, Complexity: 1, Description:
