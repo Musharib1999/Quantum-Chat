@@ -62,8 +62,22 @@ export default function FormArchitect() {
                 if (!Array.isArray(parsedFields)) {
                     throw new Error("Fields must be an array of objects.");
                 }
+
+                // Auto-generate key from label if missing
+                parsedFields = parsedFields.map((f: any) => {
+                    if (!f.key && f.label) {
+                        f.key = f.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    }
+                    if (!f.key) throw new Error(`Field "${f.label || 'Unknown'}" is missing a unique "key".`);
+                    if (!f.type) f.type = 'text'; // Default to text
+                    return f;
+                });
+
+                // Update the editor with the normalized fields
+                setJsonFields(JSON.stringify(parsedFields, null, 2));
+
             } catch (e: any) {
-                setStatus('Error: ' + (e.message || 'Invalid JSON format'));
+                setStatus('Validation Error: ' + (e.message || 'Invalid JSON format'));
                 setLoading(false);
                 return;
             }
