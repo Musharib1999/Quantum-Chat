@@ -121,7 +121,7 @@ export default function ChatInterface({ mode, initialMessage, contextConfig, pla
     };
 
     return (
-        <React.Fragment>
+        <div className="flex flex-col h-full w-full overflow-hidden">
             {/* Messages List - Transitions smoothy */}
             <main className={`overflow-y-auto bg-transparent min-w-0 w-full overflow-x-hidden transition-all duration-700 ease-in-out ${messages.length === 0 ? 'flex-[0.001] opacity-0 py-0' : 'flex-1 p-3 md:p-4 lg:p-6 opacity-100'}`}>
                 <div className="w-full max-w-3xl mx-auto space-y-6">
@@ -179,8 +179,23 @@ export default function ChatInterface({ mode, initialMessage, contextConfig, pla
             </main>
 
             {/* Input Area - Integrated & Sleek */}
-            <footer className="p-4 md:p-6 bg-transparent relative z-20">
-                <div className="max-w-3xl mx-auto relative group">
+            <footer className={`p-4 md:p-6 bg-transparent relative z-20 transition-all duration-700 ease-in-out ${messages.length === 0 ? 'flex-1 flex flex-col justify-center' : 'translate-y-0'}`}>
+                <div className="max-w-3xl mx-auto w-full relative group">
+                    {messages.length === 0 && (
+                        <div className="mb-12 text-center animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000">
+                            <div className="w-20 h-20 rounded-3xl bg-zinc-900/60 border border-white/10 flex items-center justify-center font-bold text-white shadow-2xl mx-auto mb-8 text-4xl group-hover:scale-105 transition-transform duration-500">
+                                Q
+                            </div>
+                            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-4">
+                                Quantum Guru
+                            </h1>
+                            <p className="text-zinc-400 text-lg font-light max-w-lg mx-auto leading-relaxed">
+                                {mode === 'market' ? 'Advanced Market Intelligence & Financial Neural Analysis.' :
+                                    mode === 'article' ? 'Quantum Research Lab & Document Intelligence.' :
+                                        'Industrial Quantum Solutions & Architecture Design.'}
+                            </p>
+                        </div>
+                    )}
                     <div className="relative flex items-end gap-2 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 transition-all focus-within:ring-1 focus-within:ring-zinc-700/50 focus-within:border-zinc-700/50 focus-within:bg-zinc-900/95">
                         <textarea
                             value={inputValue}
@@ -205,6 +220,6 @@ export default function ChatInterface({ mode, initialMessage, contextConfig, pla
                     </p>
                 </div>
             </footer>
-        </React.Fragment>
+        </div>
     );
 }
