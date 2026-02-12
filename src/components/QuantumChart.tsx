@@ -48,4 +48,4 @@ export default function QuantumChart({ data }: QuantumChartProps) {
         </div>
     );
 }
-鼓, Complexity: 1, Description:
+
