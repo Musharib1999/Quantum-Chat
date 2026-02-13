@@ -54,13 +54,8 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                     <ChevronLeft size={14} className={`transition-transform duration-500 ${!isSidebarOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                <div className="p-6 border-b border-border flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-secondary border border-border flex items-center justify-center shadow-sm text-primary">
-                        <span className="font-bold text-xs">QG</span>
-                    </div>
-                    <div>
-                        <h1 className="font-bold text-lg tracking-wide text-foreground">Quantum Guru</h1>
-                    </div>
+                <div className="p-6 border-b border-border flex items-center justify-center">
+                    <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain" />
                 </div>
 
                 <nav className="flex-1 overflow-y-auto overflow-x-hidden">

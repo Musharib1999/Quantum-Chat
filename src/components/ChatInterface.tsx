@@ -187,8 +187,12 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                                     : 'bg-primary border border-primary text-primary-foreground shadow-md'
                                     }`}>
                                     {msg.sender === 'user' ? <User size={14} className="text-foreground" /> : (
-                                        <div className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground font-bold text-[10px]">
-                                            QG
+                                        <div className="w-full h-full overflow-hidden rounded-lg">
+                                            <img
+                                                src="/logo.png"
+                                                alt="QG"
+                                                className="w-[250%] max-w-none h-full object-cover object-left"
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -262,9 +266,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                     {messages.length === 0 && (
                         <div className="mb-12 text-center animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000">
                             <div className="mx-auto mb-8 group-hover:scale-105 transition-transform duration-500 flex justify-center">
-                                <div className="w-24 h-24 rounded-3xl bg-secondary border border-border flex items-center justify-center shadow-xl">
-                                    <span className="text-4xl font-black text-primary tracking-tighter">QG</span>
-                                </div>
+                                <img src="/logo.png" alt="Quantum Guru" className="h-24 w-auto object-contain" />
                             </div>
                             <p className="text-muted-foreground text-lg font-light max-w-lg mx-auto leading-relaxed">
                                 {mode === 'market' ? 'Advanced Market Intelligence & Financial Neural Analysis.' :
