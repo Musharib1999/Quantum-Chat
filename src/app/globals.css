@@ -46,45 +46,49 @@
 }
 
 [data-theme="light"] {
+  /* Quantum Guru "Line Theme" - Clean, White, Geometric */
   --background: #ffffff;
-  --foreground: #18181b;
-  /* Zinc 900 */
+  --foreground: #444444;
+  /* Dark Slate Grey for body text */
 
-  --card: rgba(255, 255, 255, 0.9);
-  --card-foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #444444;
 
   --popover: #ffffff;
-  --popover-foreground: #18181b;
+  --popover-foreground: #444444;
 
-  --primary: #18181b;
-  /* Dark for contrast */
+  --primary: #000000;
+  /* Pure Black for Headings/Actions */
   --primary-foreground: #ffffff;
 
-  --secondary: #f4f4f5;
-  /* Zinc 100 */
-  --secondary-foreground: #18181b;
+  --secondary: #f3f4f6;
+  /* Very light grey for backgrounds */
+  --secondary-foreground: #111827;
 
-  --muted: #e4e4e7;
-  /* Zinc 200 */
-  --muted-foreground: #71717a;
-  /* Zinc 500 */
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  /* Neutral Grey */
 
-  --accent: rgba(0, 0, 0, 0.05);
-  --accent-foreground: #18181b;
+  --accent: #1BB0CE;
+  /* Quantum Blue/Teal Accent */
+  --accent-foreground: #ffffff;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #e4e4e7;
-  /* Zinc 200 */
-  --input: #f4f4f5;
-  --ring: #d4d4d8;
-  /* Zinc 300 */
+  --border: #e5e5e5;
+  /* Distinct but subtle grey line */
+  --input: #ffffff;
+  --ring: #1BB0CE;
+  /* Teal ring focus */
 
-  --shadow-glass: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* Minimalist Shadows - replacing heavy glass with clean lines */
+  --shadow-glass: none;
+  --shadow-warm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.05);
 
-  --gradient-start: #18181b;
-  --gradient-end: #52525b;
+  --gradient-start: #000000;
+  --gradient-end: #333333;
 }
 
 @theme inline {
