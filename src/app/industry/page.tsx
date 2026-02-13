@@ -82,10 +82,10 @@ export default function IndustryPage() {
                     <div className="p-4 space-y-2">
                         {loadingMetadata ? (
                             <div className="p-4 animate-pulse space-y-4">
-                                <div className="h-4 bg-white/5 rounded w-1/2"></div>
+                                <div className="h-4 bg-muted rounded w-1/2"></div>
                                 <div className="space-y-2">
-                                    <div className="h-10 bg-white/5 rounded"></div>
-                                    <div className="h-10 bg-white/5 rounded"></div>
+                                    <div className="h-10 bg-muted rounded"></div>
+                                    <div className="h-10 bg-muted rounded"></div>
                                 </div>
                             </div>
                         ) : (
@@ -99,7 +99,7 @@ export default function IndustryPage() {
                     </div>
                 }
             >
-                <div className="flex flex-col h-full">
+                <div className="flex flex-col h-full bg-background">
                     {/* Form Fetcher / Wizard View */}
                     {sidebarStep === 'ready' && !sessionConfig.formData && (
                         <div className="p-4 md:p-8 flex-1 flex items-center justify-center overflow-y-auto">
@@ -125,9 +125,9 @@ export default function IndustryPage() {
 
                     {/* Placeholder when nothing is selected */}
                     {sidebarStep !== 'ready' && !sessionConfig.formData && (
-                        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 animate-in fade-in duration-500">
-                            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                                <div className="w-2 h-2 bg-zinc-600 rounded-full animate-ping"></div>
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground animate-in fade-in duration-500">
+                            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-4 border border-border">
+                                <div className="w-2 h-2 bg-primary rounded-full animate-ping"></div>
                             </div>
                             <p className="font-medium">Select parameters from the sidebar to begin.</p>
                         </div>
