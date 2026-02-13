@@ -60,20 +60,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 
           {/* Logo Section (Top Left) */}
+          {/* Logo Section (Top Left) */}
           <div className="flex items-center gap-3 group cursor-pointer">
-            {isDarkMode ? (
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transform transition-transform group-hover:rotate-180 duration-700 bg-indigo-500 text-white shadow-lg shadow-indigo-500/20`}>
-                  <Atom size={24} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-lg tracking-tight leading-none">Quantum</span>
-                  <span className="text-xs font-medium tracking-widest uppercase text-slate-400">Guru</span>
-                </div>
-              </div>
-            ) : (
-              <img src="/logo.png" alt="Quantum Guru" className="h-12 w-auto object-contain" />
-            )}
+            <img src="/logo.png" alt="Quantum Guru" className="h-12 w-auto object-contain" />
           </div>
 
           {/* Desktop Links */}
