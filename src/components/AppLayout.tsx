@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Settings } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { useTheme } from './ThemeContext';
 import Link from 'next/link';
+import LogoOrHeader from './LogoOrHeader';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -54,7 +56,8 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                 </button>
 
                 <div className="p-6 border-b border-border flex items-center justify-center">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain" />
+                    {/* Access theme context directly or pass it down? AppLayout needs useTheme. */}
+                    <LogoOrHeader />
                 </div>
 
                 <nav className="flex-1 overflow-y-auto overflow-x-hidden">
