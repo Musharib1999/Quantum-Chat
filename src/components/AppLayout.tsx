@@ -5,7 +5,6 @@ import { ChevronLeft, Settings } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from './ThemeContext';
 import Link from 'next/link';
-import LogoOrHeader from './LogoOrHeader';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -55,9 +54,13 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                     <ChevronLeft size={14} className={`transition-transform duration-500 ${!isSidebarOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                <div className="p-6 border-b border-border flex items-center justify-center">
-                    {/* Access theme context directly or pass it down? AppLayout needs useTheme. */}
-                    <LogoOrHeader />
+                <div className="p-6 border-b border-border flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-secondary border border-border flex items-center justify-center shadow-sm text-primary">
+                        <span className="font-bold text-xs">QG</span>
+                    </div>
+                    <div>
+                        <h1 className="font-bold text-lg tracking-wide text-foreground">Quantum Guru</h1>
+                    </div>
                 </div>
 
                 <nav className="flex-1 overflow-y-auto overflow-x-hidden">
