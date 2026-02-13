@@ -102,13 +102,7 @@ export default function LandingPage() {
 
         {/* Hero Section */}
         <div className="text-center max-w-3xl mx-auto mb-20 animate-fade-in-up">
-          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6 border ${isDarkMode ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300' : 'bg-blue-50 border-blue-200 text-blue-600'}`}>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-            </span>
-            System Online v2.4
-          </div>
+          {/* System Status Removed */}
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
             The Future of <br />
