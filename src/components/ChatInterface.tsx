@@ -183,20 +183,20 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
 
                                 {/* Avatar */}
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${msg.sender === 'user'
-                                    ? 'bg-zinc-800 border border-white/10 shadow-lg shadow-black/20'
-                                    : 'bg-white/5 border border-white/10 shadow-lg shadow-white/5'
+                                    ? 'bg-secondary border border-border shadow-sm'
+                                    : 'bg-primary border border-primary text-primary-foreground shadow-md'
                                     }`}>
-                                    {msg.sender === 'user' ? <User size={14} className="text-white" /> : (
-                                        <span className="text-[10px] font-bold text-white dark:text-white text-zinc-800">QG</span>
+                                    {msg.sender === 'user' ? <User size={14} className="text-foreground" /> : (
+                                        <span className="text-[10px] font-bold">QG</span>
                                     )}
                                 </div>
 
                                 {/* Bubble */}
                                 <div className={`rounded-2xl px-5 py-4 shadow-sm text-base leading-relaxed whitespace-pre-wrap ${msg.sender === 'user'
-                                    ? 'bg-zinc-800/80 backdrop-blur-md text-zinc-100 border border-white/10 rounded-br-none shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
+                                    ? 'bg-secondary text-foreground border border-border rounded-br-none'
                                     : msg.sender === 'system'
-                                        ? 'bg-secondary/50 text-muted-foreground text-sm text-center w-full rounded-lg border border-border'
-                                        : 'bg-card/60 backdrop-blur-md text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden'
+                                        ? 'bg-muted text-muted-foreground text-sm text-center w-full rounded-lg border border-border'
+                                        : 'bg-card text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden'
                                     }`}>
                                     {msg.sender === 'bot' || msg.sender === 'user' ? (
                                         <>
@@ -217,35 +217,35 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                     {isTyping && (
                         <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <div className="flex flex-row items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                                    <span className="text-[10px] font-bold text-white">...</span>
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                                    <span className="text-[10px] font-bold text-primary">...</span>
                                 </div>
                                 <div className="flex space-x-1 pl-2">
-                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                    <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce"></div>
+                                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></div>
                                 </div>
                             </div>
                         </div>
                     )}
                     {processingStep && (
                         <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 w-full max-w-md flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-                                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            <div className="bg-card border border-border rounded-2xl p-4 w-full max-w-md flex items-center gap-4 shadow-sm">
+                                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                                    <div className="w-5 h-5 border-2 border-muted border-t-primary rounded-full animate-spin"></div>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Quantum Pipeline Active</div>
-                                    <div className="text-sm font-bold text-white">
+                                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Quantum Pipeline Active</div>
+                                    <div className="text-sm font-bold text-foreground">
                                         {processingStep === 'generating' ? 'Generating Pulse Code...' :
                                             processingStep === 'simulating' ? 'Running Circuit on Simulator...' :
                                                 'Interpreting Quantum Output...'}
                                     </div>
                                 </div>
                                 <div className="flex gap-1">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'generating' ? 'bg-white' : 'bg-zinc-800'}`}></div>
-                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'simulating' ? 'bg-white' : 'bg-zinc-800'}`}></div>
-                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'interpreting' ? 'bg-white' : 'bg-zinc-800'}`}></div>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'generating' ? 'bg-primary' : 'bg-muted'}`}></div>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'simulating' ? 'bg-primary' : 'bg-muted'}`}></div>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${processingStep === 'interpreting' ? 'bg-primary' : 'bg-muted'}`}></div>
                                 </div>
                             </div>
                         </div>
@@ -259,39 +259,39 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                 <div className="max-w-3xl mx-auto w-full relative group">
                     {messages.length === 0 && (
                         <div className="mb-12 text-center animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000">
-                            <div className="w-20 h-20 rounded-3xl bg-zinc-900/60 border border-white/10 flex items-center justify-center font-bold text-white shadow-2xl mx-auto mb-8 text-4xl group-hover:scale-105 transition-transform duration-500">
+                            <div className="w-20 h-20 rounded-3xl bg-card border border-border flex items-center justify-center font-bold text-foreground shadow-xl mx-auto mb-8 text-4xl group-hover:scale-105 transition-transform duration-500">
                                 QG
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-4">
+                            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-4">
                                 Quantum Guru
                             </h1>
-                            <p className="text-zinc-400 text-lg font-light max-w-lg mx-auto leading-relaxed">
+                            <p className="text-muted-foreground text-lg font-light max-w-lg mx-auto leading-relaxed">
                                 {mode === 'market' ? 'Advanced Market Intelligence & Financial Neural Analysis.' :
                                     mode === 'article' ? 'Quantum Research Lab & Document Intelligence.' :
                                         'Industrial Quantum Solutions & Architecture Design.'}
                             </p>
                         </div>
                     )}
-                    <div className="relative flex items-end gap-2 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 transition-all focus-within:ring-1 focus-within:ring-zinc-700/50 focus-within:border-zinc-700/50 focus-within:bg-zinc-900/95">
+                    <div className="relative flex items-end gap-2 bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-lg p-2 transition-all focus-within:ring-1 focus-within:ring-ring focus-within:border-ring focus-within:bg-card">
                         <textarea
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                             placeholder={placeholder || "Initialize quantum query..."}
                             rows={1}
-                            className="flex-1 max-h-32 bg-transparent text-zinc-100 placeholder:text-zinc-500 text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
+                            className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
                             style={{ minHeight: '52px' }}
                         />
 
                         <button
                             onClick={() => handleSendMessage()}
                             disabled={!inputValue.trim() || isTyping}
-                            className="p-3 rounded-xl bg-zinc-100 text-zinc-950 hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95 mb-0.5 font-bold"
+                            className="p-3 rounded-xl bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-0.5 font-bold"
                         >
                             {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}
                         </button>
                     </div>
-                    <p className="text-center text-[10px] text-zinc-600 mt-3 font-medium tracking-wide">
+                    <p className="text-center text-[10px] text-muted-foreground mt-3 font-medium tracking-wide">
                         QUANTUM SECURE CONNECTION • END-TO-END ENCRYPTED
                     </p>
                 </div>
