@@ -187,7 +187,13 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                                     : 'bg-primary border border-primary text-primary-foreground shadow-md'
                                     }`}>
                                     {msg.sender === 'user' ? <User size={14} className="text-foreground" /> : (
-                                        <img src="/logo.png" alt="QG" className="w-6 h-auto object-contain" />
+                                        <div className="w-full h-full overflow-hidden rounded-lg">
+                                            <img
+                                                src="/logo.png"
+                                                alt="QG"
+                                                className="w-[250%] max-w-none h-full object-cover object-left"
+                                            />
+                                        </div>
                                     )}
                                 </div>
 
