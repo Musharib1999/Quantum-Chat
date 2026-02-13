@@ -187,7 +187,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                                     : 'bg-primary border border-primary text-primary-foreground shadow-md'
                                     }`}>
                                     {msg.sender === 'user' ? <User size={14} className="text-foreground" /> : (
-                                        <span className="text-[10px] font-bold">QG</span>
+                                        <img src="/logo.png" alt="QG" className="w-6 h-auto object-contain" />
                                     )}
                                 </div>
 
@@ -259,12 +259,9 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                 <div className="max-w-3xl mx-auto w-full relative group">
                     {messages.length === 0 && (
                         <div className="mb-12 text-center animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000">
-                            <div className="w-20 h-20 rounded-3xl bg-card border border-border flex items-center justify-center font-bold text-foreground shadow-xl mx-auto mb-8 text-4xl group-hover:scale-105 transition-transform duration-500">
-                                QG
+                            <div className="mx-auto mb-8 group-hover:scale-105 transition-transform duration-500 flex justify-center">
+                                <img src="/logo.png" alt="Quantum Guru" className="h-24 w-auto object-contain" />
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-4">
-                                Quantum Guru
-                            </h1>
                             <p className="text-muted-foreground text-lg font-light max-w-lg mx-auto leading-relaxed">
                                 {mode === 'market' ? 'Advanced Market Intelligence & Financial Neural Analysis.' :
                                     mode === 'article' ? 'Quantum Research Lab & Document Intelligence.' :
