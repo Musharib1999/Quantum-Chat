@@ -46,46 +46,44 @@
 }
 
 [data-theme="light"] {
-  /* Quantum Guru "Line Theme" - Clean, White, Geometric */
+  /* Quantum Guru "Clean White" Theme */
   --background: #ffffff;
-  --foreground: #444444;
-  /* Dark Slate Grey for body text */
+  --foreground: #111827;
+  /* Near-black for sharp text */
 
+  /* Cards are now pure white with a subtle border, no grey background */
   --card: #ffffff;
-  --card-foreground: #444444;
+  --card-foreground: #111827;
 
   --popover: #ffffff;
-  --popover-foreground: #444444;
+  --popover-foreground: #111827;
 
   --primary: #000000;
-  /* Pure Black for Headings/Actions */
   --primary-foreground: #ffffff;
 
-  --secondary: #f3f4f6;
-  /* Very light grey for backgrounds */
+  /* Secondary/Muted: Very subtle off-white, NOT grey */
+  --secondary: #f9fafb;
   --secondary-foreground: #111827;
 
-  --muted: #f3f4f6;
+  --muted: #f9fafb;
   --muted-foreground: #6b7280;
-  /* Neutral Grey */
 
   --accent: #1BB0CE;
-  /* Quantum Blue/Teal Accent */
+  /* Keep the Teal accent */
   --accent-foreground: #ffffff;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #e5e5e5;
-  /* Distinct but subtle grey line */
+  /* Borders are barely visible, just enough for structure */
+  --border: #f3f4f6;
   --input: #ffffff;
   --ring: #1BB0CE;
-  /* Teal ring focus */
 
-  /* Minimalist Shadows - replacing heavy glass with clean lines */
+  /* No shadows, flat design */
   --shadow-glass: none;
-  --shadow-warm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-warm: none;
+  --shadow-button: none;
 
   --gradient-start: #000000;
   --gradient-end: #333333;
