@@ -85,9 +85,6 @@ export default function LandingPage() {
             >
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all transform hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-white text-slate-950 hover:bg-slate-200' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
-              Connect Wallet
-            </button>
           </div>
 
           {/* Mobile Menu Toggle */}
