@@ -61,44 +61,44 @@ export default function QuantumFormFetcher({ industry, service, problem, onSubmi
     };
 
     if (loading) return (
-        <div className="p-8 bg-zinc-900/50 border border-white/5 rounded-2xl animate-pulse flex flex-col items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                <Settings className="text-zinc-600 animate-spin" size={20} />
+        <div className="p-8 bg-card border border-border rounded-2xl animate-pulse flex flex-col items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center">
+                <Settings className="text-muted-foreground animate-spin" size={20} />
             </div>
-            <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Hydrating Quantum Parameters...</p>
+            <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Hydrating Quantum Parameters...</p>
         </div>
     );
 
     if (error) return (
-        <div className="p-8 bg-zinc-900/50 border border-white/5 rounded-2xl text-center space-y-3">
-            <Info className="text-zinc-600 mx-auto" size={24} />
-            <p className="text-zinc-500 text-sm font-medium">{error}</p>
+        <div className="p-8 bg-card border border-border rounded-2xl text-center space-y-3">
+            <Info className="text-muted-foreground mx-auto" size={24} />
+            <p className="text-muted-foreground text-sm font-medium">{error}</p>
         </div>
     );
 
     if (!form) return null;
 
     return (
-        <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 space-y-8 animate-in zoom-in-95 duration-700">
+        <div className="bg-card backdrop-blur-xl border border-border rounded-3xl p-6 md:p-8 space-y-8 animate-in zoom-in-95 duration-700 shadow-sm">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-xl font-black text-white tracking-tight">Quantum Parameters</h3>
-                    <p className="text-zinc-500 text-sm mt-1">{form.description || `Configure your ${problem} simulation settings.`}</p>
+                    <h3 className="text-xl font-black text-foreground tracking-tight">Quantum Parameters</h3>
+                    <p className="text-muted-foreground text-sm mt-1">{form.description || `Configure your ${problem} simulation settings.`}</p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                    <Settings className="text-white" size={18} />
+                <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center">
+                    <Settings className="text-foreground" size={18} />
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {form.fields.map((field) => (
                     <div key={field.key} className="space-y-2">
-                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">{field.label}</label>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">{field.label}</label>
                         {field.type === 'select' ? (
                             <select
                                 value={formData[field.key]}
                                 onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-all appearance-none"
+                                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none"
                             >
                                 {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
@@ -108,9 +108,9 @@ export default function QuantumFormFetcher({ industry, service, problem, onSubmi
                                     type="range"
                                     value={formData[field.key] || 0}
                                     onChange={(e) => handleInputChange(field.key, parseInt(e.target.value))}
-                                    className="w-full accent-white h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                                    className="w-full accent-primary h-1 bg-secondary rounded-lg appearance-none cursor-pointer"
                                 />
-                                <div className="flex justify-between text-[10px] text-zinc-600 mt-2 font-mono">
+                                <div className="flex justify-between text-[10px] text-muted-foreground mt-2 font-mono">
                                     <span>{formData[field.key] || 0}</span>
                                 </div>
                             </div>
@@ -119,17 +119,17 @@ export default function QuantumFormFetcher({ industry, service, problem, onSubmi
                                 type={field.type === 'number' ? 'number' : 'text'}
                                 value={formData[field.key] || ''}
                                 onChange={(e) => handleInputChange(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-700 focus:outline-none focus:border-white/30 transition-all"
+                                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-all"
                             />
                         )}
-                        {field.description && <p className="text-[10px] text-zinc-600 italic">{field.description}</p>}
+                        {field.description && <p className="text-[10px] text-muted-foreground italic">{field.description}</p>}
                     </div>
                 ))}
             </div>
 
             <button
                 onClick={() => onSubmit(formData)}
-                className="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:bg-zinc-200 transition-all active:scale-[0.98] shadow-2xl shadow-white/5"
+                className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5"
             >
                 <Play size={18} fill="currentColor" /> Execute Quantum Workflow
             </button>
