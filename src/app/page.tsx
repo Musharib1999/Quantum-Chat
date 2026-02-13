@@ -72,17 +72,9 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Desktop Links */}
+          {/* Desktop Links - Removed */}
           <div className="hidden md:flex items-center gap-8">
-            {['Platform', 'Solutions', 'Research', 'Pricing'].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className={`text-sm font-medium transition-colors hover:text-indigo-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}
-              >
-                {item}
-              </a>
-            ))}
+            {/* Links removed per user request */}
           </div>
 
           {/* Actions */}
@@ -200,11 +192,7 @@ export default function LandingPage() {
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className={`fixed inset-0 z-40 md:hidden flex flex-col items-center justify-center space-y-8 ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
-          {['Platform', 'Solutions', 'Research', 'Pricing'].map((item) => (
-            <a key={item} href="#" className="text-2xl font-bold" onClick={() => setIsMobileMenuOpen(false)}>
-              {item}
-            </a>
-          ))}
+          {/* Mobile Links - Removed */}
           <button onClick={toggleTheme} className="flex items-center gap-2 px-6 py-3 rounded-full border border-current opacity-60">
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
