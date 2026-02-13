@@ -112,7 +112,7 @@
   --radius-md: calc(var(--radius) - 4px);
   --radius-sm: calc(var(--radius) - 8px);
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-montserrat), system-ui, -apple-system, sans-serif;
 
   --shadow-warm: 0 10px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.01);
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.8);

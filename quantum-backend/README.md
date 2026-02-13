@@ -8,8 +8,8 @@ This is a FastAPI microservice designed to run Qiskit and D-Wave simulations.
 2. Connect your repository: `https://github.com/Musharib1999/Quantum-calculation-backend.git`
 3. Use the following settings:
    - **Environment**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Build Command**: `python3 -m pip install -r requirements.txt`
+   - **Start Command**: `python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT`
 
 ## Endpoints
 

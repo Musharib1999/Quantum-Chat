@@ -1,7 +1,6 @@
-fastapi==0.109.2
-uvicorn==0.27.1
-pydantic==2.6.1
-qiskit==1.0.0
-qiskit-aer==0.13.3
-dimod==0.12.14
-dwave-ocean-sdk==6.10.0
+fastapi
+uvicorn
+pydantic
+qiskit
+qiskit-aer
+dimod

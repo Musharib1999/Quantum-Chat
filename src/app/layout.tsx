@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeContext";
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-montserrat",
+});
 
 export const metadata: Metadata = {
   title: "Quantum Guru Chat",
@@ -22,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" data-theme="dark">
-      <body className="antialiased select-none">
+      <body className={`${montserrat.variable} font-sans antialiased select-none`}>
         <ThemeProvider>
           {children}
         </ThemeProvider>
