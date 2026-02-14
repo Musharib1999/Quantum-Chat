@@ -73,12 +73,7 @@ export default function LandingPage() {
 
           {/* Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-white/10 text-yellow-300' : 'hover:bg-slate-100 text-slate-600'}`}
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            {/* Theme Toggle Removed */}
           </div>
 
           {/* Mobile Menu Toggle */}

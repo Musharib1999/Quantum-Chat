@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Settings } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
-import { useTheme } from './ThemeContext';
 import Link from 'next/link';
 
 interface AppLayoutProps {
@@ -63,10 +61,7 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                 </nav>
 
                 <div className="p-4 border-t border-border bg-card/50 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Appearance</span>
-                        <ThemeToggle />
-                    </div>
+                    {/* Appearance Toggle Removed */}
 
                     <div className="pt-4 border-t border-border space-y-2">
                         <div className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-secondary/50 border border-border">
