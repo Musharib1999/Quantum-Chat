@@ -8,7 +8,7 @@ interface IField {
     label: string;
     key: string;
     type: 'text' | 'number' | 'select' | 'range';
-    options?: string[];
+    options?: (string | { label: string; value: string })[];
     description?: string;
     defaultValue?: string;
 }

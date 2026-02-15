@@ -8,7 +8,7 @@ interface IField {
     label: string;
     key: string;
     type: 'text' | 'number' | 'select' | 'range';
-    options?: string[];
+    options?: (string | { label: string; value: string })[];
     description?: string;
     defaultValue?: string;
 }
@@ -100,7 +100,11 @@ export default function QuantumFormFetcher({ industry, service, problem, onSubmi
                                 onChange={(e) => handleInputChange(field.key, e.target.value)}
                                 className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none"
                             >
-                                {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                {field.options?.map((opt: any) => {
+                                    const label = typeof opt === 'string' ? opt : opt.label;
+                                    const value = typeof opt === 'string' ? opt : opt.value;
+                                    return <option key={value} value={value}>{label}</option>;
+                                })}
                             </select>
                         ) : field.type === 'range' ? (
                             <div className="pt-2">

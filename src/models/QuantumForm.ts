@@ -4,7 +4,7 @@ export interface IQuantumField {
     label: string;
     key: string;
     type: 'text' | 'number' | 'select' | 'range';
-    options?: string[];
+    options?: { label: string; value: string }[] | string[];
     description?: string;
     defaultValue?: string;
 }
@@ -23,7 +23,7 @@ const QuantumFieldSchema = new Schema({
     label: { type: String, required: true },
     key: { type: String, required: true },
     type: { type: String, enum: ['text', 'number', 'select', 'range'], required: true },
-    options: [String],
+    options: [{ label: String, value: String }],
     description: String,
     defaultValue: String
 });
