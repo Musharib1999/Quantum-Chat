@@ -244,6 +244,12 @@ export async function chatWithGroq(
                 if (scrapedData) autonomousContext = scrapedData;
             }
             systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset.`;
+            systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
+            You must provide your response in the following strict order:
+            1. **Stocks Prices and Movements Numbers**: Current price, day's change, percentage change, and key volume data.
+            2. **News**: Recent headlines and relevant news events affecting the stock.
+            3. **Analysis**: Technical and fundamental analysis based on the data.
+            4. **Conclusion**: A final summary and potential outlook.`;
         }
         // Mode: Article & Learn
         else if (contextConfig.mode === 'article') {

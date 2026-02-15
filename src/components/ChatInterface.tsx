@@ -35,9 +35,9 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages, isTyping]);
+    // useEffect(() => {
+    //     scrollToBottom();
+    // }, [messages, isTyping]);
 
     const lastTriggeredFormRef = useRef<string | null>(null);
 

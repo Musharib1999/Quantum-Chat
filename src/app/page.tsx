@@ -139,7 +139,7 @@ export default function LandingPage() {
           <FeatureCard
             href="/market"
             icon={<TrendingUp size={32} />}
-            title="Market Intelligence"
+            title="Quantum Stocks and Market Intelligence"
             description="Real-time analysis of financial assets, stock trends, and deep market insights powered by quantum algorithms."
             actionText="Access Data"
             isDarkMode={isDarkMode}
