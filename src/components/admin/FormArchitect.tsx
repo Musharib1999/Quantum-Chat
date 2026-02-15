@@ -7,7 +7,7 @@ import axios from 'axios';
 interface IField {
     label: string;
     key: string;
-    type: 'text' | 'number' | 'select' | 'range';
+    type: 'text' | 'number' | 'select' | 'multi-select' | 'range';
     options?: (string | { label: string; value: string })[];
     description?: string;
     defaultValue?: string;

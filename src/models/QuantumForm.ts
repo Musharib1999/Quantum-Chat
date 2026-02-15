@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IQuantumField {
     label: string;
     key: string;
-    type: 'text' | 'number' | 'select' | 'range';
+    type: 'text' | 'number' | 'select' | 'multi-select' | 'range';
     options?: { label: string; value: string }[] | string[];
     description?: string;
     defaultValue?: string;
@@ -22,7 +22,7 @@ export interface IQuantumForm extends Document {
 const QuantumFieldSchema = new Schema({
     label: { type: String, required: true },
     key: { type: String, required: true },
-    type: { type: String, enum: ['text', 'number', 'select', 'range'], required: true },
+    type: { type: String, enum: ['text', 'number', 'select', 'multi-select', 'range'], required: true },
     options: [{ label: String, value: String }],
     description: String,
     defaultValue: String

@@ -7,7 +7,7 @@ import { Settings, Play, Info } from 'lucide-react';
 interface IField {
     label: string;
     key: string;
-    type: 'text' | 'number' | 'select' | 'range';
+    type: 'text' | 'number' | 'select' | 'multi-select' | 'range';
     options?: (string | { label: string; value: string })[];
     description?: string;
     defaultValue?: string;
@@ -99,6 +99,22 @@ export default function QuantumFormFetcher({ industry, service, problem, onSubmi
                                 value={formData[field.key]}
                                 onChange={(e) => handleInputChange(field.key, e.target.value)}
                                 className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none"
+                            >
+                                {field.options?.map((opt: any) => {
+                                    const label = typeof opt === 'string' ? opt : opt.label;
+                                    const value = typeof opt === 'string' ? opt : opt.value;
+                                    return <option key={value} value={value}>{label}</option>;
+                                })}
+                            </select>
+                        ) : field.type === 'multi-select' ? (
+                            <select
+                                multiple
+                                value={formData[field.key] || []}
+                                onChange={(e) => {
+                                    const values = Array.from(e.target.selectedOptions, option => option.value);
+                                    handleInputChange(field.key, values);
+                                }}
+                                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none h-32"
                             >
                                 {field.options?.map((opt: any) => {
                                     const label = typeof opt === 'string' ? opt : opt.label;
