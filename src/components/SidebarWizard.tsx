@@ -14,7 +14,7 @@ interface SidebarWizardProps {
     metadata: {
         industries: { id: string, label: string, icon?: string }[];
         services: { id: string, label: string, icon?: string }[];
-        problemMapping: Record<string, { id: string, label: string }[]>;
+        problemMapping: Record<string, Record<string, { id: string, label: string }[]>>;
     };
     onSelect: (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => void;
 }
@@ -79,7 +79,10 @@ export default function SidebarWizard({ step, config, metadata, onSelect }: Side
                         <span>Select Problem</span>
                     </div>
                     <div className="space-y-1">
-                        {metadata.problemMapping[config.service]?.map(item => renderItem(item, 'problem', false, config.problem === item.label))}
+                        {config.industry && config.service && metadata.problemMapping[config.industry]?.[config.service]?.map(item => renderItem(item, 'problem', false, config.problem === item.label))}
+                        {(!config.industry || !metadata.problemMapping[config.industry]?.[config.service]?.length) && (
+                            <p className="text-[10px] text-muted-foreground px-2 italic">No problems mapped to this service.</p>
+                        )}
                     </div>
                 </div>
             )}

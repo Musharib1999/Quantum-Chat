@@ -253,7 +253,7 @@ export default function FormArchitect() {
                                 className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             />
                             <datalist id="problems">
-                                {(metadata.problemMapping[service] || []).map((p: any) => <option key={p.id} value={p.label} />)}
+                                {(metadata.problemMapping[industry]?.[service] || []).map((p: any) => <option key={p.id} value={p.label} />)}
                             </datalist>
                         </div>
                     </div>
