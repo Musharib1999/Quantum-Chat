@@ -1,8 +1,11 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
+import AppLayout from '@/components/AppLayout';
+import ChatInterface from '@/components/ChatInterface';
+import StockSidebar from '@/components/StockSidebar';
 import MarketNews from '@/components/MarketNews';
 import { getMarketNews } from '@/app/actions/chat';
-import { useEffect } from 'react';
 
 export default function MarketPage() {
     const [selectedStock, setSelectedStock] = useState<{ _id: string, name: string, url: string } | null>(null);
