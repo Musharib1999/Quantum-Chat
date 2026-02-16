@@ -39,25 +39,30 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
     //     scrollToBottom();
     // }, [messages, isTyping]);
 
-    const lastTriggeredFormRef = useRef<string | null>(null);
+    const lastTriggeredNewsRef = useRef<string | null>(null);
 
     // --- Automated Analysis Trigger ---
     useEffect(() => {
         const targetUrl = mode === 'market' ? contextConfig?.stockUrl : mode === 'article' ? contextConfig?.articleUrl : null;
         const targetName = mode === 'market' ? contextConfig?.stockName : mode === 'article' ? contextConfig?.articleTitle : null;
 
+        // Stock Analysis Trigger
         if (targetUrl && targetUrl !== lastTriggeredUrlRef.current) {
             lastTriggeredUrlRef.current = targetUrl;
-
-            // Check if we should trigger (new selection or starting fresh)
             const triggerMessage = mode === 'market'
                 ? `Analyze latest trends, market news, and stock prices for ${targetName}.`
                 : `Provide a detailed summary and latest insights for the research article: ${targetName}.`;
 
-            // Artificial delay to feel "real"
-            const timer = setTimeout(() => {
-                handleSendMessage(triggerMessage);
-            }, 1000);
+            const timer = setTimeout(() => handleSendMessage(triggerMessage), 1000);
+            return () => clearTimeout(timer);
+        }
+
+        // News Detail Trigger (New)
+        if (mode === 'market' && contextConfig?.newsTitle && contextConfig?.newsTitle !== lastTriggeredNewsRef.current) {
+            lastTriggeredNewsRef.current = contextConfig.newsTitle;
+            const triggerMessage = `Provide more details and market implications for the following news headline from ${contextConfig.newsSource}: "${contextConfig.newsTitle}"`;
+
+            const timer = setTimeout(() => handleSendMessage(triggerMessage), 500);
             return () => clearTimeout(timer);
         }
 
@@ -71,7 +76,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                 return () => clearTimeout(timer);
             }
         }
-    }, [contextConfig?.stockUrl, contextConfig?.articleUrl, contextConfig?.formData, mode]);
+    }, [contextConfig?.stockUrl, contextConfig?.articleUrl, contextConfig?.formData, contextConfig?.newsTitle, mode]);
 
 
     const handleSendMessage = async (text?: string, customConfig?: any) => {

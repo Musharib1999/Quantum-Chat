@@ -9,6 +9,7 @@ import { getMarketNews } from '@/app/actions/chat';
 
 export default function MarketPage() {
     const [selectedStock, setSelectedStock] = useState<{ _id: string, name: string, url: string } | null>(null);
+    const [selectedNews, setSelectedNews] = useState<any | null>(null);
     const [news, setNews] = useState<any[]>([]);
     const [isNewsLoading, setIsNewsLoading] = useState(true);
 
@@ -31,10 +32,16 @@ export default function MarketPage() {
         setSelectedStock(stock);
     };
 
-    const contextConfig = selectedStock ? {
-        stockName: selectedStock.name,
-        stockUrl: selectedStock.url
-    } : {};
+    const contextConfig = {
+        ...(selectedStock ? {
+            stockName: selectedStock.name,
+            stockUrl: selectedStock.url
+        } : {}),
+        ...(selectedNews ? {
+            newsTitle: selectedNews.title,
+            newsSource: selectedNews.source
+        } : {})
+    };
 
     return (
         <AppLayout
@@ -44,7 +51,13 @@ export default function MarketPage() {
                     <StockSidebar onSelect={handleStockSelect} activeStockId={selectedStock?._id} />
                 </div>
             }
-            rightSidebarContent={<MarketNews news={news} isLoading={isNewsLoading} />}
+            rightSidebarContent={
+                <MarketNews
+                    news={news}
+                    isLoading={isNewsLoading}
+                    onSelect={(n) => setSelectedNews(n)}
+                />
+            }
         >
             <ChatInterface
                 mode="market"

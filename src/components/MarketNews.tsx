@@ -15,9 +15,10 @@ interface NewsItem {
 interface MarketNewsProps {
     news: NewsItem[];
     isLoading: boolean;
+    onSelect?: (news: NewsItem) => void;
 }
 
-export default function MarketNews({ news, isLoading }: MarketNewsProps) {
+export default function MarketNews({ news, isLoading, onSelect }: MarketNewsProps) {
     return (
         <div className="flex flex-col h-full bg-card/30">
             <div className="p-6 border-b border-border">
