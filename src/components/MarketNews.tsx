@@ -45,6 +45,7 @@ export default function MarketNews({ news, isLoading, onSelect }: MarketNewsProp
                     news.map((newsItem) => (
                         <div
                             key={newsItem.id}
+                            onClick={() => onSelect?.(newsItem)}
                             className="group p-4 rounded-2xl bg-secondary/30 border border-border/50 hover:border-primary/20 transition-all cursor-pointer"
                         >
                             <div className="flex items-start justify-between mb-2">
