@@ -32,7 +32,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
     return (
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border">
-                <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                <h3 className="text-foreground mb-4 flex items-center gap-2">
                     <TrendingUp className="text-green-400" size={18} /> Quantum Stocks and Market Intelligence
                 </h3>
                 <div className="relative">
@@ -59,7 +59,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                             }`}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm">{stock.name}</span>
+                            <span className="text-sm">{stock.name}</span>
                             {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
                         </div>
                     </button>

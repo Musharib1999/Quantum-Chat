@@ -21,7 +21,7 @@ export default function MarketNews({ news, isLoading }: MarketNewsProps) {
     return (
         <div className="flex flex-col h-full bg-card/30">
             <div className="p-6 border-b border-border">
-                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                <h3 className="text-sm uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
                     <Newspaper size={14} className="text-primary" />
                     Latest Market News
                 </h3>
@@ -47,22 +47,22 @@ export default function MarketNews({ news, isLoading }: MarketNewsProps) {
                             className="group p-4 rounded-2xl bg-secondary/30 border border-border/50 hover:border-primary/20 transition-all cursor-pointer"
                         >
                             <div className="flex items-start justify-between mb-2">
-                                <span className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">{newsItem.source}</span>
+                                <span className="text-[10px] text-primary/60 uppercase tracking-widest">{newsItem.source}</span>
                                 <span className="text-[10px] text-muted-foreground">{newsItem.time}</span>
                             </div>
 
-                            <h4 className="text-sm font-bold text-foreground leading-tight mb-3 group-hover:text-primary transition-colors">
+                            <h4 className="text-sm text-foreground leading-tight mb-3 group-hover:text-primary transition-colors">
                                 {newsItem.title}
                             </h4>
 
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     {newsItem.trend === 'up' ? (
-                                        <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                        <div className="flex items-center gap-1 text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                                             <TrendingUp size={10} /> POSITIVE
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-1 text-[10px] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">
+                                        <div className="flex items-center gap-1 text-[10px] text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">
                                             <TrendingDown size={10} /> VOLATILE
                                         </div>
                                     )}
@@ -74,13 +74,13 @@ export default function MarketNews({ news, isLoading }: MarketNewsProps) {
                 ) : (
                     <div className="flex flex-col items-center justify-center p-12 text-center h-full">
                         <Newspaper size={32} className="text-muted-foreground/20 mb-4" />
-                        <p className="text-xs text-muted-foreground font-medium">No recent news found.</p>
+                        <p className="text-xs text-muted-foreground">No recent news found.</p>
                     </div>
                 )}
             </div>
 
             <div className="p-4 border-t border-border bg-secondary/20">
-                <p className="text-[10px] text-center text-muted-foreground font-medium tracking-wide">
+                <p className="text-[10px] text-center text-muted-foreground tracking-wide">
                     REAL-TIME QUANTUM NEWS FEED • ENCRYPTED
                 </p>
             </div>

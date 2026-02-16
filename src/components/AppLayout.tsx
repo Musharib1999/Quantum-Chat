@@ -75,9 +75,9 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                 <div className="p-4 border-t border-border bg-card/50 space-y-4">
                     <div className="pt-4 border-t border-border space-y-2">
                         <div className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-secondary/50 border border-border">
-                            <div className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-foreground font-black text-xs">US</div>
+                            <div className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-foreground text-xs">US</div>
                             <div className="flex-1 overflow-hidden">
-                                <p className="text-xs font-bold text-foreground truncate">User Session</p>
+                                <p className="text-xs text-foreground truncate">User Session</p>
                                 <p className="text-[10px] text-muted-foreground truncate">Pro Plan Active</p>
                             </div>
                         </div>
