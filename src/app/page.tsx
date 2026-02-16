@@ -104,21 +104,7 @@ export default function LandingPage() {
             Access next-generation computational power. Select your specialized interface below to begin your journey into quantum-accelerated workflows.
           </p>
 
-          {/* Stats Row */}
-          <div className={`grid grid-cols-3 gap-4 md:gap-12 py-8 border-y ${isDarkMode ? 'border-white/5' : 'border-slate-200'}`}>
-            <div className="flex flex-col">
-              <span className="text-3xl font-bold">128Q</span>
-              <span className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Processing Power</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-3xl font-bold">0.02ms</span>
-              <span className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Latency</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-3xl font-bold">99.9%</span>
-              <span className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Uptime</span>
-            </div>
-          </div>
+
         </div>
 
         {/* Cards Grid */}
