@@ -1,52 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Obsidian & Steel - Premium Monochromatic Theme */
-  --background: #000000;
-  /* Absolute Black */
-  --foreground: #f4f4f5;
-  /* Zinc 100 */
-
-  --card: rgba(24, 24, 27, 0.8);
-  /* Zinc 900 semi-transparent */
-  --card-foreground: #f4f4f5;
-
-  --popover: rgba(18, 18, 18, 0.95);
-  --popover-foreground: #f4f4f5;
-
-  --primary: #ffffff;
-  /* Pure White for contrast */
-  --primary-foreground: #000000;
-
-  --secondary: #27272a;
-  /* Zinc 800 */
-  --secondary-foreground: #e4e4e7;
-  /* Zinc 200 */
-
-  --muted: rgba(39, 39, 42, 0.5);
-  --muted-foreground: #a1a1aa;
-  /* Zinc 400 */
-
-  --accent: rgba(255, 255, 255, 0.1);
-  --accent-foreground: #ffffff;
-
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-
-  --border: rgba(255, 255, 255, 0.1);
-  /* Subtle white border */
-  --input: rgba(24, 24, 27, 0.8);
-  --ring: rgba(255, 255, 255, 0.3);
-
-  --radius: 0.75rem;
-  /* Slightly tighter radius for professional feel */
-
-  --gradient-start: #ffffff;
-  --gradient-end: #a1a1aa;
-}
-
-[data-theme="light"] {
-  /* Quantum Guru "Clean White" Theme */
+  /* Quantum Guru "Clean White" Theme - DEFAULT */
   --background: #ffffff;
   --foreground: #111827;
   /* Near-black for sharp text */
@@ -85,8 +40,46 @@
   --shadow-warm: none;
   --shadow-button: none;
 
+  --radius: 0.75rem;
+
   --gradient-start: #000000;
   --gradient-end: #333333;
+}
+
+[data-theme="dark"] {
+  /* Obsidian & Steel - Premium Monochromatic Theme */
+  --background: #000000;
+  --foreground: #f4f4f5;
+
+  --card: rgba(24, 24, 27, 0.8);
+  --card-foreground: #f4f4f5;
+
+  --popover: rgba(18, 18, 18, 0.95);
+  --popover-foreground: #f4f4f5;
+
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+
+  --secondary: #27272a;
+  --secondary-foreground: #e4e4e7;
+
+  --muted: rgba(39, 39, 42, 0.5);
+  --muted-foreground: #a1a1aa;
+
+  --accent: rgba(255, 255, 255, 0.1);
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(24, 24, 27, 0.8);
+  --ring: rgba(255, 255, 255, 0.3);
+
+  --gradient-start: #ffffff;
+  --gradient-end: #a1a1aa;
+
+  /* Restore shadows for dark theme depth if needed, otherwise inherit */
 }
 
 @theme inline {
