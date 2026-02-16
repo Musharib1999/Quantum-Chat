@@ -7,19 +7,26 @@ import Link from 'next/link';
 interface AppLayoutProps {
     children: React.ReactNode;
     sidebarContent: React.ReactNode;
+    rightSidebarContent?: React.ReactNode;
     currentMode: 'industry' | 'market' | 'article';
 }
 
-export default function AppLayout({ children, sidebarContent, currentMode }: AppLayoutProps) {
+export default function AppLayout({ children, sidebarContent, rightSidebarContent, currentMode }: AppLayoutProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
             const mobile = window.innerWidth < 768;
             setIsMobile(mobile);
-            if (mobile) setIsSidebarOpen(false);
-            else setIsSidebarOpen(true);
+            if (mobile) {
+                setIsSidebarOpen(false);
+                setIsRightSidebarOpen(false);
+            } else {
+                setIsSidebarOpen(true);
+                setIsRightSidebarOpen(true);
+            }
         };
         handleResize();
         window.addEventListener('resize', handleResize);
@@ -27,19 +34,24 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
     }, []);
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+    const toggleRightSidebar = () => setIsRightSidebarOpen(!isRightSidebarOpen);
 
     return (
         <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-zinc-500/30">
             <div className="fixed inset-0 bg-background z-0 pointer-events-none"></div>
             <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none"></div>
 
-            {isMobile && isSidebarOpen && (
+            {isMobile && (isSidebarOpen || isRightSidebarOpen) && (
                 <div
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 animate-in fade-in duration-300"
-                    onClick={() => setIsSidebarOpen(false)}
+                    onClick={() => {
+                        setIsSidebarOpen(false);
+                        setIsRightSidebarOpen(false);
+                    }}
                 />
             )}
 
+            {/* Left Sidebar */}
             <aside className={`
                 z-40 bg-card/80 backdrop-blur-2xl border-r border-border flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
                 ${isMobile ? 'fixed inset-y-0 left-0 h-full shadow-2xl' : 'relative h-full'}
@@ -61,8 +73,6 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
                 </nav>
 
                 <div className="p-4 border-t border-border bg-card/50 space-y-4">
-                    {/* Appearance Toggle Removed */}
-
                     <div className="pt-4 border-t border-border space-y-2">
                         <div className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-secondary/50 border border-border">
                             <div className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-foreground font-black text-xs">US</div>
@@ -91,6 +101,37 @@ export default function AppLayout({ children, sidebarContent, currentMode }: App
             <main className="flex-1 flex flex-col h-full relative min-w-0 w-full overflow-hidden z-10 bg-transparent">
                 {children}
             </main>
+
+            {/* Right Sidebar */}
+            {rightSidebarContent && (
+                <>
+                    <aside className={`
+                        z-40 bg-card/80 backdrop-blur-2xl border-l border-border flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+                        ${isMobile ? 'fixed inset-y-0 right-0 h-full shadow-2xl' : 'relative h-full'}
+                        ${isRightSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 translate-x-10 opacity-0 overflow-hidden'}
+                    `}>
+                        <button
+                            onClick={toggleRightSidebar}
+                            className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-card hover:bg-secondary hover:text-foreground rounded-l-xl flex items-center justify-center transition-all z-50 backdrop-blur-md border border-r-0 border-border shadow-md text-muted-foreground"
+                        >
+                            <ChevronLeft size={14} className={`transition-transform duration-500 ${isRightSidebarOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <div className="h-full overflow-y-auto">
+                            {rightSidebarContent}
+                        </div>
+                    </aside>
+
+                    {isMobile && !isRightSidebarOpen && (
+                        <button
+                            onClick={() => setIsRightSidebarOpen(true)}
+                            className="absolute top-4 right-4 z-50 w-10 h-10 bg-card/80 backdrop-blur-md border border-border rounded-xl flex items-center justify-center text-foreground shadow-lg"
+                        >
+                            <Settings size={20} />
+                        </button>
+                    )}
+                </>
+            )}
         </div>
     );
 }
