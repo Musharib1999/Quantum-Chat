@@ -40,6 +40,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
     // }, [messages, isTyping]);
 
     const lastTriggeredNewsRef = useRef<string | null>(null);
+    const lastTriggeredFormRef = useRef<string | null>(null);
 
     // --- Automated Analysis Trigger ---
     useEffect(() => {
