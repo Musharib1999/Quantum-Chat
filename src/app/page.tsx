@@ -95,7 +95,7 @@ export default function LandingPage() {
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
             The Future of <br />
-            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${isDarkMode ? 'from-indigo-400 via-purple-400 to-indigo-400' : 'from-blue-600 via-indigo-600 to-blue-600'}`}>
+            <span className="text-[rgb(48,102,187)]">
               Quantum Analysis
             </span>
           </h1>
