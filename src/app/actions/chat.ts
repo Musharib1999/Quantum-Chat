@@ -245,11 +245,20 @@ export async function chatWithGroq(
             }
             systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset.`;
             systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
-            You must provide your response in the following strict order:
-            1. **Stocks Prices and Movements Numbers**: Current price, day's change, percentage change, and key volume data.
-            2. **News**: Recent headlines and relevant news events affecting the stock.
-            3. **Analysis**: Technical and fundamental analysis based on the data.
-            4. **Conclusion**: A final summary and potential outlook.`;
+            You must provide your response in the following strict order using Markdown:
+            1. **## Stocks Prices and Movements Numbers**
+               - Provide Current price, day's change, percentage change, and key volume data.
+            2. **## News**
+               - Recent headlines and relevant news events affecting the stock.
+            3. **## Analysis**
+               - Technical and fundamental analysis based on the data.
+            4. **## Conclusion**
+               - A final summary and potential outlook.
+            
+            STYLING RULES:
+            - Use '##' for main section headers.
+            - Do NOT use decorative symbols like '|' or '---' at the start of headers.
+            - Use bullet points for lists.`;
         }
         // Mode: Article & Learn
         else if (contextConfig.mode === 'article') {
@@ -262,6 +271,20 @@ export async function chatWithGroq(
                 if (scrapedData) autonomousContext = scrapedData;
             }
             systemInstructions += `\nTASK: Summarize, analyze, or answer questions based on the specific research article provided.`;
+            systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
+            You must provide your response in the following strict order using Markdown:
+            1. **## Executive Summary**
+               - A concise overview of the article's main purpose.
+            2. **## Key Findings**
+               - The most important results or discoveries.
+            3. **## Analysis & Implications**
+               - What this means for the field of Quantum Computing.
+            4. **## Conclusion**
+               - Final thoughts or future outlook.
+
+            STYLING RULES:
+            - Use '##' for main section headers.
+            - Do NOT use decorative symbols like '|' or '---' at the start of headers.`;
         }
         // Mode: Industry (Modular / Robust)
         else if (contextConfig.mode === 'industry') {
@@ -451,5 +474,46 @@ Success: ${executionResult.success}
         });
 
         return { text: "", error: errorMsg };
+    }
+}
+export async function getMarketNews() {
+    if (!API_KEY) return [];
+
+    const groq = new Groq({ apiKey: API_KEY });
+
+    try {
+        const response = await groq.chat.completions.create({
+            model: DEFAULT_MODEL,
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a financial news aggregator specialized in quantum computing and global markets. Provide the top 10 latest news headlines. For each, include: title, source, time, impact (high/medium), and trend (up/down). Output ONLY as a JSON array of objects."
+                },
+                {
+                    role: "user",
+                    content: "Fetch top 10 latest news for quantum stocks and markets."
+                }
+            ],
+            response_format: { type: "json_object" }
+        });
+
+        const content = response.choices[0]?.message?.content;
+        if (!content) return [];
+
+        const data = JSON.parse(content);
+        // Sometimes LLM wraps it in a 'news' or 'headlines' key
+        const news = Array.isArray(data) ? data : (data.news || data.headlines || data.items || []);
+
+        return news.slice(0, 10).map((item: any, index: number) => ({
+            id: index + 1,
+            title: item.title || "Unknown Headline",
+            source: item.source || "Market Feed",
+            time: item.time || "Recent",
+            impact: item.impact || "medium",
+            trend: item.trend || "up"
+        }));
+    } catch (e) {
+        console.error("News Fetch Error:", e);
+        return [];
     }
 }
