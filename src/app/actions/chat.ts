@@ -236,7 +236,15 @@ export async function chatWithGroq(
     if (contextConfig) {
         // Mode: Market Intelligence
         if (contextConfig.mode === 'market') {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                dateStyle: 'full',
+                timeStyle: 'long'
+            });
+
             systemInstructions += `\n\nMODE: MARKET INTELLIGENCE`;
+            systemInstructions += `\nCURRENT SYSTEM TIME (NY): ${timeString}`;
             if (contextConfig.stockName) systemInstructions += `\nFOCUS ASSET: ${contextConfig.stockName}`;
             if (contextConfig.stockUrl) {
                 systemInstructions += `\nREFERENCE URL: ${contextConfig.stockUrl}`;
