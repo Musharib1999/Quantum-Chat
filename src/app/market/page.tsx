@@ -74,14 +74,21 @@ export default function MarketPage() {
 
     const handleStockSelect = (stock: any) => {
         setSelectedStock(stock);
+        setSelectedNews(null); // Clear news when stock is selected
+    };
+
+    const handleNewsSelect = (n: any) => {
+        setSelectedNews(n);
+        setSelectedStock(null); // Clear stock when news is selected
+        setSelectedStockData(null);
     };
 
     const contextConfig = {
         ...(selectedStock ? {
+            ...(selectedStockData?.symbol ? { symbol: selectedStockData.symbol } : {}), // Pass symbol explicitly if available
             stockName: selectedStock.name,
             stockUrl: selectedStock.url,
-            symbol: selectedStock.symbol,
-            realTimeData: selectedStockData // Pass the fetched data
+            realTimeData: selectedStockData
         } : {}),
         ...(selectedNews ? {
             newsTitle: selectedNews.title,
@@ -108,7 +115,7 @@ export default function MarketPage() {
                 <MarketNews
                     news={news}
                     isLoading={isNewsLoading}
-                    onSelect={(n) => setSelectedNews(n)}
+                    onSelect={handleNewsSelect}
                 />
             }
         >
