@@ -10,6 +10,7 @@ import ChatLog from '@/models/ChatLog';
 import Experiment from '@/models/Experiment';
 import { execSync } from 'child_process';
 import path from 'path';
+import { getStockPrice } from './market';
 
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
@@ -235,9 +236,6 @@ export async function chatWithGroq(
     let autonomousContext = "";
     if (contextConfig) {
         // Mode: Market Intelligence
-        import { getStockPrice } from './market';
-
-        // ... inside chatWithGroq ...
 
         if (contextConfig.mode === 'market') {
             const now = new Date();
