@@ -43,6 +43,12 @@ export default function MarketPage() {
         } : {})
     };
 
+    const handleAnalysisTriggered = () => {
+        // Clear selection after analysis starts to prevent sticky context
+        setSelectedStock(null);
+        setSelectedNews(null);
+    };
+
     return (
         <AppLayout
             currentMode="market"
@@ -63,6 +69,7 @@ export default function MarketPage() {
                 mode="market"
                 contextConfig={contextConfig}
                 placeholder="Ask Market Intelligence..."
+                onAnalysisTriggered={handleAnalysisTriggered}
             />
         </AppLayout>
     );

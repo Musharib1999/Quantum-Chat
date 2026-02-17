@@ -19,9 +19,10 @@ interface ChatInterfaceProps {
     mode: 'industry' | 'market' | 'article';
     contextConfig?: any; // The payload to send to chatWithGroq
     placeholder?: string;
+    onAnalysisTriggered?: () => void;
 }
 
-export default function ChatInterface({ mode, contextConfig, placeholder }: ChatInterfaceProps) {
+export default function ChatInterface({ mode, contextConfig, placeholder, onAnalysisTriggered }: ChatInterfaceProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -67,7 +68,10 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                 : `Provide a detailed summary and latest insights for the research article: ${targetName}.`;
 
             setShouldAutoScroll(true);
-            const timer = setTimeout(() => handleSendMessage(triggerMessage), 1000);
+            const timer = setTimeout(() => {
+                handleSendMessage(triggerMessage);
+                onAnalysisTriggered?.();
+            }, 1000);
             return () => clearTimeout(timer);
         }
 
@@ -77,7 +81,10 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
             const triggerMessage = `Provide more details and market implications for the following news headline from ${contextConfig.newsSource}: "${contextConfig.newsTitle}"`;
 
             setShouldAutoScroll(true);
-            const timer = setTimeout(() => handleSendMessage(triggerMessage), 500);
+            const timer = setTimeout(() => {
+                handleSendMessage(triggerMessage);
+                onAnalysisTriggered?.();
+            }, 500);
             return () => clearTimeout(timer);
         }
 
