@@ -34,7 +34,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border">
                 <h3 className="text-foreground mb-4 flex items-center gap-2">
-                    <TrendingUp className="text-green-400" size={18} /> Quantum Stocks and Market Intelligence
+                    <TrendingUp className="text-green-400" size={18} /> Quantum Stock and Market Intelligence
                 </h3>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
