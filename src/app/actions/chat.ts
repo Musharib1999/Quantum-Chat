@@ -235,6 +235,10 @@ export async function chatWithGroq(
     let autonomousContext = "";
     if (contextConfig) {
         // Mode: Market Intelligence
+        import { getStockPrice } from './market';
+
+        // ... inside chatWithGroq ...
+
         if (contextConfig.mode === 'market') {
             const now = new Date();
             const timeString = now.toLocaleString('en-US', {
@@ -243,13 +247,74 @@ export async function chatWithGroq(
                 timeStyle: 'long'
             });
 
+            // 1. Ticker Extraction Layer (The Intermediate Layer)
+            let targetSymbol = contextConfig.symbol; // Start with explicit selection if any
+
+            // If no symbol selected, try to extract from prompt
+            if (!targetSymbol) {
+                try {
+                    const extraction = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'." },
+                            { role: "user", content: prompt }
+                        ],
+                        model: "llama-3.3-70b-versatile",
+                        temperature: 0
+                    });
+                    const extracted = extraction.choices[0]?.message?.content?.trim();
+                    if (extracted && extracted !== 'NULL' && extracted.length < 10) {
+                        targetSymbol = extracted.replace(/[^a-zA-Z0-9-]/g, ''); // Clean it
+                    }
+                } catch (e) {
+                    console.error("Ticker extraction failed:", e);
+                }
+            }
+
+            // 2. Data Fetching Layer
+            let realTimeData = contextConfig.realTimeData;
+            if (targetSymbol && !realTimeData) {
+                realTimeData = await getStockPrice(targetSymbol);
+            }
+
             systemInstructions += `\n\nMODE: MARKET INTELLIGENCE`;
             systemInstructions += `\nCURRENT SYSTEM TIME (NY): ${timeString}`;
-            if (contextConfig.stockName) systemInstructions += `\nFOCUS ASSET: ${contextConfig.stockName}`;
+
+            // 3. Inject Data into Context
+            if (realTimeData) {
+                const rt = realTimeData;
+                systemInstructions += `\n\nREAL-TIME DATA (ALPHA VANTAGE):
+                - Symbol: ${rt.symbol}
+                - Price: $${rt.price}
+                - Change: ${rt.change} (${rt.changePercent})
+                - Volume: ${rt.volume}
+                - Latest Trading Day: ${rt.latestTradingDay}
+                - Previous Close: ${rt.previousClose}
+                
+                IMPORTANT: Use this REAL-TIME data as the primary source.`;
+            } else if (targetSymbol) {
+                systemInstructions += `\nFOCUS ASSET: ${targetSymbol} (Real-time data unavailable, use general knowledge)`;
+            }
+
+            if (contextConfig.stockName && !targetSymbol) systemInstructions += `\nFOCUS ASSET: ${contextConfig.stockName}`;
+
             if (contextConfig.stockUrl) {
                 systemInstructions += `\nREFERENCE URL: ${contextConfig.stockUrl}`;
                 const scrapedData = await scrapeUrl(contextConfig.stockUrl);
                 if (scrapedData) autonomousContext = scrapedData;
+            }
+
+            // Inject Real-Time Data if available
+            if (contextConfig.realTimeData) {
+                const rt = contextConfig.realTimeData;
+                systemInstructions += `\n\nREAL-TIME DATA (ALPHA VANTAGE):
+                - Symbol: ${rt.symbol}
+                - Price: $${rt.price}
+                - Change: ${rt.change} (${rt.changePercent})
+                - Volume: ${rt.volume}
+                - Latest Trading Day: ${rt.latestTradingDay}
+                - Previous Close: ${rt.previousClose}
+                
+                IMPORTANT: Use this REAL-TIME data as the primary source for price and movement. Do NOT rely on potential hallucinations or old training data.`;
             }
             systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset.`;
             systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:

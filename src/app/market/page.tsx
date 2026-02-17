@@ -6,12 +6,35 @@ import ChatInterface from '@/components/ChatInterface';
 import StockSidebar from '@/components/StockSidebar';
 import MarketNews from '@/components/MarketNews';
 import { getMarketNews } from '@/app/actions/chat';
+import { getStockPrice } from '@/app/actions/market';
 
 export default function MarketPage() {
-    const [selectedStock, setSelectedStock] = useState<{ _id: string, name: string, url: string } | null>(null);
+    const [selectedStock, setSelectedStock] = useState<{ _id: string, name: string, url: string, symbol?: string } | null>(null);
+    const [selectedStockData, setSelectedStockData] = useState<any | null>(null);
     const [selectedNews, setSelectedNews] = useState<any | null>(null);
     const [news, setNews] = useState<any[]>([]);
     const [isNewsLoading, setIsNewsLoading] = useState(true);
+
+    // Static Map for users who haven't migrated DB
+    const SYMBOL_MAP: Record<string, string> = {
+        'Apple': 'AAPL',
+        'Tesla': 'TSLA',
+        'Microsoft': 'MSFT',
+        'NVIDIA': 'NVDA',
+        'Google': 'GOOGL',
+        'Alphabet (Google)': 'GOOGL',
+        'Amazon': 'AMZN',
+        'Meta': 'META',
+        'Facebook': 'META',
+        'Bitcoin': 'BTC-USD',
+        'Ethereum': 'ETH-USD',
+        'S&P 500': 'SPY',
+        'Nasdaq 100': 'QQQ',
+        'Netflix': 'NFLX',
+        'IBM': 'IBM',
+        'Intel': 'INTC',
+        'AMD': 'AMD'
+    };
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -28,6 +51,27 @@ export default function MarketPage() {
         fetchNews();
     }, []);
 
+    // Fetch Real-Time Price on Selection
+    useEffect(() => {
+        const fetchPrice = async () => {
+            if (selectedStock) {
+                // Use DB symbol OR fallback to static map
+                const symbol = selectedStock.symbol || SYMBOL_MAP[selectedStock.name];
+
+                if (symbol) {
+                    const data = await getStockPrice(symbol);
+                    setSelectedStockData({ ...data, symbol }); // Ensure symbol is linked
+                } else {
+                    console.warn("No symbol found for:", selectedStock.name);
+                    setSelectedStockData(null);
+                }
+            } else {
+                setSelectedStockData(null);
+            }
+        };
+        fetchPrice();
+    }, [selectedStock]);
+
     const handleStockSelect = (stock: any) => {
         setSelectedStock(stock);
     };
@@ -35,7 +79,9 @@ export default function MarketPage() {
     const contextConfig = {
         ...(selectedStock ? {
             stockName: selectedStock.name,
-            stockUrl: selectedStock.url
+            stockUrl: selectedStock.url,
+            symbol: selectedStock.symbol,
+            realTimeData: selectedStockData // Pass the fetched data
         } : {}),
         ...(selectedNews ? {
             newsTitle: selectedNews.title,
@@ -46,6 +92,7 @@ export default function MarketPage() {
     const handleAnalysisTriggered = () => {
         // Clear selection after analysis starts to prevent sticky context
         setSelectedStock(null);
+        setSelectedStockData(null);
         setSelectedNews(null);
     };
 

@@ -8,6 +8,7 @@ interface Stock {
     _id: string;
     name: string;
     url: string;
+    symbol?: string;
 }
 
 interface StockSidebarProps {
