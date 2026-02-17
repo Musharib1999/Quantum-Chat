@@ -16,7 +16,7 @@ interface Message {
 }
 
 interface ChatInterfaceProps {
-    mode: 'industry' | 'market' | 'article';
+    mode: 'industry' | 'market' | 'article' | 'embed';
     contextConfig?: any; // The payload to send to chatWithGroq
     placeholder?: string;
     onAnalysisTriggered?: () => void;
@@ -244,7 +244,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
                                         </>
                                     ) : (
                                         <span className="flex items-center justify-center gap-2">
-                                            {mode === 'market' ? <TrendingUp size={14} /> : mode === 'article' ? <BookOpen size={14} /> : <ShieldCheck size={14} />}
+                                            {mode === 'market' ? <TrendingUp size={14} /> : mode === 'article' ? <BookOpen size={14} /> : mode === 'embed' ? <User size={14} /> : <ShieldCheck size={14} />}
                                             {msg.text}
                                         </span>
                                     )}
@@ -304,7 +304,8 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
                             <p className="text-muted-foreground text-lg font-light max-w-lg mx-auto leading-relaxed">
                                 {mode === 'market' ? 'Advanced Market Intelligence & Financial Neural Analysis.' :
                                     mode === 'article' ? 'Quantum Research Lab & Document Intelligence.' :
-                                        'Industrial Quantum Solutions & Architecture Design.'}
+                                        mode === 'embed' ? 'Quantum Assistant' :
+                                            'Industrial Quantum Solutions & Architecture Design.'}
                             </p>
                         </div>
                     )}
