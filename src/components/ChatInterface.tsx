@@ -180,7 +180,11 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
     return (
         <div className="flex flex-col h-full w-full overflow-hidden">
             {/* Messages List - Transitions smoothy */}
-            <main className={`overflow-y-auto bg-transparent min-w-0 w-full overflow-x-hidden transition-all duration-700 ease-in-out ${messages.length === 0 ? 'flex-[0.001] opacity-0 py-0' : 'flex-1 p-3 md:p-4 lg:p-6 opacity-100'}`}>
+            <main
+                ref={scrollContainerRef as any}
+                onScroll={handleScroll}
+                className={`overflow-y-auto bg-transparent min-w-0 w-full overflow-x-hidden transition-all duration-700 ease-in-out ${messages.length === 0 ? 'flex-[0.001] opacity-0 py-0' : 'flex-1 p-3 md:p-4 lg:p-6 opacity-100'}`}
+            >
                 <div className="w-full max-w-3xl mx-auto space-y-6">
 
                     {messages.map((msg) => (
