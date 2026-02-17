@@ -314,17 +314,37 @@ export async function chatWithGroq(
                 
                 IMPORTANT: Use this REAL-TIME data as the primary source for price and movement. Do NOT rely on potential hallucinations or old training data.`;
             }
-            systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset.`;
+            systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset or news topic.`;
+
+            // Conditional Response Structure
+            let responseStructure = "";
+            if (contextConfig.realTimeData || (targetSymbol && !contextConfig.newsTitle)) {
+                // Case A: Stock Data is available OR we are analyzing a specific ticker
+                responseStructure = `
+                1. **## Stocks Prices and Movements Numbers**
+                   - Provide Current price, day's change, percentage change, and key volume data.
+                2. **## News**
+                   - Recent headlines and relevant news events affecting the stock.
+                3. **## Analysis**
+                   - Technical and fundamental analysis based on the data.
+                4. **## Conclusion**
+                   - A final summary and potential outlook.`;
+            } else {
+                // Case B: News-Only Analysis (No specific stock data focus)
+                responseStructure = `
+                1. **## News Analysis**
+                   - Detailed breakdown of the specific news story or headline provided.
+                2. **## Market Implications**
+                   - How this news impacts the broader market or specific sectors.
+                3. **## Key Takeaways**
+                   - The most important points for investors to know.
+                4. **## Outlook**
+                   - Potential future developments based on this news.`;
+            }
+
             systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
             You must provide your response in the following strict order using Markdown:
-            1. **## Stocks Prices and Movements Numbers**
-               - Provide Current price, day's change, percentage change, and key volume data.
-            2. **## News**
-               - Recent headlines and relevant news events affecting the stock.
-            3. **## Analysis**
-               - Technical and fundamental analysis based on the data.
-            4. **## Conclusion**
-               - A final summary and potential outlook.
+            ${responseStructure}
             
             STYLING RULES:
             - Use '##' for main section headers.
