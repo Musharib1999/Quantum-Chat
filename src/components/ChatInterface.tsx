@@ -30,14 +30,26 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
     const lastTriggeredUrlRef = useRef<string | null>(null);
 
-    // Auto-scroll
+    // New Auto-scroll Logic
+    const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+    const scrollContainerRef = useRef<HTMLElement>(null);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    // useEffect(() => {
-    //     scrollToBottom();
-    // }, [messages, isTyping]);
+    useEffect(() => {
+        if (shouldAutoScroll) {
+            scrollToBottom();
+        }
+    }, [messages, isTyping]);
+
+    const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        // If user is within 100px of bottom, enable auto-scroll
+        const isAtBottom = scrollHeight - scrollTop <= clientHeight + 100;
+        setShouldAutoScroll(isAtBottom);
+    };
 
     const lastTriggeredNewsRef = useRef<string | null>(null);
     const lastTriggeredFormRef = useRef<string | null>(null);
@@ -54,6 +66,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
                 ? `Analyze latest trends, market news, and stock prices for ${targetName}.`
                 : `Provide a detailed summary and latest insights for the research article: ${targetName}.`;
 
+            setShouldAutoScroll(true);
             const timer = setTimeout(() => handleSendMessage(triggerMessage), 1000);
             return () => clearTimeout(timer);
         }
@@ -63,6 +76,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
             lastTriggeredNewsRef.current = contextConfig.newsTitle;
             const triggerMessage = `Provide more details and market implications for the following news headline from ${contextConfig.newsSource}: "${contextConfig.newsTitle}"`;
 
+            setShouldAutoScroll(true);
             const timer = setTimeout(() => handleSendMessage(triggerMessage), 500);
             return () => clearTimeout(timer);
         }
@@ -73,6 +87,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
             if (formString !== lastTriggeredFormRef.current) {
                 lastTriggeredFormRef.current = formString;
                 const triggerMessage = `Execute Quantum Workflow for ${contextConfig.problem} in ${contextConfig.industry} using ${contextConfig.hardware}.`;
+                setShouldAutoScroll(true);
                 const timer = setTimeout(() => handleSendMessage(triggerMessage), 500);
                 return () => clearTimeout(timer);
             }
@@ -81,6 +96,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder }: Chat
 
 
     const handleSendMessage = async (text?: string, customConfig?: any) => {
+        setShouldAutoScroll(true);
         const messageToSend = text || inputValue;
         if (!messageToSend.trim()) return;
 
