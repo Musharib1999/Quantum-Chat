@@ -113,30 +113,113 @@ export default function IndustryPage() {
                 // Left Sidebar: Only show in Chat Mode (Selections) OR minimal back button in Selection Mode
                 sidebarContent={
                     flowStage === 'CHAT' ? (
-                        <div className="p-4 space-y-6">
-                            <button
-                                onClick={() => { setFlowStage('SELECTION'); setWizardStep('industry'); setSessionConfig({ industry: null, service: null, problem: null, hardware: null }); }}
-                                className="w-full py-4 rounded-xl border border-primary/20 hover:border-primary text-lg font-medium text-primary hover:bg-primary/5 transition-all mb-6 flex justify-center"
-                            >
-                                Start New
-                            </button>
-
-                            <div className="space-y-4">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Configuration</h3>
-                                <div className="space-y-3">
-                                    {[
-                                        { label: 'Industry', value: sessionConfig.industry },
-                                        { label: 'Service', value: sessionConfig.service },
-                                        { label: 'Problem', value: sessionConfig.problem },
-                                        { label: 'Hardware', value: sessionConfig.hardware },
-                                    ].map((item) => (
-                                        <div key={item.label} className="flex flex-col">
-                                            <span className="text-[10px] text-muted-foreground uppercase">{item.label}</span>
-                                            <div className="flex items-center gap-2 text-sm font-medium text-blue-400">
-                                                <CheckCircle2 size={12} /> {item.value}
+                        <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
+                            {/* Industry Section */}
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Industry</h3>
+                                <div className="space-y-1">
+                                    {metadata.industries?.map((ind: any) => {
+                                        const isSelected = sessionConfig.industry === ind.label;
+                                        return (
+                                            <div
+                                                key={ind.label}
+                                                onClick={() => {
+                                                    setSessionConfig({ industry: ind.label, service: null, problem: null, hardware: null });
+                                                    setFlowStage('SELECTION');
+                                                    setWizardStep('service');
+                                                }}
+                                                className={`group flex items-center justify-between p-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' : 'border-transparent hover:bg-muted text-muted-foreground'}`}
+                                            >
+                                                <span className="font-medium">{ind.label}</span>
+                                                <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-primary/20' : 'bg-muted-foreground/10'}`}>Offline</span>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Service Section */}
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Service</h3>
+                                <div className="space-y-1">
+                                    {metadata.services?.map((svc: any) => {
+                                        const isSelected = sessionConfig.service === svc.label;
+                                        return (
+                                            <div
+                                                key={svc.label}
+                                                onClick={() => {
+                                                    setSessionConfig(prev => ({ ...prev, service: svc.label, problem: null, hardware: null, formData: undefined }));
+                                                    setFlowStage('SELECTION');
+                                                    setWizardStep('problem');
+                                                }}
+                                                className={`group flex items-center justify-between p-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' : 'border-transparent hover:bg-muted text-muted-foreground'}`}
+                                            >
+                                                <span className="font-medium">{svc.label}</span>
+                                                <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-primary/20' : 'bg-muted-foreground/10'}`}>Offline</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Problem Section */}
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Problem</h3>
+                                <div className="space-y-1">
+                                    {/* Dynamic Problems based on Ind/Svc selection */}
+                                    {(() => {
+                                        const problems = (sessionConfig.industry && sessionConfig.service)
+                                            ? (metadata.problemMapping?.[sessionConfig.industry]?.[sessionConfig.service] || [])
+                                            : [];
+
+                                        if (problems.length === 0) return <div className="text-xs text-muted-foreground px-2 italic">Select Industry & Service</div>;
+
+                                        return problems.map((prob: any) => {
+                                            const isSelected = sessionConfig.problem === prob.label;
+                                            return (
+                                                <div
+                                                    key={prob.label}
+                                                    onClick={() => {
+                                                        setSessionConfig(prev => ({ ...prev, problem: prob.label, hardware: null, formData: undefined }));
+                                                        setFlowStage('SELECTION');
+                                                        setWizardStep('hardware');
+                                                    }}
+                                                    className={`group flex items-center justify-between p-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' : 'border-transparent hover:bg-muted text-muted-foreground'}`}
+                                                >
+                                                    <span className="font-medium truncate max-w-[140px]">{prob.label}</span>
+                                                    <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-primary/20' : 'bg-muted-foreground/10'}`}>Offline</span>
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* Hardware Section */}
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Hardware</h3>
+                                <div className="space-y-1">
+                                    {[
+                                        { id: 'ibm_brisbane', label: 'IBM Brisbane (127 Qubits)' },
+                                        { id: 'ionq_aria', label: 'IonQ Aria (25 Qubits)' },
+                                        { id: 'rigetti_aspen', label: 'Rigetti Aspen-M-3 (80 Qubits)' },
+                                        { id: 'dwave_advantage', label: 'D-Wave Advantage (5000+ Qubits)' }
+                                    ].map((hw: any) => {
+                                        const isSelected = sessionConfig.hardware === hw.label;
+                                        return (
+                                            <div
+                                                key={hw.id}
+                                                onClick={() => {
+                                                    // Just update hardware, stay in place
+                                                    setSessionConfig(prev => ({ ...prev, hardware: hw.label }));
+                                                }}
+                                                className={`group flex items-center justify-between p-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' : 'border-transparent hover:bg-muted text-muted-foreground'}`}
+                                            >
+                                                <span className="font-medium truncate max-w-[140px]">{hw.label}</span>
+                                                <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-primary/20' : 'bg-muted-foreground/10'}`}>Offline</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
