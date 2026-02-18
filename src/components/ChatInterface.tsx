@@ -328,9 +328,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
                             {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}
                         </button>
                     </div>
-                    <p className="text-center text-[10px] text-muted-foreground mt-3 font-medium tracking-wide">
-                        QUANTUM SECURE CONNECTION • END-TO-END ENCRYPTED
-                    </p>
+
                 </div>
             </footer>
         </div>

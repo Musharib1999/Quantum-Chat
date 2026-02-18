@@ -19,7 +19,7 @@ interface StockSidebarProps {
 export default function StockSidebar({ onSelect, activeStockId }: StockSidebarProps) {
     const [stocks, setStocks] = useState<Stock[]>([]);
     const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         axios.get('/api/stocks')
