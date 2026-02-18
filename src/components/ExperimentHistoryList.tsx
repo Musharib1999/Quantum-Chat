@@ -29,7 +29,7 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
 
     return (
         <div className="flex flex-col space-y-3 p-4">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Recent Experiments</h3>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">Recent Experiments</h3>
             {experiments.map((exp) => (
                 <button
                     key={exp._id}
