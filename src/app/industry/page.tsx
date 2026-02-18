@@ -116,7 +116,7 @@ export default function IndustryPage() {
                         <div className="p-4 space-y-6">
                             <button
                                 onClick={() => { setFlowStage('SELECTION'); setWizardStep('industry'); setSessionConfig({ industry: null, service: null, problem: null, hardware: null }); }}
-                                className="w-full py-4 rounded-xl border border-border text-lg font-bold text-primary hover:bg-secondary/50 transition-all mb-6 flex justify-center"
+                                className="w-full py-4 rounded-xl border border-primary/20 hover:border-primary text-lg font-medium text-primary hover:bg-primary/5 transition-all mb-6 flex justify-center"
                             >
                                 Start New
                             </button>
