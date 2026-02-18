@@ -75,9 +75,9 @@ export default function ArticleSidebar({ onSelect, activeArticleId }: ArticleSid
                     <button
                         key={article._id}
                         onClick={() => onSelect(article)}
-                        className={`w-full text-left px-3 py-3 rounded-lg border transition-all group ${activeArticleId === article._id
-                            ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-                            : 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'
+                        className={`w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 group ${activeArticleId === article._id
+                            ? 'bg-card border-ring ring-1 ring-ring shadow-md text-blue-400 font-medium'
+                            : 'bg-transparent border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md'
                             }`}
                     >
                         <div className="flex items-start gap-3">
