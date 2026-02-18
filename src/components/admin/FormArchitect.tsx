@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Save, Layers, Settings2, Search, Edit3, CheckCircle2, Code2 } from 'lucide-react';
+import { Plus, Trash2, Save, Layers, Settings2, Search, Edit3, CheckCircle2, Code2, GripVertical, X, ArrowLeftRight } from 'lucide-react';
 import axios from 'axios';
 
 interface IField {
@@ -27,17 +27,45 @@ export default function FormArchitect() {
     const [industry, setIndustry] = useState('');
     const [service, setService] = useState('');
     const [problem, setProblem] = useState('');
+
+    // Config State
+    const [editorMode, setEditorMode] = useState<'visual' | 'json'>('visual');
+    const [fields, setFields] = useState<IField[]>([]);
     const [jsonFields, setJsonFields] = useState('[]');
+
+    // UI State
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('');
+    const [view, setView] = useState<'editor' | 'overview'>('overview');
+    const [editingField, setEditingField] = useState<IField | null>(null);
+    const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+    // Data State
     const [existingForms, setExistingForms] = useState<IQuantumForm[]>([]);
     const [metadata, setMetadata] = useState<{ industries: any[], services: any[], problemMapping: any }>({ industries: [], services: [], problemMapping: {} });
-    const [view, setView] = useState<'editor' | 'overview'>('overview');
 
     useEffect(() => {
         fetchInitialData();
     }, []);
+
+    // Sync Helper: JSON -> Visual
+    const syncJsonToVisual = () => {
+        try {
+            const parsed = JSON.parse(jsonFields);
+            if (Array.isArray(parsed)) {
+                setFields(parsed);
+            }
+        } catch (e) {
+            // Invalid JSON, don't overwrite visual state yet
+            console.warn("Invalid JSON during sync");
+        }
+    };
+
+    // Sync Helper: Visual -> JSON
+    const syncVisualToJson = (currentFields: IField[]) => {
+        setJsonFields(JSON.stringify(currentFields, null, 2));
+    };
 
     const fetchInitialData = async () => {
         try {
@@ -56,37 +84,32 @@ export default function FormArchitect() {
         setLoading(true);
         setStatus('Saving...');
         try {
-            let parsedFields;
-            try {
-                parsedFields = JSON.parse(jsonFields);
-                if (!Array.isArray(parsedFields)) {
-                    throw new Error("Fields must be an array of objects.");
+            // Final Sync based on current mode
+            let finalFields = fields;
+            if (editorMode === 'json') {
+                try {
+                    finalFields = JSON.parse(jsonFields);
+                    if (!Array.isArray(finalFields)) throw new Error("Fields must be array");
+                } catch (e: any) {
+                    throw new Error("Invalid JSON: " + e.message);
                 }
-
-                // Auto-generate key from label if missing
-                parsedFields = parsedFields.map((f: any) => {
-                    if (!f.key && f.label) {
-                        f.key = f.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                    }
-                    if (!f.key) throw new Error(`Field "${f.label || 'Unknown'}" is missing a unique "key".`);
-                    if (!f.type) f.type = 'text'; // Default to text
-                    return f;
-                });
-
-                // Update the editor with the normalized fields
-                setJsonFields(JSON.stringify(parsedFields, null, 2));
-
-            } catch (e: any) {
-                setStatus('Validation Error: ' + (e.message || 'Invalid JSON format'));
-                setLoading(false);
-                return;
             }
+
+            // Normalization
+            finalFields = finalFields.map((f: any) => {
+                if (!f.key && f.label) {
+                    f.key = f.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                }
+                if (!f.key) throw new Error(`Field "${f.label || 'Unknown'}" is missing a unique "key".`);
+                if (!f.type) f.type = 'text';
+                return f;
+            });
 
             await axios.post('/api/quantum-forms', {
                 industry,
                 service,
                 problem,
-                fields: parsedFields,
+                fields: finalFields,
                 active: true
             });
             setStatus('Form Saved Successfully!');
@@ -103,38 +126,81 @@ export default function FormArchitect() {
         setIndustry(form.industry);
         setService(form.service);
         setProblem(form.problem);
+        setFields(form.fields || []);
         setJsonFields(JSON.stringify(form.fields || [], null, 2));
         setView('editor');
-    };
-
-    const handleJsonChange = (value: string) => {
-        setJsonFields(value);
-        try {
-            const parsed = JSON.parse(value);
-            // Smart Paste: If user pastes a full config object, extract fields only
-            if (!Array.isArray(parsed) && typeof parsed === 'object' && parsed !== null && parsed.fields && Array.isArray(parsed.fields)) {
-                // Remove metadata auto-fill as per user request
-                // Replace textarea content with just the fields array
-                setJsonFields(JSON.stringify(parsed.fields, null, 2));
-                setStatus('✨ Extracted fields from JSON configuration!');
-            }
-        } catch (e) {
-            // Ignore parsing errors while typing
-        }
+        setEditorMode('visual'); // Default to visual for ease
     };
 
     const resetForm = () => {
         setIndustry('');
         setService('');
         setProblem('');
-        setJsonFields('[\n  {\n    "label": "Example Label",\n    "key": "example_key",\n    "type": "text"\n  }\n]');
+        setFields([]);
+        setJsonFields('[]');
         setView('editor');
+        setEditorMode('visual');
+    };
+
+    // --- Visual Editor Handlers ---
+
+    const openNewFieldModal = () => {
+        setEditingField({
+            label: '',
+            key: '',
+            type: 'text',
+            options: [],
+            description: '',
+            defaultValue: ''
+        });
+        setEditingFieldIndex(null);
+        setIsEditModalOpen(true);
+    };
+
+    const openEditFieldModal = (field: IField, index: number) => {
+        setEditingField({ ...field });
+        setEditingFieldIndex(index);
+        setIsEditModalOpen(true);
+    };
+
+    const saveField = () => {
+        if (!editingField || !editingField.label) {
+            alert("Label is required");
+            return;
+        }
+
+        // Auto-generate key if empty
+        const fieldToSave = { ...editingField };
+        if (!fieldToSave.key) {
+            fieldToSave.key = fieldToSave.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        }
+
+        const newFields = [...fields];
+        if (editingFieldIndex !== null) {
+            newFields[editingFieldIndex] = fieldToSave;
+        } else {
+            newFields.push(fieldToSave);
+        }
+
+        setFields(newFields);
+        syncVisualToJson(newFields); // Keep JSON in sync
+        setIsEditModalOpen(false);
+        setEditingField(null);
+        setEditingFieldIndex(null);
+    };
+
+    const deleteField = (index: number) => {
+        if (confirm("Delete this field?")) {
+            const newFields = fields.filter((_, i) => i !== index);
+            setFields(newFields);
+            syncVisualToJson(newFields);
+        }
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700 h-full overflow-y-auto">
+        <div className="space-y-8 animate-in fade-in duration-700 h-full overflow-y-auto pb-20">
             {view === 'overview' ? (
-                <div className="space-y-8 pb-20">
+                <div className="space-y-8">
                     <div className="flex items-center justify-between border-b border-border pb-6">
                         <div>
                             <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3">
@@ -180,8 +246,9 @@ export default function FormArchitect() {
                     </div>
                 </div>
             ) : (
-                <div className="space-y-8 pb-20">
-                    <div className="flex items-center justify-between border-b border-border pb-6">
+                <div className="space-y-8">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-border pb-6 sticky top-0 bg-background/95 backdrop-blur z-10 pt-2">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
                                 <Layers className="text-primary" size={24} />
@@ -205,7 +272,7 @@ export default function FormArchitect() {
                                 disabled={loading || !industry || !service || !problem}
                                 className="bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 shadow-xl"
                             >
-                                <Save size={18} /> {loading ? 'Saving...' : 'Save'}
+                                <Save size={18} /> {loading ? 'Saving...' : 'Save Module'}
                             </button>
                         </div>
                     </div>
@@ -216,6 +283,7 @@ export default function FormArchitect() {
                         </div>
                     )}
 
+                    {/* Meta Fields */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Industry</label>
@@ -224,7 +292,7 @@ export default function FormArchitect() {
                                 value={industry}
                                 onChange={(e) => setIndustry(e.target.value)}
                                 placeholder="e.g. Biochemistry"
-                                className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                             />
                             <datalist id="industries">
                                 {metadata.industries.map(i => <option key={i.id} value={i.label} />)}
@@ -237,7 +305,7 @@ export default function FormArchitect() {
                                 value={service}
                                 onChange={(e) => setService(e.target.value)}
                                 placeholder="e.g. Simulation"
-                                className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                             />
                             <datalist id="services">
                                 {metadata.services.map(s => <option key={s.id} value={s.label} />)}
@@ -250,7 +318,7 @@ export default function FormArchitect() {
                                 value={problem}
                                 onChange={(e) => setProblem(e.target.value)}
                                 placeholder="e.g. Protein Folding"
-                                className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                             />
                             <datalist id="problems">
                                 {(metadata.problemMapping[industry]?.[service] || []).map((p: any) => <option key={p.id} value={p.label} />)}
@@ -258,33 +326,162 @@ export default function FormArchitect() {
                         </div>
                     </div>
 
-                    <div className="space-y-6 pt-6">
-                        <div className="flex items-center justify-between border-b border-border pb-4">
+                    {/* Builder Area */}
+                    <div className="space-y-6 pt-6 bg-card/30 rounded-3xl p-6 border border-border/50">
+                        <div className="flex items-center justify-between">
                             <h2 className="text-xl font-black text-foreground flex items-center gap-2 tracking-tight">
-                                <Code2 size={20} className="text-muted-foreground" /> Parameter Field Definitions (JSON)
+                                <Settings2 size={20} className="text-primary" /> Parameter Definition
                             </h2>
+                            <div className="flex items-center bg-secondary/50 rounded-lg p-1 border border-border">
+                                <button
+                                    onClick={() => { syncJsonToVisual(); setEditorMode('visual'); }}
+                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${editorMode === 'visual' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                >
+                                    Visual Builder
+                                </button>
+                                <button
+                                    onClick={() => { syncVisualToJson(fields); setEditorMode('json'); }}
+                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${editorMode === 'json' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                >
+                                    JSON Editor
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="bg-black/40 rounded-[2.5rem] border border-border p-8 shadow-inner group transition-all hover:border-primary/20">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-4 block">Schema Definition</label>
-                            <textarea
-                                value={jsonFields}
-                                onChange={(e) => handleJsonChange(e.target.value)}
-                                placeholder='[{"label": "Iterations", "key": "iters", "type": "number"}]'
-                                className="w-full h-96 bg-transparent font-mono text-sm text-primary/80 focus:text-primary outline-none resize-none transition-all scrollbar-hide py-2"
-                                spellCheck={false}
-                            />
-                            <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
-                                <div className="flex gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500/50 pulse"></div>
-                                        <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Valid JSON Structure Required</span>
+                        {editorMode === 'visual' ? (
+                            <div className="space-y-4">
+                                {fields.length === 0 && (
+                                    <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl bg-secondary/10">
+                                        <p className="text-sm text-muted-foreground mb-4">No parameters defined yet.</p>
+                                        <button onClick={openNewFieldModal} className="px-4 py-2 bg-primary/10 text-primary rounded-lg font-bold text-xs hover:bg-primary/20 transition-colors">
+                                            + Add First Parameter
+                                        </button>
                                     </div>
+                                )}
+                                <div className="grid gap-3">
+                                    {fields.map((field, idx) => (
+                                        <div key={idx} className="bg-card border border-border p-4 rounded-xl flex items-center justify-between group hover:border-primary/30 transition-all">
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-2 bg-secondary rounded-lg text-muted-foreground cursor-grab active:cursor-grabbing">
+                                                    <GripVertical size={16} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-sm text-foreground">{field.label}</h4>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-[10px] font-mono bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">{field.key}</span>
+                                                        <span className="text-[10px] uppercase font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">{field.type}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => openEditFieldModal(field, idx)} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground">
+                                                    <Edit3 size={16} />
+                                                </button>
+                                                <button onClick={() => deleteField(idx)} className="p-2 hover:bg-red-500/10 rounded-lg text-muted-foreground hover:text-red-400">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-tighter">
-                                    Fields: label, key, type [text|number|range|select], options[], defaultValue
+                                <button
+                                    onClick={openNewFieldModal}
+                                    className="w-full py-3 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-secondary/30 transition-all font-bold text-sm flex items-center justify-center gap-2"
+                                >
+                                    <Plus size={16} /> Add Parameter
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="bg-black/40 rounded-2xl border border-border p-6 shadow-inner">
+                                <textarea
+                                    value={jsonFields}
+                                    onChange={(e) => setJsonFields(e.target.value)}
+                                    className="w-full h-96 bg-transparent font-mono text-sm text-green-400 focus:outline-none resize-none"
+                                    spellCheck={false}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+                    <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-4 border-b border-border flex items-center justify-between bg-secondary/30">
+                            <h3 className="font-bold text-foreground">
+                                {editingFieldIndex !== null ? 'Edit Parameter' : 'New Parameter'}
+                            </h3>
+                            <button onClick={() => setIsEditModalOpen(false)}><X size={20} className="text-muted-foreground" /></button>
+                        </div>
+                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Label</label>
+                                    <input
+                                        value={editingField?.label}
+                                        onChange={e => setEditingField(prev => prev ? ({ ...prev, label: e.target.value }) : null)}
+                                        className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                        placeholder="e.g. Iterations"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Key (Auto)</label>
+                                    <input
+                                        value={editingField?.key}
+                                        onChange={e => setEditingField(prev => prev ? ({ ...prev, key: e.target.value }) : null)}
+                                        className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm font-mono text-muted-foreground focus:outline-none focus:border-primary"
+                                        placeholder="iterations"
+                                    />
                                 </div>
                             </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Type</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['text', 'number', 'select', 'multi-select', 'range'].map(t => (
+                                        <button
+                                            key={t}
+                                            onClick={() => setEditingField(prev => prev ? ({ ...prev, type: t as any }) : null)}
+                                            className={`px-3 py-2 rounded-lg text-xs font-bold border transition-all ${editingField?.type === t ? 'bg-primary/10 border-primary text-primary' : 'bg-secondary border-transparent text-muted-foreground hover:bg-secondary/80'}`}
+                                        >
+                                            {t}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {(editingField?.type === 'select' || editingField?.type === 'multi-select') && (
+                                <div className="space-y-2 p-4 bg-secondary/30 rounded-xl border border-border">
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Options (Comma Separated)</label>
+                                    <textarea
+                                        value={editingField?.options?.map(o => typeof o === 'string' ? o : o.label).join(', ')}
+                                        onChange={(e) => {
+                                            const opts = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                            setEditingField(prev => prev ? ({ ...prev, options: opts }) : null);
+                                        }}
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary h-20 resize-none"
+                                        placeholder="e.g. Option A, Option B, Option C"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Description</label>
+                                <input
+                                    value={editingField?.description}
+                                    onChange={e => setEditingField(prev => prev ? ({ ...prev, description: e.target.value }) : null)}
+                                    className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                    placeholder="Helper text for the user..."
+                                />
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
+                            <button onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground">Cancel</button>
+                            <button onClick={saveField} className="px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:opacity-90 shadow-lg">
+                                {editingFieldIndex !== null ? 'Update Parameter' : 'Add Parameter'}
+                            </button>
                         </div>
                     </div>
                 </div>
