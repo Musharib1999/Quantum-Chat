@@ -119,12 +119,20 @@ export default function MarketPage() {
                 />
             }
         >
-            <ChatInterface
-                mode="market"
-                contextConfig={contextConfig}
-                placeholder="Ask Market Intelligence..."
-                onAnalysisTriggered={handleAnalysisTriggered}
-            />
+            {/* Chat Area */}
+            <div className="flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 64px)' }}>
+                <MarketChat
+                    contextConfig={{
+                        stockUrl: selectedStock?.url,
+                        stockName: selectedStock?.name,
+                        symbol: selectedStock?.symbol,
+                        realTimeData: selectedStockData, // Pass the fetched Alpha Vantage data
+                        newsTitle: selectedNews?.title,
+                        newsSource: selectedNews?.source
+                    }}
+                    onAnalysisTriggered={handleAnalysisTriggered}
+                />
+            </div>
         </AppLayout>
     );
 }

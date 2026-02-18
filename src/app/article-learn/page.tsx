@@ -27,11 +27,15 @@ export default function ArticlePage() {
                 </div>
             }
         >
-            <ChatInterface
-                mode="article"
-                contextConfig={contextConfig}
-                placeholder="Ask Article & Learn..."
-            />
+            <main className="flex-1 overflow-hidden relative pt-16"> {/* Add padding for header */}
+                <ArticleChat
+                    contextConfig={{
+                        articleTitle: selectedArticle?.title,
+                        articleUrl: selectedArticle?.url,
+                        articleCategory: selectedArticle?.category
+                    }}
+                />
+            </main>
         </AppLayout>
     );
 }
