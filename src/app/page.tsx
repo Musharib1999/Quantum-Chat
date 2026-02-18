@@ -105,7 +105,7 @@ export default function LandingPage() {
             icon={<Cpu size={32} />}
             title="Quantum Industry"
             description="Guided problem-solving wizard for industrial applications, hardware selection, and use-case analysis."
-            actionText="Launch Interface"
+            actionText="Launch"
             isDarkMode={isDarkMode}
             accentColor="indigo"
           />
