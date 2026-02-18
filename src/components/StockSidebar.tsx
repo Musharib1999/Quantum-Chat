@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, TrendingUp, Search } from 'lucide-react';
+import { ExternalLink, TrendingUp, Search, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
 interface Stock {
@@ -49,7 +49,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                {isLoading ? (
+                {loading ? (
                     <div className="flex flex-col items-center justify-center h-40 text-muted-foreground space-y-3">
                         <Loader2 className="animate-spin text-green-400" size={24} />
                         <span className="text-xs font-mono animate-pulse">Loading...</span>
