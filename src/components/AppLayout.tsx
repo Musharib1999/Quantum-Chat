@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
+import UserSessionCard from '@/components/UserSessionCard';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -72,17 +73,7 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                     {sidebarContent}
                 </nav>
 
-                <div className="p-4 border-t border-border bg-card/50 space-y-4">
-                    <div className="pt-4 border-t border-border space-y-2">
-                        <div className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-secondary/50 border border-border">
-                            <div className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-foreground text-xs">US</div>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="text-xs text-foreground truncate">User Session</p>
-                                <p className="text-[10px] text-muted-foreground truncate">Pro Plan Active</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
             </aside>
 
             {isMobile && !isSidebarOpen && (
@@ -102,8 +93,9 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                 {children}
             </main>
 
+
             {/* Right Sidebar */}
-            {rightSidebarContent && (
+            {(rightSidebarContent || ['industry', 'market', 'article'].includes(currentMode)) && (
                 <>
                     <aside className={`
                         z-40 bg-card/80 backdrop-blur-2xl border-l border-border flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
@@ -117,8 +109,9 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                             <ChevronLeft size={14} className={`transition-transform duration-500 ${isRightSidebarOpen ? 'rotate-180' : ''}`} />
                         </button>
 
-                        <div className="h-full overflow-y-auto">
-                            {rightSidebarContent}
+                        <div className="h-full overflow-y-auto flex flex-col">
+                            <UserSessionCard />
+                            {rightSidebarContent && <div className="flex-1">{rightSidebarContent}</div>}
                         </div>
                     </aside>
 
