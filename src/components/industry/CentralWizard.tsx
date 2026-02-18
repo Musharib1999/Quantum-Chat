@@ -5,10 +5,11 @@ import { Briefcase, Cpu, Layers, Zap } from 'lucide-react';
 interface CentralWizardProps {
     step: 'industry' | 'service' | 'problem' | 'hardware';
     metadata: any;
+    config: { industry: string | null, service: string | null };
     onSelect: (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => void;
 }
 
-export default function CentralWizard({ step, metadata, onSelect }: CentralWizardProps) {
+export default function CentralWizard({ step, metadata, config, onSelect }: CentralWizardProps) {
     const containerVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
@@ -58,23 +59,33 @@ export default function CentralWizard({ step, metadata, onSelect }: CentralWizar
                     </div>
                 );
             case 'problem':
+                // Drill down to specific problems
+                const problems = (config.industry && config.service)
+                    ? (metadata.problemMapping[config.industry]?.[config.service] || [])
+                    : [];
+
                 return (
                     <div className="space-y-6 text-center">
                         <h2 className="text-3xl font-light text-foreground">Select Problem</h2>
                         <div className="grid grid-cols-1 gap-3 max-w-xl mx-auto">
-                            {/* Assuming problems are fetched or static based on previous selection, but here using metadata directly or needing filtering logic in parent */}
-                            {Object.keys(metadata.problemMapping || {}).map((prob: string) => (
-                                <button
-                                    key={prob}
-                                    onClick={() => onSelect('problem', prob)}
-                                    className="p-4 bg-card border border-border rounded-xl hover:border-blue-500/50 hover:bg-secondary/50 transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md"
-                                >
-                                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors shrink-0">
-                                        <Zap size={16} />
-                                    </div>
-                                    <span className="font-medium">{prob}</span>
-                                </button>
-                            ))}
+                            {problems.length > 0 ? (
+                                problems.map((prob: any) => (
+                                    <button
+                                        key={prob.id || prob.label}
+                                        onClick={() => onSelect('problem', prob.label)}
+                                        className="p-4 bg-card border border-border rounded-xl hover:border-blue-500/50 hover:bg-secondary/50 transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors shrink-0">
+                                            <Zap size={16} />
+                                        </div>
+                                        <span className="font-medium">{prob.label}</span>
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="text-muted-foreground py-8">
+                                    No mapped problems found for this combination.
+                                </div>
+                            )}
                         </div>
                     </div>
                 );

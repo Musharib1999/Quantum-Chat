@@ -158,6 +158,7 @@ export default function IndustryPage() {
                         <CentralWizard
                             step={wizardStep}
                             metadata={metadata}
+                            config={sessionConfig}
                             onSelect={handleWizardSelect}
                         />
                     )}
