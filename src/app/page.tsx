@@ -34,23 +34,12 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ease-in-out font-sans ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`min-h-screen transition-colors duration-500 ease-in-out font-sans ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
 
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* Gradients */}
-        <div
-          className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-40 transition-transform duration-1000 ${isDarkMode ? 'bg-indigo-900' : 'bg-blue-200'}`}
-          style={{ transform: `translate(${mousePosition.x * -1}px, ${mousePosition.y * -1}px)` }}
-        />
-        <div
-          className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-40 transition-transform duration-1000 ${isDarkMode ? 'bg-violet-900' : 'bg-purple-200'}`}
-          style={{ transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)` }}
-        />
-
-        {/* Grid Pattern */}
-        <div className={`absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20`} />
-        <div className={`absolute inset-0 bg-grid-pattern opacity-[0.03] ${isDarkMode ? 'bg-white' : 'bg-black'}`}
+      {/* Background - Clean White (or Dark Slate) */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {/* Subtle Grid Pattern Only - optional, keeping it minimal as requested */}
+        <div className={`absolute inset-0 bg-grid-pattern opacity-[0.02] ${isDarkMode ? 'bg-white' : 'bg-black'}`}
           style={{ backgroundSize: '40px 40px', backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)' }}
         />
       </div>
