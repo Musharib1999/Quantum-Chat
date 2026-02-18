@@ -95,7 +95,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {form.fields.map((field) => (
                     <div key={field.key} className="space-y-2">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">{field.label}</label>
+                        <label className="text-xs font-bold text-muted-foreground">{field.label}</label>
                         {field.type === 'select' ? (
                             <select
                                 value={formData[field.key]}
@@ -151,7 +151,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
 
             <button
                 onClick={() => onSubmit(formData)}
-                className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5"
+                className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5"
             >
                 <Play size={18} fill="currentColor" /> Execute Quantum Workflow
             </button>
