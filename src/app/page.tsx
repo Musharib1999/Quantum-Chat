@@ -173,9 +173,9 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
   // Map color names to Tailwind classes
   const colorMap = {
     indigo: {
-      light: 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white',
-      dark: 'bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white',
-      border: 'group-hover:border-indigo-500/50'
+      light: 'bg-[rgb(48,102,187)]/10 text-[rgb(48,102,187)] group-hover:bg-[rgb(48,102,187)] group-hover:text-white',
+      dark: 'bg-[rgb(48,102,187)]/20 text-[rgb(48,102,187)] group-hover:bg-[rgb(48,102,187)] group-hover:text-white',
+      border: 'group-hover:border-[rgb(48,102,187)]/50'
     },
     emerald: {
       light: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white',
@@ -201,7 +201,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
 
       {/* Glow Effect on Hover */}
       <div className={`absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 
-        ${accentColor === 'indigo' ? 'bg-indigo-500' : accentColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-500'}`}
+        ${accentColor === 'indigo' ? 'bg-[rgb(48,102,187)]' : accentColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-500'}`}
       />
 
       <div>
