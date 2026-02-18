@@ -28,28 +28,32 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
             .finally(() => setLoading(false));
     }, []);
 
-    const filtered = stocks.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
+    const filtered = stocks.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return (
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border">
                 <h3 className="text-foreground mb-4 flex items-center gap-2">
-                    <TrendingUp className="text-green-400" size={18} /> Quantum Stock and Market Intelligence
+                    <TrendingUp className="text-green-400" size={18} /> Quantum Stocks
                 </h3>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <input
-                        className="w-full bg-secondary/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm text-foreground focus:outline-none focus:border-green-500/50 transition-colors"
+                        type="text"
                         placeholder="Search assets..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-secondary/50 border border-input rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-400/50 transition-all placeholder:text-muted-foreground/50"
                     />
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {loading ? (
-                    <div className="p-4 text-center text-xs text-muted-foreground">Loading assets...</div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground space-y-3">
+                        <Loader2 className="animate-spin text-green-400" size={24} />
+                        <span className="text-xs font-mono animate-pulse">Loading...</span>
+                    </div>
                 ) : filtered.map(stock => (
                     <button
                         key={stock._id}

@@ -42,34 +42,26 @@ export default function MarketNews({ news, isLoading, onSelect }: MarketNewsProp
                         </div>
                     ))
                 ) : news.length > 0 ? (
-                    news.map((newsItem) => (
+                    news.map((item) => (
                         <div
-                            key={newsItem.id}
-                            onClick={() => onSelect?.(newsItem)}
-                            className="group p-4 rounded-2xl bg-secondary/30 border border-border/50 hover:border-primary/20 transition-all cursor-pointer"
+                            key={item.id}
+                            onClick={() => onSelect?.(item)}
+                            className="p-3 bg-card/50 rounded-lg border border-border/50 hover:bg-accent/10 hover:border-blue-500/50 cursor-pointer transition-all group"
                         >
-                            <div className="flex items-start justify-between mb-2">
-                                <span className="text-[10px] text-primary/60 uppercase tracking-widest">{newsItem.source}</span>
-                                <span className="text-[10px] text-muted-foreground">{newsItem.time}</span>
+                            <div className="flex justify-between items-start mb-1">
+                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">{item.source}</span>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                    {item.trend === 'up' ? '▲' : '▼'}
+                                </span>
                             </div>
-
-                            <h4 className="text-sm text-foreground leading-tight mb-3 group-hover:text-primary transition-colors">
-                                {newsItem.title}
+                            <h4 className="text-sm font-medium leading-snug group-hover:text-blue-400 transition-colors line-clamp-2">
+                                {item.title}
                             </h4>
-
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    {newsItem.trend === 'up' ? (
-                                        <div className="flex items-center gap-1 text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                                            <TrendingUp size={10} /> POSITIVE
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1 text-[10px] text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">
-                                            <TrendingDown size={10} /> VOLATILE
-                                        </div>
-                                    )}
-                                </div>
-                                <ArrowRight size={14} className="text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
+                            <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                                <span>{item.time}</span>
+                                <span className={`px-1 rounded border ${item.impact === 'high' ? 'border-red-500/30 text-red-400' : 'border-border'}`}>
+                                    {item.impact.toUpperCase()}
+                                </span>
                             </div>
                         </div>
                     ))
