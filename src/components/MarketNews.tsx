@@ -72,11 +72,7 @@ export default function MarketNews({ news, isLoading, onSelect }: MarketNewsProp
                 )}
             </div>
 
-            <div className="p-4 border-t border-border bg-secondary/20">
-                <p className="text-[10px] text-center text-muted-foreground tracking-wide">
-                    REAL-TIME QUANTUM NEWS FEED • ENCRYPTED
-                </p>
-            </div>
+
         </div>
     );
 }
