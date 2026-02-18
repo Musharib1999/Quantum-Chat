@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import ChatInterface from '@/components/ChatInterface';
+import IndustryChat from '@/components/chat/IndustryChat';
 import ExperimentHistory from '@/components/ExperimentHistory';
 import SidebarWizard from '@/components/SidebarWizard';
 import QuantumFormFetcher from '@/components/QuantumFormFetcher';
@@ -116,19 +116,10 @@ export default function IndustryPage() {
 
                     {/* Chat Interface (Active or Historical) */}
                     {(sessionConfig.formData) && (
-import IndustryChat from '@/components/chat/IndustryChat';
-
-                    // ... (imports)
-
-                    // ... (inside component)
-
-                    {/* Chat Interface (Active or Historical) */}
-                    {(sessionConfig.formData) && (
                         <IndustryChat
                             contextConfig={sessionConfig}
                             placeholder="Ask Quantum Assistant (Industry Mode)..."
                         />
-                    )}
                     )}
 
                     {/* Placeholder when nothing is selected */}
