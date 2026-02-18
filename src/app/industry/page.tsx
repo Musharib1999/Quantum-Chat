@@ -128,7 +128,7 @@ export default function IndustryPage() {
                                                     setFlowStage('SELECTION');
                                                     setWizardStep('service');
                                                 }}
-                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer ${isSelected ? 'bg-secondary text-foreground font-medium shadow-sm' : 'hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span>{ind.label}</span>
                                             </div>
@@ -151,7 +151,7 @@ export default function IndustryPage() {
                                                     setFlowStage('SELECTION');
                                                     setWizardStep('problem');
                                                 }}
-                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer ${isSelected ? 'bg-secondary text-foreground font-medium shadow-sm' : 'hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span>{svc.label}</span>
                                             </div>
@@ -182,7 +182,7 @@ export default function IndustryPage() {
                                                         setFlowStage('SELECTION');
                                                         setWizardStep('hardware');
                                                     }}
-                                                    className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer ${isSelected ? 'bg-secondary text-foreground font-medium shadow-sm' : 'hover:bg-secondary/40 text-muted-foreground'}`}
+                                                    className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                                 >
                                                     <span className="truncate max-w-[170px]">{prob.label}</span>
                                                 </div>
@@ -210,7 +210,7 @@ export default function IndustryPage() {
                                                     // Just update hardware, stay in place
                                                     setSessionConfig(prev => ({ ...prev, hardware: hw.label }));
                                                 }}
-                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer ${isSelected ? 'bg-secondary text-foreground font-medium shadow-sm' : 'hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span className="truncate max-w-[140px]">{hw.label}</span>
                                                 <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded text-muted-foreground bg-muted`}>Offline</span>
