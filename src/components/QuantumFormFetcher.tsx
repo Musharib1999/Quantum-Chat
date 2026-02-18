@@ -95,7 +95,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {form.fields.map((field) => (
                     <div key={field.key} className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground">{field.label}</label>
+                        <label className="text-xs font-medium text-muted-foreground">{field.label}</label>
                         {field.type === 'select' ? (
                             <select
                                 value={formData[field.key]}
