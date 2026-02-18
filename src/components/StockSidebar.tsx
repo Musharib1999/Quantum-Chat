@@ -40,7 +40,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <input
                         type="text"
-                        placeholder="Search assets..."
+                        placeholder="Search..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-secondary/50 border border-input rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-400/50 transition-all placeholder:text-muted-foreground/50"
