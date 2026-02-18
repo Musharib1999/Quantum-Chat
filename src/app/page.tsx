@@ -90,7 +90,7 @@ export default function LandingPage() {
           </h1>
 
           <p className={`text-lg md:text-xl mb-10 leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-            Access next-generation computational power. Select your specialized interface below to begin your journey into quantum-accelerated workflows.
+            Select your specialized interface below to begin your journey into selected quantum domain.
           </p>
 
 
