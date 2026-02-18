@@ -58,9 +58,9 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                     <button
                         key={stock._id}
                         onClick={() => onSelect(stock)}
-                        className={`w-full text-left px-3 py-3 rounded-lg border transition-all group ${activeStockId === stock._id
-                            ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                            : 'bg-transparent border-transparent hover:bg-white/5 text-muted-foreground hover:text-foreground'
+                        className={`w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 group ${activeStockId === stock._id
+                            ? 'bg-card border-ring ring-1 ring-ring shadow-md text-primary font-medium'
+                            : 'bg-transparent border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md'
                             }`}
                     >
                         <div className="flex items-center justify-between">
