@@ -84,7 +84,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
         <div className="bg-card backdrop-blur-xl border border-border rounded-3xl p-6 md:p-8 space-y-8 animate-in zoom-in-95 duration-700 shadow-sm">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-xl font-black text-foreground tracking-tight">Quantum Parameters</h3>
+                    <h3 className="text-xl font-bold text-foreground tracking-tight">Quantum Parameters</h3>
                     <p className="text-muted-foreground text-sm mt-1">{form.description || `Configure your ${problem} simulation settings.`}</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center">
