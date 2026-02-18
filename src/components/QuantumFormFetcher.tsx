@@ -23,10 +23,11 @@ interface QuantumFormFetcherProps {
     industry: string;
     service: string;
     problem: string;
+    initialData?: Record<string, any>;
     onSubmit: (formData: Record<string, any>) => void;
 }
 
-export default function QuantumFormFetcher({ industry, service, problem, onSubmit }: QuantumFormFetcherProps) {
+export default function QuantumFormFetcher({ industry, service, problem, initialData, onSubmit }: QuantumFormFetcherProps) {
     const [form, setForm] = useState<IForm | null>(null);
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true);
@@ -43,7 +44,8 @@ export default function QuantumFormFetcher({ industry, service, problem, onSubmi
                 data.fields.forEach((f: IField) => {
                     if (f.defaultValue) defaults[f.key] = f.defaultValue;
                 });
-                setFormData(defaults);
+                // Merge with initialData if provided (for re-runs)
+                setFormData({ ...defaults, ...initialData });
             } catch (err: any) {
                 setError(err.response?.status === 404 ? 'No specialized quantum form mapped for this configuration.' : 'Failed to load quantum form.');
             } finally {
