@@ -6,6 +6,7 @@ import IndustryChat from '@/components/chat/IndustryChat';
 import ExperimentHistory from '@/components/ExperimentHistory';
 import SidebarWizard from '@/components/SidebarWizard';
 import QuantumFormFetcher from '@/components/QuantumFormFetcher';
+import IndustryPlaceholder from '@/components/IndustryPlaceholder';
 import axios from 'axios';
 
 export default function IndustryPage() {
@@ -118,15 +119,9 @@ export default function IndustryPage() {
                     {(sessionConfig.formData) && (
                         <IndustryChat
                             contextConfig={sessionConfig}
-                            placeholder="Ask Quantum Assistant (Industry Mode)..."
+                            placeholder="Ask QUANTUM GURU AI..."
                         />
                     )}
-
-                    import IndustryPlaceholder from '@/components/IndustryPlaceholder';
-
-                    // ... (imports)
-
-                    // ... (inside component)
 
                     {/* Placeholder when nothing is selected */}
                     {sidebarStep !== 'ready' && !sessionConfig.formData && (

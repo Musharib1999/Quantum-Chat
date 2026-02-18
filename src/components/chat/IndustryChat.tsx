@@ -160,7 +160,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                            placeholder={placeholder || "Initialize quantum query..."}
+                            placeholder={placeholder || "Ask QUANTUM GURU AI..."}
                             rows={1}
                             className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
                             style={{ minHeight: '52px' }}
