@@ -12,14 +12,14 @@ export default function EmbedChatPage() {
                     <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
                         <span className="text-white text-[10px] font-bold">QG</span>
                     </div>
-
-                    {/* Chat Interface - Filling the rest */}
-                    <div className="flex-1 overflow-hidden">
-                        <ChatInterface
-                            mode="embed"
-                            placeholder="How can I help you today?"
-                        />
-                    </div>
+                    <span className="font-semibold text-sm text-gray-700">Quantum Assistant</span>
                 </div>
-                );
+            </header>
+
+            {/* Chat Interface - Filling the rest */}
+            <div className="flex-1 overflow-hidden bg-white/30">
+                <EmbedChat placeholder="How can I help you today?" />
+            </div>
+        </div>
+    );
 }
