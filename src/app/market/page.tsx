@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import ChatInterface from '@/components/ChatInterface';
 import StockSidebar from '@/components/StockSidebar';
+import MarketChat from '@/components/chat/MarketChat';
 import MarketNews from '@/components/MarketNews';
 import { getMarketNews } from '@/app/actions/chat';
 import { getStockPrice } from '@/app/actions/market';

@@ -116,11 +116,19 @@ export default function IndustryPage() {
 
                     {/* Chat Interface (Active or Historical) */}
                     {(sessionConfig.formData) && (
-                        <ChatInterface
-                            mode="industry"
+import IndustryChat from '@/components/chat/IndustryChat';
+
+                    // ... (imports)
+
+                    // ... (inside component)
+
+                    {/* Chat Interface (Active or Historical) */}
+                    {(sessionConfig.formData) && (
+                        <IndustryChat
                             contextConfig={sessionConfig}
                             placeholder="Ask Quantum Assistant (Industry Mode)..."
                         />
+                    )}
                     )}
 
                     {/* Placeholder when nothing is selected */}
