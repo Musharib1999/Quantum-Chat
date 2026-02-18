@@ -169,7 +169,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                         <button
                             onClick={() => sendMessage()}
                             disabled={!inputValue.trim() || isTyping}
-                            className="p-3 rounded-xl bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-0.5 font-bold"
+                            className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 font-bold"
+                            style={{ backgroundColor: 'rgb(48, 102, 187)' }}
                         >
                             {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}
                         </button>
