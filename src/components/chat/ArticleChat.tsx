@@ -117,7 +117,7 @@ export default function ArticleChat({ contextConfig, placeholder, onAnalysisTrig
                                 <img src="/avatar.png" alt="Quantum Guru" className="h-24 w-auto object-contain" />
                             </div>
                             <p className="text-muted-foreground text-lg font-light max-w-lg mx-auto leading-relaxed">
-                                Quantum Research Lab & Document Intelligence.
+                                Summarize and construct your thoughts for quantum.
                             </p>
                         </div>
                     )}
