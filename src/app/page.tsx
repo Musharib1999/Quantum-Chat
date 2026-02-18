@@ -104,7 +104,7 @@ export default function LandingPage() {
             href="/industry"
             icon={<Cpu size={32} />}
             title="Quantum Industry"
-            description="Guided problem-solving wizard for industrial applications, hardware selection, and use-case analysis."
+            description="Guided problem-solving wizard for industrial applications, hardware selection and use-case analysis."
             actionText="Launch"
             isDarkMode={isDarkMode}
             accentColor="indigo"
@@ -115,7 +115,7 @@ export default function LandingPage() {
             href="/market"
             icon={<TrendingUp size={32} />}
             title="Quantum Stocks and Market Intelligence"
-            description="Real-time analysis of financial assets, stock trends, and deep market insights powered by quantum algorithms."
+            description="Real-time analysis of financial assets, stock trends and deep market insights powered by quantum algorithms."
             actionText="Access Data"
             isDarkMode={isDarkMode}
             accentColor="emerald"
@@ -126,7 +126,7 @@ export default function LandingPage() {
             href="/article-learn"
             icon={<BookOpen size={32} />}
             title="Article & Learn"
-            description="Stay updated with curated scientific papers, tutorials, and latest news in the quantum domain."
+            description="Stay updated with curated scientific papers, tutorials and latest news in the quantum domain."
             actionText="Start Learning"
             isDarkMode={isDarkMode}
             accentColor="rose"
