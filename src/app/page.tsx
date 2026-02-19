@@ -147,10 +147,6 @@ export default function LandingPage() {
       <footer className={`py-12 border-t ${isDarkMode ? 'border-white/5 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-col items-start gap-2">
-            <div className="flex items-center gap-2 opacity-50">
-              <Atom size={16} />
-              <span className="font-semibold tracking-widest text-sm">QUANTUM GURU</span>
-            </div>
             <p className="text-xs opacity-50">© 2026 Quantum Guru Inc. All rights reserved.</p>
           </div>
         </div>
