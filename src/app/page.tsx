@@ -216,7 +216,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
           : (isDarkMode ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border-emerald-100')
         }
       `}>
-        {isLocked ? <Lock size={10} /> : <Unlock size={10} />}
+        {isLocked ? <LockIcon size={10} /> : <UnlockIcon size={10} />}
         {isLocked ? 'Locked' : 'Unlocked'}
       </div>
 
