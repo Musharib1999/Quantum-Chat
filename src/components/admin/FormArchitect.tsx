@@ -84,34 +84,66 @@ export default function FormArchitect() {
         setLoading(true);
         setStatus('Saving...');
         try {
-            // Final Sync based on current mode
-            let finalFields = fields;
-            if (editorMode === 'json') {
-                try {
-                    finalFields = JSON.parse(jsonFields);
-                    if (!Array.isArray(finalFields)) throw new Error("Fields must be array");
-                } catch (e: any) {
-                    throw new Error("Invalid JSON: " + e.message);
-                }
-            }
-
-            // Normalization
-            finalFields = finalFields.map((f: any) => {
-                if (!f.key && f.label) {
-                    f.key = f.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                }
-                if (!f.key) throw new Error(`Field "${f.label || 'Unknown'}" is missing a unique "key".`);
-                if (!f.type) f.type = 'text';
-                return f;
-            });
-
-            await axios.post('/api/quantum-forms', {
+            let payload: any = {
                 industry,
                 service,
                 problem,
-                fields: finalFields,
-                active: true
-            });
+                active: true,
+                fields: []
+            };
+
+            if (editorMode === 'json') {
+                try {
+                    const parsed = JSON.parse(jsonFields);
+                    if (Array.isArray(parsed)) {
+                        payload.fields = parsed;
+                    } else if (typeof parsed === 'object' && parsed !== null) {
+                        // Handle full form object (e.g. copied from chat)
+                        if (parsed.sections) {
+                            payload.sections = parsed.sections;
+                            // Validate sections have fields
+                            payload.sections.forEach((sec: any) => {
+                                if (!sec.fields || !Array.isArray(sec.fields)) {
+                                    throw new Error(`Section "${sec.section_name}" missing fields array.`);
+                                }
+                            });
+                        }
+                        if (parsed.fields && Array.isArray(parsed.fields)) {
+                            payload.fields = parsed.fields;
+                        }
+                        // Allow JSON to override metadata keys if present
+                        if (parsed.industry) payload.industry = parsed.industry;
+                        if (parsed.service) payload.service = parsed.service;
+                        if (parsed.problem) payload.problem = parsed.problem;
+                    } else {
+                        throw new Error("Invalid JSON: Must be an Array of fields or a Form Object.");
+                    }
+                } catch (e: any) {
+                    throw new Error("Invalid JSON: " + e.message);
+                }
+            } else {
+                payload.fields = fields;
+            }
+
+            // Normalize Fields (Top-level)
+            if (payload.fields && payload.fields.length > 0) {
+                payload.fields = payload.fields.map((f: any) => normalizeField(f));
+            }
+
+            // Normalize Fields (Inside Sections)
+            if (payload.sections) {
+                payload.sections = payload.sections.map((sec: any) => ({
+                    ...sec,
+                    fields: sec.fields.map((f: any) => normalizeField(f))
+                }));
+            }
+
+            // Update UI state if metadata changed via JSON
+            if (payload.industry) setIndustry(payload.industry);
+            if (payload.service) setService(payload.service);
+            if (payload.problem) setProblem(payload.problem);
+
+            await axios.post('/api/quantum-forms', payload);
             setStatus('Form Saved Successfully!');
             fetchInitialData();
             setTimeout(() => setView('overview'), 1500);
@@ -120,6 +152,15 @@ export default function FormArchitect() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const normalizeField = (f: any) => {
+        if (!f.key && f.label) {
+            f.key = f.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        }
+        if (!f.key) throw new Error(`Field "${f.label || 'Unknown'}" is missing a unique "key".`);
+        if (!f.type) f.type = 'text';
+        return f;
     };
 
     const editForm = (form: IQuantumForm) => {
