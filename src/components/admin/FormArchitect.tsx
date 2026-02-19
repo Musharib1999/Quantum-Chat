@@ -19,6 +19,7 @@ interface IQuantumForm {
     service: string;
     problem: string;
     fields: IField[];
+    sections?: { section_name: string; fields: IField[] }[];
     active: boolean;
     createdAt?: string;
 }
@@ -55,6 +56,8 @@ export default function FormArchitect() {
             const parsed = JSON.parse(jsonFields);
             if (Array.isArray(parsed)) {
                 setFields(parsed);
+            } else if (parsed.fields && Array.isArray(parsed.fields)) {
+                setFields(parsed.fields);
             }
         } catch (e) {
             // Invalid JSON, don't overwrite visual state yet
@@ -168,9 +171,19 @@ export default function FormArchitect() {
         setService(form.service);
         setProblem(form.problem);
         setFields(form.fields || []);
-        setJsonFields(JSON.stringify(form.fields || [], null, 2));
+
+        // Intelligent Editor Mode Switching
+        if (form.sections && form.sections.length > 0) {
+            // If sections exist, assume structure is complex -> JSON Mode
+            setJsonFields(JSON.stringify({ sections: form.sections }, null, 2));
+            setEditorMode('json');
+        } else {
+            // Flat fields -> Visual Mode
+            setJsonFields(JSON.stringify(form.fields || [], null, 2));
+            setEditorMode('visual');
+        }
+
         setView('editor');
-        setEditorMode('visual'); // Default to visual for ease
     };
 
     const resetForm = () => {
