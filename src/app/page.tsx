@@ -131,7 +131,7 @@ export default function LandingPage() {
           <FeatureCard
             href="/article-learn"
             icon={<BookOpen size={32} />}
-            title="Article & Learn"
+            title="Analyze Quantum Information"
             description="Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain"
             actionText="View"
             isDarkMode={isDarkMode}
