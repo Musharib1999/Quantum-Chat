@@ -133,7 +133,7 @@ export default function LandingPage() {
             icon={<BookOpen size={32} />}
             title="Article & Learn"
             description="Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain"
-            actionText="Start Learning"
+            actionText="View"
             isDarkMode={isDarkMode}
             accentColor="rose"
             status="unlocked"
