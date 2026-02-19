@@ -15,6 +15,7 @@ export interface IQuantumForm extends Document {
     problem: string;
     description: string;
     fields: IQuantumField[];
+    sections?: { section_name: string; fields: IQuantumField[] }[];
     active: boolean;
     createdAt: Date;
 }
@@ -33,7 +34,11 @@ const QuantumFormSchema: Schema = new Schema({
     service: { type: String, required: true },
     problem: { type: String, required: true },
     description: { type: String },
-    fields: [QuantumFieldSchema],
+    fields: { type: [QuantumFieldSchema], default: [] },
+    sections: [{
+        section_name: { type: String, required: true },
+        fields: [QuantumFieldSchema]
+    }],
     active: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now }
 });

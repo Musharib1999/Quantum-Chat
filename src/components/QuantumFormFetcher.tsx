@@ -4,13 +4,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Settings, Play, Info } from 'lucide-react';
 
-interface IField {
-    label: string;
-    key: string;
-    type: 'text' | 'number' | 'select' | 'multi-select' | 'range';
-    options?: (string | { label: string; value: string })[];
-    description?: string;
-    defaultValue?: string;
+label: string;
+key: string;
+type: 'text' | 'number' | 'select' | 'multi-select' | 'range' | 'textarea' | 'dropdown';
+options ?: (string | { label: string; value: string })[];
+description ?: string;
+defaultValue ?: string;
+required ?: boolean;
 }
 
 interface IForm {
@@ -62,6 +62,82 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
+    const renderField = (field: IField) => {
+        // Map 'dropdown' to 'select' for compatibility
+        const effectiveType = field.type === 'dropdown' ? 'select' : field.type;
+
+        return (
+            <div key={field.key} className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">
+                    {field.label} {field.required && <span className="text-red-400">*</span>}
+                </label>
+                {effectiveType === 'select' ? (
+                    <div className="relative">
+                        <select
+                            value={formData[field.key] || ''}
+                            onChange={(e) => handleInputChange(field.key, e.target.value)}
+                            className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none"
+                        >
+                            <option value="" disabled>Select option</option>
+                            {field.options?.map((opt: any) => {
+                                const label = typeof opt === 'string' ? opt : opt.label;
+                                const value = typeof opt === 'string' ? opt : opt.value;
+                                return <option key={value} value={value}>{label}</option>;
+                            })}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                            <Play size={10} className="rotate-90" />
+                        </div>
+                    </div>
+                ) : effectiveType === 'multi-select' ? (
+                    <select
+                        multiple
+                        value={formData[field.key] || []}
+                        onChange={(e) => {
+                            const values = Array.from(e.target.selectedOptions, option => option.value);
+                            handleInputChange(field.key, values);
+                        }}
+                        className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none h-32"
+                    >
+                        {field.options?.map((opt: any) => {
+                            const label = typeof opt === 'string' ? opt : opt.label;
+                            const value = typeof opt === 'string' ? opt : opt.value;
+                            return <option key={value} value={value}>{label}</option>;
+                        })}
+                    </select>
+                ) : effectiveType === 'range' ? (
+                    <div className="pt-2">
+                        <input
+                            type="range"
+                            value={formData[field.key] || 0}
+                            onChange={(e) => handleInputChange(field.key, parseInt(e.target.value))}
+                            className="w-full accent-primary h-1 bg-secondary rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex justify-between text-[10px] text-muted-foreground mt-2 font-mono">
+                            <span>{formData[field.key] || 0}</span>
+                        </div>
+                    </div>
+                ) : effectiveType === 'textarea' ? (
+                    <textarea
+                        value={formData[field.key] || ''}
+                        onChange={(e) => handleInputChange(field.key, e.target.value)}
+                        className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-all min-h-[100px]"
+                        placeholder={field.description || "Enter details..."}
+                    />
+                ) : (
+                    <input
+                        type={field.type === 'number' ? 'number' : 'text'}
+                        value={formData[field.key] || ''}
+                        onChange={(e) => handleInputChange(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
+                        className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-all"
+                        placeholder={field.description}
+                    />
+                )}
+                {field.description && <p className="text-[10px] text-muted-foreground italic">{field.description}</p>}
+            </div>
+        );
+    };
+
     if (loading) return (
         <div className="p-8 bg-card border border-border rounded-2xl animate-pulse flex flex-col items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center">
@@ -92,61 +168,21 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {form.fields.map((field) => (
-                    <div key={field.key} className="space-y-2">
-                        <label className="text-xs font-medium text-muted-foreground">{field.label}</label>
-                        {field.type === 'select' ? (
-                            <select
-                                value={formData[field.key]}
-                                onChange={(e) => handleInputChange(field.key, e.target.value)}
-                                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none"
-                            >
-                                {field.options?.map((opt: any) => {
-                                    const label = typeof opt === 'string' ? opt : opt.label;
-                                    const value = typeof opt === 'string' ? opt : opt.value;
-                                    return <option key={value} value={value}>{label}</option>;
-                                })}
-                            </select>
-                        ) : field.type === 'multi-select' ? (
-                            <select
-                                multiple
-                                value={formData[field.key] || []}
-                                onChange={(e) => {
-                                    const values = Array.from(e.target.selectedOptions, option => option.value);
-                                    handleInputChange(field.key, values);
-                                }}
-                                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none h-32"
-                            >
-                                {field.options?.map((opt: any) => {
-                                    const label = typeof opt === 'string' ? opt : opt.label;
-                                    const value = typeof opt === 'string' ? opt : opt.value;
-                                    return <option key={value} value={value}>{label}</option>;
-                                })}
-                            </select>
-                        ) : field.type === 'range' ? (
-                            <div className="pt-2">
-                                <input
-                                    type="range"
-                                    value={formData[field.key] || 0}
-                                    onChange={(e) => handleInputChange(field.key, parseInt(e.target.value))}
-                                    className="w-full accent-primary h-1 bg-secondary rounded-lg appearance-none cursor-pointer"
-                                />
-                                <div className="flex justify-between text-[10px] text-muted-foreground mt-2 font-mono">
-                                    <span>{formData[field.key] || 0}</span>
-                                </div>
+            <div className="space-y-8">
+                {form.sections && form.sections.length > 0 ? (
+                    form.sections.map((section, idx) => (
+                        <div key={idx} className="space-y-4">
+                            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider border-b border-border/50 pb-2">{section.section_name}</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {section.fields.map((field) => renderField(field))}
                             </div>
-                        ) : (
-                            <input
-                                type={field.type === 'number' ? 'number' : 'text'}
-                                value={formData[field.key] || ''}
-                                onChange={(e) => handleInputChange(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
-                                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-all"
-                            />
-                        )}
-                        {field.description && <p className="text-[10px] text-muted-foreground italic">{field.description}</p>}
+                        </div>
+                    ))
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {form.fields.map((field) => renderField(field))}
                     </div>
-                ))}
+                )}
             </div>
 
             <button
