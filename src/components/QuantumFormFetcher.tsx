@@ -17,6 +17,7 @@ interface IField {
 interface IForm {
     _id: string;
     fields: IField[];
+    sections?: { section_name: string; fields: IField[] }[];
     description: string;
 }
 
