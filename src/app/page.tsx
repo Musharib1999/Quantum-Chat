@@ -12,7 +12,9 @@ import {
   Atom,
   Menu,
   X,
-  Cpu
+  Cpu,
+  Lock as LockIcon,
+  Unlock as UnlockIcon
 } from 'lucide-react';
 
 export default function LandingPage() {
