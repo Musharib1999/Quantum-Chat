@@ -108,6 +108,7 @@ export default function LandingPage() {
             actionText="Launch"
             isDarkMode={isDarkMode}
             accentColor="indigo"
+            status="locked"
           />
 
           {/* Card 2: Market Intelligence */}
@@ -119,6 +120,7 @@ export default function LandingPage() {
             actionText="Access Data"
             isDarkMode={isDarkMode}
             accentColor="emerald"
+            status="unlocked"
           />
 
           {/* Card 3: Article & Learn */}
@@ -130,6 +132,7 @@ export default function LandingPage() {
             actionText="Start Learning"
             isDarkMode={isDarkMode}
             accentColor="rose"
+            status="locked"
           />
 
         </div>
@@ -167,9 +170,10 @@ interface FeatureCardProps {
   actionText: string;
   isDarkMode: boolean;
   accentColor: 'indigo' | 'emerald' | 'rose';
+  status?: 'locked' | 'unlocked';
 }
 
-const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, accentColor }: FeatureCardProps) => {
+const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, accentColor, status = 'unlocked' }: FeatureCardProps) => {
   // Map color names to Tailwind classes
   const colorMap = {
     indigo: {
@@ -190,6 +194,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
   };
 
   const colors = colorMap[accentColor];
+  const isLocked = status === 'locked';
 
   return (
     <Link href={href} className={`group relative p-8 rounded-3xl border transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 overflow-hidden flex flex-col justify-between h-full
@@ -203,6 +208,17 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
       <div className={`absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 
         ${accentColor === 'indigo' ? 'bg-[rgb(48,102,187)]' : accentColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-500'}`}
       />
+
+      {/* Lock/Unlock Status Badge */}
+      <div className={`absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-sm transition-all
+        ${isLocked
+          ? (isDarkMode ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-red-50 text-red-600 border-red-100')
+          : (isDarkMode ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border-emerald-100')
+        }
+      `}>
+        {isLocked ? <Lock size={10} /> : <Unlock size={10} />}
+        {isLocked ? 'Locked' : 'Unlocked'}
+      </div>
 
       <div>
         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 ${isDarkMode ? colors.dark : colors.light}`}>
