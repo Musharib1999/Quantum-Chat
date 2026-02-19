@@ -23,10 +23,11 @@ export interface IQuantumForm extends Document {
 const QuantumFieldSchema = new Schema({
     label: { type: String, required: true },
     key: { type: String, required: true },
-    type: { type: String, enum: ['text', 'number', 'select', 'multi-select', 'range'], required: true },
-    options: [{ label: String, value: String }],
+    type: { type: String, enum: ['text', 'number', 'select', 'multi-select', 'range', 'textarea', 'dropdown'], required: true },
+    options: { type: [Schema.Types.Mixed], default: [] }, // Allow strings or objects
     description: String,
-    defaultValue: String
+    defaultValue: String,
+    required: { type: Boolean, default: false }
 });
 
 const QuantumFormSchema: Schema = new Schema({
