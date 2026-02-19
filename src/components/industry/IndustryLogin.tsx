@@ -1,0 +1,125 @@
+import React, { useState } from 'react';
+import { Mail, Lock, Atom, ArrowRight, ShieldCheck } from 'lucide-react';
+
+interface IndustryLoginProps {
+    onLogin: (email: string) => void;
+}
+
+export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        // Simulate network delay for "quantum" feel
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        if (!email || !password) {
+            setError('Please provide credentials to access the Quantum Interface.');
+            setLoading(false);
+            return;
+        }
+
+        // Simple validation rule: Any non-empty email/password works for now (Demo Mode)
+        // In a real app, this would call an API.
+        onLogin(email);
+        setLoading(false);
+    };
+
+    return (
+        <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden">
+            {/* Background Effects */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] animate-pulse delay-1000" />
+            </div>
+
+            <div className="relative z-10 w-full max-w-md p-8">
+                <div className="bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 space-y-8 animate-in zoom-in-95 fade-in duration-700">
+
+                    {/* Header */}
+                    <div className="text-center space-y-2">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/50 border border-white/10 mb-4 shadow-inner">
+                            <Atom size={32} className="text-primary animate-spin-slow" />
+                        </div>
+                        <h1 className="text-3xl font-black tracking-tight text-foreground">
+                            Quantum<span className="text-primary">Gate</span>
+                        </h1>
+                        <p className="text-sm text-muted-foreground font-medium">
+                            Authorized access only. Secure connection protocols active.
+                        </p>
+                    </div>
+
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Email Identity</label>
+                            <div className="relative group">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <Mail size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                </div>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                    placeholder="researcher@quantum.lab"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Access Key</label>
+                            <div className="relative group">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <Lock size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                </div>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold text-center animate-in slide-in-from-top-2">
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group border border-primary/50"
+                        >
+                            {loading ? (
+                                <span className="flex items-center gap-2">
+                                    <ShieldCheck size={18} className="animate-pulse" /> Verifying...
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    Enter Workspace <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            )}
+                        </button>
+                    </form>
+
+                    {/* Footer */}
+                    <div className="pt-4 text-center">
+                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest">
+                            Restricted Area • Encryption: QKD-256
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
