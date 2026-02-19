@@ -11,9 +11,25 @@ import { getExperiments } from '@/app/actions/experiment';
 import axios from 'axios';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 
+import IndustryLogin from '@/components/industry/IndustryLogin';
+import { useAuth } from '@/context/AuthContext';
+
 export default function IndustryPage() {
+    // Auth Context
+    const { isAuthenticated, login } = useAuth();
+
     // Flow State: 'wip' means using wizard, 'chat' means using chat
     const [flowStage, setFlowStage] = useState<'SELECTION' | 'CHAT'>('SELECTION');
+
+    // ... existing state ...
+
+    const handleLogin = (email: string) => {
+        login(email);
+    };
+
+    if (!isAuthenticated) {
+        return <IndustryLogin onLogin={handleLogin} />;
+    }
 
     // Config State
     const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null, formData?: any }>({ industry: null, service: null, problem: null, hardware: null });
