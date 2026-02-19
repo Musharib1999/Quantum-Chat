@@ -58,13 +58,6 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                 ${isMobile ? 'fixed inset-y-0 left-0 h-full shadow-2xl' : 'relative h-full'}
                 ${isSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 -translate-x-10 opacity-0 overflow-hidden'}
             `}>
-                <button
-                    onClick={toggleSidebar}
-                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-card hover:bg-secondary hover:text-foreground rounded-r-xl flex items-center justify-center transition-all z-50 backdrop-blur-md border border-l-0 border-border shadow-md text-muted-foreground"
-                >
-                    <ChevronLeft size={14} className={`transition-transform duration-500 ${!isSidebarOpen ? 'rotate-180' : ''}`} />
-                </button>
-
                 <div className="p-6 border-b border-border flex items-center justify-center">
                     <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain" />
                 </div>
@@ -72,9 +65,19 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                 <nav className="flex-1 overflow-y-auto overflow-x-hidden">
                     {sidebarContent}
                 </nav>
-
-
             </aside>
+
+            {/* Desktop Left Sidebar Toggle - Moved Outside */}
+            {!isMobile && (
+                <button
+                    onClick={toggleSidebar}
+                    className={`absolute top-1/2 -translate-y-1/2 w-6 h-12 bg-card hover:bg-secondary hover:text-foreground rounded-r-xl flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-50 backdrop-blur-md border border-l-0 border-border shadow-md text-muted-foreground
+                    ${isSidebarOpen ? 'left-80' : 'left-0'}
+                    `}
+                >
+                    <ChevronLeft size={14} className={`transition-transform duration-500 ${!isSidebarOpen ? 'rotate-180' : ''}`} />
+                </button>
+            )}
 
             {isMobile && !isSidebarOpen && (
                 <button
@@ -97,18 +100,23 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
             {/* Right Sidebar */}
             {(rightSidebarContent || ['industry', 'market', 'article'].includes(currentMode)) && (
                 <>
+                    {/* Desktop Right Sidebar Toggle - Moved Outside */}
+                    {!isMobile && (
+                        <button
+                            onClick={toggleRightSidebar}
+                            className={`absolute top-1/2 -translate-y-1/2 w-6 h-12 bg-card hover:bg-secondary hover:text-foreground rounded-l-xl flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-50 backdrop-blur-md border border-r-0 border-border shadow-md text-muted-foreground
+                            ${isRightSidebarOpen ? 'right-80' : 'right-0'}
+                            `}
+                        >
+                            <ChevronLeft size={14} className={`transition-transform duration-500 ${isRightSidebarOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                    )}
+
                     <aside className={`
                         z-40 bg-card/80 backdrop-blur-2xl border-l border-border flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
                         ${isMobile ? 'fixed inset-y-0 right-0 h-full shadow-2xl' : 'relative h-full'}
                         ${isRightSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 translate-x-10 opacity-0 overflow-hidden'}
                     `}>
-                        <button
-                            onClick={toggleRightSidebar}
-                            className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-card hover:bg-secondary hover:text-foreground rounded-l-xl flex items-center justify-center transition-all z-50 backdrop-blur-md border border-r-0 border-border shadow-md text-muted-foreground"
-                        >
-                            <ChevronLeft size={14} className={`transition-transform duration-500 ${isRightSidebarOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
                         <div className="h-full overflow-y-auto flex flex-col">
                             <UserSessionCard />
                             {rightSidebarContent && <div className="flex-1">{rightSidebarContent}</div>}
