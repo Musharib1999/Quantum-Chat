@@ -116,7 +116,7 @@ export default function IndustryPage() {
                         <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
                             {/* Industry Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Industry</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 text-center">Industry</h3>
                                 <div className="space-y-1">
                                     {metadata.industries?.map((ind: any) => {
                                         const isSelected = sessionConfig.industry === ind.label;
@@ -128,7 +128,7 @@ export default function IndustryPage() {
                                                     setFlowStage('SELECTION');
                                                     setWizardStep('service');
                                                 }}
-                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-center py-3 px-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span>{ind.label}</span>
                                             </div>
@@ -139,7 +139,7 @@ export default function IndustryPage() {
 
                             {/* Service Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Service</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 text-center">Service</h3>
                                 <div className="space-y-1">
                                     {metadata.services?.map((svc: any) => {
                                         const isSelected = sessionConfig.service === svc.label;
@@ -151,7 +151,7 @@ export default function IndustryPage() {
                                                     setFlowStage('SELECTION');
                                                     setWizardStep('problem');
                                                 }}
-                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-center py-3 px-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span>{svc.label}</span>
                                             </div>
@@ -162,7 +162,7 @@ export default function IndustryPage() {
 
                             {/* Problem Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Problem</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 text-center">Problem</h3>
                                 <div className="space-y-1">
                                     {/* Dynamic Problems based on Ind/Svc selection */}
                                     {(() => {
@@ -170,7 +170,7 @@ export default function IndustryPage() {
                                             ? (metadata.problemMapping?.[sessionConfig.industry]?.[sessionConfig.service] || [])
                                             : [];
 
-                                        if (problems.length === 0) return <div className="text-xs text-muted-foreground px-2 italic">Select Industry & Service</div>;
+                                        if (problems.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-center">Select Industry & Service</div>;
 
                                         return problems.map((prob: any) => {
                                             const isSelected = sessionConfig.problem === prob.label;
@@ -182,9 +182,9 @@ export default function IndustryPage() {
                                                         setFlowStage('SELECTION');
                                                         setWizardStep('hardware');
                                                     }}
-                                                    className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                    className={`group flex items-center justify-center py-3 px-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                                 >
-                                                    <span className="truncate max-w-[170px]">{prob.label}</span>
+                                                    <span className="truncate max-w-[190px]">{prob.label}</span>
                                                 </div>
                                             );
                                         });
@@ -194,7 +194,7 @@ export default function IndustryPage() {
 
                             {/* Hardware Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Hardware</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 text-center">Hardware</h3>
                                 <div className="space-y-1">
                                     {[
                                         { id: 'ibm_brisbane', label: 'IBM Brisbane (127 Qubits)' },
@@ -210,7 +210,7 @@ export default function IndustryPage() {
                                                     // Just update hardware, stay in place
                                                     setSessionConfig(prev => ({ ...prev, hardware: hw.label }));
                                                 }}
-                                                className={`group flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-center gap-2 py-3 px-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-md border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span className="truncate max-w-[140px]">{hw.label}</span>
                                                 <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded text-muted-foreground bg-muted`}>Offline</span>

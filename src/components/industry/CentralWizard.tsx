@@ -22,7 +22,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                 return (
                     <div className="space-y-6 text-center">
                         <h2 className="text-3xl font-light text-foreground">Select Industry</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                        <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
                             {metadata.industries?.map((ind: any) => (
                                 <button
                                     key={ind.label}
@@ -42,7 +42,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                 return (
                     <div className="space-y-6 text-center">
                         <h2 className="text-3xl font-light text-foreground">Select Service</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                        <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto">
                             {metadata.services?.map((svc: any) => (
                                 <button
                                     key={svc.label}
@@ -67,7 +67,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                 return (
                     <div className="space-y-6 text-center">
                         <h2 className="text-3xl font-light text-foreground">Select Problem</h2>
-                        <div className="grid grid-cols-1 gap-3 max-w-xl mx-auto">
+                        <div className="flex flex-wrap justify-center gap-3 max-w-xl mx-auto">
                             {problems.length > 0 ? (
                                 problems.map((prob: any) => (
                                     <button
@@ -99,7 +99,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                 return (
                     <div className="space-y-6 text-center">
                         <h2 className="text-3xl font-light text-foreground">Select Hardware</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                        <div className="flex flex-wrap justify-center gap-4 max-w-3xl mx-auto">
                             {hardwareOptions.map((hw) => (
                                 <button
                                     key={hw.id}
