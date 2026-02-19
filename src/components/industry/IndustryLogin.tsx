@@ -48,17 +48,14 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                             <Atom size={32} className="text-primary animate-spin-slow" />
                         </div>
                         <h1 className="text-3xl font-black tracking-tight text-foreground">
-                            Quantum<span className="text-primary">Gate</span>
+                            Login
                         </h1>
-                        <p className="text-sm text-muted-foreground font-medium">
-                            Authorized access only. Secure connection protocols active.
-                        </p>
                     </div>
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Email Identity</label>
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Email</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Mail size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -74,7 +71,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Access Key</label>
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Password</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Lock size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -111,13 +108,6 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                             )}
                         </button>
                     </form>
-
-                    {/* Footer */}
-                    <div className="pt-4 text-center">
-                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest">
-                            Restricted Area • Encryption: QKD-256
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
