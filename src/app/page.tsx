@@ -92,7 +92,7 @@ export default function LandingPage() {
           </h1>
 
           <p className={`text-lg md:text-xl mb-10 leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-            Select your specialized interface below to begin your journey into selected quantum domain.
+            Select your specialized interface below to begin your journey of respective quantum domain
           </p>
 
 
@@ -106,7 +106,7 @@ export default function LandingPage() {
             href="/industry"
             icon={<Cpu size={32} />}
             title="Quantum Industry"
-            description="Guided problem-solving wizard for industrial applications, hardware selection and use-case analysis."
+            description="Industry specific guided problem solving wizards based on hardware, use case and service selection"
             actionText="Launch"
             isDarkMode={isDarkMode}
             accentColor="indigo"
@@ -119,7 +119,7 @@ export default function LandingPage() {
             href="/market"
             icon={<TrendingUp size={32} />}
             title="Quantum Stocks and Market Intelligence"
-            description="Real-time analysis of financial assets, stock trends and deep market insights powered by quantum algorithms."
+            description="Current market analysis of your quantum asset"
             actionText="Access Data"
             isDarkMode={isDarkMode}
             accentColor="emerald"
@@ -132,7 +132,7 @@ export default function LandingPage() {
             href="/article-learn"
             icon={<BookOpen size={32} />}
             title="Article & Learn"
-            description="Stay updated with curated scientific papers, tutorials and latest news in the quantum domain."
+            description="Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain"
             actionText="Start Learning"
             isDarkMode={isDarkMode}
             accentColor="rose"
