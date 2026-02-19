@@ -111,6 +111,7 @@ export default function LandingPage() {
             isDarkMode={isDarkMode}
             accentColor="indigo"
             status="locked"
+            badgeText="Unlock with free account"
           />
 
           {/* Card 2: Market Intelligence */}
@@ -123,6 +124,7 @@ export default function LandingPage() {
             isDarkMode={isDarkMode}
             accentColor="emerald"
             status="unlocked"
+            badgeText="Try now"
           />
 
           {/* Card 3: Article & Learn */}
@@ -134,7 +136,8 @@ export default function LandingPage() {
             actionText="Start Learning"
             isDarkMode={isDarkMode}
             accentColor="rose"
-            status="locked"
+            status="unlocked"
+            badgeText="Try now"
           />
 
         </div>
@@ -173,9 +176,10 @@ interface FeatureCardProps {
   isDarkMode: boolean;
   accentColor: 'indigo' | 'emerald' | 'rose';
   status?: 'locked' | 'unlocked';
+  badgeText?: string;
 }
 
-const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, accentColor, status = 'unlocked' }: FeatureCardProps) => {
+const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, accentColor, status = 'unlocked', badgeText }: FeatureCardProps) => {
   // Map color names to Tailwind classes
   const colorMap = {
     indigo: {
@@ -219,7 +223,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
         }
       `}>
         {isLocked ? <LockIcon size={10} /> : <UnlockIcon size={10} />}
-        {isLocked ? 'Locked' : 'Unlocked'}
+        {badgeText || (isLocked ? 'Locked' : 'Unlocked')}
       </div>
 
       <div>
