@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
-    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers
+    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -19,6 +19,7 @@ import ThemeToggle from '../../../components/ThemeToggle';
 import StockManager from '../../../components/admin/StockManager';
 import ArticleManager from '../../../components/admin/ArticleManager';
 import FormArchitect from '../../../components/admin/FormArchitect';
+import UserManager from '../../../components/admin/UserManager';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -178,6 +179,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('articles'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<UserIcon size={20} />}
+                        label="Users"
+                        active={activeTab === 'users'}
+                        onClick={() => { setActiveTab('users'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<MessageSquare size={20} />}
                         label="Chat Logs"
                         active={activeTab === 'logs'}
@@ -222,6 +229,7 @@ export default function AdminDashboard() {
                             {activeTab === 'stocks' && <TrendingUp className="text-green-400" />}
                             {activeTab === 'articles' && <BookOpen className="text-blue-400" />}
                             {activeTab === 'forms' && <Layers className="text-primary" />}
+                            {activeTab === 'users' && <UserIcon className="text-blue-400" />}
                             {activeTab.replace('_', ' ')}
                         </h2>
                     </div>
@@ -409,6 +417,7 @@ export default function AdminDashboard() {
                     {activeTab === 'stocks' && <StockManager />}
                     {activeTab === 'articles' && <ArticleManager />}
                     {activeTab === 'forms' && <FormArchitect />}
+                    {activeTab === 'users' && <UserManager />}
 
                     {/* LOGS TAB */}
                     {activeTab === 'logs' && (

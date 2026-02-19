@@ -16,19 +16,32 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
         setError('');
         setLoading(true);
 
-        // Simulate network delay for "quantum" feel
-        await new Promise(resolve => setTimeout(resolve, 800));
-
         if (!email || !password) {
             setError('Please provide credentials to access the Quantum Interface.');
             setLoading(false);
             return;
         }
 
-        // Simple validation rule: Any non-empty email/password works for now (Demo Mode)
-        // In a real app, this would call an API.
-        onLogin(email);
-        setLoading(false);
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+
+            // Login successful
+            onLogin(email);
+        } catch (err: any) {
+            setError(err.message || 'Authentication failed. Please check your connection.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
