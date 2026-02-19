@@ -4,13 +4,14 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Settings, Play, Info } from 'lucide-react';
 
-label: string;
-key: string;
-type: 'text' | 'number' | 'select' | 'multi-select' | 'range' | 'textarea' | 'dropdown';
-options ?: (string | { label: string; value: string })[];
-description ?: string;
-defaultValue ?: string;
-required ?: boolean;
+interface IField {
+    label: string;
+    key: string;
+    type: 'text' | 'number' | 'select' | 'multi-select' | 'range' | 'textarea' | 'dropdown';
+    options?: (string | { label: string; value: string })[];
+    description?: string;
+    defaultValue?: string;
+    required?: boolean;
 }
 
 interface IForm {
