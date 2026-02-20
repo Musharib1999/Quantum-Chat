@@ -59,7 +59,7 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                 ${isSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 -translate-x-10 opacity-0 overflow-hidden'}
             `}>
                 <div className="p-6 border-b border-border flex items-center justify-center">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain" />
+                    <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain scale-90" />
                 </div>
 
                 <nav className="flex-1 overflow-y-auto overflow-x-hidden">

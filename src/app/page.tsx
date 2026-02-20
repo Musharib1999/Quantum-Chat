@@ -54,7 +54,7 @@ export default function LandingPage() {
           {/* Logo Section (Top Left) */}
           {/* Logo Section (Top Left) */}
           <div className="flex items-center gap-3 group cursor-pointer">
-            <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain" />
+            <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain scale-90 origin-left" />
           </div>
 
           {/* Desktop Links - Removed */}
