@@ -46,8 +46,8 @@ export default function LandingPage() {
         />
       </div>
 
-      {/* Absolute Logo */}
-      <div className="absolute top-6 left-6 z-[60]">
+      {/* Fixed Logo */}
+      <div className="fixed top-6 left-6 z-[60]">
         <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain scale-90 origin-top-left cursor-pointer" />
       </div>
 
