@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
-    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon
+    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon, Newspaper
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -20,6 +20,7 @@ import StockManager from '../../../components/admin/StockManager';
 import ArticleManager from '../../../components/admin/ArticleManager';
 import FormArchitect from '../../../components/admin/FormArchitect';
 import UserManager from '../../../components/admin/UserManager';
+import NewsManager from '../../../components/admin/NewsManager';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -173,6 +174,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('forms'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<Newspaper size={20} />}
+                        label="News Integration"
+                        active={activeTab === 'news'}
+                        onClick={() => { setActiveTab('news'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<BookOpen size={20} />}
                         label="Articles"
                         active={activeTab === 'articles'}
@@ -227,6 +234,7 @@ export default function AdminDashboard() {
                             {activeTab === 'analytics' && <BarChart3 className="text-purple-400" />}
                             {activeTab === 'logs' && <MessageSquare className="text-purple-400" />}
                             {activeTab === 'stocks' && <TrendingUp className="text-green-400" />}
+                            {activeTab === 'news' && <Newspaper className="text-blue-500" />}
                             {activeTab === 'articles' && <BookOpen className="text-blue-400" />}
                             {activeTab === 'forms' && <Layers className="text-primary" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
@@ -413,10 +421,27 @@ export default function AdminDashboard() {
                         </div>
                     )}
 
-                    {/* NEW TABS */}
+                    {/* STOCKS TAB */}
                     {activeTab === 'stocks' && <StockManager />}
+
+                    {/* ARTICLES TAB */}
                     {activeTab === 'articles' && <ArticleManager />}
-                    {activeTab === 'forms' && <FormArchitect />}
+
+                    {/* FORMS TAB */}
+                    {activeTab === 'forms' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <FormArchitect />
+                        </div>
+                    )}
+
+                    {/* NEWS TAB */}
+                    {activeTab === 'news' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <NewsManager />
+                        </div>
+                    )}
+
+                    {/* USERS TAB */}
                     {activeTab === 'users' && <UserManager />}
 
                     {/* LOGS TAB */}

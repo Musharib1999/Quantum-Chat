@@ -8,6 +8,7 @@ import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
 import Experiment from '@/models/Experiment';
+import News from '@/models/News';
 import { execSync } from 'child_process';
 import path from 'path';
 import { getStockPrice } from './market';
@@ -568,43 +569,27 @@ Success: ${executionResult.success}
     }
 }
 export async function getMarketNews() {
-    if (!API_KEY) return [];
-
-    const groq = new Groq({ apiKey: API_KEY });
-
     try {
-        const response = await groq.chat.completions.create({
-            model: DEFAULT_MODEL,
-            messages: [
-                {
-                    role: "system",
-                    content: "You are a financial news aggregator specialized in quantum computing and global markets. Provide the top 10 latest news headlines. For each, include: title, source, time, impact (high/medium), and trend (up/down). Output ONLY as a JSON array of objects."
-                },
-                {
-                    role: "user",
-                    content: "Fetch top 10 latest news for quantum stocks and markets."
-                }
-            ],
-            response_format: { type: "json_object" }
-        });
+        await dbConnect();
 
-        const content = response.choices[0]?.message?.content;
-        if (!content) return [];
+        // Fetch latest 10 news items from MongoDB
+        const newsDocs = await News.find({}).sort({ publishedAt: -1 }).limit(10).lean();
 
-        const data = JSON.parse(content);
-        // Sometimes LLM wraps it in a 'news' or 'headlines' key
-        const news = Array.isArray(data) ? data : (data.news || data.headlines || data.items || []);
+        if (!newsDocs || newsDocs.length === 0) {
+            return [];
+        }
 
-        return news.slice(0, 10).map((item: any, index: number) => ({
+        // Map them to the format expected by the frontend component
+        return newsDocs.map((item: any, index: number) => ({
             id: index + 1,
-            title: item.title || "Unknown Headline",
-            source: item.source || "Market Feed",
-            time: item.time || "Recent",
-            impact: item.impact || "medium",
-            trend: item.trend || "up"
+            title: item.title,
+            source: item.source,
+            time: new Date(item.publishedAt || item.createdAt).toLocaleDateString(),
+            impact: item.impact,
+            trend: item.trend
         }));
-    } catch (e) {
-        console.error("News Fetch Error:", e);
+    } catch (error) {
+        console.error("Failed to fetch market news from database:", error);
         return [];
     }
 }

@@ -128,6 +128,35 @@ async def simulate_dwave(request: DWaveRequest):
             "traceback": traceback.format_exc()
         }
 
+@app.get("/api/news", dependencies=[Depends(verify_api_key)])
+async def get_news(query: str = 'quantum computing OR "quantum technology"'):
+    try:
+        from pygooglenews import GoogleNews
+        gn = GoogleNews(lang='en', country='US')
+        
+        search_results = gn.search(query)
+        entries = search_results.get('entries', [])[:15]
+        
+        formatted_news = []
+        for entry in entries:
+            # Simple impact/trend assignment for demo purposes
+            title_lower = entry.title.lower()
+            impact = "high" if any(w in title_lower for w in ["breakthrough", "major", "funding", "ibm", "google"]) else "medium"
+            trend = "up" if any(w in title_lower for w in ["growth", "up", "bull", "success", "advance"]) else "down"
+
+            formatted_news.append({
+                "title": entry.title,
+                "url": entry.link,
+                "publishedAt": entry.published,
+                "source": entry.source.title if hasattr(entry, 'source') else "Google News",
+                "impact": impact,
+                "trend": trend
+            })
+            
+        return {"success": True, "news": formatted_news}
+    except Exception as e:
+        return {"success": False, "error": str(e), "traceback": traceback.format_exc()}
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "Quantum Backend"}

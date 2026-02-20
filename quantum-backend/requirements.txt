@@ -4,3 +4,4 @@ pydantic
 qiskit
 qiskit-aer
 dimod
+pygooglenews
