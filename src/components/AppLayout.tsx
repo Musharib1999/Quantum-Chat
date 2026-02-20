@@ -38,7 +38,13 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
     const toggleRightSidebar = () => setIsRightSidebarOpen(!isRightSidebarOpen);
 
     return (
-        <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-zinc-500/30">
+        <div className="h-screen w-full bg-background text-foreground flex overflow-hidden relative font-sans antialiased text-sm">
+
+            {/* Absolute Logo */}
+            <div className={`absolute top-6 left-6 z-[60] transition-opacity duration-300 ${!isSidebarOpen && isMobile ? 'opacity-0' : 'opacity-100'}`}>
+                <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain scale-90 origin-top-left cursor-pointer" />
+            </div>
+
             <div className="fixed inset-0 bg-background z-0 pointer-events-none"></div>
             <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none"></div>
 
@@ -58,11 +64,7 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                 ${isMobile ? 'fixed inset-y-0 left-0 h-full shadow-2xl' : 'relative h-full'}
                 ${isSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 -translate-x-10 opacity-0 overflow-hidden'}
             `}>
-                <div className="p-6 border-b border-border flex items-center justify-center">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain scale-90" />
-                </div>
-
-                <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden pt-20">
                     {sidebarContent}
                 </nav>
             </aside>

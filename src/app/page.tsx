@@ -46,15 +46,18 @@ export default function LandingPage() {
         />
       </div>
 
+      {/* Absolute Logo */}
+      <div className="absolute top-6 left-6 z-[60]">
+        <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain scale-90 origin-top-left cursor-pointer" />
+      </div>
+
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 ${isDarkMode ? 'border-white/10 bg-slate-950/70' : 'border-slate-200 bg-white/70'}`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 
-          {/* Logo Section (Top Left) */}
-          {/* Logo Section (Top Left) */}
-          {/* Logo Section (Top Left) */}
+          {/* Logo Section Removed from here */}
           <div className="flex items-center gap-3 group cursor-pointer">
-            <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain scale-90 origin-left" />
+            {/* Logo moved to absolute position */}
           </div>
 
           {/* Desktop Links - Removed */}
