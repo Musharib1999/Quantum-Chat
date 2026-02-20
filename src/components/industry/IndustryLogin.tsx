@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Atom, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Atom, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 interface IndustryLoginProps {
     onLogin: (email: string) => void;
@@ -10,6 +10,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,7 +69,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Email</label>
+                            <label className="text-[10px] font-bold text-muted-foreground tracking-widest pl-1">Email</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Mail size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -84,18 +85,25 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Password</label>
+                            <label className="text-[10px] font-bold text-muted-foreground tracking-widest pl-1">Password</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Lock size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
                                 </div>
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3.5 pl-11 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
                                     placeholder="••••••••"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
                             </div>
                         </div>
 
