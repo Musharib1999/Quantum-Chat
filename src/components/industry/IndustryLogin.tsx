@@ -61,7 +61,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/50 border border-white/10 mb-4 shadow-inner">
                             <Atom size={32} className="text-primary animate-spin-slow" />
                         </div>
-                        <h1 className="text-3xl font-black tracking-tight text-foreground">
+                        <h1 className="text-3xl font-black tracking-tight" style={{ color: 'rgb(48, 102, 187)' }}>
                             Login
                         </h1>
                     </div>
