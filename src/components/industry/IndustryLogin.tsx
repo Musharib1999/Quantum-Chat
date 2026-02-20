@@ -61,7 +61,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/50 border border-white/10 mb-4 shadow-inner">
                             <Atom size={32} className="text-primary animate-spin-slow" />
                         </div>
-                        <h1 className="text-3xl font-black tracking-tight" style={{ color: 'rgb(48, 102, 187)' }}>
+                        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'rgb(48, 102, 187)' }}>
                             Login
                         </h1>
                     </div>
@@ -69,7 +69,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-muted-foreground tracking-widest pl-1">Email</label>
+                            <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Email</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Mail size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -85,7 +85,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-muted-foreground tracking-widest pl-1">Password</label>
+                            <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Password</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Lock size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
