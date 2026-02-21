@@ -69,9 +69,9 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/industry"
-              className="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-sm font-bold rounded-full transition-all flex items-center gap-2 shadow-sm"
+              className="px-8 py-2.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white font-bold rounded-xl transition-all shadow-sm text-lg"
             >
-              Login <ArrowRight size={16} />
+              Login
             </Link>
           </div>
 
