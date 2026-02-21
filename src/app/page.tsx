@@ -46,42 +46,44 @@ export default function LandingPage() {
         />
       </div>
 
-      {/* Fixed Logo */}
-      <div className="fixed top-6 left-6 z-[60]">
-        <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain scale-90 origin-top-left cursor-pointer" />
-      </div>
-
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 ${isDarkMode ? 'border-white/10 bg-slate-950/70' : 'border-slate-200 bg-white/70'}`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 
-          {/* Logo Section Removed from here */}
+          {/* Logo Section */}
           <div className="flex items-center gap-3 group cursor-pointer">
-            {/* Logo moved to absolute position */}
+            <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain cursor-pointer" />
           </div>
 
-          {/* Desktop Links - Removed */}
-          <div className="hidden md:flex items-center gap-8">
-            {/* Links removed per user request */}
-          </div>
+          <div className="flex items-center gap-8">
+            {/* Desktop Links */}
+            <div className="hidden md:flex items-center gap-8 text-sm font-medium">
+              <Link href="#architecture" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Architecture
+              </Link>
+              <Link href="#core-engine" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Core Engine
+              </Link>
+            </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-4">
-            <Link
-              href="/industry"
-              className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white font-bold rounded-lg transition-all shadow-sm text-sm"
+            {/* Actions */}
+            <div className="flex items-center gap-4">
+              <Link
+                href="/industry"
+                className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white font-bold rounded-lg transition-all shadow-sm text-sm"
+              >
+                Login
+              </Link>
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              className="md:hidden p-2 text-slate-600 dark:text-slate-300"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              Login
-            </Link>
+              {isMobileMenuOpen ? <X /> : <Menu />}
+            </button>
           </div>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X /> : <Menu />}
-          </button>
         </div>
       </nav>
 
