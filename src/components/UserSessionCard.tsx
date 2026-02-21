@@ -17,7 +17,7 @@ export default function UserSessionCard() {
                             <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate leading-tight">{user?.name || 'Quantum User'}</p>
                             <div className="flex items-center gap-1 text-[11px] text-zinc-700 dark:text-zinc-300 mt-0.5 font-medium">
                                 <Unlock size={12} strokeWidth={2} />
-                                <span>Access Unlocked</span>
+                                <span>Pro Plan Active</span>
                             </div>
                         </div>
                     </div>
