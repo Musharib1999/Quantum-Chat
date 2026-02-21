@@ -21,20 +21,6 @@ export default function IndustryPage() {
     // Flow State: 'wip' means using wizard, 'chat' means using chat
     const [flowStage, setFlowStage] = useState<'SELECTION' | 'CHAT'>('SELECTION');
 
-    // ... existing state ...
-
-    const handleLogin = (email: string) => {
-        login(email);
-    };
-
-    if (isInitializing) {
-        return <div className="min-h-screen bg-background flex items-center justify-center" />;
-    }
-
-    if (!isAuthenticated) {
-        return <IndustryLogin onLogin={handleLogin} />;
-    }
-
     // Config State
     const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null, formData?: any }>({ industry: null, service: null, problem: null, hardware: null });
     const [wizardStep, setWizardStep] = useState<'industry' | 'service' | 'problem' | 'hardware'>('industry');
@@ -55,11 +41,12 @@ export default function IndustryPage() {
                     axios.get('/api/quantum-forms/metadata'),
                     getExperiments()
                 ]);
-                setMetadata(metaRes.data);
-                setExperiments(expRes);
+                if (metaRes.data) setMetadata(metaRes.data);
+                if (expRes) setExperiments(expRes);
                 setLoadingExperiments(false);
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
+                setLoadingExperiments(false);
             }
         };
         initData();
@@ -67,10 +54,22 @@ export default function IndustryPage() {
         // Poll for experiment updates
         const interval = setInterval(async () => {
             const exps = await getExperiments();
-            setExperiments(exps);
+            if (exps) setExperiments(exps);
         }, 5000);
         return () => clearInterval(interval);
     }, []);
+
+    const handleLogin = (email: string) => {
+        login(email);
+    };
+
+    if (isInitializing) {
+        return <div className="min-h-screen bg-background flex items-center justify-center" />;
+    }
+
+    if (!isAuthenticated) {
+        return <IndustryLogin onLogin={handleLogin} />;
+    }
 
 
     // Steps Handler
