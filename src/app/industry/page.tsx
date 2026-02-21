@@ -16,7 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function IndustryPage() {
     // Auth Context
-    const { isAuthenticated, login } = useAuth();
+    const { isAuthenticated, login, isInitializing } = useAuth();
 
     // Flow State: 'wip' means using wizard, 'chat' means using chat
     const [flowStage, setFlowStage] = useState<'SELECTION' | 'CHAT'>('SELECTION');
@@ -26,6 +26,10 @@ export default function IndustryPage() {
     const handleLogin = (email: string) => {
         login(email);
     };
+
+    if (isInitializing) {
+        return <div className="min-h-screen bg-background flex items-center justify-center" />;
+    }
 
     if (!isAuthenticated) {
         return <IndustryLogin onLogin={handleLogin} />;

@@ -10,6 +10,7 @@ interface User {
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
+    isInitializing: boolean;
     login: (email: string) => void;
     logout: () => void;
 }
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isInitializing, setIsInitializing] = useState(true);
 
     useEffect(() => {
         // Check local storage on mount
@@ -34,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 localStorage.removeItem('quantum_session');
             }
         }
+        setIsInitializing(false);
     }, []);
 
     const login = (email: string) => {
@@ -50,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated, isInitializing, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
