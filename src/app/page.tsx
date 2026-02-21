@@ -66,8 +66,13 @@ export default function LandingPage() {
           </div>
 
           {/* Actions */}
-          <div className="hidden md:flex items-center gap-4">
-            {/* Theme Toggle Removed */}
+          <div className="flex items-center gap-4">
+            <Link
+              href="/industry"
+              className="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-sm font-bold rounded-full transition-all flex items-center gap-2 shadow-sm"
+            >
+              Login <ArrowRight size={16} />
+            </Link>
           </div>
 
           {/* Mobile Menu Toggle */}
