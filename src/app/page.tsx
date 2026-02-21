@@ -56,16 +56,6 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-8">
-            {/* Desktop Links */}
-            <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-              <Link href="#architecture" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-                Architecture
-              </Link>
-              <Link href="#core-engine" className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-                Core Engine
-              </Link>
-            </div>
-
             {/* Actions */}
             <div className="flex items-center gap-4">
               <Link
