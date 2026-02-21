@@ -110,7 +110,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
                                             <Cpu size={20} />
                                         </div>
-                                        <div className="text-xs font-mono text-muted-foreground border border-border px-2 py-0.5 rounded">ONLINE</div>
+                                        <div className="text-xs font-mono text-muted-foreground border border-border px-2 py-0.5 rounded">Online</div>
                                     </div>
                                     <span className="font-medium text-lg">{hw.label}</span>
                                     <span className="text-sm text-muted-foreground">High-fidelity quantum processing unit.</span>

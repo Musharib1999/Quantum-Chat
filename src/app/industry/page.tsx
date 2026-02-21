@@ -135,7 +135,7 @@ export default function IndustryPage() {
                         <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
                             {/* Industry Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 text-left">Industry</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Industry</h3>
                                 <div className="space-y-1">
                                     {metadata.industries?.map((ind: any) => {
                                         const isSelected = sessionConfig.industry === ind.label;
@@ -158,7 +158,7 @@ export default function IndustryPage() {
 
                             {/* Service Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 text-left">Service</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Service</h3>
                                 <div className="space-y-1">
                                     {metadata.services?.map((svc: any) => {
                                         const isSelected = sessionConfig.service === svc.label;
@@ -181,7 +181,7 @@ export default function IndustryPage() {
 
                             {/* Problem Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 text-left">Problem</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Problem</h3>
                                 <div className="space-y-1">
                                     {/* Dynamic Problems based on Ind/Svc selection */}
                                     {(() => {
@@ -213,7 +213,7 @@ export default function IndustryPage() {
 
                             {/* Hardware Section */}
                             <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 text-left">Hardware</h3>
+                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Hardware</h3>
                                 <div className="space-y-1">
                                     {[
                                         { id: 'ibm_brisbane', label: 'IBM Brisbane (127 Qubits)' },
@@ -232,7 +232,7 @@ export default function IndustryPage() {
                                                 className={`group flex items-center justify-between w-full gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span className="truncate" title={hw.label}>{hw.label}</span>
-                                                <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded text-muted-foreground bg-muted shrink-0`}>Offline</span>
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-muted-foreground bg-muted shrink-0`}>Offline</span>
                                             </div>
                                         );
                                     })}

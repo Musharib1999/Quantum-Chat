@@ -123,7 +123,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                     <div className="w-5 h-5 border-2 border-muted border-t-primary rounded-full animate-spin"></div>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Quantum Pipeline Active</div>
+                                    <div className="text-[10px] font-black text-muted-foreground tracking-widest leading-none mb-1">Quantum Pipeline Active</div>
                                     <div className="text-sm font-bold text-foreground">
                                         {processingStep === 'generating' ? 'Generating Pulse Code...' :
                                             processingStep === 'simulating' ? 'Running Circuit on Simulator...' :
