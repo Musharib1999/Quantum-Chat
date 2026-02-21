@@ -266,15 +266,17 @@ export default function IndustryPage() {
                         <>
                             {!sessionConfig.formData ? (
                                 // Step 5 of Flow: Form Entry (Before actual Chat triggers)
-                                <div className="flex-1 flex items-center justify-center p-4 overflow-y-auto">
-                                    <div className="max-w-2xl w-full">
-                                        <QuantumFormFetcher
-                                            industry={sessionConfig.industry!}
-                                            service={sessionConfig.service!}
-                                            problem={sessionConfig.problem!}
-                                            initialData={sessionConfig.formData} // Handling re-run pre-fill
-                                            onSubmit={handleFormSubmit}
-                                        />
+                                <div className="absolute inset-0 p-4">
+                                    <div className="h-full w-full overflow-y-auto custom-scrollbar flex justify-center py-4">
+                                        <div className="max-w-3xl w-full my-auto">
+                                            <QuantumFormFetcher
+                                                industry={sessionConfig.industry!}
+                                                service={sessionConfig.service!}
+                                                problem={sessionConfig.problem!}
+                                                initialData={sessionConfig.formData} // Handling re-run pre-fill
+                                                onSubmit={handleFormSubmit}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             ) : (
