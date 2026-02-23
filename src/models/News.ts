@@ -7,6 +7,7 @@ export interface INews extends Document {
     publishedAt: string;
     impact: 'high' | 'medium' | 'low';
     trend: 'up' | 'down';
+    summary?: string;
     createdAt: Date;
 }
 
@@ -17,6 +18,7 @@ const NewsSchema = new Schema<INews>({
     publishedAt: { type: String, required: true },
     impact: { type: String, enum: ['high', 'medium', 'low'], default: 'medium' },
     trend: { type: String, enum: ['up', 'down'], default: 'up' },
+    summary: { type: String },
     createdAt: { type: Date, default: Date.now },
 });
 

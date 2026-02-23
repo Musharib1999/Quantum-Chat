@@ -10,7 +10,7 @@ import os
 app = FastAPI(title="Quantum Calculation Backend")
 
 # Security
-API_SECRET = os.getenv("API_SECRET_KEY", "default-dev-key")
+API_SECRET = os.getenv("API_SECRET_KEY", "dev_secret_key_123")
 
 async def verify_api_key(x_api_key: str = Header(None)):
     if x_api_key != API_SECRET:

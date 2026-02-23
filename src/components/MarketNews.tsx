@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Newspaper, Loader2, Newspaper as NewspaperIcon } from 'lucide-react';
-import { getLatestNews } from '@/app/actions/market';
+import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info } from 'lucide-react';
+import { getDbNews } from '@/app/actions/news-automation';
 
 interface NewsItem {
     id: number;
@@ -11,6 +11,7 @@ interface NewsItem {
     time: string;
     impact: string;
     trend: string;
+    summary?: string;
     url?: string;
 }
 
@@ -100,6 +101,11 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                             <h4 className="text-sm font-medium leading-snug group-hover:text-blue-400 transition-colors line-clamp-2">
                                 {item.title}
                             </h4>
+                            {item.summary && (
+                                <p className="mt-2 text-[11px] text-muted-foreground/80 line-clamp-3 italic border-l border-blue-500/30 pl-2">
+                                    {item.summary.length > 150 ? item.summary.substring(0, 150) + "..." : item.summary}
+                                </p>
+                            )}
                             <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
                                 <span>{item.time}</span>
                                 <span className={`px-1 rounded border ${item.impact === 'high' ? 'border-red-500/30 text-red-400' : 'border-border'}`}>
