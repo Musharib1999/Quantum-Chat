@@ -196,7 +196,7 @@ export async function chatWithGroq(
     if ((isMarketQuery || isNewsQuery) && !contextConfig?.realTimeData && !kbResult) {
         // Detect potential ticker
         const commonTickers = ["AAPL", "GOOGL", "MSFT", "AMZN", "META", "TSLA", "NFLX", "NVDA", "BTC", "ETH", "IBM", "IONQ", "RGTI", "QBTS"];
-        const foundTicker = commonTickers.find(t => lowerPrompt.includes(t.toLowerCase())) ||
+        const foundTicker = contextConfig?.symbol || commonTickers.find(t => lowerPrompt.includes(t.toLowerCase())) ||
             (lowerPrompt.match(/\$([a-z]{1,5})/i)?.[1].toUpperCase());
 
         if (foundTicker) {
