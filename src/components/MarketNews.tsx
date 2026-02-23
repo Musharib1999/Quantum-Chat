@@ -31,7 +31,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
 
         setIsLoading(true);
         try {
-            const result = await getLatestNews(undefined, pageNum, 20);
+            const result = await getDbNews(20, pageNum);
             if (result.news.length === 0) {
                 setHasMore(false);
             } else {

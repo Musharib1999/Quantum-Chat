@@ -11,7 +11,7 @@ import { chatWithGroq } from './chat';
  */
 export async function automateNewsSummarization() {
     try {
-        await connectToDatabase();
+        await dbConnect();
 
         // 1. Fetch latest 20 news items from the external service
         console.log("[Automation] Fetching latest news from Market Service...");
