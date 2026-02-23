@@ -116,28 +116,28 @@ export default function LandingPage() {
 
           {/* Card 2: Market Intelligence */}
           <FeatureCard
-            href="/market"
+            href="#"
             icon={<TrendingUp size={32} />}
             title="Quantum Stocks and Market Intelligence"
             description="Current market analysis of your quantum asset"
-            actionText="Access Data"
+            actionText="Unavailable"
             isDarkMode={isDarkMode}
             accentColor="emerald"
-            status="unlocked"
-            badgeText="Try now"
+            status="locked"
+            badgeText="Under Maintenance"
           />
 
           {/* Card 3: Article & Learn */}
           <FeatureCard
-            href="/article-learn"
+            href="#"
             icon={<BookOpen size={32} />}
             title="Analyze Quantum Information"
             description="Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain"
-            actionText="View"
+            actionText="Unavailable"
             isDarkMode={isDarkMode}
             accentColor="rose"
-            status="unlocked"
-            badgeText="Try now"
+            status="locked"
+            badgeText="Under Maintenance"
           />
 
         </div>
@@ -203,11 +203,14 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
   const isLocked = status === 'locked';
 
   return (
-    <Link href={href} className={`group relative p-8 rounded-3xl border transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 overflow-hidden flex flex-col justify-between h-full
+    <Link
+      href={href}
+      onClick={(e) => href === '#' && e.preventDefault()}
+      className={`group relative p-8 rounded-3xl border transition-all duration-300 ${href === '#' ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1'} overflow-hidden flex flex-col justify-between h-full
       ${isDarkMode
-        ? `bg-slate-900/50 border-white/5 hover:bg-slate-900 ${colors.border}`
-        : `bg-white border-slate-100 hover:border-slate-200`
-      }
+          ? `bg-slate-900/50 border-white/5 ${href !== '#' ? 'hover:bg-slate-900 ' + colors.border : ''}`
+          : `bg-white border-slate-100 ${href !== '#' ? 'hover:border-slate-200' : ''}`
+        }
     `}>
 
       {/* Glow Effect on Hover */}
