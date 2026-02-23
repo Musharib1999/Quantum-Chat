@@ -4,30 +4,28 @@ import News from '@/models/News';
 
 export const dynamic = 'force-dynamic';
 
-const QUANTUM_API_URL = process.env.QUANTUM_API_URL || 'http://localhost:8000';
-const QUANTUM_API_SECRET = process.env.QUANTUM_API_SECRET || 'dev_secret_key_123';
+const BASE_URL = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
 export async function POST() {
     try {
         await dbConnect();
 
-        // 1. Fetch from Python Backend (pygooglenews)
-        const response = await fetch(`${QUANTUM_API_URL}/api/news`, {
-            headers: {
-                'x-api-key': QUANTUM_API_SECRET
-            },
+        // 1. Fetch from Local Vercel Python Function (pygooglenews)
+        const response = await fetch(`${BASE_URL}/api/news`, {
             // Prevent caching so we get fresh news on trigger
             cache: 'no-store'
         });
 
         if (!response.ok) {
-            throw new Error(`Python API responded with status: ${response.status}`);
+            throw new Error(`News API responded with status: ${response.status}`);
         }
 
         const data = await response.json();
 
         if (!data.success) {
-            throw new Error(data.error || 'Failed to scrape news from python backend');
+            throw new Error(data.error || 'Failed to scrape news');
         }
 
         const fetchedNews = data.news;

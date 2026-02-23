@@ -11,7 +11,7 @@ import Experiment from '@/models/Experiment';
 import News from '@/models/News';
 import { execSync } from 'child_process';
 import path from 'path';
-import { getStockPrice } from './market';
+import { getStockPrice, getLatestNews } from './market';
 
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
@@ -185,6 +185,29 @@ export async function chatWithGroq(
     // 2. KB / RAG Check (Standard for all modes, but could be scoped later)
     const kbResult = await queryKnowledgeBase(prompt);
 
+    // 2.5 Autonomous Market Data Fetch (If finance-related and no context provided)
+    let autonomousMarketData = null;
+    let autonomousNewsData = null;
+
+    const lowerPrompt = prompt.toLowerCase();
+    const isMarketQuery = ["price", "stock", "market", "share", "dividend", "financial", "nasdaq", "nyse", "ticker"].some(kw => lowerPrompt.includes(kw));
+    const isNewsQuery = ["news", "latest", "headline", "happening", "report", "update"].some(kw => lowerPrompt.includes(kw));
+
+    if ((isMarketQuery || isNewsQuery) && !contextConfig?.realTimeData && !kbResult) {
+        // Detect potential ticker
+        const commonTickers = ["AAPL", "GOOGL", "MSFT", "AMZN", "META", "TSLA", "NFLX", "NVDA", "BTC", "ETH", "IBM", "IONQ", "RGTI", "QBTS"];
+        const foundTicker = commonTickers.find(t => lowerPrompt.includes(t.toLowerCase())) ||
+            (lowerPrompt.match(/\$([a-z]{1,5})/i)?.[1].toUpperCase());
+
+        if (foundTicker) {
+            autonomousMarketData = await getStockPrice(foundTicker);
+        }
+
+        if (isNewsQuery || (isMarketQuery && !foundTicker)) {
+            autonomousNewsData = await getLatestNews(foundTicker || "quantum computing market");
+        }
+    }
+
     if (kbResult?.type === 'direct') {
         const text = kbResult.text;
         await ChatLog.create({
@@ -226,7 +249,23 @@ export async function chatWithGroq(
     }
 
     // 3. Main LLM Logic
-    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant. Be helpful, professional, and efficient.`;
+    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant. Be helpful, professional, and efficient.
+    Current Time: ${new Date().toLocaleString()}
+    Language: ${lang === 'hi' ? 'Hindi' : 'English'}`;
+
+    // Inject Autonomous Market/News context if fetched
+    if (autonomousMarketData) {
+        systemInstructions += `\n\nAUTONOMOUS MARKET DATA (YAHOO FINANCE):
+        - Symbol: ${autonomousMarketData.symbol}
+        - Price: $${autonomousMarketData.price}
+        - Change: ${autonomousMarketData.change} (${autonomousMarketData.changePercent})
+        - Volume: ${autonomousMarketData.volume}
+        - Day Close: ${autonomousMarketData.previousClose}`;
+    }
+    if (autonomousNewsData && autonomousNewsData.length > 0) {
+        systemInstructions += `\n\nAUTONOMOUS MARKET NEWS:
+        ${autonomousNewsData.slice(0, 5).map((n: any) => `- ${n.title} (${n.source})`).join('\n')}`;
+    }
 
     // --- Dynamic Context Injection ---
     let autonomousContext = "";

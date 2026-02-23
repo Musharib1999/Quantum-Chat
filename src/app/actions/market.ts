@@ -1,35 +1,70 @@
 'use server';
 
-const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY || 'BY4WASP6OIOZJVLQ';
-const BASE_URL = 'https://www.alphavantage.co/query';
+const MARKET_SERVICE_URL = process.env.MARKET_SERVICE_URL || 'http://localhost:3001';
+const MARKET_SERVICE_KEY = process.env.MARKET_SERVICE_KEY;
 
 export async function getStockPrice(symbol: string) {
     if (!symbol) return null;
 
     try {
-        const url = `${BASE_URL}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
-        const response = await fetch(url, { next: { revalidate: 60 } }); // Cache for 1 min
+        const url = `${MARKET_SERVICE_URL}/api/stocks?symbol=${symbol}`;
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${MARKET_SERVICE_KEY}` },
+            next: { revalidate: 300 }
+        });
+
+        if (!response.ok) {
+            console.error(`Stock API responded with status: ${response.status}`);
+            return null;
+        }
+
         const data = await response.json();
 
-        // Alpha Vantage Global Quote Response Structure
-        const quote = data['Global Quote'];
-        if (!quote) {
-            console.error('Alpha Vantage Error:', data);
+        if (data.error) {
+            console.error('Stock API Error:', data.error);
             return null;
         }
 
         return {
-            symbol: quote['01. symbol'],
-            price: parseFloat(quote['05. price']),
-            change: parseFloat(quote['09. change']),
-            changePercent: quote['10. change percent'],
-            volume: parseInt(quote['06. volume']),
-            latestTradingDay: quote['07. latest trading day'],
-            previousClose: parseFloat(quote['08. previous close'])
+            symbol: data.symbol,
+            price: data.price,
+            change: data.change,
+            changePercent: data.changePercent,
+            volume: data.volume,
+            latestTradingDay: data.latestTradingDay,
+            previousClose: data.previousClose
         };
 
     } catch (error) {
         console.error("Failed to fetch stock price:", error);
         return null;
+    }
+}
+
+export async function getLatestNews(query?: string) {
+    try {
+        const url = `${MARKET_SERVICE_URL}/api/news${query ? `?query=${encodeURIComponent(query)}` : ''}`;
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${MARKET_SERVICE_KEY}` },
+            next: { revalidate: 300 }
+        });
+
+        if (!response.ok) {
+            console.error(`News API responded with status: ${response.status}`);
+            return [];
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+            console.error('News API Error:', data.error);
+            return [];
+        }
+
+        return data.news;
+
+    } catch (error) {
+        console.error("Failed to fetch market news:", error);
+        return [];
     }
 }
