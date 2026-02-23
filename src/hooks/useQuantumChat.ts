@@ -57,6 +57,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             const fullConfig = { ...contextConfig, ...customConfig, mode };
 
             // Call API
+            console.log(`[useQuantumChat] Sending message to Groq (mode: ${mode}):`, userMsg.text);
             const response = await chatWithGroq(userMsg.text, 'chat', 'en', fullConfig);
 
             // Extract step output markers (code, sim output)

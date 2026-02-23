@@ -34,29 +34,39 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
         const targetName = contextConfig?.stockName;
 
         // Stock Analysis Trigger
-        if (targetUrl && targetUrl !== lastTriggeredUrlRef.current) {
-            lastTriggeredUrlRef.current = targetUrl;
-            const triggerMessage = `Analyze latest trends, market news, and stock prices for ${targetName}.`;
+        if (targetUrl) {
+            if (targetUrl !== lastTriggeredUrlRef.current) {
+                lastTriggeredUrlRef.current = targetUrl;
+                const triggerMessage = `Analyze latest trends, market news, and stock prices for ${targetName}.`;
 
-            setShouldAutoScroll(true);
-            const timer = setTimeout(() => {
-                sendMessage(triggerMessage);
-                onAnalysisTriggered?.();
-            }, 1000);
-            return () => clearTimeout(timer);
+                setShouldAutoScroll(true);
+                const timer = setTimeout(() => {
+                    sendMessage(triggerMessage);
+                    onAnalysisTriggered?.();
+                }, 1000);
+                return () => clearTimeout(timer);
+            }
+        } else {
+            // Clear ref if targetUrl becomes null, allowing re-selection of the same stock
+            lastTriggeredUrlRef.current = null;
         }
 
         // News Detail Trigger
-        if (contextConfig?.newsTitle && contextConfig?.newsTitle !== lastTriggeredNewsRef.current) {
-            lastTriggeredNewsRef.current = contextConfig.newsTitle;
-            const triggerMessage = `Provide more details and market implications for the following news headline from ${contextConfig.newsSource}: "${contextConfig.newsTitle}"`;
+        if (contextConfig?.newsTitle) {
+            if (contextConfig?.newsTitle !== lastTriggeredNewsRef.current) {
+                lastTriggeredNewsRef.current = contextConfig.newsTitle;
+                const triggerMessage = `Provide more details and market implications for the following news headline from ${contextConfig.newsSource}: "${contextConfig.newsTitle}"`;
 
-            setShouldAutoScroll(true);
-            const timer = setTimeout(() => {
-                sendMessage(triggerMessage);
-                onAnalysisTriggered?.();
-            }, 500);
-            return () => clearTimeout(timer);
+                setShouldAutoScroll(true);
+                const timer = setTimeout(() => {
+                    sendMessage(triggerMessage);
+                    onAnalysisTriggered?.();
+                }, 500);
+                return () => clearTimeout(timer);
+            }
+        } else {
+            // Clear ref if title becomes null
+            lastTriggeredNewsRef.current = null;
         }
     }, [contextConfig, sendMessage, onAnalysisTriggered, setShouldAutoScroll]);
 
