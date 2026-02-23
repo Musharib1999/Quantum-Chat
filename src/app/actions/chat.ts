@@ -665,8 +665,31 @@ After the paragraph, generate a chart from the actual data:
     } catch (error: any) {
         console.error("Groq Server Error:", error);
 
-        // Log the error response as well
-        const errorMsg = "Failed to process request with Groq. Please try again later.";
+        // Fallback: If we hit a rate limit but we successfully fetched market data, return that data directly.
+        let fallbackText = "";
+        if (autonomousMarketData) {
+            fallbackText += `⚠️ **Notice: AI Analysis is currently unavailable due to high traffic (Rate Limit Reached).**\n\nHowever, I retrieved the raw market data you requested:\n\n**${autonomousMarketData.symbol}**\n- **Price:** $${autonomousMarketData.price}\n- **Change:** ${autonomousMarketData.change} (${autonomousMarketData.changePercent})\n- **Volume:** ${autonomousMarketData.volume}\n- **Previous Close:** $${autonomousMarketData.previousClose}\n\n`;
+        }
+
+        if (autonomousNewsData && autonomousNewsData.length > 0) {
+            fallbackText += `**Latest Headlines:**\n`;
+            autonomousNewsData.slice(0, 3).forEach((n: any) => {
+                fallbackText += `- [${n.title}](${n.url || '#'}) (${n.source})\n`;
+            });
+        }
+
+        if (fallbackText) {
+            // We have fallback data to show
+            return {
+                text: fallbackText,
+                source: 'fallback_market_data',
+                guardrailsStatus: 'passed',
+                activeGuardrails: ruleTexts
+            };
+        }
+
+        // Log the error response if no fallback data exists
+        const errorMsg = "Failed to process request with Groq API (Rate limit or server error). Please try again later.";
         await ChatLog.create({
             userQuery: prompt,
             aiResponse: error.message || errorMsg,
@@ -675,7 +698,7 @@ After the paragraph, generate a chart from the actual data:
             activeGuardrails: ruleTexts
         });
 
-        return { text: "", error: errorMsg };
+        return { text: errorMsg, error: error.message };
     }
 }
 export async function getMarketNews() {
