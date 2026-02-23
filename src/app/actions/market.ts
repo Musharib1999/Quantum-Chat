@@ -19,6 +19,7 @@ export async function getStockPrice(symbol: string) {
         }
 
         const data = await response.json();
+        console.log("MARKET_SERVICE DEBUG [Stocks]:", data);
 
         if (data.error) {
             console.error('Stock API Error:', data.error);
@@ -60,6 +61,7 @@ export async function getLatestNews(query?: string, page: number = 1, limit: num
         }
 
         const data = await response.json();
+        console.log("MARKET_SERVICE DEBUG [News]:", data?.news?.length, "items found");
 
         if (!data.success) {
             console.error('News API Error:', data.error);
