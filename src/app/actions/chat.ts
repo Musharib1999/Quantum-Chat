@@ -203,119 +203,120 @@ export async function chatWithGroq(
             autonomousMarketData = await getStockPrice(foundTicker);
         }
 
-        const newsResult = await getLatestNews(foundTicker || "quantum computing market");
-        autonomousNewsData = newsResult.news;
+        if (isNewsQuery || (isMarketQuery && !foundTicker)) {
+            const newsResult = await getLatestNews(foundTicker || "quantum computing market");
+            autonomousNewsData = newsResult.news;
+        }
     }
-}
 
-if (kbResult?.type === 'direct') {
-    const text = kbResult.text;
-    await ChatLog.create({
-        userQuery: prompt,
-        aiResponse: text,
-        source: 'kb_direct',
-        guardrailsStatus: 'passed',
-        activeGuardrails: ruleTexts
-    });
-    return { text, source: 'kb_direct', guardrailsStatus: 'passed', activeGuardrails: ruleTexts };
-}
+    if (kbResult?.type === 'direct') {
+        const text = kbResult.text;
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: text,
+            source: 'kb_direct',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        });
+        return { text, source: 'kb_direct', guardrailsStatus: 'passed', activeGuardrails: ruleTexts };
+    }
 
-if (kbResult?.type === 'form') {
-    await ChatLog.create({
-        userQuery: prompt,
-        aiResponse: kbResult.text,
-        source: 'kb_form',
-        guardrailsStatus: 'passed',
-        activeGuardrails: ruleTexts
-    });
-    return {
-        text: kbResult.text,
-        form: kbResult.form,
-        source: 'kb_form',
-        guardrailsStatus: 'passed',
-        activeGuardrails: ruleTexts
-    };
-}
+    if (kbResult?.type === 'form') {
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: kbResult.text,
+            source: 'kb_form',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        });
+        return {
+            text: kbResult.text,
+            form: kbResult.form,
+            source: 'kb_form',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        };
+    }
 
-if (kbResult?.type === 'url_only') {
-    const text = "I found an official portal that might help you.";
-    return {
-        text,
-        sourceUrl: kbResult.sourceUrl,
-        source: 'kb_url',
-        guardrailsStatus: 'passed',
-        activeGuardrails: ruleTexts
-    };
-}
+    if (kbResult?.type === 'url_only') {
+        const text = "I found an official portal that might help you.";
+        return {
+            text,
+            sourceUrl: kbResult.sourceUrl,
+            source: 'kb_url',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        };
+    }
 
-// 3. Main LLM Logic
-let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant. Be helpful, professional, and efficient.
+    // 3. Main LLM Logic
+    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant. Be helpful, professional, and efficient.
     Current Time: ${new Date().toLocaleString()}
     Language: ${lang === 'hi' ? 'Hindi' : 'English'}`;
 
-// Inject Autonomous Market/News context if fetched
-if (autonomousMarketData) {
-    systemInstructions += `\n\nAUTONOMOUS MARKET DATA (YAHOO FINANCE):
+    // Inject Autonomous Market/News context if fetched
+    if (autonomousMarketData) {
+        systemInstructions += `\n\nAUTONOMOUS MARKET DATA (YAHOO FINANCE):
         - Symbol: ${autonomousMarketData.symbol}
         - Price: $${autonomousMarketData.price}
         - Change: ${autonomousMarketData.change} (${autonomousMarketData.changePercent})
         - Volume: ${autonomousMarketData.volume}
         - Day Close: ${autonomousMarketData.previousClose}`;
-}
-if (autonomousNewsData && autonomousNewsData.length > 0) {
-    systemInstructions += `\n\nAUTONOMOUS MARKET NEWS:
+    }
+    if (autonomousNewsData && autonomousNewsData.length > 0) {
+        systemInstructions += `\n\nAUTONOMOUS MARKET NEWS:
         ${autonomousNewsData.slice(0, 5).map((n: any) => `- ${n.title} (${n.source})`).join('\n')}`;
-}
+    }
 
-// --- Dynamic Context Injection ---
-let autonomousContext = "";
-if (contextConfig) {
-    // Mode: Market Intelligence
+    // --- Dynamic Context Injection ---
+    let autonomousContext = "";
+    if (contextConfig) {
+        // Mode: Market Intelligence
 
-    if (contextConfig.mode === 'market') {
-        const now = new Date();
-        const timeString = now.toLocaleString('en-US', {
-            timeZone: 'America/New_York',
-            dateStyle: 'full',
-            timeStyle: 'long'
-        });
+        if (contextConfig.mode === 'market') {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                dateStyle: 'full',
+                timeStyle: 'long'
+            });
 
-        // 1. Ticker Extraction Layer (The Intermediate Layer)
-        let targetSymbol = contextConfig.symbol; // Start with explicit selection if any
+            // 1. Ticker Extraction Layer (The Intermediate Layer)
+            let targetSymbol = contextConfig.symbol; // Start with explicit selection if any
 
-        // If no symbol selected, try to extract from prompt
-        if (!targetSymbol) {
-            try {
-                const extraction = await groq.chat.completions.create({
-                    messages: [
-                        { role: "system", content: "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'." },
-                        { role: "user", content: prompt }
-                    ],
-                    model: "llama-3.3-70b-versatile",
-                    temperature: 0
-                });
-                const extracted = extraction.choices[0]?.message?.content?.trim();
-                if (extracted && extracted !== 'NULL' && extracted.length < 10) {
-                    targetSymbol = extracted.replace(/[^a-zA-Z0-9-]/g, ''); // Clean it
+            // If no symbol selected, try to extract from prompt
+            if (!targetSymbol) {
+                try {
+                    const extraction = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'." },
+                            { role: "user", content: prompt }
+                        ],
+                        model: "llama-3.3-70b-versatile",
+                        temperature: 0
+                    });
+                    const extracted = extraction.choices[0]?.message?.content?.trim();
+                    if (extracted && extracted !== 'NULL' && extracted.length < 10) {
+                        targetSymbol = extracted.replace(/[^a-zA-Z0-9-]/g, ''); // Clean it
+                    }
+                } catch (e) {
+                    console.error("Ticker extraction failed:", e);
                 }
-            } catch (e) {
-                console.error("Ticker extraction failed:", e);
             }
-        }
 
-        // 2. Data Fetching Layer
-        let realTimeData = contextConfig.realTimeData;
-        if (targetSymbol && !realTimeData) {
-            realTimeData = await getStockPrice(targetSymbol);
-        }
+            // 2. Data Fetching Layer
+            let realTimeData = contextConfig.realTimeData;
+            if (targetSymbol && !realTimeData) {
+                realTimeData = await getStockPrice(targetSymbol);
+            }
 
-        systemInstructions += `\n\nMODE: MARKET INTELLIGENCE`;
-        systemInstructions += `\nCURRENT SYSTEM TIME (NY): ${timeString}`;
+            systemInstructions += `\n\nMODE: MARKET INTELLIGENCE`;
+            systemInstructions += `\nCURRENT SYSTEM TIME (NY): ${timeString}`;
 
-        // 3. Inject Data into Context
-        if (realTimeData) {
-            const rt = realTimeData;
-            systemInstructions += `\n\nREAL-TIME DATA (ALPHA VANTAGE):
+            // 3. Inject Data into Context
+            if (realTimeData) {
+                const rt = realTimeData;
+                systemInstructions += `\n\nREAL-TIME DATA (ALPHA VANTAGE):
                 - Symbol: ${rt.symbol}
                 - Price: $${rt.price}
                 - Change: ${rt.change} (${rt.changePercent})
@@ -324,22 +325,22 @@ if (contextConfig) {
                 - Previous Close: ${rt.previousClose}
                 
                 IMPORTANT: Use this REAL-TIME data as the primary source.`;
-        } else if (targetSymbol) {
-            systemInstructions += `\nFOCUS ASSET: ${targetSymbol} (Real-time data unavailable, use general knowledge)`;
-        }
+            } else if (targetSymbol) {
+                systemInstructions += `\nFOCUS ASSET: ${targetSymbol} (Real-time data unavailable, use general knowledge)`;
+            }
 
-        if (contextConfig.stockName && !targetSymbol) systemInstructions += `\nFOCUS ASSET: ${contextConfig.stockName}`;
+            if (contextConfig.stockName && !targetSymbol) systemInstructions += `\nFOCUS ASSET: ${contextConfig.stockName}`;
 
-        if (contextConfig.stockUrl) {
-            systemInstructions += `\nREFERENCE URL: ${contextConfig.stockUrl}`;
-            const scrapedData = await scrapeUrl(contextConfig.stockUrl);
-            if (scrapedData) autonomousContext = scrapedData;
-        }
+            if (contextConfig.stockUrl) {
+                systemInstructions += `\nREFERENCE URL: ${contextConfig.stockUrl}`;
+                const scrapedData = await scrapeUrl(contextConfig.stockUrl);
+                if (scrapedData) autonomousContext = scrapedData;
+            }
 
-        // Inject Real-Time Data if available
-        if (contextConfig.realTimeData) {
-            const rt = contextConfig.realTimeData;
-            systemInstructions += `\n\nREAL-TIME DATA (ALPHA VANTAGE):
+            // Inject Real-Time Data if available
+            if (contextConfig.realTimeData) {
+                const rt = contextConfig.realTimeData;
+                systemInstructions += `\n\nREAL-TIME DATA (ALPHA VANTAGE):
                 - Symbol: ${rt.symbol}
                 - Price: $${rt.price}
                 - Change: ${rt.change} (${rt.changePercent})
@@ -348,14 +349,14 @@ if (contextConfig) {
                 - Previous Close: ${rt.previousClose}
                 
                 IMPORTANT: Use this REAL-TIME data as the primary source for price and movement. Do NOT rely on potential hallucinations or old training data.`;
-        }
-        systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset or news topic.`;
+            }
+            systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset or news topic.`;
 
-        // Conditional Response Structure
-        let responseStructure = "";
-        if (contextConfig.realTimeData || (targetSymbol && !contextConfig.newsTitle)) {
-            // Case A: Stock Data is available OR we are analyzing a specific ticker
-            responseStructure = `
+            // Conditional Response Structure
+            let responseStructure = "";
+            if (contextConfig.realTimeData || (targetSymbol && !contextConfig.newsTitle)) {
+                // Case A: Stock Data is available OR we are analyzing a specific ticker
+                responseStructure = `
                 1. **## Stocks Prices and Movements Numbers**
                    - Provide Current price, day's change, percentage change, and key volume data.
                 2. **## News**
@@ -364,9 +365,9 @@ if (contextConfig) {
                    - Technical and fundamental analysis based on the data.
                 4. **## Conclusion**
                    - A final summary and potential outlook.`;
-        } else {
-            // Case B: News-Only Analysis (No specific stock data focus)
-            responseStructure = `
+            } else {
+                // Case B: News-Only Analysis (No specific stock data focus)
+                responseStructure = `
                 1. **## News Analysis**
                    - Detailed breakdown of the specific news story or headline provided.
                 2. **## Market Implications**
@@ -375,9 +376,9 @@ if (contextConfig) {
                    - The most important points for investors to know.
                 4. **## Outlook**
                    - Potential future developments based on this news.`;
-        }
+            }
 
-        systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
+            systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
             You must provide your response in the following strict order using Markdown:
             ${responseStructure}
             
@@ -385,19 +386,19 @@ if (contextConfig) {
             - Use '##' for main section headers.
             - Do NOT use decorative symbols like '|' or '---' at the start of headers.
             - Use bullet points for lists.`;
-    }
-    // Mode: Article & Learn
-    else if (contextConfig.mode === 'article') {
-        systemInstructions += `\n\nMODE: ARTICLE & LEARN`;
-        if (contextConfig.articleTitle) systemInstructions += `\nCURRENT PAPER/ARTICLE: ${contextConfig.articleTitle}`;
-        if (contextConfig.articleCategory) systemInstructions += `\nCATEGORY: ${contextConfig.articleCategory}`;
-        if (contextConfig.articleUrl) {
-            systemInstructions += `\nSOURCE URL: ${contextConfig.articleUrl}`;
-            const scrapedData = await scrapeUrl(contextConfig.articleUrl);
-            if (scrapedData) autonomousContext = scrapedData;
         }
-        systemInstructions += `\nTASK: Summarize, analyze, or answer questions based on the specific research article provided.`;
-        systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
+        // Mode: Article & Learn
+        else if (contextConfig.mode === 'article') {
+            systemInstructions += `\n\nMODE: ARTICLE & LEARN`;
+            if (contextConfig.articleTitle) systemInstructions += `\nCURRENT PAPER/ARTICLE: ${contextConfig.articleTitle}`;
+            if (contextConfig.articleCategory) systemInstructions += `\nCATEGORY: ${contextConfig.articleCategory}`;
+            if (contextConfig.articleUrl) {
+                systemInstructions += `\nSOURCE URL: ${contextConfig.articleUrl}`;
+                const scrapedData = await scrapeUrl(contextConfig.articleUrl);
+                if (scrapedData) autonomousContext = scrapedData;
+            }
+            systemInstructions += `\nTASK: Summarize, analyze, or answer questions based on the specific research article provided.`;
+            systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
             You must provide your response in the following strict order using Markdown:
             1. **## Executive Summary**
                - A concise overview of the article's main purpose.
@@ -411,23 +412,23 @@ if (contextConfig) {
             STYLING RULES:
             - Use '##' for main section headers.
             - Do NOT use decorative symbols like '|' or '---' at the start of headers.`;
-    }
-    // Mode: Industry (Modular / Robust)
-    else if (contextConfig.mode === 'industry') {
-        const { industry, service, problem, hardware, formData } = contextConfig;
+        }
+        // Mode: Industry (Modular / Robust)
+        else if (contextConfig.mode === 'industry') {
+            const { industry, service, problem, hardware, formData } = contextConfig;
 
-        if (formData && Object.keys(formData).length > 0) {
-            // --- SPECIAL: MULTI-PASS QUANTUM WORKFLOW ---
+            if (formData && Object.keys(formData).length > 0) {
+                // --- SPECIAL: MULTI-PASS QUANTUM WORKFLOW ---
 
-            // Determine Backend Type
-            const isDWave = hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer');
-            let codePrompt = "";
-            let executionResult: any = {};
-            let generatedCode = "";
+                // Determine Backend Type
+                const isDWave = hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer');
+                let codePrompt = "";
+                let executionResult: any = {};
+                let generatedCode = "";
 
-            if (isDWave) {
-                // --- D-WAVE WORKFLOW ---
-                codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
+                if (isDWave) {
+                    // --- D-WAVE WORKFLOW ---
+                    codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
 
 CRITICAL: The ONLY valid BinaryQuadraticModel constructor is:
   BinaryQuadraticModel(linear: dict, quadratic: dict, offset: float, vartype: str)
@@ -452,29 +453,29 @@ Write a script that:
 
 Return ONLY the Python code. No markdown. No backticks. No explanation.`;
 
-                const completion1 = await groq.chat.completions.create({
-                    messages: [{ role: "system", content: "You are a D-Wave/Ocean Expert. Return only code." }, { role: "user", content: codePrompt }],
-                    model: DEFAULT_MODEL,
-                });
+                    const completion1 = await groq.chat.completions.create({
+                        messages: [{ role: "system", content: "You are a D-Wave/Ocean Expert. Return only code." }, { role: "user", content: codePrompt }],
+                        model: DEFAULT_MODEL,
+                    });
 
-                generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
+                    generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
 
-                // Strip any LLM-generated dimod imports (they may be misspelled/hallucinated)
-                // Always force the correct verified imports at the top
-                const correctDwaveImports = `from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\nimport numpy as np\n\n`;
-                generatedCode = generatedCode
-                    .split('\n')
-                    .filter(line => !line.trim().startsWith('from dimod import') && !line.trim().startsWith('import dimod'))
-                    .join('\n')
-                    .trim();
-                generatedCode = correctDwaveImports + generatedCode;
+                    // Strip any LLM-generated dimod imports (they may be misspelled/hallucinated)
+                    // Always force the correct verified imports at the top
+                    const correctDwaveImports = `from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\nimport numpy as np\n\n`;
+                    generatedCode = generatedCode
+                        .split('\n')
+                        .filter(line => !line.trim().startsWith('from dimod import') && !line.trim().startsWith('import dimod'))
+                        .join('\n')
+                        .trim();
+                    generatedCode = correctDwaveImports + generatedCode;
 
-                // Execute D-Wave Simulator
-                executionResult = await executeDWaveAnnealer(generatedCode);
+                    // Execute D-Wave Simulator
+                    executionResult = await executeDWaveAnnealer(generatedCode);
 
-            } else {
-                // --- QISKIT WORKFLOW (Default) ---
-                codePrompt = `Generate a complete, self-contained Python Qiskit script for the following quantum computing problem:
+                } else {
+                    // --- QISKIT WORKFLOW (Default) ---
+                    codePrompt = `Generate a complete, self-contained Python Qiskit script for the following quantum computing problem:
 Industry: ${industry}
 Service: ${service}
 Problem: ${problem}
@@ -488,19 +489,19 @@ Rules (VERY IMPORTANT):
 4. Print the measurement counts clearly
 5. Return ONLY the Python code, no markdown, no explanation`;
 
-                const completion1 = await groq.chat.completions.create({
-                    messages: [{ role: "system", content: "You are a Qiskit Expert. Return only code." }, { role: "user", content: codePrompt }],
-                    model: DEFAULT_MODEL,
-                });
+                    const completion1 = await groq.chat.completions.create({
+                        messages: [{ role: "system", content: "You are a Qiskit Expert. Return only code." }, { role: "user", content: codePrompt }],
+                        model: DEFAULT_MODEL,
+                    });
 
-                generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
+                    generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
 
-                // Execute Qiskit Simulator
-                executionResult = await executeQuantumCircuit(generatedCode);
-            }
+                    // Execute Qiskit Simulator
+                    executionResult = await executeQuantumCircuit(generatedCode);
+                }
 
-            // Pass 2: Interpret and Format
-            const interpretPrompt = `You are a Quantum Computing analyst. Analyze the following ACTUAL simulator output ONLY.
+                // Pass 2: Interpret and Format
+                const interpretPrompt = `You are a Quantum Computing analyst. Analyze the following ACTUAL simulator output ONLY.
 
 Problem: ${problem} | Industry: ${industry} | Simulator: ${isDWave ? 'D-Wave Annealing' : 'Qiskit Gate-Model'}
 Raw Output: ${executionResult.output || executionResult.error}
@@ -520,162 +521,162 @@ After the paragraph, generate a chart from the actual data:
 }
 [/CHART_DATA]`;
 
-            const completion2 = await groq.chat.completions.create({
-                messages: [
-                    { role: "system", content: "You are a Quantum Analysis expert." },
-                    { role: "user", content: interpretPrompt }
-                ],
-                model: DEFAULT_MODEL,
-            });
-
-            const rawOutput = executionResult.output || executionResult.error || 'No output returned.';
-
-            // Universal table formatter — converts any key:value assignments into a clean markdown table
-            const parseAnyAssignmentTable = (output: string): string | null => {
-                const bestMatch = output.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
-                if (!bestMatch) return null;
-
-                const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([\w.+-]+)/g)];
-                if (allPairs.length === 0) return null;
-
-                const rows = allPairs.map(([, key, val]) => {
-                    // Format variable name: pilot_1_flight_a → Pilot 1 → Flight a
-                    const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
-                    const displayKey = pilotFlight
-                        ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`
-                        : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-                    const numVal = parseFloat(val);
-                    const displayVal = isNaN(numVal) ? val
-                        : numVal === 1 ? '✅ Assigned'
-                            : numVal === 0 ? '⬜ Not Assigned'
-                                : numVal.toFixed(4);
-
-                    return `| ${displayKey} | ${displayVal} |`;
+                const completion2 = await groq.chat.completions.create({
+                    messages: [
+                        { role: "system", content: "You are a Quantum Analysis expert." },
+                        { role: "user", content: interpretPrompt }
+                    ],
+                    model: DEFAULT_MODEL,
                 });
 
-                const header = `| Variable | Value |\n|---|---|\n`;
-                return `**⚙️ Simulator Output**\n\n${header}${rows.join('\n')}`;
-            };
+                const rawOutput = executionResult.output || executionResult.error || 'No output returned.';
 
-            const energyMatch = rawOutput.match(/Energy:\s*([-\d.]+)/i);
-            const energyLine = energyMatch ? `\n\n> **Lowest Energy:** \`${energyMatch[1]}\`` : '';
+                // Universal table formatter — converts any key:value assignments into a clean markdown table
+                const parseAnyAssignmentTable = (output: string): string | null => {
+                    const bestMatch = output.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
+                    if (!bestMatch) return null;
 
-            const tableOutput = parseAnyAssignmentTable(rawOutput);
-            const formattedOutput = tableOutput
-                ? `${tableOutput}${energyLine}\n\n---\n\n`
-                : `**⚙️ Raw Simulator Output**\n\`\`\`\n${rawOutput.trim()}\n\`\`\`\n\n---\n\n`;
+                    const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([\w.+-]+)/g)];
+                    if (allPairs.length === 0) return null;
 
-            const finalExplanation =
-                `[STEP_CODE]${generatedCode}[/STEP_CODE]` +
-                `[STEP_SIM]${rawOutput.trim()}[/STEP_SIM]` +
-                formattedOutput +
-                (completion2.choices[0]?.message?.content || "Simulation complete.");
+                    const rows = allPairs.map(([, key, val]) => {
+                        // Format variable name: pilot_1_flight_a → Pilot 1 → Flight a
+                        const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
+                        const displayKey = pilotFlight
+                            ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`
+                            : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-            // --- SAVE EXPERIMENT TO HISTORY ---
-            try {
-                await Experiment.create({
-                    industry,
-                    service,
-                    problem,
-                    hardware,
-                    parameters: formData,
-                    qiskitCode: generatedCode,
-                    results: executionResult, // Simulation output
-                    analysis: finalExplanation,
-                    chartData: executionResult.counts ? {
-                        type: "bar",
-                        data: Object.entries(executionResult.counts).map(([k, v]) => ({ name: k, value: v }))
-                    } : null,
-                    timestamp: new Date()
+                        const numVal = parseFloat(val);
+                        const displayVal = isNaN(numVal) ? val
+                            : numVal === 1 ? '✅ Assigned'
+                                : numVal === 0 ? '⬜ Not Assigned'
+                                    : numVal.toFixed(4);
+
+                        return `| ${displayKey} | ${displayVal} |`;
+                    });
+
+                    const header = `| Variable | Value |\n|---|---|\n`;
+                    return `**⚙️ Simulator Output**\n\n${header}${rows.join('\n')}`;
+                };
+
+                const energyMatch = rawOutput.match(/Energy:\s*([-\d.]+)/i);
+                const energyLine = energyMatch ? `\n\n> **Lowest Energy:** \`${energyMatch[1]}\`` : '';
+
+                const tableOutput = parseAnyAssignmentTable(rawOutput);
+                const formattedOutput = tableOutput
+                    ? `${tableOutput}${energyLine}\n\n---\n\n`
+                    : `**⚙️ Raw Simulator Output**\n\`\`\`\n${rawOutput.trim()}\n\`\`\`\n\n---\n\n`;
+
+                const finalExplanation =
+                    `[STEP_CODE]${generatedCode}[/STEP_CODE]` +
+                    `[STEP_SIM]${rawOutput.trim()}[/STEP_SIM]` +
+                    formattedOutput +
+                    (completion2.choices[0]?.message?.content || "Simulation complete.");
+
+                // --- SAVE EXPERIMENT TO HISTORY ---
+                try {
+                    await Experiment.create({
+                        industry,
+                        service,
+                        problem,
+                        hardware,
+                        parameters: formData,
+                        qiskitCode: generatedCode,
+                        results: executionResult, // Simulation output
+                        analysis: finalExplanation,
+                        chartData: executionResult.counts ? {
+                            type: "bar",
+                            data: Object.entries(executionResult.counts).map(([k, v]) => ({ name: k, value: v }))
+                        } : null,
+                        timestamp: new Date()
+                    });
+                } catch (saveError) {
+                    console.error("Failed to save experiment history:", saveError);
+                    // Don't block the response, just log the error
+                }
+
+                await ChatLog.create({
+                    userQuery: prompt,
+                    aiResponse: finalExplanation,
+                    source: 'quantum_workflow',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts
                 });
-            } catch (saveError) {
-                console.error("Failed to save experiment history:", saveError);
-                // Don't block the response, just log the error
+
+                return {
+                    text: finalExplanation,
+                    source: 'quantum_workflow',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts
+                };
             }
 
-            await ChatLog.create({
-                userQuery: prompt,
-                aiResponse: finalExplanation,
-                source: 'quantum_workflow',
-                guardrailsStatus: 'passed',
-                activeGuardrails: ruleTexts
-            });
-
-            return {
-                text: finalExplanation,
-                source: 'quantum_workflow',
-                guardrailsStatus: 'passed',
-                activeGuardrails: ruleTexts
-            };
+            // Normal Industry Context (Existing logic)
+            if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
+            if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;
+            if (problem) systemInstructions += `\nPROBLEM CONTEXT: The specific problem being addressed is ${problem}.`;
+            if (hardware) systemInstructions += `\nHARDWARE CONTEXT: The target quantum hardware is ${hardware}. Optimize your responses for this architecture.`;
         }
-
-        // Normal Industry Context (Existing logic)
-        if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
-        if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;
-        if (problem) systemInstructions += `\nPROBLEM CONTEXT: The specific problem being addressed is ${problem}.`;
-        if (hardware) systemInstructions += `\nHARDWARE CONTEXT: The target quantum hardware is ${hardware}. Optimize your responses for this architecture.`;
     }
-}
 
-systemInstructions += `\n\nCRITICAL SAFETY RULES:
+    systemInstructions += `\n\nCRITICAL SAFETY RULES:
     ${ruleTexts.length > 0 ? "You MUST NOT discuss or provide information about: " + ruleTexts.join(", ") : "Follow general safety guidelines."}
     If a user asks about these topics, politely decline to answer.`;
 
-let finalPrompt = prompt;
+    let finalPrompt = prompt;
 
-// Integrate KB or Autonomous Context if found
-const integratedContext = kbResult?.type === 'context' ? kbResult.text : autonomousContext;
-const contextSource = kbResult?.type === 'context' ? kbResult.source : (contextConfig?.stockUrl || contextConfig?.articleUrl);
+    // Integrate KB or Autonomous Context if found
+    const integratedContext = kbResult?.type === 'context' ? kbResult.text : autonomousContext;
+    const contextSource = kbResult?.type === 'context' ? kbResult.source : (contextConfig?.stockUrl || contextConfig?.articleUrl);
 
-if (integratedContext) {
-    systemInstructions += "\n\nUse the following official context to answer the user's question accurately. Provide summaries of trends, market news, and stock prices if applicable. If information is missing, state what is available.";
-    finalPrompt = `Web-Scraped Context from ${contextSource}: ${integratedContext}\n\nUser Question/Request: ${prompt}`;
-}
+    if (integratedContext) {
+        systemInstructions += "\n\nUse the following official context to answer the user's question accurately. Provide summaries of trends, market news, and stock prices if applicable. If information is missing, state what is available.";
+        finalPrompt = `Web-Scraped Context from ${contextSource}: ${integratedContext}\n\nUser Question/Request: ${prompt}`;
+    }
 
-try {
-    const completion = await groq.chat.completions.create({
-        messages: [
-            { role: "system", content: systemInstructions },
-            { role: "user", content: finalPrompt },
-        ],
-        model: DEFAULT_MODEL,
-    });
+    try {
+        const completion = await groq.chat.completions.create({
+            messages: [
+                { role: "system", content: systemInstructions },
+                { role: "user", content: finalPrompt },
+            ],
+            model: DEFAULT_MODEL,
+        });
 
-    const text = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+        const text = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
 
-    // --- Log Interaction ---
-    await ChatLog.create({
-        userQuery: prompt,
-        aiResponse: text,
-        source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
-        context: kbResult?.type === 'context' ? kbResult.source : undefined,
-        guardrailsStatus: 'passed',
-        activeGuardrails: ruleTexts
-    });
+        // --- Log Interaction ---
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: text,
+            source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
+            context: kbResult?.type === 'context' ? kbResult.source : undefined,
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        });
 
-    return {
-        text,
-        source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
-        sourceUrl: kbResult?.type === 'context' ? kbResult.source : undefined,
-        guardrailsStatus: 'passed',
-        activeGuardrails: ruleTexts
-    };
-} catch (error: any) {
-    console.error("Groq Server Error:", error);
+        return {
+            text,
+            source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
+            sourceUrl: kbResult?.type === 'context' ? kbResult.source : undefined,
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        };
+    } catch (error: any) {
+        console.error("Groq Server Error:", error);
 
-    // Log the error response as well
-    const errorMsg = "Failed to process request with Groq. Please try again later.";
-    await ChatLog.create({
-        userQuery: prompt,
-        aiResponse: error.message || errorMsg,
-        source: 'error',
-        guardrailsStatus: 'passed', // Logic still passed guardrails
-        activeGuardrails: ruleTexts
-    });
+        // Log the error response as well
+        const errorMsg = "Failed to process request with Groq. Please try again later.";
+        await ChatLog.create({
+            userQuery: prompt,
+            aiResponse: error.message || errorMsg,
+            source: 'error',
+            guardrailsStatus: 'passed', // Logic still passed guardrails
+            activeGuardrails: ruleTexts
+        });
 
-    return { text: "", error: errorMsg };
-}
+        return { text: "", error: errorMsg };
+    }
 }
 export async function getMarketNews() {
     try {
