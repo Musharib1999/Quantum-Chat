@@ -87,7 +87,7 @@ export async function automateNewsSummarization() {
  */
 export async function getDbNews(limit: number = 20, page: number = 1) {
     try {
-        await connectToDatabase();
+        await dbConnect();
         const skip = (page - 1) * limit;
 
         const news = await News.find()
