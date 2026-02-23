@@ -668,7 +668,7 @@ After the paragraph, generate a chart from the actual data:
         // Fallback: If we hit a rate limit but we successfully fetched market data, return that data directly.
         let fallbackText = "";
         if (autonomousMarketData) {
-            fallbackText += `⚠️ **Notice: AI Analysis is currently unavailable due to high traffic (Rate Limit Reached).**\n\nHowever, I retrieved the raw market data you requested:\n\n**${autonomousMarketData.symbol}**\n- **Price:** $${autonomousMarketData.price}\n- **Change:** ${autonomousMarketData.change} (${autonomousMarketData.changePercent})\n- **Volume:** ${autonomousMarketData.volume}\n- **Previous Close:** $${autonomousMarketData.previousClose}\n\n`;
+            fallbackText += `⚠️ **Notice: Deep AI Analysis is currently unavaliable.**\n\nHowever, I retrieved the raw market data you requested:\n\n**${autonomousMarketData.symbol}**\n- **Price:** $${autonomousMarketData.price}\n- **Change:** ${autonomousMarketData.change} (${autonomousMarketData.changePercent})\n- **Volume:** ${autonomousMarketData.volume}\n- **Previous Close:** $${autonomousMarketData.previousClose}\n\n`;
         }
 
         if (autonomousNewsData && autonomousNewsData.length > 0) {
