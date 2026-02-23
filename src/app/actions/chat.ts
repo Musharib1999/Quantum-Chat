@@ -15,50 +15,45 @@ import { getStockPrice } from './market';
 
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
-const QUANTUM_API_URL = process.env.QUANTUM_API_URL || "http://127.0.0.1:8000";
-const QUANTUM_API_SECRET = process.env.QUANTUM_API_SECRET || "default-dev-key"; // Shared secret
 
 // --- Quantum Execution Helper ---
 async function executeQuantumCircuit(circuitCode: string) {
     try {
-        console.log(`[Quantum Sim] Sending request to: ${QUANTUM_API_URL}/api/simulate/qiskit`);
+        console.log(`[Quantum Sim] Sending request to: http://127.0.0.1:8001/execute`);
 
-        const response = await axios.post(`${QUANTUM_API_URL}/api/simulate/qiskit`, {
-            code: circuitCode,
-            shots: 1024
+        const response = await axios.post(`http://127.0.0.1:8001/execute`, {
+            code: circuitCode
         }, {
-            timeout: 20000,
-            headers: { 'X-API-Key': QUANTUM_API_SECRET }
+            timeout: 20000
         });
 
-        return response.data;
+        return response.data; // Expecting { output: "...", error: str | null }
     } catch (e: any) {
         console.error("Simulator Execution Fail:", e.message);
         if (e.code === 'ECONNREFUSED') {
-            return { success: false, error: "Quantum Backend is offline. Please ensure the Python service is running." };
+            return { error: "Qiskit Simulator is offline. Please ensure the Python service is running on Port 8001." };
         }
-        return { success: false, error: `Quantum Service Error: ${e.message}` };
+        return { error: `Quantum Service Error: ${e.message}` };
     }
 }
 
 async function executeDWaveAnnealer(code: string) {
     try {
-        console.log(`[DWave Sim] Sending request to: ${QUANTUM_API_URL}/api/simulate/dwave`);
+        console.log(`[DWave Sim] Sending request to: http://127.0.0.1:8002/execute`);
 
-        const response = await axios.post(`${QUANTUM_API_URL}/api/simulate/dwave`, {
+        const response = await axios.post(`http://127.0.0.1:8002/execute`, {
             code: code
         }, {
-            timeout: 20000,
-            headers: { 'X-API-Key': QUANTUM_API_SECRET }
+            timeout: 60000  // 60s — annealing can be slow for large BQMs
         });
 
-        return response.data;
+        return response.data; // Expecting { output: "...", error: str | null }
     } catch (e: any) {
         console.error("D-Wave Execution Fail:", e.message);
         if (e.code === 'ECONNREFUSED') {
-            return { success: false, error: "Quantum Backend is offline. Please ensure the Python service is running." };
+            return { error: "D-Wave Simulator is offline. Please ensure the Python service is running on Port 8002." };
         }
-        return { success: false, error: `Quantum Service Error: ${e.message}` };
+        return { error: `Quantum Service Error: ${e.message}` };
     }
 }
 
@@ -393,18 +388,30 @@ export async function chatWithGroq(
 
                 if (isDWave) {
                     // --- D-WAVE WORKFLOW ---
-                    codePrompt = `Generate a Python script using 'dimod' for D-Wave Quantum Annealing for the following problem:
-Industry: ${industry}
-Service: ${service}
-Problem: ${problem}
+                    codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
+
+CRITICAL: The ONLY valid BinaryQuadraticModel constructor is:
+  BinaryQuadraticModel(linear: dict, quadratic: dict, offset: float, vartype: str)
+  - linear = {'var': bias_float, ...}
+  - quadratic = {('var1','var2'): coupling_float, ...}
+  - vartype = 'BINARY' or 'SPIN'
+  DO NOT pass num_variables or any other argument.
+
+Problem: ${problem} | Industry: ${industry} | Service: ${service}
 Parameters: ${JSON.stringify(formData)}
 
-Requirements:
-1. Define a BinaryQuadraticModel (BQM) representing the problem.
-2. Store the BQM in a variable named 'bqm'.
-3. Do NOT run the sampler yourself; just define 'bqm'.
-4. Do NOT use 'dwave.system' or cloud samplers; use 'dimod'.
-5. Return ONLY the Python code.`;
+Write a script that:
+1. from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler
+2. Define linear={} and quadratic={} dicts to encode the problem. You may use UP TO 30 VARIABLES.
+3. If the problem requires more than 30 variables, split into 2 BATCHES of ≤15 variables each:
+   - Define bqm_batch1 and bqm_batch2 separately
+   - Run each independently: sampleset1 = sampler.sample(bqm_batch1, num_reads=50)
+   - Combine and print: print(f'Batch 1: {sampleset1.first.sample}, Energy: {sampleset1.first.energy:.4f}')
+4. If ≤30 variables, use a single BQM: bqm = BinaryQuadraticModel(linear, quadratic, 0.0, 'BINARY')
+   - sampler = SimulatedAnnealingSampler(); sampleset = sampler.sample(bqm, num_reads=50)
+   - best = sampleset.first; print(f'Best: {best.sample}'); print(f'Energy: {best.energy:.4f}')
+
+Return ONLY the Python code. No markdown. No backticks. No explanation.`;
 
                     const completion1 = await groq.chat.completions.create({
                         messages: [{ role: "system", content: "You are a D-Wave/Ocean Expert. Return only code." }, { role: "user", content: codePrompt }],
@@ -413,19 +420,34 @@ Requirements:
 
                     generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
 
+                    // Strip any LLM-generated dimod imports (they may be misspelled/hallucinated)
+                    // Always force the correct verified imports at the top
+                    const correctDwaveImports = `from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\nimport numpy as np\n\n`;
+                    generatedCode = generatedCode
+                        .split('\n')
+                        .filter(line => !line.trim().startsWith('from dimod import') && !line.trim().startsWith('import dimod'))
+                        .join('\n')
+                        .trim();
+                    generatedCode = correctDwaveImports + generatedCode;
+
                     // Execute D-Wave Simulator
                     executionResult = await executeDWaveAnnealer(generatedCode);
 
                 } else {
                     // --- QISKIT WORKFLOW (Default) ---
-                    codePrompt = `Generate a Python Qiskit circuit for the following problem:
+                    codePrompt = `Generate a complete, self-contained Python Qiskit script for the following quantum computing problem:
 Industry: ${industry}
 Service: ${service}
 Problem: ${problem}
 Hardware: ${hardware}
 Parameters: ${JSON.stringify(formData)}
 
-Return ONLY the Python code. Define a variable 'circuit' which is the QuantumCircuit object. Do not include any other text.`;
+Rules (VERY IMPORTANT):
+1. Use qiskit and qiskit_aer for simulation
+2. Build a QuantumCircuit, add gates, add measurements
+3. Run with AerSimulator: from qiskit_aer import AerSimulator; sim = AerSimulator(); job = sim.run(circuit, shots=1024); result = job.result(); counts = result.get_counts(); print(f"Results: {counts}")
+4. Print the measurement counts clearly
+5. Return ONLY the Python code, no markdown, no explanation`;
 
                     const completion1 = await groq.chat.completions.create({
                         messages: [{ role: "system", content: "You are a Qiskit Expert. Return only code." }, { role: "user", content: codePrompt }],
@@ -439,17 +461,23 @@ Return ONLY the Python code. Define a variable 'circuit' which is the QuantumCir
                 }
 
                 // Pass 2: Interpret and Format
-                const interpretPrompt = `Analyze these Quantum Execution results (${isDWave ? 'D-Wave Annealing' : 'Gate-Model Circuit'}):
-Problem: ${problem}
-Results: ${JSON.stringify(executionResult)}
-Success: ${executionResult.success}
+                const interpretPrompt = `You are a Quantum Computing analyst. Analyze the following ACTUAL simulator output ONLY.
 
-1. Provide a professional, human-friendly explanation of these results in the context of ${industry}.
-2. Generate a JSON block for a chart like this:
+Problem: ${problem} | Industry: ${industry} | Simulator: ${isDWave ? 'D-Wave Annealing' : 'Qiskit Gate-Model'}
+Raw Output: ${executionResult.output || executionResult.error}
+
+STRICT RULES:
+- Write exactly ONE paragraph of 5-6 lines maximum.
+- Only describe what the ACTUAL output data shows. Do NOT assume, speculate, or explain theory.
+- If the output is an error, state only what the error was and what it means technically.
+- Do not add introductions, conclusions, or generic quantum computing background.
+- Be direct and data-driven.
+
+After the paragraph, generate a chart from the actual data:
 [CHART_DATA]
 {
   "type": "bar",
-  "data": [ {"name": "Solution A", "value": 450}, {"name": "Solution B", "value": 574} ]
+  "data": [ {"name": "Label from output", "value": 123} ]
 }
 [/CHART_DATA]`;
 
@@ -461,7 +489,49 @@ Success: ${executionResult.success}
                     model: DEFAULT_MODEL,
                 });
 
-                const finalExplanation = completion2.choices[0]?.message?.content || "Simulation complete.";
+                const rawOutput = executionResult.output || executionResult.error || 'No output returned.';
+
+                // Universal table formatter — converts any key:value assignments into a clean markdown table
+                const parseAnyAssignmentTable = (output: string): string | null => {
+                    const bestMatch = output.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
+                    if (!bestMatch) return null;
+
+                    const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([\w.+-]+)/g)];
+                    if (allPairs.length === 0) return null;
+
+                    const rows = allPairs.map(([, key, val]) => {
+                        // Format variable name: pilot_1_flight_a → Pilot 1 → Flight a
+                        const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
+                        const displayKey = pilotFlight
+                            ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`
+                            : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+                        const numVal = parseFloat(val);
+                        const displayVal = isNaN(numVal) ? val
+                            : numVal === 1 ? '✅ Assigned'
+                                : numVal === 0 ? '⬜ Not Assigned'
+                                    : numVal.toFixed(4);
+
+                        return `| ${displayKey} | ${displayVal} |`;
+                    });
+
+                    const header = `| Variable | Value |\n|---|---|\n`;
+                    return `**⚙️ Simulator Output**\n\n${header}${rows.join('\n')}`;
+                };
+
+                const energyMatch = rawOutput.match(/Energy:\s*([-\d.]+)/i);
+                const energyLine = energyMatch ? `\n\n> **Lowest Energy:** \`${energyMatch[1]}\`` : '';
+
+                const tableOutput = parseAnyAssignmentTable(rawOutput);
+                const formattedOutput = tableOutput
+                    ? `${tableOutput}${energyLine}\n\n---\n\n`
+                    : `**⚙️ Raw Simulator Output**\n\`\`\`\n${rawOutput.trim()}\n\`\`\`\n\n---\n\n`;
+
+                const finalExplanation =
+                    `[STEP_CODE]${generatedCode}[/STEP_CODE]` +
+                    `[STEP_SIM]${rawOutput.trim()}[/STEP_SIM]` +
+                    formattedOutput +
+                    (completion2.choices[0]?.message?.content || "Simulation complete.");
 
                 // --- SAVE EXPERIMENT TO HISTORY ---
                 try {
@@ -591,5 +661,117 @@ export async function getMarketNews() {
     } catch (error) {
         console.error("Failed to fetch market news from database:", error);
         return [];
+    }
+}
+
+// ============================================================
+// STEP-BY-STEP QUANTUM WORKFLOW ACTIONS
+// ============================================================
+
+export async function generateQuantumCode(config: {
+    problem: string; industry: string; service: string; hardware: string; formData: any;
+}): Promise<{ code: string; error?: string }> {
+    const groq = new Groq({ apiKey: API_KEY });
+    const { problem, industry, service, hardware, formData } = config;
+    const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
+
+    try {
+        let codePrompt = '';
+        if (isDWave) {
+            codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
+CRITICAL: The ONLY valid BinaryQuadraticModel constructor is:
+  BinaryQuadraticModel(linear: dict, quadratic: dict, offset: float, vartype: str)
+  DO NOT pass num_variables or any other argument.
+Problem: ${problem} | Industry: ${industry} | Service: ${service}
+Parameters: ${JSON.stringify(formData)}
+Write a script that:
+1. from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler
+2. Define linear={} and quadratic={} dicts. You may use UP TO 30 VARIABLES.
+3. bqm = BinaryQuadraticModel(linear, quadratic, 0.0, 'BINARY')
+   sampler = SimulatedAnnealingSampler(); sampleset = sampler.sample(bqm, num_reads=50)
+   best = sampleset.first; print(f'Best: {best.sample}'); print(f'Energy: {best.energy:.4f}')
+Return ONLY the Python code. No markdown. No backticks. No explanation.`;
+        } else {
+            codePrompt = `Generate a complete, self-contained Python Qiskit script.
+Industry: ${industry} | Service: ${service} | Problem: ${problem} | Hardware: ${hardware}
+Parameters: ${JSON.stringify(formData)}
+Rules: Use qiskit and qiskit_aer. Build QuantumCircuit, add gates and measurements.
+Run: from qiskit_aer import AerSimulator; sim=AerSimulator(); job=sim.run(circuit,shots=1024); result=job.result(); counts=result.get_counts(); print(f"Results: {counts}")
+Return ONLY the Python code. No markdown. No explanation.`;
+        }
+
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: 'system', content: 'You are a Quantum Expert. Return only Python code.' }, { role: 'user', content: codePrompt }],
+            model: DEFAULT_MODEL,
+        });
+
+        let code = completion.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || '';
+
+        // Always force correct dimod imports for D-Wave
+        if (isDWave) {
+            const correctImports = `from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\nimport numpy as np\n\n`;
+            code = code.split('\n').filter((l: string) => !l.trim().startsWith('from dimod import') && !l.trim().startsWith('import dimod')).join('\n').trim();
+            code = correctImports + code;
+        }
+
+        return { code };
+    } catch (e: any) {
+        return { code: '', error: e.message };
+    }
+}
+
+export async function runQuantumSimulator(config: {
+    code: string; hardware: string;
+}): Promise<{ output: string; error?: string }> {
+    const { code, hardware } = config;
+    const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
+
+    try {
+        const result = isDWave
+            ? await executeDWaveAnnealer(code)
+            : await executeQuantumCircuit(code);
+        return { output: result.output || result.error || 'No output returned.', error: result.error };
+    } catch (e: any) {
+        return { output: '', error: e.message };
+    }
+}
+
+export async function interpretQuantumResults(config: {
+    problem: string; industry: string; hardware: string; rawOutput: string;
+}): Promise<{ text: string; chartData?: any }> {
+    const groq = new Groq({ apiKey: API_KEY });
+    const { problem, industry, hardware, rawOutput } = config;
+    const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
+
+    try {
+        const prompt = `You are a Quantum Computing analyst. Analyze the following ACTUAL simulator output ONLY.
+Problem: ${problem} | Industry: ${industry} | Simulator: ${isDWave ? 'D-Wave Annealing' : 'Qiskit Gate-Model'}
+Raw Output: ${rawOutput}
+STRICT RULES:
+- Write exactly ONE paragraph of 5-6 lines maximum.
+- Only describe what the ACTUAL output data shows. Do NOT assume, speculate, or explain theory.
+- If the output is an error, state only what the error was and what it means technically.
+- Be direct and data-driven.
+After the paragraph, generate a chart:
+[CHART_DATA]
+{ "type": "bar", "data": [ {"name": "Label from output", "value": 123} ] }
+[/CHART_DATA]`;
+
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
+            model: DEFAULT_MODEL,
+        });
+
+        let text = completion.choices[0]?.message?.content || 'Analysis complete.';
+        let chartData = null;
+        const chartMatch = text.match(/\[CHART_DATA\]([\s\S]*?)\[\/CHART_DATA\]/);
+        if (chartMatch) {
+            try { chartData = JSON.parse(chartMatch[1]); } catch { }
+            text = text.replace(/\[CHART_DATA\][\s\S]*?\[\/CHART_DATA\]/, '').trim();
+        }
+
+        return { text, chartData };
+    } catch (e: any) {
+        return { text: `Interpretation failed: ${e.message}` };
     }
 }

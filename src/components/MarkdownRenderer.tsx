@@ -41,15 +41,17 @@ export default function MarkdownRenderer({ content, hideLinks }: MarkdownRendere
                                         <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 mix-blend-screen" />
                                     </div>
                                 </div>
-                                <SyntaxHighlighter
-                                    style={vscDarkPlus}
-                                    language={match[1]}
-                                    PreTag="div"
-                                    customStyle={{ margin: 0, padding: '1.5rem', background: '#09090b', fontSize: '0.875rem' }}
-                                    {...props}
-                                >
-                                    {String(children).replace(/\n$/, '')}
-                                </SyntaxHighlighter>
+                                <div className="max-h-48 overflow-y-auto">
+                                    <SyntaxHighlighter
+                                        style={vscDarkPlus}
+                                        language={match[1]}
+                                        PreTag="div"
+                                        customStyle={{ margin: 0, padding: '1.5rem', background: '#09090b', fontSize: '0.875rem' }}
+                                        {...props}
+                                    >
+                                        {String(children).replace(/\n$/, '')}
+                                    </SyntaxHighlighter>
+                                </div>
                             </div>
                         ) : (
                             <code className="bg-muted text-pink-500 rounded px-1.5 py-0.5 text-sm font-mono border border-border" {...props}>

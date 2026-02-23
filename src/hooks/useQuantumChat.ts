@@ -15,6 +15,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
+    const [stepOutputs, setStepOutputs] = useState<{ code?: string; sim?: string; analysis?: string }>({});
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLElement>(null);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -58,18 +59,36 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             // Call API
             const response = await chatWithGroq(userMsg.text, 'chat', 'en', fullConfig);
 
+            // Extract step output markers (code, sim output)
+            let cleanText = response.text;
+            const stepCodeMatch = cleanText.match(/\[STEP_CODE\]([\s\S]*?)\[\/STEP_CODE\]/);
+            const stepSimMatch = cleanText.match(/\[STEP_SIM\]([\s\S]*?)\[\/STEP_SIM\]/);
+            if (stepCodeMatch || stepSimMatch) {
+                setStepOutputs({
+                    code: stepCodeMatch?.[1]?.trim(),
+                    sim: stepSimMatch?.[1]?.trim(),
+                    analysis: undefined // will be filled later from cleanText
+                });
+                cleanText = cleanText
+                    .replace(/\[STEP_CODE\][\s\S]*?\[\/STEP_CODE\]/, '')
+                    .replace(/\[STEP_SIM\][\s\S]*?\[\/STEP_SIM\]/, '')
+                    .trim();
+            }
+
             // Handle Chart Data
             let chartData = null;
-            let cleanText = response.text;
-            const chartMatch = response.text.match(/\[CHART_DATA\]([\s\S]*?)\[\/CHART_DATA\]/);
+            const chartMatch = cleanText.match(/\[CHART_DATA\]([\s\S]*?)\[\/CHART_DATA\]/);
             if (chartMatch) {
                 try {
                     chartData = JSON.parse(chartMatch[1]);
-                    cleanText = response.text.replace(/\[CHART_DATA\][\s\S]*?\[\/CHART_DATA\]/, '').trim();
+                    cleanText = cleanText.replace(/\[CHART_DATA\][\s\S]*?\[\/CHART_DATA\]/, '').trim();
                 } catch (e) {
                     console.error("Failed to parse chart data");
                 }
             }
+
+            // Store final analysis text in stepOutputs
+            setStepOutputs(prev => ({ ...prev, analysis: cleanText }));
 
             // Simulate Streaming
             const botMsgId = Date.now() + 1;
@@ -113,15 +132,28 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         }
     };
 
+    const addBotMessage = (text: string, chartData?: any) => {
+        const botMsgId = Date.now() + 1;
+        setMessages(prev => [...prev, {
+            id: botMsgId,
+            text,
+            sender: 'bot',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            chartData,
+        }]);
+    };
+
     return {
         messages,
         inputValue,
         setInputValue,
         isTyping,
         sendMessage,
+        addBotMessage,
         messagesEndRef,
         scrollContainerRef,
         handleScroll,
-        setShouldAutoScroll
+        setShouldAutoScroll,
+        stepOutputs
     };
 }

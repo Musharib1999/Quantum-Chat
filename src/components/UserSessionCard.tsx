@@ -8,9 +8,9 @@ export default function UserSessionCard() {
     if (isAuthenticated) {
         return (
             <div className="p-4 border-b border-border bg-card/10">
-                <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-zinc-200/80 dark:bg-zinc-800/80 border border-zinc-300 dark:border-zinc-700 shadow-sm hover:shadow-md transition-all group">
+                <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-all group" style={{ borderLeft: '3px solid #3066bb' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-sm uppercase shadow-inner">
+                        <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-sm uppercase shadow-inner" style={{ backgroundColor: '#3066bb' }}>
                             {user?.name?.substring(0, 2) || 'QG'}
                         </div>
                         <div className="flex flex-col overflow-hidden">
