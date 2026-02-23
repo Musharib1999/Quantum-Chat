@@ -87,7 +87,7 @@ export default function MarketPage() {
                         stockUrl: selectedStock?.url,
                         stockName: selectedStock?.name,
                         symbol: selectedStock?.symbol,
-                        realtimeData: selectedStockData,
+                        realTimeData: selectedStockData,
                         newsTitle: selectedNews?.title,
                         newsSource: selectedNews?.source
                     }}
