@@ -2,19 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import ChatInterface from '@/components/ChatInterface';
 import StockSidebar from '@/components/StockSidebar';
 import MarketChat from '@/components/chat/MarketChat';
 import MarketNews from '@/components/MarketNews';
-import { getMarketNews } from '@/app/actions/chat';
 import { getStockPrice } from '@/app/actions/market';
 
 export default function MarketPage() {
     const [selectedStock, setSelectedStock] = useState<{ _id: string, name: string, url: string, symbol?: string } | null>(null);
     const [selectedStockData, setSelectedStockData] = useState<any | null>(null);
     const [selectedNews, setSelectedNews] = useState<any | null>(null);
-    const [news, setNews] = useState<any[]>([]);
-    const [isNewsLoading, setIsNewsLoading] = useState(true);
 
     // Static Map for users who haven't migrated DB
     const SYMBOL_MAP: Record<string, string> = {
@@ -37,31 +33,14 @@ export default function MarketPage() {
         'AMD': 'AMD'
     };
 
-    useEffect(() => {
-        const fetchNews = async () => {
-            setIsNewsLoading(true);
-            try {
-                const results = await getMarketNews();
-                setNews(results);
-            } catch (error) {
-                console.error("Failed to fetch news:", error);
-            } finally {
-                setIsNewsLoading(false);
-            }
-        };
-        fetchNews();
-    }, []);
-
     // Fetch Real-Time Price on Selection
     useEffect(() => {
         const fetchPrice = async () => {
             if (selectedStock) {
-                // Use DB symbol OR fallback to static map
                 const symbol = selectedStock.symbol || SYMBOL_MAP[selectedStock.name];
-
                 if (symbol) {
                     const data = await getStockPrice(symbol);
-                    setSelectedStockData({ ...data, symbol }); // Ensure symbol is linked
+                    setSelectedStockData({ ...data, symbol });
                 } else {
                     console.warn("No symbol found for:", selectedStock.name);
                     setSelectedStockData(null);
@@ -75,30 +54,16 @@ export default function MarketPage() {
 
     const handleStockSelect = (stock: any) => {
         setSelectedStock(stock);
-        setSelectedNews(null); // Clear news when stock is selected
+        setSelectedNews(null); // Clear news context when stock is selected
     };
 
     const handleNewsSelect = (n: any) => {
         setSelectedNews(n);
-        setSelectedStock(null); // Clear stock when news is selected
+        setSelectedStock(null); // Clear stock context when news is selected
         setSelectedStockData(null);
     };
 
-    const contextConfig = {
-        ...(selectedStock ? {
-            ...(selectedStockData?.symbol ? { symbol: selectedStockData.symbol } : {}), // Pass symbol explicitly if available
-            stockName: selectedStock.name,
-            stockUrl: selectedStock.url,
-            realTimeData: selectedStockData
-        } : {}),
-        ...(selectedNews ? {
-            newsTitle: selectedNews.title,
-            newsSource: selectedNews.source
-        } : {})
-    };
-
     const handleAnalysisTriggered = () => {
-        // Clear selection after analysis starts to prevent sticky context
         setSelectedStock(null);
         setSelectedStockData(null);
         setSelectedNews(null);
@@ -113,21 +78,16 @@ export default function MarketPage() {
                 </div>
             }
             rightSidebarContent={
-                <MarketNews
-                    news={news}
-                    isLoading={isNewsLoading}
-                    onSelect={handleNewsSelect}
-                />
+                <MarketNews onSelect={handleNewsSelect} />
             }
         >
-            {/* Chat Area */}
             <div className="flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 64px)' }}>
                 <MarketChat
                     contextConfig={{
                         stockUrl: selectedStock?.url,
                         stockName: selectedStock?.name,
                         symbol: selectedStock?.symbol,
-                        realTimeData: selectedStockData, // Pass the fetched Alpha Vantage data
+                        realtimeData: selectedStockData,
                         newsTitle: selectedNews?.title,
                         newsSource: selectedNews?.source
                     }}

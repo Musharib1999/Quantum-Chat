@@ -41,9 +41,14 @@ export async function getStockPrice(symbol: string) {
     }
 }
 
-export async function getLatestNews(query?: string) {
+export async function getLatestNews(query?: string, page: number = 1, limit: number = 20) {
     try {
-        const url = `${MARKET_SERVICE_URL}/api/news${query ? `?query=${encodeURIComponent(query)}` : ''}`;
+        const queryParams = new URLSearchParams();
+        if (query) queryParams.append('query', query);
+        queryParams.append('page', page.toString());
+        queryParams.append('limit', limit.toString());
+
+        const url = `${MARKET_SERVICE_URL}/api/news?${queryParams.toString()}`;
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${MARKET_SERVICE_KEY}` },
             next: { revalidate: 300 }
@@ -51,20 +56,24 @@ export async function getLatestNews(query?: string) {
 
         if (!response.ok) {
             console.error(`News API responded with status: ${response.status}`);
-            return [];
+            return { news: [], hasMore: false };
         }
 
         const data = await response.json();
 
         if (!data.success) {
             console.error('News API Error:', data.error);
-            return [];
+            return { news: [], hasMore: false };
         }
 
-        return data.news;
+        return {
+            news: data.news,
+            hasMore: data.hasMore || false,
+            total: data.total || 0
+        };
 
     } catch (error) {
         console.error("Failed to fetch market news:", error);
-        return [];
+        return { news: [], hasMore: false };
     }
 }
