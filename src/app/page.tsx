@@ -51,8 +51,10 @@ export default function LandingPage() {
         <div className="w-full px-6 md:px-8 h-20 flex items-center justify-between">
 
           {/* Logo Section */}
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain cursor-pointer" />
+          <div className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity">
+            <a href="https://www.quantumcomputers.guru/">
+              <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain cursor-pointer" />
+            </a>
           </div>
 
           <div className="flex items-center gap-8">
