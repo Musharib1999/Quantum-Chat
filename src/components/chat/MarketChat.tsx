@@ -29,11 +29,11 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
     const lastTriggeredNewsRef = useRef<string | null>(null);
 
     // --- Market Triggers ---
+    // 1. Stock Analysis Trigger
     useEffect(() => {
         const targetUrl = contextConfig?.stockUrl;
         const targetName = contextConfig?.stockName;
 
-        // Stock Analysis Trigger
         if (targetUrl) {
             if (targetUrl !== lastTriggeredUrlRef.current) {
                 lastTriggeredUrlRef.current = targetUrl;
@@ -50,12 +50,17 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
             // Clear ref if targetUrl becomes null, allowing re-selection of the same stock
             lastTriggeredUrlRef.current = null;
         }
+    }, [contextConfig?.stockUrl, contextConfig?.stockName, sendMessage, onAnalysisTriggered, setShouldAutoScroll]);
 
-        // News Detail Trigger
-        if (contextConfig?.newsTitle) {
-            if (contextConfig?.newsTitle !== lastTriggeredNewsRef.current) {
-                lastTriggeredNewsRef.current = contextConfig.newsTitle;
-                const triggerMessage = `Provide more details and market implications for the following news headline from ${contextConfig.newsSource}: "${contextConfig.newsTitle}"`;
+    // 2. News Detail Trigger
+    useEffect(() => {
+        const targetNewsTitle = contextConfig?.newsTitle;
+        const targetNewsSource = contextConfig?.newsSource;
+
+        if (targetNewsTitle) {
+            if (targetNewsTitle !== lastTriggeredNewsRef.current) {
+                lastTriggeredNewsRef.current = targetNewsTitle;
+                const triggerMessage = `Provide more details and market implications for the following news headline from ${targetNewsSource}: "${targetNewsTitle}"`;
 
                 setShouldAutoScroll(true);
                 const timer = setTimeout(() => {
@@ -68,7 +73,7 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
             // Clear ref if title becomes null
             lastTriggeredNewsRef.current = null;
         }
-    }, [contextConfig, sendMessage, onAnalysisTriggered, setShouldAutoScroll]);
+    }, [contextConfig?.newsTitle, contextConfig?.newsSource, sendMessage, onAnalysisTriggered, setShouldAutoScroll]);
 
     return (
         <div className="flex flex-col h-full w-full overflow-hidden">
