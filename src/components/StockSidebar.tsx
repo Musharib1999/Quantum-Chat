@@ -43,7 +43,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                         placeholder="Search..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-secondary/50 border border-input rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:border-ring focus:ring-ring transition-all placeholder:text-muted-foreground/50"
+                        className="w-full bg-secondary/50 border border-input rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-ring transition-all placeholder:text-muted-foreground/50"
                     />
                 </div>
             </div>
@@ -59,8 +59,8 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                         key={stock._id}
                         onClick={() => onSelect(stock)}
                         className={`w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 group ${activeStockId === stock._id
-                            ? 'bg-card border-ring ring-1 ring-ring shadow-md text-primary font-medium'
-                            : 'bg-transparent border-transparent text-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:shadow-md'
+                            ? 'bg-card border-ring shadow-md text-primary font-medium'
+                            : 'bg-transparent border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md'
                             }`}
                     >
                         <div className="flex items-center justify-between">
