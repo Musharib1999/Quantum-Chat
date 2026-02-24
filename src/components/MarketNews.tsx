@@ -160,9 +160,9 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
-                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold">
+                            <div className="flex items-center gap-2 text-[#3066bb] font-semibold">
                                 <FileText size={16} />
-                                <span>Quantum Insight</span>
+                                <span>Quantum Guru LLM Insight</span>
                             </div>
                             <button
                                 onClick={() => setSelectedSummaryItem(null)}
