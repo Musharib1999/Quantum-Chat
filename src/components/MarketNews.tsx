@@ -79,7 +79,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
         <div className="flex flex-col h-full bg-card/30">
             <div className="p-6 border-b border-border">
                 <h3 className="text-foreground mb-4 flex items-center gap-2">
-                    <Newspaper className="text-green-500 dark:text-green-400" size={18} /> Quantum News Feed
+                    <Newspaper className="text-green-500 dark:text-green-400" size={18} /> Quantum News
                 </h3>
             </div>
 
