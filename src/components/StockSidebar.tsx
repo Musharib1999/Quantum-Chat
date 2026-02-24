@@ -30,18 +30,6 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
 
     const filtered = stocks.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const parseStockName = (rawName: string, explicitSymbol?: string) => {
-        if (explicitSymbol) {
-            const cleanName = rawName.replace(new RegExp(`\\s*\\(?${explicitSymbol}\\)?\\s*|-?\\s*${explicitSymbol}`, 'i'), '').trim();
-            return { name: cleanName, symbol: explicitSymbol.toUpperCase() };
-        }
-        const match = rawName.match(/(.+?)\s*[\(\-]\s*([A-Z0-9.\-]+)\s*\)?$/i);
-        if (match) {
-            return { name: match[1].trim(), symbol: match[2].toUpperCase().trim() };
-        }
-        return { name: rawName, symbol: null };
-    };
-
     return (
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border">
@@ -69,31 +57,21 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                             </div>
                         </div>
                     ))
-                ) : filtered.map(stock => {
-                    const parsed = parseStockName(stock.name, stock.symbol);
-                    return (
-                        <button
-                            key={stock._id}
-                            onClick={() => onSelect(stock)}
-                            className={`w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 group ${activeStockId === stock._id
-                                ? 'bg-card border-ring shadow-md text-primary font-medium'
-                                : 'bg-transparent border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md'
-                                }`}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col items-start gap-1.5">
-                                    <span className="text-sm leading-tight">{parsed.name}</span>
-                                    {parsed.symbol && (
-                                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${activeStockId === stock._id ? 'bg-[#3066bb]/10 text-[#3066bb] border-[#3066bb]/20' : 'bg-muted text-muted-foreground border-border/50 group-hover:bg-muted/80'}`}>
-                                            {parsed.symbol}
-                                        </span>
-                                    )}
-                                </div>
-                                {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-[#3066bb] animate-pulse shrink-0" />}
-                            </div>
-                        </button>
-                    );
-                })}
+                ) : filtered.map(stock => (
+                    <button
+                        key={stock._id}
+                        onClick={() => onSelect(stock)}
+                        className={`w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 group ${activeStockId === stock._id
+                            ? 'bg-card border-ring shadow-md text-primary font-medium'
+                            : 'bg-transparent border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md'
+                            }`}
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm">{stock.name}</span>
+                            {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+                        </div>
+                    </button>
+                ))}
             </div>
         </div>
     );
