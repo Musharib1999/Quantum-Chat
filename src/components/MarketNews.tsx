@@ -162,7 +162,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                         <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
                             <div className="flex items-center gap-2 text-[#3066bb] font-semibold">
                                 <FileText size={16} />
-                                <span>Quantum Guru LLM Insight</span>
+                                <span>Quantum Guru Insight</span>
                             </div>
                             <button
                                 onClick={() => setSelectedSummaryItem(null)}
