@@ -140,51 +140,51 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                     onClick={() => setSelectedSummaryItem(null)}
                 >
                     <div
-                        className="bg-[#0f172a] border border-white/10 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+                        className="bg-card border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-900/50">
-                            <div className="flex items-center gap-2 text-blue-400 font-semibold">
+                        <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold">
                                 <FileText size={16} />
                                 <span>Quantum Insight</span>
                             </div>
                             <button
                                 onClick={() => setSelectedSummaryItem(null)}
-                                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-full transition-colors"
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
-                        <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-white/10">
-                            <div className="flex items-center gap-3 mb-4 text-xs font-mono text-slate-400">
-                                <span className="uppercase text-blue-400">{selectedSummaryItem.source}</span>
+                        <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-border">
+                            <div className="flex items-center gap-3 mb-4 text-xs font-mono text-muted-foreground">
+                                <span className="uppercase text-blue-600 dark:text-blue-400">{selectedSummaryItem.source}</span>
                                 <span>•</span>
                                 <span>{selectedSummaryItem.time}</span>
                             </div>
 
-                            <h4 className="text-xl md:text-2xl font-bold leading-tight mb-6 text-white">
+                            <h4 className="text-xl md:text-2xl font-bold leading-tight mb-6 text-foreground">
                                 {selectedSummaryItem.title}
                             </h4>
 
-                            <div className="text-[15px] leading-relaxed text-slate-300 space-y-4">
+                            <div className="text-[15px] leading-relaxed text-muted-foreground space-y-4">
                                 {selectedSummaryItem.summary ? (
                                     selectedSummaryItem.summary.split('\\n').map((para, i) => (
                                         <p key={i}>{para}</p>
                                     ))
                                 ) : (
-                                    <p className="italic text-slate-500">No automated summary available for this article.</p>
+                                    <p className="italic text-muted-foreground/70">No automated summary available for this article.</p>
                                 )}
                             </div>
                         </div>
 
                         {selectedSummaryItem.url && selectedSummaryItem.url !== '#' && (
-                            <div className="p-4 border-t border-white/10 bg-slate-900 flex justify-end">
+                            <div className="p-4 border-t border-border bg-muted/10 flex justify-end">
                                 <a
                                     href={selectedSummaryItem.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-blue-900/20"
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-blue-500/20"
                                 >
                                     Read Full Article <ArrowRight size={14} />
                                 </a>
