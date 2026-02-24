@@ -79,49 +79,66 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
         <div className="flex flex-col h-full bg-card/30">
             <div className="p-6 border-b border-border">
                 <h3 className="text-foreground mb-4 flex items-center gap-2">
-                    <Newspaper className="text-blue-400" size={18} /> Quantum News Feed
+                    <Newspaper className="text-green-500 dark:text-green-400" size={18} /> Quantum News Feed
                 </h3>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-border">
-                {news.map((item, index) => {
-                    const isLastElement = news.length === index + 1;
-                    return (
-                        <div
-                            key={`${item.id}-${index}`}
-                            ref={isLastElement ? lastNewsElementRef : null}
-                            className="p-4 bg-card/40 rounded-xl border border-border/50 hover:bg-accent/5 transition-all group relative overflow-hidden flex flex-col gap-2"
-                        >
+                {isLoading && news.length === 0 ? (
+                    Array(5).fill(0).map((_, i) => (
+                        <div key={i} className="p-4 bg-transparent border border-transparent rounded-xl flex flex-col gap-3">
                             <div className="flex justify-between items-start mb-1">
-                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">{item.source}</span>
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                                    {item.trend === 'up' ? '▲' : '▼'}
-                                </span>
+                                <div className="h-3 w-16 bg-muted/50 rounded animate-pulse"></div>
+                                <div className="h-3 w-8 bg-muted/50 rounded animate-pulse"></div>
                             </div>
-                            <h4
-                                className="text-sm font-medium leading-normal group-hover:text-blue-400 transition-colors line-clamp-3 cursor-pointer"
-                                onClick={() => setSelectedSummaryItem(item)}
-                            >
-                                {item.title}
-                            </h4>
-
-                            <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/30 pt-3">
-                                <span>{item.time}</span>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setSelectedSummaryItem(item); }}
-                                    className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 font-medium bg-blue-400/10 px-2.5 py-1 rounded hover:bg-blue-400/20 transition-colors"
-                                >
-                                    <FileText size={12} /> Show Summary
-                                </button>
+                            <div className="h-4 w-5/6 bg-muted/50 rounded animate-pulse"></div>
+                            <div className="h-4 w-4/6 bg-muted/50 rounded animate-pulse"></div>
+                            <div className="mt-2 border-t border-border/30 pt-3 flex justify-between">
+                                <div className="h-3 w-24 bg-muted/50 rounded animate-pulse"></div>
+                                <div className="h-6 w-24 bg-muted/50 rounded animate-pulse"></div>
                             </div>
                         </div>
+                    ))
+                ) : (
+                    news.map((item, index) => {
+                        const isLastElement = news.length === index + 1;
+                        return (
+                            <div
+                                key={`${item.id}-${index}`}
+                                ref={isLastElement ? lastNewsElementRef : null}
+                                className="p-4 bg-transparent border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2"
+                            >
+                                <div className="flex justify-between items-start mb-1">
+                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">{item.source}</span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'}`}>
+                                        {item.trend === 'up' ? '▲' : '▼'}
+                                    </span>
+                                </div>
+                                <h4
+                                    className="text-sm font-medium leading-normal text-foreground group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors line-clamp-3 cursor-pointer"
+                                    onClick={() => setSelectedSummaryItem(item)}
+                                >
+                                    {item.title}
+                                </h4>
 
-                    );
-                })}
+                                <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/30 pt-3">
+                                    <span>{item.time}</span>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setSelectedSummaryItem(item); }}
+                                        className="flex items-center gap-1.5 text-green-600 dark:text-green-400 hover:text-green-500 font-medium bg-green-500/10 px-2.5 py-1 rounded hover:bg-green-500/20 transition-colors"
+                                    >
+                                        <FileText size={12} /> Show Summary
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
 
-                {isLoading && (
-                    <div className="flex justify-center p-4">
-                        <Loader2 className="animate-spin text-blue-400" size={24} />
+                {isLoading && news.length > 0 && (
+                    <div className="flex flex-col items-center justify-center p-4 text-muted-foreground space-y-3">
+                        <Loader2 className="animate-spin text-green-500 dark:text-green-400" size={24} />
+                        <span className="text-xs font-mono animate-pulse">Loading...</span>
                     </div>
                 )}
 
