@@ -121,11 +121,10 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                     {item.title}
                                 </h4>
 
-                                <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/30 pt-3">
-                                    <span>{item.time}</span>
+                                <div className="mt-2 flex items-center justify-end text-[10px] text-muted-foreground border-t border-border/30 pt-3">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setSelectedSummaryItem(item); }}
-                                        className="flex items-center gap-1.5 text-green-600 dark:text-green-400 hover:text-green-500 font-medium bg-green-500/10 px-2.5 py-1 rounded hover:bg-green-500/20 transition-colors"
+                                        className="flex items-center gap-1.5 text-white font-medium bg-[#3066bb] px-2.5 py-1 rounded hover:bg-[#255296] transition-colors shadow-sm"
                                     >
                                         <FileText size={12} /> Show Summary
                                     </button>
@@ -176,8 +175,6 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                         <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-border">
                             <div className="flex items-center gap-3 mb-4 text-xs font-mono text-muted-foreground">
                                 <span className="uppercase text-blue-600 dark:text-blue-400">{selectedSummaryItem.source}</span>
-                                <span>•</span>
-                                <span>{selectedSummaryItem.time}</span>
                             </div>
 
                             <h4 className="text-xl md:text-2xl font-bold leading-tight mb-6 text-foreground">
@@ -201,7 +198,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                     href={selectedSummaryItem.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-blue-500/20"
+                                    className="px-4 py-2 bg-[#3066bb] hover:bg-[#255296] text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-[#3066bb]/20"
                                 >
                                     Read Full Article <ArrowRight size={14} />
                                 </a>
