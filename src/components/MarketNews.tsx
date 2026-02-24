@@ -115,7 +115,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                     </span>
                                 </div>
                                 <h4
-                                    className="text-sm font-medium leading-normal text-foreground group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors line-clamp-3 cursor-pointer"
+                                    className="text-sm font-medium leading-normal text-foreground transition-colors line-clamp-3 cursor-pointer"
                                     onClick={() => setSelectedSummaryItem(item)}
                                 >
                                     {item.title}
