@@ -50,10 +50,13 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground space-y-3">
-                        <Loader2 className="animate-spin text-green-400" size={24} />
-                        <span className="text-xs font-mono animate-pulse">Loading...</span>
-                    </div>
+                    Array(8).fill(0).map((_, i) => (
+                        <div key={i} className="w-full text-left px-3 py-3 rounded-xl border border-transparent bg-transparent">
+                            <div className="flex items-center justify-between">
+                                <div className="h-4 w-2/3 bg-muted/50 rounded animate-pulse"></div>
+                            </div>
+                        </div>
+                    ))
                 ) : filtered.map(stock => (
                     <button
                         key={stock._id}

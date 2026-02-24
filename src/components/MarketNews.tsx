@@ -135,8 +135,8 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                 )}
 
                 {isLoading && news.length > 0 && (
-                    <div className="flex flex-col items-center justify-center p-4 text-muted-foreground space-y-3">
-                        <Loader2 className="animate-spin text-green-500 dark:text-green-400" size={24} />
+                    <div className="flex flex-col items-center justify-center p-4 text-[#3066bb] space-y-3">
+                        <Loader2 className="animate-spin text-[#3066bb]" size={24} />
                         <span className="text-xs font-mono animate-pulse">Loading...</span>
                     </div>
                 )}
