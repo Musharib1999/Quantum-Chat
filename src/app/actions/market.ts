@@ -10,7 +10,7 @@ export async function getStockPrice(symbol: string) {
         const url = `${MARKET_SERVICE_URL}/api/stocks?symbol=${symbol}`;
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${MARKET_SERVICE_KEY}` },
-            next: { revalidate: 300 }
+            cache: 'no-store'
         });
 
         if (!response.ok) {
