@@ -53,7 +53,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                     Array(8).fill(0).map((_, i) => (
                         <div key={i} className="w-full text-left px-3 py-3 rounded-xl border border-transparent bg-transparent">
                             <div className="flex items-center justify-between">
-                                <div className="h-4 w-2/3 bg-muted/50 rounded animate-pulse"></div>
+                                <div className="h-4 w-2/3 bg-muted rounded animate-pulse"></div>
                             </div>
                         </div>
                     ))

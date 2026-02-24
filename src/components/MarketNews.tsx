@@ -88,14 +88,14 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                     Array(5).fill(0).map((_, i) => (
                         <div key={i} className="p-4 bg-transparent border border-transparent rounded-xl flex flex-col gap-3">
                             <div className="flex justify-between items-start mb-1">
-                                <div className="h-3 w-16 bg-muted/50 rounded animate-pulse"></div>
-                                <div className="h-3 w-8 bg-muted/50 rounded animate-pulse"></div>
+                                <div className="h-3 w-16 bg-muted rounded animate-pulse"></div>
+                                <div className="h-3 w-8 bg-muted rounded animate-pulse"></div>
                             </div>
-                            <div className="h-4 w-5/6 bg-muted/50 rounded animate-pulse"></div>
-                            <div className="h-4 w-4/6 bg-muted/50 rounded animate-pulse"></div>
+                            <div className="h-4 w-5/6 bg-muted rounded animate-pulse"></div>
+                            <div className="h-4 w-4/6 bg-muted rounded animate-pulse"></div>
                             <div className="mt-2 border-t border-border/30 pt-3 flex justify-between">
-                                <div className="h-3 w-24 bg-muted/50 rounded animate-pulse"></div>
-                                <div className="h-6 w-24 bg-muted/50 rounded animate-pulse"></div>
+                                <div className="h-3 w-24 bg-muted rounded animate-pulse"></div>
+                                <div className="h-6 w-24 bg-muted rounded animate-pulse"></div>
                             </div>
                         </div>
                     ))
