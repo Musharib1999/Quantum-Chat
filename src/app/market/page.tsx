@@ -69,6 +69,8 @@ export default function MarketPage() {
         setSelectedNews(null);
     };
 
+    const resolvedSymbol = selectedStock ? (selectedStock.symbol || SYMBOL_MAP[selectedStock.name]) : undefined;
+
     return (
         <AppLayout
             currentMode="market"
@@ -86,7 +88,7 @@ export default function MarketPage() {
                     contextConfig={{
                         stockUrl: selectedStock?.url,
                         stockName: selectedStock?.name,
-                        symbol: selectedStock?.symbol,
+                        symbol: resolvedSymbol,
                         realTimeData: selectedStockData,
                         newsTitle: selectedNews?.title,
                         newsSource: selectedNews?.source
