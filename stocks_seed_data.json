@@ -1,0 +1,87 @@
+[
+    {
+        "name": "IonQ",
+        "symbol": "IONQ",
+        "url": "https://finance.yahoo.com/quote/IONQ"
+    },
+    {
+        "name": "D-Wave",
+        "symbol": "QBTS",
+        "url": "https://finance.yahoo.com/quote/QBTS"
+    },
+    {
+        "name": "Rigetti",
+        "symbol": "RGTI",
+        "url": "https://finance.yahoo.com/quote/RGTI"
+    },
+    {
+        "name": "Quantum Computing Inc",
+        "symbol": "QUBT",
+        "url": "https://finance.yahoo.com/quote/QUBT"
+    },
+    {
+        "name": "Arqit",
+        "symbol": "ARQQ",
+        "url": "https://finance.yahoo.com/quote/ARQQ"
+    },
+    {
+        "name": "SEALSQ",
+        "symbol": "LAES",
+        "url": "https://finance.yahoo.com/quote/LAES"
+    },
+    {
+        "name": "BTQ Technologies",
+        "symbol": "BTQ",
+        "url": "https://finance.yahoo.com/quote/BTQ"
+    },
+    {
+        "name": "IBM",
+        "symbol": "IBM",
+        "url": "https://finance.yahoo.com/quote/IBM"
+    },
+    {
+        "name": "Microsoft",
+        "symbol": "MSFT",
+        "url": "https://finance.yahoo.com/quote/MSFT"
+    },
+    {
+        "name": "Alphabet / Google",
+        "symbol": "GOOGL",
+        "url": "https://finance.yahoo.com/quote/GOOGL"
+    },
+    {
+        "name": "Amazon",
+        "symbol": "AMZN",
+        "url": "https://finance.yahoo.com/quote/AMZN"
+    },
+    {
+        "name": "Intel",
+        "symbol": "INTC",
+        "url": "https://finance.yahoo.com/quote/INTC"
+    },
+    {
+        "name": "NVIDIA",
+        "symbol": "NVDA",
+        "url": "https://finance.yahoo.com/quote/NVDA"
+    },
+    {
+        "name": "Honeywell",
+        "symbol": "HON",
+        "url": "https://finance.yahoo.com/quote/HON"
+    },
+    {
+        "name": "TSMC",
+        "symbol": "TSM",
+        "url": "https://finance.yahoo.com/quote/TSM"
+    },
+    {
+        "name": "ASML",
+        "symbol": "ASML",
+        "url": "https://finance.yahoo.com/quote/ASML"
+    },
+    {
+        "name": "Applied Materials",
+        "symbol": "AMAT",
+        "url": "https://finance.yahoo.com/quote/AMAT"
+    }
+]

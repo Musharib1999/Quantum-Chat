@@ -1,6 +1,7 @@
 'use server';
 
 const MARKET_SERVICE_URL = process.env.MARKET_SERVICE_URL || 'http://localhost:3001';
+const NEWS_SERVICE_URL = process.env.NEWS_SERVICE_URL || 'http://localhost:3002';
 const MARKET_SERVICE_KEY = process.env.MARKET_SERVICE_KEY;
 
 export async function getStockPrice(symbol: string) {
@@ -49,7 +50,7 @@ export async function getLatestNews(query?: string, page: number = 1, limit: num
         queryParams.append('page', page.toString());
         queryParams.append('limit', limit.toString());
 
-        const url = `${MARKET_SERVICE_URL}/api/news?${queryParams.toString()}`;
+        const url = `${NEWS_SERVICE_URL}/api/news?${queryParams.toString()}`;
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${MARKET_SERVICE_KEY}` },
             next: { revalidate: 300 }
