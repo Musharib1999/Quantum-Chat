@@ -109,7 +109,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                 className="p-4 bg-transparent border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2"
                             >
                                 <div className="flex justify-between items-start mb-1">
-                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">{item.source}</span>
+                                    <span className="text-[10px] tracking-wider text-muted-foreground font-mono">{item.source}</span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'}`}>
                                         {item.trend === 'up' ? '▲' : '▼'}
                                     </span>
@@ -174,7 +174,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
 
                         <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-border">
                             <div className="flex items-center gap-3 mb-4 text-xs font-mono text-muted-foreground">
-                                <span className="uppercase text-blue-600 dark:text-blue-400">{selectedSummaryItem.source}</span>
+                                <span className="text-blue-600 dark:text-blue-400">{selectedSummaryItem.source}</span>
                             </div>
 
                             <h4 className="text-xl md:text-2xl font-bold leading-tight mb-6 text-foreground">
