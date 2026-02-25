@@ -2,8 +2,28 @@
 
 import { getLatestNews } from './market';
 import News from '@/models/News';
+import SystemPrompt from '@/models/SystemPrompt';
 import dbConnect from '@/lib/db';
 import { chatWithGroq } from './chat';
+
+// --- Dynamic Prompt Parsing Helper ---
+async function getDynamicPrompt(category: string, replacements: Record<string, any>, fallback: string): Promise<string> {
+    try {
+        const promptDoc = await SystemPrompt.findOne({ category }).lean();
+        let template = promptDoc ? promptDoc.template : fallback;
+
+        Object.keys(replacements).forEach(key => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            let val = replacements[key];
+            if (val === undefined || val === null) val = '';
+            template = template.replace(regex, typeof val === 'object' ? JSON.stringify(val) : String(val));
+        });
+        return template;
+    } catch (error) {
+        console.error(`Failed to load dynamic prompt for ${category}`, error);
+        return fallback;
+    }
+}
 
 /**
  * Automates scraping of news from Quantum Market Service,
@@ -39,13 +59,17 @@ export async function automateNewsSummarization() {
             console.log(`[Automation] Summarizing: ${item.title}`);
 
             // 3. Use Groq to summarize (Industrial Prompt)
-            const prompt = `Properly summarize this quantum computing news headline in exactly 200 words. 
-            Focus on technical implications, market impact, and industrial importance. 
-            Keep it professional and industrial.
-            
-            HEADLINE: ${item.title}
-            SOURCE: ${item.source}
-            `;
+            const fallbackPrompt = `Properly summarize this quantum computing news headline in exactly 200 words. 
+Focus on technical implications, market impact, and industrial importance. 
+Keep it professional and industrial.
+
+HEADLINE: ${item.title}
+SOURCE: ${item.source}`;
+
+            const prompt = await getDynamicPrompt('news_automation', {
+                title: item.title,
+                source: item.source
+            }, fallbackPrompt);
 
             try {
                 const llmResponse = await chatWithGroq(prompt, 'chat', 'en');

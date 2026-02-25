@@ -4,6 +4,10 @@ import { Plus, Trash2, Key, User as UserIcon, Loader2, Save, X, Search } from 'l
 interface User {
     _id: string;
     email: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    plan?: string;
     role: string;
     createdAt: string;
 }
@@ -21,6 +25,10 @@ export default function UserManager() {
     // Form States
     const [newEmail, setNewEmail] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [newFirstName, setNewFirstName] = useState("");
+    const [newLastName, setNewLastName] = useState("");
+    const [newPhone, setNewPhone] = useState("");
+    const [newPlan, setNewPlan] = useState<'Guest' | 'Pro' | 'Enterprise'>('Guest');
     const [resetPassword, setResetPassword] = useState("");
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
@@ -55,7 +63,14 @@ export default function UserManager() {
             const res = await fetch('/api/admin/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: newEmail, password: newPassword }),
+                body: JSON.stringify({
+                    email: newEmail,
+                    password: newPassword,
+                    firstName: newFirstName,
+                    lastName: newLastName,
+                    phone: newPhone,
+                    plan: newPlan,
+                }),
             });
             const data = await res.json();
 
@@ -65,8 +80,7 @@ export default function UserManager() {
 
             setUsers([data, ...users]);
             setShowAddModal(false);
-            setNewEmail("");
-            setNewPassword("");
+            setNewEmail(""); setNewPassword(""); setNewFirstName(""); setNewLastName(""); setNewPhone(""); setNewPlan('Guest');
         } catch (error: any) {
             setFormError(error.message);
         } finally {
@@ -127,13 +141,13 @@ export default function UserManager() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <UserIcon className="text-blue-400" /> User Management
+                        <UserIcon className="text-[#3066bb]" /> User Management
                     </h2>
                     <p className="text-sm text-muted-foreground mt-1">Manage platform access and user accounts.</p>
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-900/20 transition-all active:scale-95"
+                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
                 >
                     <Plus size={18} /> Add User
                 </button>
@@ -147,12 +161,12 @@ export default function UserManager() {
                     placeholder="Search users by email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-secondary/30 border border-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-muted-foreground"
+                    className="w-full pl-12 pr-4 py-3 bg-secondary/30 border border-border rounded-xl focus:ring-2 focus:ring-[#3066bb]/20 focus:border-[#3066bb] outline-none transition-all placeholder:text-muted-foreground"
                 />
             </div>
 
             {/* Users Table */}
-            <div className="bg-card/60 backdrop-blur-md rounded-2xl shadow-xl border border-border overflow-hidden">
+            <div className="bg-card/60 backdrop-blur-md rounded-2xl border border-border overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-secondary/30 border-b border-border">
@@ -181,7 +195,7 @@ export default function UserManager() {
                                     <tr key={user._id} className="hover:bg-secondary/10 transition-colors">
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                                <div className="w-8 h-8 rounded-full bg-[#3066bb]/10 text-[#3066bb] flex items-center justify-center border border-[#3066bb]/20">
                                                     <UserIcon size={14} />
                                                 </div>
                                                 <span className="font-medium text-foreground">{user.email}</span>
@@ -203,14 +217,14 @@ export default function UserManager() {
                                                         setResetPassword("");
                                                         setShowResetModal(true);
                                                     }}
-                                                    className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                                    className="p-2 text-muted-foreground hover:text-[#3066bb] hover:bg-[#3066bb]/10 rounded-lg transition-colors"
                                                     title="Reset Password"
                                                 >
                                                     <Key size={18} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteUser(user._id)}
-                                                    className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                    className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                                                     title="Remove User"
                                                 >
                                                     <Trash2 size={18} />
@@ -237,25 +251,78 @@ export default function UserManager() {
                         </button>
 
                         <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                            <Plus className="w-5 h-5 text-blue-400" /> New User
+                            <Plus className="w-5 h-5 text-[#3066bb]" /> New User
                         </h3>
 
                         <div className="space-y-4">
+                            {/* Row: First & Last Name */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">First Name</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-[#3066bb]/20 focus:border-[#3066bb]"
+                                        placeholder="Jane"
+                                        value={newFirstName}
+                                        onChange={e => setNewFirstName(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Last Name</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-[#3066bb]/20 focus:border-[#3066bb]"
+                                        placeholder="Doe"
+                                        value={newLastName}
+                                        onChange={e => setNewLastName(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Email */}
                             <div>
                                 <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Email Address</label>
                                 <input
                                     type="email"
-                                    className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-[#3066bb]/20 focus:border-[#3066bb]"
                                     placeholder="user@example.com"
                                     value={newEmail}
                                     onChange={e => setNewEmail(e.target.value)}
                                 />
                             </div>
+
+                            {/* Phone */}
+                            <div>
+                                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-[#3066bb]/20 focus:border-[#3066bb]"
+                                    placeholder="+1 234 567 8900"
+                                    value={newPhone}
+                                    onChange={e => setNewPhone(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Plan */}
+                            <div>
+                                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Plan Tier</label>
+                                <select
+                                    className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-[#3066bb]/20 focus:border-[#3066bb]"
+                                    value={newPlan}
+                                    onChange={e => setNewPlan(e.target.value as any)}
+                                >
+                                    <option value="Guest">Guest</option>
+                                    <option value="Pro">Pro</option>
+                                    <option value="Enterprise">Enterprise</option>
+                                </select>
+                            </div>
+
+                            {/* Password */}
                             <div>
                                 <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Initial Password</label>
                                 <input
                                     type="text"
-                                    className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                    className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-[#3066bb]/20 focus:border-[#3066bb] font-mono"
                                     placeholder="Enter secure password"
                                     value={newPassword}
                                     onChange={e => setNewPassword(e.target.value)}
@@ -267,17 +334,10 @@ export default function UserManager() {
                             )}
 
                             <div className="pt-2 flex justify-end gap-3">
-                                <button
-                                    onClick={() => setShowAddModal(false)}
-                                    className="px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-secondary rounded-lg"
-                                >
+                                <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-secondary rounded-lg">
                                     Cancel
                                 </button>
-                                <button
-                                    onClick={handleAddUser}
-                                    disabled={actionLoading}
-                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2 disabled:opacity-50"
-                                >
+                                <button onClick={handleAddUser} disabled={actionLoading} className="px-6 py-2 bg-[#3066bb] hover:bg-[#255299] text-white rounded-lg font-bold flex items-center gap-2 disabled:opacity-50">
                                     {actionLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <Save size={16} />}
                                     Create User
                                 </button>

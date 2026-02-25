@@ -14,15 +14,18 @@ import {
     getChatLogs,
     type QaPairType as QaPair, type GuardrailType as Guardrail, type ChatLogType
 } from '../../actions/admin';
-import QuantumBackground from '../../../components/QuantumBackground';
+import { useTheme } from '@/components/ThemeContext';
 import ThemeToggle from '../../../components/ThemeToggle';
 import StockManager from '../../../components/admin/StockManager';
 import ArticleManager from '../../../components/admin/ArticleManager';
 import FormArchitect from '../../../components/admin/FormArchitect';
 import UserManager from '../../../components/admin/UserManager';
 import NewsManager from '../../../components/admin/NewsManager';
+import PromptEditor from '../../../components/admin/PromptEditor';
 
 export default function AdminDashboard() {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
     const router = useRouter();
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const initialTab = searchParams?.get('tab') || "knowledge_base";
@@ -114,12 +117,13 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="flex h-screen bg-background font-sans overflow-hidden text-foreground relative selection:bg-purple-500/30">
+        <div className={`flex h-screen w-full transition-colors duration-500 ease-in-out font-sans overflow-hidden ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
             {/* Background Effects */}
-            <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-100 transition-opacity duration-500">
-                <QuantumBackground />
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className={`absolute inset-0 bg-grid-pattern opacity-[0.02] ${isDarkMode ? 'bg-white' : 'bg-black'}`}
+                    style={{ backgroundSize: '40px 40px', backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)' }}
+                />
             </div>
-            <div className="fixed inset-0 bg-background/80 z-0 pointer-events-none backdrop-blur-[1px]" />
 
             {/* Mobile Sidebar Overlay */}
             {isMobileMenuOpen && (
@@ -131,18 +135,15 @@ export default function AdminDashboard() {
 
             {/* Sidebar */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-64 bg-black/20 backdrop-blur-2xl border-r border-white/5 flex flex-col transition-transform duration-300 ease-in-out
+                fixed inset-y-0 left-0 z-50 w-64 border-r flex flex-col transition-all duration-300 ease-in-out backdrop-blur-md
                 md:relative md:translate-x-0
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                ${isDarkMode ? 'border-white/10 bg-slate-950/70' : 'border-slate-200 bg-white/70'}
             `}>
-                <div className="p-6 border-b border-border flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-secondary to-secondary/50 border border-border rounded-lg flex items-center justify-center font-bold text-foreground shadow-lg">QG</div>
-                        <div>
-                            <h1 className="font-bold text-lg tracking-wide text-foreground">Quantum Admin</h1>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Control Center</p>
-                        </div>
-                    </div>
+                <div className={`p-6 border-b flex items-center justify-between ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
+                    <a href="https://www.quantumcomputers.guru/" target="_self" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+                        <img src="/logo.png" alt="Quantum Guru" className="w-32 h-10 object-contain" />
+                    </a>
                     <button className="md:hidden p-2 hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                         <X size={20} className="text-foreground" />
                     </button>
@@ -157,9 +158,15 @@ export default function AdminDashboard() {
                     />
                     <SidebarLink
                         icon={<ShieldAlert size={20} />}
-                        label="Guardrails"
+                        label="Guardrails (Safety)"
                         active={activeTab === 'guardrails'}
                         onClick={() => { setActiveTab('guardrails'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
+                        icon={<FileText size={20} />}
+                        label="System Prompts (AI Logic)"
+                        active={activeTab === 'prompts'}
+                        onClick={() => { setActiveTab('prompts'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
                         icon={<TrendingUp size={20} />}
@@ -205,7 +212,7 @@ export default function AdminDashboard() {
                     />
                 </nav>
 
-                <div className="p-4 border-t border-border">
+                <div className={`p-4 border-t ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
                     <button
                         onClick={() => router.push('/admin/login')}
                         className="flex items-center gap-3 w-full px-4 py-3 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-all font-medium group"
@@ -217,10 +224,10 @@ export default function AdminDashboard() {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 transition-colors duration-500 ease-in-out">
 
                 {/* Desktop/Mobile Header */}
-                <header className="bg-transparent border-b border-border h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-30 backdrop-blur-md">
+                <header className={`bg-transparent border-b h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-30 transition-all duration-300 ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
                     <div className="flex items-center gap-4">
                         <button
                             className="md:hidden p-2 text-muted-foreground hover:bg-white/5 rounded-lg transition-colors"
@@ -231,6 +238,7 @@ export default function AdminDashboard() {
                         <h2 className="font-bold text-foreground flex items-center gap-2 text-sm md:text-base capitalize">
                             {activeTab === 'knowledge_base' && <MessageSquare className="text-blue-400" />}
                             {activeTab === 'guardrails' && <ShieldAlert className="text-red-400" />}
+                            {activeTab === 'prompts' && <FileText className="text-blue-500" />}
                             {activeTab === 'analytics' && <BarChart3 className="text-purple-400" />}
                             {activeTab === 'logs' && <MessageSquare className="text-purple-400" />}
                             {activeTab === 'stocks' && <TrendingUp className="text-green-400" />}
@@ -290,9 +298,9 @@ export default function AdminDashboard() {
 
                                 {newType === 'form' && (
                                     <div className="mt-4">
-                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Form Settings (JSON Configuration)</label>
+                                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Form Settings (JSON Configuration)</label>
                                         <textarea
-                                            className="w-full p-4 border border-border rounded-xl font-mono text-xs bg-black/80 dark:bg-black/50 text-green-400 h-40 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                                            className="w-full p-4 border border-border rounded-xl font-mono text-xs bg-secondary/30 text-foreground h-40 outline-none focus:ring-2 focus:ring-[#3066bb] shadow-sm"
                                             value={newFormConfig}
                                             onChange={e => setNewFormConfig(e.target.value)}
                                         />
@@ -336,16 +344,16 @@ export default function AdminDashboard() {
                     {/* GUARDRAILS TAB */}
                     {activeTab === 'guardrails' && (
                         <div className="max-w-4xl mx-auto space-y-6">
-                            <div className="bg-gradient-to-r from-red-900/20 to-orange-900/20 p-6 rounded-2xl border border-red-500/20 mb-8 backdrop-blur-md">
-                                <h3 className="flex items-center gap-2 font-bold text-red-400 text-lg">
+                            <div className="bg-red-500/10 p-6 rounded-2xl border border-red-500/20 mb-8 backdrop-blur-md">
+                                <h3 className="flex items-center gap-2 font-bold text-red-500 text-lg">
                                     <ShieldAlert size={24} /> Safety & Compliance
                                 </h3>
-                                <p className="text-red-300/80 text-sm mt-1">Define strict boundaries for the AI. These rules override all other knowledge retrieval.</p>
+                                <p className="text-red-500/80 text-sm mt-1">Define strict boundaries for the AI. These rules override all other knowledge retrieval.</p>
                             </div>
 
                             <div className="flex gap-4 mb-6">
                                 <input
-                                    className="flex-1 p-4 bg-zinc-800/50 border border-white/10 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-red-500/50 text-white placeholder:text-zinc-500"
+                                    className="flex-1 p-4 bg-secondary/50 border border-border rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-red-500/50 text-foreground placeholder:text-muted-foreground"
                                     placeholder="Enter a new guardrail rule (e.g., 'Do not discuss politics')"
                                     value={newRule}
                                     onChange={e => setNewRule(e.target.value)}
@@ -360,17 +368,17 @@ export default function AdminDashboard() {
 
                             <div className="grid gap-4">
                                 {guardrails.map(g => (
-                                    <div key={g.id} className={`p-4 rounded-xl border flex items-center justify-between transition-all backdrop-blur-sm ${g.active ? 'bg-zinc-900/60 border-white/10 shadow-sm' : 'bg-zinc-900/20 border-white/5 opacity-60'
+                                    <div key={g.id} className={`p-4 rounded-xl border flex items-center justify-between transition-all backdrop-blur-sm ${g.active ? 'bg-card border-border shadow-sm' : 'bg-secondary/20 border-border opacity-60'
                                         }`}>
                                         <div className="flex items-center gap-4 flex-1">
-                                            <div className={`p-2 rounded-lg ${g.active ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-zinc-800 text-zinc-600'}`}>
+                                            <div className={`p-2 rounded-lg ${g.active ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-secondary text-muted-foreground'}`}>
                                                 <Lock size={20} />
                                             </div>
                                             <div className="flex-1">
                                                 {editingRuleId === g.id ? (
                                                     <div className="flex gap-2">
                                                         <input
-                                                            className="flex-1 p-2 bg-zinc-800 border border-white/10 rounded-lg text-white"
+                                                            className="flex-1 p-2 bg-secondary border border-border rounded-lg text-foreground"
                                                             value={editingRuleText}
                                                             onChange={e => setEditingRuleText(e.target.value)}
                                                             autoFocus
@@ -383,9 +391,9 @@ export default function AdminDashboard() {
                                                         </button>
                                                     </div>
                                                 ) : (
-                                                    <p className={`font-medium ${g.active ? 'text-zinc-200' : 'text-zinc-500 line-through'}`}>{g.rule}</p>
+                                                    <p className={`font-medium ${g.active ? 'text-foreground' : 'text-muted-foreground line-through'}`}>{g.rule}</p>
                                                 )}
-                                                <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-wider">{g.type?.replace('_', ' ') || 'GENERAL'}</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase font-medium tracking-wider">{g.type?.replace('_', ' ') || 'GENERAL'}</span>
                                             </div>
                                         </div>
 
@@ -407,9 +415,9 @@ export default function AdminDashboard() {
                                             </button>
                                             <button
                                                 onClick={() => handleToggleGuardrail(g.id)}
-                                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${g.active
-                                                    ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
-                                                    : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
+                                                className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${g.active
+                                                    ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20'
+                                                    : 'bg-secondary text-muted-foreground hover:bg-secondary/80 border border-transparent'
                                                     }`}
                                             >
                                                 {g.active ? 'Active' : 'Disabled'}
@@ -426,6 +434,19 @@ export default function AdminDashboard() {
 
                     {/* ARTICLES TAB */}
                     {activeTab === 'articles' && <ArticleManager />}
+
+                    {/* SYSTEM PROMPTS TAB */}
+                    {activeTab === 'prompts' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto space-y-6">
+                            <div className="bg-[#3066bb]/10 p-6 rounded-2xl border border-[#3066bb]/20 mb-6 backdrop-blur-md">
+                                <h3 className="flex items-center gap-2 font-bold text-[#3066bb] text-lg">
+                                    <FileText size={24} /> System Instructions (Prompts)
+                                </h3>
+                                <p className="text-[#3066bb]/80 text-sm mt-1">Dynamically control the underlying text strings injected into the LLM context.</p>
+                            </div>
+                            <PromptEditor />
+                        </div>
+                    )}
 
                     {/* FORMS TAB */}
                     {activeTab === 'forms' && (
@@ -530,17 +551,24 @@ export default function AdminDashboard() {
 
 // Components
 function SidebarLink({ icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
+
+    // Same styling logic as landing page feature cards
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${active
-                ? 'bg-secondary text-foreground shadow-[0_0_15px_rgba(255,255,255,0.05)] border-border'
-                : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground border-transparent'
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all border ${active
+                ? (isDarkMode ? 'bg-[#3066bb]/20 text-[#3066bb] border-[#3066bb]/50' : 'bg-[#3066bb]/10 text-[#3066bb] border-[#3066bb]/50')
+                : (isDarkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border-transparent' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-transparent')
                 }`}
         >
             {icon}
             <span className="font-medium text-sm">{label}</span>
-            {active && <ChevronDown className="ml-auto w-4 h-4 -rotate-90 text-zinc-400" />}
         </button>
     );
 }
+
+// -------------------------------------------------------------------------------- //
+// TAB COMPONENTS
+// -------------------------------------------------------------------------------- //

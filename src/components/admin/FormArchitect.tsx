@@ -257,14 +257,14 @@ export default function FormArchitect() {
                 <div className="space-y-8">
                     <div className="flex items-center justify-between border-b border-border pb-6">
                         <div>
-                            <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3">
+                            <h2 className="text-2xl font-semibold text-foreground tracking-tight flex items-center gap-3">
                                 <Search className="text-muted-foreground" /> Module Overview
                             </h2>
                             <p className="text-muted-foreground mt-1">Manage all active quantum industry modules and their parameter forms.</p>
                         </div>
                         <button
                             onClick={resetForm}
-                            className="bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all shadow-lg"
+                            className="bg-[#3066bb] text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 hover:bg-[#255299] transition-all"
                         >
                             <Plus size={18} /> New Module
                         </button>
@@ -272,15 +272,15 @@ export default function FormArchitect() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {existingForms.map((form) => (
-                            <div key={form._id} className="bg-secondary/20 backdrop-blur-md border border-border p-6 rounded-3xl group hover:border-primary/50 transition-all flex flex-col justify-between min-h-[240px]">
+                            <div key={form._id} className="bg-card border border-border p-6 rounded-3xl group hover:border-[#3066bb]/50 transition-all flex flex-col justify-between min-h-[240px]">
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <div className="bg-primary/5 px-2 py-1 rounded text-[10px] font-black text-primary uppercase tracking-widest leading-none border border-primary/10">{form.industry}</div>
-                                        {form.active && <CheckCircle2 size={14} className="text-green-500" />}
+                                        <div className="bg-[#3066bb]/10 px-2 py-1 rounded text-[10px] font-semibold text-[#3066bb] tracking-widest leading-none border border-[#3066bb]/20">{form.industry}</div>
+                                        {form.active && <CheckCircle2 size={14} className="text-[#3066bb]" />}
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-black text-foreground leading-tight">{form.problem}</h3>
-                                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mt-1">{form.service}</p>
+                                        <h3 className="text-lg font-semibold text-foreground leading-tight">{form.problem}</h3>
+                                        <p className="text-muted-foreground text-xs font-medium tracking-widest mt-1">{form.service}</p>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {form.fields && form.fields.slice(0, 3).map((f, i) => (
@@ -291,7 +291,7 @@ export default function FormArchitect() {
                                 </div>
                                 <button
                                     onClick={() => editForm(form)}
-                                    className="mt-6 w-full py-2.5 rounded-xl border border-border text-xs font-black uppercase tracking-widest text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all flex items-center justify-center gap-2"
+                                    className="mt-6 w-full py-2.5 rounded-xl border border-border text-xs font-semibold tracking-widest text-muted-foreground group-hover:bg-[#3066bb] group-hover:text-white group-hover:border-[#3066bb] transition-all flex items-center justify-center gap-2"
                                 >
                                     <Edit3 size={14} /> Configure Module
                                 </button>
@@ -304,27 +304,27 @@ export default function FormArchitect() {
                     {/* Header */}
                     <div className="flex items-center justify-between border-b border-border pb-6 sticky top-0 bg-background/95 backdrop-blur z-10 pt-2">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                                <Layers className="text-primary" size={24} />
+                            <div className="w-12 h-12 rounded-2xl bg-[#3066bb]/10 border border-[#3066bb]/20 flex items-center justify-center">
+                                <Layers className="text-[#3066bb]" size={24} />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-black text-foreground tracking-tight">
+                                <h1 className="text-2xl font-semibold text-foreground tracking-tight">
                                     Form Architect
                                 </h1>
-                                <p className="text-muted-foreground mt-1">Design parameter fields for <span className="text-primary font-bold">{problem || 'New Problem'}</span></p>
+                                <p className="text-muted-foreground mt-1">Design parameter fields for <span className="text-[#3066bb] font-medium">{problem || 'New Problem'}</span></p>
                             </div>
                         </div>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setView('overview')}
-                                className="px-6 py-2.5 rounded-xl font-bold text-muted-foreground hover:text-foreground transition-all text-sm"
+                                className="px-6 py-2.5 rounded-xl font-medium text-muted-foreground hover:text-foreground transition-all text-sm"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSave}
                                 disabled={loading || !industry || !service || !problem}
-                                className="bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 shadow-xl"
+                                className="bg-[#3066bb] text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 hover:bg-[#255299] transition-all disabled:opacity-50"
                             >
                                 <Save size={18} /> {loading ? 'Saving...' : 'Save Module'}
                             </button>
@@ -340,7 +340,7 @@ export default function FormArchitect() {
                     {/* Meta Fields */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Industry</label>
+                            <label className="text-[10px] font-semibold text-muted-foreground tracking-[0.2em]">Industry</label>
                             <input
                                 list="industries"
                                 value={industry}
@@ -353,7 +353,7 @@ export default function FormArchitect() {
                             </datalist>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Service</label>
+                            <label className="text-[10px] font-semibold text-muted-foreground tracking-[0.2em]">Service</label>
                             <input
                                 list="services"
                                 value={service}
@@ -366,7 +366,7 @@ export default function FormArchitect() {
                             </datalist>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Problem Context</label>
+                            <label className="text-[10px] font-semibold text-muted-foreground tracking-[0.2em]">Problem Context</label>
                             <input
                                 list="problems"
                                 value={problem}
@@ -381,21 +381,21 @@ export default function FormArchitect() {
                     </div>
 
                     {/* Builder Area */}
-                    <div className="space-y-6 pt-6 bg-card/30 rounded-3xl p-6 border border-border/50">
+                    <div className="space-y-6 pt-6 bg-card rounded-3xl p-6 border border-border">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-black text-foreground flex items-center gap-2 tracking-tight">
-                                <Settings2 size={20} className="text-primary" /> Parameter Definition
+                            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2 tracking-tight">
+                                <Settings2 size={20} className="text-[#3066bb]" /> Parameter Definition
                             </h2>
                             <div className="flex items-center bg-secondary/50 rounded-lg p-1 border border-border">
                                 <button
                                     onClick={() => { syncJsonToVisual(); setEditorMode('visual'); }}
-                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${editorMode === 'visual' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${editorMode === 'visual' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                 >
                                     Visual Builder
                                 </button>
                                 <button
                                     onClick={() => { syncVisualToJson(fields); setEditorMode('json'); }}
-                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${editorMode === 'json' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${editorMode === 'json' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                 >
                                     JSON Editor
                                 </button>
@@ -405,9 +405,9 @@ export default function FormArchitect() {
                         {editorMode === 'visual' ? (
                             <div className="space-y-4">
                                 {fields.length === 0 && (
-                                    <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl bg-secondary/10">
+                                    <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl bg-secondary/50">
                                         <p className="text-sm text-muted-foreground mb-4">No parameters defined yet.</p>
-                                        <button onClick={openNewFieldModal} className="px-4 py-2 bg-primary/10 text-primary rounded-lg font-bold text-xs hover:bg-primary/20 transition-colors">
+                                        <button onClick={openNewFieldModal} className="px-4 py-2 bg-[#3066bb]/10 text-[#3066bb] rounded-lg font-medium text-xs hover:bg-[#3066bb]/20 transition-colors">
                                             + Add First Parameter
                                         </button>
                                     </div>
@@ -420,10 +420,10 @@ export default function FormArchitect() {
                                                     <GripVertical size={16} />
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-sm text-foreground">{field.label}</h4>
+                                                    <h4 className="font-medium text-sm text-foreground">{field.label}</h4>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-[10px] font-mono bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">{field.key}</span>
-                                                        <span className="text-[10px] uppercase font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">{field.type}</span>
+                                                        <span className="text-[10px] font-medium text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">{field.type}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -440,17 +440,17 @@ export default function FormArchitect() {
                                 </div>
                                 <button
                                     onClick={openNewFieldModal}
-                                    className="w-full py-3 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-secondary/30 transition-all font-bold text-sm flex items-center justify-center gap-2"
+                                    className="w-full py-3 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:text-[#3066bb] hover:border-[#3066bb]/50 hover:bg-secondary/80 transition-all font-medium text-sm flex items-center justify-center gap-2"
                                 >
                                     <Plus size={16} /> Add Parameter
                                 </button>
                             </div>
                         ) : (
-                            <div className="bg-black/40 rounded-2xl border border-border p-6 shadow-inner">
+                            <div className="bg-secondary/50 rounded-2xl border border-border p-6 shadow-sm">
                                 <textarea
                                     value={jsonFields}
                                     onChange={(e) => setJsonFields(e.target.value)}
-                                    className="w-full h-96 bg-transparent font-mono text-sm text-green-400 focus:outline-none resize-none"
+                                    className="w-full h-96 bg-transparent font-mono text-sm text-foreground focus:outline-none resize-none"
                                     spellCheck={false}
                                 />
                             </div>
@@ -464,7 +464,7 @@ export default function FormArchitect() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
                     <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-4 border-b border-border flex items-center justify-between bg-secondary/30">
-                            <h3 className="font-bold text-foreground">
+                            <h3 className="font-medium text-foreground">
                                 {editingFieldIndex !== null ? 'Edit Parameter' : 'New Parameter'}
                             </h3>
                             <button onClick={() => setIsEditModalOpen(false)}><X size={20} className="text-muted-foreground" /></button>
@@ -472,7 +472,7 @@ export default function FormArchitect() {
                         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Label</label>
+                                    <label className="text-[10px] font-medium text-muted-foreground">Label</label>
                                     <input
                                         value={editingField?.label}
                                         onChange={e => setEditingField(prev => prev ? ({ ...prev, label: e.target.value }) : null)}
@@ -481,7 +481,7 @@ export default function FormArchitect() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Key (Auto)</label>
+                                    <label className="text-[10px] font-medium text-muted-foreground">Key (Auto)</label>
                                     <input
                                         value={editingField?.key}
                                         onChange={e => setEditingField(prev => prev ? ({ ...prev, key: e.target.value }) : null)}
@@ -492,13 +492,13 @@ export default function FormArchitect() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Type</label>
+                                <label className="text-[10px] font-medium text-muted-foreground">Type</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {['text', 'number', 'select', 'multi-select', 'range'].map(t => (
                                         <button
                                             key={t}
                                             onClick={() => setEditingField(prev => prev ? ({ ...prev, type: t as any }) : null)}
-                                            className={`px-3 py-2 rounded-lg text-xs font-bold border transition-all ${editingField?.type === t ? 'bg-primary/10 border-primary text-primary' : 'bg-secondary border-transparent text-muted-foreground hover:bg-secondary/80'}`}
+                                            className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${editingField?.type === t ? 'bg-[#3066bb]/10 border-[#3066bb] text-[#3066bb]' : 'bg-secondary border-transparent text-muted-foreground hover:bg-secondary/80'}`}
                                         >
                                             {t}
                                         </button>
@@ -508,7 +508,7 @@ export default function FormArchitect() {
 
                             {(editingField?.type === 'select' || editingField?.type === 'multi-select') && (
                                 <div className="space-y-2 p-4 bg-secondary/30 rounded-xl border border-border">
-                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Options (Comma Separated)</label>
+                                    <label className="text-[10px] font-medium text-muted-foreground">Options (Comma Separated)</label>
                                     <textarea
                                         value={editingField?.options?.map(o => typeof o === 'string' ? o : o.label).join(', ')}
                                         onChange={(e) => {
@@ -522,7 +522,7 @@ export default function FormArchitect() {
                             )}
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Description</label>
+                                <label className="text-[10px] font-medium text-muted-foreground">Description</label>
                                 <input
                                     value={editingField?.description}
                                     onChange={e => setEditingField(prev => prev ? ({ ...prev, description: e.target.value }) : null)}
@@ -531,9 +531,9 @@ export default function FormArchitect() {
                                 />
                             </div>
                         </div>
-                        <div className="p-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
-                            <button onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 rounded-lg text-sm font-bold text-muted-foreground hover:text-foreground">Cancel</button>
-                            <button onClick={saveField} className="px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:opacity-90 shadow-lg">
+                        <div className="p-4 border-t border-border bg-secondary flex justify-end gap-3">
+                            <button onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground border border-transparent hover:bg-background">Cancel</button>
+                            <button onClick={saveField} className="px-6 py-2 bg-[#3066bb] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all">
                                 {editingFieldIndex !== null ? 'Update Parameter' : 'Add Parameter'}
                             </button>
                         </div>

@@ -5,6 +5,7 @@ import { Send, User, StopCircle, ShieldCheck, TrendingUp, BookOpen } from 'lucid
 import MarkdownRenderer from './MarkdownRenderer';
 import QuantumChart from './QuantumChart';
 import { chatWithGroq, AIResponse } from '@/app/actions/chat';
+import { useAuth } from '@/context/AuthContext';
 
 interface Message {
     id: number;
@@ -23,6 +24,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ mode, contextConfig, placeholder, onAnalysisTriggered }: ChatInterfaceProps) {
+    const { isAuthenticated } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -125,7 +127,8 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
 
         try {
             // Include mode in context config if not present
-            const fullConfig = { ...contextConfig, ...customConfig, mode };
+            const accumulatedTokens = parseInt(sessionStorage.getItem('qg_session_tokens_used') || '0', 10);
+            const fullConfig = { ...contextConfig, ...customConfig, mode, isAuthenticated, accumulatedTokens };
 
             // Simulate Pipeline progress if form is active
             if (fullConfig.formData) {
@@ -135,6 +138,11 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
 
             const response = await chatWithGroq(userMsg.text, 'chat', 'en', fullConfig);
             setProcessingStep(null);
+
+            // Dispatch token usage event to sidebar indicator
+            if (response.tokensUsed !== undefined) {
+                window.dispatchEvent(new CustomEvent('qg:token-update', { detail: { delta: response.tokensUsed } }));
+            }
 
             // Parse Chart Data if present
             let chartData = null;

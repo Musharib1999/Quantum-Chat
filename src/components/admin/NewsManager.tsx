@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Newspaper, Loader2, RefreshCw, Trash, ExternalLink, Activity } from 'lucide-react';
 import axios from 'axios';
+import { useTheme } from '@/components/ThemeContext';
 
 interface NewsItem {
     _id: string;
@@ -16,6 +17,9 @@ interface NewsItem {
 }
 
 export default function NewsManager() {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
+
     const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [isScraping, setIsScraping] = useState(false);
@@ -72,16 +76,16 @@ export default function NewsManager() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                        <Newspaper className="text-blue-400" size={24} /> News Integration
+                    <h2 className={`text-xl font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                        <Newspaper className="text-[#3066bb]" size={24} /> News Integration
                     </h2>
-                    <p className="text-sm text-zinc-400 mt-1">Manage automated news scraping from Google News.</p>
+                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage automated news scraping from Google News.</p>
                 </div>
 
                 <button
                     onClick={handleScrape}
                     disabled={isScraping}
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-sm"
                 >
                     {isScraping ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     {isScraping ? 'Scraping...' : 'Run Scraper Now'}
@@ -96,43 +100,43 @@ export default function NewsManager() {
 
             {/* List */}
             {loading ? (
-                <div className="flex justify-center p-12"><Loader2 className="animate-spin text-muted-foreground w-8 h-8" /></div>
+                <div className="flex justify-center p-12"><Loader2 className={`animate-spin w-8 h-8 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} /></div>
             ) : (
-                <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-                    <table className="w-full text-left text-sm text-zinc-300">
-                        <thead className="bg-black/40 text-zinc-100">
+                <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
+                    <table className={`w-full text-left text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <thead className={isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-50 text-slate-900'}>
                             <tr>
                                 <th className="px-5 py-4 font-medium">Headline & Source</th>
                                 <th className="px-5 py-4 font-medium w-32">Indicators</th>
                                 <th className="px-5 py-4 font-medium text-right w-24">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className={`divide-y ${isDarkMode ? 'divide-white/5' : 'divide-slate-200'}`}>
                             {news.map((item) => (
-                                <tr key={item._id} className="hover:bg-white/5 transition-colors group">
+                                <tr key={item._id} className={`group transition-colors ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}>
                                     <td className="px-5 py-4">
-                                        <div className="font-medium text-zinc-200 line-clamp-2">{item.title}</div>
-                                        <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-500">
-                                            <span className="text-zinc-400">{item.source}</span>
+                                        <div className={`font-medium line-clamp-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{item.title}</div>
+                                        <div className={`flex items-center gap-3 mt-1.5 text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                            <span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>{item.source}</span>
                                             <span>•</span>
                                             <span>{new Date(item.publishedAt || item.createdAt).toLocaleDateString()}</span>
-                                            <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <a href={item.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-[#3066bb] hover:text-[#255299]' : 'text-[#3066bb] hover:text-[#255299]'}`}>
                                                 Read <ExternalLink size={10} />
                                             </a>
                                         </div>
                                     </td>
                                     <td className="px-5 py-4 align-top">
                                         <div className="flex flex-col gap-1.5">
-                                            <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] w-fit font-medium ${item.trend === 'up' ? 'bg-green-500/20 text-green-400 border border-green-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'}`}>
+                                            <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] w-fit font-medium ${item.trend === 'up' ? 'bg-green-500/20 text-green-500 border border-green-500/20' : 'bg-red-500/20 text-red-500 border border-red-500/20'}`}>
                                                 {item.trend === 'up' ? 'UPTREND ▲' : 'DOWNTREND ▼'}
                                             </span>
-                                            <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] w-fit font-medium ${item.impact === 'high' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/20' : 'bg-zinc-500/20 text-zinc-400 border border-zinc-500/20'}`}>
+                                            <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] w-fit font-medium ${item.impact === 'high' ? 'bg-orange-500/20 text-orange-500 border border-orange-500/20' : 'bg-slate-500/20 text-slate-500 border border-slate-500/20'}`}>
                                                 {item.impact.toUpperCase()} IMPACT
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-5 py-4 text-right align-top">
-                                        <button onClick={() => handleDelete(item._id)} className="text-zinc-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100">
+                                        <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100">
                                             <Trash size={16} />
                                         </button>
                                     </td>
@@ -140,7 +144,7 @@ export default function NewsManager() {
                             ))}
                             {news.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="px-5 py-12 text-center text-muted-foreground">
+                                    <td colSpan={3} className="px-5 py-12 text-center text-slate-500">
                                         No news articles yet. Click "Run Scraper Now" to fetch live data.
                                     </td>
                                 </tr>

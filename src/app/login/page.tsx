@@ -1,20 +1,16 @@
-import React, { useState } from 'react';
+"use client";
+
+import React, { useState, Suspense } from 'react';
 import { Mail, Lock, Atom, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-interface LoginUserData {
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    plan?: 'Guest' | 'Pro' | 'Enterprise';
-    role?: string;
-}
+function LoginForm() {
+    const { login } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirect = searchParams.get('redirect') || '/market';
 
-interface IndustryLoginProps {
-    onLogin: (userData: LoginUserData) => void;
-}
-
-export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -27,7 +23,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
         setLoading(true);
 
         if (!email || !password) {
-            setError('Please provide credentials to access the Quantum Interface.');
+            setError('Please provide your credentials.');
             setLoading(false);
             return;
         }
@@ -45,8 +41,9 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                 throw new Error(data.error || 'Login failed');
             }
 
-            // Login successful — pass full user object
-            onLogin(data as LoginUserData);
+            // Store full user profile in AuthContext
+            login(data);
+            router.push(redirect);
         } catch (err: any) {
             setError(err.message || 'Authentication failed. Please check your connection.');
         } finally {
@@ -63,7 +60,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                 </a>
             </div>
 
-            {/* Background Effects */}
+            {/* Background glow effects */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
                 <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] animate-pulse delay-1000" />
@@ -148,5 +145,13 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense>
+            <LoginForm />
+        </Suspense>
     );
 }

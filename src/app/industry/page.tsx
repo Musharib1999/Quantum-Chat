@@ -59,8 +59,8 @@ export default function IndustryPage() {
         return () => clearInterval(interval);
     }, []);
 
-    const handleLogin = (email: string) => {
-        login(email);
+    const handleLogin = (userData: { email: string; firstName?: string; lastName?: string; phone?: string; plan?: 'Guest' | 'Pro' | 'Enterprise'; role?: string }) => {
+        login(userData);
     };
 
     if (isInitializing) {

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash, ExternalLink, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import { useTheme } from '@/components/ThemeContext';
 
 interface Article {
     _id: string;
@@ -14,6 +15,9 @@ interface Article {
 const CATEGORIES = ['Research', 'News', 'Analysis', 'Tutorial'];
 
 export default function ArticleManager() {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
+
     const [articles, setArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(true);
     const [title, setTitle] = useState('');
@@ -65,38 +69,38 @@ export default function ArticleManager() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-white">Research Library</h2>
+                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Research Library</h2>
             </div>
 
             {/* Add Form */}
-            <form onSubmit={handleAdd} className="bg-white/5 p-4 rounded-lg border border-white/10 space-y-4">
+            <form onSubmit={handleAdd} className={`p-4 rounded-lg border space-y-4 ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input
                         type="text"
                         placeholder="Article Title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="md:col-span-1 bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className={`md:col-span-1 border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] ${isDarkMode ? 'bg-slate-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                     />
                     <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className={`border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] ${isDarkMode ? 'bg-slate-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                     >
-                        {CATEGORIES.map(c => <option key={c} value={c} className="bg-zinc-900">{c}</option>)}
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <input
                         type="text"
                         placeholder="Source URL"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className={`border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] ${isDarkMode ? 'bg-slate-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                     />
                 </div>
                 <button
                     type="submit"
                     disabled={isSubmitting || !title || !url}
-                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                     {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                     Add Article
@@ -105,31 +109,31 @@ export default function ArticleManager() {
 
             {/* List */}
             {loading ? (
-                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-muted-foreground" /></div>
+                <div className="flex justify-center p-8"><Loader2 className={`animate-spin ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} /></div>
             ) : (
-                <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-                    <table className="w-full text-left text-sm text-zinc-300">
-                        <thead className="bg-white/5 text-zinc-100">
+                <div className={`rounded-lg border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
+                    <table className={`w-full text-left text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <thead className={isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-50 text-slate-900'}>
                             <tr>
                                 <th className="px-4 py-3 font-medium">Title</th>
                                 <th className="px-4 py-3 font-medium">Category</th>
                                 <th className="px-4 py-3 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className={`divide-y ${isDarkMode ? 'divide-white/5' : 'divide-slate-200'}`}>
                             {articles.map((article) => (
-                                <tr key={article._id} className="hover:bg-white/5 transition-colors">
+                                <tr key={article._id} className={`transition-colors ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}>
                                     <td className="px-4 py-3">
-                                        <div className="font-medium text-zinc-200">{article.title}</div>
-                                        <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                                        <div className={`font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{article.title}</div>
+                                        <a href={article.url} target="_blank" rel="noopener noreferrer" className={`text-xs underline underline-offset-2 ${isDarkMode ? 'text-[#3066bb] hover:text-[#255299]' : 'text-[#3066bb] hover:text-[#255299]'}`}>
                                             {article.url}
                                         </a>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className="bg-white/10 px-2 py-0.5 rounded text-xs text-zinc-300">{article.category}</span>
+                                        <span className={`px-2 py-0.5 rounded text-xs ${isDarkMode ? 'bg-white/10 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{article.category}</span>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <button onClick={() => handleDelete(article._id)} className="text-red-400 hover:text-red-300 p-1 hover:bg-red-500/10 rounded">
+                                        <button onClick={() => handleDelete(article._id)} className="text-red-500 hover:text-red-400 p-1 hover:bg-red-500/10 rounded">
                                             <Trash size={14} />
                                         </button>
                                     </td>
@@ -137,7 +141,7 @@ export default function ArticleManager() {
                             ))}
                             {articles.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">No articles found.</td>
+                                    <td colSpan={3} className="px-4 py-8 text-center text-slate-500">No articles found.</td>
                                 </tr>
                             )}
                         </tbody>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash, ExternalLink, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import { useTheme } from '@/components/ThemeContext';
 
 interface Stock {
     _id: string;
@@ -11,6 +12,9 @@ interface Stock {
 }
 
 export default function StockManager() {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
+
     const [stocks, setStocks] = useState<Stock[]>([]);
     const [loading, setLoading] = useState(true);
     const [newName, setNewName] = useState('');
@@ -61,31 +65,31 @@ export default function StockManager() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-white">Stock Watchlist</h2>
+                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Stock Watchlist</h2>
             </div>
 
             {/* Add Form */}
-            <form onSubmit={handleAdd} className="bg-white/5 p-4 rounded-lg border border-white/10 space-y-4">
+            <form onSubmit={handleAdd} className={`p-4 rounded-lg border space-y-4 ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                         type="text"
                         placeholder="Stock Name (e.g. IonQ Inc.)"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className={`border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] ${isDarkMode ? 'bg-slate-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                     />
                     <input
                         type="text"
                         placeholder="Analysis URL"
                         value={newUrl}
                         onChange={(e) => setNewUrl(e.target.value)}
-                        className="bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className={`border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] ${isDarkMode ? 'bg-slate-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                     />
                 </div>
                 <button
                     type="submit"
                     disabled={isSubmitting || !newName || !newUrl}
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                     {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                     Add Stock
@@ -94,28 +98,28 @@ export default function StockManager() {
 
             {/* List */}
             {loading ? (
-                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-muted-foreground" /></div>
+                <div className="flex justify-center p-8"><Loader2 className={`animate-spin ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} /></div>
             ) : (
-                <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-                    <table className="w-full text-left text-sm text-zinc-300">
-                        <thead className="bg-white/5 text-zinc-100">
+                <div className={`rounded-lg border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
+                    <table className={`w-full text-left text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        <thead className={isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-50 text-slate-900'}>
                             <tr>
                                 <th className="px-4 py-3 font-medium">Name</th>
                                 <th className="px-4 py-3 font-medium">Link</th>
                                 <th className="px-4 py-3 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className={`divide-y ${isDarkMode ? 'divide-white/5' : 'divide-slate-200'}`}>
                             {stocks.map((stock) => (
-                                <tr key={stock._id} className="hover:bg-white/5 transition-colors">
+                                <tr key={stock._id} className={`transition-colors ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}>
                                     <td className="px-4 py-3">{stock.name}</td>
                                     <td className="px-4 py-3">
-                                        <a href={stock.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                                        <a href={stock.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 ${isDarkMode ? 'text-[#3066bb] hover:text-[#255299]' : 'text-[#3066bb] hover:text-[#255299]'}`}>
                                             View <ExternalLink size={12} />
                                         </a>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <button onClick={() => handleDelete(stock._id)} className="text-red-400 hover:text-red-300 p-1 hover:bg-red-500/10 rounded">
+                                        <button onClick={() => handleDelete(stock._id)} className="text-red-500 hover:text-red-400 p-1 hover:bg-red-500/10 rounded">
                                             <Trash size={14} />
                                         </button>
                                     </td>
@@ -123,7 +127,7 @@ export default function StockManager() {
                             ))}
                             {stocks.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">No stocks added yet.</td>
+                                    <td colSpan={3} className="px-4 py-8 text-center text-slate-500">No stocks added yet.</td>
                                 </tr>
                             )}
                         </tbody>

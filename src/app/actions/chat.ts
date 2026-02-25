@@ -9,6 +9,7 @@ import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
 import Experiment from '@/models/Experiment';
 import News from '@/models/News';
+import SystemPrompt from '@/models/SystemPrompt';
 import { execSync } from 'child_process';
 import path from 'path';
 import { getStockPrice, getLatestNews } from './market';
@@ -74,6 +75,9 @@ export interface AIResponse {
     error?: string;
     guardrailsStatus?: string;
     activeGuardrails?: string[];
+    tokensUsed?: number;
+    sessionTokenLimit?: number;
+    tokenLimitExceeded?: boolean;
 }
 
 // --- Connection Check ---
@@ -150,6 +154,31 @@ const queryKnowledgeBase = async (prompt: string) => {
     return null;
 };
 
+// --- Dynamic Prompt Parsing Helper ---
+/**
+ * Fetches the prompt template from DB and replaces {{tags}} with the provided runtime values.
+ * Falls back to a string default if DB fetch fails.
+ */
+async function getDynamicPrompt(category: string, replacements: Record<string, any>, fallback: string): Promise<string> {
+    try {
+        const promptDoc = await SystemPrompt.findOne({ category }).lean();
+        let template = promptDoc ? promptDoc.template : fallback;
+
+        // Replace all {{key}} with their corresponding value from the replacements object
+        Object.keys(replacements).forEach(key => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            let val = replacements[key];
+            if (val === undefined || val === null) val = '';
+            template = template.replace(regex, typeof val === 'object' ? JSON.stringify(val) : String(val));
+        });
+
+        return template;
+    } catch (error) {
+        console.error(`Failed to load dynamic prompt for ${category}`, error);
+        return fallback; // Safety fallback 
+    }
+}
+
 export async function chatWithGroq(
     prompt: string,
     type: 'chat' | 'draft' = 'chat',
@@ -169,6 +198,24 @@ export async function chatWithGroq(
     const activeRules = await getActiveGuardrails();
     const ruleTexts = activeRules.map(r => r.rule);
 
+    // Session Token Limit Enforcement (Guest users only)
+    const SESSION_TOKEN_LIMIT = 10000;
+    const isGuest = !contextConfig?.isAuthenticated;
+    const accumulatedTokens = contextConfig?.accumulatedTokens || 0;
+
+    if (isGuest && accumulatedTokens >= SESSION_TOKEN_LIMIT) {
+        const limitMsg = "🔒 **Session Limit Reached**\n\nYou've used all **10,000 QG Tokens** for this session. To continue using Quantum Guru with unlimited access, please **[Login or Sign Up](/login)** to upgrade your plan.";
+        return {
+            text: limitMsg,
+            source: 'token_limit',
+            tokenLimitExceeded: true,
+            tokensUsed: accumulatedTokens,
+            sessionTokenLimit: SESSION_TOKEN_LIMIT,
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        };
+    }
+
     // 1. Guardrails Pre-Check (Hard Block)
     const violation = checkGuardrails(prompt, activeRules);
     if (violation) {
@@ -185,27 +232,90 @@ export async function chatWithGroq(
     // 2. KB / RAG Check (Standard for all modes, but could be scoped later)
     const kbResult = await queryKnowledgeBase(prompt);
 
-    // 2.5 Autonomous Market Data Fetch (If finance-related and no context provided)
+
+    // 2.5 Autonomous Market Data Fetch via LLM Tool Calling
     let autonomousMarketData = null;
     let autonomousNewsData = null;
 
-    const lowerPrompt = prompt.toLowerCase();
-    const isMarketQuery = ["price", "stock", "market", "share", "dividend", "financial", "nasdaq", "nyse", "ticker"].some(kw => lowerPrompt.includes(kw));
-    const isNewsQuery = ["news", "latest", "headline", "happening", "report", "update"].some(kw => lowerPrompt.includes(kw));
+    if (!contextConfig?.realTimeData && !kbResult) {
+        // Define our available native tools
+        const tools = [
+            {
+                type: "function",
+                function: {
+                    name: "get_stock_price",
+                    description: "Gets the real-time stock price and market data for a given company ticker symbol. Use exactly when the user asks for financial data on a specific company.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            ticker: { type: "string", description: "The official abbreviated stock ticker symbol (e.g., AAPL for Apple, TSLA for Tesla)" }
+                        },
+                        required: ["ticker"]
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: "get_market_news",
+                    description: "Fetches recent news headlines for a given company or generic topic.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            topic: { type: "string", description: "The topic or company name to get news for (e.g., 'Apple' or 'Quantum Computing')." }
+                        },
+                        required: ["topic"]
+                    }
+                }
+            }
+        ];
 
-    if ((isMarketQuery || isNewsQuery) && !contextConfig?.realTimeData && !kbResult) {
-        // Detect potential ticker
-        const commonTickers = ["AAPL", "GOOGL", "MSFT", "AMZN", "META", "TSLA", "NFLX", "NVDA", "BTC", "ETH", "IBM", "IONQ", "RGTI", "QBTS"];
-        const foundTicker = contextConfig?.symbol || commonTickers.find(t => lowerPrompt.includes(t.toLowerCase())) ||
-            (lowerPrompt.match(/\$([a-z]{1,5})/i)?.[1].toUpperCase());
+        try {
+            // First pass: Ask the LLM if it wants to use a tool based on the user's prompt
+            const initialToolCheck = await groq.chat.completions.create({
+                messages: [{ role: "system", content: "You are an AI router. Decide if you need to fetch live data using your tools." }, { role: "user", content: prompt }],
+                model: DEFAULT_MODEL,
+                tools: tools as any[],
+                tool_choice: "auto",
+                temperature: 0,
+            });
 
-        if (foundTicker) {
-            autonomousMarketData = await getStockPrice(foundTicker);
-        }
+            const responseMessage = initialToolCheck.choices[0]?.message;
 
-        if (isNewsQuery || (isMarketQuery && !foundTicker)) {
-            const newsResult = await getLatestNews(foundTicker || "quantum computing market");
-            autonomousNewsData = newsResult.news;
+            // Did the LLM decide to call any tools?
+            if (responseMessage?.tool_calls) {
+                for (const toolCall of responseMessage.tool_calls) {
+                    const args = JSON.parse(toolCall.function.arguments);
+
+                    if (toolCall.function.name === 'get_stock_price') {
+                        console.log(`[Groq Tool] Triggered get_stock_price for: ${args.ticker}`);
+                        try {
+                            // Add an AbortController for a 5-second graceful timeout
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                            // We call the existing local import which talks to the external Vercel app
+                            autonomousMarketData = await getStockPrice(args.ticker);
+                            clearTimeout(timeoutId);
+                        } catch (e: any) {
+                            console.error("[Groq Tool] get_stock_price failed/timed out:", e.message);
+                            // It failed safely, we will just inform Groq we don't have the data in the system instructions later
+                        }
+                    }
+
+                    if (toolCall.function.name === 'get_market_news') {
+                        console.log(`[Groq Tool] Triggered get_market_news for: ${args.topic}`);
+                        try {
+                            const newsResult = await getLatestNews(args.topic);
+                            autonomousNewsData = newsResult.news;
+                        } catch (e: any) {
+                            console.error("[Groq Tool] get_market_news failed:", e.message);
+                        }
+                    }
+                }
+            }
+        } catch (toolError) {
+            console.error("[Groq Tool Calling Error] - Proceeding without tools:", toolError);
         }
     }
 
@@ -249,10 +359,18 @@ export async function chatWithGroq(
         };
     }
 
+
     // 3. Main LLM Logic
-    let systemInstructions = `You are Quantum AI, a futuristic and highly capable AI assistant. Be helpful, professional, and efficient.
-    Current Time: ${new Date().toLocaleString()}
-    Language: ${lang === 'hi' ? 'Hindi' : 'English'}`;
+    // We already have kbResult, autonomousMarketData, and autonomousNewsData from the checks above
+    const timeStringVal = new Date().toLocaleString();
+    const langStringVal = lang === 'hi' ? 'Hindi' : 'English';
+
+    // Base System Prompt (General)
+    let systemInstructions = await getDynamicPrompt(
+        'general_conversation',
+        { time: timeStringVal, language: langStringVal },
+        `You are Quantum AI, a futuristic and highly capable AI assistant. Be helpful, professional, and efficient.\nCurrent Time: ${timeStringVal}\nLanguage: ${langStringVal}`
+    );
 
     // Inject Autonomous Market/News context if fetched
     if (autonomousMarketData) {
@@ -340,78 +458,50 @@ export async function chatWithGroq(
             // Inject Real-Time Data if available
             if (contextConfig.realTimeData) {
                 const rt = contextConfig.realTimeData;
-                systemInstructions += `\n\nREAL-TIME DATA (ALPHA VANTAGE):
-                - Symbol: ${rt.symbol}
-                - Price: $${rt.price}
-                - Change: ${rt.change} (${rt.changePercent})
-                - Volume: ${rt.volume}
-                - Latest Trading Day: ${rt.latestTradingDay}
-                - Previous Close: ${rt.previousClose}
-                
-                IMPORTANT: Use this REAL-TIME data as the primary source for price and movement. Do NOT rely on potential hallucinations or old training data.`;
-            }
-            systemInstructions += `\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset or news topic.`;
-
-            // Conditional Response Structure
-            let responseStructure = "";
-            if (contextConfig.realTimeData || (targetSymbol && !contextConfig.newsTitle)) {
-                // Case A: Stock Data is available OR we are analyzing a specific ticker
-                responseStructure = `
-                1. **## Stocks Prices and Movements Numbers**
-                   - Provide Current price, day's change, percentage change, and key volume data.
-                2. **## News**
-                   - Recent headlines and relevant news events affecting the stock.
-                3. **## Analysis**
-                   - Technical and fundamental analysis based on the data.
-                4. **## Conclusion**
-                   - A final summary and potential outlook.`;
+                systemInstructions = await getDynamicPrompt('market_inquiry', {
+                    time: timeString,
+                    symbol: rt.symbol,
+                    price: rt.price,
+                    change: rt.change,
+                    changePercent: rt.changePercent,
+                    volume: rt.volume,
+                    date: rt.latestTradingDay,
+                    close: rt.previousClose,
+                    scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
+                }, systemInstructions); // fallback to what we had
             } else {
-                // Case B: News-Only Analysis (No specific stock data focus)
-                responseStructure = `
-                1. **## News Analysis**
-                   - Detailed breakdown of the specific news story or headline provided.
-                2. **## Market Implications**
-                   - How this news impacts the broader market or specific sectors.
-                3. **## Key Takeaways**
-                   - The most important points for investors to know.
-                4. **## Outlook**
-                   - Potential future developments based on this news.`;
-            }
+                // Even without full stock data, we might have a scraped URL for a given target symbol
+                // We will fallback to a simplified market instruction if we don't have real time data but we ARE in market mode
+                systemInstructions += `\nMODE: MARKET INTELLIGENCE\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset or news topic.\n${autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''}`;
+                if (targetSymbol) systemInstructions += `\nFOCUS ASSET: ${targetSymbol}`;
 
-            systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
-            You must provide your response in the following strict order using Markdown:
-            ${responseStructure}
-            
-            STYLING RULES:
-            - Use '##' for main section headers.
-            - Do NOT use decorative symbols like '|' or '---' at the start of headers.
-            - Use bullet points for lists.`;
+                let responseStructure = `
+                 1. **## News Analysis**
+                    - Detailed breakdown of the specific news story or headline provided.
+                 2. **## Market Implications**
+                    - How this news impacts the broader market or specific sectors.
+                 3. **## Key Takeaways**
+                    - The most important points for investors to know.
+                 4. **## Outlook**
+                    - Potential future developments based on this news.`;
+
+                systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:\nYou must provide your response in the following strict order using Markdown:\n${responseStructure}\n\nSTYLING RULES:\n- Use '##' for main section headers.\n- Do NOT use decorative symbols like '|' or '---' at the start of headers.\n- Use bullet points for lists.`;
+            }
         }
         // Mode: Article & Learn
         else if (contextConfig.mode === 'article') {
-            systemInstructions += `\n\nMODE: ARTICLE & LEARN`;
-            if (contextConfig.articleTitle) systemInstructions += `\nCURRENT PAPER/ARTICLE: ${contextConfig.articleTitle}`;
-            if (contextConfig.articleCategory) systemInstructions += `\nCATEGORY: ${contextConfig.articleCategory}`;
             if (contextConfig.articleUrl) {
-                systemInstructions += `\nSOURCE URL: ${contextConfig.articleUrl}`;
                 const scrapedData = await scrapeUrl(contextConfig.articleUrl);
                 if (scrapedData) autonomousContext = scrapedData;
             }
-            systemInstructions += `\nTASK: Summarize, analyze, or answer questions based on the specific research article provided.`;
-            systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:
-            You must provide your response in the following strict order using Markdown:
-            1. **## Executive Summary**
-               - A concise overview of the article's main purpose.
-            2. **## Key Findings**
-               - The most important results or discoveries.
-            3. **## Analysis & Implications**
-               - What this means for the field of Quantum Computing.
-            4. **## Conclusion**
-               - Final thoughts or future outlook.
 
-            STYLING RULES:
-            - Use '##' for main section headers.
-            - Do NOT use decorative symbols like '|' or '---' at the start of headers.`;
+            // Override ALL system instructions with the Article mode prompt (which is how the original worked)
+            systemInstructions = await getDynamicPrompt('article_inquiry', {
+                title: contextConfig.articleTitle || 'Provided Context',
+                category: contextConfig.articleCategory || 'General',
+                url: contextConfig.articleUrl || 'N/A',
+                scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
+            }, systemInstructions); // fallback
         }
         // Mode: Industry (Modular / Robust)
         else if (contextConfig.mode === 'industry') {
@@ -428,30 +518,12 @@ export async function chatWithGroq(
 
                 if (isDWave) {
                     // --- D-WAVE WORKFLOW ---
-                    codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
-
-CRITICAL: The ONLY valid BinaryQuadraticModel constructor is:
-  BinaryQuadraticModel(linear: dict, quadratic: dict, offset: float, vartype: str)
-  - linear = {'var': bias_float, ...}
-  - quadratic = {('var1','var2'): coupling_float, ...}
-  - vartype = 'BINARY' or 'SPIN'
-  DO NOT pass num_variables or any other argument.
-
-Problem: ${problem} | Industry: ${industry} | Service: ${service}
-Parameters: ${JSON.stringify(formData)}
-
-Write a script that:
-1. from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler
-2. Define linear={} and quadratic={} dicts to encode the problem. You may use UP TO 30 VARIABLES.
-3. If the problem requires more than 30 variables, split into 2 BATCHES of ≤15 variables each:
-   - Define bqm_batch1 and bqm_batch2 separately
-   - Run each independently: sampleset1 = sampler.sample(bqm_batch1, num_reads=50)
-   - Combine and print: print(f'Batch 1: {sampleset1.first.sample}, Energy: {sampleset1.first.energy:.4f}')
-4. If ≤30 variables, use a single BQM: bqm = BinaryQuadraticModel(linear, quadratic, 0.0, 'BINARY')
-   - sampler = SimulatedAnnealingSampler(); sampleset = sampler.sample(bqm, num_reads=50)
-   - best = sampleset.first; print(f'Best: {best.sample}'); print(f'Energy: {best.energy:.4f}')
-
-Return ONLY the Python code. No markdown. No backticks. No explanation.`;
+                    codePrompt = await getDynamicPrompt('industry_dwave', {
+                        industry,
+                        service,
+                        problem,
+                        parameters: JSON.stringify(formData)
+                    }, `You are a Python expert using dimod 0.12.21. Generate a complete runnable script. Problem: ${problem} | Industry: ${industry} | Service: ${service}. Return ONLY Python code.`);
 
                     const completion1 = await groq.chat.completions.create({
                         messages: [{ role: "system", content: "You are a D-Wave/Ocean Expert. Return only code." }, { role: "user", content: codePrompt }],
@@ -475,19 +547,13 @@ Return ONLY the Python code. No markdown. No backticks. No explanation.`;
 
                 } else {
                     // --- QISKIT WORKFLOW (Default) ---
-                    codePrompt = `Generate a complete, self-contained Python Qiskit script for the following quantum computing problem:
-Industry: ${industry}
-Service: ${service}
-Problem: ${problem}
-Hardware: ${hardware}
-Parameters: ${JSON.stringify(formData)}
-
-Rules (VERY IMPORTANT):
-1. Use qiskit and qiskit_aer for simulation
-2. Build a QuantumCircuit, add gates, add measurements
-3. Run with AerSimulator: from qiskit_aer import AerSimulator; sim = AerSimulator(); job = sim.run(circuit, shots=1024); result = job.result(); counts = result.get_counts(); print(f"Results: {counts}")
-4. Print the measurement counts clearly
-5. Return ONLY the Python code, no markdown, no explanation`;
+                    codePrompt = await getDynamicPrompt('industry_qiskit', {
+                        industry,
+                        service,
+                        problem,
+                        hardware,
+                        parameters: JSON.stringify(formData)
+                    }, `Generate a complete Qiskit script for Problem: ${problem} | Industry: ${industry}. Return ONLY Python code.`);
 
                     const completion1 = await groq.chat.completions.create({
                         messages: [{ role: "system", content: "You are a Qiskit Expert. Return only code." }, { role: "user", content: codePrompt }],
@@ -501,25 +567,15 @@ Rules (VERY IMPORTANT):
                 }
 
                 // Pass 2: Interpret and Format
-                const interpretPrompt = `You are a Quantum Computing analyst. Analyze the following ACTUAL simulator output ONLY.
+                const simulatorType = isDWave ? 'D-Wave Annealing' : 'Qiskit Gate-Model';
+                const rawActualOutput = executionResult.output || executionResult.error;
 
-Problem: ${problem} | Industry: ${industry} | Simulator: ${isDWave ? 'D-Wave Annealing' : 'Qiskit Gate-Model'}
-Raw Output: ${executionResult.output || executionResult.error}
-
-STRICT RULES:
-- Write exactly ONE paragraph of 5-6 lines maximum.
-- Only describe what the ACTUAL output data shows. Do NOT assume, speculate, or explain theory.
-- If the output is an error, state only what the error was and what it means technically.
-- Do not add introductions, conclusions, or generic quantum computing background.
-- Be direct and data-driven.
-
-After the paragraph, generate a chart from the actual data:
-[CHART_DATA]
-{
-  "type": "bar",
-  "data": [ {"name": "Label from output", "value": 123} ]
-}
-[/CHART_DATA]`;
+                const interpretPrompt = await getDynamicPrompt('industry_analysis', {
+                    problem,
+                    industry,
+                    simulator: simulatorType,
+                    output: rawActualOutput
+                }, `Analyze the following ACTUAL simulator output ONLY. Output: ${rawActualOutput}`);
 
                 const completion2 = await groq.chat.completions.create({
                     messages: [
@@ -624,10 +680,16 @@ After the paragraph, generate a chart from the actual data:
     If a user asks about these topics, politely decline to answer.`;
 
     let finalPrompt = prompt;
+    let integratedContext = null;
+    let contextSource = null;
 
-    // Integrate KB or Autonomous Context if found
-    const integratedContext = kbResult?.type === 'context' ? kbResult.text : autonomousContext;
-    const contextSource = kbResult?.type === 'context' ? kbResult.source : (contextConfig?.stockUrl || contextConfig?.articleUrl);
+    if (kbResult?.type === 'context') {
+        integratedContext = kbResult.text;
+        contextSource = kbResult.source;
+    } else if (autonomousContext) {
+        integratedContext = autonomousContext;
+        contextSource = contextConfig?.stockUrl || contextConfig?.articleUrl || "Autonomous Scrape";
+    }
 
     if (integratedContext) {
         systemInstructions += "\n\nUse the following official context to answer the user's question accurately. Provide summaries of trends, market news, and stock prices if applicable. If information is missing, state what is available.";
@@ -644,6 +706,7 @@ After the paragraph, generate a chart from the actual data:
         });
 
         const text = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+        const tokensUsed = completion.usage?.total_tokens || 0;
 
         // --- Log Interaction ---
         await ChatLog.create({
@@ -660,47 +723,35 @@ After the paragraph, generate a chart from the actual data:
             source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
             sourceUrl: kbResult?.type === 'context' ? kbResult.source : undefined,
             guardrailsStatus: 'passed',
-            activeGuardrails: ruleTexts
+            activeGuardrails: ruleTexts,
+            tokensUsed,
+            sessionTokenLimit: SESSION_TOKEN_LIMIT,
         };
+
     } catch (error: any) {
         console.error("Groq Server Error:", error);
 
-        // Fallback: If we hit a rate limit but we successfully fetched market data, return that data directly.
-        let fallbackText = "";
-        if (autonomousMarketData) {
-            fallbackText += `⚠️ **Notice: Deep AI Analysis is currently unavaliable.**\n\nHowever, I retrieved the raw market data you requested:\n\n**${autonomousMarketData.symbol}**\n- **Price:** $${autonomousMarketData.price}\n- **Change:** ${autonomousMarketData.change} (${autonomousMarketData.changePercent})\n- **Volume:** ${autonomousMarketData.volume}\n- **Previous Close:** $${autonomousMarketData.previousClose}\n\n`;
-        }
+        // Basic offline fallback (Strict Maintenance Mode)
+        const errorMsg = "I am currently undergoing maintenance and cannot process complex requests right now. However, you can still ask me questions from our official Knowledge Base, or try again in a few minutes.";
 
-        if (autonomousNewsData && autonomousNewsData.length > 0) {
-            fallbackText += `**Latest Headlines:**\n`;
-            autonomousNewsData.slice(0, 3).forEach((n: any) => {
-                fallbackText += `- [${n.title}](${n.url || '#'}) (${n.source})\n`;
-            });
-        }
-
-        if (fallbackText) {
-            // We have fallback data to show
-            return {
-                text: fallbackText,
-                source: 'fallback_market_data',
-                guardrailsStatus: 'passed',
-                activeGuardrails: ruleTexts
-            };
-        }
-
-        // Log the error response if no fallback data exists
-        const errorMsg = "Failed to process request with Groq API (Rate limit or server error). Please try again later.";
         await ChatLog.create({
             userQuery: prompt,
-            aiResponse: error.message || errorMsg,
+            aiResponse: errorMsg,
             source: 'error',
             guardrailsStatus: 'passed', // Logic still passed guardrails
             activeGuardrails: ruleTexts
         });
 
-        return { text: errorMsg, error: error.message };
+        return {
+            text: errorMsg,
+            error: "LLM_OFFLINE",
+            source: 'error',
+            guardrailsStatus: 'passed',
+            activeGuardrails: ruleTexts
+        };
     }
 }
+
 export async function getMarketNews() {
     try {
         await dbConnect();
