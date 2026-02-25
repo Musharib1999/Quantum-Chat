@@ -118,28 +118,26 @@ export default function LandingPage() {
 
           {/* Card 2: Market Intelligence */}
           <FeatureCard
-            href="#"
+            href="/market"
             icon={<TrendingUp size={32} />}
             title="Quantum Stocks and Market Intelligence"
             description="Current market analysis of your quantum asset"
-            actionText="Unavailable"
+            actionText="Launch"
             isDarkMode={isDarkMode}
             accentColor="emerald"
-            status="locked"
-            badgeText="Under Maintenance"
+            status="unlocked"
           />
 
           {/* Card 3: Article & Learn */}
           <FeatureCard
-            href="#"
+            href="/article-learn"
             icon={<BookOpen size={32} />}
             title="Analyze Quantum Information"
             description="Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain"
-            actionText="Unavailable"
+            actionText="Launch"
             isDarkMode={isDarkMode}
             accentColor="rose"
-            status="locked"
-            badgeText="Under Maintenance"
+            status="unlocked"
           />
 
         </div>
