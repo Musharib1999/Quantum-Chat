@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
-    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon, Newspaper
+    LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon, Newspaper, Briefcase
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +22,7 @@ import FormArchitect from '../../../components/admin/FormArchitect';
 import UserManager from '../../../components/admin/UserManager';
 import NewsManager from '../../../components/admin/NewsManager';
 import PromptEditor from '../../../components/admin/PromptEditor';
+import UseCaseManager from '../../../components/admin/UseCaseManager';
 
 export default function AdminDashboard() {
     const { theme } = useTheme();
@@ -193,6 +194,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('articles'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<Briefcase size={20} />}
+                        label="Use Cases"
+                        active={activeTab === 'use_cases'}
+                        onClick={() => { setActiveTab('use_cases'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<UserIcon size={20} />}
                         label="Users"
                         active={activeTab === 'users'}
@@ -244,6 +251,7 @@ export default function AdminDashboard() {
                             {activeTab === 'stocks' && <TrendingUp className="text-green-400" />}
                             {activeTab === 'news' && <Newspaper className="text-blue-500" />}
                             {activeTab === 'articles' && <BookOpen className="text-blue-400" />}
+                            {activeTab === 'use_cases' && <Briefcase className="text-purple-500" />}
                             {activeTab === 'forms' && <Layers className="text-primary" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
                             {activeTab.replace('_', ' ')}
@@ -459,6 +467,15 @@ export default function AdminDashboard() {
                     {activeTab === 'news' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <NewsManager />
+                        </div>
+                    )}
+
+                    {/* USE CASES TAB */}
+                    {activeTab === 'use_cases' && (
+                        <div className="flex flex-col h-full bg-transparent overflow-y-auto">
+                            <div className="w-full max-w-7xl mx-auto p-4 md:p-8 shrink-0">
+                                <UseCaseManager />
+                            </div>
                         </div>
                     )}
 

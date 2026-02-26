@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import ChatInterface from '@/components/ChatInterface';
 import ArticleSidebar from '@/components/ArticleSidebar';
+import UseCaseSidebar from '@/components/UseCaseSidebar';
 import ArticleChat from '@/components/chat/ArticleChat';
 
 export default function ArticlePage() {
@@ -23,8 +24,13 @@ export default function ArticlePage() {
         <AppLayout
             currentMode="article"
             sidebarContent={
-                <div className="h-full">
+                <div className="h-full border-b border-border">
                     <ArticleSidebar onSelect={handleArticleSelect} activeArticleId={selectedArticle?._id} />
+                </div>
+            }
+            rightSidebarContent={
+                <div className="h-full bg-card/30">
+                    <UseCaseSidebar />
                 </div>
             }
         >
