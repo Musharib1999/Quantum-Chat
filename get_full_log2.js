@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
 const { get_encoding } = require('tiktoken');
 
+require('dotenv').config();
+
 async function checkLog() {
-    await mongoose.connect('mongodb+srv://musharibsubhani_db_user:Zq8jSgF42sl88Jcl@cluster0.auezwk2.mongodb.net/?appName=Cluster0');
+    await mongoose.connect(process.env.MONGODB_URI);
 
     // Mongoose schema matches the log DB
     const ChatLogSchema = new mongoose.Schema({
@@ -16,7 +18,7 @@ async function checkLog() {
 
     // Get the exact log
     const log = await ChatLog.findOne({ userQuery: { $regex: /Alphabet/i } }).sort({ timestamp: -1 }).lean();
-    
+
     console.log("========================================");
     if (!log) {
         console.log("Could not find Alphabet log");

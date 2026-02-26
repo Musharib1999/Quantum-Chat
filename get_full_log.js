@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 
+require('dotenv').config();
+
 async function checkLog() {
-    await mongoose.connect('mongodb+srv://musharibsubhani_db_user:Zq8jSgF42sl88Jcl@cluster0.auezwk2.mongodb.net/?appName=Cluster0');
+    await mongoose.connect(process.env.MONGODB_URI);
 
     const ChatLogSchema = new mongoose.Schema({
         userQuery: String,
@@ -14,7 +16,7 @@ async function checkLog() {
 
     // Get the log exactly from when Alphabet was queried
     const log = await ChatLog.findOne({ userQuery: { $regex: /Alphabet/i } }).sort({ timestamp: -1 }).lean();
-    
+
     if (log) {
         console.log("==================================================");
         console.log(`TIME: ${log.timestamp}`);

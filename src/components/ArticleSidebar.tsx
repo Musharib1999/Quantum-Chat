@@ -38,14 +38,15 @@ export default function ArticleSidebar({ onSelect, activeArticleId }: ArticleSid
     return (
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border space-y-4">
-                <h3 className="font-bold text-foreground flex items-center gap-2">
+                <h3 className="text-foreground flex items-center gap-2">
                     <BookOpen className="text-blue-400" size={18} /> Article & Learn
                 </h3>
 
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <input
-                        className="w-full bg-secondary/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm text-foreground focus:outline-none focus:border-blue-500/50 transition-colors"
+                        type="text"
+                        className="w-full bg-secondary/50 border border-input rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-ring transition-all placeholder:text-muted-foreground/50"
                         placeholder="Search research..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -76,14 +77,14 @@ export default function ArticleSidebar({ onSelect, activeArticleId }: ArticleSid
                         key={article._id}
                         onClick={() => onSelect(article)}
                         className={`w-full text-left px-3 py-3 rounded-xl border transition-all duration-200 group ${activeArticleId === article._id
-                            ? 'bg-card border-ring ring-1 ring-ring shadow-md text-blue-400 font-medium'
-                            : 'bg-transparent border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md'
+                            ? 'bg-card border-ring shadow-md text-blue-400 font-medium'
+                            : 'bg-transparent border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md'
                             }`}
                     >
                         <div className="flex items-start gap-3">
                             <FileText size={16} className={`shrink-0 mt-0.5 ${activeArticleId === article._id ? 'text-blue-400' : 'text-muted-foreground/50'}`} />
-                            <div className="min-w-0">
-                                <div className="font-medium text-sm leading-snug break-words">{article.title}</div>
+                            <div className="min-w-0 flex-1">
+                                <div className="text-sm leading-snug break-words">{article.title}</div>
                                 <div className="flex items-center gap-2 mt-1.5">
                                     <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">{article.category}</span>
                                     {article.url && (

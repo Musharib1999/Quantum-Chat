@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 
+require('dotenv').config();
+
 async function checkLog() {
-    await mongoose.connect('mongodb+srv://musharibsubhani_db_user:Zq8jSgF42sl88Jcl@cluster0.auezwk2.mongodb.net/?appName=Cluster0');
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected to MongoDB!");
 
     // We only need the simplest dynamic schema to read the raw logs
@@ -16,14 +18,14 @@ async function checkLog() {
 
     // Let's grab the last 5 logs from around that time
     const logs = await ChatLog.find().sort({ timestamp: -1 }).limit(5).lean();
-    
+
     logs.forEach(log => {
         console.log("-----------------------------------------");
         console.log(`TIME: ${log.timestamp}`);
         console.log(`SOURCE: ${log.source}`);
         console.log(`USER ASKED: ${log.userQuery}`);
         // Only print first 200 chars to avoid flooding the terminal
-        console.log(`AI REPLIED: ${log.aiResponse?.substring(0, 200)}...`); 
+        console.log(`AI REPLIED: ${log.aiResponse?.substring(0, 200)}...`);
     });
 
     process.exit(0);
