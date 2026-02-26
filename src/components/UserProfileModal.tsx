@@ -72,22 +72,24 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             </div>
 
             {/* Action button */}
-            {isAuthenticated && user ? (
-                <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 mx-2 px-3 py-2.5 my-1.5 rounded-lg text-sm text-red-500 hover:ring-1 hover:ring-inset hover:ring-ring transition-all"
-                >
-                    <LogOut size={14} />
-                    Sign Out
-                </button>
-            ) : (
-                <button
-                    onClick={handleLogin}
-                    className="w-full mx-2 px-3 py-2.5 my-1.5 rounded-lg text-sm text-foreground hover:ring-1 hover:ring-inset hover:ring-ring transition-all text-left"
-                >
-                    Login
-                </button>
-            )}
+            <div className="p-1.5">
+                {isAuthenticated && user ? (
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-500 hover:ring-1 hover:ring-inset hover:ring-ring transition-all text-left"
+                    >
+                        <LogOut size={14} />
+                        Sign Out
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleLogin}
+                        className="w-full px-3 py-2 rounded-lg text-sm text-foreground hover:ring-1 hover:ring-inset hover:ring-ring transition-all text-left"
+                    >
+                        Login
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
