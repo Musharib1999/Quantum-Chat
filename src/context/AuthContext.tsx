@@ -10,6 +10,8 @@ interface User {
     phone?: string;
     plan?: 'Guest' | 'Pro' | 'Enterprise';
     role?: string;
+    tokenLimit?: number;
+    tokensUsed?: number;
 }
 
 interface AuthContextType {
@@ -40,6 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     phone: parsed.phone || '',
                     plan: parsed.plan || 'Guest',
                     role: parsed.role || 'user',
+                    tokenLimit: parsed.tokenLimit,
+                    tokensUsed: parsed.tokensUsed,
                 });
                 setIsAuthenticated(true);
             } catch (e) {
@@ -59,6 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             phone: userData.phone || '',
             plan: userData.plan || 'Guest',
             role: userData.role || 'user',
+            tokenLimit: userData.tokenLimit,
+            tokensUsed: userData.tokensUsed,
         };
         setUser(newUser);
         setIsAuthenticated(true);

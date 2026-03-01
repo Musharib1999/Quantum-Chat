@@ -2,37 +2,48 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
-const SESSION_TOKEN_LIMIT = 100000;
+const DEFAULT_GUEST_LIMIT = 100000;
 const STORAGE_KEY = 'qg_session_tokens_used';
 
 export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () => void }) {
+    const { user, isAuthenticated } = useAuth();
     const [tokensUsed, setTokensUsed] = useState<number>(0);
 
+    const sessionTokenLimit = user?.tokenLimit || DEFAULT_GUEST_LIMIT;
+
     useEffect(() => {
+        if (isAuthenticated && user?.tokensUsed !== undefined) {
+            setTokensUsed(user.tokensUsed);
+            return;
+        }
+
         const stored = sessionStorage.getItem(STORAGE_KEY);
         if (stored) {
             const parsed = parseInt(stored, 10);
             if (!isNaN(parsed)) setTokensUsed(parsed);
         }
-    }, []);
+    }, [isAuthenticated, user?.tokensUsed]);
 
     useEffect(() => {
         const handleTokenUpdate = (e: Event) => {
             const { delta } = (e as CustomEvent<{ delta: number }>).detail;
             if (typeof delta !== 'number' || isNaN(delta)) return;
             setTokensUsed((prev: number) => {
-                const newTotal = Math.min(prev + delta, SESSION_TOKEN_LIMIT);
-                sessionStorage.setItem(STORAGE_KEY, String(newTotal));
+                const newTotal = Math.min(prev + delta, sessionTokenLimit);
+                if (!isAuthenticated) {
+                    sessionStorage.setItem(STORAGE_KEY, String(newTotal));
+                }
                 return newTotal;
             });
         };
         window.addEventListener('qg:token-update', handleTokenUpdate);
         return () => window.removeEventListener('qg:token-update', handleTokenUpdate);
-    }, []);
+    }, [isAuthenticated, sessionTokenLimit]);
 
-    const remaining = Math.max(SESSION_TOKEN_LIMIT - tokensUsed, 0);
-    const fillPercent = Math.min((tokensUsed / SESSION_TOKEN_LIMIT) * 100, 100);
+    const remaining = Math.max(sessionTokenLimit - tokensUsed, 0);
+    const fillPercent = Math.min((tokensUsed / sessionTokenLimit) * 100, 100);
     const remainingPercent = 100 - fillPercent;
 
     const isWarning = remainingPercent <= 10;
@@ -49,7 +60,7 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
                         QG Tokens
                     </span>
                     <span className="text-[10px] font-mono tabular-nums ml-1 text-foreground">
-                        {tokensUsed.toLocaleString()} / {SESSION_TOKEN_LIMIT.toLocaleString()}
+                        {tokensUsed.toLocaleString()} / {sessionTokenLimit.toLocaleString()}
                     </span>
                 </div>
 

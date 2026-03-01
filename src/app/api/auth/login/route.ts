@@ -24,6 +24,8 @@ export async function POST(req: Request) {
             phone: user.phone || '',
             plan: user.plan || 'Guest',
             role: user.role || 'user',
+            tokenLimit: user.tokenLimit,
+            tokensUsed: user.tokensUsed
         });
 
     } catch (error) {
