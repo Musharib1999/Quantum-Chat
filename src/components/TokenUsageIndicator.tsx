@@ -56,7 +56,7 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
     return (
         <div className="px-4 py-3 border-b border-border">
             {/* Top row: token label + count + big circular burger button */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between gap-4 mb-2">
                 <div className="flex items-center gap-1.5">
                     <span className="text-[10px] text-foreground uppercase tracking-widest">
                         QG Tokens
@@ -71,7 +71,7 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
                     <button
                         onClick={onMenuClick}
                         title="Account"
-                        className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 shadow-sm"
+                        className="w-9 h-9 shrink-0 rounded-full bg-secondary border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 shadow-sm"
                     >
                         <Menu size={17} strokeWidth={2.2} />
                     </button>

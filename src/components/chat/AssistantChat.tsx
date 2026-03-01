@@ -92,7 +92,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                                 Quantum Assistant
                             </h2>
                             <p className="text-muted-foreground text-lg font-light max-w-2xl mx-auto leading-relaxed">
-                                A new Quantum Guru LLM training on high quality Quantum data with 43 Million tokens and 240 million parameters.
+                                Summarize and construct your thoughts for quantum
                             </p>
                         </div>
                     )}
@@ -118,12 +118,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                         </button>
                     </div>
 
-                    {/* Placeholder Footer Info */}
-                    <div className="mt-4 text-center">
-                        <p className="text-[11px] text-muted-foreground/60 transition-opacity duration-500">
-                            Quantum Assistant can answer any questions accurately.
-                        </p>
-                    </div>
+
                 </div>
             </div>
         </div>
