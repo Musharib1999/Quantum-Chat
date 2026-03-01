@@ -16,7 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function IndustryPage() {
     // Auth Context
-    const { isAuthenticated, login, isInitializing } = useAuth();
+    const { isAuthenticated, user, login, isInitializing } = useAuth();
 
     // Flow State: 'wip' means using wizard, 'chat' means using chat
     const [flowStage, setFlowStage] = useState<'SELECTION' | 'CHAT'>('SELECTION');
@@ -33,13 +33,13 @@ export default function IndustryPage() {
     // Modal State
     const [selectedExperiment, setSelectedExperiment] = useState<any | null>(null);
 
-    // Fetch Metadata & Experiments on Mount
+    // Fetch Metadata & Experiments on Mount/Auth
     useEffect(() => {
         const initData = async () => {
             try {
                 const [metaRes, expRes] = await Promise.all([
                     axios.get('/api/quantum-forms/metadata'),
-                    getExperiments()
+                    getExperiments(user?.email)
                 ]);
                 if (metaRes.data) setMetadata(metaRes.data);
                 if (expRes) setExperiments(expRes);
@@ -49,15 +49,19 @@ export default function IndustryPage() {
                 setLoadingExperiments(false);
             }
         };
-        initData();
 
-        // Poll for experiment updates
-        const interval = setInterval(async () => {
-            const exps = await getExperiments();
-            if (exps) setExperiments(exps);
-        }, 5000);
-        return () => clearInterval(interval);
-    }, []);
+        // Only run when we know auth state
+        if (!isInitializing) {
+            initData();
+
+            // Poll for experiment updates
+            const interval = setInterval(async () => {
+                const exps = await getExperiments(user?.email);
+                if (exps) setExperiments(exps);
+            }, 5000);
+            return () => clearInterval(interval);
+        }
+    }, [user?.email, isInitializing]);
 
     const handleLogin = (userData: { email: string; firstName?: string; lastName?: string; phone?: string; plan?: 'Guest' | 'Pro' | 'Enterprise'; role?: string }) => {
         login(userData);
@@ -248,6 +252,7 @@ export default function IndustryPage() {
                             experiments={experiments}
                             loading={loadingExperiments}
                             onSelectExperiment={setSelectedExperiment}
+                            isGuest={!isAuthenticated}
                         />
                     </div>
                 }

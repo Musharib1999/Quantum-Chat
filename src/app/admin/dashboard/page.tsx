@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
     LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon, Newspaper, Briefcase,
-    Key, Loader2
+    Key, Loader2, Beaker
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -24,6 +24,7 @@ import UserManager from '../../../components/admin/UserManager';
 import NewsManager from '../../../components/admin/NewsManager';
 import PromptEditor from '../../../components/admin/PromptEditor';
 import UseCaseManager from '../../../components/admin/UseCaseManager';
+import ExperimentManager from '../../../components/admin/ExperimentManager';
 
 export default function AdminDashboard() {
     const { theme } = useTheme();
@@ -253,6 +254,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('use_cases'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<Beaker size={20} />}
+                        label="Experiments"
+                        active={activeTab === 'experiments'}
+                        onClick={() => { setActiveTab('experiments'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<UserIcon size={20} />}
                         label="Users"
                         active={activeTab === 'users'}
@@ -312,6 +319,7 @@ export default function AdminDashboard() {
                             {activeTab === 'news' && <Newspaper className="text-blue-500" />}
                             {activeTab === 'articles' && <BookOpen className="text-blue-400" />}
                             {activeTab === 'use_cases' && <Briefcase className="text-purple-500" />}
+                            {activeTab === 'experiments' && <Beaker className="text-purple-500" />}
                             {activeTab === 'forms' && <Layers className="text-primary" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
                             {activeTab.replace('_', ' ')}
@@ -330,6 +338,13 @@ export default function AdminDashboard() {
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-auto p-4 md:p-8 bg-transparent">
+
+                    {/* EXPERIMENTS TAB */}
+                    {activeTab === 'experiments' && (
+                        <div className="max-w-7xl mx-auto">
+                            <ExperimentManager />
+                        </div>
+                    )}
 
                     {/* KNOWLEDGE BASE TAB */}
                     {activeTab === 'knowledge_base' && (

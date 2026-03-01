@@ -3,11 +3,22 @@
 import dbConnect from '@/lib/db';
 import Experiment from '@/models/Experiment';
 
-export async function getExperiments() {
+export async function getExperiments(userEmail?: string, isAdmin: boolean = false) {
     await dbConnect();
     try {
+        // If not admin and no userEmail provided, return nothing (Guest state)
+        if (!isAdmin && !userEmail) {
+            return [];
+        }
+
+        // Build query document
+        const query: any = {};
+        if (!isAdmin && userEmail) {
+            query.userId = userEmail; // Regular users only see their own
+        }
+
         // Fetch last 50 experiments, newest first
-        const experiments = await Experiment.find({})
+        const experiments = await Experiment.find(query)
             .sort({ timestamp: -1 })
             .limit(50)
             .lean();

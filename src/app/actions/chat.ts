@@ -645,6 +645,7 @@ export async function chatWithGroq(
                 // --- SAVE EXPERIMENT TO HISTORY ---
                 try {
                     await Experiment.create({
+                        userId: contextConfig.userEmail, // Tag experiment to user
                         industry,
                         service,
                         problem,

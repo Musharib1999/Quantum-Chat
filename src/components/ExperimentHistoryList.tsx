@@ -5,9 +5,10 @@ interface ExperimentHistoryListProps {
     experiments: any[];
     loading: boolean;
     onSelectExperiment: (experiment: any) => void;
+    isGuest?: boolean;
 }
 
-export default function ExperimentHistoryList({ experiments, loading, onSelectExperiment }: ExperimentHistoryListProps) {
+export default function ExperimentHistoryList({ experiments, loading, onSelectExperiment, isGuest }: ExperimentHistoryListProps) {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -21,8 +22,17 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
         return (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
                 <Beaker size={32} className="opacity-20 mb-4" />
-                <p className="text-sm">No experiments yet.</p>
-                <p className="text-xs opacity-60 mt-1">Run a simulation to see it here.</p>
+                {isGuest ? (
+                    <>
+                        <p className="text-sm">History Unavailable</p>
+                        <p className="text-xs opacity-60 mt-1">Log in to safely store and review your quantum simulations.</p>
+                    </>
+                ) : (
+                    <>
+                        <p className="text-sm">No experiments yet.</p>
+                        <p className="text-xs opacity-60 mt-1">Run a simulation to see it here.</p>
+                    </>
+                )}
             </div>
         );
     }
