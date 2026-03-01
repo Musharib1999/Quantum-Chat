@@ -39,7 +39,7 @@ export default function LandingPage() {
         <div className="w-full px-6 md:px-8 h-20 flex items-center justify-end">
 
           {/* Logo Section */}
-          <div className="absolute top-6 left-6 flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
+          <div className="absolute top-4 left-6 flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
             <a href="https://www.quantumcomputers.guru/">
               <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[65px] w-auto object-contain cursor-pointer drop-shadow-sm" />
             </a>
