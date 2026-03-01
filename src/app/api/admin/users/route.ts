@@ -40,6 +40,8 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
+        console.log("PUT /api/admin/users received body:", body);
+
         const updateData: any = {};
         if (email !== undefined) updateData.email = email;
         if (firstName !== undefined) updateData.firstName = firstName;
@@ -50,7 +52,11 @@ export async function PUT(req: Request) {
         if (tokenLimit !== undefined) updateData.tokenLimit = Number(tokenLimit);
         if (tokensUsed !== undefined) updateData.tokensUsed = Number(tokensUsed);
 
+        console.log("PUT /api/admin/users updateData:", updateData);
+
         const user = await User.findByIdAndUpdate(id, updateData, { new: true });
+
+        console.log("PUT /api/admin/users db response user tokenLimit:", user?.tokenLimit);
 
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });

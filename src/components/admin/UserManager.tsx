@@ -135,8 +135,7 @@ export default function UserManager() {
             });
 
             if (res.ok) {
-                const updatedUser = await res.json();
-                setUsers(users.map(u => u._id === updatedUser._id ? updatedUser : u));
+                await fetchUsers();
                 setShowResetModal(false);
                 setResetPassword("");
                 setSelectedUser(null);
