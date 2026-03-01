@@ -108,8 +108,8 @@ export default function LandingPage() {
           <FeatureCard
             href="/quantum-assistant"
             icon={<Bot size={32} />}
-            title="Quantum Assistant"
-            description="Our newest Quantum Guru LLM trained on high quality Quantum data with 43 million tokens and 240 million parameters."
+            title="Quantum Guru LLM"
+            description="Our newest quantum assistant trained on high quality Quantum data with 100 million tokens and 400 million parameters."
             actionText="Chat Now"
             isDarkMode={isDarkMode}
             accentColor="indigo"
