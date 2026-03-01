@@ -95,7 +95,7 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                                     {msg.sender === 'user' ? <User size={14} className="text-foreground" /> : (
                                         <div className="w-full h-full overflow-hidden rounded-lg">
                                             <img
-                                                src="/avatar.png"
+                                                src="/qg-icon.png"
                                                 alt="QG"
                                                 className="w-full h-full object-cover"
                                             />
@@ -148,7 +148,7 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                     {messages.length === 0 && (
                         <div className="mb-12 text-center animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000">
                             <div className="mx-auto mb-8 group-hover:scale-105 transition-transform duration-500 flex justify-center">
-                                <img src="/avatar.png" alt="Quantum Guru" className="h-24 w-auto object-contain" />
+                                <img src="/qg-icon.png" alt="Quantum Guru" className="h-[90px] w-auto object-contain" />
                             </div>
                             <p className="text-muted-foreground text-lg font-light max-w-lg mx-auto leading-relaxed">
                                 Summarize and construct your thoughts for quantum

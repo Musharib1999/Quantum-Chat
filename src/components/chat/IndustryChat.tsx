@@ -186,7 +186,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${msg.sender === 'user' ? 'bg-secondary border border-border shadow-sm' : 'bg-primary border border-primary text-primary-foreground shadow-md'}`}>
                                     {msg.sender === 'user' ? <User size={14} className="text-foreground" /> : (
                                         <div className="w-full h-full overflow-hidden rounded-lg">
-                                            <img src="/avatar.png" alt="QG" className="w-full h-full object-cover" />
+                                            <img src="/qg-icon.png" alt="QG" className="w-full h-full object-cover" />
                                         </div>
                                     )}
                                 </div>
@@ -317,7 +317,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     {messages.length === 0 && workflow.kind === 'idle' && (
                         <div className="mb-12 text-center animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000">
                             <div className="mx-auto mb-8 group-hover:scale-105 transition-transform duration-500 flex justify-center">
-                                <img src="/avatar.png" alt="Quantum Guru" className="h-24 w-auto object-contain" />
+                                <img src="/qg-icon.png" alt="Quantum Guru" className="h-[90px] w-auto object-contain" />
                             </div>
                             <p className="text-muted-foreground text-lg font-light max-w-lg mx-auto leading-relaxed">
                                 Industrial Quantum Solutions & Architecture Design.
