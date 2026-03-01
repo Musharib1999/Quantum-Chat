@@ -109,7 +109,7 @@ export default function LandingPage() {
             href="/quantum-assistant"
             icon={<Bot size={32} />}
             title="Quantum Guru LLM"
-            description="Our newest quantum assistant trained on high quality Quantum data with 100 million tokens and 400 million parameters."
+            description="A 400M-parameter architecture optimized via large-scale domain-adaptive fine-tuning on 100M curated quantum-computing tokens"
             actionText="Chat Now"
             isDarkMode={isDarkMode}
             accentColor="indigo"
