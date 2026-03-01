@@ -10,7 +10,10 @@ export interface Message {
     chartData?: any;
 }
 
+import { useAuth } from '@/context/AuthContext';
+
 export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed' | 'assistant', contextConfig?: any) {
+    const { isAuthenticated, user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -54,7 +57,13 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         setIsTyping(true);
 
         try {
-            const fullConfig = { ...contextConfig, ...customConfig, mode };
+            const fullConfig = {
+                ...contextConfig,
+                ...customConfig,
+                mode,
+                isAuthenticated,
+                userEmail: user?.email
+            };
 
             // Call API
             console.log(`[useQuantumChat] Sending message to Groq (mode: ${mode}):`, userMsg.text);

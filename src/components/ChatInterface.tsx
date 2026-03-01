@@ -24,7 +24,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ mode, contextConfig, placeholder, onAnalysisTriggered }: ChatInterfaceProps) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -128,7 +128,8 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
         try {
             // Include mode in context config if not present
             const accumulatedTokens = parseInt(sessionStorage.getItem('qg_session_tokens_used') || '0', 10);
-            const fullConfig = { ...contextConfig, ...customConfig, mode, isAuthenticated, accumulatedTokens };
+            const userEmail = contextConfig?.userEmail || undefined;
+            const fullConfig = { ...contextConfig, ...customConfig, mode, isAuthenticated, accumulatedTokens, userEmail };
 
             // Simulate Pipeline progress if form is active
             if (fullConfig.formData) {

@@ -9,6 +9,7 @@ import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
 import Experiment from '@/models/Experiment';
 import News from '@/models/News';
+import User from '@/models/User';
 import SystemPrompt from '@/models/SystemPrompt';
 import { execSync } from 'child_process';
 import path from 'path';
@@ -198,18 +199,26 @@ export async function chatWithGroq(
     const activeRules = await getActiveGuardrails();
     const ruleTexts = activeRules.map(r => r.rule);
 
-    // Session Token Limit Enforcement (Guest users only)
-    const SESSION_TOKEN_LIMIT = 100000;
-    const isGuest = !contextConfig?.isAuthenticated;
-    const accumulatedTokens = contextConfig?.accumulatedTokens || 0;
+    // Fetch user from DB to enforce strict server-side token limits
+    let dbUser = null;
+    if (contextConfig?.userEmail) {
+        dbUser = await User.findOne({ email: contextConfig.userEmail });
+    }
 
-    if (isGuest && accumulatedTokens >= SESSION_TOKEN_LIMIT) {
-        const limitMsg = "🔒 **Session Limit Reached**\n\nThank you for exploring Quantum Guru! You have reached your complimentary session limit of **100,000 QG Tokens**.\n\nTo continue using our advanced quantum intelligence without interruption, we kindly ask you to **[Login or Sign Up](/login)** to securely save your progress and access unlimited features.";
+    // Session Token Limit Enforcement
+    const SESSION_TOKEN_LIMIT = dbUser ? (dbUser.tokenLimit || 100000) : 100000;
+    const isGuest = !contextConfig?.isAuthenticated;
+    const accumulatedTokens = dbUser ? (dbUser.tokensUsed || 0) : (contextConfig?.accumulatedTokens || 0);
+
+    if (accumulatedTokens >= SESSION_TOKEN_LIMIT) {
+        const authAction = isGuest ? "**[Login or Sign Up](/login)** to securely save your progress and access unlimited features." : "contact your administrator to upgrade your plan.";
+        const limitMsg = `🔒 **Session Limit Reached**\n\nThank you for exploring Quantum Guru! You have reached your allocated limit of **${SESSION_TOKEN_LIMIT.toLocaleString()} QG Tokens**.\n\nTo continue using our advanced quantum intelligence without interruption, please ${authAction}`;
+
         return {
             text: limitMsg,
             source: 'token_limit',
             tokenLimitExceeded: true,
-            tokensUsed: accumulatedTokens,
+            tokensUsed: 0, // 0 for this specific blocked request
             sessionTokenLimit: SESSION_TOKEN_LIMIT,
             guardrailsStatus: 'passed',
             activeGuardrails: ruleTexts
@@ -717,6 +726,12 @@ export async function chatWithGroq(
             guardrailsStatus: 'passed',
             activeGuardrails: ruleTexts
         });
+
+        // --- Update DB Token Usage ---
+        if (dbUser) {
+            dbUser.tokensUsed = (dbUser.tokensUsed || 0) + tokensUsed;
+            await dbUser.save();
+        }
 
         return {
             text,

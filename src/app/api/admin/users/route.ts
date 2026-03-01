@@ -34,13 +34,23 @@ export async function PUT(req: Request) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { id, password } = body;
+        const { id, password, email, firstName, lastName, phone, plan, tokenLimit, tokensUsed } = body;
 
-        if (!id || !password) {
-            return NextResponse.json({ error: 'ID and password are required' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        const user = await User.findByIdAndUpdate(id, { password }, { new: true });
+        const updateData: any = {};
+        if (email !== undefined) updateData.email = email;
+        if (firstName !== undefined) updateData.firstName = firstName;
+        if (lastName !== undefined) updateData.lastName = lastName;
+        if (phone !== undefined) updateData.phone = phone;
+        if (plan !== undefined) updateData.plan = plan;
+        if (password) updateData.password = password; // Since plain text is okay for now like the POST endpoint
+        if (tokenLimit !== undefined) updateData.tokenLimit = Number(tokenLimit);
+        if (tokensUsed !== undefined) updateData.tokensUsed = Number(tokensUsed);
+
+        const user = await User.findByIdAndUpdate(id, updateData, { new: true });
 
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });

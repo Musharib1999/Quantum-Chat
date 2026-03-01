@@ -9,6 +9,8 @@ interface User {
     phone?: string;
     plan?: string;
     role: string;
+    tokenLimit?: number;
+    tokensUsed?: number;
     createdAt: string;
 }
 
@@ -30,6 +32,7 @@ export default function UserManager() {
     const [newPhone, setNewPhone] = useState("");
     const [newPlan, setNewPlan] = useState<'Guest' | 'Pro' | 'Enterprise'>('Guest');
     const [resetPassword, setResetPassword] = useState("");
+    const [editTokenLimit, setEditTokenLimit] = useState<number>(100000);
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
 
@@ -106,24 +109,40 @@ export default function UserManager() {
         }
     };
 
-    const handleResetPassword = async () => {
-        if (!resetPassword || !selectedUser) return;
+    const handleEditUser = async () => {
+        if (!selectedUser) return;
         setActionLoading(true);
+
+        const updates: any = {
+            id: selectedUser._id,
+            email: newEmail,
+            firstName: newFirstName,
+            lastName: newLastName,
+            phone: newPhone,
+            plan: newPlan,
+            tokenLimit: editTokenLimit
+        };
+
+        if (resetPassword) {
+            updates.password = resetPassword;
+        }
 
         try {
             const res = await fetch('/api/admin/users', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: selectedUser._id, password: resetPassword }),
+                body: JSON.stringify(updates),
             });
 
             if (res.ok) {
+                const updatedUser = await res.json();
+                setUsers(users.map(u => u._id === updatedUser._id ? updatedUser : u));
                 setShowResetModal(false);
                 setResetPassword("");
                 setSelectedUser(null);
-                alert("Password updated successfully");
             } else {
-                alert("Failed to update password");
+                const data = await res.json();
+                alert(data.error || "Failed to update user");
             }
         } catch (error) {
             console.error("Update failed", error);
@@ -174,6 +193,7 @@ export default function UserManager() {
                                 <th className="p-4">User</th>
                                 <th className="p-4">Role</th>
                                 <th className="p-4">Created At</th>
+                                <th className="p-4">Tokens</th>
                                 <th className="p-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -209,16 +229,39 @@ export default function UserManager() {
                                         <td className="p-4 text-sm text-muted-foreground font-mono">
                                             {new Date(user.createdAt).toLocaleDateString()}
                                         </td>
+                                        <td className="p-4">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
+                                                    <span className={((user.tokensUsed || 0) >= (user.tokenLimit || 100000)) ? "text-red-500 font-bold" : "text-foreground"}>
+                                                        {(user.tokensUsed || 0).toLocaleString()}
+                                                    </span>
+                                                    <span>/</span>
+                                                    <span>{(user.tokenLimit || 100000).toLocaleString()}</span>
+                                                </div>
+                                                <div className="w-24 h-1.5 rounded-full bg-secondary overflow-hidden">
+                                                    <div
+                                                        className={`h-full ${((user.tokensUsed || 0) >= (user.tokenLimit || 100000)) ? 'bg-red-500' : 'bg-[#3066bb]'}`}
+                                                        style={{ width: `${Math.min(((user.tokensUsed || 0) / (user.tokenLimit || 100000)) * 100, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <button
                                                     onClick={() => {
                                                         setSelectedUser(user);
+                                                        setNewFirstName(user.firstName || "");
+                                                        setNewLastName(user.lastName || "");
+                                                        setNewEmail(user.email || "");
+                                                        setNewPhone(user.phone || "");
+                                                        setNewPlan(user.plan as any || 'Guest');
+                                                        setEditTokenLimit(user.tokenLimit || 100000);
                                                         setResetPassword("");
                                                         setShowResetModal(true);
                                                     }}
                                                     className="p-2 text-muted-foreground hover:text-[#3066bb] hover:bg-[#3066bb]/10 rounded-lg transition-colors"
-                                                    title="Reset Password"
+                                                    title="Edit User"
                                                 >
                                                     <Key size={18} />
                                                 </button>
@@ -349,8 +392,8 @@ export default function UserManager() {
 
             {/* RESET PASSWORD MODAL */}
             {showResetModal && selectedUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-card w-full max-w-xl rounded-2xl border border-border shadow-2xl p-6 relative animate-in zoom-in-95 duration-200 my-8">
                         <button
                             onClick={() => { setShowResetModal(false); setSelectedUser(null); }}
                             className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
@@ -358,26 +401,94 @@ export default function UserManager() {
                             <X size={20} />
                         </button>
 
-                        <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                            <Key className="w-5 h-5 text-orange-400" /> Reset Password
+                        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                            <Key className="w-5 h-5 text-orange-400" /> Edit User
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-6">
-                            Changing password for <span className="font-bold text-foreground">{selectedUser.email}</span>
-                        </p>
 
                         <div className="space-y-4">
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">New Password</label>
+                            {/* Row: First & Last Name */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">First Name</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+                                        value={newFirstName}
+                                        onChange={e => setNewFirstName(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Last Name</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+                                        value={newLastName}
+                                        onChange={e => setNewLastName(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Row: Email & Phone */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Email Address</label>
+                                    <input
+                                        type="email"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+                                        value={newEmail}
+                                        onChange={e => setNewEmail(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Phone Number</label>
+                                    <input
+                                        type="tel"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+                                        value={newPhone}
+                                        onChange={e => setNewPhone(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Row: Plan & Token Limit */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Plan Tier</label>
+                                    <select
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+                                        value={newPlan}
+                                        onChange={e => setNewPlan(e.target.value as any)}
+                                    >
+                                        <option value="Guest">Guest</option>
+                                        <option value="Pro">Pro</option>
+                                        <option value="Enterprise">Enterprise</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Token Limit</label>
+                                    <input
+                                        type="number"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 font-mono"
+                                        value={editTokenLimit}
+                                        onChange={e => setEditTokenLimit(Number(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Password Override */}
+                            <div className="pt-2 border-t border-border mt-4">
+                                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Override Password (Optional)</label>
                                 <input
                                     type="text"
-                                    className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 font-mono"
-                                    placeholder="Enter new password"
+                                    className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 font-mono placeholder:text-muted-foreground/50"
+                                    placeholder="Leave blank to keep current password"
                                     value={resetPassword}
                                     onChange={e => setResetPassword(e.target.value)}
                                 />
+                                <p className="text-[10px] text-muted-foreground mt-1">Only fill this if you want to force a password change for this user.</p>
                             </div>
 
-                            <div className="pt-2 flex justify-end gap-3">
+                            <div className="pt-4 flex justify-end gap-3">
                                 <button
                                     onClick={() => { setShowResetModal(false); setSelectedUser(null); }}
                                     className="px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-secondary rounded-lg"
@@ -385,12 +496,12 @@ export default function UserManager() {
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={handleResetPassword}
-                                    disabled={actionLoading || !resetPassword}
+                                    onClick={handleEditUser}
+                                    disabled={actionLoading}
                                     className="px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold flex items-center gap-2 disabled:opacity-50"
                                 >
                                     {actionLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <Save size={16} />}
-                                    Update Password
+                                    Save Changes
                                 </button>
                             </div>
                         </div>

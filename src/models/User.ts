@@ -35,6 +35,14 @@ const UserSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    tokenLimit: {
+        type: Number,
+        default: 100000,
+    },
+    tokensUsed: {
+        type: Number,
+        default: 0,
+    }
 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);
