@@ -42,7 +42,7 @@ export default function UserManager() {
 
     const fetchUsers = async () => {
         try {
-            const res = await fetch('/api/admin/users');
+            const res = await fetch('/api/admin/users', { cache: 'no-store' });
             const data = await res.json();
             if (Array.isArray(data)) {
                 setUsers(data);
