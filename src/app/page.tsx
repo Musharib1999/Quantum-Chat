@@ -112,7 +112,7 @@ export default function LandingPage() {
             description="A 400M-parameter architecture optimized via large-scale domain-adaptive fine-tuning on 100M curated quantum-computing tokens"
             actionText="Chat Now"
             isDarkMode={isDarkMode}
-            accentColor="indigo"
+            accentColor="assistant"
             status="unlocked"
           />
 
@@ -162,7 +162,7 @@ interface FeatureCardProps {
   description: string;
   actionText: string;
   isDarkMode: boolean;
-  accentColor: 'indigo' | 'emerald' | 'rose';
+  accentColor: 'indigo' | 'emerald' | 'rose' | 'assistant';
   status?: 'locked' | 'unlocked';
   badgeText?: string;
 }
@@ -184,6 +184,11 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
       light: 'bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white',
       dark: 'bg-rose-500/10 text-rose-400 group-hover:bg-rose-500 group-hover:text-white',
       border: 'group-hover:border-rose-500/50'
+    },
+    assistant: {
+      light: 'bg-[rgb(48,102,187)] text-white group-hover:bg-black group-hover:text-white',
+      dark: 'bg-[rgb(48,102,187)] text-white group-hover:bg-black group-hover:text-white',
+      border: 'group-hover:border-black/50'
     }
   };
 
@@ -203,7 +208,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
 
       {/* Glow Effect on Hover */}
       <div className={`absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 
-        ${accentColor === 'indigo' ? 'bg-[rgb(48,102,187)]' : accentColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-500'}`}
+        ${(accentColor === 'indigo' || accentColor === 'assistant') ? 'bg-[rgb(48,102,187)]' : accentColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-500'}`}
       />
 
       {/* Lock/Unlock Status Badge */}
