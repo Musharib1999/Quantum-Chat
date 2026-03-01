@@ -36,10 +36,10 @@ export default function LandingPage() {
 
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 ${isDarkMode ? 'border-white/10 bg-slate-950/70' : 'border-slate-200 bg-white/70'}`}>
-        <div className="w-full px-6 md:px-8 h-20 flex items-center justify-between">
+        <div className="w-full px-6 md:px-8 h-20 flex items-center justify-end">
 
           {/* Logo Section */}
-          <div className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity">
+          <div className="absolute top-6 left-6 flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
             <a href="https://www.quantumcomputers.guru/">
               <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain cursor-pointer" />
             </a>

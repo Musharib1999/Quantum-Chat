@@ -11,10 +11,10 @@ export default function QuantumAssistantPage() {
     return (
         <div className="flex flex-col h-screen w-full bg-background overflow-hidden relative">
             {/* Custom Header overlaying the chat */}
-            <header className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 md:p-6 pointer-events-none">
+            <header className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-6 pointer-events-none">
                 {/* Left: Branding */}
-                <div className="flex items-center gap-2 pointer-events-auto">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain pl-2" />
+                <div className="flex items-center pointer-events-auto">
+                    <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain" />
                 </div>
 
                 {/* Right: Token Indicator & Burger Menu */}
