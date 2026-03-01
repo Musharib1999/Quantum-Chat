@@ -512,6 +512,10 @@ export async function chatWithGroq(
                 scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
             }, systemInstructions); // fallback
         }
+        // Mode: Quantum Assistant
+        else if (contextConfig.mode === 'assistant') {
+            systemInstructions += `\n\nMODE: GENERAL CHAT AND ASSISTANCE CONTEXT\nTASK: You are providing general chat and assistance. Answer the user's questions to the best of your ability. Keep responses helpful and professional.`;
+        }
         // Mode: Industry (Modular / Robust)
         else if (contextConfig.mode === 'industry') {
             const { industry, service, problem, hardware, formData } = contextConfig;
