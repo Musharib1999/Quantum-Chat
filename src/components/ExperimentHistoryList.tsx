@@ -34,7 +34,7 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
                 <button
                     key={exp._id}
                     onClick={() => onSelectExperiment(exp)}
-                    className="group w-full text-left p-3 rounded-xl bg-card/50 border border-border hover:border-primary/50 hover:bg-secondary/50 transition-all shadow-sm"
+                    className="group w-full text-left p-3 rounded-xl bg-transparent border border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md transition-all duration-200"
                 >
                     <div className="flex justify-between items-start mb-2">
                         <span className="text-[10px] font-mono text-muted-foreground">
