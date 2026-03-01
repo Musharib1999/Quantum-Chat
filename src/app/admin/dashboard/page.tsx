@@ -143,7 +143,7 @@ export default function AdminDashboard() {
             `}>
                 <div className={`p-6 border-b flex items-center justify-between ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
                     <a href="https://www.quantumcomputers.guru/" target="_self" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-                        <img src="/logo.png" alt="Quantum Guru" className="w-32 h-10 object-contain" />
+                        <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain" />
                     </a>
                     <button className="md:hidden p-2 hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                         <X size={20} className="text-foreground" />

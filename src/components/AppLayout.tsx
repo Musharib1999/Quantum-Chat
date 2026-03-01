@@ -46,7 +46,7 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                 {/* Fixed Logo */}
                 <div className={`fixed top-6 left-6 z-[60] transition-opacity duration-300 ${!isSidebarOpen && isMobile ? 'opacity-0' : 'opacity-100'}`}>
                     <a href="https://www.quantumcomputers.guru/">
-                        <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain scale-90 origin-top-left cursor-pointer hover:opacity-90 transition-opacity" />
+                        <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity" />
                     </a>
                 </div>
 
