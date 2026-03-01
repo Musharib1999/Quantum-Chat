@@ -28,7 +28,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
             <main
                 ref={scrollContainerRef as any}
                 onScroll={handleScroll}
-                className={`overflow-y-auto bg-transparent min-w-0 w-full overflow-x-hidden transition-all duration-700 ease-in-out pb-32 ${messages.length === 0 ? 'flex-[0.001] opacity-0 py-0' : 'flex-1 p-4 md:p-8 lg:p-10 opacity-100'}`}
+                className={`overflow-y-auto bg-transparent min-w-0 w-full overflow-x-hidden transition-all duration-700 ease-in-out ${messages.length === 0 ? 'flex-[0.001] opacity-0 py-0' : 'flex-1 p-4 md:p-8 lg:p-10 opacity-100'}`}
             >
                 <div className="w-full max-w-4xl mx-auto space-y-8">
                     {messages.map((msg) => (
@@ -75,6 +75,9 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                             </div>
                         </div>
                     )}
+
+                    {/* Spacer to push content above the fixed input box */}
+                    <div className="h-40 md:h-[200px] shrink-0 w-full pointer-events-none" />
                     <div ref={messagesEndRef} />
                 </div>
             </main>
