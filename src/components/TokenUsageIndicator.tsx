@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 
-const SESSION_TOKEN_LIMIT = 10000;
+const SESSION_TOKEN_LIMIT = 100000;
 const STORAGE_KEY = 'qg_session_tokens_used';
 
 export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () => void }) {

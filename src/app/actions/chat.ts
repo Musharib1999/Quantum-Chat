@@ -199,12 +199,12 @@ export async function chatWithGroq(
     const ruleTexts = activeRules.map(r => r.rule);
 
     // Session Token Limit Enforcement (Guest users only)
-    const SESSION_TOKEN_LIMIT = 10000;
+    const SESSION_TOKEN_LIMIT = 100000;
     const isGuest = !contextConfig?.isAuthenticated;
     const accumulatedTokens = contextConfig?.accumulatedTokens || 0;
 
     if (isGuest && accumulatedTokens >= SESSION_TOKEN_LIMIT) {
-        const limitMsg = "🔒 **Session Limit Reached**\n\nYou've used all **10,000 QG Tokens** for this session. To continue using Quantum Guru with unlimited access, please **[Login or Sign Up](/login)** to upgrade your plan.";
+        const limitMsg = "🔒 **Session Limit Reached**\n\nThank you for exploring Quantum Guru! You have reached your complimentary session limit of **100,000 QG Tokens**.\n\nTo continue using our advanced quantum intelligence without interruption, we kindly ask you to **[Login or Sign Up](/login)** to securely save your progress and access unlimited features.";
         return {
             text: limitMsg,
             source: 'token_limit',
