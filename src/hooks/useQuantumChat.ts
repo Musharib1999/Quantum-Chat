@@ -60,6 +60,11 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             console.log(`[useQuantumChat] Sending message to Groq (mode: ${mode}):`, userMsg.text);
             const response = await chatWithGroq(userMsg.text, 'chat', 'en', fullConfig);
 
+            // Dispatch token usage event to sidebar indicator
+            if (response.tokensUsed !== undefined) {
+                window.dispatchEvent(new CustomEvent('qg:token-update', { detail: { delta: response.tokensUsed } }));
+            }
+
             // Extract step output markers (code, sim output)
             let cleanText = response.text;
             const stepCodeMatch = cleanText.match(/\[STEP_CODE\]([\s\S]*?)\[\/STEP_CODE\]/);
