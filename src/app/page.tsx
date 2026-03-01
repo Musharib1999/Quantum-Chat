@@ -104,31 +104,7 @@ export default function LandingPage() {
             badgeText="Unlock with free account"
           />
 
-          {/* Card 2: Market Intelligence */}
-          <FeatureCard
-            href="/market"
-            icon={<TrendingUp size={32} />}
-            title="Quantum Stocks and Market Intelligence"
-            description="Current market analysis of your quantum asset"
-            actionText="Launch"
-            isDarkMode={isDarkMode}
-            accentColor="emerald"
-            status="unlocked"
-          />
-
-          {/* Card 3: Article & Learn */}
-          <FeatureCard
-            href="/article-learn"
-            icon={<BookOpen size={32} />}
-            title="Analyze Quantum Information"
-            description="Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain"
-            actionText="Launch"
-            isDarkMode={isDarkMode}
-            accentColor="rose"
-            status="unlocked"
-          />
-
-          {/* Card 4: Quantum Assistant */}
+          {/* Card 2: Quantum Assistant */}
           <FeatureCard
             href="/quantum-assistant"
             icon={<Bot size={32} />}
@@ -137,6 +113,18 @@ export default function LandingPage() {
             actionText="Chat Now"
             isDarkMode={isDarkMode}
             accentColor="indigo"
+            status="unlocked"
+          />
+
+          {/* Card 3: Market Intelligence */}
+          <FeatureCard
+            href="/market"
+            icon={<TrendingUp size={32} />}
+            title="Quantum Stocks and Market Intelligence"
+            description="Current market analysis of your quantum asset"
+            actionText="Launch"
+            isDarkMode={isDarkMode}
+            accentColor="emerald"
             status="unlocked"
           />
 
