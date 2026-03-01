@@ -126,9 +126,9 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
 
                     {isTyping && (
                         <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <div className="flex flex-row items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                                    <span className="text-[10px] font-bold text-primary">...</span>
+                            <div className="flex flex-row items-center gap-4">
+                                <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-border p-1 flex items-center justify-center shrink-0">
+                                    <img src="/qg-icon.png" className="w-full h-full object-contain" alt="QG typing" />
                                 </div>
                                 <div className="flex space-x-1 pl-2">
                                     <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
