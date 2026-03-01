@@ -86,8 +86,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                     {messages.length === 0 && (
                         <div className="mb-12 text-center animate-in fade-in zoom-in slide-in-from-bottom-4 duration-1000">
                             <div className="mx-auto mb-8 group-hover:scale-105 transition-transform duration-500 flex justify-center">
-                                <img src="/logo.png" alt="Quantum Guru" className="h-16 w-auto object-contain block dark:hidden" />
-                                <img src="/quantum-guru-white-logo.png" alt="Quantum Guru" className="h-16 w-auto object-contain hidden dark:block" />
+                                <img src="/qg-icon.png" alt="Quantum Guru" className="h-[90px] w-auto object-contain" />
                             </div>
                             <h2 className="text-3xl font-bold tracking-tight mb-4 text-foreground hidden">
                                 Quantum Assistant
