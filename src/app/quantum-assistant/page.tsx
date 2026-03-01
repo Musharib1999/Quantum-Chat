@@ -13,8 +13,10 @@ export default function QuantumAssistantPage() {
             {/* Custom Header overlaying the chat */}
             <header className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-6 pointer-events-none">
                 {/* Left: Branding */}
-                <div className="flex items-center pointer-events-auto">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-8 md:h-10 w-auto object-contain" />
+                <div className="flex items-center pointer-events-auto mt-2 ml-2">
+                    <a href="https://www.quantumcomputers.guru/">
+                        <img src="/logo.png" alt="Quantum Guru" className="h-10 md:h-[60px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
+                    </a>
                 </div>
 
                 {/* Right: Token Indicator & Burger Menu */}

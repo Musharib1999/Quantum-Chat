@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Bot, User, StopCircle } from 'lucide-react';
+import { Bot, User, StopCircle, Send } from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
 
@@ -98,24 +98,23 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                     )}
 
                     {/* Input Field */}
-                    <div className="relative flex items-end gap-3 bg-card/80 backdrop-blur-2xl border-2 border-border/80 rounded-3xl shadow-2xl p-3 transition-all focus-within:ring-2 focus-within:ring-ring focus-within:border-ring focus-within:bg-card">
+                    <div className="relative flex items-end gap-2 bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-lg p-2 transition-all focus-within:ring-1 focus-within:ring-ring focus-within:border-ring focus-within:bg-card">
                         <textarea
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
                             placeholder={placeholder || "Ask Quantum Assistant..."}
                             rows={1}
-                            className="flex-1 max-h-48 bg-transparent text-foreground placeholder:text-muted-foreground text-lg px-5 py-4 focus:outline-none resize-none scrollbar-hide"
-                            style={{ minHeight: '60px' }}
+                            className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
+                            style={{ minHeight: '52px' }}
                         />
-
                         <button
                             onClick={() => sendMessage()}
                             disabled={!inputValue.trim() || isTyping}
-                            className="p-4 rounded-2xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1.5 font-bold flex items-center justify-center"
+                            className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-bold flex items-center justify-center"
                             style={{ backgroundColor: 'rgb(48, 102, 187)' }}
                         >
-                            {isTyping ? <StopCircle size={24} className="animate-pulse" /> : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                            {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}
                         </button>
                     </div>
 
