@@ -225,14 +225,14 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
                                 {/* Avatar */}
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${msg.sender === 'user'
                                     ? 'bg-secondary border border-border shadow-sm'
-                                    : 'bg-primary border border-primary text-primary-foreground shadow-md'
+                                    : 'bg-white border border-border shadow-sm p-1'
                                     }`}>
                                     {msg.sender === 'user' ? <User size={14} className="text-foreground" /> : (
                                         <div className="w-full h-full overflow-hidden rounded-lg">
                                             <img
                                                 src="/qg-icon.png"
                                                 alt="QG"
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-contain"
                                             />
                                         </div>
                                     )}

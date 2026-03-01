@@ -37,14 +37,14 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                                 {/* Avatar */}
                                 <div className={`w-10 h-10 mt-1 rounded-xl flex items-center justify-center shrink-0 ${msg.sender === 'user'
                                     ? 'bg-secondary border border-border shadow-sm'
-                                    : 'bg-primary border border-primary text-primary-foreground shadow-md'
+                                    : 'bg-white border border-border shadow-sm p-1'
                                     }`}>
                                     {msg.sender === 'user' ? <User size={18} className="text-foreground" /> : (
                                         <div className="w-full h-full overflow-hidden rounded-xl">
                                             <img
                                                 src="/qg-icon.png"
                                                 alt="QG"
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-contain"
                                             />
                                         </div>
                                     )}
@@ -64,8 +64,8 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                     {isTyping && (
                         <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <div className="flex flex-row items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                                    <Bot size={18} className="text-primary" />
+                                <div className="w-10 h-10 rounded-xl bg-white border border-border flex items-center justify-center shrink-0 p-1 shadow-sm">
+                                    <img src="/qg-icon.png" className="w-full h-full object-contain" alt="QG typing" />
                                 </div>
                                 <div className="flex space-x-1 pl-4 py-5">
                                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>

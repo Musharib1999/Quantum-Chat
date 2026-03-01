@@ -183,10 +183,10 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     {messages.map((msg) => (
                         <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                             <div className={`flex max-w-[95%] md:max-w-[85%] lg:max-w-[80%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${msg.sender === 'user' ? 'bg-secondary border border-border shadow-sm' : 'bg-primary border border-primary text-primary-foreground shadow-md'}`}>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${msg.sender === 'user' ? 'bg-secondary border border-border shadow-sm' : 'bg-white border border-border shadow-sm p-1'}`}>
                                     {msg.sender === 'user' ? <User size={14} className="text-foreground" /> : (
                                         <div className="w-full h-full overflow-hidden rounded-lg">
-                                            <img src="/qg-icon.png" alt="QG" className="w-full h-full object-cover" />
+                                            <img src="/qg-icon.png" alt="QG" className="w-full h-full object-contain" />
                                         </div>
                                     )}
                                 </div>
