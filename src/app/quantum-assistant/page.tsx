@@ -11,9 +11,9 @@ export default function QuantumAssistantPage() {
     return (
         <div className="flex flex-col h-screen w-full bg-background overflow-hidden relative">
             {/* Custom Header overlaying the chat */}
-            <header className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-6 pointer-events-none">
+            <header className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 md:pt-6 md:px-8 pointer-events-none">
                 {/* Left: Branding */}
-                <div className="flex items-center pointer-events-auto mt-2 ml-2">
+                <div className="flex items-center pointer-events-auto">
                     <a href="https://www.quantumcomputers.guru/">
                         <img src="/logo.png" alt="Quantum Guru" className="h-10 md:h-[60px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
                     </a>
