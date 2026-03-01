@@ -254,12 +254,12 @@ export default function IndustryPage() {
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                                         <BookOpen className="text-blue-400 w-4 h-4" />
-                                        Article & Learn
+                                        Analyze Quantum Information
                                     </h3>
                                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </div>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Deepen your quantum knowledge with curated articles.
+                                    Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain
                                 </p>
                             </a>
                         </div>
