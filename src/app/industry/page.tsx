@@ -252,8 +252,7 @@ export default function IndustryPage() {
                         <div className="p-4 border-b border-border shrink-0 mt-1">
                             <a href="/article-learn" className="block w-full p-4 rounded-xl bg-card border border-border hover:border-ring hover:shadow-md transition-all duration-200 group">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                                        <BookOpen className="text-blue-400 w-4 h-4" />
+                                    <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                                         Analyze Quantum Information
                                     </h3>
                                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
