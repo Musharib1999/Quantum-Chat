@@ -12,20 +12,29 @@ export default function AdminLogin() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
 
-        // Mock Authentication Logic
-        setTimeout(() => {
-            if (email === "admin" && password === "admin123") {
+        try {
+            const res = await fetch('/api/admin/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: email, password }),
+            });
+
+            if (res.ok) {
                 router.push("/admin/dashboard");
             } else {
-                setError("Invalid credentials. Try 'admin' / 'admin123'");
+                const data = await res.json();
+                setError(data.error || "Invalid credentials.");
                 setIsLoading(false);
             }
-        }, 1500);
+        } catch (err) {
+            setError("A network error occurred.");
+            setIsLoading(false);
+        }
     };
 
     return (
