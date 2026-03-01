@@ -59,7 +59,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
             {/* Logo */}
             <div className="absolute top-2 left-4 md:top-4 md:left-8 z-20">
                 <a href="https://www.quantumcomputers.guru/">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[65px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
+                    <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
                 </a>
             </div>
 
