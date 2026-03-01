@@ -14,10 +14,7 @@ export default function QuantumAssistantPage() {
             <header className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 md:p-6 pointer-events-none">
                 {/* Left: Branding */}
                 <div className="flex items-center gap-2 pointer-events-auto">
-                    <img src="/qg-icon.png" alt="Quantum Guru" className="h-8 w-auto" />
-                    <span className="font-bold text-lg tracking-tight hidden sm:block text-foreground">
-                        Quantum Guru
-                    </span>
+                    <img src="/logo.png" alt="Quantum Guru" className="h-6 w-auto pl-2" />
                 </div>
 
                 {/* Right: Token Indicator & Burger Menu */}

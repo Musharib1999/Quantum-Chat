@@ -42,7 +42,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                                     {msg.sender === 'user' ? <User size={18} className="text-foreground" /> : (
                                         <div className="w-full h-full overflow-hidden rounded-xl">
                                             <img
-                                                src="/avatar.png"
+                                                src="/qg-icon.png"
                                                 alt="QG"
                                                 className="w-full h-full object-cover"
                                             />
