@@ -186,8 +186,8 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
       border: 'group-hover:border-rose-500/50'
     },
     assistant: {
-      light: 'bg-[rgb(48,102,187)] text-white group-hover:bg-black group-hover:text-white',
-      dark: 'bg-[rgb(48,102,187)] text-white group-hover:bg-black group-hover:text-white',
+      light: 'bg-white text-black border border-slate-200 shadow-sm group-hover:bg-black group-hover:text-white group-hover:border-black',
+      dark: 'bg-slate-800 text-white border border-slate-700 group-hover:bg-white group-hover:text-black group-hover:border-white',
       border: 'group-hover:border-black/50'
     }
   };
