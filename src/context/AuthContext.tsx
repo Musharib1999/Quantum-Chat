@@ -20,6 +20,7 @@ interface AuthContextType {
     isInitializing: boolean;
     login: (userData: Partial<User> & { email: string }) => void;
     logout: () => void;
+    updateUser: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +47,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     tokensUsed: parsed.tokensUsed,
                 });
                 setIsAuthenticated(true);
+
+                // Fetch fresh user data from the backend to keep token limits synced
+                fetch(`/api/auth/me?email=${encodeURIComponent(parsed.email)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.error) {
+                            setUser(prev => {
+                                if (!prev) return prev;
+                                const updated = { ...prev, tokenLimit: data.tokenLimit, tokensUsed: data.tokensUsed };
+                                localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
+                                return updated;
+                            });
+                        }
+                    })
+                    .catch(err => console.error("Failed to refresh user tokens", err));
+
             } catch (e) {
                 console.error("Invalid session", e);
                 localStorage.removeItem('quantum_session');
@@ -78,8 +95,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem('qg_session_tokens_used');
     };
 
+    const updateUser = (updates: Partial<User>) => {
+        setUser(prev => {
+            if (!prev) return prev;
+            const updated = { ...prev, ...updates };
+            localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
+            return updated;
+        });
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated, isInitializing, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated, isInitializing, login, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

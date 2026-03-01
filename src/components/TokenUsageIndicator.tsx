@@ -8,7 +8,7 @@ const DEFAULT_GUEST_LIMIT = 100000;
 const STORAGE_KEY = 'qg_session_tokens_used';
 
 export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () => void }) {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, updateUser } = useAuth();
     const [tokensUsed, setTokensUsed] = useState<number>(0);
 
     const sessionTokenLimit = user?.tokenLimit || DEFAULT_GUEST_LIMIT;
@@ -34,13 +34,15 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
                 const newTotal = Math.min(prev + delta, sessionTokenLimit);
                 if (!isAuthenticated) {
                     sessionStorage.setItem(STORAGE_KEY, String(newTotal));
+                } else if (updateUser) {
+                    updateUser({ tokensUsed: newTotal });
                 }
                 return newTotal;
             });
         };
         window.addEventListener('qg:token-update', handleTokenUpdate);
         return () => window.removeEventListener('qg:token-update', handleTokenUpdate);
-    }, [isAuthenticated, sessionTokenLimit]);
+    }, [isAuthenticated, sessionTokenLimit, updateUser]);
 
     const remaining = Math.max(sessionTokenLimit - tokensUsed, 0);
     const fillPercent = Math.min((tokensUsed / sessionTokenLimit) * 100, 100);
