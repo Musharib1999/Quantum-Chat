@@ -55,7 +55,7 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
                             {exp.success !== false ? 'Success' : 'Failed'}
                         </span>
                     </div>
-                    <div className="font-medium text-sm text-foreground mb-1 line-clamp-1 group-hover:text-blue-400 transition-colors">
+                    <div className="font-medium text-sm text-foreground mb-1 line-clamp-1 transition-colors">
                         {exp.problem || "Untitled Experiment"}
                     </div>
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
