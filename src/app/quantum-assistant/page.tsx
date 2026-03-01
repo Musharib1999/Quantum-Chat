@@ -15,7 +15,7 @@ export default function QuantumAssistantPage() {
                 {/* Left: Branding */}
                 <div className="flex items-center pointer-events-auto">
                     <a href="https://www.quantumcomputers.guru/">
-                        <img src="/logo.png" alt="Quantum Guru" className="h-10 md:h-[60px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
+                        <img src="/logo.png" alt="Quantum Guru" className="h-12 md:h-[80px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
                     </a>
                 </div>
 

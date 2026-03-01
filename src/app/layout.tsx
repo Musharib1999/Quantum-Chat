@@ -10,7 +10,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Quantum Guru Chat",
+  title: "Quantum Guru AI",
   description: "Turning Quantum Complexity into Clear Intelligence",
 };
 
