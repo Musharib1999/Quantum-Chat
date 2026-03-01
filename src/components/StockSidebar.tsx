@@ -67,7 +67,25 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                             }`}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-sm">{stock.name}</span>
+                            <div className="flex items-center gap-3">
+                                {/* Logo with Fallback */}
+                                <div className="relative w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-white border border-border overflow-hidden">
+                                    <img
+                                        src={`https://logo.clearbit.com/${(stock.url || '').replace(/^https?:\/\//, '').split('/')[0]}`}
+                                        alt={stock.symbol || stock.name}
+                                        className="w-full h-full object-contain p-0.5"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                            if (fallback) fallback.style.display = 'flex';
+                                        }}
+                                    />
+                                    <div className="absolute inset-0 hidden items-center justify-center bg-secondary text-foreground text-[10px] font-bold uppercase">
+                                        {(stock.symbol || stock.name).substring(0, 1)}
+                                    </div>
+                                </div>
+                                <span className="text-sm font-medium">{stock.name}</span>
+                            </div>
                             {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
                         </div>
                     </button>
