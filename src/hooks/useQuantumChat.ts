@@ -10,7 +10,7 @@ export interface Message {
     chartData?: any;
 }
 
-export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed', contextConfig?: any) {
+export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed' | 'assistant', contextConfig?: any) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);

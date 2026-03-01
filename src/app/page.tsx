@@ -3,19 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/components/ThemeContext';
-import {
-  TrendingUp,
-  BookOpen,
-  Moon,
-  Sun,
-  ArrowRight,
-  Atom,
-  Menu,
-  X,
-  Cpu,
-  Lock as LockIcon,
-  Unlock as UnlockIcon
-} from 'lucide-react';
+import { Shield, Cpu, ArrowRight, TrendingUp, BookOpen, Bot, Lock as LockIcon, Unlock as UnlockIcon, LogOut, Sun, Moon, CheckCircle, Menu, X, Atom } from 'lucide-react';
 
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme();
@@ -137,6 +125,18 @@ export default function LandingPage() {
             actionText="Launch"
             isDarkMode={isDarkMode}
             accentColor="rose"
+            status="unlocked"
+          />
+
+          {/* Card 4: Quantum Assistant */}
+          <FeatureCard
+            href="/quantum-assistant"
+            icon={<Bot size={32} />}
+            title="Quantum Assistant"
+            description="Our newest Quantum Guru LLM trained on high quality Quantum data with 43 million tokens and 240 million parameters."
+            actionText="Chat Now"
+            isDarkMode={isDarkMode}
+            accentColor="indigo"
             status="unlocked"
           />
 
