@@ -9,7 +9,7 @@ import ExperimentDetailsModal from '@/components/ExperimentDetailsModal';
 import QuantumFormFetcher from '@/components/QuantumFormFetcher';
 import { getExperiments } from '@/app/actions/experiment';
 import axios from 'axios';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, BookOpen, ChevronRight } from 'lucide-react';
 
 import IndustryLogin from '@/components/industry/IndustryLogin';
 import { useAuth } from '@/context/AuthContext';
@@ -247,13 +247,31 @@ export default function IndustryPage() {
                 }
                 // Right Sidebar: Experiment History
                 rightSidebarContent={
-                    <div className="h-full overflow-hidden">
-                        <ExperimentHistoryList
-                            experiments={experiments}
-                            loading={loadingExperiments}
-                            onSelectExperiment={setSelectedExperiment}
-                            isGuest={!isAuthenticated}
-                        />
+                    <div className="h-full overflow-hidden flex flex-col">
+                        {/* Article & Learn Link Card */}
+                        <div className="p-4 border-b border-border shrink-0 mt-1">
+                            <a href="/article-learn" className="block w-full p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all group">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                        <BookOpen className="text-blue-400 w-4 h-4" />
+                                        Article & Learn
+                                    </h3>
+                                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    Deepen your quantum knowledge with curated articles.
+                                </p>
+                            </a>
+                        </div>
+
+                        <div className="flex-1 overflow-hidden">
+                            <ExperimentHistoryList
+                                experiments={experiments}
+                                loading={loadingExperiments}
+                                onSelectExperiment={setSelectedExperiment}
+                                isGuest={!isAuthenticated}
+                            />
+                        </div>
                     </div>
                 }
             >
