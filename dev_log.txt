@@ -1,0 +1,64 @@
+
+> quantum-chat@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+   ▲ Next.js 15.1.12
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.29.107:3001
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1735ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1095ms (654 modules)
+ GET / 200 in 1282ms
+ ○ Compiling /icon.png ...
+ ✓ Compiled /icon.png in 1106ms (362 modules)
+ GET /icon.png?ad09aa288f0b66f4 200 in 1508ms
+ ○ Compiling /quantum-assistant ...
+ ✓ Compiled /quantum-assistant in 1974ms (2865 modules)
+ GET /quantum-assistant 200 in 2124ms
+ GET /quantum-assistant 200 in 191ms
+ GET /icon.png?ad09aa288f0b66f4 200 in 16ms
+ GET / 200 in 37ms
+ GET / 200 in 67ms
+ GET /icon.png?ad09aa288f0b66f4 200 in 7ms
+ GET /quantum-assistant 200 in 16ms
+ GET /quantum-assistant 200 in 77ms
+[Gemini Tool Calling Error] - Proceeding without tools: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at async chatWithGroq (src/app/actions/chat.ts:375:27)
+  373 |         try {
+  374 |             const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, tools: [geminiTools] as any });
+> 375 |             const result = await model.generateContent([
+      |                           ^
+  376 |                 "You are an AI router. Decide if you need to fetch live data using your tools based on the user prompt.",
+  377 |                 prompt
+  378 |             ]); {
+  status: 404,
+  statusText: 'Not Found',
+  errorDetails: undefined
+}
+LLM Server Error: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at async chatWithGroq (src/app/actions/chat.ts:868:23)
+  866 |
+  867 |         const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+> 868 |         const result = await model.generateContent([
+      |                       ^
+  869 |             { text: systemInstructions },
+  870 |             { text: finalPrompt }
+  871 |         ]); {
+  status: 404,
+  statusText: 'Not Found',
+  errorDetails: undefined
+}
+ POST /quantum-assistant 200 in 3370ms
+ GET / 200 in 29ms
+ ○ Compiling /market ...
+ ✓ Compiled /market in 2.1s (3998 modules)
+ GET /market 200 in 2383ms
+ ○ Compiling /api/stocks ...
+ ✓ Compiled /api/stocks in 1618ms (4018 modules)
+ GET /api/stocks 200 in 1883ms
+ POST /market 200 in 2014ms
+ ✓ Compiled in 1463ms (3999 modules)

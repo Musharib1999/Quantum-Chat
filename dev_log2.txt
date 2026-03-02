@@ -1,0 +1,13 @@
+
+> quantum-chat@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+   ▲ Next.js 15.1.12
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.29.107:3002
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1938ms
