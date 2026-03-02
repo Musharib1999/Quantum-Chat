@@ -21,7 +21,7 @@ const MarketPromptSchema = new Schema<IMarketPrompt>(
             type: String,
             required: [true, 'Please provide the query text to trigger'],
             trim: true,
-            maxlength: [500, 'Query cannot be more than 500 characters'],
+            maxlength: [5000, 'Query cannot be more than 5000 characters'],
         },
         isActive: {
             type: Boolean,
