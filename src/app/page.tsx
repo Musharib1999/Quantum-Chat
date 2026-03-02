@@ -50,15 +50,9 @@ export default function LandingPage() {
             <div className="flex items-center gap-4">
               <Link
                 href="/login"
-                className="px-6 py-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors text-sm"
+                className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white dark:bg-transparent dark:border-[#3066bb] dark:text-[#5c8deb] dark:hover:bg-[#3066bb] dark:hover:text-white font-bold rounded transition-all shadow-sm text-sm"
               >
                 Login
-              </Link>
-              <Link
-                href="/login?mode=signup"
-                className="px-6 py-1.5 bg-[#3066bb] text-white hover:bg-[#255299] font-bold rounded transition-all shadow-sm text-sm"
-              >
-                Sign Up
               </Link>
             </div>
 
