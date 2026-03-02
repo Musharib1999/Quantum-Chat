@@ -11,3 +11,12 @@
 
  ✓ Starting...
  ✓ Ready in 1938ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1699ms (654 modules)
+ GET / 200 in 1966ms
+ ✓ Compiled /icon.png in 266ms (362 modules)
+ GET /icon.png?ad09aa288f0b66f4 200 in 323ms
+ ○ Compiling /quantum-assistant ...
+ ✓ Compiled /quantum-assistant in 2.4s (2865 modules)
+ GET /quantum-assistant 200 in 2569ms
+ GET /quantum-assistant 200 in 183ms

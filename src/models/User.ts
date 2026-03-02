@@ -18,6 +18,14 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    company: {
+        type: String,
+        default: '',
+    },
+    isApproved: {
+        type: Boolean,
+        default: false,
+    },
     phone: {
         type: String,
         default: '',

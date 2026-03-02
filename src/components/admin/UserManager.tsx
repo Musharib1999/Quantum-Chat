@@ -6,6 +6,8 @@ interface User {
     email: string;
     firstName?: string;
     lastName?: string;
+    company?: string;
+    isApproved?: boolean;
     phone?: string;
     plan?: string;
     role: string;
@@ -150,6 +152,29 @@ export default function UserManager() {
         }
     };
 
+    const handleToggleApproval = async (user: User) => {
+        const newStatus = !user.isApproved;
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: user._id,
+                    isApproved: newStatus
+                }),
+            });
+
+            if (res.ok) {
+                // Update local state to reflect change immediately
+                setUsers(users.map(u => u._id === user._id ? { ...u, isApproved: newStatus } : u));
+            } else {
+                alert("Failed to update user approval status");
+            }
+        } catch (error) {
+            console.error("Status update failed", error);
+        }
+    };
+
     const filteredUsers = users.filter(u =>
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -190,8 +215,9 @@ export default function UserManager() {
                         <thead className="bg-secondary/30 border-b border-border">
                             <tr className="text-muted-foreground font-bold text-xs uppercase tracking-wider">
                                 <th className="p-4">User</th>
+                                <th className="p-4">Company</th>
                                 <th className="p-4">Role</th>
-                                <th className="p-4">Created At</th>
+                                <th className="p-4">Status</th>
                                 <th className="p-4">Tokens</th>
                                 <th className="p-4 text-right">Actions</th>
                             </tr>
@@ -217,16 +243,30 @@ export default function UserManager() {
                                                 <div className="w-8 h-8 rounded-full bg-[#3066bb]/10 text-[#3066bb] flex items-center justify-center border border-[#3066bb]/20">
                                                     <UserIcon size={14} />
                                                 </div>
-                                                <span className="font-medium text-foreground">{user.email}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-foreground">{user.email}</span>
+                                                    {(user.firstName || user.lastName) && (
+                                                        <span className="text-xs text-muted-foreground">{user.firstName} {user.lastName}</span>
+                                                    )}
+                                                </div>
                                             </div>
+                                        </td>
+                                        <td className="p-4 text-sm font-medium text-muted-foreground">
+                                            {user.company || "-"}
                                         </td>
                                         <td className="p-4">
                                             <span className="px-2 py-1 rounded-md bg-secondary text-xs font-bold uppercase text-muted-foreground border border-border">
                                                 {user.role}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-sm text-muted-foreground font-mono">
-                                            {new Date(user.createdAt).toLocaleDateString()}
+                                        <td className="p-4">
+                                            {user.role === 'admin' ? (
+                                                <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-md text-xs font-bold uppercase border border-blue-500/20">Active</span>
+                                            ) : user.isApproved ? (
+                                                <span className="px-2 py-1 bg-green-500/10 text-green-400 rounded-md text-xs font-bold uppercase border border-green-500/20">Active</span>
+                                            ) : (
+                                                <span className="px-2 py-1 bg-orange-500/10 text-orange-400 rounded-md text-xs font-bold uppercase border border-orange-500/20">Pending</span>
+                                            )}
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-col gap-1">
@@ -246,7 +286,18 @@ export default function UserManager() {
                                             </div>
                                         </td>
                                         <td className="p-4 text-right">
-                                            <div className="flex justify-end gap-2">
+                                            <div className="flex justify-end gap-2 items-center">
+                                                {user.role !== 'admin' && (
+                                                    <button
+                                                        onClick={() => handleToggleApproval(user)}
+                                                        className={`p-2 rounded-lg transition-colors border text-xs font-bold ${user.isApproved
+                                                            ? 'text-red-400 bg-red-500/10 border-red-500/20 hover:bg-red-500/20'
+                                                            : 'text-green-400 bg-green-500/10 border-green-500/20 hover:bg-green-500/20'}`}
+                                                        title={user.isApproved ? "Revoke Access" : "Approve User"}
+                                                    >
+                                                        {user.isApproved ? "Revoke" : "Approve"}
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => {
                                                         setSelectedUser(user);

@@ -11,39 +11,57 @@ function LoginForm() {
     const searchParams = useSearchParams();
     const redirect = searchParams.get('redirect') || '/market';
 
+    const [mode, setMode] = useState<'login' | 'signup'>('login');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [company, setCompany] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
     const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccessMsg('');
         setLoading(true);
 
-        if (!email || !password) {
-            setError('Please provide your credentials.');
+        if (!email || !password || (mode === 'signup' && (!firstName || !lastName))) {
+            setError('Please provide all required fields.');
             setLoading(false);
             return;
         }
 
         try {
-            const res = await fetch('/api/auth/login', {
+            const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/signup';
+            const bodyPayload = mode === 'login'
+                ? { email, password }
+                : { firstName, lastName, company, email, password, role: 'user' };
+
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify(bodyPayload),
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || 'Login failed');
+                throw new Error(data.error || `${mode === 'login' ? 'Login' : 'Registration'} failed`);
             }
 
-            // Store full user profile in AuthContext
-            login(data);
-            router.push(redirect);
+            if (mode === 'login') {
+                // Store full user profile in AuthContext
+                login(data);
+                router.push(redirect);
+            } else {
+                setSuccessMsg(data.message || 'Registration successful. Your account is pending admin approval.');
+                setMode('login'); // Switch back to login view
+                setPassword(''); // Clear password for security
+            }
         } catch (err: any) {
             setError(err.message || 'Authentication failed. Please check your connection.');
         } finally {
@@ -67,21 +85,79 @@ function LoginForm() {
             </div>
 
             <div className="relative z-10 w-full max-w-md p-8">
-                <div className="bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 space-y-8 animate-in zoom-in-95 fade-in duration-700">
+                <div className="bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 space-y-6 animate-in zoom-in-95 fade-in duration-700">
 
                     {/* Header */}
                     <div className="text-center space-y-2">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/50 border border-white/10 mb-4 shadow-inner">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/50 border border-white/10 mb-2 shadow-inner">
                             <Atom size={32} className="text-primary animate-spin-slow" />
                         </div>
                         <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'rgb(48, 102, 187)' }}>
-                            Login
+                            {mode === 'login' ? 'Login' : 'Request Access'}
                         </h1>
+                        <p className="text-sm text-muted-foreground">
+                            {mode === 'login' ? 'Enter your credentials to access the workspace.' : 'Sign up to request approval from an administrator.'}
+                        </p>
+                    </div>
+
+                    {/* Mode Toggle */}
+                    <div className="flex p-1 bg-secondary/50 rounded-xl">
+                        <button
+                            type="button"
+                            onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }}
+                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            Login
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); }}
+                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'signup' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            Sign Up
+                        </button>
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-2">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {mode === 'signup' && (
+                            <>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">First Name</label>
+                                        <input
+                                            type="text"
+                                            value={firstName}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                            className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                            placeholder="Marie"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Last Name</label>
+                                        <input
+                                            type="text"
+                                            value={lastName}
+                                            onChange={(e) => setLastName(e.target.value)}
+                                            className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                            placeholder="Curie"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Company / Institution</label>
+                                    <input
+                                        type="text"
+                                        value={company}
+                                        onChange={(e) => setCompany(e.target.value)}
+                                        className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                        placeholder="Quantum Labs Inc."
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        <div className="space-y-1.5">
                             <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Email</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -91,13 +167,13 @@ function LoginForm() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
                                     placeholder="researcher@quantum.lab"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                             <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Password</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -107,7 +183,7 @@ function LoginForm() {
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3.5 pl-11 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -126,18 +202,24 @@ function LoginForm() {
                             </div>
                         )}
 
+                        {successMsg && (
+                            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-xs font-bold text-center animate-in slide-in-from-top-2">
+                                {successMsg}
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group border border-primary/50"
+                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3.5 mt-2 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group border border-primary/50"
                         >
                             {loading ? (
                                 <span className="flex items-center gap-2">
-                                    <ShieldCheck size={18} className="animate-pulse" /> Verifying...
+                                    <ShieldCheck size={18} className="animate-pulse" /> Processing...
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    Enter Workspace <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    {mode === 'login' ? 'Enter Workspace' : 'Submit Request'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                                 </span>
                             )}
                         </button>

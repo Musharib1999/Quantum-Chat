@@ -36,7 +36,7 @@ export async function PUT(req: Request) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { id, password, email, firstName, lastName, phone, plan, tokenLimit, tokensUsed } = body;
+        const { id, password, email, firstName, lastName, company, isApproved, phone, plan, tokenLimit, tokensUsed } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -48,6 +48,8 @@ export async function PUT(req: Request) {
         if (email !== undefined) updateData.email = email;
         if (firstName !== undefined) updateData.firstName = firstName;
         if (lastName !== undefined) updateData.lastName = lastName;
+        if (company !== undefined) updateData.company = company;
+        if (isApproved !== undefined) updateData.isApproved = isApproved;
         if (phone !== undefined) updateData.phone = phone;
         if (plan !== undefined) updateData.plan = plan;
         if (password) updateData.password = password; // Since plain text is okay for now like the POST endpoint
