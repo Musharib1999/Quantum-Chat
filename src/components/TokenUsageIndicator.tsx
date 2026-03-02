@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const DEFAULT_GUEST_LIMIT = 100000;
@@ -71,9 +71,13 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
                     <button
                         onClick={onMenuClick}
                         title="Account"
-                        className="w-9 h-9 shrink-0 rounded-full bg-secondary border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 shadow-sm"
+                        className="w-9 h-9 shrink-0 rounded-[14px] bg-secondary border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 shadow-sm"
                     >
-                        <Menu size={17} strokeWidth={2.2} />
+                        {isAuthenticated && user ? (
+                            <span className="text-sm font-medium">{(user.firstName || user.email || 'U').substring(0, 2).toLowerCase()}</span>
+                        ) : (
+                            <UserIcon size={17} strokeWidth={2.2} />
+                        )}
                     </button>
                 )}
             </div>
