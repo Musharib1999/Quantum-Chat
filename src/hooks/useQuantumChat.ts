@@ -40,7 +40,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         setShouldAutoScroll(isAtBottom);
     };
 
-    const sendMessage = async (text?: string, customConfig?: any) => {
+    const sendMessage = async (text?: string, customConfig?: any, hiddenPrompt?: string) => {
         setShouldAutoScroll(true);
         const messageToSend = text || inputValue;
         if (!messageToSend.trim()) return;
@@ -66,8 +66,9 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             };
 
             // Call API
-            console.log(`[useQuantumChat] Sending message to Groq (mode: ${mode}):`, userMsg.text);
-            const response = await chatWithGroq(userMsg.text, 'chat', 'en', fullConfig);
+            const promptToSend = hiddenPrompt || userMsg.text;
+            console.log(`[useQuantumChat] Sending message to Groq (mode: ${mode}):`, promptToSend);
+            const response = await chatWithGroq(promptToSend, 'chat', 'en', fullConfig);
 
             // Dispatch token usage event to sidebar indicator
             if (response.tokensUsed !== undefined) {

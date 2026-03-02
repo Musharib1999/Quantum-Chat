@@ -174,8 +174,8 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                                 <button
                                     key={idx}
                                     onClick={() => {
-                                        setInputValue(chip.query);
-                                        // Optional: setTimeout(() => sendMessage(), 100); to auto-send
+                                        setInputValue(chip.label);
+                                        // Optional: setTimeout(() => sendMessage(chip.label, undefined, chip.query), 100); to auto-send
                                     }}
                                     className="snap-start flex items-center gap-1.5 shrink-0 px-3.5 py-1.5 bg-secondary/80 hover:bg-secondary border border-border rounded-full text-xs font-medium text-foreground transition-all shadow-sm group hover:border-[#3066bb]/40 hover:text-[#3066bb] dark:hover:text-[#5c8deb]"
                                 >
@@ -190,7 +190,19 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                         <textarea
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    if (inputValue.trim()) {
+                                        const matchedChip = marketChips.find(c => c.label.trim() === inputValue.trim());
+                                        if (matchedChip) {
+                                            sendMessage(matchedChip.label, undefined, matchedChip.query);
+                                        } else {
+                                            sendMessage();
+                                        }
+                                    }
+                                }
+                            }}
                             placeholder={placeholder || "Ask QUANTUM GURU AI..."}
                             rows={1}
                             className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
@@ -198,7 +210,14 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                         />
 
                         <button
-                            onClick={() => sendMessage()}
+                            onClick={() => {
+                                const matchedChip = marketChips.find(c => c.label.trim() === inputValue.trim());
+                                if (matchedChip) {
+                                    sendMessage(matchedChip.label, undefined, matchedChip.query);
+                                } else {
+                                    sendMessage();
+                                }
+                            }}
                             disabled={!inputValue.trim() || isTyping}
                             className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-bold"
                             style={{ backgroundColor: 'rgb(48, 102, 187)' }}
