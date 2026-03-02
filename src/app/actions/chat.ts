@@ -271,7 +271,7 @@ export async function chatWithGroq(
         return { text: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
     }
 
-    const groq = new Groq({ apiKey: API_KEY });
+    // const groq = new Groq({ apiKey: API_KEY });
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
     // 0. Fetch Active Rules for both logging and prompt injection
@@ -877,7 +877,7 @@ export async function chatWithGroq(
         await ChatLog.create({
             userQuery: prompt,
             aiResponse: text,
-            source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
+            source: kbResult?.type === 'context' ? 'kb_context' : 'gemini',
             context: kbResult?.type === 'context' ? kbResult.source : undefined,
             guardrailsStatus: 'passed',
             activeGuardrails: ruleTexts
@@ -891,7 +891,7 @@ export async function chatWithGroq(
 
         return {
             text,
-            source: kbResult?.type === 'context' ? 'kb_context' : 'groq',
+            source: kbResult?.type === 'context' ? 'kb_context' : 'gemini',
             sourceUrl: kbResult?.type === 'context' ? kbResult.source : undefined,
             guardrailsStatus: 'passed',
             activeGuardrails: ruleTexts,
@@ -900,7 +900,7 @@ export async function chatWithGroq(
         };
 
     } catch (error: any) {
-        console.error("Groq Server Error:", error);
+        console.error("LLM Server Error:", error);
 
         // Basic offline fallback (Strict Maintenance Mode)
         const errorMsg = "I am currently undergoing maintenance and cannot process complex requests right now. However, you can still ask me questions from our official Knowledge Base, or try again in a few minutes.";
@@ -956,9 +956,13 @@ export async function getMarketNews() {
 export async function generateQuantumCode(config: {
     problem: string; industry: string; service: string; hardware: string; formData: any;
 }): Promise<{ code: string; error?: string }> {
-    const groq = new Groq({ apiKey: API_KEY });
+    // const groq = new Groq({ apiKey: API_KEY });
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
     const { problem, industry, service, hardware, formData } = config;
+
+    if (!GEMINI_API_KEY) {
+        return { code: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
+    }
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
     try {
@@ -1035,9 +1039,13 @@ export async function runQuantumSimulator(config: {
 export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string;
 }): Promise<{ text: string; chartData?: any }> {
-    const groq = new Groq({ apiKey: API_KEY });
+    // const groq = new Groq({ apiKey: API_KEY });
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
     const { problem, industry, hardware, rawOutput } = config;
+
+    if (!GEMINI_API_KEY) {
+        return { text: "Analysis unavailable: Gemini API Key is missing.", chartData: null };
+    }
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
     try {
