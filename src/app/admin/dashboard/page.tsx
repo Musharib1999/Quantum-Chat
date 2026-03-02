@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
     LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon, Newspaper, Briefcase,
-    Key, Loader2, Beaker
+    Key, Loader2, Beaker, ArrowUpCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -25,6 +25,7 @@ import NewsManager from '../../../components/admin/NewsManager';
 import PromptEditor from '../../../components/admin/PromptEditor';
 import UseCaseManager from '../../../components/admin/UseCaseManager';
 import ExperimentManager from '../../../components/admin/ExperimentManager';
+import MarketPromptManager from '../../../components/admin/MarketPromptManager';
 
 export default function AdminDashboard() {
     const { theme } = useTheme();
@@ -236,6 +237,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('forms'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<ArrowUpCircle size={20} />}
+                        label="Market Prompts"
+                        active={activeTab === 'market_prompts'}
+                        onClick={() => { setActiveTab('market_prompts'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<Newspaper size={20} />}
                         label="News Integration"
                         active={activeTab === 'news'}
@@ -321,6 +328,7 @@ export default function AdminDashboard() {
                             {activeTab === 'use_cases' && <Briefcase className="text-purple-500" />}
                             {activeTab === 'experiments' && <Beaker className="text-purple-500" />}
                             {activeTab === 'forms' && <Layers className="text-primary" />}
+                            {activeTab === 'market_prompts' && <ArrowUpCircle className="text-green-500" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
                             {activeTab.replace('_', ' ')}
                         </h2>
@@ -535,6 +543,13 @@ export default function AdminDashboard() {
                     {activeTab === 'forms' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <FormArchitect />
+                        </div>
+                    )}
+
+                    {/* MARKET PROMPTS TAB */}
+                    {activeTab === 'market_prompts' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <MarketPromptManager />
                         </div>
                     )}
 

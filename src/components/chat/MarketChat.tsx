@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
-import { Send, User, StopCircle, TrendingUp } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Send, User, StopCircle, TrendingUp, Sparkles } from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 import QuantumChart from '../QuantumChart';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
@@ -24,6 +24,17 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
         handleScroll,
         setShouldAutoScroll
     } = useQuantumChat('market', contextConfig);
+
+    const [marketChips, setMarketChips] = useState<{ label: string, query: string }[]>([]);
+
+    useEffect(() => {
+        fetch('/api/market-prompts')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setMarketChips(data);
+            })
+            .catch(err => console.error("Failed to load chips", err));
+    }, []);
 
     const lastTriggeredUrlRef = useRef<string | null>(null);
     const lastTriggeredNewsRef = useRef<string | null>(null);
@@ -155,6 +166,26 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                             </p>
                         </div>
                     )}
+
+                    {/* Market Prompt Chips */}
+                    {marketChips.length > 0 && (
+                        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-3 scrollbar-none snap-x mb-1 w-full mask-edges">
+                            {marketChips.map((chip, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => {
+                                        setInputValue(chip.query);
+                                        // Optional: setTimeout(() => sendMessage(), 100); to auto-send
+                                    }}
+                                    className="snap-start flex items-center gap-1.5 shrink-0 px-3.5 py-1.5 bg-secondary/80 hover:bg-secondary border border-border rounded-full text-xs font-medium text-foreground transition-all shadow-sm group hover:border-[#3066bb]/40 hover:text-[#3066bb] dark:hover:text-[#5c8deb]"
+                                >
+                                    <Sparkles size={12} className="text-muted-foreground group-hover:text-[#3066bb] dark:group-hover:text-[#5c8deb] transition-colors" />
+                                    {chip.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="relative flex items-end gap-2 bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-lg p-2 transition-all focus-within:ring-1 focus-within:ring-ring focus-within:border-ring focus-within:bg-card">
                         <textarea
                             value={inputValue}
