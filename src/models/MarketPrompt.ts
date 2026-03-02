@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMarketPrompt extends Document {
     label: string;
@@ -9,7 +9,7 @@ export interface IMarketPrompt extends Document {
     updatedAt: Date;
 }
 
-const MarketPromptSchema: Schema = new Schema(
+const MarketPromptSchema = new Schema<IMarketPrompt>(
     {
         label: {
             type: String,
@@ -38,6 +38,5 @@ const MarketPromptSchema: Schema = new Schema(
     }
 );
 
-const MarketPrompt: Model<IMarketPrompt> = mongoose.models.MarketPrompt || mongoose.model<IMarketPrompt>('MarketPrompt', MarketPromptSchema);
-
-export default MarketPrompt;
+// Prevent mongoose from compiling the model multiple times in Next.js
+export default mongoose.models.MarketPrompt || mongoose.model<IMarketPrompt>('MarketPrompt', MarketPromptSchema);
