@@ -82,12 +82,24 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         Sign Out
                     </button>
                 ) : (
-                    <button
-                        onClick={handleLogin}
-                        className="w-full px-3 py-2 rounded-lg text-sm text-foreground hover:ring-1 hover:ring-inset hover:ring-ring transition-all text-left"
-                    >
-                        Login
-                    </button>
+                    <>
+                        <button
+                            onClick={handleLogin}
+                            className="w-full px-3 py-2 rounded-lg text-sm text-foreground hover:ring-1 hover:ring-inset hover:ring-ring transition-all text-left"
+                        >
+                            Login
+                        </button>
+                        <button
+                            onClick={() => {
+                                const redirect = encodeURIComponent(pathname || '/market');
+                                router.push(`/login?mode=signup&redirect=${redirect}`);
+                                onClose();
+                            }}
+                            className="w-full mt-1 px-3 py-2 rounded-lg text-sm text-[#3066bb] font-medium hover:bg-[#3066bb]/10 transition-all text-left"
+                        >
+                            Sign Up
+                        </button>
+                    </>
                 )}
             </div>
         </div>
