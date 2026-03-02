@@ -20,6 +20,7 @@ interface IQuantumForm {
     problem: string;
     fields: IField[];
     sections?: { section_name: string; fields: IField[] }[];
+    codeTemplates?: { hardware: string; code: string }[];
     active: boolean;
     createdAt?: string;
 }
@@ -33,6 +34,7 @@ export default function FormArchitect() {
     const [editorMode, setEditorMode] = useState<'visual' | 'json'>('visual');
     const [fields, setFields] = useState<IField[]>([]);
     const [jsonFields, setJsonFields] = useState('[]');
+    const [codeTemplates, setCodeTemplates] = useState<{ hardware: string; code: string }[]>([]);
 
     // UI State
     const [loading, setLoading] = useState(false);
@@ -92,7 +94,8 @@ export default function FormArchitect() {
                 service,
                 problem,
                 active: true,
-                fields: []
+                fields: [],
+                codeTemplates
             };
 
             if (editorMode === 'json') {
@@ -171,6 +174,7 @@ export default function FormArchitect() {
         setService(form.service);
         setProblem(form.problem);
         setFields(form.fields || []);
+        setCodeTemplates(form.codeTemplates || []);
 
         // Intelligent Editor Mode Switching
         if (form.sections && form.sections.length > 0) {
@@ -192,6 +196,7 @@ export default function FormArchitect() {
         setProblem('');
         setFields([]);
         setJsonFields('[]');
+        setCodeTemplates([]);
         setView('editor');
         setEditorMode('visual');
     };
@@ -453,6 +458,66 @@ export default function FormArchitect() {
                                     className="w-full h-96 bg-transparent font-mono text-sm text-foreground focus:outline-none resize-none"
                                     spellCheck={false}
                                 />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Code Templates Section */}
+                    <div className="space-y-6 pt-6 bg-card rounded-3xl p-6 border border-border">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2 tracking-tight">
+                                <Code2 size={20} className="text-[#3066bb]" /> Code Templates
+                            </h2>
+                            <button
+                                onClick={() => setCodeTemplates([...codeTemplates, { hardware: '', code: '' }])}
+                                className="px-4 py-2 bg-[#3066bb]/10 text-[#3066bb] rounded-lg font-medium text-xs hover:bg-[#3066bb]/20 transition-colors flex items-center gap-2"
+                            >
+                                <Plus size={14} /> Add Hardware Template
+                            </button>
+                        </div>
+
+                        {codeTemplates.length === 0 ? (
+                            <div className="text-center py-10 border-2 border-dashed border-border rounded-2xl bg-secondary/30">
+                                <p className="text-xs text-muted-foreground">No code templates defined. Fallback to generic LLM generation.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {codeTemplates.map((tmpl, idx) => (
+                                    <div key={idx} className="bg-secondary/20 p-4 rounded-2xl border border-border space-y-4 relative group">
+                                        <button
+                                            onClick={() => setCodeTemplates(codeTemplates.filter((_, i) => i !== idx))}
+                                            className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Target Hardware</label>
+                                            <input
+                                                value={tmpl.hardware}
+                                                onChange={(e) => {
+                                                    const updated = [...codeTemplates];
+                                                    updated[idx].hardware = e.target.value;
+                                                    setCodeTemplates(updated);
+                                                }}
+                                                placeholder="e.g. Qiskit Simulator, D-Wave Advantage"
+                                                className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] transition-all"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Template Code (Python)</label>
+                                            <textarea
+                                                value={tmpl.code}
+                                                onChange={(e) => {
+                                                    const updated = [...codeTemplates];
+                                                    updated[idx].code = e.target.value;
+                                                    setCodeTemplates(updated);
+                                                }}
+                                                placeholder="Paste boilerplate code here... Use {{shots}} or {{parameters.key}} for dynamic injection."
+                                                className="w-full h-48 bg-background border border-border rounded-xl px-4 py-3 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#3066bb] transition-all resize-none"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>

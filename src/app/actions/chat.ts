@@ -1,6 +1,7 @@
 "use server";
 
 import Groq from "groq-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import dbConnect from '@/lib/db';
@@ -13,17 +14,25 @@ import User from '@/models/User';
 import SystemPrompt from '@/models/SystemPrompt';
 import { execSync } from 'child_process';
 import path from 'path';
+import crypto from 'crypto';
 import { getStockPrice, getLatestNews } from './market';
+import QuantumForm from '@/models/QuantumForm';
 
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = "gemini-1.5-flash";
+
+const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL || "http://127.0.0.1:8001";
+const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL || "http://127.0.0.1:8002";
+
 // --- Quantum Execution Helper ---
 async function executeQuantumCircuit(circuitCode: string) {
     try {
-        console.log(`[Quantum Sim] Sending request to: http://127.0.0.1:8001/execute`);
+        console.log(`[Quantum Sim] Sending request to: ${QISKIT_SERVICE_URL}/execute`);
 
-        const response = await axios.post(`http://127.0.0.1:8001/execute`, {
+        const response = await axios.post(`${QISKIT_SERVICE_URL}/execute`, {
             code: circuitCode
         }, {
             timeout: 20000
@@ -41,9 +50,9 @@ async function executeQuantumCircuit(circuitCode: string) {
 
 async function executeDWaveAnnealer(code: string) {
     try {
-        console.log(`[DWave Sim] Sending request to: http://127.0.0.1:8002/execute`);
+        console.log(`[DWave Sim] Sending request to: ${DWAVE_SERVICE_URL}/execute`);
 
-        const response = await axios.post(`http://127.0.0.1:8002/execute`, {
+        const response = await axios.post(`${DWAVE_SERVICE_URL}/execute`, {
             code: code
         }, {
             timeout: 60000  // 60s — annealing can be slow for large BQMs
@@ -57,6 +66,73 @@ async function executeDWaveAnnealer(code: string) {
         }
         return { error: `Quantum Service Error: ${e.message}` };
     }
+}
+
+// --- Robustness Helpers ---
+
+/**
+ * Layer 1 & 2 Validation: Security & Quantum Constraints
+ */
+async function validateQuantumCode(code: string, hardware: string): Promise<{ valid: boolean; error?: string }> {
+    // 1. Static Security Check (Layer 1)
+    const bannedPatterns = [
+        /import\s+os/i, /from\s+os/i,
+        /import\s+subprocess/i, /from\s+subprocess/i,
+        /import\s+sys/i, /from\s+sys/i,
+        /import\s+requests/i, /import\s+socket/i,
+        /eval\(/i, /exec\(/i, /getattr\(/i
+    ];
+
+    for (const pattern of bannedPatterns) {
+        if (pattern.test(code)) {
+            return { valid: false, error: "Security Violation: Unauthorized module import detected." };
+        }
+    }
+
+    // 2. Hardware Constraint Check (Layer 2)
+    if (hardware.toLowerCase().includes('qiskit')) {
+        const qubitMatch = code.match(/QuantumCircuit\((\d+)\)/);
+        if (qubitMatch && parseInt(qubitMatch[1]) > 32) {
+            return { valid: false, error: `Hardware Violation: Requested ${qubitMatch[1]} qubits exceeds simulator limit of 32.` };
+        }
+        // Simple depth proxy: count gate applications
+        const gateCount = (code.match(/circuit\.[a-z0-9]+\(/gi) || []).length;
+        if (gateCount > 100) {
+            return { valid: false, error: `Complexity Violation: Circuit contains ${gateCount} operations, exceeding local limit of 100.` };
+        }
+    }
+
+    if (hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer')) {
+        // Look for common variable patterns: linear={...} or BinaryQuadraticModel(...)
+        const varMatch = code.match(/linear\s*=\s*\{([^}]+)\}/);
+        if (varMatch) {
+            const keys = varMatch[1].split(',').length;
+            if (keys > 30) {
+                return { valid: false, error: `Hardware Violation: Requested ${keys} variables exceeds local annealing limit of 30.` };
+            }
+        }
+    }
+
+    // 3. Syntax Pre-check via Service (Layer 3)
+    try {
+        const endpoint = hardware.toLowerCase().includes('d-wave') ? `${DWAVE_SERVICE_URL}/validate` : `${QISKIT_SERVICE_URL}/validate`;
+        const verify = await axios.post(endpoint, { code });
+        if (!verify.data.valid) {
+            return { valid: false, error: `Syntax Error: ${verify.data.error}` };
+        }
+    } catch (e) {
+        console.warn("Validation service unreachable, skipping Step 3.");
+    }
+
+    return { valid: true };
+}
+
+/**
+ * Result Caching (SHA-256)
+ */
+function getWorkflowCacheKey(problem: string, service: string, hardware: string, params: any) {
+    const data = JSON.stringify({ problem, service, hardware, params });
+    return crypto.createHash('sha256').update(data).digest('hex');
 }
 
 // --- Types ---
@@ -83,8 +159,7 @@ export interface AIResponse {
 
 // --- Connection Check ---
 export async function checkGeminiConnection() {
-    // Keeping function name for compatibility, but checking Groq key
-    return !!API_KEY;
+    return !!GEMINI_API_KEY;
 }
 
 // --- Guardrails ---
@@ -189,11 +264,15 @@ export async function chatWithGroq(
     // Keeping name for frontend compatibility
     await dbConnect(); // Ensure connection early
 
-    if (!API_KEY) {
-        return { text: "", error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
+    // Sanitization: Prevent prompt injection in the main prompt string
+    const sanitizedPrompt = prompt.replace(/[{}]/g, ''); // Simple bracket stripping
+
+    if (!GEMINI_API_KEY) {
+        return { text: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
     }
 
     const groq = new Groq({ apiKey: API_KEY });
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
     // 0. Fetch Active Rules for both logging and prompt injection
     const activeRules = await getActiveGuardrails();
@@ -247,84 +326,85 @@ export async function chatWithGroq(
     let autonomousNewsData = null;
 
     if (!contextConfig?.realTimeData && !kbResult) {
+        /* GROQ_FALLBACK:
         // Define our available native tools
         const tools = [
-            {
-                type: "function",
-                function: {
-                    name: "get_stock_price",
-                    description: "Gets the real-time stock price and market data for a given company ticker symbol. Use exactly when the user asks for financial data on a specific company.",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            ticker: { type: "string", description: "The official abbreviated stock ticker symbol (e.g., AAPL for Apple, TSLA for Tesla)" }
-                        },
-                        required: ["ticker"]
-                    }
-                }
-            },
-            {
-                type: "function",
-                function: {
-                    name: "get_market_news",
-                    description: "Fetches recent news headlines for a given company or generic topic.",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            topic: { type: "string", description: "The topic or company name to get news for (e.g., 'Apple' or 'Quantum Computing')." }
-                        },
-                        required: ["topic"]
-                    }
-                }
-            }
+            ...
         ];
 
         try {
             // First pass: Ask the LLM if it wants to use a tool based on the user's prompt
             const initialToolCheck = await groq.chat.completions.create({
-                messages: [{ role: "system", content: "You are an AI router. Decide if you need to fetch live data using your tools." }, { role: "user", content: prompt }],
-                model: DEFAULT_MODEL,
-                tools: tools as any[],
-                tool_choice: "auto",
-                temperature: 0,
+                ...
             });
+            ...
+        } catch (toolError) {
+            console.error("[Groq Tool Calling Error] - Proceeding without tools:", toolError);
+        }
+        */
 
-            const responseMessage = initialToolCheck.choices[0]?.message;
-
-            // Did the LLM decide to call any tools?
-            if (responseMessage?.tool_calls) {
-                for (const toolCall of responseMessage.tool_calls) {
-                    const args = JSON.parse(toolCall.function.arguments);
-
-                    if (toolCall.function.name === 'get_stock_price') {
-                        console.log(`[Groq Tool] Triggered get_stock_price for: ${args.ticker}`);
-                        try {
-                            // Add an AbortController for a 5-second graceful timeout
-                            const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-                            // We call the existing local import which talks to the external Vercel app
-                            autonomousMarketData = await getStockPrice(args.ticker);
-                            clearTimeout(timeoutId);
-                        } catch (e: any) {
-                            console.error("[Groq Tool] get_stock_price failed/timed out:", e.message);
-                            // It failed safely, we will just inform Groq we don't have the data in the system instructions later
-                        }
+        const geminiTools = {
+            functionDeclarations: [
+                {
+                    name: "get_stock_price",
+                    description: "Gets the real-time stock price and market data for a given company ticker symbol. Use exactly when the user asks for financial data on a specific company.",
+                    parameters: {
+                        type: "OBJECT",
+                        properties: {
+                            ticker: { type: "STRING", description: "The official abbreviated stock ticker symbol (e.g., AAPL for Apple, TSLA for Tesla)" }
+                        },
+                        required: ["ticker"]
                     }
+                },
+                {
+                    name: "get_market_news",
+                    description: "Fetches recent news headlines for a given company or generic topic.",
+                    parameters: {
+                        type: "OBJECT",
+                        properties: {
+                            topic: { type: "STRING", description: "The topic or company name to get news for (e.g., 'Apple' or 'Quantum Computing')." }
+                        },
+                        required: ["topic"]
+                    }
+                }
+            ]
+        };
 
-                    if (toolCall.function.name === 'get_market_news') {
-                        console.log(`[Groq Tool] Triggered get_market_news for: ${args.topic}`);
-                        try {
-                            const newsResult = await getLatestNews(args.topic);
-                            autonomousNewsData = newsResult.news;
-                        } catch (e: any) {
-                            console.error("[Groq Tool] get_market_news failed:", e.message);
-                        }
+        try {
+            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, tools: [geminiTools] as any });
+            const result = await model.generateContent([
+                "You are an AI router. Decide if you need to fetch live data using your tools based on the user prompt.",
+                prompt
+            ]);
+
+            const call = result.response.functionCalls()?.[0];
+            if (call) {
+                if (call.name === 'get_stock_price') {
+                    const args: any = call.args;
+                    console.log(`[Gemini Tool] Triggered get_stock_price for: ${args.ticker}`);
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 5000);
+                        autonomousMarketData = await getStockPrice(args.ticker);
+                        clearTimeout(timeoutId);
+                    } catch (e: any) {
+                        console.error("[Gemini Tool] get_stock_price failed:", e.message);
+                    }
+                }
+
+                if (call.name === 'get_market_news') {
+                    const args: any = call.args;
+                    console.log(`[Gemini Tool] Triggered get_market_news for: ${args.topic}`);
+                    try {
+                        const newsResult = await getLatestNews(args.topic);
+                        autonomousNewsData = newsResult.news;
+                    } catch (e: any) {
+                        console.error("[Gemini Tool] get_market_news failed:", e.message);
                     }
                 }
             }
         } catch (toolError) {
-            console.error("[Groq Tool Calling Error] - Proceeding without tools:", toolError);
+            console.error("[Gemini Tool Calling Error] - Proceeding without tools:", toolError);
         }
     }
 
@@ -413,6 +493,7 @@ export async function chatWithGroq(
 
             // If no symbol selected, try to extract from prompt
             if (!targetSymbol) {
+                /* GROQ_FALLBACK:
                 try {
                     const extraction = await groq.chat.completions.create({
                         messages: [
@@ -428,6 +509,20 @@ export async function chatWithGroq(
                     }
                 } catch (e) {
                     console.error("Ticker extraction failed:", e);
+                }
+                */
+                try {
+                    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+                    const extraction = await model.generateContent([
+                        "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.",
+                        prompt
+                    ]);
+                    const extracted = extraction.response.text().trim();
+                    if (extracted && extracted !== 'NULL' && extracted.length < 10) {
+                        targetSymbol = extracted.replace(/[^a-zA-Z0-9-]/g, ''); // Clean it
+                    }
+                } catch (e) {
+                    console.error("Gemini Ticker extraction failed:", e);
                 }
             }
 
@@ -518,170 +613,215 @@ export async function chatWithGroq(
         }
         // Mode: Industry (Modular / Robust)
         else if (contextConfig.mode === 'industry') {
-            const { industry, service, problem, hardware, formData } = contextConfig;
+            const { industry, service, problem, hardware, formData, userEmail } = contextConfig;
 
             if (formData && Object.keys(formData).length > 0) {
-                // --- SPECIAL: MULTI-PASS QUANTUM WORKFLOW ---
+                // --- STEP 0: FETCH FORM DEF ---
+                const formDef = await QuantumForm.findOne({ industry, service, problem });
 
-                // Determine Backend Type
-                const isDWave = hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer');
-                let codePrompt = "";
-                let executionResult: any = {};
-                let generatedCode = "";
-
-                if (isDWave) {
-                    // --- D-WAVE WORKFLOW ---
-                    codePrompt = await getDynamicPrompt('industry_dwave', {
-                        industry,
-                        service,
-                        problem,
-                        parameters: JSON.stringify(formData)
-                    }, `You are a Python expert using dimod 0.12.21. Generate a complete runnable script. Problem: ${problem} | Industry: ${industry} | Service: ${service}. Return ONLY Python code.`);
-
-                    const completion1 = await groq.chat.completions.create({
-                        messages: [{ role: "system", content: "You are a D-Wave/Ocean Expert. Return only code." }, { role: "user", content: codePrompt }],
-                        model: DEFAULT_MODEL,
-                    });
-
-                    generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
-
-                    // Strip any LLM-generated dimod imports (they may be misspelled/hallucinated)
-                    // Always force the correct verified imports at the top
-                    const correctDwaveImports = `from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\nimport numpy as np\n\n`;
-                    generatedCode = generatedCode
-                        .split('\n')
-                        .filter(line => !line.trim().startsWith('from dimod import') && !line.trim().startsWith('import dimod'))
-                        .join('\n')
-                        .trim();
-                    generatedCode = correctDwaveImports + generatedCode;
-
-                    // Execute D-Wave Simulator
-                    executionResult = await executeDWaveAnnealer(generatedCode);
-
-                } else {
-                    // --- QISKIT WORKFLOW (Default) ---
-                    codePrompt = await getDynamicPrompt('industry_qiskit', {
-                        industry,
-                        service,
-                        problem,
-                        hardware,
-                        parameters: JSON.stringify(formData)
-                    }, `Generate a complete Qiskit script for Problem: ${problem} | Industry: ${industry}. Return ONLY Python code.`);
-
-                    const completion1 = await groq.chat.completions.create({
-                        messages: [{ role: "system", content: "You are a Qiskit Expert. Return only code." }, { role: "user", content: codePrompt }],
-                        model: DEFAULT_MODEL,
-                    });
-
-                    generatedCode = completion1.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || "";
-
-                    // Execute Qiskit Simulator
-                    executionResult = await executeQuantumCircuit(generatedCode);
+                // --- STEP 1: DETERMINISTIC GUARDRAILS (Pre-LLM) ---
+                if (formDef) {
+                    const allFields = [...(formDef.fields || []), ...(formDef.sections?.flatMap((s: any) => s.fields) || [])];
+                    for (const field of allFields) {
+                        const val = formData[field.key];
+                        if (field.required && (val === undefined || val === '')) {
+                            return { text: `Error: Required parameter "${field.label}" is missing.`, source: 'guardrail' };
+                        }
+                        // Type Validation
+                        if (val !== undefined && val !== '') {
+                            if (field.type === 'number' && isNaN(Number(val))) {
+                                return { text: `Error: Parameter "${field.label}" must be a number.`, source: 'guardrail' };
+                            }
+                        }
+                    }
                 }
 
-                // Pass 2: Interpret and Format
-                const simulatorType = isDWave ? 'D-Wave Annealing' : 'Qiskit Gate-Model';
-                const rawActualOutput = executionResult.output || executionResult.error;
+                // --- STEP 1.5: SHA-256 RESULT CACHING ---
+                const cacheKey = getWorkflowCacheKey(problem, service, hardware, formData);
+                const cachedResult = await Experiment.findOne({ cacheKey }).sort({ timestamp: -1 }).lean();
 
-                const interpretPrompt = await getDynamicPrompt('industry_analysis', {
-                    problem,
-                    industry,
-                    simulator: simulatorType,
-                    output: rawActualOutput
-                }, `Analyze the following ACTUAL simulator output ONLY. Output: ${rawActualOutput}`);
+                if (cachedResult) {
+                    console.log(`[Quantum Workflow] CACHE_HIT | Problem: ${problem} | Key: ${cacheKey}`);
+                    return {
+                        text: cachedResult.analysis,
+                        source: 'quantum_cache',
+                        guardrailsStatus: 'passed',
+                        activeGuardrails: ruleTexts
+                    };
+                }
 
-                const completion2 = await groq.chat.completions.create({
-                    messages: [
-                        { role: "system", content: "You are a Quantum Analysis expert." },
-                        { role: "user", content: interpretPrompt }
-                    ],
-                    model: DEFAULT_MODEL,
+                // --- STEP 1.6: LOGGING & SANITIZATION ---
+                console.log(`[Quantum Workflow] START | Industry: ${industry} | Service: ${service} | Problem: ${problem} | Hardware: ${hardware}`);
+                const sanitizedFormData: Record<string, any> = {};
+                Object.keys(formData).forEach(key => {
+                    const val = formData[key];
+                    sanitizedFormData[key] = typeof val === 'string' ? val.replace(/[{}]/g, '') : val;
                 });
 
-                const rawOutput = executionResult.output || executionResult.error || 'No output returned.';
+                // --- STEP 2: TEMPLATE LOOKUP ---
+                let templateCode = "";
+                if (formDef?.codeTemplates) {
+                    const matched = formDef.codeTemplates.find((t: any) =>
+                        hardware.toLowerCase().includes(t.hardware.toLowerCase()) ||
+                        t.hardware.toLowerCase().includes(hardware.toLowerCase())
+                    );
+                    templateCode = matched?.code || "";
+                }
 
-                // Universal table formatter — converts any key:value assignments into a clean markdown table
-                const parseAnyAssignmentTable = (output: string): string | null => {
-                    const bestMatch = output.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
-                    if (!bestMatch) return null;
+                // --- STEP 3: MULTI-PASS GENERATION (Structured JSON) ---
+                const isDWave = hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer');
+                let generatedCode = "";
+                let explanation = "";
+                let attempts = 0;
+                const MAX_ATTEMPTS = 3;
+                let lastError = "";
+                let finalExecutionResult: any = {};
 
-                    const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([\w.+-]+)/g)];
-                    if (allPairs.length === 0) return null;
+                while (attempts < MAX_ATTEMPTS) {
+                    attempts++;
+                    console.log(`[Quantum Workflow] Attempt ${attempts} for ${problem}`);
 
-                    const rows = allPairs.map(([, key, val]) => {
-                        // Format variable name: pilot_1_flight_a → Pilot 1 → Flight a
-                        const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
-                        const displayKey = pilotFlight
-                            ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`
-                            : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const genPrompt = await getDynamicPrompt(isDWave ? 'industry_dwave' : 'industry_qiskit', {
+                        industry, service, problem, hardware,
+                        parameters: JSON.stringify(sanitizedFormData),
+                        template: templateCode || "None (Generate from scratch)",
+                        lastError: lastError ? `PREVIOUS_ERROR: ${lastError}` : ""
+                    }, `You are a Quantum Expert. ${templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."} 
+                    STRICT RULES:
+                    - Use a fixed seed (e.g., 42) for all simulators/samplers to ensure reproducibility.
+                    - Do NOT include any explanations in the code block.
+                    Return a JSON object with "code" and "explanation" keys.`);
 
-                        const numVal = parseFloat(val);
-                        const displayVal = isNaN(numVal) ? val
-                            : numVal === 1 ? '✅ Assigned'
-                                : numVal === 0 ? '⬜ Not Assigned'
-                                    : numVal.toFixed(4);
-
-                        return `| ${displayKey} | ${displayVal} |`;
+                    /* GROQ_FALLBACK:
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields." },
+                            { role: "user", content: genPrompt }
+                        ],
+                        model: DEFAULT_MODEL,
+                        response_format: { type: "json_object" }
                     });
 
+                    try {
+                        const content = completion.choices[0]?.message?.content || "{}";
+                        const parsed = JSON.parse(content);
+                        ...
+                    } catch (e: any) { ... }
+                    */
+
+                    const model = genAI.getGenerativeModel({
+                        model: GEMINI_MODEL,
+                        generationConfig: { responseMimeType: "application/json" }
+                    });
+                    const result = await model.generateContent([
+                        "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields.",
+                        genPrompt
+                    ]);
+
+                    try {
+                        const content = result.response.text() || "{}";
+                        const parsed = JSON.parse(content);
+                        generatedCode = parsed.code || "";
+                        explanation = parsed.explanation || "";
+
+                        console.log(`[Quantum Workflow] GENERATED | Attempt: ${attempts} | Code Length: ${generatedCode.length}`);
+
+                        // --- STEP 4: THREE-LAYER VALIDATION ---
+                        const validation = await validateQuantumCode(generatedCode, hardware);
+                        if (!validation.valid) {
+                            console.warn(`[Quantum Workflow] VALIDATION_FAILED | Error: ${validation.error}`);
+                            lastError = `Validation failed: ${validation.error}`;
+                            continue;
+                        }
+
+                        console.log(`[Quantum Workflow] VALIDATED | Proceeding to execution.`);
+
+                        // --- STEP 5: EXECUTION ---
+                        finalExecutionResult = isDWave
+                            ? await executeDWaveAnnealer(generatedCode)
+                            : await executeQuantumCircuit(generatedCode);
+
+                        if (finalExecutionResult.error) {
+                            console.error(`[Quantum Workflow] EXECUTION_ERROR | Error: ${finalExecutionResult.error}`);
+                            lastError = `Runtime error: ${finalExecutionResult.error}`;
+                            continue;
+                        }
+
+                        console.log(`[Quantum Workflow] EXECUTED | Output length: ${finalExecutionResult.output?.length || 0}`);
+                        // SUCCESS
+                        break;
+
+                    } catch (e: any) {
+                        lastError = `Processing error: ${e.message}`;
+                        if (attempts >= MAX_ATTEMPTS) {
+                            return { text: `Error: Critical failure in quantum workflow after ${MAX_ATTEMPTS} attempts. Last Error: ${lastError}`, source: 'quantum_workflow_error' };
+                        }
+                    }
+                }
+
+                // --- STEP 6: FORMAT & SAVE ---
+                const rawOutput = (finalExecutionResult.output || finalExecutionResult.error || 'No output.').trim();
+
+                const parseAnyAssignmentTable = (out: string): string | null => {
+                    const bestMatch = out.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
+                    if (!bestMatch) return null;
+                    const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([\w.+-]+)/g)];
+                    if (allPairs.length === 0) return null;
+                    const rows = allPairs.map(([, key, val]) => {
+                        const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
+                        const displayKey = pilotFlight ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}` : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        const numVal = parseFloat(val);
+                        const displayVal = isNaN(numVal) ? val : numVal === 1 ? '✅ Assigned' : numVal === 0 ? '⬜ Not Assigned' : numVal.toFixed(4);
+                        return `| ${displayKey} | ${displayVal} |`;
+                    });
                     const header = `| Variable | Value |\n|---|---|\n`;
                     return `**⚙️ Simulator Output**\n\n${header}${rows.join('\n')}`;
                 };
 
+                const tableOutput = parseAnyAssignmentTable(rawOutput);
                 const energyMatch = rawOutput.match(/Energy:\s*([-\d.]+)/i);
                 const energyLine = energyMatch ? `\n\n> **Lowest Energy:** \`${energyMatch[1]}\`` : '';
 
-                const tableOutput = parseAnyAssignmentTable(rawOutput);
                 const formattedOutput = tableOutput
                     ? `${tableOutput}${energyLine}\n\n---\n\n`
-                    : `**⚙️ Raw Simulator Output**\n\`\`\`\n${rawOutput.trim()}\n\`\`\`\n\n---\n\n`;
+                    : `**⚙️ Raw Simulator Output**\n\`\`\`\n${rawOutput}\n\`\`\`\n\n---\n\n`;
 
-                const finalExplanation =
-                    `[STEP_CODE]${generatedCode}[/STEP_CODE]` +
-                    `[STEP_SIM]${rawOutput.trim()}[/STEP_SIM]` +
+                const finalDisplay = `[STEP_CODE]${generatedCode}[/STEP_CODE]` +
+                    `[STEP_SIM]${rawOutput}[/STEP_SIM]` +
                     formattedOutput +
-                    (completion2.choices[0]?.message?.content || "Simulation complete.");
+                    explanation;
 
-                // --- SAVE EXPERIMENT TO HISTORY ---
                 try {
                     await Experiment.create({
-                        userId: contextConfig.userEmail, // Tag experiment to user
+                        userId: userEmail,
                         industry,
                         service,
                         problem,
                         hardware,
                         parameters: formData,
                         qiskitCode: generatedCode,
-                        results: executionResult, // Simulation output
-                        analysis: finalExplanation,
-                        chartData: executionResult.counts ? {
+                        results: finalExecutionResult,
+                        analysis: finalDisplay,
+                        cacheKey: cacheKey, // Store the hash for future reuse
+                        chartData: finalExecutionResult.counts ? {
                             type: "bar",
-                            data: Object.entries(executionResult.counts).map(([k, v]) => ({ name: k, value: v }))
+                            data: Object.entries(finalExecutionResult.counts).map(([k, v]) => ({ name: k, value: v }))
                         } : null,
                         timestamp: new Date()
                     });
                 } catch (saveError) {
                     console.error("Failed to save experiment history:", saveError);
-                    // Don't block the response, just log the error
                 }
 
-                await ChatLog.create({
-                    userQuery: prompt,
-                    aiResponse: finalExplanation,
-                    source: 'quantum_workflow',
-                    guardrailsStatus: 'passed',
-                    activeGuardrails: ruleTexts
-                });
-
                 return {
-                    text: finalExplanation,
+                    text: finalDisplay,
                     source: 'quantum_workflow',
                     guardrailsStatus: 'passed',
                     activeGuardrails: ruleTexts
                 };
             }
 
-            // Normal Industry Context (Existing logic)
+            // Normal Industry Context (Existing logic if no formData)
             if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
             if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;
             if (problem) systemInstructions += `\nPROBLEM CONTEXT: The specific problem being addressed is ${problem}.`;
@@ -711,6 +851,7 @@ export async function chatWithGroq(
     }
 
     try {
+        /* GROQ_FALLBACK:
         const completion = await groq.chat.completions.create({
             messages: [
                 { role: "system", content: systemInstructions },
@@ -721,6 +862,16 @@ export async function chatWithGroq(
 
         const text = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
         const tokensUsed = completion.usage?.total_tokens || 0;
+        */
+
+        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+        const result = await model.generateContent([
+            { text: systemInstructions },
+            { text: finalPrompt }
+        ]);
+
+        const text = result.response.text() || "I'm sorry, I couldn't generate a response.";
+        const tokensUsed = result.response.usageMetadata?.totalTokenCount || 0;
 
         // --- Log Interaction ---
         await ChatLog.create({
@@ -806,6 +957,7 @@ export async function generateQuantumCode(config: {
     problem: string; industry: string; service: string; hardware: string; formData: any;
 }): Promise<{ code: string; error?: string }> {
     const groq = new Groq({ apiKey: API_KEY });
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
     const { problem, industry, service, hardware, formData } = config;
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
@@ -834,12 +986,22 @@ Run: from qiskit_aer import AerSimulator; sim=AerSimulator(); job=sim.run(circui
 Return ONLY the Python code. No markdown. No explanation.`;
         }
 
+        /* GROQ_FALLBACK:
         const completion = await groq.chat.completions.create({
             messages: [{ role: 'system', content: 'You are a Quantum Expert. Return only Python code.' }, { role: 'user', content: codePrompt }],
             model: DEFAULT_MODEL,
         });
 
         let code = completion.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || '';
+        */
+
+        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+        const result = await model.generateContent([
+            "You are a Quantum Expert. Return only Python code. No markdown. No explanation.",
+            codePrompt
+        ]);
+
+        let code = result.response.text().replace(/```python|```/g, '').trim() || '';
 
         // Always force correct dimod imports for D-Wave
         if (isDWave) {
@@ -874,6 +1036,7 @@ export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string;
 }): Promise<{ text: string; chartData?: any }> {
     const groq = new Groq({ apiKey: API_KEY });
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
     const { problem, industry, hardware, rawOutput } = config;
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
@@ -891,12 +1054,22 @@ After the paragraph, generate a chart:
 { "type": "bar", "data": [ {"name": "Label from output", "value": 123} ] }
 [/CHART_DATA]`;
 
+        /* GROQ_FALLBACK:
         const completion = await groq.chat.completions.create({
             messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
             model: DEFAULT_MODEL,
         });
 
         let text = completion.choices[0]?.message?.content || 'Analysis complete.';
+        */
+
+        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+        const result = await model.generateContent([
+            "You are a Quantum Analysis expert.",
+            prompt
+        ]);
+
+        let text = result.response.text() || 'Analysis complete.';
         let chartData = null;
         const chartMatch = text.match(/\[CHART_DATA\]([\s\S]*?)\[\/CHART_DATA\]/);
         if (chartMatch) {

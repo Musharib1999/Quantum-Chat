@@ -39,3 +39,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# build logs
+build_log.txt
+1Check
+
+# helper scripts
+check_*.py
+trace_*.py
+find_line.py
+print_context.py
+replace_chat_script.py
+update_chat_fallback.py
+fix_avatar.py
+*.js
+!next.config.ts
+!eslint.config.mjs
+!postcss.config.mjs
+!*.d.ts

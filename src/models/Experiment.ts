@@ -12,6 +12,7 @@ export interface IExperiment extends Document {
     results: any; // The simulation results (counts, etc.)
     analysis: string; // The LLM explanation
     chartData?: any; // The chart configuration
+    cacheKey?: string; // SHA-256 hash for result caching
 }
 
 const ExperimentSchema: Schema = new Schema({
@@ -25,7 +26,8 @@ const ExperimentSchema: Schema = new Schema({
     qiskitCode: { type: String, required: true },
     results: { type: Schema.Types.Mixed, required: true },
     analysis: { type: String, required: true },
-    chartData: { type: Schema.Types.Mixed }
+    chartData: { type: Schema.Types.Mixed },
+    cacheKey: { type: String, index: true }
 });
 
 export default mongoose.models.Experiment || mongoose.model<IExperiment>('Experiment', ExperimentSchema);
