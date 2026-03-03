@@ -118,7 +118,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[10px] tracking-wider text-muted-foreground font-mono">{item.source}</span>
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            <span className={`text-[9px] font-mono font-bold ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
+                                            <span className={`text-[9px] font-sans font-normal ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
                                                     (item.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
                                                         'text-red-600'
                                                 }`}>
