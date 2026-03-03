@@ -76,18 +76,24 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                             <div className="flex items-center justify-start mt-1 pt-1 border-t border-border/20">
                                 <div className="flex items-center gap-1">
                                     <div className="flex gap-0.5">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <div
-                                                key={star}
-                                                className={`w-1.5 h-1.5 rounded-full ${star <= (stock.quantumExposureScore || 0)
-                                                    ? 'bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]'
-                                                    : 'bg-muted'
-                                                    }`}
-                                            />
-                                        ))}
+                                        {[1, 2, 3, 4, 5].map((star) => {
+                                            const score = stock.quantumExposureScore || 0;
+                                            let dotColor = 'bg-muted';
+                                            if (star <= score) {
+                                                if (score >= 4) dotColor = 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]';
+                                                else if (score >= 2) dotColor = 'bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.5)]';
+                                                else dotColor = 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]';
+                                            }
+                                            return (
+                                                <div
+                                                    key={star}
+                                                    className={`w-1.5 h-1.5 rounded-full ${dotColor}`}
+                                                />
+                                            );
+                                        })}
                                     </div>
                                     <span className="text-[10px] text-muted-foreground font-mono ml-1">
-                                        Q-Score: {stock.quantumExposureScore || 0}/5
+                                        Quantum exposure: {stock.quantumExposureScore || 0}/5
                                     </span>
                                 </div>
                             </div>

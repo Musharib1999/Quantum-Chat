@@ -114,17 +114,23 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                         <span className="text-[10px] tracking-wider text-muted-foreground font-mono">{item.source}</span>
                                         <div className="flex items-center gap-1 mt-0.5">
                                             <div className="flex gap-0.5">
-                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                    <div
-                                                        key={star}
-                                                        className={`w-1 h-1 rounded-full ${star <= (item.quantumExposureScore || 0)
-                                                                ? 'bg-blue-500 shadow-[0_0_3px_rgba(59,130,246,0.5)]'
-                                                                : 'bg-muted'
-                                                            }`}
-                                                    />
-                                                ))}
+                                                {[1, 2, 3, 4, 5].map((star) => {
+                                                    const score = item.quantumExposureScore || 0;
+                                                    let dotColor = 'bg-muted';
+                                                    if (star <= score) {
+                                                        if (score >= 4) dotColor = 'bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]';
+                                                        else if (score >= 2) dotColor = 'bg-orange-500 shadow-[0_0_3px_rgba(249,115,22,0.5)]';
+                                                        else dotColor = 'bg-red-500 shadow-[0_0_3px_rgba(239,68,68,0.5)]';
+                                                    }
+                                                    return (
+                                                        <div
+                                                            key={star}
+                                                            className={`w-1 h-1 rounded-full ${dotColor}`}
+                                                        />
+                                                    );
+                                                })}
                                             </div>
-                                            <span className="text-[9px] text-muted-foreground/70 font-mono">Q-Score: {item.quantumExposureScore || 0}/5</span>
+                                            <span className="text-[9px] text-muted-foreground/70 font-mono">Quantum exposure: {item.quantumExposureScore || 0}/5</span>
                                         </div>
                                     </div>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'}`}>
