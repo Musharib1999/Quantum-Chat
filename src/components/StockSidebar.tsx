@@ -10,6 +10,8 @@ interface Stock {
     url: string;
     symbol?: string;
     quantumExposureScore?: number;
+    patentCount?: number;
+    patentLink?: string;
 }
 
 interface StockSidebarProps {
@@ -96,6 +98,27 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                                         Quantum exposure: {stock.quantumExposureScore || 0}/5
                                     </span>
                                 </div>
+                            </div>
+
+                            {/* Patent Section */}
+                            <div className="flex items-center justify-between mt-1 text-[10px] border-t border-border/20 pt-1">
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-500/10 rounded-md border border-blue-500/20">
+                                        <span className="text-blue-400 font-bold uppercase tracking-tighter">Patents:</span>
+                                        <span className="text-foreground font-mono">{stock.patentCount || 'TBD'}</span>
+                                    </div>
+                                </div>
+                                <a
+                                    href={stock.patentLink || `https://patents.google.com/?q=assignee:${encodeURIComponent(stock.name)}+quantum`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1 text-muted-foreground hover:text-blue-400 transition-colors flex items-center gap-1 group/link"
+                                    title="Verify on Google Patents"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <span className="text-[9px] opacity-0 group-hover/link:opacity-100 transition-opacity">Verify</span>
+                                    <ExternalLink size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
+                                </a>
                             </div>
                         </div>
                     </button>
