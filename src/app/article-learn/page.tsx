@@ -6,13 +6,28 @@ import ChatInterface from '@/components/ChatInterface';
 import ArticleSidebar from '@/components/ArticleSidebar';
 import UseCaseSidebar from '@/components/UseCaseSidebar';
 import ArticleChat from '@/components/chat/ArticleChat';
+import IndustryLogin from '@/components/industry/IndustryLogin';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ArticlePage() {
+    const { isAuthenticated, user, login, isInitializing } = useAuth();
     const [selectedArticle, setSelectedArticle] = useState<{ _id: string, title: string, category: string, url: string } | null>(null);
 
     const handleArticleSelect = useCallback((article: any) => {
         setSelectedArticle(article);
     }, []);
+
+    const handleLogin = (userData: any) => {
+        login(userData);
+    };
+
+    if (isInitializing) {
+        return <div className="min-h-screen bg-background flex items-center justify-center" />;
+    }
+
+    if (!isAuthenticated) {
+        return <IndustryLogin onLogin={handleLogin} />;
+    }
 
     const contextConfig = selectedArticle ? {
         articleTitle: selectedArticle.title,

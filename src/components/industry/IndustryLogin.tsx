@@ -45,8 +45,11 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                 throw new Error(data.error || 'Login failed');
             }
 
-            // Login successful — pass full user object
+            // Login successful
             onLogin(data as LoginUserData);
+
+            // Redirect to landing page to choose entry point
+            window.location.href = '/';
         } catch (err: any) {
             setError(err.message || 'Authentication failed Please check your connection');
         } finally {

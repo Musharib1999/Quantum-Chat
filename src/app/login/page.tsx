@@ -9,7 +9,7 @@ function LoginForm() {
     const { login } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const redirect = searchParams.get('redirect') || '/market';
+    const redirect = searchParams.get('redirect') || '/';
     const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'login';
 
     const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
