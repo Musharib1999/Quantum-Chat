@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info, X, ArrowRight, FileText } from 'lucide-react';
 import { getDbNews } from '@/app/actions/news-automation';
+import QuantumHeatMap from './QuantumHeatMap';
 
 interface NewsItem {
     id: number | string;
@@ -82,6 +83,10 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                 <h3 className="text-foreground mb-4 flex items-center gap-2">
                     <Newspaper className="text-green-500 dark:text-green-400" size={18} /> Quantum News
                 </h3>
+            </div>
+
+            <div className="p-4 border-b border-border/10">
+                <QuantumHeatMap />
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-border">

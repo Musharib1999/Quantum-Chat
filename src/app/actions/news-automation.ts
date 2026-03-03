@@ -58,25 +58,53 @@ export async function automateNewsSummarization() {
 
             console.log(`[Automation] Summarizing: ${item.title}`);
 
-            // 3. Use Groq to summarize (Industrial Prompt)
+            // 3. Use LLM to summarize and extract location (Industrial Prompt)
             const fallbackPrompt = `Properly summarize this quantum computing news headline in exactly 200 words. 
 Focus on technical implications, market impact, and industrial importance. 
 Keep it professional and industrial.
 
+Also, identify the primary country or region this news is associated with (e.g., where the company is based or where the breakthrough happened).
+
+Return the response in STRICT JSON format with these exact keys:
+{
+  "summary": "The 200-word summary here...",
+  "countryCode": "ISO 3166-1 alpha-3 code (e.g., USA, DEU, CHN)",
+  "countryName": "Full name of the country"
+}
+
 HEADLINE: ${item.title}
 SOURCE: ${item.source}`;
 
-            const prompt = await getDynamicPrompt('news_automation', {
+            const prompt = await getDynamicPrompt('news_automation_v2', {
                 title: item.title,
                 source: item.source
             }, fallbackPrompt);
 
             try {
                 const llmResponse = await chatWithGroq(prompt, 'chat', 'en');
-                const summary = llmResponse.text;
+                let summary = llmResponse.text;
+                let countryCode = "GLOBAL";
+                let countryName = "International";
+
+                try {
+                    // Try to parse JSON from the LLM response
+                    const jsonMatch = llmResponse.text.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const parsed = JSON.parse(jsonMatch[0]);
+                        summary = parsed.summary || summary;
+                        countryCode = parsed.countryCode || "GLOBAL";
+                        countryName = parsed.countryName || "International";
+                    }
+                } catch (parseErr) {
+                    console.warn("[Automation] Failed to parse JSON response, falling back to raw text", parseErr);
+                }
 
                 if (existing) {
-                    await News.findByIdAndUpdate(existing._id, { summary });
+                    await News.findByIdAndUpdate(existing._id, {
+                        summary,
+                        countryCode,
+                        countryName
+                    });
                 } else {
                     await News.create({
                         title: item.title,
@@ -85,12 +113,14 @@ SOURCE: ${item.source}`;
                         publishedAt: item.time || new Date().toISOString(),
                         impact: item.impact || 'medium',
                         trend: item.trend || 'up',
-                        summary: summary
+                        summary: summary,
+                        countryCode,
+                        countryName
                     });
                 }
                 processedCount++;
             } catch (err) {
-                console.error(`[Automation] Failed to summarize item: ${item.title}`, err);
+                console.error(`[Automation] Failed to process item: ${item.title}`, err);
             }
         }
 
