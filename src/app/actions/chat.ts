@@ -17,6 +17,7 @@ import { execSync } from 'child_process';
 import path from 'path';
 import crypto from 'crypto';
 import { buildMarketContext } from './market-pipeline';
+import { buildArticleContext } from './article-pipeline';
 import QuantumForm from '@/models/QuantumForm';
 import { getStockPrice, getLatestNews } from './market';
 
@@ -517,18 +518,12 @@ export async function chatWithGroq(
         }
         // Mode: Article & Learn
         else if (contextConfig.mode === 'article') {
-            if (contextConfig.articleUrl) {
-                const scrapedData = await scrapeUrl(contextConfig.articleUrl);
-                if (scrapedData) autonomousContext = scrapedData;
-            }
-
-            // Override ALL system instructions with the Article mode prompt (which is how the original worked)
-            systemInstructions = await getDynamicPrompt('article_inquiry', {
-                title: contextConfig.articleTitle || 'Provided Context',
-                category: contextConfig.articleCategory || 'General',
-                url: contextConfig.articleUrl || 'N/A',
-                scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
-            }, systemInstructions); // fallback
+            const articleDeps = {
+                getDynamicPrompt,
+                scrapeUrl
+            };
+            const articleResult = await buildArticleContext(contextConfig, articleDeps);
+            systemInstructions = articleResult.systemInstructions;
         }
         // Mode: Quantum Assistant
         else if (contextConfig.mode === 'assistant') {
