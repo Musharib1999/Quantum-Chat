@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
     LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon, Newspaper, Briefcase,
-    Key, Loader2, Beaker, ArrowUpCircle
+    Key, Loader2, Beaker, ArrowUpCircle, Cpu
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -26,6 +26,7 @@ import PromptEditor from '../../../components/admin/PromptEditor';
 import UseCaseManager from '../../../components/admin/UseCaseManager';
 import ExperimentManager from '../../../components/admin/ExperimentManager';
 import MarketPromptManager from '../../../components/admin/MarketPromptManager';
+import LLMSettingsManager from '../../../components/admin/LLMSettingsManager';
 
 export default function AdminDashboard() {
     const { theme } = useTheme();
@@ -284,6 +285,12 @@ export default function AdminDashboard() {
                         active={activeTab === 'analytics'}
                         onClick={() => { setActiveTab('analytics'); setIsMobileMenuOpen(false); }}
                     />
+                    <SidebarLink
+                        icon={<Cpu size={20} />}
+                        label="LLM Settings"
+                        active={activeTab === 'llm_settings'}
+                        onClick={() => { setActiveTab('llm_settings'); setIsMobileMenuOpen(false); }}
+                    />
                 </nav>
 
                 <div className={`p-4 border-t ${isDarkMode ? 'border-white/10' : 'border-slate-200'} space-y-2`}>
@@ -330,6 +337,7 @@ export default function AdminDashboard() {
                             {activeTab === 'forms' && <Layers className="text-primary" />}
                             {activeTab === 'market_prompts' && <ArrowUpCircle className="text-green-500" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
+                            {activeTab === 'llm_settings' && <Cpu className="text-orange-400" />}
                             {activeTab.replace('_', ' ')}
                         </h2>
                     </div>
@@ -649,6 +657,11 @@ export default function AdminDashboard() {
                             <h3 className="text-xl font-bold text-gray-300">Analytics Module</h3>
                             <p className="text-sm">Usage statistics and query insights coming soon.</p>
                         </div>
+                    )}
+
+                    {/* LLM SETTINGS TAB */}
+                    {activeTab === 'llm_settings' && (
+                        <LLMSettingsManager />
                     )}
                 </div>
             </div>

@@ -12,6 +12,7 @@ import Experiment from '@/models/Experiment';
 import News from '@/models/News';
 import User from '@/models/User';
 import SystemPrompt from '@/models/SystemPrompt';
+import LLMSetting from '@/models/LLMSetting';
 import { execSync } from 'child_process';
 import path from 'path';
 import crypto from 'crypto';
@@ -22,7 +23,9 @@ const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = "gemini-2.5-flash-lite";
+const GEMINI_MODEL = "gemini-2.0-flash-lite";
+
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
 const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL || "http://127.0.0.1:8001";
 const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL || "http://127.0.0.1:8002";
@@ -264,15 +267,55 @@ export async function chatWithGroq(
     // Keeping name for frontend compatibility
     await dbConnect(); // Ensure connection early
 
+    // 0. Fetch Global LLM Settings
+    let activeProvider = 'gemini';
+    let activeModel = 'gemini-2.0-flash-lite-preview';
+
+    try {
+        const settings = await LLMSetting.findOne({ key: "global_llm_settings" }).lean();
+        if (settings) {
+            activeProvider = settings.activeProvider as 'groq' | 'gemini';
+            activeModel = settings.activeModel;
+        }
+    } catch (e) {
+        console.error("Failed to fetch LLM settings, falling back to Gemini");
+    }
+
     // Sanitization: Prevent prompt injection in the main prompt string
     const sanitizedPrompt = prompt.replace(/[{}]/g, ''); // Simple bracket stripping
 
-    if (!GEMINI_API_KEY) {
-        return { text: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
-    }
+    let responseText = "";
+    let tokensUsed = 0;
 
-    // const groq = new Groq({ apiKey: API_KEY });
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
+    if (activeProvider === 'groq') {
+        if (!API_KEY) return { text: "", error: "Groq API Key (GROQ_API_KEY) is missing." };
+        const groq = new Groq({ apiKey: API_KEY });
+
+        try {
+            const completion = await groq.chat.completions.create({
+                messages: [{ role: "user", content: prompt }],
+                model: activeModel,
+                temperature: 0.7,
+            });
+            responseText = completion.choices[0]?.message?.content || "";
+            tokensUsed = completion.usage?.total_tokens || 0;
+        } catch (err: any) {
+            return { text: "", error: `Groq Error: ${err.message}` };
+        }
+    } else {
+        if (!GEMINI_API_KEY) return { text: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
+
+        try {
+            const model = genAI.getGenerativeModel({ model: activeModel });
+            const result = await model.generateContent(prompt);
+            responseText = result.response.text();
+            // Gemini flash-lite using a rough estimate if tokens are not explicitly returned in this client version
+            tokensUsed = (result.response as any).usageMetadata?.totalTokenCount || Math.ceil(prompt.length / 4);
+        } catch (err: any) {
+            return { text: "", error: `Gemini Error: ${err.message}` };
+        }
+    }
 
     // 0. Fetch Active Rules for both logging and prompt injection
     const activeRules = await getActiveGuardrails();
