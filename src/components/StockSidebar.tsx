@@ -103,7 +103,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                             </div>
 
                             {/* Exposure Action Section */}
-                            <div className="mt-2 border-t border-border/10 pt-2 flex justify-between items-center">
+                            {/* <div className="mt-2 border-t border-border/10 pt-2 flex justify-between items-center">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -119,18 +119,18 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                                     <div className="w-1 h-3 rounded-full bg-blue-500/60" />
                                     <div className="w-1 h-3 rounded-full bg-blue-500/80" />
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </button>
                 ))}
             </div>
 
             {/* Quantum Exposure Modal */}
-            <QuantumExposureModal
+            {/* <QuantumExposureModal 
                 isOpen={!!exposureStock}
                 onClose={() => setExposureStock(null)}
                 stock={exposureStock}
-            />
+            /> */}
         </div>
     );
 }
