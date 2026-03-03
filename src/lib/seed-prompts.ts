@@ -206,6 +206,37 @@ Context: {{prompt}}`
         availableTags: ['{{headline}}'],
         template: `Identify the primary country associated with this quantum computing news headline. Return ONLY the country name (e.g. USA, China, UK, India, Germany). If it's a global story or country is unclear, return 'Global'.
 Headline: {{headline}}`
+    },
+    {
+        category: 'market_news_fallback',
+        title: 'Market Intelligence Logic',
+        description: 'Decides context and provides either stock details or general news/info.',
+        availableTags: ['{{scrapedData}}', '{{targetSymbol}}'],
+        template: `MODE: MARKET INTELLIGENCE
+TASK: Analyze the user's query and provide contextually relevant information.
+
+LOGIC:
+- If the user is asking for specific news, trends, or general information: Provide a detailed breakdown of the news/info.
+- If the user is asking for stock-related details (even if real-time data is unavailable): Provide technical analysis, key levels, and fundamental outlook for the focus asset.
+
+{{scrapedData}}
+FOCUS ASSET: {{targetSymbol}}
+
+CRITICAL RESPONSE STRUCTURE:
+You must provide your response in the following strict order using Markdown:
+1. **## Market Context**
+   - Identify the user's intent and provide an overview of the topic/asset.
+2. **## News & Trends**
+   - Relevant headlines or fundamental shifts affecting the context.
+3. **## Analysis & Implications**
+   - Technical or fundamental breakdown based on available knowledge.
+4. **## Outlook**
+   - Potential future developments or key levels to watch.
+
+STYLING RULES:
+- Use '##' for main section headers.
+- Do NOT use decorative symbols like '|' or '---' at the start of headers.
+- Use bullet points for lists.`
     }
 ];
 

@@ -17,7 +17,8 @@ const SystemPromptSchema = new mongoose.Schema({
             'ticker_extraction',
             'assistant_mode',
             'industry_json_wrapper',
-            'news_geo_backfill'
+            'news_geo_backfill',
+            'market_news_fallback'
         ],
         description: 'The internal ID for the prompt category'
     },

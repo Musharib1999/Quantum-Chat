@@ -596,22 +596,10 @@ export async function chatWithGroq(
                     scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
                 }, systemInstructions); // fallback to what we had
             } else {
-                // Even without full stock data, we might have a scraped URL for a given target symbol
-                // We will fallback to a simplified market instruction if we don't have real time data but we ARE in market mode
-                systemInstructions += `\nMODE: MARKET INTELLIGENCE\nTASK: Provide financial analysis, market trends, and investment insights related to the selected asset or news topic.\n${autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''}`;
-                if (targetSymbol) systemInstructions += `\nFOCUS ASSET: ${targetSymbol}`;
-
-                let responseStructure = `
-                 1. **## News Analysis**
-                    - Detailed breakdown of the specific news story or headline provided.
-                 2. **## Market Implications**
-                    - How this news impacts the broader market or specific sectors.
-                 3. **## Key Takeaways**
-                    - The most important points for investors to know.
-                 4. **## Outlook**
-                    - Potential future developments based on this news.`;
-
-                systemInstructions += `\n\nCRITICAL RESPONSE STRUCTURE:\nYou must provide your response in the following strict order using Markdown:\n${responseStructure}\n\nSTYLING RULES:\n- Use '##' for main section headers.\n- Do NOT use decorative symbols like '|' or '---' at the start of headers.\n- Use bullet points for lists.`;
+                systemInstructions = await getDynamicPrompt('market_news_fallback', {
+                    targetSymbol: targetSymbol || (contextConfig.stockName ? contextConfig.stockName : "N/A"),
+                    scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
+                }, systemInstructions); // fallback to what we had
             }
         }
         // Mode: Article & Learn
@@ -1121,9 +1109,10 @@ export async function debugStockFetch(prompt: string) {
     try {
         // Step 1: Ticker Extraction
         steps.push({ name: "Ticker Extraction", status: "processing" });
+        const tickerInstruction = await getDynamicPrompt('ticker_extraction', { prompt }, "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.");
         const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
         const extraction = await model.generateContent([
-            "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.",
+            tickerInstruction,
             prompt
         ]);
         ticker = extraction.response.text().trim().replace(/[^a-zA-Z0-9-]/g, '');
@@ -1150,6 +1139,12 @@ export async function debugStockFetch(prompt: string) {
                     close: rawMarketData.previousClose,
                     scrapedData: ""
                 }, "Fallback template");
+            } else {
+                // FALLBACK for debugger if market data fails
+                enrichedPrompt = await getDynamicPrompt('market_news_fallback', {
+                    targetSymbol: ticker,
+                    scrapedData: ""
+                }, "Fallback news template");
             }
             steps[2] = { name: "Prompt Enrichment", status: enrichedPrompt ? "completed" : "failed", result: enrichedPrompt };
 
