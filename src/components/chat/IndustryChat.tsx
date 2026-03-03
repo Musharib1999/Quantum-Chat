@@ -5,7 +5,7 @@ import { Send, User, StopCircle, ShieldCheck, Eye, X, ChevronRight, Play, Loader
 import MarkdownRenderer from '../MarkdownRenderer';
 import QuantumChart from '../QuantumChart';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
-import { generateQuantumCode, runQuantumSimulator, interpretQuantumResults } from '@/app/actions/chat';
+import { generateQuantumCode, runQuantumSimulator, interpretQuantumResults } from '@/app/actions/industry-pipeline';
 
 interface IndustryChatProps {
     contextConfig?: any;
