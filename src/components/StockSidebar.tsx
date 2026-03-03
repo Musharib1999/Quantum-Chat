@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, TrendingUp, Search, Loader2 } from 'lucide-react';
+import { ExternalLink, TrendingUp, Search, Loader2, Info } from 'lucide-react';
 import axios from 'axios';
+import QuantumExposureModal from './QuantumExposureModal';
 
 interface Stock {
     _id: string;
@@ -23,6 +24,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
     const [stocks, setStocks] = useState<Stock[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [exposureStock, setExposureStock] = useState<Stock | null>(null);
 
     useEffect(() => {
         axios.get('/api/stocks')
@@ -100,30 +102,35 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                                 </div>
                             </div>
 
-                            {/* Patent Section */}
-                            <div className="flex items-center justify-between mt-1 text-[10px] border-t border-border/20 pt-1">
-                                <div className="flex items-center gap-1.5 text-muted-foreground">
-                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-500/10 rounded-md border border-blue-500/20">
-                                        <span className="text-blue-400 font-bold uppercase tracking-tighter">Patents:</span>
-                                        <span className="text-foreground font-mono">{stock.patentCount || 'TBD'}</span>
-                                    </div>
-                                </div>
-                                <a
-                                    href={stock.patentLink || `https://patents.google.com/?q=assignee:${encodeURIComponent(stock.name)}+quantum`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-1 text-muted-foreground hover:text-blue-400 transition-colors flex items-center gap-1 group/link"
-                                    title="Verify on Google Patents"
-                                    onClick={(e) => e.stopPropagation()}
+                            {/* Exposure Action Section */}
+                            <div className="mt-2 border-t border-border/10 pt-2 flex justify-between items-center">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExposureStock(stock);
+                                    }}
+                                    className="flex items-center gap-1.5 text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-tighter bg-blue-500/5 px-2 py-1 rounded-md border border-blue-500/10 hover:border-blue-500/30 group-hover:bg-blue-500/10"
                                 >
-                                    <span className="text-[9px] opacity-0 group-hover/link:opacity-100 transition-opacity">Verify</span>
-                                    <ExternalLink size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
-                                </a>
+                                    <Info size={12} />
+                                    Check quantum exposure
+                                </button>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="w-1 h-3 rounded-full bg-blue-500/40" />
+                                    <div className="w-1 h-3 rounded-full bg-blue-500/60" />
+                                    <div className="w-1 h-3 rounded-full bg-blue-500/80" />
+                                </div>
                             </div>
                         </div>
                     </button>
                 ))}
             </div>
+
+            {/* Quantum Exposure Modal */}
+            <QuantumExposureModal
+                isOpen={!!exposureStock}
+                onClose={() => setExposureStock(null)}
+                stock={exposureStock}
+            />
         </div>
     );
 }
