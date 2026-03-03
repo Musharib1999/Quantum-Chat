@@ -162,6 +162,50 @@ After the paragraph, generate a chart from the actual data:
   "data": [ {"name": "Label from output", "value": 123} ]
 }
 [/CHART_DATA]`
+    },
+    {
+        category: 'ai_router',
+        title: 'AI Tool Router',
+        description: 'Decides if live data (stocks/news) is needed based on user prompt.',
+        availableTags: ['{{prompt}}'],
+        template: `You are an AI router. Decide if you need to fetch live data using your tools based on the user prompt.
+User Prompt: {{prompt}}`
+    },
+    {
+        category: 'ticker_extraction',
+        title: 'Stock Ticker Extraction',
+        description: 'Extracts official stock symbols from natural language.',
+        availableTags: ['{{prompt}}'],
+        template: `Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.
+User Text: {{prompt}}`
+    },
+    {
+        category: 'assistant_mode',
+        title: 'Quantum Assistant Mode',
+        description: 'Fallback instructions for general chat and assistance.',
+        availableTags: [],
+        template: `MODE: GENERAL CHAT AND ASSISTANCE CONTEXT
+TASK: You are providing general chat and assistance. Answer the user's questions to the best of your ability. Keep responses helpful and professional.`
+    },
+    {
+        category: 'industry_json_wrapper',
+        title: 'Industry Mode JSON Wrapper',
+        description: 'Instructions to ensure Industry mode returns structured JSON.',
+        availableTags: ['{{prompt}}', '{{templateCode}}'],
+        template: `You are a Quantum Expert. {{templateCode}}
+STRICT RULES:
+- Use a fixed seed (e.g., 42) for all simulators/samplers to ensure reproducibility.
+- Do NOT include any explanations in the code block.
+Return a JSON object with "code" and "explanation" keys.
+Context: {{prompt}}`
+    },
+    {
+        category: 'news_geo_backfill',
+        title: 'News Geo-tagging',
+        description: 'Identifies country from news headlines for backfilling.',
+        availableTags: ['{{headline}}'],
+        template: `Identify the primary country associated with this quantum computing news headline. Return ONLY the country name (e.g. USA, China, UK, India, Germany). If it's a global story or country is unclear, return 'Global'.
+Headline: {{headline}}`
     }
 ];
 

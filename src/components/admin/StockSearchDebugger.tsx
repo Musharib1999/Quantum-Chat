@@ -15,6 +15,24 @@ export default function StockSearchDebugger() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [history, setHistory] = useState<any[]>([]);
+    const [activeView, setActiveView] = useState<'trace' | 'history'>('trace');
+    const [selectedLog, setSelectedLog] = useState<any>(null);
+
+    const fetchHistory = async () => {
+        try {
+            const res = await axios.get('/api/admin/stock-logs');
+            setHistory(res.data);
+        } catch (err) {
+            console.error("Failed to fetch history:", err);
+        }
+    };
+
+    React.useEffect(() => {
+        if (activeView === 'history') {
+            fetchHistory();
+        }
+    }, [activeView]);
 
     const handleRunDebug = async () => {
         if (!prompt.trim()) return;
@@ -32,40 +50,118 @@ export default function StockSearchDebugger() {
         }
     };
 
+    const viewLogDetails = (log: any) => {
+        setSelectedLog(log);
+        setResult({
+            ticker: log.ticker,
+            rawMarketData: log.rawData,
+            enrichedPrompt: log.systemPrompt,
+            finalOutput: log.aiResponse,
+            steps: [
+                { name: "Ticker Extraction", status: "completed", result: log.ticker },
+                { name: "Market Data Fetch", status: log.rawData ? "completed" : "failed", result: log.rawData },
+                { name: "Persistent Log Captured", status: "completed", result: new Date(log.timestamp).toLocaleString() }
+            ]
+        });
+        setActiveView('trace');
+    };
+
     return (
         <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-700">
             {/* Header */}
-            <div className="bg-[#3066bb]/10 p-6 rounded-2xl border border-[#3066bb]/20 backdrop-blur-md">
-                <h3 className="flex items-center gap-2 font-bold text-[#3066bb] text-lg">
-                    <Cpu size={24} /> Stock Flow Debugger
-                </h3>
-                <p className="text-[#3066bb]/80 text-sm mt-1">Trace the autonomous stock fetching logic: Ticker Extraction → YFinance Data → Prompt Enrichment → Final Summary.</p>
-            </div>
-
-            {/* Input Area */}
-            <div className="bg-card/70 backdrop-blur-md p-6 rounded-2xl border border-border shadow-md">
-                <div className="flex gap-4 items-end">
-                    <div className="flex-1">
-                        <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Test Prompt</label>
-                        <input
-                            type="text"
-                            placeholder="e.g. What is the current price of NVDA and how it affects AI market?"
-                            className="w-full p-4 bg-secondary/30 border border-border rounded-xl focus:ring-2 focus:ring-[#3066bb] outline-none text-sm placeholder:text-muted-foreground transition-all"
-                            value={prompt}
-                            onChange={(e) => setPrompt(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleRunDebug()}
-                        />
-                    </div>
+            <div className="bg-[#3066bb]/10 p-6 rounded-2xl border border-[#3066bb]/20 backdrop-blur-md flex justify-between items-center">
+                <div>
+                    <h3 className="flex items-center gap-2 font-bold text-[#3066bb] text-lg">
+                        <Cpu size={24} /> Stock Flow Debugger
+                    </h3>
+                    <p className="text-[#3066bb]/80 text-sm mt-1">Trace the autonomous stock fetching logic: Ticker Extraction → YFinance Data → Prompt Enrichment → Final Summary.</p>
+                </div>
+                <div className="flex bg-secondary/50 p-1 rounded-xl border border-border">
                     <button
-                        onClick={handleRunDebug}
-                        disabled={loading || !prompt.trim()}
-                        className="bg-[#3066bb] hover:bg-[#255296] text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 active:scale-95"
+                        onClick={() => setActiveView('trace')}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeView === 'trace' ? 'bg-[#3066bb] text-white shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play size={18} fill="currentColor" />}
-                        Run Trace
+                        Live Trace
+                    </button>
+                    <button
+                        onClick={() => setActiveView('history')}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeView === 'history' ? 'bg-[#3066bb] text-white shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                        Market Logs
                     </button>
                 </div>
             </div>
+
+            {activeView === 'trace' ? (
+                /* Input Area */
+                <div className="bg-card/70 backdrop-blur-md p-6 rounded-2xl border border-border shadow-md">
+                    <div className="flex gap-4 items-end">
+                        <div className="flex-1">
+                            <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Test Prompt</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. What is the current price of NVDA and how it affects AI market?"
+                                className="w-full p-4 bg-secondary/30 border border-border rounded-xl focus:ring-2 focus:ring-[#3066bb] outline-none text-sm placeholder:text-muted-foreground transition-all"
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleRunDebug()}
+                            />
+                        </div>
+                        <button
+                            onClick={handleRunDebug}
+                            disabled={loading || !prompt.trim()}
+                            className="bg-[#3066bb] hover:bg-[#255296] text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 active:scale-95"
+                        >
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play size={18} fill="currentColor" />}
+                            Run Trace
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                /* History Area */
+                <div className="bg-card/70 backdrop-blur-md rounded-2xl border border-border overflow-hidden shadow-md animate-in slide-in-from-right-4 duration-500">
+                    <div className="p-4 border-b border-border bg-secondary/20 flex justify-between items-center">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Historical Market Interactions</h4>
+                        <button onClick={fetchHistory} className="text-xs text-[#3066bb] hover:underline flex items-center gap-1">
+                            <Play size={10} className="rotate-90" /> Refresh
+                        </button>
+                    </div>
+                    <div className="max-h-[500px] overflow-y-auto">
+                        <table className="w-full text-left text-xs">
+                            <thead className="bg-secondary/30 text-muted-foreground uppercase font-bold sticky top-0">
+                                <tr>
+                                    <th className="p-3">Time</th>
+                                    <th className="p-3">Ticker</th>
+                                    <th className="p-3">User query</th>
+                                    <th className="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {history.map((log) => (
+                                    <tr key={log._id} className="hover:bg-secondary/20 transition-colors group">
+                                        <td className="p-3 text-muted-foreground whitespace-nowrap">{new Date(log.timestamp).toLocaleTimeString()}</td>
+                                        <td className="p-3 font-mono font-bold text-[#3066bb]">{log.ticker || 'N/A'}</td>
+                                        <td className="p-3 truncate max-w-[300px] text-foreground">{log.userQuery}</td>
+                                        <td className="p-3">
+                                            <button
+                                                onClick={() => viewLogDetails(log)}
+                                                className="text-[10px] bg-[#3066bb]/10 text-[#3066bb] px-2 py-1 rounded border border-[#3066bb]/20 hover:bg-[#3066bb] hover:text-white transition-all uppercase font-bold"
+                                            >
+                                                Inspect Trace
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {history.length === 0 && (
+                                    <tr>
+                                        <td colSpan={4} className="p-10 text-center text-muted-foreground">No market logs found yet.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {error && (
                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-center gap-2 text-sm">
@@ -90,8 +186,8 @@ export default function StockSearchDebugger() {
                                 <div key={idx} className="bg-card/40 border border-border p-4 rounded-xl flex items-center justify-between group hover:bg-card/60 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${step.status === 'completed' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
-                                                step.status === 'failed' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                                                    'bg-blue-500/10 border-blue-500/20 text-blue-500'
+                                            step.status === 'failed' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                                                'bg-blue-500/10 border-blue-500/20 text-blue-500'
                                             }`}>
                                             {step.status === 'completed' ? <CheckCircle size={16} /> :
                                                 step.status === 'failed' ? <AlertCircle size={16} /> :

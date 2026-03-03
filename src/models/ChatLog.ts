@@ -21,6 +21,10 @@ const ChatLogSchema = new mongoose.Schema({
         default: 'passed'
     },
     activeGuardrails: [String], // List of rules checked
+    ticker: String,
+    rawData: mongoose.Schema.Types.Mixed,
+    systemPrompt: String,
+    mode: String,
     timestamp: {
         type: Date,
         default: Date.now,

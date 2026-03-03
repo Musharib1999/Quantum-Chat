@@ -238,7 +238,7 @@ const queryKnowledgeBase = async (prompt: string) => {
  * Fetches the prompt template from DB and replaces {{tags}} with the provided runtime values.
  * Falls back to a string default if DB fetch fails.
  */
-async function getDynamicPrompt(category: string, replacements: Record<string, any>, fallback: string): Promise<string> {
+export async function getDynamicPrompt(category: string, replacements: Record<string, any>, fallback: string): Promise<string> {
     try {
         const promptDoc = await SystemPrompt.findOne({ category }).lean();
         let template = promptDoc ? promptDoc.template : fallback;
@@ -296,6 +296,9 @@ export async function chatWithGroq(
     if (contextConfig?.userEmail) {
         dbUser = await User.findOne({ email: contextConfig.userEmail });
     }
+
+    let logTicker = contextConfig?.symbol || null;
+    let logRawData: any = contextConfig?.realTimeData || null;
 
     // Session Token Limit Enforcement
     const SESSION_TOKEN_LIMIT = dbUser ? (dbUser.tokenLimit || 100000) : 100000;
@@ -384,9 +387,10 @@ export async function chatWithGroq(
         };
 
         try {
+            const routerInstruction = await getDynamicPrompt('ai_router', { prompt }, "You are an AI router. Decide if you need to fetch live data using your tools based on the user prompt.");
             const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, tools: [geminiTools] as any });
             const result = await model.generateContent([
-                "You are an AI router. Decide if you need to fetch live data using your tools based on the user prompt.",
+                routerInstruction,
                 prompt
             ]);
 
@@ -399,6 +403,8 @@ export async function chatWithGroq(
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 5000);
                         autonomousMarketData = await getStockPrice(args.ticker);
+                        logTicker = args.ticker;
+                        logRawData = autonomousMarketData;
                         clearTimeout(timeoutId);
                     } catch (e: any) {
                         console.error("[Gemini Tool] get_stock_price failed:", e.message);
@@ -525,9 +531,10 @@ export async function chatWithGroq(
                 }
                 */
                 try {
+                    const tickerInstruction = await getDynamicPrompt('ticker_extraction', { prompt }, "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.");
                     const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
                     const extraction = await model.generateContent([
-                        "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.",
+                        tickerInstruction,
                         prompt
                     ]);
                     const extracted = extraction.response.text().trim();
@@ -543,6 +550,8 @@ export async function chatWithGroq(
             let realTimeData = contextConfig.realTimeData;
             if (targetSymbol && !realTimeData) {
                 realTimeData = await getStockPrice(targetSymbol);
+                logTicker = targetSymbol;
+                logRawData = realTimeData;
             }
 
             systemInstructions += `\n\nMODE: MARKET INTELLIGENCE`;
@@ -622,7 +631,7 @@ export async function chatWithGroq(
         }
         // Mode: Quantum Assistant
         else if (contextConfig.mode === 'assistant') {
-            systemInstructions += `\n\nMODE: GENERAL CHAT AND ASSISTANCE CONTEXT\nTASK: You are providing general chat and assistance. Answer the user's questions to the best of your ability. Keep responses helpful and professional.`;
+            systemInstructions = await getDynamicPrompt('assistant_mode', {}, `MODE: GENERAL CHAT AND ASSISTANCE CONTEXT\nTASK: You are providing general chat and assistance. Answer the user's questions to the best of your ability. Keep responses helpful and professional.`);
         }
         // Mode: Industry (Modular / Robust)
         else if (contextConfig.mode === 'industry') {
@@ -705,22 +714,14 @@ export async function chatWithGroq(
                     - Do NOT include any explanations in the code block.
                     Return a JSON object with "code" and "explanation" keys.`);
 
-                    /* GROQ_FALLBACK:
-                    const completion = await groq.chat.completions.create({
-                        messages: [
-                            { role: "system", content: "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields." },
-                            { role: "user", content: genPrompt }
-                        ],
-                        model: DEFAULT_MODEL,
-                        response_format: { type: "json_object" }
-                    });
-
-                    try {
-                        const content = completion.choices[0]?.message?.content || "{}";
-                        const parsed = JSON.parse(content);
-                        ...
-                    } catch (e: any) { ... }
-                    */
+                    const jsonWrapperInstruction = await getDynamicPrompt('industry_json_wrapper', {
+                        prompt: genPrompt,
+                        templateCode: templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."
+                    }, `You are a Quantum Expert. ${templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."} 
+                    STRICT RULES:
+                    - Use a fixed seed (e.g., 42) for all simulators/samplers to ensure reproducibility.
+                    - Do NOT include any explanations in the code block.
+                    Return a JSON object with "code" and "explanation" keys.`);
 
                     const model = genAI.getGenerativeModel({
                         model: GEMINI_MODEL,
@@ -728,7 +729,7 @@ export async function chatWithGroq(
                     });
                     const result = await model.generateContent([
                         "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields.",
-                        genPrompt
+                        jsonWrapperInstruction
                     ]);
 
                     try {
@@ -895,7 +896,11 @@ export async function chatWithGroq(
             source: kbResult?.type === 'context' ? 'kb_context' : activeProvider,
             context: kbResult?.type === 'context' ? kbResult.source : undefined,
             guardrailsStatus: 'passed',
-            activeGuardrails: ruleTexts
+            activeGuardrails: ruleTexts,
+            ticker: logTicker,
+            rawData: logRawData,
+            systemPrompt: systemInstructions,
+            mode: contextConfig?.mode || 'assistant'
         });
 
         // --- Update DB Token Usage ---

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import News from '@/models/News';
-import { chatWithGroq } from '@/app/actions/chat';
+import { chatWithGroq, getDynamicPrompt } from '@/app/actions/chat';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,14 +21,16 @@ export async function POST() {
         let updatedCount = 0;
 
         for (const item of itemsToUpdate) {
-            const prompt = `Identify the primary country associated with this quantum computing news headline.
+            const prompt = await getDynamicPrompt('news_geo_backfill', {
+                headline: item.title
+            }, `Identify the primary country associated with this quantum computing news headline.
 Return the response in STRICT JSON format:
 {
   "countryCode": "ISO 3166-1 alpha-3 code (e.g., USA, DEU, CHN)",
   "countryName": "Full name of the country"
 }
 
-HEADLINE: ${item.title}`;
+HEADLINE: ${item.title}`);
 
             try {
                 const llmResponse = await chatWithGroq(prompt, 'chat', 'en');

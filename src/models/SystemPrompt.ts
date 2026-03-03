@@ -12,7 +12,12 @@ const SystemPromptSchema = new mongoose.Schema({
             'news_automation',
             'industry_dwave',
             'industry_qiskit',
-            'industry_analysis'
+            'industry_analysis',
+            'ai_router',
+            'ticker_extraction',
+            'assistant_mode',
+            'industry_json_wrapper',
+            'news_geo_backfill'
         ],
         description: 'The internal ID for the prompt category'
     },
