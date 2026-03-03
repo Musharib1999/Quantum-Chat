@@ -287,36 +287,6 @@ export async function chatWithGroq(
     let responseText = "";
     let tokensUsed = 0;
 
-    if (activeProvider === 'groq') {
-        if (!API_KEY) return { text: "", error: "Groq API Key (GROQ_API_KEY) is missing." };
-        const groq = new Groq({ apiKey: API_KEY });
-
-        try {
-            const completion = await groq.chat.completions.create({
-                messages: [{ role: "user", content: prompt }],
-                model: activeModel,
-                temperature: 0.7,
-            });
-            responseText = completion.choices[0]?.message?.content || "";
-            tokensUsed = completion.usage?.total_tokens || 0;
-        } catch (err: any) {
-            return { text: "", error: `Groq Error: ${err.message}` };
-        }
-    } else {
-        if (!GEMINI_API_KEY) return { text: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
-
-        try {
-            const model = genAI.getGenerativeModel({ model: activeModel });
-            const result = await model.generateContent(prompt);
-            responseText = result.response.text();
-            // Gemini flash-lite using a rough estimate if tokens are not explicitly returned in this client version
-            tokensUsed = (result.response as any).usageMetadata?.totalTokenCount || Math.ceil(prompt.length / 4);
-        } catch (err: any) {
-            return { text: "", error: `Gemini Error: ${err.message}` };
-        }
-    }
-
     // 0. Fetch Active Rules for both logging and prompt injection
     const activeRules = await getActiveGuardrails();
     const ruleTexts = activeRules.map(r => r.rule);
@@ -894,33 +864,35 @@ export async function chatWithGroq(
     }
 
     try {
-        /* GROQ_FALLBACK:
-        const completion = await groq.chat.completions.create({
-            messages: [
-                { role: "system", content: systemInstructions },
-                { role: "user", content: finalPrompt },
-            ],
-            model: DEFAULT_MODEL,
-        });
+        if (activeProvider === 'groq') {
+            if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY missing");
+            const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+            const completion = await groq.chat.completions.create({
+                messages: [
+                    { role: "system", content: systemInstructions },
+                    { role: "user", content: finalPrompt }
+                ],
+                model: activeModel,
+                temperature: 0.7,
+            });
+            responseText = completion.choices[0]?.message?.content || "";
+            tokensUsed = completion.usage?.total_tokens || 0;
+        } else {
+            const model = genAI.getGenerativeModel({ model: activeModel || GEMINI_MODEL });
+            const result = await model.generateContent([
+                { text: systemInstructions },
+                { text: finalPrompt }
+            ]);
 
-        const text = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
-        const tokensUsed = completion.usage?.total_tokens || 0;
-        */
-
-        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-        const result = await model.generateContent([
-            { text: systemInstructions },
-            { text: finalPrompt }
-        ]);
-
-        const text = result.response.text() || "I'm sorry, I couldn't generate a response.";
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount || 0;
+            responseText = result.response.text() || "I'm sorry, I couldn't generate a response.";
+            tokensUsed = result.response.usageMetadata?.totalTokenCount || 0;
+        }
 
         // --- Log Interaction ---
         await ChatLog.create({
             userQuery: prompt,
-            aiResponse: text,
-            source: kbResult?.type === 'context' ? 'kb_context' : 'gemini',
+            aiResponse: responseText,
+            source: kbResult?.type === 'context' ? 'kb_context' : activeProvider,
             context: kbResult?.type === 'context' ? kbResult.source : undefined,
             guardrailsStatus: 'passed',
             activeGuardrails: ruleTexts
@@ -933,8 +905,8 @@ export async function chatWithGroq(
         }
 
         return {
-            text,
-            source: kbResult?.type === 'context' ? 'kb_context' : 'gemini',
+            text: responseText,
+            source: kbResult?.type === 'context' ? 'kb_context' : activeProvider,
             sourceUrl: kbResult?.type === 'context' ? kbResult.source : undefined,
             guardrailsStatus: 'passed',
             activeGuardrails: ruleTexts,
