@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import StockSidebar from '@/components/StockSidebar';
 import MarketChat from '@/components/chat/MarketChat';
@@ -52,22 +52,22 @@ export default function MarketPage() {
         fetchPrice();
     }, [selectedStock]);
 
-    const handleStockSelect = (stock: any) => {
+    const handleStockSelect = useCallback((stock: any) => {
         setSelectedStock(stock);
         setSelectedNews(null); // Clear news context when stock is selected
-    };
+    }, []);
 
-    const handleNewsSelect = (n: any) => {
+    const handleNewsSelect = useCallback((n: any) => {
         setSelectedNews(n);
         setSelectedStock(null); // Clear stock context when news is selected
         setSelectedStockData(null);
-    };
+    }, []);
 
-    const handleAnalysisTriggered = () => {
+    const handleAnalysisTriggered = useCallback(() => {
         setSelectedStock(null);
         setSelectedStockData(null);
         setSelectedNews(null);
-    };
+    }, []);
 
     const resolvedSymbol = selectedStock ? (selectedStock.symbol || SYMBOL_MAP[selectedStock.name]) : undefined;
 

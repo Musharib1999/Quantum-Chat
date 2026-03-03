@@ -45,20 +45,17 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
         const targetUrl = contextConfig?.stockUrl;
         const targetName = contextConfig?.stockName;
 
-        if (targetUrl) {
-            if (targetUrl !== lastTriggeredUrlRef.current) {
-                lastTriggeredUrlRef.current = targetUrl;
-                const triggerMessage = `Analyze latest trends, market news, and stock prices for ${targetName}.`;
+        if (targetUrl && targetUrl !== lastTriggeredUrlRef.current) {
+            lastTriggeredUrlRef.current = targetUrl;
+            const triggerMessage = `Analyze latest trends, market news, and stock prices for ${targetName}.`;
 
-                setShouldAutoScroll(true);
-                const timer = setTimeout(() => {
-                    sendMessage(triggerMessage);
-                    onAnalysisTriggered?.();
-                }, 1000);
-                return () => clearTimeout(timer);
-            }
-        } else {
-            // Clear ref if targetUrl becomes null, allowing re-selection of the same stock
+            setShouldAutoScroll(true);
+            const timer = setTimeout(() => {
+                sendMessage(triggerMessage);
+                onAnalysisTriggered?.();
+            }, 1000);
+            return () => clearTimeout(timer);
+        } else if (!targetUrl) {
             lastTriggeredUrlRef.current = null;
         }
     }, [contextConfig?.stockUrl, contextConfig?.stockName, sendMessage, onAnalysisTriggered, setShouldAutoScroll]);

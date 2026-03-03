@@ -41,8 +41,10 @@ export default function ArticleChat({ contextConfig, placeholder, onAnalysisTrig
                 onAnalysisTriggered?.();
             }, 1000);
             return () => clearTimeout(timer);
+        } else if (!targetUrl) {
+            lastTriggeredUrlRef.current = null;
         }
-    }, [contextConfig, sendMessage, onAnalysisTriggered, setShouldAutoScroll]);
+    }, [contextConfig?.articleUrl, contextConfig?.articleTitle, sendMessage, onAnalysisTriggered, setShouldAutoScroll]);
 
     return (
         <div className="flex flex-col h-full w-full overflow-hidden">

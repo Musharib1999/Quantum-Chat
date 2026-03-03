@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import ChatInterface from '@/components/ChatInterface';
 import ArticleSidebar from '@/components/ArticleSidebar';
@@ -10,9 +10,9 @@ import ArticleChat from '@/components/chat/ArticleChat';
 export default function ArticlePage() {
     const [selectedArticle, setSelectedArticle] = useState<{ _id: string, title: string, category: string, url: string } | null>(null);
 
-    const handleArticleSelect = (article: any) => {
+    const handleArticleSelect = useCallback((article: any) => {
         setSelectedArticle(article);
-    };
+    }, []);
 
     const contextConfig = selectedArticle ? {
         articleTitle: selectedArticle.title,

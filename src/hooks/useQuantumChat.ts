@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { chatWithGroq } from '@/app/actions/chat';
 
 export interface Message {
@@ -40,7 +40,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         setShouldAutoScroll(isAtBottom);
     };
 
-    const sendMessage = async (text?: string, customConfig?: any, hiddenPrompt?: string) => {
+    const sendMessage = useCallback(async (text?: string, customConfig?: any, hiddenPrompt?: string) => {
         setShouldAutoScroll(true);
         const messageToSend = text || inputValue;
         if (!messageToSend.trim()) return;
@@ -146,7 +146,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         } finally {
             setIsTyping(false);
         }
-    };
+    }, [mode, contextConfig, isAuthenticated, user?.email, inputValue]);
 
     const addBotMessage = (text: string, chartData?: any) => {
         const botMsgId = Date.now() + 1;
