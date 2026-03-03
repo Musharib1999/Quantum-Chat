@@ -9,6 +9,7 @@ interface Stock {
     name: string;
     url: string;
     symbol?: string;
+    quantumExposureScore?: number;
 }
 
 interface StockSidebarProps {
@@ -66,9 +67,30 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                             : 'bg-transparent border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md'
                             }`}
                     >
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm">{stock.name}</span>
-                            {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm line-clamp-1">{stock.name}</span>
+                                {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+                            </div>
+
+                            <div className="flex items-center justify-between mt-1 pt-1 border-t border-border/20">
+                                <div className="flex items-center gap-1">
+                                    <div className="flex gap-0.5">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <div
+                                                key={star}
+                                                className={`w-1.5 h-1.5 rounded-full ${star <= (stock.quantumExposureScore || 0)
+                                                    ? 'bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]'
+                                                    : 'bg-muted'
+                                                    }`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground font-mono ml-1">
+                                        Q-Score: {stock.quantumExposureScore || 0}/5
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </button>
                 ))}

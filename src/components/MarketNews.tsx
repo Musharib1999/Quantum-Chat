@@ -5,13 +5,14 @@ import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info, X, ArrowRight, Fi
 import { getDbNews } from '@/app/actions/news-automation';
 
 interface NewsItem {
-    id: number;
+    id: number | string;
     title: string;
     source: string;
     time: string;
     impact: string;
     trend: string;
     summary?: string;
+    quantumExposureScore?: number;
     url?: string;
 }
 
@@ -109,7 +110,23 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                 className="p-4 bg-transparent border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2"
                             >
                                 <div className="flex justify-between items-start mb-1">
-                                    <span className="text-[10px] tracking-wider text-muted-foreground font-mono">{item.source}</span>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] tracking-wider text-muted-foreground font-mono">{item.source}</span>
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                            <div className="flex gap-0.5">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <div
+                                                        key={star}
+                                                        className={`w-1 h-1 rounded-full ${star <= (item.quantumExposureScore || 0)
+                                                                ? 'bg-blue-500 shadow-[0_0_3px_rgba(59,130,246,0.5)]'
+                                                                : 'bg-muted'
+                                                            }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <span className="text-[9px] text-muted-foreground/70 font-mono">Q-Score: {item.quantumExposureScore || 0}/5</span>
+                                        </div>
+                                    </div>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'}`}>
                                         {item.trend === 'up' ? '▲' : '▼'}
                                     </span>

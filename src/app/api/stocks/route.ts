@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Stock from '@/models/Stock';
+import { getQuantumExposureScore } from '@/app/actions/quantum-score';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,17 @@ export async function GET() {
     await dbConnect();
     try {
         const stocks = await Stock.find({}).sort({ name: 1 });
+
+        // Background update for missing scores
+        stocks.forEach(stock => {
+            if (!stock.quantumExposureScore || stock.quantumExposureScore === 0) {
+                // Not awaiting to avoid blocking the response
+                getQuantumExposureScore(stock.name, 'stock', stock._id.toString()).catch(err => {
+                    console.error(`Background Q-Score update failed for ${stock.name}:`, err);
+                });
+            }
+        });
+
         return NextResponse.json(stocks);
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch stocks' }, { status: 500 });

@@ -8,6 +8,7 @@ export interface INews extends Document {
     impact: 'high' | 'medium' | 'low';
     trend: 'up' | 'down';
     summary?: string;
+    quantumExposureScore?: number;
     createdAt: Date;
 }
 
@@ -19,6 +20,7 @@ const NewsSchema = new Schema<INews>({
     impact: { type: String, enum: ['high', 'medium', 'low'], default: 'medium' },
     trend: { type: String, enum: ['up', 'down'], default: 'up' },
     summary: { type: String },
+    quantumExposureScore: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
 });
 
