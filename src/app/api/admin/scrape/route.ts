@@ -2,67 +2,33 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import News from '@/models/News';
 
-export const dynamic = 'force-dynamic';
+import { automateNewsSummarization } from '@/app/actions/news-automation';
 
-const NEWS_SERVICE_URL = process.env.NEWS_SERVICE_URL || 'https://quantum-news.vercel.app';
-const NEWS_SERVICE_KEY = process.env.NEWS_SERVICE_KEY;
+export const dynamic = 'force-dynamic';
 
 export async function POST() {
     try {
         await dbConnect();
 
-        if (!NEWS_SERVICE_KEY) {
-            throw new Error("NEWS_SERVICE_KEY is missing from environment variables.");
-        }
+        console.log("[Admin API] Triggering automated news scraping and summarization...");
 
-        // 1. Fetch from External Python News Service
-        const response = await fetch(`${NEWS_SERVICE_URL}/api/news`, {
-            headers: {
-                'Authorization': `Bearer ${NEWS_SERVICE_KEY}`
-            },
-            cache: 'no-store'
-        });
+        // This handles fetching, deduplication, and LLM summarization
+        const result = await automateNewsSummarization();
 
-        if (!response.ok) {
-            throw new Error(`News API responded with status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to scrape news');
-        }
-
-        const fetchedNews = data.news;
-        let addedCount = 0;
-
-        // 2. Insert into MongoDB, ignoring duplicates
-        for (const item of fetchedNews) {
-            try {
-                // Upsert based on URL to prevent duplicates while updating trends if needed
-                const result = await News.updateOne(
-                    { url: item.url },
-                    { $setOnInsert: item },
-                    { upsert: true }
-                );
-
-                if (result.upsertedId) {
-                    addedCount++;
-                }
-            } catch (err) {
-                console.error("Error inserting news item:", err);
-            }
+        if (!result.success) {
+            return NextResponse.json({
+                error: result.error || result.message || 'Scraping failed'
+            }, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
-            message: `Scraping complete. Added ${addedCount} new articles.`,
-            totalFetched: fetchedNews.length,
-            added: addedCount
+            message: result.message,
+            totalProcessed: result.total
         });
 
     } catch (error: any) {
-        console.error("Scraping error:", error);
-        return NextResponse.json({ error: error.message || 'Scraping failed' }, { status: 500 });
+        console.error("Scraping route error:", error);
+        return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
     }
 }
