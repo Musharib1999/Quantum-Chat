@@ -4,17 +4,22 @@ import News from '@/models/News';
 
 export const dynamic = 'force-dynamic';
 
-const BASE_URL = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const NEWS_SERVICE_URL = process.env.NEWS_SERVICE_URL || 'https://quantum-news.vercel.app';
+const NEWS_SERVICE_KEY = process.env.NEWS_SERVICE_KEY;
 
 export async function POST() {
     try {
         await dbConnect();
 
-        // 1. Fetch from Local Vercel Python Function (pygooglenews)
-        const response = await fetch(`${BASE_URL}/api/news`, {
-            // Prevent caching so we get fresh news on trigger
+        if (!NEWS_SERVICE_KEY) {
+            throw new Error("NEWS_SERVICE_KEY is missing from environment variables.");
+        }
+
+        // 1. Fetch from External Python News Service
+        const response = await fetch(`${NEWS_SERVICE_URL}/api/news`, {
+            headers: {
+                'Authorization': `Bearer ${NEWS_SERVICE_KEY}`
+            },
             cache: 'no-store'
         });
 
