@@ -28,11 +28,11 @@ export default function AdminLogin() {
                 router.push("/admin/dashboard");
             } else {
                 const data = await res.json();
-                setError(data.error || "Invalid credentials.");
+                setError(data.error || "Invalid credentials");
                 setIsLoading(false);
             }
         } catch (err) {
-            setError("A network error occurred.");
+            setError("A network error occurred");
             setIsLoading(false);
         }
     };
@@ -80,7 +80,7 @@ export default function AdminLogin() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="w-full pl-12 pr-4 py-3 bg-zinc-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-white/10 focus:border-white/20 outline-none transition-all text-zinc-200 placeholder:text-zinc-700 shadow-inner"
-                                        placeholder="Enter username"
+                                        placeholder=""
                                         required
                                     />
                                 </div>
@@ -95,7 +95,7 @@ export default function AdminLogin() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="w-full pl-12 pr-4 py-3 bg-zinc-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-white/10 focus:border-white/20 outline-none transition-all text-zinc-200 placeholder:text-zinc-700 shadow-inner"
-                                        placeholder="Enter password"
+                                        placeholder=""
                                         required
                                     />
                                 </div>

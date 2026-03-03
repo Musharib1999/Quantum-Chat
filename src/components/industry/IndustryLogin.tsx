@@ -27,7 +27,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
         setLoading(true);
 
         if (!email || !password) {
-            setError('Please provide credentials to access the Quantum Interface.');
+            setError('Please provide credentials to access the Quantum Interface');
             setLoading(false);
             return;
         }
@@ -48,7 +48,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
             // Login successful — pass full user object
             onLogin(data as LoginUserData);
         } catch (err: any) {
-            setError(err.message || 'Authentication failed. Please check your connection.');
+            setError(err.message || 'Authentication failed Please check your connection');
         } finally {
             setLoading(false);
         }
@@ -95,7 +95,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                    placeholder="researcher@quantum.lab"
+                                    placeholder=""
                                 />
                             </div>
                         </div>
@@ -111,7 +111,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3.5 pl-11 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                    placeholder="••••••••"
+                                    placeholder=""
                                 />
                                 <button
                                     type="button"

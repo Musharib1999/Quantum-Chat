@@ -31,7 +31,7 @@ function LoginForm() {
         setLoading(true);
 
         if (!email || !password || (mode === 'signup' && (!firstName || !lastName))) {
-            setError('Please provide all required fields.');
+            setError('Please provide all required fields');
             setLoading(false);
             return;
         }
@@ -59,12 +59,12 @@ function LoginForm() {
                 login(data);
                 router.push(redirect);
             } else {
-                setSuccessMsg(data.message || 'Registration successful. Your account is pending admin approval.');
+                setSuccessMsg(data.message || 'Registration successful Your account is pending admin approval');
                 setMode('login'); // Switch back to login view
                 setPassword(''); // Clear password for security
             }
         } catch (err: any) {
-            setError(err.message || 'Authentication failed. Please check your connection.');
+            setError(err.message || 'Authentication failed Please check your connection');
         } finally {
             setLoading(false);
         }
@@ -97,7 +97,7 @@ function LoginForm() {
                             {mode === 'login' ? 'Login' : 'Request Access'}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {mode === 'login' ? 'Enter your credentials to access the workspace.' : 'Sign up to request approval from an administrator.'}
+                            {mode === 'login' ? 'Enter your credentials to access the workspace' : 'Sign up to request approval from an administrator'}
                         </p>
                     </div>
 
@@ -131,7 +131,7 @@ function LoginForm() {
                                             value={firstName}
                                             onChange={(e) => setFirstName(e.target.value)}
                                             className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                            placeholder="Marie"
+                                            placeholder=""
                                         />
                                     </div>
                                     <div className="space-y-1.5">
@@ -141,7 +141,7 @@ function LoginForm() {
                                             value={lastName}
                                             onChange={(e) => setLastName(e.target.value)}
                                             className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                            placeholder="Curie"
+                                            placeholder=""
                                         />
                                     </div>
                                 </div>
@@ -152,7 +152,7 @@ function LoginForm() {
                                         value={company}
                                         onChange={(e) => setCompany(e.target.value)}
                                         className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                        placeholder="Quantum Labs Inc."
+                                        placeholder=""
                                     />
                                 </div>
                             </>
@@ -169,7 +169,7 @@ function LoginForm() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                    placeholder="researcher@quantum.lab"
+                                    placeholder=""
                                 />
                             </div>
                         </div>
@@ -185,7 +185,7 @@ function LoginForm() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                    placeholder="••••••••"
+                                    placeholder=""
                                 />
                                 <button
                                     type="button"
