@@ -73,7 +73,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                                 {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
                             </div>
 
-                            <div className="flex items-center justify-between mt-1 pt-1 border-t border-border/20">
+                            <div className="flex items-center justify-start mt-1 pt-1 border-t border-border/20">
                                 <div className="flex items-center gap-1">
                                     <div className="flex gap-0.5">
                                         {[1, 2, 3, 4, 5].map((star) => (
