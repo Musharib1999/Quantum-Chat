@@ -177,9 +177,8 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                                         setInputValue(chip.label);
                                         // Optional: sendMessage(chip.label, undefined, chip.query)
                                     }}
-                                    className="snap-start flex items-center gap-1.5 shrink-0 px-3.5 py-1.5 bg-transparent hover:bg-transparent border border-border rounded-full text-xs font-medium text-foreground transition-all group hover:border-[#3066bb]/60 hover:text-[#3066bb] dark:hover:text-[#5c8deb]"
+                                    className="snap-start flex items-center shrink-0 px-3.5 py-1.5 bg-transparent border border-border rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all"
                                 >
-                                    <Sparkles size={12} className="text-muted-foreground group-hover:text-[#3066bb] dark:group-hover:text-[#5c8deb] transition-colors" />
                                     {chip.label}
                                 </button>
                             ))}
