@@ -118,9 +118,9 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[10px] tracking-wider text-muted-foreground font-mono">{item.source}</span>
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500 bg-green-500/10' :
-                                                    (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500 bg-orange-500/10' :
-                                                        'text-red-500 bg-red-500/10'
+                                            <span className={`text-[9px] font-mono font-bold ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
+                                                    (item.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
+                                                        'text-red-600'
                                                 }`}>
                                                 Quantum exposure: {item.quantumExposureScore || 0}/5
                                             </span>
