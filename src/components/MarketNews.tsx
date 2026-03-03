@@ -118,24 +118,12 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[10px] tracking-wider text-muted-foreground font-mono">{item.source}</span>
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            <div className="flex gap-0.5">
-                                                {[1, 2, 3, 4, 5].map((star) => {
-                                                    const score = item.quantumExposureScore || 0;
-                                                    let dotColor = 'bg-muted';
-                                                    if (star <= score) {
-                                                        if (score >= 4) dotColor = 'bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.5)]';
-                                                        else if (score >= 2) dotColor = 'bg-orange-500 shadow-[0_0_3px_rgba(249,115,22,0.5)]';
-                                                        else dotColor = 'bg-red-500 shadow-[0_0_3px_rgba(239,68,68,0.5)]';
-                                                    }
-                                                    return (
-                                                        <div
-                                                            key={star}
-                                                            className={`w-1 h-1 rounded-full ${dotColor}`}
-                                                        />
-                                                    );
-                                                })}
-                                            </div>
-                                            <span className="text-[9px] text-muted-foreground/70 font-mono">Quantum exposure: {item.quantumExposureScore || 0}/5</span>
+                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500 bg-green-500/10' :
+                                                    (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500 bg-orange-500/10' :
+                                                        'text-red-500 bg-red-500/10'
+                                                }`}>
+                                                Quantum exposure: {item.quantumExposureScore || 0}/5
+                                            </span>
                                         </div>
                                     </div>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'}`}>
