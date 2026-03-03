@@ -16,8 +16,11 @@ import LLMSetting from '@/models/LLMSetting';
 import { execSync } from 'child_process';
 import path from 'path';
 import crypto from 'crypto';
-import { getStockPrice, getLatestNews } from './market';
+import { buildMarketContext } from './market-pipeline';
 import QuantumForm from '@/models/QuantumForm';
+import { getStockPrice, getLatestNews } from './market';
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
@@ -182,7 +185,7 @@ const checkGuardrails = (prompt: string, rules: any[]): string | null => {
 };
 
 // --- Web Scraping Helper ---
-async function scrapeUrl(url: string) {
+export async function scrapeUrl(url: string) {
     try {
         const { data } = await axios.get(url, {
             headers: {
@@ -500,107 +503,17 @@ export async function chatWithGroq(
         // Mode: Market Intelligence
 
         if (contextConfig.mode === 'market') {
-            const now = new Date();
-            const timeString = now.toLocaleString('en-US', {
-                timeZone: 'America/New_York',
-                dateStyle: 'full',
-                timeStyle: 'long'
-            });
+            const pipelineDeps = {
+                genAI,
+                GEMINI_MODEL,
+                getDynamicPrompt,
+                scrapeUrl
+            };
 
-            // 1. Ticker Extraction Layer (The Intermediate Layer)
-            let targetSymbol = contextConfig.symbol; // Start with explicit selection if any
-
-            // If no symbol selected, try to extract from prompt
-            if (!targetSymbol) {
-                /* GROQ_FALLBACK:
-                try {
-                    const extraction = await groq.chat.completions.create({
-                        messages: [
-                            { role: "system", content: "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'." },
-                            { role: "user", content: prompt }
-                        ],
-                        model: "llama-3.3-70b-versatile",
-                        temperature: 0
-                    });
-                    const extracted = extraction.choices[0]?.message?.content?.trim();
-                    if (extracted && extracted !== 'NULL' && extracted.length < 10) {
-                        targetSymbol = extracted.replace(/[^a-zA-Z0-9-]/g, ''); // Clean it
-                    }
-                } catch (e) {
-                    console.error("Ticker extraction failed:", e);
-                }
-                */
-                try {
-                    const tickerInstruction = await getDynamicPrompt('ticker_extraction', { prompt }, "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.");
-                    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-                    const extraction = await model.generateContent([
-                        tickerInstruction,
-                        prompt
-                    ]);
-                    const extracted = extraction.response.text().trim();
-                    if (extracted && extracted !== 'NULL' && extracted.length < 10) {
-                        targetSymbol = extracted.replace(/[^a-zA-Z0-9-]/g, ''); // Clean it
-                    }
-                } catch (e) {
-                    console.error("Gemini Ticker extraction failed:", e);
-                }
-            }
-
-            // 2. Data Fetching Layer
-            let realTimeData = contextConfig.realTimeData;
-            if (targetSymbol && !realTimeData) {
-                realTimeData = await getStockPrice(targetSymbol);
-                logTicker = targetSymbol;
-                logRawData = realTimeData;
-            }
-
-            systemInstructions += `\n\nMODE: MARKET INTELLIGENCE`;
-            systemInstructions += `\nCURRENT SYSTEM TIME (NY): ${timeString}`;
-
-            // 3. Inject Data into Context
-            if (realTimeData) {
-                const rt = realTimeData;
-                systemInstructions += `\n\nREAL-TIME DATA (ALPHA VANTAGE):
-                - Symbol: ${rt.symbol}
-                - Price: $${rt.price}
-                - Change: ${rt.change} (${rt.changePercent})
-                - Volume: ${rt.volume}
-                - Latest Trading Day: ${rt.latestTradingDay}
-                - Previous Close: ${rt.previousClose}
-                
-                IMPORTANT: Use this REAL-TIME data as the primary source.`;
-            } else if (targetSymbol) {
-                systemInstructions += `\nFOCUS ASSET: ${targetSymbol} (Real-time data unavailable, use general knowledge)`;
-            }
-
-            if (contextConfig.stockName && !targetSymbol) systemInstructions += `\nFOCUS ASSET: ${contextConfig.stockName}`;
-
-            if (contextConfig.stockUrl) {
-                systemInstructions += `\nREFERENCE URL: ${contextConfig.stockUrl}`;
-                const scrapedData = await scrapeUrl(contextConfig.stockUrl);
-                if (scrapedData) autonomousContext = scrapedData;
-            }
-
-            // Inject Real-Time Data if available
-            if (realTimeData || contextConfig.realTimeData) {
-                const rt = realTimeData || contextConfig.realTimeData;
-                systemInstructions = await getDynamicPrompt('market_inquiry', {
-                    time: timeString,
-                    symbol: rt.symbol,
-                    price: rt.price,
-                    change: rt.change,
-                    changePercent: rt.changePercent,
-                    volume: rt.volume,
-                    date: rt.latestTradingDay,
-                    close: rt.previousClose,
-                    scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
-                }, systemInstructions); // fallback to what we had
-            } else {
-                systemInstructions = await getDynamicPrompt('market_news_fallback', {
-                    targetSymbol: targetSymbol || (contextConfig.stockName ? contextConfig.stockName : "N/A"),
-                    scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
-                }, systemInstructions); // fallback to what we had
-            }
+            const marketResult = await buildMarketContext(prompt, contextConfig, pipelineDeps);
+            systemInstructions = marketResult.systemInstructions;
+            logTicker = marketResult.logTicker;
+            logRawData = marketResult.logRawData;
         }
         // Mode: Article & Learn
         else if (contextConfig.mode === 'article') {
