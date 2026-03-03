@@ -573,8 +573,8 @@ export async function chatWithGroq(
             }
 
             // Inject Real-Time Data if available
-            if (contextConfig.realTimeData) {
-                const rt = contextConfig.realTimeData;
+            if (realTimeData || contextConfig.realTimeData) {
+                const rt = realTimeData || contextConfig.realTimeData;
                 systemInstructions = await getDynamicPrompt('market_inquiry', {
                     time: timeString,
                     symbol: rt.symbol,
@@ -1103,5 +1103,77 @@ After the paragraph, generate a chart:
         return { text, chartData };
     } catch (e: any) {
         return { text: `Interpretation failed: ${e.message}` };
+    }
+}
+
+export async function debugStockFetch(prompt: string) {
+    const steps: any[] = [];
+    let ticker = "NULL";
+    let rawMarketData = null;
+    let enrichedPrompt = "";
+    let finalOutput = "";
+
+    try {
+        // Step 1: Ticker Extraction
+        steps.push({ name: "Ticker Extraction", status: "processing" });
+        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+        const extraction = await model.generateContent([
+            "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.",
+            prompt
+        ]);
+        ticker = extraction.response.text().trim().replace(/[^a-zA-Z0-9-]/g, '');
+        steps[0] = { name: "Ticker Extraction", status: "completed", result: ticker };
+
+        if (ticker && ticker !== 'NULL') {
+            // Step 2: Fetching Market Data
+            steps.push({ name: "Market Data Fetch", status: "processing" });
+            rawMarketData = await getStockPrice(ticker);
+            steps[1] = { name: "Market Data Fetch", status: rawMarketData ? "completed" : "failed", result: rawMarketData };
+
+            // Step 3: Prompt Enrichement
+            steps.push({ name: "Prompt Enrichment", status: "processing" });
+            const timeString = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+            if (rawMarketData) {
+                enrichedPrompt = await getDynamicPrompt('market_inquiry', {
+                    time: timeString,
+                    symbol: rawMarketData.symbol,
+                    price: rawMarketData.price,
+                    change: rawMarketData.change,
+                    changePercent: rawMarketData.changePercent,
+                    volume: rawMarketData.volume,
+                    date: rawMarketData.latestTradingDay,
+                    close: rawMarketData.previousClose,
+                    scrapedData: ""
+                }, "Fallback template");
+            }
+            steps[2] = { name: "Prompt Enrichment", status: enrichedPrompt ? "completed" : "failed", result: enrichedPrompt };
+
+            // Step 4: Final Summarization
+            steps.push({ name: "Final Summarization", status: "processing" });
+            const chatModel = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+            const finalResult = await chatModel.generateContent([
+                { role: "system", text: enrichedPrompt } as any,
+                { role: "user", text: prompt } as any
+            ]);
+            finalOutput = finalResult.response.text();
+            steps[3] = { name: "Final Summarization", status: "completed", result: finalOutput };
+        } else {
+            steps.push({ name: "Process Halted", status: "info", result: "No ticker detected. Generic flow would trigger." });
+        }
+
+        return {
+            ticker,
+            rawMarketData,
+            enrichedPrompt,
+            finalOutput,
+            steps
+        };
+
+    } catch (error: any) {
+        console.error("Debug Flow Error:", error);
+        return {
+            error: error.message,
+            steps
+        };
     }
 }

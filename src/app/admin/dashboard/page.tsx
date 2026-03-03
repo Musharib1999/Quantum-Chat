@@ -27,6 +27,7 @@ import UseCaseManager from '../../../components/admin/UseCaseManager';
 import ExperimentManager from '../../../components/admin/ExperimentManager';
 import MarketPromptManager from '../../../components/admin/MarketPromptManager';
 import LLMSettingsManager from '../../../components/admin/LLMSettingsManager';
+import StockSearchDebugger from '../../../components/admin/StockSearchDebugger';
 
 export default function AdminDashboard() {
     const { theme } = useTheme();
@@ -286,6 +287,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('analytics'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<Search size={20} />}
+                        label="Stock Debugger"
+                        active={activeTab === 'stock_debug'}
+                        onClick={() => { setActiveTab('stock_debug'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<Cpu size={20} />}
                         label="LLM Settings"
                         active={activeTab === 'llm_settings'}
@@ -338,6 +345,7 @@ export default function AdminDashboard() {
                             {activeTab === 'market_prompts' && <ArrowUpCircle className="text-green-500" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
                             {activeTab === 'llm_settings' && <Cpu className="text-orange-400" />}
+                            {activeTab === 'stock_debug' && <Search className="text-blue-400" />}
                             {activeTab.replace('_', ' ')}
                         </h2>
                     </div>
@@ -657,6 +665,11 @@ export default function AdminDashboard() {
                             <h3 className="text-xl font-bold text-gray-300">Analytics Module</h3>
                             <p className="text-sm">Usage statistics and query insights coming soon.</p>
                         </div>
+                    )}
+
+                    {/* STOCK DEBUGGER TAB */}
+                    {activeTab === 'stock_debug' && (
+                        <StockSearchDebugger />
                     )}
 
                     {/* LLM SETTINGS TAB */}
