@@ -177,7 +177,7 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                                         setInputValue(chip.label);
                                         // Optional: sendMessage(chip.label, undefined, chip.query)
                                     }}
-                                    className="snap-start flex items-center shrink-0 px-3.5 py-1.5 bg-transparent border border-ring rounded-full text-xs font-medium text-foreground hover:bg-ring/5 transition-all shadow-sm"
+                                    className="snap-start flex items-center shrink-0 px-3.5 py-1.5 bg-transparent border border-ring rounded-full text-xs font-medium text-foreground hover:bg-card hover:shadow-md transition-all duration-200"
                                 >
                                     {chip.label}
                                 </button>
