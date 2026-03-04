@@ -307,6 +307,12 @@ export async function executeIndustryWorkflow(
                     ? await executeDWaveAnnealer(generatedCode)
                     : await executeQuantumCircuit(generatedCode);
 
+                // If python execution failed but output contains Traceback, treat as error
+                const rawSimulatorOutput = finalExecutionResult.output || "";
+                if (rawSimulatorOutput.includes("Runtime Error") || rawSimulatorOutput.includes("Traceback")) {
+                    finalExecutionResult.error = rawSimulatorOutput;
+                }
+
                 if (finalExecutionResult.error) {
                     console.error(`[Quantum Workflow] EXECUTION_ERROR | Error: ${finalExecutionResult.error}`);
                     lastError = `Runtime error: ${finalExecutionResult.error}`;
