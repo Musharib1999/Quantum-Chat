@@ -104,7 +104,7 @@ Parameters: {{parameters}}
 Rules (VERY IMPORTANT):
 1. Use qiskit and qiskit_aer for simulation
 2. Build a QuantumCircuit, add gates, add measurements
-3. Run with AerSimulator: from qiskit_aer import AerSimulator; sim = AerSimulator(); job = sim.run(circuit, shots=1024); result = job.result(); counts = result.get_counts(); print(f"Results: {counts}")
+3. Run with AerSimulator: from qiskit_aer import AerSimulator; sim = AerSimulator(); job = sim.run(circuit, shots=1024, seed_simulator=42); result = job.result(); counts = result.get_counts(); print(f"Results: {counts}")
 4. Print the measurement counts clearly
 5. Return ONLY the Python code, no markdown, no explanation`
     },
@@ -129,11 +129,12 @@ Write a script that:
 1. from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler
 2. Define linear={} and quadratic={} dicts to encode the problem. You may use UP TO 30 VARIABLES.
 3. If the problem requires more than 30 variables, split into 2 BATCHES of ≤15 variables each:
-   - Define bqm_batch1 and bqm_batch2 separately
-   - Run each independently: sampleset1 = sampler.sample(bqm_batch1, num_reads=50)
+   - sampler = SimulatedAnnealingSampler(seed=42)
+   - sampleset1 = sampler.sample(bqm_batch1, num_reads=50)
    - Combine and print: print(f'Batch 1: {sampleset1.first.sample}, Energy: {sampleset1.first.energy:.4f}')
 4. If ≤30 variables, use a single BQM: bqm = BinaryQuadraticModel(linear, quadratic, 0.0, 'BINARY')
-   - sampler = SimulatedAnnealingSampler(); sampleset = sampler.sample(bqm, num_reads=50)
+   - sampler = SimulatedAnnealingSampler(seed=42)
+   - sampleset = sampler.sample(bqm, num_reads=50)
    - best = sampleset.first; print(f'Best: {best.sample}'); print(f'Energy: {best.energy:.4f}')
 
 Return ONLY the Python code. No markdown. No backticks. No explanation.`
