@@ -5,7 +5,7 @@ import { Send, User, StopCircle, ShieldCheck, Eye, X, ChevronRight, Play, Loader
 import MarkdownRenderer from '../MarkdownRenderer';
 import QuantumChart from '../QuantumChart';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
-import { generateQuantumCode, runQuantumSimulator, interpretQuantumResults, savePipelineExperiment } from '@/app/actions/industry-pipeline';
+import { generateQuantumCode, runQuantumSimulator, interpretQuantumResults, savePipelineExperiment, extractBatchState } from '@/app/actions/industry-pipeline';
 import { useAuth } from '@/context/AuthContext';
 
 interface IndustryChatProps {
@@ -17,9 +17,9 @@ interface IndustryChatProps {
 type WorkflowStage =
     | { kind: 'idle' }
     | { kind: 'step1_loading' }
-    | { kind: 'step1_done'; code: string }
-    | { kind: 'step2_loading'; code: string }
-    | { kind: 'step2_done'; code: string; simOutput: string }
+    | { kind: 'step1_done'; code: string; batchesTotal: number }
+    | { kind: 'step2_loading'; code: string; currentBatch: number; totalBatches: number }
+    | { kind: 'step2_done'; code: string; simOutput: string; totalBatches: number }
     | { kind: 'step3_loading'; code: string; simOutput: string }
     | { kind: 'step3_done'; code: string; simOutput: string; analysis: string; chartData?: any };
 
@@ -98,25 +98,81 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 service: contextConfig.service,
                 hardware: contextConfig.hardware,
                 formData: contextConfig.formData,
+                batchIndex: 1, // Start with first batch
             });
             stopTimer();
-            setWorkflow({ kind: 'step1_done', code: result.code || result.error || 'No code generated.' });
+            setWorkflow({
+                kind: 'step1_done',
+                code: result.code || result.error || 'No code generated.',
+                batchesTotal: result.batchesTotal || 1
+            });
         } catch (e: any) {
             stopTimer();
-            setWorkflow({ kind: 'step1_done', code: `Error: ${e.message}` });
+            setWorkflow({ kind: 'step1_done', code: `Error: ${e.message}`, batchesTotal: 1 });
         }
     };
 
-    const runStep2 = async (code: string) => {
-        setWorkflow({ kind: 'step2_loading', code });
+    const runStep2 = async (initialCode: string) => {
+        const totalBatches = (workflow as any).batchesTotal || 1;
+        let combinedOutput = "";
+        let currentBatchCode = initialCode;
+        let lastBatchState = "None";
+
+        setWorkflow({ kind: 'step2_loading', code: initialCode, currentBatch: 1, totalBatches });
         startTimer();
+
         try {
-            const result = await runQuantumSimulator({ code, hardware: contextConfig.hardware });
+            for (let b = 1; b <= totalBatches; b++) {
+                setWorkflow(prev => ({ ...prev, kind: 'step2_loading', currentBatch: b } as any));
+
+                // 1. Generate code for current batch if not the first one (first was done in Step 1)
+                if (b > 1) {
+                    const genRes = await generateQuantumCode({
+                        problem: contextConfig.problem,
+                        industry: contextConfig.industry,
+                        service: contextConfig.service,
+                        hardware: contextConfig.hardware,
+                        formData: contextConfig.formData,
+                        batchIndex: b,
+                        lastBatchState
+                    });
+                    currentBatchCode = genRes.code;
+                }
+
+                // 2. Run Simulator
+                const simRes = await runQuantumSimulator({
+                    code: currentBatchCode,
+                    hardware: contextConfig.hardware
+                });
+
+                if (simRes.error) {
+                    throw new Error(`Batch ${b} Failed: ${simRes.error}`);
+                }
+
+                combinedOutput += `\n\n--- BATCH ${b} ---\n${simRes.output}`;
+
+                // 3. Extract state for next batch if needed
+                if (b < totalBatches) {
+                    const stateRes = await extractBatchState({ output: simRes.output });
+                    lastBatchState = stateRes.state;
+                }
+            }
+
             stopTimer();
-            setWorkflow({ kind: 'step2_done', code, simOutput: result.output || result.error || 'No output.' });
+            setWorkflow({
+                kind: 'step2_done',
+                code: initialCode,
+                simOutput: combinedOutput.trim(),
+                totalBatches
+            });
         } catch (e: any) {
             stopTimer();
-            setWorkflow({ kind: 'step2_done', code, simOutput: `Error: ${e.message}` });
+            setWorkflow({
+                kind: 'step2_done',
+                code: initialCode,
+                simOutput: `Error during batch execution: ${e.message}`,
+                totalBatches
+            });
         }
     };
 
@@ -257,6 +313,10 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                             (step.num === 1 && workflow.kind === 'step1_loading') ||
                                             (step.num === 2 && workflow.kind === 'step2_loading') ||
                                             (step.num === 3 && workflow.kind === 'step3_loading');
+
+                                        const currentBatch = (workflow as any).currentBatch || 1;
+                                        const totalBatches = (workflow as any).totalBatches || 1;
+
                                         const isVerifying =
                                             (step.num === 1 && workflow.kind === 'step1_done') ||
                                             (step.num === 2 && workflow.kind === 'step2_done');
@@ -287,7 +347,16 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                         <div className="text-[10px] text-muted-foreground">{step.desc}</div>
                                                     </div>
                                                     {/* Right-side action */}
-                                                    {isActive && <Loader2 size={14} className="animate-spin text-primary shrink-0" />}
+                                                    {isActive && (
+                                                        <div className="flex items-center gap-2">
+                                                            {step.num === 2 && totalBatches > 1 && (
+                                                                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                                                                    BATCH {currentBatch}/{totalBatches}
+                                                                </span>
+                                                            )}
+                                                            <Loader2 size={14} className="animate-spin text-primary shrink-0" />
+                                                        </div>
+                                                    )}
                                                     {isDone && stepOutput && (
                                                         <button
                                                             onClick={() => setViewingContent({ label: step.label, content: stepOutput })}

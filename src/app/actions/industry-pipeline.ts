@@ -498,8 +498,14 @@ ${combinedAnalysis}
 // ============================================================
 
 export async function generateQuantumCode(config: {
-    problem: string; industry: string; service: string; hardware: string; formData: any;
-}): Promise<{ code: string; error?: string }> {
+    problem: string;
+    industry: string;
+    service: string;
+    hardware: string;
+    formData: any;
+    batchIndex?: number; // 1-indexed
+    lastBatchState?: string;
+}): Promise<{ code: string; batchesTotal: number; error?: string }> {
     const { problem, industry, service, hardware, formData } = config;
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
@@ -566,9 +572,47 @@ Return ONLY the Python code. No markdown. No explanation.`;
             }
         }
 
+        // --- BATCHING METADATA ---
+        let batchesTotal = 1;
+        let startDim = 0;
+        let endDim = 0;
+        const sanitizedFormData: Record<string, any> = { ...formData };
+
+        if (formDef?.batchingEnabled && formDef.qubitFormula) {
+            try {
+                let formula = formDef.qubitFormula;
+                Object.keys(formData).forEach(key => {
+                    const regex = new RegExp(`{{${key}}}`, 'g');
+                    formula = formula.replace(regex, String(formData[key]));
+                });
+                const sanitizedMath = formula.replace(/[^0-9+\-*/().\s]/g, '');
+                const totalQubits = Math.ceil(eval(sanitizedMath));
+                const maxPerBatch = formDef.maxQubitsPerBatch || 20;
+                batchesTotal = Math.ceil(totalQubits / maxPerBatch);
+
+                if (config.batchIndex) {
+                    const b = config.batchIndex;
+                    startDim = (b - 1) * maxPerBatch;
+                    endDim = Math.min(b * maxPerBatch - 1, totalQubits - 1);
+
+                    // Inject batch-specific keys
+                    sanitizedFormData.batch_start_index = startDim;
+                    sanitizedFormData.batch_end_index = endDim;
+                    sanitizedFormData.batch_size = endDim - startDim + 1;
+                    sanitizedFormData.last_batch_state = config.lastBatchState || "None";
+
+                    if (formDef.batchKey) {
+                        sanitizedFormData[formDef.batchKey] = sanitizedFormData.batch_size;
+                    }
+                }
+            } catch (e) {
+                console.error("Batching calculation failed:", e);
+            }
+        }
+
         let code = '';
         if (provider === 'groq') {
-            if (!GROQ_API_KEY) return { code: "", error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
+            if (!GROQ_API_KEY) return { code: "", batchesTotal, error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
             const groq = new Groq({ apiKey: GROQ_API_KEY });
             const completion = await groq.chat.completions.create({
                 messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: codePrompt }],
@@ -576,7 +620,7 @@ Return ONLY the Python code. No markdown. No explanation.`;
             });
             code = completion.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || '';
         } else {
-            if (!GEMINI_API_KEY) return { code: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
+            if (!GEMINI_API_KEY) return { code: "", batchesTotal, error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({ model: modelName });
             const result = await model.generateContent([
@@ -588,7 +632,7 @@ Return ONLY the Python code. No markdown. No explanation.`;
 
         // --- FINAL SAFETY: HARD TEMPLATE SUBSTITUTION & INJECTION ---
         // 1. Hard Regex Substitution (Primary)
-        Object.entries(formData).forEach(([key, val]) => {
+        Object.entries(sanitizedFormData).forEach(([key, val]) => {
             const bracedPlaceholder = new RegExp(`{{parameters\\.${key}}}`, 'g');
             const cleanPlaceholder = new RegExp(`parameters\\.${key}`, 'g');
 
@@ -598,13 +642,12 @@ Return ONLY the Python code. No markdown. No explanation.`;
         });
 
         // 2. Python-Side Injection (Ultimate Fallback)
-        // We inject a DotDict class so python as code like 'parameters.num_pilots' works even if not replaced.
         const pythonInjections = `
 class DotDict(dict):
     def __getattr__(self, name): return self.get(name)
     def __setattr__(self, name, value): self[name] = value
 
-parameters = DotDict(${JSON.stringify(formData)})
+parameters = DotDict(${JSON.stringify(sanitizedFormData)})
 `;
         code = pythonInjections + "\n" + code;
 
@@ -619,9 +662,43 @@ parameters = DotDict(${JSON.stringify(formData)})
             code = correctImports + code;
         }
 
-        return { code };
+        return { code, batchesTotal };
     } catch (e: any) {
-        return { code: '', error: e.message };
+        return { code: '', batchesTotal: 1, error: e.message };
+    }
+}
+
+export async function extractBatchState(config: {
+    output: string;
+}): Promise<{ state: string }> {
+    const { output } = config;
+    try {
+        const { provider, modelName } = await getDynamicLLM();
+        const prompt = `Analyze this quantum simulator output and provide a one-sentence "Continuity Summary" for the NEXT batch. 
+        Focus ONLY on final positions, states, or fixed assignments (e.g., "Pilot 0 is at JFK, Pilot 1 is at LHR"). 
+        Return ONLY the summary string. No JSON, no markdown.
+
+        OUTPUT:
+        ${output}`;
+
+        let state = "";
+        if (provider === 'groq') {
+            const groq = new Groq({ apiKey: GROQ_API_KEY! });
+            const completion = await groq.chat.completions.create({
+                messages: [{ role: 'user', content: prompt }],
+                model: modelName,
+            });
+            state = completion.choices[0]?.message?.content || "None";
+        } else {
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(prompt);
+            state = result.response.text() || "None";
+        }
+        return { state: state.trim() };
+    } catch (e) {
+        console.warn("State extraction failed:", e);
+        return { state: "None" };
     }
 }
 
