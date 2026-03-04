@@ -1,12 +1,32 @@
+"use server";
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = "gemini-2.0-flash-lite";
+import Groq from "groq-sdk";
+import LLMSetting from '@/models/LLMSetting';
+import dbConnect from '@/lib/db';
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+async function getDynamicLLM() {
+    await dbConnect();
+    let provider = 'gemini';
+    let modelName = 'gemini-2.0-flash-lite';
+    try {
+        const settings = await LLMSetting.findOne({ key: "global_llm_settings" }).lean();
+        if (settings) {
+            provider = settings.activeProvider;
+            modelName = settings.activeModel;
+        }
+    } catch (e) {
+        console.error("Failed to fetch LLM settings, falling back to Gemini");
+    }
+    return { provider, modelName };
+}
 import axios from 'axios';
 import crypto from 'crypto';
 
 interface IndustryPipelineDeps {
-    genAI: any;
-    GEMINI_MODEL: string;
     getDynamicPrompt: (category: string, replacements: Record<string, any>, fallback: string) => Promise<string>;
     QuantumForm: any;
     Experiment: any;
@@ -129,7 +149,8 @@ export async function executeIndustryWorkflow(
     ruleTexts: string[],
     deps: IndustryPipelineDeps
 ): Promise<any> {
-    const { genAI, GEMINI_MODEL, getDynamicPrompt, QuantumForm, Experiment } = deps;
+    const { getDynamicPrompt, QuantumForm, Experiment } = deps;
+    const { provider, modelName } = await getDynamicLLM();
     const { industry, service, problem, hardware, formData, userEmail } = contextConfig;
 
     let systemInstructions = "";
@@ -228,17 +249,35 @@ export async function executeIndustryWorkflow(
             - Do NOT include any explanations in the code block.
             Return a JSON object with "code" and "explanation" keys.`);
 
-            const model = genAI.getGenerativeModel({
-                model: GEMINI_MODEL,
-                generationConfig: { responseMimeType: "application/json" }
-            });
-            const result = await model.generateContent([
-                "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields.",
-                jsonWrapperInstruction
-            ]);
+            let contentStr = "{}";
+            if (provider === 'groq') {
+                if (!GROQ_API_KEY) throw new Error("Groq API Key is missing");
+                const groq = new Groq({ apiKey: GROQ_API_KEY });
+                const completion = await groq.chat.completions.create({
+                    messages: [
+                        { role: 'system', content: "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields." },
+                        { role: 'user', content: jsonWrapperInstruction }
+                    ],
+                    model: modelName,
+                    response_format: { type: "json_object" }
+                });
+                contentStr = completion.choices[0]?.message?.content || "{}";
+            } else {
+                if (!GEMINI_API_KEY) throw new Error("Gemini API Key is missing");
+                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({
+                    model: modelName,
+                    generationConfig: { responseMimeType: "application/json" }
+                });
+                const result = await model.generateContent([
+                    "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields.",
+                    jsonWrapperInstruction
+                ]);
+                contentStr = result.response.text() || "{}";
+            }
 
             try {
-                const content = result.response.text() || "{}";
+                const content = contentStr;
                 const parsed = JSON.parse(content);
                 generatedCode = parsed.code || "";
                 explanation = parsed.explanation || "";
@@ -362,16 +401,11 @@ export async function executeIndustryWorkflow(
 export async function generateQuantumCode(config: {
     problem: string; industry: string; service: string; hardware: string; formData: any;
 }): Promise<{ code: string; error?: string }> {
-    // const groq = new Groq({ apiKey: API_KEY });
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
     const { problem, industry, service, hardware, formData } = config;
-
-    if (!GEMINI_API_KEY) {
-        return { code: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
-    }
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
     try {
+        const { provider, modelName } = await getDynamicLLM();
         let codePrompt = '';
         if (isDWave) {
             codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
@@ -396,22 +430,25 @@ Run: from qiskit_aer import AerSimulator; sim=AerSimulator(); job=sim.run(circui
 Return ONLY the Python code. No markdown. No explanation.`;
         }
 
-        /* GROQ_FALLBACK:
-        const completion = await groq.chat.completions.create({
-            messages: [{ role: 'system', content: 'You are a Quantum Expert. Return only Python code.' }, { role: 'user', content: codePrompt }],
-            model: DEFAULT_MODEL,
-        });
-
-        let code = completion.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || '';
-        */
-
-        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-        const result = await model.generateContent([
-            "You are a Quantum Expert. Return only Python code. No markdown. No explanation.",
-            codePrompt
-        ]);
-
-        let code = result.response.text().replace(/```python|```/g, '').trim() || '';
+        let code = '';
+        if (provider === 'groq') {
+            if (!GROQ_API_KEY) return { code: "", error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
+            const groq = new Groq({ apiKey: GROQ_API_KEY });
+            const completion = await groq.chat.completions.create({
+                messages: [{ role: 'system', content: 'You are a Quantum Expert. Return only Python code. No markdown. No explanation.' }, { role: 'user', content: codePrompt }],
+                model: modelName,
+            });
+            code = completion.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || '';
+        } else {
+            if (!GEMINI_API_KEY) return { code: "", error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent([
+                "You are a Quantum Expert. Return only Python code. No markdown. No explanation.",
+                codePrompt
+            ]);
+            code = result.response.text().replace(/```python|```/g, '').trim() || '';
+        }
 
         // Always force correct dimod imports for D-Wave
         if (isDWave) {
@@ -445,16 +482,11 @@ export async function runQuantumSimulator(config: {
 export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string;
 }): Promise<{ text: string; chartData?: any }> {
-    // const groq = new Groq({ apiKey: API_KEY });
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
     const { problem, industry, hardware, rawOutput } = config;
-
-    if (!GEMINI_API_KEY) {
-        return { text: "Analysis unavailable: Gemini API Key is missing.", chartData: null };
-    }
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
     try {
+        const { provider, modelName } = await getDynamicLLM();
         const prompt = `You are a Quantum Computing analyst. Analyze the following ACTUAL simulator output ONLY.
 Problem: ${problem} | Industry: ${industry} | Simulator: ${isDWave ? 'D-Wave Annealing' : 'Qiskit Gate-Model'}
 Raw Output: ${rawOutput}
@@ -468,22 +500,25 @@ After the paragraph, generate a chart:
 { "type": "bar", "data": [ {"name": "Label from output", "value": 123} ] }
 [/CHART_DATA]`;
 
-        /* GROQ_FALLBACK:
-        const completion = await groq.chat.completions.create({
-            messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
-            model: DEFAULT_MODEL,
-        });
-
-        let text = completion.choices[0]?.message?.content || 'Analysis complete.';
-        */
-
-        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-        const result = await model.generateContent([
-            "You are a Quantum Analysis expert.",
-            prompt
-        ]);
-
-        let text = result.response.text() || 'Analysis complete.';
+        let text = '';
+        if (provider === 'groq') {
+            if (!GROQ_API_KEY) return { text: "Analysis unavailable: Groq API Key is missing.", chartData: null };
+            const groq = new Groq({ apiKey: GROQ_API_KEY });
+            const completion = await groq.chat.completions.create({
+                messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
+                model: modelName,
+            });
+            text = completion.choices[0]?.message?.content || 'Analysis complete.';
+        } else {
+            if (!GEMINI_API_KEY) return { text: "Analysis unavailable: Gemini API Key is missing.", chartData: null };
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent([
+                "You are a Quantum Analysis expert.",
+                prompt
+            ]);
+            text = result.response.text() || 'Analysis complete.';
+        }
         let chartData = null;
         const chartMatch = text.match(/\[CHART_DATA\]([\s\S]*?)\[\/CHART_DATA\]/);
         if (chartMatch) {
