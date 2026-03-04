@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import News from '@/models/News';
-import { chatWithGroq, getDynamicPrompt } from '@/app/actions/chat';
+import { chatWithGroq } from '@/app/actions/chat';
+import { getDynamicPrompt } from '@/app/actions/prompt-utils';
 
 export const dynamic = 'force-dynamic';
 
