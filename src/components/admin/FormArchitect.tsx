@@ -22,6 +22,10 @@ interface IQuantumForm {
     sections?: { section_name: string; fields: IField[] }[];
     codeTemplates?: { hardware: string; code: string }[];
     active: boolean;
+    batchingEnabled?: boolean;
+    maxQubitsPerBatch?: number;
+    qubitFormula?: string;
+    batchKey?: string;
     createdAt?: string;
 }
 
@@ -35,6 +39,10 @@ export default function FormArchitect() {
     const [fields, setFields] = useState<IField[]>([]);
     const [jsonFields, setJsonFields] = useState('[]');
     const [codeTemplates, setCodeTemplates] = useState<{ hardware: string; code: string }[]>([]);
+    const [batchingEnabled, setBatchingEnabled] = useState(false);
+    const [maxQubitsPerBatch, setMaxQubitsPerBatch] = useState(64);
+    const [qubitFormula, setQubitFormula] = useState('');
+    const [batchKey, setBatchKey] = useState('');
 
     // UI State
     const [loading, setLoading] = useState(false);
@@ -95,7 +103,11 @@ export default function FormArchitect() {
                 problem,
                 active: true,
                 fields: [],
-                codeTemplates
+                codeTemplates,
+                batchingEnabled,
+                maxQubitsPerBatch,
+                qubitFormula,
+                batchKey
             };
 
             if (editorMode === 'json') {
@@ -175,6 +187,10 @@ export default function FormArchitect() {
         setProblem(form.problem);
         setFields(form.fields || []);
         setCodeTemplates(form.codeTemplates || []);
+        setBatchingEnabled(form.batchingEnabled || false);
+        setMaxQubitsPerBatch(form.maxQubitsPerBatch || 64);
+        setQubitFormula(form.qubitFormula || '');
+        setBatchKey(form.batchKey || '');
 
         // Intelligent Editor Mode Switching
         if (form.sections && form.sections.length > 0) {
@@ -197,6 +213,10 @@ export default function FormArchitect() {
         setFields([]);
         setJsonFields('[]');
         setCodeTemplates([]);
+        setBatchingEnabled(false);
+        setMaxQubitsPerBatch(64);
+        setQubitFormula('');
+        setBatchKey('');
         setView('editor');
         setEditorMode('visual');
     };
@@ -382,6 +402,67 @@ export default function FormArchitect() {
                             <datalist id="problems">
                                 {(metadata.problemMapping[industry]?.[service] || []).map((p: any) => <option key={p.id} value={p.label} />)}
                             </datalist>
+                        </div>
+                    </div>
+
+                    {/* Batching & Complexity Settings */}
+                    <div className="bg-[#3066bb]/5 border border-[#3066bb]/20 p-6 rounded-3xl space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Layers className="text-[#3066bb]" size={20} />
+                                <div>
+                                    <h3 className="text-sm font-semibold text-foreground tracking-tight">Batching & Complexity Optimizer</h3>
+                                    <p className="text-[10px] text-muted-foreground">Configure how large problems are split into sequential batches.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-medium text-muted-foreground mr-1">Enable Batching</span>
+                                <button
+                                    onClick={() => setBatchingEnabled(!batchingEnabled)}
+                                    className={`w-10 h-5 rounded-full transition-all relative ${batchingEnabled ? 'bg-[#3066bb]' : 'bg-secondary'}`}
+                                >
+                                    <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${batchingEnabled ? 'left-6' : 'left-1'}`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Qubit Formula</label>
+                                <input
+                                    value={qubitFormula}
+                                    onChange={(e) => setQubitFormula(e.target.value)}
+                                    placeholder="e.g. {{pilots}} * {{routes}} * {{days}}"
+                                    className="w-full bg-background border border-border rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#3066bb] transition-all"
+                                />
+                                <p className="text-[9px] text-muted-foreground italic">Math for estimating problem size.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Max Qubits / Batch</label>
+                                <input
+                                    type="number"
+                                    value={maxQubitsPerBatch}
+                                    onChange={(e) => setMaxQubitsPerBatch(parseInt(e.target.value))}
+                                    className="w-full bg-background border border-border rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#3066bb] transition-all"
+                                />
+                                <p className="text-[9px] text-muted-foreground italic">When to trigger a split.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Batch Dimension Key</label>
+                                <input
+                                    value={batchKey}
+                                    onChange={(e) => setBatchKey(e.target.value)}
+                                    placeholder="e.g. days"
+                                    className="w-full bg-background border border-border rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#3066bb] transition-all"
+                                />
+                                <p className="text-[9px] text-muted-foreground italic">Field used for splitting.</p>
+                            </div>
+                            <div className="flex items-end pb-1">
+                                <div className="bg-[#3066bb]/10 border border-[#3066bb]/20 px-3 py-2 rounded-xl w-full">
+                                    <span className="text-[9px] font-medium text-muted-foreground block mb-0.5">Placeholder Guide</span>
+                                    <code className="text-[10px] text-[#3066bb] font-bold">{"{{last_batch_state}}"}</code>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

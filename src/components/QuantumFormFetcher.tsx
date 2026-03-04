@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Settings, Play, Info } from 'lucide-react';
+import { Settings, Play, Info, Layers } from 'lucide-react';
 
 interface IField {
     label: string;
@@ -13,12 +13,15 @@ interface IField {
     defaultValue?: string;
     required?: boolean;
 }
-
 interface IForm {
     _id: string;
     fields: IField[];
     sections?: { section_name: string; fields: IField[] }[];
     description: string;
+    batchingEnabled?: boolean;
+    maxQubitsPerBatch?: number;
+    qubitFormula?: string;
+    batchKey?: string;
 }
 
 interface QuantumFormFetcherProps {
@@ -63,6 +66,36 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
     const handleInputChange = (key: string, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
+
+    const calculateComplexity = () => {
+        if (!form || !form.qubitFormula) return { qubits: 0, batches: 1 };
+
+        let formula = form.qubitFormula;
+        // Replace placeholders with current values
+        Object.keys(formData).forEach(key => {
+            const val = formData[key] || 0;
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            formula = formula.replace(regex, String(val));
+        });
+
+        try {
+            // Basic math evaluation (safe enough for simple algebra)
+            // Replace any non-math characters for safety
+            const sanitized = formula.replace(/[^0-9+\-*/().\s]/g, '');
+            const qubits = Math.max(0, Math.ceil(eval(sanitized) || 0));
+
+            let batches = 1;
+            if (form.batchingEnabled && form.maxQubitsPerBatch && qubits > form.maxQubitsPerBatch) {
+                batches = Math.ceil(qubits / form.maxQubitsPerBatch);
+            }
+
+            return { qubits, batches };
+        } catch (e) {
+            return { qubits: 0, batches: 1, error: true };
+        }
+    };
+
+    const { qubits, batches } = calculateComplexity();
 
     const renderField = (field: IField) => {
         // Map 'dropdown' to 'select' for compatibility
@@ -176,6 +209,44 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                     </div>
                 )}
             </div>
+
+            {/* Complexity & Batching Widget */}
+            {form.qubitFormula && (
+                <div className="bg-secondary/40 border border-[#3066bb]/20 p-5 rounded-2xl flex items-center justify-between group overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#3066bb]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-10 h-10 rounded-full bg-[#3066bb]/10 border border-[#3066bb]/20 flex items-center justify-center text-[#3066bb]">
+                            <Layers size={18} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-foreground">Estimated Complexity</span>
+                                <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-border">Qubits</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 italic">
+                                {form.qubitFormula.replace(/{{|}}/g, '')}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="text-right relative z-10">
+                        <div className="text-2xl font-bold text-foreground transition-all duration-300 group-hover:scale-110 group-hover:text-[#3066bb]">
+                            {qubits > 0 ? qubits : '--'}
+                        </div>
+                        {form.batchingEnabled && batches > 1 && (
+                            <div className="flex items-center justify-end gap-1 mt-0.5">
+                                <span className="text-[10px] text-[#3066bb] font-bold px-1.5 py-0.5 bg-[#3066bb]/10 rounded border border-[#3066bb]/10 animate-pulse">
+                                    Split into {batches} Batches
+                                </span>
+                            </div>
+                        )}
+                        {form.batchingEnabled && batches <= 1 && qubits > 0 && (
+                            <div className="text-[9px] text-muted-foreground">Single Execution</div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <button
                 onClick={() => onSubmit(formData)}

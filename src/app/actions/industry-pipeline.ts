@@ -232,189 +232,249 @@ export async function executeIndustryWorkflow(
             templateCode = matched?.code || "";
         }
 
-        // --- STEP 3: MULTI-PASS GENERATION (Structured JSON) ---
-        const isDWave = hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer');
-        let generatedCode = "";
-        let explanation = "";
-        let attempts = 0;
-        const MAX_ATTEMPTS = 3;
-        let lastError = "";
-        let finalExecutionResult: any = {};
+        // --- STEP 3: BATCHING ORCHESTRATION ---
+        let batchesNeeded = 1;
+        if (formDef?.batchingEnabled && formDef.qubitFormula) {
+            let formula = formDef.qubitFormula;
+            Object.keys(sanitizedFormData).forEach(key => {
+                const regex = new RegExp(`{{${key}}}`, 'g');
+                formula = formula.replace(regex, String(sanitizedFormData[key]));
+            });
+            try {
+                const sanitizedMath = formula.replace(/[^0-9+\-*/().\s]/g, '');
+                const qubits = Math.ceil(eval(sanitizedMath));
+                if (qubits > (formDef.maxQubitsPerBatch || 64)) {
+                    batchesNeeded = Math.ceil(qubits / (formDef.maxQubitsPerBatch || 64));
+                }
+            } catch (e) {
+                console.error("Batch calculation failed:", e);
+            }
+        }
 
-        while (attempts < MAX_ATTEMPTS) {
-            attempts++;
-            console.log(`[Quantum Workflow] Attempt ${attempts} for ${problem}`);
+        let combinedAnalysis = "";
+        let combinedRawOutput = "";
+        let lastBatchState = "None (First Batch)";
+        const totalDimension = sanitizedFormData[formDef?.batchKey || ''] || 1;
+        const dimensionPerBatch = Math.ceil(totalDimension / batchesNeeded);
 
-            const genPrompt = await getDynamicPrompt(isDWave ? 'industry_dwave' : 'industry_qiskit', {
-                industry, service, problem, hardware,
-                parameters: JSON.stringify(sanitizedFormData),
-                template: templateCode || "None (Generate from scratch)",
-                lastError: lastError ? `PREVIOUS_ERROR: ${lastError}` : ""
-            }, `You are a Quantum Expert. ${templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."} 
+        for (let b = 1; b <= batchesNeeded; b++) {
+            console.log(`[Quantum Workflow] Starting Batch ${b}/${batchesNeeded}`);
+            const startDim = (b - 1) * dimensionPerBatch + 1;
+            const endDim = Math.min(b * dimensionPerBatch, totalDimension);
+
+            const batchFormData = {
+                ...sanitizedFormData,
+                [formDef?.batchKey || '']: endDim - startDim + 1, // Current slice size
+                batch_start_index: startDim,
+                batch_end_index: endDim,
+                last_batch_state: lastBatchState
+            };
+
+            const isDWave = hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer');
+            let generatedCode = "";
+            let explanation = "";
+            let attempts = 0;
+            const MAX_ATTEMPTS = 3;
+            let lastError = "";
+            let finalExecutionResult: any = {};
+
+            while (attempts < MAX_ATTEMPTS) {
+                attempts++;
+                console.log(`[Quantum Workflow] Attempt ${attempts} for ${problem}`);
+
+                const genPrompt = await getDynamicPrompt(isDWave ? 'industry_dwave' : 'industry_qiskit', {
+                    industry, service, problem, hardware,
+                    parameters: JSON.stringify(sanitizedFormData),
+                    template: templateCode || "None (Generate from scratch)",
+                    lastError: lastError ? `PREVIOUS_ERROR: ${lastError}` : ""
+                }, `You are a Quantum Expert. ${templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."} 
             STRICT RULES:
             - Use a fixed seed (e.g., 42) for all simulators/samplers to ensure reproducibility.
             - Do NOT include any explanations in the code block.
             Return a JSON object with "code" and "explanation" keys.`);
 
-            const jsonWrapperInstruction = await getDynamicPrompt('industry_json_wrapper', {
-                prompt: genPrompt,
-                templateCode: templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."
-            }, `You are a Quantum Expert. ${templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."} 
+                const jsonWrapperInstruction = await getDynamicPrompt('industry_json_wrapper', {
+                    prompt: genPrompt,
+                    templateCode: templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."
+                }, `You are a Quantum Expert. ${templateCode ? "Use the provided template and fill placeholders." : "Generate a complete script."} 
             STRICT RULES:
             - Use a fixed seed (e.g., 42) for all simulators/samplers to ensure reproducibility.
             - Do NOT include any explanations in the code block.
             Return a JSON object with "code" and "explanation" keys.`);
 
-            let contentStr = "{}";
-            if (provider === 'groq') {
-                if (!GROQ_API_KEY) throw new Error("Groq API Key is missing");
-                const groq = new Groq({ apiKey: GROQ_API_KEY });
-                const completion = await groq.chat.completions.create({
-                    messages: [
-                        { role: 'system', content: "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields." },
-                        { role: 'user', content: jsonWrapperInstruction }
-                    ],
-                    model: modelName,
-                    response_format: { type: "json_object" }
-                });
-                contentStr = completion.choices[0]?.message?.content || "{}";
-            } else {
-                if (!GEMINI_API_KEY) throw new Error("Gemini API Key is missing");
-                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-                const model = genAI.getGenerativeModel({
-                    model: modelName,
-                    generationConfig: { responseMimeType: "application/json" }
-                });
-                const result = await model.generateContent([
-                    "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields.",
-                    jsonWrapperInstruction
-                ]);
-                contentStr = result.response.text() || "{}";
+                let contentStr = "{}";
+                if (provider === 'groq') {
+                    if (!GROQ_API_KEY) throw new Error("Groq API Key is missing");
+                    const groq = new Groq({ apiKey: GROQ_API_KEY });
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: 'system', content: "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields." },
+                            { role: 'user', content: jsonWrapperInstruction }
+                        ],
+                        model: modelName,
+                        response_format: { type: "json_object" }
+                    });
+                    contentStr = completion.choices[0]?.message?.content || "{}";
+                } else {
+                    if (!GEMINI_API_KEY) throw new Error("Gemini API Key is missing");
+                    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                    const model = genAI.getGenerativeModel({
+                        model: modelName,
+                        generationConfig: { responseMimeType: "application/json" }
+                    });
+                    const result = await model.generateContent([
+                        "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields.",
+                        jsonWrapperInstruction
+                    ]);
+                    contentStr = result.response.text() || "{}";
+                }
+
+                try {
+                    const content = contentStr;
+                    const parsed = JSON.parse(content);
+                    generatedCode = parsed.code || "";
+                    explanation = parsed.explanation || "";
+
+                    console.log(`[Quantum Workflow] GENERATED | Attempt: ${attempts} | Code Length: ${generatedCode.length}`);
+
+                    // --- STEP 4: THREE-LAYER VALIDATION ---
+                    const validation = await validateQuantumCode(generatedCode, hardware);
+                    if (!validation.valid) {
+                        console.warn(`[Quantum Workflow] VALIDATION_FAILED | Error: ${validation.error}`);
+                        lastError = `Validation failed: ${validation.error}`;
+                        continue;
+                    }
+
+                    console.log(`[Quantum Workflow] VALIDATED | Proceeding to execution.`);
+
+                    // --- STEP 5: EXECUTION ---
+                    finalExecutionResult = isDWave
+                        ? await executeDWaveAnnealer(generatedCode)
+                        : await executeQuantumCircuit(generatedCode);
+
+                    // If python execution failed but output contains Traceback, treat as error
+                    const rawSimulatorOutput = finalExecutionResult.output || "";
+                    if (rawSimulatorOutput.includes("Runtime Error") || rawSimulatorOutput.includes("Traceback")) {
+                        finalExecutionResult.error = rawSimulatorOutput;
+                    }
+
+                    if (finalExecutionResult.error) {
+                        console.error(`[Quantum Workflow] EXECUTION_ERROR | Error: ${finalExecutionResult.error}`);
+                        lastError = `Runtime error: ${finalExecutionResult.error}`;
+                        continue;
+                    }
+
+                    console.log(`[Quantum Workflow] EXECUTED | Output length: ${finalExecutionResult.output?.length || 0}`);
+                    // SUCCESS
+                    break;
+
+                } catch (e: any) {
+                    lastError = `Processing error: ${e.message}`;
+                    if (attempts >= MAX_ATTEMPTS) {
+                        return { returnMode: 'direct', data: { text: `Error: Critical failure in quantum workflow after ${MAX_ATTEMPTS} attempts. Last Error: ${lastError}`, source: 'quantum_workflow_error' } };
+                    }
+                }
             }
 
-            try {
-                const content = contentStr;
-                const parsed = JSON.parse(content);
-                generatedCode = parsed.code || "";
-                explanation = parsed.explanation || "";
+            // --- STEP 6: FORMAT BATCH OUTPUT ---
+            const rawOutput = (finalExecutionResult.output || finalExecutionResult.error || 'No output.').trim();
 
-                console.log(`[Quantum Workflow] GENERATED | Attempt: ${attempts} | Code Length: ${generatedCode.length}`);
+            const parseAnyAssignmentTable = (out: string): string | null => {
+                const bestMatch = out.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
+                if (!bestMatch) return null;
+                const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([^\s,]+)/g)];
+                if (allPairs.length === 0) return null;
+                const rows = allPairs.map(([, key, rawVal]) => {
+                    const val = rawVal.replace(/np\.\w+\(([^)]+)\)/, '$1');
+                    const pilotFlightDay = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)(?:[_\s]day[_\s]?(\w+))?/i);
+                    let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    if (pilotFlightDay) {
+                        displayKey = `Pilot ${pilotFlightDay[1]} → Flight ${pilotFlightDay[2]}`;
+                        if (pilotFlightDay[3]) displayKey += ` (Day ${pilotFlightDay[3]})`;
+                    }
+                    const numVal = parseFloat(val);
+                    const displayVal = isNaN(numVal) ? val : numVal === 1 ? '✅ Assigned' : numVal === 0 ? '⬜ Not Assigned' : numVal.toFixed(4);
+                    return `| ${displayKey} | ${displayVal} |`;
+                });
+                const header = `| Variable | Value |\n|---|---|\n`;
+                return `${header}${rows.join('\n')}`;
+            };
 
-                // --- STEP 4: THREE-LAYER VALIDATION ---
-                const validation = await validateQuantumCode(generatedCode, hardware);
-                if (!validation.valid) {
-                    console.warn(`[Quantum Workflow] VALIDATION_FAILED | Error: ${validation.error}`);
-                    lastError = `Validation failed: ${validation.error}`;
-                    continue;
-                }
+            const tableOutput = parseAnyAssignmentTable(rawOutput);
+            const energyMatch = rawOutput.match(/Energy:\s*([-\d.]+)/i);
+            const energyLine = energyMatch ? `\n> **Lowest Energy:** \`${energyMatch[1]}\`` : '';
 
-                console.log(`[Quantum Workflow] VALIDATED | Proceeding to execution.`);
+            combinedRawOutput += `\n\n--- BATCH ${b} (Dimension ${startDim}-${endDim}) ---\n${rawOutput}\n`;
+            combinedAnalysis += `\n### 📦 Batch ${b} | ${formDef?.batchKey || 'Dimension'} ${startDim}-${endDim}
+${explanation}
 
-                // --- STEP 5: EXECUTION ---
-                finalExecutionResult = isDWave
-                    ? await executeDWaveAnnealer(generatedCode)
-                    : await executeQuantumCircuit(generatedCode);
+${tableOutput ? `**Results:**\n${tableOutput}` : `**Raw Output:**\n\`\`\`\n${rawOutput}\n\`\`\``}
+${energyLine}
 
-                // If python execution failed but output contains Traceback, treat as error
-                const rawSimulatorOutput = finalExecutionResult.output || "";
-                if (rawSimulatorOutput.includes("Runtime Error") || rawSimulatorOutput.includes("Traceback")) {
-                    finalExecutionResult.error = rawSimulatorOutput;
-                }
+---
+`;
 
-                if (finalExecutionResult.error) {
-                    console.error(`[Quantum Workflow] EXECUTION_ERROR | Error: ${finalExecutionResult.error}`);
-                    lastError = `Runtime error: ${finalExecutionResult.error}`;
-                    continue;
-                }
+            // --- STEP 7: STATE EXTRACTION (FOR CONTINUITY) ---
+            if (b < batchesNeeded) {
+                console.log(`[Quantum Workflow] Extracting state from batch ${b}...`);
+                const stateExtractPrompt = `Analyze this quantum output and provide a one-sentence "Continuity Summary" for the NEXT batch. 
+                Focus ONLY on the final configuration (e.g., "Pilot A is at JFK, Pilot B is at LHR"). 
+                Wait, do NOT use natural language summaries if you can provide a JSON state. 
+                Actually, just provide a concise summary of variables that must stay fixed.
+                
+                OUTPUT:
+                ${rawOutput}`;
 
-                console.log(`[Quantum Workflow] EXECUTED | Output length: ${finalExecutionResult.output?.length || 0}`);
-                // SUCCESS
-                break;
+                try {
+                    const extractRes = await (provider === 'groq'
+                        ? (new Groq({ apiKey: GROQ_API_KEY! }).chat.completions.create({ messages: [{ role: 'user', content: stateExtractPrompt }], model: modelName }))
+                        : (new GoogleGenerativeAI(GEMINI_API_KEY!).getGenerativeModel({ model: modelName }).generateContent(stateExtractPrompt)));
 
-            } catch (e: any) {
-                lastError = `Processing error: ${e.message}`;
-                if (attempts >= MAX_ATTEMPTS) {
-                    return { returnMode: 'direct', data: { text: `Error: Critical failure in quantum workflow after ${MAX_ATTEMPTS} attempts. Last Error: ${lastError}`, source: 'quantum_workflow_error' } };
+                    lastBatchState = provider === 'groq'
+                        ? (extractRes as any).choices[0].message.content
+                        : (extractRes as any).response.text();
+
+                    console.log(`[Quantum Workflow] Extracted State: ${lastBatchState.substring(0, 50)}...`);
+                } catch (e) {
+                    console.warn("State extraction failed, proceeding with 'None'.");
+                    lastBatchState = "None";
                 }
             }
         }
 
-        // --- STEP 6: FORMAT & SAVE ---
-        const rawOutput = (finalExecutionResult.output || finalExecutionResult.error || 'No output.').trim();
+        // --- STEP 8: FINAL SAVE ---
+        const finalDisplay = `## 🚀 Multi-Batch Quantum Execution Completed
+The problem was split into **${batchesNeeded} batches** to accommodate quantum hardware constraints. 
 
-        const parseAnyAssignmentTable = (out: string): string | null => {
-            const bestMatch = out.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
-            if (!bestMatch) return null;
-            // Use a broader regex to capture np.type(val) as well
-            const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([^\s,]+)/g)];
-            if (allPairs.length === 0) return null;
-            const rows = allPairs.map(([, key, rawVal]) => {
-                // Strip np.int8(1) -> 1
-                const val = rawVal.replace(/np\.\w+\(([^)]+)\)/, '$1');
+${combinedAnalysis}
 
-                const pilotFlightDay = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)(?:[_\s]day[_\s]?(\w+))?/i);
-                let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-                if (pilotFlightDay) {
-                    displayKey = `Pilot ${pilotFlightDay[1]} → Flight ${pilotFlightDay[2]}`;
-                    if (pilotFlightDay[3]) {
-                        displayKey += ` (Day ${pilotFlightDay[3]})`;
-                    }
-                }
-                const numVal = parseFloat(val);
-                const displayVal = isNaN(numVal) ? val : numVal === 1 ? '✅ Assigned' : numVal === 0 ? '⬜ Not Assigned' : numVal.toFixed(4);
-                return `| ${displayKey} | ${displayVal} |`;
-            });
-            const header = `| Variable | Value |\n|---|---|\n`;
-            return `**⚙️ Simulator Output**\n\n${header}${rows.join('\n')}`;
-        };
-
-        const tableOutput = parseAnyAssignmentTable(rawOutput);
-        const energyMatch = rawOutput.match(/Energy:\s*([-\d.]+)/i);
-        const energyLine = energyMatch ? `\n\n> **Lowest Energy:** \`${energyMatch[1]}\`` : '';
-
-        const formattedOutput = tableOutput
-            ? `${tableOutput}${energyLine}\n\n---\n\n`
-            : `**⚙️ Raw Simulator Output**\n\`\`\`\n${rawOutput}\n\`\`\`\n\n---\n\n`;
-
-        const finalDisplay = `[STEP_CODE]${generatedCode}[/STEP_CODE]` +
-            `[STEP_SIM]${rawOutput}[/STEP_SIM]` +
-            formattedOutput +
-            explanation;
+**Final Consolidation:** Sequential continuity was maintained by carrying the end-state of each batch into the next.`;
 
         try {
             await Experiment.create({
                 userId: userEmail,
-                industry,
-                service,
-                problem,
-                hardware,
+                industry, service, problem, hardware,
                 parameters: formData,
-                qiskitCode: generatedCode,
-                results: finalExecutionResult,
+                qiskitCode: "BATCHED_EXECUTION",
+                results: { raw: combinedRawOutput },
                 analysis: finalDisplay,
-                cacheKey: cacheKey, // Store the hash for future reuse
-                chartData: finalExecutionResult.counts ? {
-                    type: "bar",
-                    data: Object.entries(finalExecutionResult.counts).map(([k, v]) => ({ name: k, value: v }))
-                } : null,
+                cacheKey: getWorkflowCacheKey(problem, service, hardware, formData),
                 timestamp: new Date()
             });
         } catch (saveError) {
-            console.error("Failed to save experiment history:", saveError);
+            console.error("Final Save Failed:", saveError);
         }
 
         return {
             returnMode: 'direct',
             data: {
                 text: finalDisplay,
-                source: 'quantum_workflow',
+                source: 'quantum_workflow_batched',
                 guardrailsStatus: 'passed',
                 activeGuardrails: ruleTexts
             }
         };
     }
-
     // Normal Industry Context (Existing logic if no formData)
     if (industry) systemInstructions += `\n\nINDUSTRY CONTEXT: You are assisting a user in the ${industry} sector.`;
     if (service) systemInstructions += `\nSERVICE CONTEXT: The user is focused on ${service}.`;

@@ -18,6 +18,10 @@ export interface IQuantumForm extends Document {
     sections?: { section_name: string; fields: IQuantumField[] }[];
     codeTemplates?: { hardware: string; code: string }[];
     active: boolean;
+    batchingEnabled?: boolean;
+    maxQubitsPerBatch?: number;
+    qubitFormula?: string;
+    batchKey?: string; // e.g. 'days' or 'time_steps'
     createdAt: Date;
 }
 
@@ -46,6 +50,10 @@ const QuantumFormSchema: Schema = new Schema({
         code: { type: String, required: true }
     }],
     active: { type: Boolean, default: true },
+    batchingEnabled: { type: Boolean, default: false },
+    maxQubitsPerBatch: { type: Number, default: 64 },
+    qubitFormula: { type: String, default: "" },
+    batchKey: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now }
 });
 
