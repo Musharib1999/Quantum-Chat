@@ -40,7 +40,7 @@ const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
 
 async function executeQuantumCircuit(circuitCode: string) {
     try {
-        const url = `${QISKIT_SERVICE_URL}/api/simulate/qiskit`;
+        const url = `${QISKIT_SERVICE_URL}/execute`;
         console.log(`[Quantum Sim] Sending request to: ${url}`);
 
         const response = await axios.post(url, {
@@ -62,7 +62,7 @@ async function executeQuantumCircuit(circuitCode: string) {
 
 async function executeDWaveAnnealer(code: string) {
     try {
-        const url = `${DWAVE_SERVICE_URL}/api/simulate/dwave`;
+        const url = `${DWAVE_SERVICE_URL}/execute`;
         console.log(`[DWave Sim] Sending request to: ${url}`);
 
         const response = await axios.post(url, {
