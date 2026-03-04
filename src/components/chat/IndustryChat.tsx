@@ -53,10 +53,19 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         const header = `| Variable | Value |\n|---|---|\n`;
         const rows = allPairs.map(([, rawKey, val]) => {
             const key = rawKey.replace(/["']/g, ''); // Clean quotes
+            const xMatch = key.match(/x_(\w+)_(\w+)(?:_(\w+))?/i);
             const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
-            const displayKey = pilotFlight
-                ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`
-                : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+            let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+            if (xMatch) {
+                const [, p, r, d] = xMatch;
+                displayKey = `Pilot ${p} → Flight ${r}`;
+                if (d !== undefined) displayKey += ` (Day ${d})`;
+            } else if (pilotFlight) {
+                displayKey = `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`;
+            }
+
             const numVal = parseFloat(val);
             const displayVal = isNaN(numVal) ? val : numVal === 1 ? '✅ Assigned' : numVal === 0 ? '⬜ Not Assigned' : numVal.toFixed(4);
             return `| ${displayKey} | ${displayVal} |`;
