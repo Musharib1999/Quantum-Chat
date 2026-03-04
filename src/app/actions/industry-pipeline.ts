@@ -352,8 +352,15 @@ export async function executeIndustryWorkflow(
                 // Strip np.int8(1) -> 1
                 const val = rawVal.replace(/np\.\w+\(([^)]+)\)/, '$1');
 
-                const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
-                const displayKey = pilotFlight ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}` : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const pilotFlightDay = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)(?:[_\s]day[_\s]?(\w+))?/i);
+                let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+                if (pilotFlightDay) {
+                    displayKey = `Pilot ${pilotFlightDay[1]} → Flight ${pilotFlightDay[2]}`;
+                    if (pilotFlightDay[3]) {
+                        displayKey += ` (Day ${pilotFlightDay[3]})`;
+                    }
+                }
                 const numVal = parseFloat(val);
                 const displayVal = isNaN(numVal) ? val : numVal === 1 ? '✅ Assigned' : numVal === 0 ? '⬜ Not Assigned' : numVal.toFixed(4);
                 return `| ${displayKey} | ${displayVal} |`;
