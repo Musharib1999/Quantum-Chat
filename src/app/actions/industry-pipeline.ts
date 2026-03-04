@@ -157,7 +157,13 @@ export async function executeIndustryWorkflow(
 
     if (formData && Object.keys(formData).length > 0) {
         // --- STEP 0: FETCH FORM DEF ---
-        const formDef = await QuantumForm.findOne({ industry, service, problem });
+        console.log(`[Quantum Workflow] Lookup | Ind: ${industry} | Svc: ${service} | Prob: ${problem}`);
+        const formDef = await QuantumForm.findOne({
+            industry: new RegExp(`^${industry}$`, 'i'),
+            service: new RegExp(`^${service}$`, 'i'),
+            problem: new RegExp(`^${problem}$`, 'i')
+        }).lean();
+        console.log(`[Quantum Workflow] Form Found: ${!!formDef}`);
 
         // --- STEP 1: DETERMINISTIC GUARDRAILS (Pre-LLM) ---
         if (formDef) {
@@ -217,10 +223,12 @@ export async function executeIndustryWorkflow(
         // --- STEP 2: TEMPLATE LOOKUP ---
         let templateCode = "";
         if (formDef?.codeTemplates) {
-            const matched = formDef.codeTemplates.find((t: any) =>
-                hardware.toLowerCase().includes(t.hardware.toLowerCase()) ||
-                t.hardware.toLowerCase().includes(hardware.toLowerCase())
-            );
+            const sanitizeStr = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const hwSanitized = sanitizeStr(hardware);
+            const matched = formDef.codeTemplates.find((t: any) => {
+                const tSanitized = sanitizeStr(t.hardware);
+                return hwSanitized.includes(tSanitized) || tSanitized.includes(hwSanitized);
+            });
             templateCode = matched?.code || "";
         }
 
@@ -425,19 +433,27 @@ export async function generateQuantumCode(config: {
 
         const { provider, modelName } = await getDynamicLLM();
 
+        console.log(`[Quantum Workflow Actions] generateQuantumCode | Ind: ${industry} | Svc: ${service} | Prob: ${problem} | HW: ${hardware}`);
+
         const formDef = await QuantumForm.findOne({
             industry: new RegExp(`^${industry}$`, 'i'),
             service: new RegExp(`^${service}$`, 'i'),
             problem: new RegExp(`^${problem}$`, 'i')
         }).lean();
 
+        console.log(`[Quantum Workflow Actions] Form Found: ${!!formDef} | Templates: ${formDef?.codeTemplates?.length || 0}`);
+
         let templateCode = "";
         if (formDef && formDef.codeTemplates && formDef.codeTemplates.length > 0) {
-            const matched = formDef.codeTemplates.find((t: any) =>
-                hardware.toLowerCase().includes(t.hardware.toLowerCase()) ||
-                t.hardware.toLowerCase().includes(hardware.toLowerCase())
-            );
+            const sanitizeStr = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const hwSanitized = sanitizeStr(hardware);
+
+            const matched = formDef.codeTemplates.find((t: any) => {
+                const tSanitized = sanitizeStr(t.hardware);
+                return hwSanitized.includes(tSanitized) || tSanitized.includes(hwSanitized);
+            });
             templateCode = matched?.code || "";
+            console.log(`[Quantum Workflow Actions] Template Match Search | HW: ${hwSanitized} | Result Found: ${!!templateCode}`);
         }
 
         let codePrompt = '';
