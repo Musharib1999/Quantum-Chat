@@ -511,7 +511,7 @@ Return ONLY the Python code. No markdown. No explanation.`;
 
         // Always force correct dimod imports for D-Wave
         if (isDWave) {
-            const correctImports = `from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\nimport numpy as np\n\n`;
+            const correctImports = `import dimod\nfrom dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\nimport numpy as np\n\n`;
             code = code.split('\n').filter((l: string) => !l.trim().startsWith('from dimod import') && !l.trim().startsWith('import dimod')).join('\n').trim();
             code = correctImports + code;
         }
