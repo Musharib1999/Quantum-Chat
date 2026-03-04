@@ -216,31 +216,28 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
 
             {/* Complexity & Batching Widget */}
             {form.qubitFormula ? (
-                <div className="bg-[#3066bb]/5 border border-[#3066bb]/30 p-5 rounded-2xl flex items-center justify-between group overflow-hidden relative shadow-inner">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#3066bb]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                <div className="bg-card border border-border p-5 rounded-2xl flex items-center justify-between group overflow-hidden relative shadow-sm transition-all hover:shadow-md hover:border-black/20">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.02] rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
                     <div className="flex items-center gap-4 relative z-10 w-full">
-                        <div className="w-10 h-10 rounded-full bg-[#3066bb]/10 border border-[#3066bb]/20 flex items-center justify-center text-[#3066bb] shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-secondary/50 border border-border flex items-center justify-center text-foreground shrink-0 group-hover:bg-black group-hover:text-white transition-colors duration-300">
                             <Layers size={18} />
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-bold text-foreground">Complexity Forecast</span>
-                                <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-border">Qubits</span>
+                                <span className="text-xs font-extrabold text-black uppercase tracking-tight">Complexity Forecast</span>
+                                <span className="text-[9px] font-bold text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-border uppercase tracking-widest">Qubits</span>
                             </div>
-                            <p className="text-[10px] text-muted-foreground mt-0.5 italic truncate max-w-[200px]" title={form.qubitFormula}>
-                                Formula: {form.qubitFormula.replace(/{{|}}/g, '')}
-                            </p>
                         </div>
 
                         <div className="text-right shrink-0">
-                            <div className="text-2xl font-bold text-[#3066bb] transition-all duration-300 group-hover:scale-110">
+                            <div className="text-3xl font-black text-black leading-none transition-all duration-300 group-hover:scale-110">
                                 {qubits > 0 ? qubits : '0'}
                             </div>
                             {form.batchingEnabled && (
-                                <div className="flex items-center justify-end gap-1 mt-0.5">
-                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${batches > 1 ? 'bg-[#3066bb]/10 border-[#3066bb]/20 text-[#3066bb] animate-pulse' : 'bg-secondary text-muted-foreground border-border'}`}>
-                                        {batches > 1 ? `${batches} Batches` : 'Single Batch'}
+                                <div className="flex items-center justify-end gap-1 mt-1.5">
+                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border transition-all duration-300 ${batches > 1 ? 'bg-black text-white border-black' : 'bg-secondary text-muted-foreground border-border'}`}>
+                                        {batches > 1 ? `${batches} BATCHES` : 'SINGLE BATCH'}
                                     </span>
                                 </div>
                             )}
@@ -248,9 +245,9 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                     </div>
                 </div>
             ) : (
-                <div className="bg-secondary/30 border border-dashed border-border p-4 rounded-xl text-center">
-                    <p className="text-[10px] text-muted-foreground italic">
-                        Quantum complexity estimation not configured for this module.
+                <div className="bg-secondary/20 border border-dashed border-border p-4 rounded-xl text-center">
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                        Quantum capacity: Not Configured
                     </p>
                 </div>
             )}
