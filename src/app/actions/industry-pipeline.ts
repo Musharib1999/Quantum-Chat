@@ -197,13 +197,21 @@ export async function executeIndustryWorkflow(
         console.log(`[Quantum Workflow] START | Industry: ${industry} | Service: ${service} | Problem: ${problem} | Hardware: ${hardware}`);
         const sanitizedFormData: Record<string, any> = {};
         Object.keys(formData).forEach(key => {
-            const val = formData[key];
+            let val = formData[key];
             if (val && typeof val === 'object') {
                 sanitizedFormData[key] = val; // handle arrays, etc
+            } else if (typeof val === 'string') {
+                // Remove weird brackets
+                val = val.replace(/[{}]/g, '');
+                // Attempt to parse as number to prevent python type errors (e.g range(10.0))
+                if (!isNaN(Number(val)) && val.trim() !== '') {
+                    sanitizedFormData[key] = val.includes('.') ? parseFloat(val) : parseInt(val, 10);
+                } else {
+                    sanitizedFormData[key] = val;
+                }
             } else {
-                sanitizedFormData[key] = typeof val === 'string' ? val.replace(/[{}]/g, '') : val;
+                sanitizedFormData[key] = val;
             }
-
         });
 
         // --- STEP 2: TEMPLATE LOOKUP ---
@@ -417,7 +425,8 @@ Parameters: ${JSON.stringify(formData)}
 Write a script that:
 1. from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler
 2. Define linear={} and quadratic={} dicts. You may use UP TO 30 VARIABLES.
-3. bqm = BinaryQuadraticModel(linear, quadratic, 0.0, 'BINARY')
+3. IMPORTANT: Ensure any variables from Parameters that refer to counts, days, shifts, or items are parsed as strict integers (e.g., int(x)) so they can be used safely in range() calls!
+4. bqm = BinaryQuadraticModel(linear, quadratic, 0.0, 'BINARY')
    sampler = SimulatedAnnealingSampler(); sampleset = sampler.sample(bqm, num_reads=50)
    best = sampleset.first; print(f'Best: {best.sample}'); print(f'Energy: {best.energy:.4f}')
 Return ONLY the Python code. No markdown. No backticks. No explanation.`;
@@ -426,6 +435,7 @@ Return ONLY the Python code. No markdown. No backticks. No explanation.`;
 Industry: ${industry} | Service: ${service} | Problem: ${problem} | Hardware: ${hardware}
 Parameters: ${JSON.stringify(formData)}
 Rules: Use qiskit and qiskit_aer. Build QuantumCircuit, add gates and measurements.
+IMPORTANT: Ensure any parameter variables used for loop dimensions or counts are cast to strict integers.
 Run: from qiskit_aer import AerSimulator; sim=AerSimulator(); job=sim.run(circuit,shots=1024); result=job.result(); counts=result.get_counts(); print(f"Results: {counts}")
 Return ONLY the Python code. No markdown. No explanation.`;
         }
