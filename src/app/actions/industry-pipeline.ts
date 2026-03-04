@@ -520,16 +520,31 @@ Return ONLY the Python code. No markdown. No explanation.`;
             code = result.response.text().replace(/```python|```/g, '').trim() || '';
         }
 
-        // --- FINAL SAFETY: HARD TEMPLATE SUBSTITUTION ---
-        // Even if the LLM hallucinated the placeholders back in, we force replace them here
-        if (templateCode || code.includes('{{parameters.')) {
-            Object.entries(formData).forEach(([key, val]) => {
-                const placeholder = new RegExp(`{{parameters\\.${key}}}`, 'g');
-                code = code.replace(placeholder, String(val));
-            });
-            // Clean up any remaining unmatched placeholders to prevent Python NameErrors
-            code = code.replace(/{{parameters\.[^}]+}}/g, 'None');
-        }
+        // --- FINAL SAFETY: HARD TEMPLATE SUBSTITUTION & INJECTION ---
+        // 1. Hard Regex Substitution (Primary)
+        Object.entries(formData).forEach(([key, val]) => {
+            const bracedPlaceholder = new RegExp(`{{parameters\\.${key}}}`, 'g');
+            const cleanPlaceholder = new RegExp(`parameters\\.${key}`, 'g');
+
+            code = code.replace(bracedPlaceholder, String(val));
+            // Also catch cases where LLM "helped" by removing braces but keeping the word 'parameters.'
+            code = code.replace(cleanPlaceholder, String(val));
+        });
+
+        // 2. Python-Side Injection (Ultimate Fallback)
+        // We inject a DotDict class so python as code like 'parameters.num_pilots' works even if not replaced.
+        const pythonInjections = `
+class DotDict(dict):
+    def __getattr__(self, name): return self.get(name)
+    def __setattr__(self, name, value): self[name] = value
+
+parameters = DotDict(${JSON.stringify(formData)})
+`;
+        code = pythonInjections + "\n" + code;
+
+        // Clean up any remaining unmatched placeholders
+        code = code.replace(/{{parameters\.[^}]+}}/g, 'None');
+
 
         // Always force correct dimod imports for D-Wave
         if (isDWave) {
