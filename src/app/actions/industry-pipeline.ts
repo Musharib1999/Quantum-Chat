@@ -345,9 +345,13 @@ export async function executeIndustryWorkflow(
         const parseAnyAssignmentTable = (out: string): string | null => {
             const bestMatch = out.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
             if (!bestMatch) return null;
-            const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([\w.+-]+)/g)];
+            // Use a broader regex to capture np.type(val) as well
+            const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([^\s,]+)/g)];
             if (allPairs.length === 0) return null;
-            const rows = allPairs.map(([, key, val]) => {
+            const rows = allPairs.map(([, key, rawVal]) => {
+                // Strip np.int8(1) -> 1
+                const val = rawVal.replace(/np\.\w+\(([^)]+)\)/, '$1');
+
                 const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
                 const displayKey = pilotFlight ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}` : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 const numVal = parseFloat(val);
