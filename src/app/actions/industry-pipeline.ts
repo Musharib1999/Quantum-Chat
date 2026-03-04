@@ -542,15 +542,13 @@ export async function generateQuantumCode(config: {
             console.log(`[Quantum Workflow Actions] Template Match Search | HW: ${hwSanitized} | Result Found: ${!!templateCode}`);
         }
 
+        let code = '';
         let codePrompt = '';
-        let systemInstruction = 'You are a Quantum Expert. Return only Python code. No markdown. No explanation.';
+        let isTemplateAided = false;
 
         if (templateCode) {
-            codePrompt = await getDynamicPrompt('industry_template_fill', {
-                template: templateCode,
-                parameters: JSON.stringify(formData)
-            }, `TEMPLATE CODE:\n${templateCode}\n\nPARAMETERS:\n${JSON.stringify(formData)}\n\nINSTRUCTION: Fill the exact parameter values into the {{parameters.variableName}} placeholders. Ensure any values acting as loop dimensions are cast to int. Return ONLY the raw valid Python code without markdown blocks or reasoning.`);
-            systemInstruction = 'You are a strict string substitution parser. Your ONLY job is to take the provided template, replace the placeholders, and return the modified code block. Do NOT rewrite, optimise, or change any logic. Return ONLY the final Python code. No markdown or explanation.';
+            code = templateCode;
+            isTemplateAided = true;
         } else {
             if (isDWave) {
                 codePrompt = await getDynamicPrompt('industry_dwave', {
@@ -627,44 +625,41 @@ Return ONLY the Python code. No markdown. No explanation.`);
             }
         }
 
-        const fullPrompt = `${systemInstruction}\n\n${codePrompt}`;
+        if (!isTemplateAided) {
+            const systemInstruction = 'You are a Quantum Expert. Return only Python code. No markdown. No explanation.';
+            const fullPrompt = `${systemInstruction}\n\n${codePrompt}`;
 
-        let code = '';
-        if (provider === 'groq') {
-            if (!GROQ_API_KEY) return { code: "", batchesTotal, error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
-            const groq = new Groq({ apiKey: GROQ_API_KEY });
-            const completion = await groq.chat.completions.create({
-                messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: codePrompt }],
-                model: modelName,
-            });
-            code = completion.choices[0]?.message?.content || '';
-        } else {
-            if (!GEMINI_API_KEY) return { code: "", batchesTotal, error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
-            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent(fullPrompt);
-            code = result.response.text() || '';
-        }
-
-        // --- POST-PROCESS: Strip Hallucinations & Clean Code ---
-        // 1. Strip markdown code blocks
-        code = code.replace(/```python\s?([\s\S]*?)```/g, '$1');
-        code = code.replace(/```\s?([\s\S]*?)```/g, '$1');
-
-        // 2. Remove common hallucinated JSON or explanation trailers
-        // If the LLM returned a JSON block at the end (like in user's screenshot), cut it.
-        // We look for the literal string "{{templateCode}}" or JSON keys that shouldn't be here.
-        if (code.includes('{{templateCode}}') || code.includes('"explanation":') || code.includes('"code":')) {
-            const lines = code.split('\n');
-            const cleanLines = [];
-            for (const line of lines) {
-                // If we hit a line that looks like the start of a JSON object or contains the hallucination markers, stop.
-                if (line.trim().startsWith('{') || line.includes('{{templateCode}}') || line.includes('"explanation":')) {
-                    break;
-                }
-                cleanLines.push(line);
+            if (provider === 'groq') {
+                if (!GROQ_API_KEY) return { code: "", batchesTotal, error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
+                const groq = new Groq({ apiKey: GROQ_API_KEY });
+                const completion = await groq.chat.completions.create({
+                    messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: codePrompt }],
+                    model: modelName,
+                });
+                code = completion.choices[0]?.message?.content || '';
+            } else {
+                if (!GEMINI_API_KEY) return { code: "", batchesTotal, error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
+                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(fullPrompt);
+                code = result.response.text() || '';
             }
-            code = cleanLines.join('\n').trim();
+
+            // --- POST-PROCESS: Strip Hallucinations & Clean Code ---
+            code = code.replace(/```python\s?([\s\S]*?)```/g, '$1');
+            code = code.replace(/```\s?([\s\S]*?)```/g, '$1');
+
+            if (code.includes('{{templateCode}}') || code.includes('"explanation":') || code.includes('"code":')) {
+                const lines = code.split('\n');
+                const cleanLines = [];
+                for (const line of lines) {
+                    if (line.trim().startsWith('{') || line.includes('{{templateCode}}') || line.includes('"explanation":')) {
+                        break;
+                    }
+                    cleanLines.push(line);
+                }
+                code = cleanLines.join('\n').trim();
+            }
         }
 
         code = code.trim();
