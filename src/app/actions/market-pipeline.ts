@@ -5,8 +5,10 @@ import { getStockPrice } from './market';
  * and avoid initializing heavy LLM SDKs multiple times.
  */
 interface PipelineDeps {
+    activeProvider: 'groq' | 'gemini';
+    activeModel: string;
     genAI: any;
-    GEMINI_MODEL: string;
+    groq: any;
     getDynamicPrompt: (category: string, replacements: Record<string, any>, fallback: string) => Promise<string>;
     scrapeUrl: (url: string) => Promise<string | null>;
 }
@@ -20,7 +22,7 @@ export async function buildMarketContext(
     logTicker: string | null;
     logRawData: any;
 }> {
-    const { genAI, GEMINI_MODEL, getDynamicPrompt, scrapeUrl } = deps;
+    const { genAI, groq, activeProvider, activeModel, getDynamicPrompt, scrapeUrl } = deps;
 
     let autonomousContext = "";
     let systemInstructions = "";
@@ -45,17 +47,28 @@ export async function buildMarketContext(
                 { prompt },
                 "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL). If none, return 'NULL'."
             );
-            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-            const extraction = await model.generateContent([
-                tickerInstruction,
-                prompt
-            ]);
-            const extracted = extraction.response.text().trim();
+
+            let extracted = "";
+            if (activeProvider === 'groq' && groq) {
+                const completion = await groq.chat.completions.create({
+                    messages: [{ role: 'system', content: tickerInstruction }, { role: 'user', content: prompt }],
+                    model: activeModel,
+                });
+                extracted = completion.choices[0]?.message?.content?.trim() || "";
+            } else if (genAI) {
+                const model = genAI.getGenerativeModel({ model: activeModel });
+                const extraction = await model.generateContent([
+                    tickerInstruction,
+                    prompt
+                ]);
+                extracted = extraction.response.text().trim();
+            }
+
             if (extracted && extracted !== 'NULL' && extracted.length < 10) {
                 targetSymbol = extracted.replace(/[^a-zA-Z0-9-]/g, '');
             }
         } catch (e) {
-            console.error("Gemini Ticker extraction failed:", e);
+            console.error("Ticker extraction failed:", e);
         }
     }
 

@@ -17,6 +17,7 @@ import { buildMarketContext } from './market-pipeline';
 import { buildArticleContext } from './article-pipeline';
 import { buildAssistantContext } from './assistant-pipeline';
 import { executeIndustryWorkflow } from './industry-pipeline';
+import { getDynamicPrompt } from './prompt-utils';
 import QuantumForm from '@/models/QuantumForm';
 import { getStockPrice, getLatestNews } from './market';
 
@@ -127,30 +128,7 @@ const queryKnowledgeBase = async (prompt: string) => {
     return null;
 };
 
-// --- Dynamic Prompt Parsing Helper ---
-/**
- * Fetches the prompt template from DB and replaces {{tags}} with the provided runtime values.
- * Falls back to a string default if DB fetch fails.
- */
-export async function getDynamicPrompt(category: string, replacements: Record<string, any>, fallback: string): Promise<string> {
-    try {
-        const promptDoc = await SystemPrompt.findOne({ category }).lean();
-        let template = promptDoc ? promptDoc.template : fallback;
-
-        // Replace all {{key}} with their corresponding value from the replacements object
-        Object.keys(replacements).forEach(key => {
-            const regex = new RegExp(`{{${key}}}`, 'g');
-            let val = replacements[key];
-            if (val === undefined || val === null) val = '';
-            template = template.replace(regex, typeof val === 'object' ? JSON.stringify(val) : String(val));
-        });
-
-        return template;
-    } catch (error) {
-        console.error(`Failed to load dynamic prompt for ${category}`, error);
-        return fallback; // Safety fallback 
-    }
-}
+// Dynamic prompt utility is now imported from prompt-utils.ts
 
 export async function chatWithGroq(
     prompt: string,
@@ -163,7 +141,7 @@ export async function chatWithGroq(
 
     // 0. Fetch Global LLM Settings
     let activeProvider = 'gemini';
-    let activeModel = 'gemini-2.0-flash-lite-preview';
+    let activeModel = 'gemini-2.0-flash-lite';
 
     try {
         const settings = await LLMSetting.findOne({ key: "global_llm_settings" }).lean();
@@ -282,7 +260,9 @@ export async function chatWithGroq(
 
         try {
             const routerInstruction = await getDynamicPrompt('ai_router', { prompt }, "You are an AI router. Decide if you need to fetch live data using your tools based on the user prompt.");
-            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL, tools: [geminiTools] as any });
+            // Use activeModel if it's Gemini, otherwise fallback to default for tools
+            const toolModelName = activeProvider === 'gemini' ? activeModel : GEMINI_MODEL;
+            const model = genAI.getGenerativeModel({ model: toolModelName, tools: [geminiTools] as any });
             const result = await model.generateContent([
                 routerInstruction,
                 prompt
@@ -395,8 +375,10 @@ export async function chatWithGroq(
 
         if (contextConfig.mode === 'market') {
             const pipelineDeps = {
+                activeProvider: activeProvider as 'groq' | 'gemini',
+                activeModel,
                 genAI,
-                GEMINI_MODEL,
+                groq: new Groq({ apiKey: process.env.GROQ_API_KEY }),
                 getDynamicPrompt,
                 scrapeUrl
             };
@@ -430,7 +412,7 @@ export async function chatWithGroq(
                 Experiment
             };
             const industryResult = await executeIndustryWorkflow(contextConfig, ruleTexts, industryDeps);
-            
+
             if (industryResult.returnMode === 'direct') {
                 return industryResult.data;
             } else {

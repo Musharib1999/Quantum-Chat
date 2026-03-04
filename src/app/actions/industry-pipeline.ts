@@ -23,6 +23,7 @@ async function getDynamicLLM() {
     }
     return { provider, modelName };
 }
+import { getDynamicPrompt } from './prompt-utils';
 import axios from 'axios';
 import crypto from 'crypto';
 
@@ -423,13 +424,15 @@ ${energyLine}
             // --- STEP 7: STATE EXTRACTION (FOR CONTINUITY) ---
             if (b < batchesNeeded) {
                 console.log(`[Quantum Workflow] Extracting state from batch ${b}...`);
-                const stateExtractPrompt = `Analyze this quantum output and provide a one-sentence "Continuity Summary" for the NEXT batch. 
+                const stateExtractPrompt = await getDynamicPrompt('industry_json_wrapper', {
+                    output: rawOutput
+                }, `Analyze this quantum output and provide a one-sentence "Continuity Summary" for the NEXT batch. 
                 Focus ONLY on the final configuration (e.g., "Pilot A is at JFK, Pilot B is at LHR"). 
                 Wait, do NOT use natural language summaries if you can provide a JSON state. 
                 Actually, just provide a concise summary of variables that must stay fixed.
                 
                 OUTPUT:
-                ${rawOutput}`;
+                ${rawOutput}`);
 
                 try {
                     const extractRes = await (provider === 'groq'
@@ -543,11 +546,19 @@ export async function generateQuantumCode(config: {
         let systemInstruction = 'You are a Quantum Expert. Return only Python code. No markdown. No explanation.';
 
         if (templateCode) {
+            codePrompt = await getDynamicPrompt('industry_json_wrapper', {
+                template: templateCode,
+                parameters: JSON.stringify(formData)
+            }, `TEMPLATE CODE:\n${templateCode}\n\nPARAMETERS:\n${JSON.stringify(formData)}\n\nINSTRUCTION: Fill the exact parameter values into the {{parameters.variableName}} placeholders. Ensure any values acting as loop dimensions are cast to int. Return ONLY the raw valid Python code without markdown blocks or reasoning.`);
             systemInstruction = 'You are a strict string substitution parser. Your ONLY job is to take the provided template, replace the placeholders, and return the modified code block. Do NOT rewrite, optimise, or change any logic. Return ONLY the final Python code. No markdown or explanation.';
-            codePrompt = `TEMPLATE CODE:\n${templateCode}\n\nPARAMETERS:\n${JSON.stringify(formData)}\n\nINSTRUCTION: Fill the exact parameter values into the {{parameters.variableName}} placeholders. Ensure any values acting as loop dimensions are cast to int. Return ONLY the raw valid Python code without markdown blocks or reasoning.`;
         } else {
             if (isDWave) {
-                codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
+                codePrompt = await getDynamicPrompt('industry_dwave', {
+                    problem,
+                    industry,
+                    service,
+                    parameters: JSON.stringify(formData)
+                }, `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
 CRITICAL: The ONLY valid BinaryQuadraticModel constructor is:
   BinaryQuadraticModel(linear: dict, quadratic: dict, offset: float, vartype: str)
   DO NOT pass num_variables or any other argument.
@@ -560,15 +571,21 @@ Write a script that:
 4. bqm = BinaryQuadraticModel(linear, quadratic, 0.0, 'BINARY')
    sampler = SimulatedAnnealingSampler(); sampleset = sampler.sample(bqm, num_reads=50)
    best = sampleset.first; print(f'Best: {best.sample}'); print(f'Energy: {best.energy:.4f}')
-Return ONLY the Python code. No markdown. No backticks. No explanation.`;
+Return ONLY the Python code. No markdown. No backticks. No explanation.`);
             } else {
-                codePrompt = `Generate a complete, self-contained Python Qiskit script.
+                codePrompt = await getDynamicPrompt('industry_qiskit', {
+                    problem,
+                    industry,
+                    service,
+                    hardware,
+                    parameters: JSON.stringify(formData)
+                }, `Generate a complete, self-contained Python Qiskit script.
 Industry: ${industry} | Service: ${service} | Problem: ${problem} | Hardware: ${hardware}
 Parameters: ${JSON.stringify(formData)}
 Rules: Use qiskit and qiskit_aer. Build QuantumCircuit, add gates and measurements.
 IMPORTANT: Ensure any parameter variables used for loop dimensions or counts are cast to strict integers.
 Run: from qiskit_aer import AerSimulator; sim=AerSimulator(); job=sim.run(circuit,shots=1024); result=job.result(); counts=result.get_counts(); print(f"Results: {counts}")
-Return ONLY the Python code. No markdown. No explanation.`;
+Return ONLY the Python code. No markdown. No explanation.`);
             }
         }
 
@@ -673,32 +690,23 @@ export async function extractBatchState(config: {
 }): Promise<{ state: string }> {
     const { output } = config;
     try {
-        const { provider, modelName } = await getDynamicLLM();
-        const prompt = `Analyze this quantum simulator output and provide a one-sentence "Continuity Summary" for the NEXT batch. 
-        Focus ONLY on final positions, states, or fixed assignments (e.g., "Pilot 0 is at JFK, Pilot 1 is at LHR"). 
-        Return ONLY the summary string. No JSON, no markdown.
-
-        OUTPUT:
-        ${output}`;
-
-        let state = "";
-        if (provider === 'groq') {
-            const groq = new Groq({ apiKey: GROQ_API_KEY! });
-            const completion = await groq.chat.completions.create({
-                messages: [{ role: 'user', content: prompt }],
-                model: modelName,
-            });
-            state = completion.choices[0]?.message?.content || "None";
-        } else {
-            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent(prompt);
-            state = result.response.text() || "None";
+        // Robust extraction using QUANTUM_JSON tags
+        const jsonMatch = output.match(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/);
+        if (jsonMatch && jsonMatch[1]) {
+            const data = JSON.parse(jsonMatch[1]);
+            return { state: JSON.stringify(data.best_solution || {}) };
         }
-        return { state: state.trim() };
+
+        // Fallback to old behavior if tags are missing (for backward compatibility)
+        const oldMatch = output.match(/\{[\s\S]*?"best_solution"[\s\S]*?\}/);
+        if (oldMatch) {
+            const data = JSON.parse(oldMatch[0]);
+            return { state: JSON.stringify(data.best_solution || {}) };
+        }
+        return { state: "{}" };
     } catch (e) {
-        console.warn("State extraction failed:", e);
-        return { state: "None" };
+        console.warn("State extraction failed, fallback to empty JSON", e);
+        return { state: "{}" };
     }
 }
 
@@ -737,36 +745,61 @@ export async function interpretQuantumResults(config: {
         // --- PRE-PROCESS: Unify and De-Gibberish Multi-Batch Results ---
         let unifiedSolution: Record<string, any> = {};
         let totalEnergy = 0;
+        let allFormattedAssignments: string[] = [];
 
-        // Find all JSON blocks (results from different batches)
-        const jsonMatches = [...rawOutput.matchAll(/\{[\s\S]*?"best_solution"[\s\S]*?\}/g)];
-        jsonMatches.forEach(match => {
-            try {
-                const data = JSON.parse(match[0]);
-                if (data.best_solution) {
-                    Object.assign(unifiedSolution, data.best_solution);
-                }
-                if (data.energy) totalEnergy += data.energy;
-            } catch (e) {
-                console.warn("Failed to parse batch JSON during interpretation", e);
-            }
-        });
+        // 1. Try robust tagged extraction first
+        const taggedMatches = [...rawOutput.matchAll(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/g)];
 
-        // Translate Keys: x_P_R_D -> Pilot P assigned to Flight R (Day D)
-        const readableAssignments: string[] = [];
-        Object.entries(unifiedSolution).forEach(([key, val]) => {
-            if (val === 1) {
-                const match = key.match(/x_(\w+)_(\w+)(?:_(\w+))?/);
-                if (match) {
-                    const [, p, r, d] = match;
-                    let desc = `Pilot ${p} scheduled for Flight ${r}`;
-                    if (d !== undefined) desc += ` on Day ${d}`;
-                    readableAssignments.push(desc);
-                } else {
-                    readableAssignments.push(`${key.replace(/_/g, ' ')}: Assigned`);
+        if (taggedMatches.length > 0) {
+            taggedMatches.forEach(match => {
+                try {
+                    const data = JSON.parse(match[1]);
+                    if (data.best_solution) Object.assign(unifiedSolution, data.best_solution);
+                    if (data.energy !== undefined) totalEnergy += data.energy;
+                    if (data.formatted_assignments) allFormattedAssignments.push(...data.formatted_assignments);
+                } catch (e) {
+                    console.warn("Failed to parse tagged JSON", e);
                 }
-            }
-        });
+            });
+        } else {
+            // 2. Fallback to naive brace matching if no tags found
+            const jsonMatches = [...rawOutput.matchAll(/\{[\s\S]*?"best_solution"[\s\S]*?\}/g)];
+            jsonMatches.forEach(match => {
+                try {
+                    const data = JSON.parse(match[0]);
+                    if (data.best_solution) {
+                        Object.assign(unifiedSolution, data.best_solution);
+                    }
+                    if (data.energy !== undefined) {
+                        totalEnergy += data.energy;
+                    }
+                    if (data.formatted_assignments && Array.isArray(data.formatted_assignments)) {
+                        allFormattedAssignments.push(...data.formatted_assignments);
+                    }
+                } catch (e) {
+                    console.warn("Failed to parse legacy JSON during interpretation", e);
+                }
+            });
+        }
+
+        // Use formatted assignments if available, otherwise fallback to manual translation
+        let readableAssignments: string[] = allFormattedAssignments;
+
+        if (readableAssignments.length === 0) {
+            Object.entries(unifiedSolution).forEach(([key, val]) => {
+                if (val === 1) {
+                    const match = key.match(/x_(\w+)_(\w+)(?:_(\w+))?/);
+                    if (match) {
+                        const [, p, r, d] = match;
+                        let desc = `Pilot ${p} scheduled for Flight ${r}`;
+                        if (d !== undefined) desc += ` on Day ${d}`;
+                        readableAssignments.push(desc);
+                    } else {
+                        readableAssignments.push(`${key.replace(/_/g, ' ')}: Assigned`);
+                    }
+                }
+            });
+        }
 
         const cleanedInput = `
 GLOBAL SIMULATION RESULTS (Unified from all batches):
@@ -775,7 +808,12 @@ ${readableAssignments.length > 0 ? readableAssignments.join('\n') : 'No assignme
 Total Energy: ${totalEnergy.toFixed(2)}
 `;
 
-        const prompt = `You are a Quantum Computing analyst. Analyze this schedule generated by a D-Wave Quantum Annealer.
+        const prompt = await getDynamicPrompt('industry_analysis', {
+            problem,
+            industry,
+            simulator: hardware,
+            output: cleanedInput
+        }, `You are a Quantum Computing analyst. Analyze this schedule generated by a D-Wave Quantum Annealer.
 Problem: ${problem} | Industry: ${industry}
 
 SCHEDULE DATA:
@@ -792,7 +830,7 @@ STRICT RULES:
 After the paragraph, generate a chart showing assignment counts:
 [CHART_DATA]
 { "type": "bar", "data": [ {"name": "Total Assignments", "value": ${readableAssignments.length}} ] }
-[/CHART_DATA]`;
+[/CHART_DATA]`);
 
         let text = '';
         if (provider === 'groq') {

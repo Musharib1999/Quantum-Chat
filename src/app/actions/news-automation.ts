@@ -6,24 +6,7 @@ import SystemPrompt from '@/models/SystemPrompt';
 import dbConnect from '@/lib/db';
 import { chatWithGroq } from './chat';
 
-// --- Dynamic Prompt Parsing Helper ---
-async function getDynamicPrompt(category: string, replacements: Record<string, any>, fallback: string): Promise<string> {
-    try {
-        const promptDoc = await SystemPrompt.findOne({ category }).lean();
-        let template = promptDoc ? promptDoc.template : fallback;
-
-        Object.keys(replacements).forEach(key => {
-            const regex = new RegExp(`{{${key}}}`, 'g');
-            let val = replacements[key];
-            if (val === undefined || val === null) val = '';
-            template = template.replace(regex, typeof val === 'object' ? JSON.stringify(val) : String(val));
-        });
-        return template;
-    } catch (error) {
-        console.error(`Failed to load dynamic prompt for ${category}`, error);
-        return fallback;
-    }
-}
+import { getDynamicPrompt } from './prompt-utils';
 
 /**
  * Automates scraping of news from Quantum Market Service,

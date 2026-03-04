@@ -10,7 +10,7 @@ export interface ILLMSetting extends Document {
 const LLMSettingSchema = new Schema<ILLMSetting>({
     key: { type: String, required: true, unique: true, default: "global_llm_settings" },
     activeProvider: { type: String, enum: ['groq', 'gemini'], default: 'gemini' },
-    activeModel: { type: String, default: 'gemini-2.0-flash-lite-preview' },
+    activeModel: { type: String, default: 'gemini-2.0-flash-lite' },
     updatedAt: { type: Date, default: Date.now },
 });
 

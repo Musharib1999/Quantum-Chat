@@ -12,7 +12,7 @@ export async function GET() {
             setting = await LLMSetting.create({
                 key: "global_llm_settings",
                 activeProvider: 'gemini',
-                activeModel: 'gemini-2.0-flash-lite-preview'
+                activeModel: 'gemini-2.0-flash-lite'
             });
         }
         return NextResponse.json(setting);

@@ -12,7 +12,7 @@ const PROVIDER_MODELS = {
         { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Llama 70B' },
     ],
     gemini: [
-        { id: 'gemini-2.0-flash-lite-preview', name: 'Gemini 2.0 Flash Lite' },
+        { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite' },
         { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
         { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
         { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
@@ -20,7 +20,7 @@ const PROVIDER_MODELS = {
 };
 
 export default function LLMSettingsManager() {
-    const [settings, setSettings] = useState({ activeProvider: 'gemini', activeModel: 'gemini-2.0-flash-lite-preview' });
+    const [settings, setSettings] = useState({ activeProvider: 'gemini', activeModel: 'gemini-2.0-flash-lite' });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
