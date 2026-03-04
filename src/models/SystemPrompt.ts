@@ -17,6 +17,7 @@ const SystemPromptSchema = new mongoose.Schema({
             'ticker_extraction',
             'assistant_mode',
             'industry_json_wrapper',
+            'industry_template_fill',
             'news_geo_backfill',
             'market_news_fallback'
         ],

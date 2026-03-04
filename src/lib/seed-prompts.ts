@@ -190,14 +190,32 @@ TASK: You are providing general chat and assistance. Answer the user's questions
     {
         category: 'industry_json_wrapper',
         title: 'Industry Mode JSON Wrapper',
-        description: 'Instructions to ensure Industry mode returns structured JSON.',
-        availableTags: ['{{prompt}}', '{{templateCode}}'],
-        template: `You are a Quantum Expert. {{templateCode}}
-STRICT RULES:
-- Use a fixed seed (e.g., 42) for all simulators/samplers to ensure reproducibility.
-- Do NOT include any explanations in the code block.
-Return a JSON object with "code" and "explanation" keys.
-Context: {{prompt}}`
+        description: 'Instructions to ensure Industry mode returns structured JSON for state extraction.',
+        availableTags: ['{{output}}'],
+        template: `Analyze this quantum output and provide a one-sentence "Continuity Summary" for the NEXT batch. 
+Focus ONLY on the final configuration (e.g., "Pilot A is at JFK, Pilot B is at LHR"). 
+Wait, do NOT use natural language summaries if you can provide a JSON state. 
+Actually, just provide a concise summary of variables that must stay fixed.
+
+OUTPUT:
+{{output}}`
+    },
+    {
+        category: 'industry_template_fill',
+        title: 'Industry Sim: Template Filling',
+        description: 'Instructions for filling Python code templates with JSON parameters.',
+        availableTags: ['{{template}}', '{{parameters}}'],
+        template: `You are a strict string substitution parser. Your ONLY job is to take the provided template, replace the placeholders, and return the modified code block. 
+Do NOT rewrite, optimize, or change any logic. 
+Return ONLY the raw valid Python code. No markdown. No explanation.
+
+TEMPLATE CODE:
+{{template}}
+
+PARAMETERS:
+{{parameters}}
+
+INSTRUCTION: Fill the exact parameter values into the {{parameters.variableName}} placeholders. Ensure any values acting as loop dimensions are cast to int.`
     },
     {
         category: 'news_geo_backfill',

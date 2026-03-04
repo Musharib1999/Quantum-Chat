@@ -546,7 +546,7 @@ export async function generateQuantumCode(config: {
         let systemInstruction = 'You are a Quantum Expert. Return only Python code. No markdown. No explanation.';
 
         if (templateCode) {
-            codePrompt = await getDynamicPrompt('industry_json_wrapper', {
+            codePrompt = await getDynamicPrompt('industry_template_fill', {
                 template: templateCode,
                 parameters: JSON.stringify(formData)
             }, `TEMPLATE CODE:\n${templateCode}\n\nPARAMETERS:\n${JSON.stringify(formData)}\n\nINSTRUCTION: Fill the exact parameter values into the {{parameters.variableName}} placeholders. Ensure any values acting as loop dimensions are cast to int. Return ONLY the raw valid Python code without markdown blocks or reasoning.`);
