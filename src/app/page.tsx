@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/components/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { Shield, Cpu, ArrowRight, TrendingUp, BookOpen, Bot, Lock as LockIcon, Unlock as UnlockIcon, LogOut, Sun, Moon, CheckCircle, Menu, X, Atom } from 'lucide-react';
 
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, logout } = useAuth();
   const isDarkMode = theme === 'dark';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -48,12 +50,21 @@ export default function LandingPage() {
           <div className="flex items-center gap-8">
             {/* Actions */}
             <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-                className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white dark:bg-transparent dark:border-[#3066bb] dark:text-[#5c8deb] dark:hover:bg-[#3066bb] dark:hover:text-white font-bold rounded transition-all shadow-sm text-sm"
-              >
-                Login
-              </Link>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => logout()}
+                  className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white dark:bg-transparent dark:border-[#3066bb] dark:text-[#5c8deb] dark:hover:bg-[#3066bb] dark:hover:text-white font-bold rounded transition-all shadow-sm text-sm"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white dark:bg-transparent dark:border-[#3066bb] dark:text-[#5c8deb] dark:hover:bg-[#3066bb] dark:hover:text-white font-bold rounded transition-all shadow-sm text-sm"
+                >
+                  Login
+                </Link>
+              )}
             </div>
 
             {/* Mobile Menu Toggle */}
