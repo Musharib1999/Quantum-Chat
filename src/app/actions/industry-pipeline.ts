@@ -36,13 +36,17 @@ const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL || "http://127.0.0.1:8
 const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL || "http://127.0.0.1:8002";
 
 // --- Quantum Execution Helpers ---
+const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
+
 async function executeQuantumCircuit(circuitCode: string) {
     try {
-        console.log(`[Quantum Sim] Sending request to: ${QISKIT_SERVICE_URL}/execute`);
+        const url = `${QISKIT_SERVICE_URL}/api/simulate/qiskit`;
+        console.log(`[Quantum Sim] Sending request to: ${url}`);
 
-        const response = await axios.post(`${QISKIT_SERVICE_URL}/execute`, {
+        const response = await axios.post(url, {
             code: circuitCode
         }, {
+            headers: { 'X-API-Key': API_SECRET },
             timeout: 20000
         });
 
@@ -50,7 +54,7 @@ async function executeQuantumCircuit(circuitCode: string) {
     } catch (e: any) {
         console.error("Simulator Execution Fail:", e.message);
         if (e.code === 'ECONNREFUSED') {
-            return { error: "Qiskit Simulator is offline. Please ensure the Python service is running on Port 8001." };
+            return { error: "Qiskit Simulator is offline. Please ensure the Python service is running." };
         }
         return { error: `Quantum Service Error: ${e.message}` };
     }
@@ -58,11 +62,13 @@ async function executeQuantumCircuit(circuitCode: string) {
 
 async function executeDWaveAnnealer(code: string) {
     try {
-        console.log(`[DWave Sim] Sending request to: ${DWAVE_SERVICE_URL}/execute`);
+        const url = `${DWAVE_SERVICE_URL}/api/simulate/dwave`;
+        console.log(`[DWave Sim] Sending request to: ${url}`);
 
-        const response = await axios.post(`${DWAVE_SERVICE_URL}/execute`, {
+        const response = await axios.post(url, {
             code: code
         }, {
+            headers: { 'X-API-Key': API_SECRET },
             timeout: 60000
         });
 
@@ -70,7 +76,7 @@ async function executeDWaveAnnealer(code: string) {
     } catch (e: any) {
         console.error("D-Wave Execution Fail:", e.message);
         if (e.code === 'ECONNREFUSED') {
-            return { error: "D-Wave Simulator is offline. Please ensure the Python service is running on Port 8002." };
+            return { error: "D-Wave Simulator is offline. Please ensure the Python service is running." };
         }
         return { error: `Quantum Service Error: ${e.message}` };
     }
@@ -629,6 +635,13 @@ export async function runQuantumSimulator(config: {
         const result = isDWave
             ? await executeDWaveAnnealer(code)
             : await executeQuantumCircuit(code);
+
+        // Handle structured JSON responses (counts, energy) from main.py
+        if (result.success && !result.output) {
+            const formattedOutput = `Simulation Successful.\nBest Solution: ${JSON.stringify(result.best_solution || result.counts || result, null, 2)}\n${result.energy !== undefined ? `Energy: ${result.energy}` : ''}`;
+            return { output: formattedOutput, error: result.error };
+        }
+
         return { output: result.output || result.error || 'No output returned.', error: result.error };
     } catch (e: any) {
         return { output: '', error: e.message };

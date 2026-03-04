@@ -48,10 +48,11 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
     const parseOutputTable = (output: string): string => {
         const bestMatch = output.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
         if (!bestMatch) return output;
-        const allPairs = [...bestMatch[1].matchAll(/'?([^':,\s]+)'?\s*:\s*([\w.+-]+)/g)];
+        const allPairs = [...bestMatch[1].matchAll(/["']?([^"':,\s]+)["']?\s*:\s*([\w.+-]+)/g)];
         if (allPairs.length === 0) return output;
         const header = `| Variable | Value |\n|---|---|\n`;
-        const rows = allPairs.map(([, key, val]) => {
+        const rows = allPairs.map(([, rawKey, val]) => {
+            const key = rawKey.replace(/["']/g, ''); // Clean quotes
             const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
             const displayKey = pilotFlight
                 ? `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`
