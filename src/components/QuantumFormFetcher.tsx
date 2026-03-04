@@ -216,10 +216,10 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
 
             {/* Complexity & Batching Widget */}
             {form.qubitFormula ? (
-                <div className="bg-card border border-border p-5 rounded-2xl flex items-center justify-between group overflow-hidden relative shadow-sm transition-all hover:shadow-md hover:border-black/20">
+                <div className="bg-card border border-border p-5 rounded-2xl flex items-center justify-between group overflow-hidden relative shadow-sm transition-all hover:shadow-md hover:border-black/20 font-sans">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.02] rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
-                    <div className="flex items-center gap-4 relative z-10 w-full">
+                    <div className="flex items-center gap-4 relative z-10 w-full font-sans">
                         <div className="w-10 h-10 rounded-full bg-secondary/50 border border-border flex items-center justify-center text-foreground shrink-0 group-hover:bg-black group-hover:text-white transition-colors duration-300">
                             <Layers size={18} />
                         </div>
@@ -230,12 +230,12 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                             </div>
                         </div>
 
-                        <div className="text-right shrink-0">
-                            <div className="text-3xl font-black text-black leading-none transition-all duration-300 group-hover:scale-110">
+                        <div className="text-right shrink-0 font-sans">
+                            <div className="text-3xl font-black text-black leading-none tracking-tighter transition-all duration-300 group-hover:scale-110">
                                 {qubits > 0 ? qubits : '0'}
                             </div>
                             {form.batchingEnabled && (
-                                <div className="flex items-center justify-end gap-1 mt-1.5">
+                                <div className="flex items-center justify-end gap-1 mt-1.5 font-sans">
                                     <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border transition-all duration-300 ${batches > 1 ? 'bg-black text-white border-black' : 'bg-secondary text-muted-foreground border-border'}`}>
                                         {batches > 1 ? `${batches} BATCHES` : 'SINGLE BATCH'}
                                     </span>

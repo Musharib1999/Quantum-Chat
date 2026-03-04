@@ -216,13 +216,13 @@ export default function IndustryPage() {
 
                                                 {/* Sidebar Complexity Preview */}
                                                 {sessionConfig.problem && (
-                                                    <div className="mt-4 mx-2 p-3 bg-secondary/30 border border-border rounded-xl space-y-2 border-dashed group hover:bg-black transition-colors duration-300">
+                                                    <div className="mt-4 mx-2 p-3 bg-secondary/30 border border-border rounded-xl space-y-2 border-dashed group hover:bg-black transition-colors duration-300 font-sans">
                                                         <div className="flex items-center gap-2 text-muted-foreground group-hover:text-white transition-colors duration-300">
                                                             <Layers size={12} />
                                                             <span className="text-[10px] font-black uppercase tracking-widest">Quantum Ops</span>
                                                         </div>
-                                                        <p className="text-[9px] text-muted-foreground leading-tight group-hover:text-zinc-400 transition-colors duration-300">
-                                                            Capacity & batching split metrics are calculated in the next stage.
+                                                        <p className="text-[9px] text-muted-foreground leading-tight group-hover:text-zinc-400 transition-colors duration-300 italic">
+                                                            Capacity & batching metrics are calculated in the next stage.
                                                         </p>
                                                     </div>
                                                 )}
