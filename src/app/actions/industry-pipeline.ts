@@ -419,10 +419,36 @@ export async function generateQuantumCode(config: {
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
     try {
+        await dbConnect();
+        const mongoose = (await import('mongoose')).default;
+        const QuantumForm = mongoose.models.QuantumForm || (await import('@/models/QuantumForm')).default;
+
         const { provider, modelName } = await getDynamicLLM();
+
+        const formDef = await QuantumForm.findOne({
+            industry: new RegExp(`^${industry}$`, 'i'),
+            service: new RegExp(`^${service}$`, 'i'),
+            problem: new RegExp(`^${problem}$`, 'i')
+        }).lean();
+
+        let templateCode = "";
+        if (formDef && formDef.codeTemplates && formDef.codeTemplates.length > 0) {
+            const matched = formDef.codeTemplates.find((t: any) =>
+                hardware.toLowerCase().includes(t.hardware.toLowerCase()) ||
+                t.hardware.toLowerCase().includes(hardware.toLowerCase())
+            );
+            templateCode = matched?.code || "";
+        }
+
         let codePrompt = '';
-        if (isDWave) {
-            codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
+        let systemInstruction = 'You are a Quantum Expert. Return only Python code. No markdown. No explanation.';
+
+        if (templateCode) {
+            systemInstruction = 'You are a strict string substitution parser. Your ONLY job is to take the provided template, replace the placeholders, and return the modified code block. Do NOT rewrite, optimise, or change any logic. Return ONLY the final Python code. No markdown or explanation.';
+            codePrompt = `TEMPLATE CODE:\n${templateCode}\n\nPARAMETERS:\n${JSON.stringify(formData)}\n\nINSTRUCTION: Fill the exact parameter values into the {{parameters.variableName}} placeholders. Ensure any values acting as loop dimensions are cast to int. Return ONLY the raw valid Python code without markdown blocks or reasoning.`;
+        } else {
+            if (isDWave) {
+                codePrompt = `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
 CRITICAL: The ONLY valid BinaryQuadraticModel constructor is:
   BinaryQuadraticModel(linear: dict, quadratic: dict, offset: float, vartype: str)
   DO NOT pass num_variables or any other argument.
@@ -436,14 +462,15 @@ Write a script that:
    sampler = SimulatedAnnealingSampler(); sampleset = sampler.sample(bqm, num_reads=50)
    best = sampleset.first; print(f'Best: {best.sample}'); print(f'Energy: {best.energy:.4f}')
 Return ONLY the Python code. No markdown. No backticks. No explanation.`;
-        } else {
-            codePrompt = `Generate a complete, self-contained Python Qiskit script.
+            } else {
+                codePrompt = `Generate a complete, self-contained Python Qiskit script.
 Industry: ${industry} | Service: ${service} | Problem: ${problem} | Hardware: ${hardware}
 Parameters: ${JSON.stringify(formData)}
 Rules: Use qiskit and qiskit_aer. Build QuantumCircuit, add gates and measurements.
 IMPORTANT: Ensure any parameter variables used for loop dimensions or counts are cast to strict integers.
 Run: from qiskit_aer import AerSimulator; sim=AerSimulator(); job=sim.run(circuit,shots=1024); result=job.result(); counts=result.get_counts(); print(f"Results: {counts}")
 Return ONLY the Python code. No markdown. No explanation.`;
+            }
         }
 
         let code = '';
@@ -451,7 +478,7 @@ Return ONLY the Python code. No markdown. No explanation.`;
             if (!GROQ_API_KEY) return { code: "", error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
             const groq = new Groq({ apiKey: GROQ_API_KEY });
             const completion = await groq.chat.completions.create({
-                messages: [{ role: 'system', content: 'You are a Quantum Expert. Return only Python code. No markdown. No explanation.' }, { role: 'user', content: codePrompt }],
+                messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: codePrompt }],
                 model: modelName,
             });
             code = completion.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || '';
@@ -460,7 +487,7 @@ Return ONLY the Python code. No markdown. No explanation.`;
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({ model: modelName });
             const result = await model.generateContent([
-                "You are a Quantum Expert. Return only Python code. No markdown. No explanation.",
+                systemInstruction,
                 codePrompt
             ]);
             code = result.response.text().replace(/```python|```/g, '').trim() || '';

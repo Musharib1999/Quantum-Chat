@@ -503,8 +503,21 @@ export default function FormArchitect() {
                                                 className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] transition-all"
                                             />
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Template Code (Python)</label>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Template Code (Python)</label>
+
+                                                {fields.length > 0 && (
+                                                    <div className="flex gap-1 flex-wrap justify-end max-w-[60%]">
+                                                        <span className="text-[9px] text-muted-foreground mt-0.5">Available Variables:</span>
+                                                        {fields.map(f => (
+                                                            <code key={f.key} className="text-[9px] bg-secondary/80 text-foreground px-1.5 py-0.5 rounded border border-border">
+                                                                {`{{parameters.${f.key}}}`}
+                                                            </code>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                             <textarea
                                                 value={tmpl.code}
                                                 onChange={(e) => {
