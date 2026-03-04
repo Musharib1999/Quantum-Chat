@@ -231,9 +231,9 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
     const currentStepNum = workflow.kind === 'idle' ? 0 : workflow.kind === 'step1_loading' ? 1 : workflow.kind === 'step1_done' ? 1 : workflow.kind === 'step2_loading' ? 2 : workflow.kind === 'step2_done' ? 2 : 3;
 
     const steps = [
-        { num: 1, label: 'Generate Quantum Code', desc: 'LLM synthesises the circuit / BQM script' },
-        { num: 2, label: 'Run Simulator', desc: 'Execute on local quantum backend' },
-        { num: 3, label: 'Interpret Results', desc: 'LLM analyses the actual output data' },
+        { num: 1, label: 'Generate Quantum Code', desc: 'Quantum Guru AI converts the problem into optimized quantum circuits or BQM models' },
+        { num: 2, label: 'Run Simulator', desc: 'Execute the program on the selected quantum simulator or hardware' },
+        { num: 3, label: 'Interpret Results', desc: 'Quantum Guru AI analyzes measurement outputs and explains the solution in human terms' }
     ];
 
     return (
