@@ -5,7 +5,8 @@ import { Send, User, StopCircle, ShieldCheck, Eye, X, ChevronRight, Play, Loader
 import MarkdownRenderer from '../MarkdownRenderer';
 import QuantumChart from '../QuantumChart';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
-import { generateQuantumCode, runQuantumSimulator, interpretQuantumResults } from '@/app/actions/industry-pipeline';
+import { generateQuantumCode, runQuantumSimulator, interpretQuantumResults, savePipelineExperiment } from '@/app/actions/industry-pipeline';
+import { useAuth } from '@/context/AuthContext';
 
 interface IndustryChatProps {
     contextConfig?: any;
@@ -23,6 +24,7 @@ type WorkflowStage =
     | { kind: 'step3_done'; code: string; simOutput: string; analysis: string; chartData?: any };
 
 export default function IndustryChat({ contextConfig, placeholder, onAnalysisTriggered }: IndustryChatProps) {
+    const { user } = useAuth();
     const {
         messages,
         inputValue,
@@ -134,6 +136,25 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             const tableOutput = parseOutputTable(simOutput);
             const fullMsg = `${tableOutput}\n\n---\n\n${result.text}`;
             addBotMessage(fullMsg, result.chartData);
+
+            // SAVE to DB
+            try {
+                await savePipelineExperiment({
+                    userId: user?.email || 'anonymous',
+                    industry: contextConfig.industry || 'Unknown',
+                    service: contextConfig.service || 'Unknown',
+                    problem: contextConfig.problem || 'Unknown',
+                    hardware: contextConfig.hardware || 'Unknown',
+                    parameters: contextConfig.formData,
+                    qiskitCode: code,
+                    results: { output: simOutput },
+                    analysis: fullMsg,
+                    chartData: result.chartData
+                });
+            } catch (saveError) {
+                console.error("Experiment save failed in UI", saveError);
+            }
+
         } catch (e: any) {
             stopTimer();
             setWorkflow({ kind: 'step3_done', code, simOutput, analysis: `Error: ${e.message}` });

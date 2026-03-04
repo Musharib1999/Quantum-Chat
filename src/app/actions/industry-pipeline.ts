@@ -536,15 +536,59 @@ After the paragraph, generate a chart:
             text = result.response.text() || 'Analysis complete.';
         }
         let chartData = null;
-        const chartMatch = text.match(/\[CHART_DATA\]([\s\S]*?)\[\/CHART_DATA\]/);
-        if (chartMatch) {
-            try { chartData = JSON.parse(chartMatch[1]); } catch { }
-            text = text.replace(/\[CHART_DATA\][\s\S]*?\[\/CHART_DATA\]/, '').trim();
+        if (text.includes("[CHART_DATA]")) {
+            const chartMatch = text.match(/\[CHART_DATA\]\n([\s\S]*?)\n\[\/CHART_DATA\]/);
+            if (chartMatch && chartMatch[1]) {
+                try {
+                    chartData = JSON.parse(chartMatch[1]);
+                    text = text.replace(chartMatch[0], "").trim();
+                } catch (e: any) {
+                    console.error("Chart JSON Parse Error:", e);
+                }
+            }
         }
 
         return { text, chartData };
     } catch (e: any) {
-        return { text: `Interpretation failed: ${e.message}` };
+        return { text: "Analysis failed due to error: " + e.message, chartData: null };
     }
 }
 
+export async function savePipelineExperiment(data: {
+    userId?: string;
+    industry: string;
+    service: string;
+    problem: string;
+    hardware: string;
+    parameters: any;
+    qiskitCode: string;
+    results: any;
+    analysis: string;
+    chartData?: any;
+}) {
+    try {
+        await dbConnect();
+
+        // Lazy-load to prevent circular import or schema loading timing issues
+        const mongoose = (await import('mongoose')).default;
+        const Experiment = mongoose.models.Experiment || (await import('@/models/Experiment')).default;
+
+        await Experiment.create({
+            userId: data.userId || 'anonymous',
+            industry: data.industry,
+            service: data.service,
+            problem: data.problem,
+            hardware: data.hardware,
+            parameters: data.parameters,
+            qiskitCode: data.qiskitCode,
+            results: data.results,
+            analysis: data.analysis,
+            chartData: data.chartData,
+            timestamp: new Date()
+        });
+        return { success: true };
+    } catch (e: any) {
+        console.error("Failed to save experiment history:", e);
+        return { success: false, error: e.message };
+    }
+}
