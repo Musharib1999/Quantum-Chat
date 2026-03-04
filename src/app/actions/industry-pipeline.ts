@@ -627,6 +627,8 @@ Return ONLY the Python code. No markdown. No explanation.`);
             }
         }
 
+        const fullPrompt = `${systemInstruction}\n\n${codePrompt}`;
+
         let code = '';
         if (provider === 'groq') {
             if (!GROQ_API_KEY) return { code: "", batchesTotal, error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
@@ -635,17 +637,37 @@ Return ONLY the Python code. No markdown. No explanation.`);
                 messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: codePrompt }],
                 model: modelName,
             });
-            code = completion.choices[0]?.message?.content?.replace(/```python|```/g, '').trim() || '';
+            code = completion.choices[0]?.message?.content || '';
         } else {
             if (!GEMINI_API_KEY) return { code: "", batchesTotal, error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent([
-                systemInstruction,
-                codePrompt
-            ]);
-            code = result.response.text().replace(/```python|```/g, '').trim() || '';
+            const result = await model.generateContent(fullPrompt);
+            code = result.response.text() || '';
         }
+
+        // --- POST-PROCESS: Strip Hallucinations & Clean Code ---
+        // 1. Strip markdown code blocks
+        code = code.replace(/```python\s?([\s\S]*?)```/g, '$1');
+        code = code.replace(/```\s?([\s\S]*?)```/g, '$1');
+
+        // 2. Remove common hallucinated JSON or explanation trailers
+        // If the LLM returned a JSON block at the end (like in user's screenshot), cut it.
+        // We look for the literal string "{{templateCode}}" or JSON keys that shouldn't be here.
+        if (code.includes('{{templateCode}}') || code.includes('"explanation":') || code.includes('"code":')) {
+            const lines = code.split('\n');
+            const cleanLines = [];
+            for (const line of lines) {
+                // If we hit a line that looks like the start of a JSON object or contains the hallucination markers, stop.
+                if (line.trim().startsWith('{') || line.includes('{{templateCode}}') || line.includes('"explanation":')) {
+                    break;
+                }
+                cleanLines.push(line);
+            }
+            code = cleanLines.join('\n').trim();
+        }
+
+        code = code.trim();
 
         // --- FINAL SAFETY: HARD TEMPLATE SUBSTITUTION & INJECTION ---
         // 1. Hard Regex Substitution (Primary)
