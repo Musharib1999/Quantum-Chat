@@ -520,6 +520,17 @@ Return ONLY the Python code. No markdown. No explanation.`;
             code = result.response.text().replace(/```python|```/g, '').trim() || '';
         }
 
+        // --- FINAL SAFETY: HARD TEMPLATE SUBSTITUTION ---
+        // Even if the LLM hallucinated the placeholders back in, we force replace them here
+        if (templateCode || code.includes('{{parameters.')) {
+            Object.entries(formData).forEach(([key, val]) => {
+                const placeholder = new RegExp(`{{parameters\\.${key}}}`, 'g');
+                code = code.replace(placeholder, String(val));
+            });
+            // Clean up any remaining unmatched placeholders to prevent Python NameErrors
+            code = code.replace(/{{parameters\.[^}]+}}/g, 'None');
+        }
+
         // Always force correct dimod imports for D-Wave
         if (isDWave) {
             const correctImports = `import dimod\nfrom dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\nimport numpy as np\n\n`;
