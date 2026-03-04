@@ -9,7 +9,7 @@ import ExperimentDetailsModal from '@/components/ExperimentDetailsModal';
 import QuantumFormFetcher from '@/components/QuantumFormFetcher';
 import { getExperiments } from '@/app/actions/experiment';
 import axios from 'axios';
-import { ArrowLeft, CheckCircle2, BookOpen, ChevronRight } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, BookOpen, ChevronRight, Layers } from 'lucide-react';
 
 import IndustryLogin from '@/components/industry/IndustryLogin';
 import { useAuth } from '@/context/AuthContext';
@@ -151,7 +151,7 @@ export default function IndustryPage() {
                                                     setFlowStage('SELECTION');
                                                     setWizardStep('service');
                                                 }}
-                                                className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span className="truncate">{ind.label}</span>
                                             </div>
@@ -174,7 +174,7 @@ export default function IndustryPage() {
                                                     setFlowStage('SELECTION');
                                                     setWizardStep('problem');
                                                 }}
-                                                className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span className="truncate">{svc.label}</span>
                                             </div>
@@ -195,22 +195,39 @@ export default function IndustryPage() {
 
                                         if (problems.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Industry & Service</div>;
 
-                                        return problems.map((prob: any) => {
-                                            const isSelected = sessionConfig.problem === prob.label;
-                                            return (
-                                                <div
-                                                    key={prob.label}
-                                                    onClick={() => {
-                                                        setSessionConfig(prev => ({ ...prev, problem: prob.label, hardware: null, formData: undefined }));
-                                                        setFlowStage('SELECTION');
-                                                        setWizardStep('hardware');
-                                                    }}
-                                                    className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
-                                                >
-                                                    <span className="truncate" title={prob.label}>{prob.label}</span>
-                                                </div>
-                                            );
-                                        });
+                                        return (
+                                            <div className="space-y-1">
+                                                {problems.map((prob: any) => {
+                                                    const isSelected = sessionConfig.problem === prob.label;
+                                                    return (
+                                                        <div
+                                                            key={prob.label}
+                                                            onClick={() => {
+                                                                setSessionConfig(prev => ({ ...prev, problem: prob.label, hardware: null, formData: undefined }));
+                                                                setFlowStage('SELECTION');
+                                                                setWizardStep('hardware');
+                                                            }}
+                                                            className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                        >
+                                                            <span className="truncate" title={prob.label}>{prob.label}</span>
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                {/* Sidebar Complexity Preview */}
+                                                {sessionConfig.problem && (
+                                                    <div className="mt-4 mx-2 p-3 bg-[#3066bb]/5 border border-[#3066bb]/10 rounded-xl space-y-2 border-dashed">
+                                                        <div className="flex items-center gap-2 text-[#3066bb]">
+                                                            <Layers size={12} />
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider">Module Status</span>
+                                                        </div>
+                                                        <p className="text-[9px] text-muted-foreground leading-tight">
+                                                            Quantum complexity count and batching split will appear in the execution panel.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
                                     })()}
                                 </div>
                             </div>
@@ -233,7 +250,7 @@ export default function IndustryPage() {
                                                     // Just update hardware, stay in place
                                                     setSessionConfig(prev => ({ ...prev, hardware: hw.label }));
                                                 }}
-                                                className={`group flex items-center justify-between w-full gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring ring-1 ring-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                className={`group flex items-center justify-between w-full gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
                                                 <span className="truncate" title={hw.label}>{hw.label}</span>
                                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-muted-foreground bg-muted shrink-0`}>Offline</span>

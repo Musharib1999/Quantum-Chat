@@ -71,16 +71,19 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
         if (!form || !form.qubitFormula) return { qubits: 0, batches: 1 };
 
         let formula = form.qubitFormula;
-        // Replace placeholders with current values
+
+        // 1. Replace known parameters
         Object.keys(formData).forEach(key => {
-            const val = formData[key] || 0;
+            const val = formData[key] === undefined || formData[key] === '' ? 0 : formData[key];
             const regex = new RegExp(`{{${key}}}`, 'g');
             formula = formula.replace(regex, String(val));
         });
 
+        // 2. Replace any remaining {{...}} with 0 to avoid eval errors
+        formula = formula.replace(/{{[^}]+}}/g, '0');
+
         try {
-            // Basic math evaluation (safe enough for simple algebra)
-            // Replace any non-math characters for safety
+            // Basic math evaluation
             const sanitized = formula.replace(/[^0-9+\-*/().\s]/g, '');
             const qubits = Math.max(0, Math.ceil(eval(sanitized) || 0));
 
@@ -91,6 +94,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
 
             return { qubits, batches };
         } catch (e) {
+            console.error("Complexity calculation error:", e);
             return { qubits: 0, batches: 1, error: true };
         }
     };
@@ -211,40 +215,43 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
             </div>
 
             {/* Complexity & Batching Widget */}
-            {form.qubitFormula && (
-                <div className="bg-secondary/40 border border-[#3066bb]/20 p-5 rounded-2xl flex items-center justify-between group overflow-hidden relative">
+            {form.qubitFormula ? (
+                <div className="bg-[#3066bb]/5 border border-[#3066bb]/30 p-5 rounded-2xl flex items-center justify-between group overflow-hidden relative shadow-inner">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[#3066bb]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-10 h-10 rounded-full bg-[#3066bb]/10 border border-[#3066bb]/20 flex items-center justify-center text-[#3066bb]">
+                    <div className="flex items-center gap-4 relative z-10 w-full">
+                        <div className="w-10 h-10 rounded-full bg-[#3066bb]/10 border border-[#3066bb]/20 flex items-center justify-center text-[#3066bb] shrink-0">
                             <Layers size={18} />
                         </div>
-                        <div>
+                        <div className="flex-1">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-bold text-foreground">Estimated Complexity</span>
+                                <span className="text-xs font-bold text-foreground">Complexity Forecast</span>
                                 <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-border">Qubits</span>
                             </div>
-                            <p className="text-[10px] text-muted-foreground mt-0.5 italic">
-                                {form.qubitFormula.replace(/{{|}}/g, '')}
+                            <p className="text-[10px] text-muted-foreground mt-0.5 italic truncate max-w-[200px]" title={form.qubitFormula}>
+                                Formula: {form.qubitFormula.replace(/{{|}}/g, '')}
                             </p>
                         </div>
-                    </div>
 
-                    <div className="text-right relative z-10">
-                        <div className="text-2xl font-bold text-foreground transition-all duration-300 group-hover:scale-110 group-hover:text-[#3066bb]">
-                            {qubits > 0 ? qubits : '--'}
-                        </div>
-                        {form.batchingEnabled && batches > 1 && (
-                            <div className="flex items-center justify-end gap-1 mt-0.5">
-                                <span className="text-[10px] text-[#3066bb] font-bold px-1.5 py-0.5 bg-[#3066bb]/10 rounded border border-[#3066bb]/10 animate-pulse">
-                                    Split into {batches} Batches
-                                </span>
+                        <div className="text-right shrink-0">
+                            <div className="text-2xl font-bold text-[#3066bb] transition-all duration-300 group-hover:scale-110">
+                                {qubits > 0 ? qubits : '0'}
                             </div>
-                        )}
-                        {form.batchingEnabled && batches <= 1 && qubits > 0 && (
-                            <div className="text-[9px] text-muted-foreground">Single Execution</div>
-                        )}
+                            {form.batchingEnabled && (
+                                <div className="flex items-center justify-end gap-1 mt-0.5">
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${batches > 1 ? 'bg-[#3066bb]/10 border-[#3066bb]/20 text-[#3066bb] animate-pulse' : 'bg-secondary text-muted-foreground border-border'}`}>
+                                        {batches > 1 ? `${batches} Batches` : 'Single Batch'}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
+                </div>
+            ) : (
+                <div className="bg-secondary/30 border border-dashed border-border p-4 rounded-xl text-center">
+                    <p className="text-[10px] text-muted-foreground italic">
+                        Quantum complexity estimation not configured for this module.
+                    </p>
                 </div>
             )}
 

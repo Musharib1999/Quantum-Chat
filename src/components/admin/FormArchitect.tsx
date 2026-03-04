@@ -313,6 +313,15 @@ export default function FormArchitect() {
                                         ))}
                                         {form.fields && form.fields.length > 3 && <span className="text-[10px] text-muted-foreground/60">+{form.fields.length - 3} more</span>}
                                     </div>
+                                    {form.qubitFormula && (
+                                        <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-border/50">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-[#3066bb] animate-pulse" />
+                                            <span className="text-[10px] font-bold text-[#3066bb] uppercase tracking-wider">Complexity Active</span>
+                                            {form.batchingEnabled && (
+                                                <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-border">Batched</span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 <button
                                     onClick={() => editForm(form)}
