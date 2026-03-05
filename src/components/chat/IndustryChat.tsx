@@ -46,13 +46,54 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
 
     // Parse raw output into table if it contains key:value pairs
     const parseOutputTable = (output: string): string => {
-        const bestMatch = output.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
-        if (!bestMatch) return output;
-        const allPairs = [...bestMatch[1].matchAll(/["']?([^"':,\s]+)["']?\s*:\s*([\w.+-]+)/g)];
-        if (allPairs.length === 0) return output;
+        let bestSolution: Record<string, string> = {};
+        let lowestEnergy: number | null = null;
+        let foundStructured = false;
+
+        // 1. Try Quantum JSON tags (Handles multiple batches too)
+        const jsonMatches = [...output.matchAll(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/g)];
+        if (jsonMatches.length > 0) {
+            jsonMatches.forEach(match => {
+                try {
+                    const data = JSON.parse(match[1]);
+                    if (data.best_solution) {
+                        foundStructured = true;
+                        Object.entries(data.best_solution).forEach(([k, v]) => {
+                            bestSolution[k] = String(v);
+                        });
+                    }
+                    if (data.energy !== undefined) {
+                        lowestEnergy = lowestEnergy === null ? data.energy : Math.min(lowestEnergy, data.energy);
+                    }
+                } catch (e) {
+                    console.warn("Table parse error:", e);
+                }
+            });
+        }
+
+        // 2. Fallback to legacy plain-text regex
+        if (!foundStructured) {
+            const bestMatch = output.match(/Best(?:\s+solution)?:\s*\{([^}]+)\}/i);
+            if (!bestMatch) return output;
+            const pairs = [...bestMatch[1].matchAll(/["']?([^"':,\s]+)["']?\s*:\s*([\w.+-]+)/g)];
+            pairs.forEach(([, k, v]) => {
+                bestSolution[k] = v;
+            });
+            const energyMatch = output.match(/Energy:\s*([-\d.]+)/i);
+            if (energyMatch) {
+                lowestEnergy = parseFloat(energyMatch[1]);
+            }
+        }
+
+        const allKeys = Object.keys(bestSolution);
+        if (allKeys.length === 0) return output;
+
         const header = `| Variable | Value |\n|---|---|\n`;
-        const rows = allPairs.map(([, rawKey, val]) => {
+        const rows = allKeys.map(rawKey => {
+            const val = bestSolution[rawKey];
             const key = rawKey.replace(/["']/g, ''); // Clean quotes
+
+            // Format variables dynamically (x_pilot_route_day)
             const xMatch = key.match(/x_(\w+)_(\w+)(?:_(\w+))?/i);
             const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
 
@@ -70,8 +111,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             const displayVal = isNaN(numVal) ? val : numVal === 1 ? '✅ Assigned' : numVal === 0 ? '⬜ Not Assigned' : numVal.toFixed(4);
             return `| ${displayKey} | ${displayVal} |`;
         });
-        const energyMatch = output.match(/Energy:\s*([-\d.]+)/i);
-        const energyLine = energyMatch ? `\n\n> **Lowest Energy:** \`${energyMatch[1]}\`` : '';
+
+        const energyLine = lowestEnergy !== null ? `\n\n> **Lowest Energy:** \`${lowestEnergy.toFixed(4)}\`` : '';
         return `**⚙️ Simulator Output**\n\n${header}${rows.join('\n')}${energyLine}`;
     };
 
