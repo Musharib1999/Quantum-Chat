@@ -888,7 +888,7 @@ After the paragraph, generate a chart showing assignment counts:
                 return num.toString().split('').map(c => map[c] || c).join('');
             };
             const msg = `Explored a combinatorial space of 2${toSuperscript(qubitCount)} scenarios and converged to a minimum-energy configuration representing the optimal solution.`;
-            text += `\n\n> ✨ *${msg}*`;
+            text += `\n\n*✨ ${msg}*`;
         }
 
         return { text, chartData };
