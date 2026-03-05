@@ -764,6 +764,8 @@ export async function interpretQuantumResults(config: {
         let totalEnergy = 0;
         let allFormattedAssignments: string[] = [];
 
+        let extractedPlotlyChart: any = null;
+
         // 1. Try robust tagged extraction first
         const taggedMatches = [...rawOutput.matchAll(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/g)];
 
@@ -774,6 +776,7 @@ export async function interpretQuantumResults(config: {
                     if (data.best_solution) Object.assign(unifiedSolution, data.best_solution);
                     if (data.energy !== undefined) totalEnergy += data.energy;
                     if (data.formatted_assignments) allFormattedAssignments.push(...data.formatted_assignments);
+                    if (data.plotly_chart) extractedPlotlyChart = data.plotly_chart;
                 } catch (e) {
                     console.warn("Failed to parse tagged JSON", e);
                 }
@@ -868,8 +871,8 @@ After the paragraph, generate a chart showing assignment counts:
             ]);
             text = result.response.text() || 'Analysis complete.';
         }
-        let chartData = null;
-        if (text.includes("[CHART_DATA]")) {
+        let chartData = extractedPlotlyChart || null;
+        if (!chartData && text.includes("[CHART_DATA]")) {
             const chartMatch = text.match(/\[CHART_DATA\]\n([\s\S]*?)\n\[\/CHART_DATA\]/);
             if (chartMatch && chartMatch[1]) {
                 try {
