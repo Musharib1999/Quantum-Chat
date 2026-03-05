@@ -88,32 +88,86 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         const allKeys = Object.keys(bestSolution);
         if (allKeys.length === 0) return output;
 
-        const header = `| Variable | Value |\n|---|---|\n`;
-        const rows = allKeys.map(rawKey => {
-            const val = bestSolution[rawKey];
+        const pilotGroupings: Record<string, { day: string, route: string }[]> = {};
+        const otherAssigned: string[] = [];
+        let hasGroupedData = false;
+
+        allKeys.forEach(rawKey => {
+            const val = parseFloat(bestSolution[rawKey]);
             const key = rawKey.replace(/["']/g, ''); // Clean quotes
 
-            // Format variables dynamically (x_pilot_route_day)
-            const xMatch = key.match(/x_(\w+)_(\w+)(?:_(\w+))?/i);
-            const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
+            if (val === 1) {
+                // Check for x_pilot_route_day or x_pilot_route
+                const xMatch = key.match(/x_(\w+)_(\w+)(?:_(\w+))?/i);
+                const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
 
-            let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-            if (xMatch) {
-                const [, p, r, d] = xMatch;
-                displayKey = `Pilot ${p} → Flight ${r}`;
-                if (d !== undefined) displayKey += ` (Day ${d})`;
-            } else if (pilotFlight) {
-                displayKey = `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`;
+                if (xMatch) {
+                    const [, p, r, d] = xMatch;
+                    if (!pilotGroupings[p]) pilotGroupings[p] = [];
+                    pilotGroupings[p].push({ day: d !== undefined ? d : 'N/A', route: r });
+                    hasGroupedData = true;
+                } else if (pilotFlight) {
+                    const [, p, r] = pilotFlight;
+                    if (!pilotGroupings[p]) pilotGroupings[p] = [];
+                    pilotGroupings[p].push({ day: 'N/A', route: r });
+                    hasGroupedData = true;
+                } else {
+                    let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    otherAssigned.push(displayKey);
+                }
             }
-
-            const numVal = parseFloat(val);
-            const displayVal = isNaN(numVal) ? val : numVal === 1 ? '✅ Assigned' : numVal === 0 ? '⬜ Not Assigned' : numVal.toFixed(4);
-            return `| ${displayKey} | ${displayVal} |`;
         });
 
+        let outputStr = '';
+
+        if (hasGroupedData) {
+            const sortedPilots = Object.keys(pilotGroupings).sort((a, b) => parseInt(a) - parseInt(b));
+            sortedPilots.forEach(p => {
+                outputStr += `**Pilot ${p}**\n`;
+                const assignments = pilotGroupings[p].sort((a, b) => {
+                    if (a.day === 'N/A' || b.day === 'N/A') return 0;
+                    return parseInt(a.day) - parseInt(b.day);
+                });
+                assignments.forEach(a => {
+                    const dayStr = a.day !== 'N/A' ? `Day ${a.day}` : 'Assignment';
+                    outputStr += `- ${dayStr}: Route ${a.route}\n`;
+                });
+                outputStr += '\n'; // Add spacing between pilots
+            });
+
+            if (otherAssigned.length > 0) {
+                outputStr += `**Other Assignments**\n` + otherAssigned.map(k => `- ${k}\n`).join('');
+            }
+            outputStr = outputStr.trim();
+        } else {
+            // Fallback to standard table if no pilot groupings found
+            const header = `| Variable | Value |\n|---|---|\n`;
+            const rows = allKeys.map(rawKey => {
+                const val = bestSolution[rawKey];
+                const key = rawKey.replace(/["']/g, '');
+
+                const xMatch = key.match(/x_(\w+)_(\w+)(?:_(\w+))?/i);
+                const pilotFlight = key.match(/pilot[_\s]?(\w+)[_\s]flight[_\s]?(\w+)/i);
+
+                let displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+                if (xMatch) {
+                    const [, p, r, d] = xMatch;
+                    displayKey = `Pilot ${p} → Flight ${r}`;
+                    if (d !== undefined) displayKey += ` (Day ${d})`;
+                } else if (pilotFlight) {
+                    displayKey = `Pilot ${pilotFlight[1]} → Flight ${pilotFlight[2]}`;
+                }
+
+                const numVal = parseFloat(val);
+                const displayVal = isNaN(numVal) ? val : numVal === 1 ? '✅ Assigned' : numVal === 0 ? '⬜ Not Assigned' : numVal.toFixed(4);
+                return `| ${displayKey} | ${displayVal} |`;
+            });
+            outputStr = `${header}${rows.join('\n')}`;
+        }
+
         const energyLine = lowestEnergy !== null ? `\n\n> **Lowest Energy:** \`${lowestEnergy.toFixed(4)}\`` : '';
-        return `**⚙️ Simulator Output**\n\n${header}${rows.join('\n')}${energyLine}`;
+        return `**⚙️ Simulator Output**\n\n${outputStr}${energyLine}`;
     };
 
     // Start timer
