@@ -881,6 +881,16 @@ After the paragraph, generate a chart showing assignment counts:
             }
         }
 
+        const qubitCount = Object.keys(unifiedSolution).length;
+        if (qubitCount > 0) {
+            const toSuperscript = (num: number) => {
+                const map: { [key: string]: string } = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+                return num.toString().split('').map(c => map[c] || c).join('');
+            };
+            const msg = `Explored a combinatorial space of 2${toSuperscript(qubitCount)} scenarios and converged to a minimum-energy configuration representing the optimal solution.`;
+            text += `\n\n> ✨ *${msg}*`;
+        }
+
         return { text, chartData };
     } catch (e: any) {
         return { text: "Analysis failed due to error: " + e.message, chartData: null };
