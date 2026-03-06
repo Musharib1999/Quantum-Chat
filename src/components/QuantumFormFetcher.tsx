@@ -249,10 +249,10 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                             <div className="text-3xl font-black text-black leading-none tracking-tighter transition-all duration-300 group-hover:scale-110">
                                 {qubits > 0 ? qubits : '0'}
                             </div>
-                            {form.batchingEnabled && batches > 1 && (
+                            {form.batchingEnabled && (
                                 <div className="flex items-center justify-end gap-1 mt-1.5 font-sans">
-                                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full border bg-black text-white border-black transition-all duration-300">
-                                        {batches} BATCHES
+                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border transition-all duration-300 ${batches > 1 ? 'bg-black text-white border-black' : 'bg-secondary text-muted-foreground border-border'}`}>
+                                        {batches > 1 ? `${batches} BATCHES` : 'SINGLE BATCH'}
                                     </span>
                                 </div>
                             )}

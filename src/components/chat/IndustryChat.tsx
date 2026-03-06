@@ -250,10 +250,10 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 });
 
                 if (simRes.error) {
-                    throw new Error(totalBatches > 1 ? `Batch ${b} Failed: ${simRes.error}` : simRes.error);
+                    throw new Error(`Batch ${b} Failed: ${simRes.error}`);
                 }
 
-                combinedOutput += totalBatches > 1 ? `\n\n--- BATCH ${b} ---\n${simRes.output}` : simRes.output;
+                combinedOutput += `\n\n--- BATCH ${b} ---\n${simRes.output}`;
 
                 // 3. Extract state for next batch if needed
                 if (b < totalBatches) {
@@ -274,7 +274,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             setWorkflow({
                 kind: 'step2_done',
                 code: initialCode,
-                simOutput: totalBatches > 1 ? `Error during batch execution: ${e.message}` : `Simulator Error: ${e.message}`,
+                simOutput: `Error during batch execution: ${e.message}`,
                 totalBatches
             });
         }
@@ -497,7 +497,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                     {/* Right-side action */}
                                                     {isActive && (
                                                         <div className="flex items-center gap-2">
-                                                            {step.num === 2 && totalBatches > 1 && (
+                                                            {step.num === 2 && (
                                                                 <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
                                                                     BATCH {currentBatch}/{totalBatches}
                                                                 </span>
