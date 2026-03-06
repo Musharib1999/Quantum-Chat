@@ -182,7 +182,7 @@ async function updateFinance() {
                         {
                             key: "sector",
                             label: "Target Sectors",
-                            type: "multiselect",
+                            type: "multi-select",
                             options: uniqueSectors.sort(),
                             description: "Select one or more industries to include in the stock universe."
                         },
