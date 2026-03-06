@@ -293,9 +293,35 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             stopTimer();
             setWorkflow({ kind: 'step3_done', code, simOutput, analysis: result.text, chartData: result.chartData });
 
+            // Generate HTML Data Table for Deterministic Routing Output
+            let tableHtml = "";
+            if (result.assignmentsTable && result.assignmentsTable.length > 0) {
+                tableHtml = `
+**Deterministic Quantum Assignments:**
+<div className="overflow-x-auto mt-4 mb-6 border border-border rounded-xl">
+    <table className="w-full text-sm text-left text-foreground">
+        <thead className="bg-secondary/50 font-medium">
+            <tr>
+                <th className="px-4 py-3">Day</th>
+                <th className="px-4 py-3">Pilot</th>
+                <th className="px-4 py-3">Route</th>
+            </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+            ${result.assignmentsTable.map((row: any) => `
+                <tr className="hover:bg-secondary/30 transition-colors">
+                    <td className="px-4 py-3 font-medium">${row.day}</td>
+                    <td className="px-4 py-3">${row.pilot}</td>
+                    <td className="px-4 py-3 text-blue-500">${row.route}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    </table>
+</div>`;
+            }
+
             // Inject final analysis as a bot message
-            const tableOutput = parseOutputTable(simOutput);
-            const fullMsg = `${tableOutput}\n\n---\n\n${result.text}`;
+            const fullMsg = `${tableHtml}\n\n${result.text}`;
             addBotMessage(fullMsg, result.chartData);
 
             // SAVE to DB
@@ -310,7 +336,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     qiskitCode: code,
                     results: { output: simOutput },
                     analysis: fullMsg,
-                    chartData: result.chartData
+                    chartData: result.chartData,
+                    assignmentsTable: result.assignmentsTable
                 });
             } catch (saveError) {
                 console.error("Experiment save failed in UI", saveError);

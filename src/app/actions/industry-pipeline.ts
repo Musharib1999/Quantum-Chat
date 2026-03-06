@@ -742,7 +742,7 @@ export async function runQuantumSimulator(config: {
 
 export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string;
-}): Promise<{ text: string; chartData?: any }> {
+}): Promise<{ text: string; chartData?: any; assignmentsTable?: any[] }> {
     const { problem, industry, hardware, rawOutput } = config;
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
@@ -844,7 +844,7 @@ After the paragraph, generate a chart showing assignment counts:
 
         let text = '';
         if (provider === 'groq') {
-            if (!GROQ_API_KEY) return { text: "Analysis unavailable: Groq API Key is missing.", chartData: null };
+            if (!GROQ_API_KEY) return { text: "Analysis unavailable: Groq API Key is missing.", chartData: null, assignmentsTable: [] };
             const groq = new Groq({ apiKey: GROQ_API_KEY });
             const completion = await groq.chat.completions.create({
                 messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
@@ -852,7 +852,7 @@ After the paragraph, generate a chart showing assignment counts:
             });
             text = completion.choices[0]?.message?.content || 'Analysis complete.';
         } else {
-            if (!GEMINI_API_KEY) return { text: "Analysis unavailable: Gemini API Key is missing.", chartData: null };
+            if (!GEMINI_API_KEY) return { text: "Analysis unavailable: Gemini API Key is missing.", chartData: null, assignmentsTable: [] };
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({ model: modelName });
             const result = await model.generateContent([
@@ -861,6 +861,41 @@ After the paragraph, generate a chart showing assignment counts:
             ]);
             text = result.response.text() || 'Analysis complete.';
         }
+
+        // --- DETERMINISTIC TABLE PARSER ---
+        const assignmentsTable: any[] = [];
+
+        // Parse x_P_R_D format commonly used in routing/rostering
+        Object.entries(unifiedSolution).forEach(([key, val]) => {
+            if (val === 1 && typeof key === 'string' && key.startsWith('x_')) {
+                const parts = key.split('_');
+                if (parts.length >= 4) {
+                    const pilot = parseInt(parts[1]);
+                    const route = parseInt(parts[2]);
+                    const day = parseInt(parts[3]);
+
+                    if (!isNaN(pilot) && !isNaN(route) && !isNaN(day)) {
+                        assignmentsTable.push({
+                            id: key,
+                            pilot: `Pilot ${pilot + 1}`,
+                            route: `Route ${route + 1}`,
+                            day: `Day ${day + 1}`
+                        });
+                    }
+                }
+            }
+        });
+
+        // Sort table chronologically by Day, then Pilot
+        assignmentsTable.sort((a, b) => {
+            const dayA = parseInt(a.day.replace('Day ', ''));
+            const dayB = parseInt(b.day.replace('Day ', ''));
+            if (dayA !== dayB) return dayA - dayB;
+
+            const pA = parseInt(a.pilot.replace('Pilot ', ''));
+            const pB = parseInt(b.pilot.replace('Pilot ', ''));
+            return pA - pB;
+        });
         let chartData = extractedPlotlyChart || null;
         if (!chartData && text.includes("[CHART_DATA]")) {
             const chartMatch = text.match(/\[CHART_DATA\]\n([\s\S]*?)\n\[\/CHART_DATA\]/);
@@ -884,9 +919,9 @@ After the paragraph, generate a chart showing assignment counts:
             text += `\n\n*✨ ${msg}*`;
         }
 
-        return { text, chartData };
+        return { text, chartData, assignmentsTable };
     } catch (e: any) {
-        return { text: "Analysis failed due to error: " + e.message, chartData: null };
+        return { text: "Analysis failed due to error: " + e.message, chartData: null, assignmentsTable: [] };
     }
 }
 
@@ -901,6 +936,7 @@ export async function savePipelineExperiment(data: {
     results: any;
     analysis: string;
     chartData?: any;
+    assignmentsTable?: any[];
 }) {
     try {
         await dbConnect();
@@ -920,6 +956,7 @@ export async function savePipelineExperiment(data: {
             results: data.results,
             analysis: data.analysis,
             chartData: data.chartData,
+            assignmentsTable: data.assignmentsTable,
             timestamp: new Date()
         });
         return { success: true };
