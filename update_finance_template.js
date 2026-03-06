@@ -44,8 +44,12 @@ risk = np.array([row["risk"] / 100 for row in data])
 # -----------------------------
 # PARAMETERS FROM UI
 # -----------------------------
+print(f"DEBUG: Parameters received in Python: {json.dumps(dict(parameters))}")
+
 risk_penalty = float(parameters.get('risk_penalty', 5.0))
-budget = int(parameters.get('max_companies', 3))
+
+# Robust budget extraction (check common key variations)
+budget = int(parameters.get('max_companies') or parameters.get('portfolio_size') or parameters.get('maxCompanies') or 10)
 
 # Ensure budget doesn't exceed available assets
 budget = min(budget, n)
@@ -75,7 +79,8 @@ for i, j in itertools.combinations(range(n), 2):
 # -----------------------------
 # BUDGET CONSTRAINT (Penalty Method)
 # -----------------------------
-A = 10.0 # Strength of the selection quota
+# Increase A for a HARD constraint (Selection of exactly 'budget' assets)
+A = 50.0 
 for i in range(n):
     var = f"x_{i}"
     Q[(var, var)] = Q.get((var, var), 0) + A * (1 - 2 * budget)
@@ -133,12 +138,12 @@ def sanitize_for_json(obj):
 
 result = {
     "assignmentsTable": [
-        {"day": "Selected", "pilot": p["ticker"], "route": f"{p['company']} | Ret: {p['expected_return']} | Risk: {p['risk']}"}
+        {"day": "Selected", "pilot": p["ticker"], "route": f"{p['company']} (Ret: {p['expected_return']}, Risk: {p['risk']})"}
         for p in portfolio
     ],
     "best_solution": sanitize_for_json(best),
     "energy": float(energy),
-    "summary": f"Targeting {budget} assets. Quantum solver selected {len(portfolio)} stocks with an expected aggregate return of {total_return:.2f}% and an average portfolio risk of {avg_risk:.2f}%.",
+    "summary": f"Optimization Target: {budget} assets. Quantum solver converged to {len(portfolio)} stocks with an aggregate expected return of {total_return:.2f}% and a portfolio-wide average risk of {avg_risk:.2f}%.",
 }
 
 # GENERATE PLOTLY CHART
