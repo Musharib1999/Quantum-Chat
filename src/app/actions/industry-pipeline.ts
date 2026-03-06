@@ -870,7 +870,7 @@ After the paragraph, generate a chart showing assignment counts:
             }
         } catch (llmError: any) {
             console.error("LLM Error during interpretation, falling back to deterministic only.", llmError);
-            text = `*AI Executive Summary Unavailable.* (Error: ${llmError.message || 'Token limit reached or API timeout'}). The raw deterministic data is presented below.`;
+            text = `*Quantum Guru AI is currently offline. The experiment summary will be generated and added to the history once the AI service is restored.*`;
         }
 
         // --- DETERMINISTIC TABLE PARSER ---
