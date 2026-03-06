@@ -592,6 +592,7 @@ Return ONLY the Python code. No markdown. No explanation.`);
         let startDim = 0;
         let endDim = 0;
         const sanitizedFormData: Record<string, any> = { ...formData };
+        let activeQubitCount = 0;
 
         // --- DATA INJECTION FOR PORTFOLIO OPTIMIZATION ---
         if (problem.toLowerCase().includes('portfolio optimization')) {
@@ -611,23 +612,30 @@ Return ONLY the Python code. No markdown. No explanation.`);
                 // Increase limit to 50 for multi-sector breath
                 const companies = await PortfolioCompany.find(query).limit(50).lean();
                 sanitizedFormData.portfolio_data = companies;
-                console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies for sectors:`, sectorParam);
+                activeQubitCount = companies.length;
+                sanitizedFormData.companies_count = activeQubitCount;
+                console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies. Active Qubit Count: ${activeQubitCount}`);
             } catch (e) {
                 console.error("Portfolio data injection failed:", e);
             }
         }
 
-        if (formDef?.batchingEnabled && formDef.qubitFormula) {
+        if (formDef?.batchingEnabled) {
             try {
-                let formula = formDef.qubitFormula;
-                Object.keys(formData).forEach(key => {
-                    const regex = new RegExp(`{{${key}}}`, 'g');
-                    formula = formula.replace(regex, String(formData[key]));
-                });
-                const sanitizedMath = formula.replace(/[^0-9+\-*/().\s]/g, '');
-                const totalQubits = Math.ceil(eval(sanitizedMath));
+                let totalQubits = 0;
+                if (activeQubitCount > 0) {
+                    totalQubits = activeQubitCount;
+                } else if (formDef.qubitFormula) {
+                    let formula = formDef.qubitFormula;
+                    Object.keys(formData).forEach(key => {
+                        const regex = new RegExp(`{{${key}}}`, 'g');
+                        formula = formula.replace(regex, String(formData[key]));
+                    });
+                    const sanitizedMath = formula.replace(/[^0-9+\-*/().\s]/g, '');
+                    totalQubits = Math.ceil(eval(sanitizedMath));
+                }
                 const maxPerBatch = formDef.maxQubitsPerBatch || 20;
-                batchesTotal = Math.ceil(totalQubits / maxPerBatch);
+                batchesTotal = Math.max(1, Math.ceil(totalQubits / maxPerBatch));
 
                 if (config.batchIndex) {
                     const b = config.batchIndex;
@@ -794,7 +802,11 @@ export async function interpretQuantumResults(config: {
                     if (data.formatted_assignments) allFormattedAssignments.push(...data.formatted_assignments);
                     if (data.plotly_chart) extractedPlotlyChart = data.plotly_chart;
                     if (data.assignmentsTable) finalAssignmentsTable.push(...data.assignmentsTable);
-                    if (data.summary) finalSummary = data.summary;
+
+                    // Only use summary if it's substantial and not a "Waiting" placeholder
+                    if (data.summary && (!finalSummary || (!data.summary.includes('Waiting') && !data.summary.includes('No stocks')))) {
+                        finalSummary = data.summary;
+                    }
                 } catch (e) {
                     console.warn("Failed to parse tagged JSON", e);
                 }
