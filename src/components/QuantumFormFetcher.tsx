@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Settings, Play, Info, Layers, ChevronDown, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Settings, Play, Info, Layers, ChevronDown, Building } from 'lucide-react';
 
 interface IField {
     label: string;
@@ -38,7 +37,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeInfoSector, setActiveInfoSector] = useState<any | null>(null);
+    const [expandedSectors, setExpandedSectors] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         const fetchForm = async () => {
@@ -131,19 +130,20 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                         </div>
                     </div>
                 ) : effectiveType === 'multi-select' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 relative">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                         {field.options?.map((opt: any) => {
                             const label = typeof opt === 'string' ? opt : opt.label;
                             const value = typeof opt === 'string' ? opt : opt.value;
                             const subOptions = typeof opt === 'object' ? opt.subOptions : null;
                             const isSelected = (formData[field.key] || []).includes(value);
+                            const isExpanded = expandedSectors[value];
 
                             return (
-                                <div key={value} className="relative group">
+                                <div key={value} className="flex flex-col gap-2">
                                     <div
-                                        className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-500 cursor-pointer ${isSelected
-                                            ? 'bg-[#1BB0CE]/5 border-[#1BB0CE] shadow-[0_0_20px_rgba(27,176,206,0.05)]'
-                                            : 'bg-secondary/10 border-border hover:border-[#1BB0CE]/30'
+                                        className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 group cursor-pointer ${isSelected
+                                            ? 'bg-[#1BB0CE]/10 border-[#1BB0CE] shadow-[0_0_15px_rgba(27,176,206,0.1)]'
+                                            : 'bg-secondary/30 border-border hover:border-[#1BB0CE]/50'
                                             }`}
                                         onClick={() => {
                                             const current = formData[field.key] || [];
@@ -154,7 +154,11 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                                         }}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <span className={`text-sm font-bold tracking-tight transition-colors ${isSelected ? 'text-[#1BB0CE]' : 'text-foreground group-hover:text-[#1BB0CE]'}`}>
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isSelected ? 'bg-[#1BB0CE] text-white' : 'bg-secondary text-muted-foreground group-hover:text-[#1BB0CE]'
+                                                }`}>
+                                                <Building size={14} />
+                                            </div>
+                                            <span className={`text-sm font-bold tracking-tight ${isSelected ? 'text-[#1BB0CE]' : 'text-foreground'}`}>
                                                 {label}
                                             </span>
                                         </div>
@@ -164,73 +168,34 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setActiveInfoSector(opt);
+                                                    setExpandedSectors(prev => ({ ...prev, [value]: !prev[value] }));
                                                 }}
-                                                className={`p-2 rounded-lg hover:bg-secondary transition-all text-muted-foreground hover:text-[#1BB0CE]`}
+                                                className={`p-1.5 rounded-lg hover:bg-secondary transition-all ${isExpanded ? 'rotate-180 text-[#1BB0CE]' : 'text-muted-foreground'}`}
                                             >
-                                                <ChevronDown size={14} className="-rotate-90" />
+                                                <ChevronDown size={14} />
                                             </button>
                                         )}
                                     </div>
+
+                                    {/* Expandable Sub-Options (Companies) */}
+                                    {isExpanded && subOptions && (
+                                        <div className="mx-2 p-3 bg-secondary/20 border-x border-b border-border/50 rounded-b-xl animate-in slide-in-from-top-2 duration-300">
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-2 px-1">Constituent Assets</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {subOptions.map((ticker: string) => (
+                                                    <span
+                                                        key={ticker}
+                                                        className="px-2 py-0.5 bg-card border border-border/50 rounded text-[10px] font-mono font-bold text-foreground"
+                                                    >
+                                                        {ticker}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
-
-                        {/* HIGH-END SIDE MODAL (OVERLAY) */}
-                        <AnimatePresence>
-                            {activeInfoSector && (
-                                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 md:justify-end bg-black/40 backdrop-blur-sm"
-                                    onClick={() => setActiveInfoSector(null)}>
-                                    <motion.div
-                                        initial={{ opacity: 0, x: 100, scale: 0.95 }}
-                                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                                        exit={{ opacity: 0, x: 100, scale: 0.95 }}
-                                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-full max-w-[320px] bg-card border border-border shadow-2xl rounded-[2.5rem] overflow-hidden flex flex-col"
-                                    >
-                                        <div className="p-6 border-b border-border/50 bg-secondary/20 flex items-center justify-between">
-                                            <div>
-                                                <p className="text-[10px] font-black text-[#1BB0CE] uppercase tracking-[0.2em] mb-1">Sector Details</p>
-                                                <h3 className="text-xl font-black text-foreground tracking-tighter">{activeInfoSector.label}</h3>
-                                            </div>
-                                            <button
-                                                onClick={() => setActiveInfoSector(null)}
-                                                className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300"
-                                            >
-                                                <X size={18} />
-                                            </button>
-                                        </div>
-
-                                        {/* Modal Body */}
-                                        <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh] custom-scrollbar">
-                                            <div className="space-y-2">
-                                                <p className="text-xs font-bold text-muted-foreground/80">Constituents Found:</p>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    {activeInfoSector.subOptions?.map((ticker: string) => (
-                                                        <div
-                                                            key={ticker}
-                                                            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-secondary/30 border border-border hover:border-[#1BB0CE]/50 transition-all group/ticker"
-                                                        >
-                                                            <span className="text-sm font-black text-foreground leading-none group-hover/ticker:text-[#1BB0CE] transition-colors">
-                                                                {ticker}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2 mt-4">
-                                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Quantum Tip</p>
-                                                <p className="text-[11px] text-zinc-400 leading-relaxed italic">
-                                                    These tickers will be injected into our QUBO solver to optimize risk-adjusted returns within the {activeInfoSector.label} universe.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                </div>
-                            )}
-                        </AnimatePresence>
                         {(!field.options || field.options.length === 0) && (
                             <p className="text-[10px] text-muted-foreground italic p-2">No options available</p>
                         )}
