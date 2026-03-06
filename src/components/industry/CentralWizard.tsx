@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Cpu, Layers, Zap, Loader2, PlaneTakeoff, Shield, TrendingUp } from 'lucide-react';
+import { Briefcase, Cpu, Layers, Zap, Loader2, PlaneTakeoff, Shield, TrendingUp, Share2, CalendarClock, Atom } from 'lucide-react';
 
 interface CentralWizardProps {
     step: 'industry' | 'service' | 'problem' | 'hardware';
@@ -36,6 +36,14 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
         if (l.includes('cyber') || l.includes('security')) return <Shield size={24} />;
         if (l.includes('finance')) return <TrendingUp size={24} />;
         return <Briefcase size={24} />;
+    };
+
+    const getServiceIcon = (label: string) => {
+        const l = label.toLowerCase();
+        if (l.includes('route') || l.includes('logistics') || l.includes('market')) return <Share2 size={20} />;
+        if (l.includes('schedule') || l.includes('rostering') || l.includes('article') || l.includes('calendar')) return <CalendarClock size={20} />;
+        if (l.includes('simulate') || l.includes('optimize') || l.includes('assistant') || l.includes('portfolio') || l.includes('atom')) return <Atom size={20} />;
+        return <Layers size={20} />;
     };
 
     const containerVariants = {
@@ -79,26 +87,29 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
             case 'service':
                 return (
                     <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-light text-foreground">Select Service</h2>
+                        <h2 className="text-3xl font-light text-foreground tracking-tight">Select Service</h2>
                         <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto">
-                            {metadata.services?.map((svc: any) => (
-                                <button
-                                    key={svc.label}
-                                    onClick={() => onSelect('service', svc.label)}
-                                    className={`p-6 bg-card border rounded-xl transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md ${(config.service === svc.label)
-                                        ? 'border-[#1BB0CE] bg-[#1BB0CE]/5'
-                                        : 'border-border hover:border-[#1BB0CE]/50 hover:bg-[#1BB0CE]/5'
-                                        }`}
-                                >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${(config.service === svc.label)
-                                        ? 'bg-[#1BB0CE]/10 text-[#1BB0CE]'
-                                        : 'bg-secondary text-muted-foreground group-hover:text-[#1BB0CE] group-hover:bg-[#1BB0CE]/10'
-                                        }`}>
-                                        <Layers size={18} />
-                                    </div>
-                                    <span className={`font-medium text-lg ${config.service === svc.label ? 'text-[#1BB0CE]' : 'text-foreground'}`}>{svc.label}</span>
-                                </button>
-                            ))}
+                            {metadata.services?.map((svc: any) => {
+                                const isActive = config.service === svc.label;
+                                return (
+                                    <button
+                                        key={svc.label}
+                                        onClick={() => onSelect('service', svc.label)}
+                                        className={`p-6 bg-card border rounded-xl transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md ${isActive
+                                            ? 'border-[#1BB0CE] bg-[#1BB0CE]/5'
+                                            : 'border-border hover:border-[#1BB0CE]/50 hover:bg-[#1BB0CE]/5'
+                                            }`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${isActive
+                                            ? 'bg-[#1BB0CE]/10 text-[#1BB0CE]'
+                                            : 'bg-secondary text-muted-foreground group-hover:text-[#1BB0CE] group-hover:bg-[#1BB0CE]/10'
+                                            }`}>
+                                            {getServiceIcon(svc.label)}
+                                        </div>
+                                        <span className={`font-semibold text-lg transition-colors ${isActive ? 'text-[#1BB0CE]' : 'text-foreground'}`}>{svc.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 );
@@ -110,7 +121,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
 
                 return (
                     <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-light text-foreground">Select Problem</h2>
+                        <h2 className="text-3xl font-light text-foreground tracking-tight">Select Problem</h2>
                         <div className="flex flex-wrap justify-center gap-3 max-w-xl mx-auto">
                             {problems.length > 0 ? (
                                 problems.map((prob: any) => (
