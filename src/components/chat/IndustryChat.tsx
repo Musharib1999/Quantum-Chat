@@ -333,8 +333,9 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 tableHtml += `|:---|:---|:---|\n`;
 
                 result.assignmentsTable.forEach((row: any) => {
-                    const dayVal = row.day.toString().startsWith('Day') ? row.day : `**${row.day}**`;
-                    tableHtml += `| ${dayVal} | **${row.pilot}** | ${row.route} |\n`;
+                    const label = row.sector || row.day || 'Selected';
+                    const displayLabel = label.toString().startsWith('Day') ? label : `**${label}**`;
+                    tableHtml += `| ${displayLabel} | **${row.pilot || row.ticker}** | ${row.route} |\n`;
                 });
             }
 
