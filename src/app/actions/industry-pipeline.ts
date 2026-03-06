@@ -843,23 +843,34 @@ After the paragraph, generate a chart showing assignment counts:
 [/CHART_DATA]`);
 
         let text = '';
-        if (provider === 'groq') {
-            if (!GROQ_API_KEY) return { text: "Analysis unavailable: Groq API Key is missing.", chartData: null, assignmentsTable: [] };
-            const groq = new Groq({ apiKey: GROQ_API_KEY });
-            const completion = await groq.chat.completions.create({
-                messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
-                model: modelName,
-            });
-            text = completion.choices[0]?.message?.content || 'Analysis complete.';
-        } else {
-            if (!GEMINI_API_KEY) return { text: "Analysis unavailable: Gemini API Key is missing.", chartData: null, assignmentsTable: [] };
-            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent([
-                "You are a Quantum Analysis expert.",
-                prompt
-            ]);
-            text = result.response.text() || 'Analysis complete.';
+        try {
+            if (provider === 'groq') {
+                if (!GROQ_API_KEY) {
+                    text = "Analysis unavailable: Groq API Key is missing.";
+                } else {
+                    const groq = new Groq({ apiKey: GROQ_API_KEY });
+                    const completion = await groq.chat.completions.create({
+                        messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
+                        model: modelName,
+                    });
+                    text = completion.choices[0]?.message?.content || 'Analysis complete.';
+                }
+            } else {
+                if (!GEMINI_API_KEY) {
+                    text = "Analysis unavailable: Gemini API Key is missing.";
+                } else {
+                    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                    const model = genAI.getGenerativeModel({ model: modelName });
+                    const result = await model.generateContent([
+                        "You are a Quantum Analysis expert.",
+                        prompt
+                    ]);
+                    text = result.response.text() || 'Analysis complete.';
+                }
+            }
+        } catch (llmError: any) {
+            console.error("LLM Error during interpretation, falling back to deterministic only.", llmError);
+            text = `*AI Executive Summary Unavailable.* (Error: ${llmError.message || 'Token limit reached or API timeout'}). The raw deterministic data is presented below.`;
         }
 
         // --- DETERMINISTIC TABLE PARSER ---
