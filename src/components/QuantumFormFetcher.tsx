@@ -139,9 +139,9 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                             return (
                                 <div key={value} className="flex flex-col gap-2">
                                     <div
-                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 group cursor-pointer ${isSelected
-                                            ? 'bg-[#1BB0CE]/10 border-[#1BB0CE] shadow-[0_0_15px_rgba(27,176,206,0.05)]'
-                                            : 'bg-secondary/30 border-border hover:border-[#1BB0CE]/50'
+                                        className={`flex items-center justify-center p-2.5 rounded-xl border transition-all duration-300 group cursor-pointer ${isSelected
+                                            ? 'bg-[#2E65BF]/10 border-[#2E65BF] shadow-[0_0_15px_rgba(46,101,191,0.05)]'
+                                            : 'bg-secondary/30 border-border hover:border-[#2E65BF]/50'
                                             }`}
                                         onClick={() => {
                                             const current = formData[field.key] || [];
@@ -151,15 +151,9 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                                             handleInputChange(field.key, next);
                                         }}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isSelected ? 'bg-[#1BB0CE] text-white' : 'bg-secondary text-muted-foreground group-hover:text-[#1BB0CE]'
-                                                }`}>
-                                                <Building size={14} />
-                                            </div>
-                                            <span className={`text-sm font-bold tracking-tight ${isSelected ? 'text-[#1BB0CE]' : 'text-foreground'}`}>
-                                                {label}
-                                            </span>
-                                        </div>
+                                        <span className={`text-xs font-medium tracking-tight ${isSelected ? 'text-[#2E65BF]' : 'text-foreground'}`}>
+                                            {label}
+                                        </span>
                                     </div>
                                 </div>
                             );
