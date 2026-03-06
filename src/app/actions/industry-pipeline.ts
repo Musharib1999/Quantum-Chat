@@ -593,6 +593,20 @@ Return ONLY the Python code. No markdown. No explanation.`);
         let endDim = 0;
         const sanitizedFormData: Record<string, any> = { ...formData };
 
+        // --- DATA INJECTION FOR PORTFOLIO OPTIMIZATION ---
+        if (problem.toLowerCase().includes('portfolio optimization')) {
+            try {
+                const PortfolioCompany = mongoose.models.PortfolioCompany || (await import('@/models/PortfolioCompany')).default;
+                const sector = formData.sector || 'Technology';
+                // Use case-insensitive regex for robustness
+                const companies = await PortfolioCompany.find({ sector: new RegExp(`^${sector}$`, 'i') }).limit(20).lean();
+                sanitizedFormData.portfolio_data = companies;
+                console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies for sector: "${sector}"`);
+            } catch (e) {
+                console.error("Portfolio data injection failed:", e);
+            }
+        }
+
         if (formDef?.batchingEnabled && formDef.qubitFormula) {
             try {
                 let formula = formDef.qubitFormula;
