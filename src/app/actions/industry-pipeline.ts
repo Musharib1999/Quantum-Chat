@@ -909,13 +909,14 @@ After the paragraph, generate a chart showing assignment counts:
         });
         let chartData = extractedPlotlyChart || null;
         if (!chartData && text.includes("[CHART_DATA]")) {
-            const chartMatch = text.match(/\[CHART_DATA\]\n([\s\S]*?)\n\[\/CHART_DATA\]/);
+            // Use regex that allows for optional whitespace/newlines around tags
+            const chartMatch = text.match(/\[CHART_DATA\]\s*([\s\S]*?)\s*\[\/CHART_DATA\]/);
             if (chartMatch && chartMatch[1]) {
                 try {
                     chartData = JSON.parse(chartMatch[1]);
                     text = text.replace(chartMatch[0], "").trim();
                 } catch (e: any) {
-                    console.error("Chart JSON Parse Error:", e);
+                    console.error("Chart JSON Parse Error:", e, "Raw string:", chartMatch[1]);
                 }
             }
         }
