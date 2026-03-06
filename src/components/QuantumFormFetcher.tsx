@@ -134,15 +134,13 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                         {field.options?.map((opt: any) => {
                             const label = typeof opt === 'string' ? opt : opt.label;
                             const value = typeof opt === 'string' ? opt : opt.value;
-                            const subOptions = typeof opt === 'object' ? opt.subOptions : null;
                             const isSelected = (formData[field.key] || []).includes(value);
-                            const isExpanded = expandedSectors[value];
 
                             return (
                                 <div key={value} className="flex flex-col gap-2">
                                     <div
-                                        className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 group cursor-pointer ${isSelected
-                                            ? 'bg-[#1BB0CE]/10 border-[#1BB0CE] shadow-[0_0_15px_rgba(27,176,206,0.1)]'
+                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 group cursor-pointer ${isSelected
+                                            ? 'bg-[#1BB0CE]/10 border-[#1BB0CE] shadow-[0_0_15px_rgba(27,176,206,0.05)]'
                                             : 'bg-secondary/30 border-border hover:border-[#1BB0CE]/50'
                                             }`}
                                         onClick={() => {
@@ -162,37 +160,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                                                 {label}
                                             </span>
                                         </div>
-
-                                        {subOptions && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setExpandedSectors(prev => ({ ...prev, [value]: !prev[value] }));
-                                                }}
-                                                className={`p-1.5 rounded-lg hover:bg-secondary transition-all ${isExpanded ? 'rotate-180 text-[#1BB0CE]' : 'text-muted-foreground'}`}
-                                            >
-                                                <ChevronDown size={14} />
-                                            </button>
-                                        )}
                                     </div>
-
-                                    {/* Expandable Sub-Options (Companies) */}
-                                    {isExpanded && subOptions && (
-                                        <div className="mx-2 p-3 bg-secondary/20 border-x border-b border-border/50 rounded-b-xl animate-in slide-in-from-top-2 duration-300">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-2 px-1">Constituent Assets</p>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {subOptions.map((ticker: string) => (
-                                                    <span
-                                                        key={ticker}
-                                                        className="px-2 py-0.5 bg-card border border-border/50 rounded text-[10px] font-mono font-bold text-foreground"
-                                                    >
-                                                        {ticker}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })}
