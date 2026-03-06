@@ -166,7 +166,13 @@ async function updateFinance() {
     try {
         await mongoose.connect(uri);
         const Schema = mongoose.Schema;
+        const PortfolioCompany = mongoose.models.PortfolioCompany || mongoose.model('PortfolioCompany', new Schema({}, { strict: false }));
         const QuantumForm = mongoose.models.QuantumForm || mongoose.model('QuantumForm', new Schema({}, { strict: false }));
+
+        // --- FETCH UNIQUE SECTORS ---
+        console.log("Fetching unique sectors from PortfolioCompany...");
+        const uniqueSectors = await PortfolioCompany.distinct('sector');
+        console.log(`Found ${uniqueSectors.length} sectors:`, uniqueSectors);
 
         const result = await QuantumForm.updateOne(
             { industry: 'Finance', problem: 'Portfolio Optimization' },
@@ -177,11 +183,7 @@ async function updateFinance() {
                             key: "sector",
                             label: "Target Sectors",
                             type: "multiselect",
-                            options: [
-                                "Technology", "Healthcare", "Finance", "Energy",
-                                "Consumer Discretionary", "Consumer Staples",
-                                "Industrials", "Telecommunications", "Utilities", "Materials"
-                            ],
+                            options: uniqueSectors.sort(),
                             description: "Select one or more industries to include in the stock universe."
                         },
                         {
