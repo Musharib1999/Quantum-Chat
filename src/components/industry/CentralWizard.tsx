@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Cpu, Layers, Zap, Loader2 } from 'lucide-react';
+import { Briefcase, Cpu, Layers, Zap, Loader2, PlaneTakeoff, Shield, TrendingUp } from 'lucide-react';
 
 interface CentralWizardProps {
     step: 'industry' | 'service' | 'problem' | 'hardware';
@@ -29,6 +29,15 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                 .finally(() => setLoadingHw(false));
         }
     }, [step]);
+
+    const getIndustryIcon = (label: string) => {
+        const l = label.toLowerCase();
+        if (l.includes('aviation')) return <PlaneTakeoff size={24} />;
+        if (l.includes('cyber') || l.includes('security')) return <Shield size={24} />;
+        if (l.includes('finance')) return <TrendingUp size={24} />;
+        return <Briefcase size={24} />;
+    };
+
     const containerVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
@@ -40,18 +49,18 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
             case 'industry':
                 return (
                     <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-light text-foreground">Select Industry</h2>
-                        <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
+                        <h2 className="text-3xl font-light text-foreground tracking-tight">Select Industry</h2>
+                        <div className="flex flex-wrap justify-center gap-6 max-w-4xl mx-auto">
                             {metadata.industries?.map((ind: any) => (
                                 <button
                                     key={ind.label}
                                     onClick={() => onSelect('industry', ind.label)}
-                                    className="p-6 bg-card border border-border rounded-xl hover:border-blue-500/50 hover:bg-secondary/50 transition-all group flex flex-col items-center gap-3 shadow-sm hover:shadow-md"
+                                    className="p-8 bg-card border border-border rounded-2xl hover:border-blue-500/50 hover:bg-secondary/50 transition-all group flex flex-col items-center gap-4 shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300 w-48"
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
-                                        <Briefcase size={20} />
+                                    <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-all duration-300 group-hover:scale-110 shadow-inner">
+                                        {getIndustryIcon(ind.label)}
                                     </div>
-                                    <span className="font-medium text-lg">{ind.label}</span>
+                                    <span className="font-semibold text-xl tracking-tight text-foreground/90 group-hover:text-foreground transition-colors">{ind.label}</span>
                                 </button>
                             ))}
                         </div>
