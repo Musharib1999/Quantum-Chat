@@ -165,9 +165,13 @@ export async function executeIndustryWorkflow(
     if (formData && Object.keys(formData).length > 0) {
         // --- STEP 0: FETCH FORM DEF ---
         console.log(`[Quantum Workflow] Lookup | Ind: ${industry} | Svc: ${service} | Prob: ${problem}`);
+        // Resilient Lookup: Fallback to industry/problem if service is missing or generic default
+        const svcSearch = (!service || service === 'Gate-Model Circuit' || service === 'undefined')
+            ? {} : { service: new RegExp(`^${service}$`, 'i') };
+
         const formDef = await QuantumForm.findOne({
             industry: new RegExp(`^${industry}$`, 'i'),
-            service: new RegExp(`^${service}$`, 'i'),
+            ...svcSearch,
             problem: new RegExp(`^${problem}$`, 'i')
         }).lean();
         console.log(`[Quantum Workflow] Form Found: ${!!formDef}`);
@@ -521,9 +525,13 @@ export async function generateQuantumCode(config: {
 
         console.log(`[Quantum Workflow Actions] generateQuantumCode | Ind: ${industry} | Svc: ${service} | Prob: ${problem} | HW: ${hardware}`);
 
+        // Resilient Lookup: Fallback to industry/problem if service and generic defaults
+        const svcResSearch = (!service || service === 'Gate-Model Circuit' || service === 'undefined')
+            ? {} : { service: new RegExp(`^${service}$`, 'i') };
+
         const formDef = await QuantumForm.findOne({
             industry: new RegExp(`^${industry}$`, 'i'),
-            service: new RegExp(`^${service}$`, 'i'),
+            ...svcResSearch,
             problem: new RegExp(`^${problem}$`, 'i')
         }).lean();
 
@@ -550,41 +558,12 @@ export async function generateQuantumCode(config: {
             code = templateCode;
             isTemplateAided = true;
         } else {
-            if (isDWave) {
-                codePrompt = await getDynamicPrompt('industry_dwave', {
-                    problem,
-                    industry,
-                    service,
-                    parameters: JSON.stringify(formData)
-                }, `You are a Python expert using dimod 0.12.21. Generate a complete runnable script.
-CRITICAL: The ONLY valid BinaryQuadraticModel constructor is:
-  BinaryQuadraticModel(linear: dict, quadratic: dict, offset: float, vartype: str)
-  DO NOT pass num_variables or any other argument.
-Problem: ${problem} | Industry: ${industry} | Service: ${service}
-Parameters: ${JSON.stringify(formData)}
-Write a script that:
-1. from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler
-2. Define linear={} and quadratic={} dicts. You may use UP TO 30 VARIABLES.
-3. IMPORTANT: Ensure any variables from Parameters that refer to counts, days, shifts, or items are parsed as strict integers (e.g., int(x)) so they can be used safely in range() calls!
-4. bqm = BinaryQuadraticModel(linear, quadratic, 0.0, 'BINARY')
-   sampler = SimulatedAnnealingSampler(); sampleset = sampler.sample(bqm, num_reads=50)
-   best = sampleset.first; print(f'Best: {best.sample}'); print(f'Energy: {best.energy:.4f}')
-Return ONLY the Python code. No markdown. No backticks. No explanation.`);
-            } else {
-                codePrompt = await getDynamicPrompt('industry_qiskit', {
-                    problem,
-                    industry,
-                    service,
-                    hardware,
-                    parameters: JSON.stringify(formData)
-                }, `Generate a complete, self-contained Python Qiskit script.
-Industry: ${industry} | Service: ${service} | Problem: ${problem} | Hardware: ${hardware}
-Parameters: ${JSON.stringify(formData)}
-Rules: Use qiskit and qiskit_aer. Build QuantumCircuit, add gates and measurements.
-IMPORTANT: Ensure any parameter variables used for loop dimensions or counts are cast to strict integers.
-Run: from qiskit_aer import AerSimulator; sim=AerSimulator(); job=sim.run(circuit,shots=1024); result=job.result(); counts=result.get_counts(); print(f"Results: {counts}")
-Return ONLY the Python code. No markdown. No explanation.`);
-            }
+            console.warn(`[Quantum Workflow Actions] No template found for ${service}/${problem} on ${hardware}. Failing fast.`);
+            return {
+                code: "",
+                batchesTotal: 1,
+                error: `No specialized quantum template found for ${service} > ${problem} on ${hardware}. LLM generation is disabled for POC stability.`
+            };
         }
 
         // --- BATCHING METADATA ---
@@ -610,7 +589,8 @@ Return ONLY the Python code. No markdown. No explanation.`);
                 }
 
                 // Increase limit to 100 for full universe coverage across all sectors
-                const companies = await PortfolioCompany.find(query).limit(100).lean();
+                // OPTIMIZATION: Only fetch required fields to prevent memory/payload issues
+                const companies = await PortfolioCompany.find(query, 'ticker company nextYearReturn risk sector').limit(100).lean();
 
                 // --- SYNC FILTERING: Apply Risk Threshold in Backend for Batch Accuracy ---
                 const rawRisk = formData.risk_threshold;
