@@ -626,24 +626,14 @@ Return ONLY the Python code. No markdown. No explanation.`);
         }
 
         if (!isTemplateAided) {
-            const systemInstruction = 'You are a Quantum Expert. Return only Python code. No markdown. No explanation.';
-            const fullPrompt = `${systemInstruction}\n\n${codePrompt}`;
+            return {
+                code: "",
+                batchesTotal,
+                error: "No pre-configured deterministic code template found for this problem and hardware. LLM code generation is currently disabled for POC."
+            };
 
-            if (provider === 'groq') {
-                if (!GROQ_API_KEY) return { code: "", batchesTotal, error: "Groq API Key is missing. Please add GROQ_API_KEY to environment variables." };
-                const groq = new Groq({ apiKey: GROQ_API_KEY });
-                const completion = await groq.chat.completions.create({
-                    messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: codePrompt }],
-                    model: modelName,
-                });
-                code = completion.choices[0]?.message?.content || '';
-            } else {
-                if (!GEMINI_API_KEY) return { code: "", batchesTotal, error: "Gemini API Key is missing. Please add GEMINI_API_KEY to environment variables." };
-                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-                const model = genAI.getGenerativeModel({ model: modelName });
-                const result = await model.generateContent(fullPrompt);
-                code = result.response.text() || '';
-            }
+            // LLM Code Generation has been disabled explicitly by the user for POC.
+            // All code must flow perfectly deterministically through the MongoDB setup.
 
             // --- POST-PROCESS: Strip Hallucinations & Clean Code ---
             code = code.replace(/```python\s?([\s\S]*?)```/g, '$1');
