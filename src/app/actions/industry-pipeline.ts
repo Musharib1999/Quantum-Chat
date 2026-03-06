@@ -769,6 +769,8 @@ export async function interpretQuantumResults(config: {
         let allFormattedAssignments: string[] = [];
 
         let extractedPlotlyChart: any = null;
+        let finalAssignmentsTable: any[] = [];
+        let finalSummary: string = "";
 
         // 1. Try robust tagged extraction first
         const taggedMatches = [...rawOutput.matchAll(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/g)];
@@ -781,6 +783,8 @@ export async function interpretQuantumResults(config: {
                     if (data.energy !== undefined) totalEnergy += data.energy;
                     if (data.formatted_assignments) allFormattedAssignments.push(...data.formatted_assignments);
                     if (data.plotly_chart) extractedPlotlyChart = data.plotly_chart;
+                    if (data.assignmentsTable) finalAssignmentsTable.push(...data.assignmentsTable);
+                    if (data.summary) finalSummary = data.summary;
                 } catch (e) {
                     console.warn("Failed to parse tagged JSON", e);
                 }
@@ -852,60 +856,66 @@ STRICT RULES:
 - Do NOT use variable names like "x_0_0_0" in your final text.
 - IMPORTANT: Do NOT include any [CHART_DATA] tags or JSON blocks. I will provide the visualization separately. ONLY PROVIDE THE TEXT SUMMARY.`);
 
-        let text = '';
-        try {
-            if (provider === 'groq') {
-                if (!GROQ_API_KEY) {
-                    text = "Analysis unavailable: Groq API Key is missing.";
+        // --- LLM SUMMARY GEN (Only if no deterministic summary provided) ---
+        let text = finalSummary || '';
+
+        if (!text) {
+            try {
+                if (provider === 'groq') {
+                    if (!GROQ_API_KEY) {
+                        text = "Analysis unavailable: Groq API Key is missing.";
+                    } else {
+                        const groq = new Groq({ apiKey: GROQ_API_KEY });
+                        const completion = await groq.chat.completions.create({
+                            messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
+                            model: modelName,
+                        });
+                        text = completion.choices[0]?.message?.content || 'Analysis complete.';
+                    }
                 } else {
-                    const groq = new Groq({ apiKey: GROQ_API_KEY });
-                    const completion = await groq.chat.completions.create({
-                        messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
-                        model: modelName,
-                    });
-                    text = completion.choices[0]?.message?.content || 'Analysis complete.';
+                    if (!GEMINI_API_KEY) {
+                        text = "Analysis unavailable: Gemini API Key is missing.";
+                    } else {
+                        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                        const model = genAI.getGenerativeModel({ model: modelName });
+                        const result = await model.generateContent([
+                            "You are a Quantum Analysis expert.",
+                            prompt
+                        ]);
+                        text = result.response.text() || 'Analysis complete.';
+                    }
                 }
-            } else {
-                if (!GEMINI_API_KEY) {
-                    text = "Analysis unavailable: Gemini API Key is missing.";
-                } else {
-                    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-                    const model = genAI.getGenerativeModel({ model: modelName });
-                    const result = await model.generateContent([
-                        "You are a Quantum Analysis expert.",
-                        prompt
-                    ]);
-                    text = result.response.text() || 'Analysis complete.';
-                }
+            } catch (llmError: any) {
+                console.error("LLM Error during interpretation, falling back to deterministic only.", llmError);
+                text = `*Quantum Guru AI is currently offline. The experiment summary will be generated and added to the history once the AI service is restored.*`;
             }
-        } catch (llmError: any) {
-            console.error("LLM Error during interpretation, falling back to deterministic only.", llmError);
-            text = `*Quantum Guru AI is currently offline. The experiment summary will be generated and added to the history once the AI service is restored.*`;
         }
 
         // --- DETERMINISTIC TABLE PARSER ---
-        const assignmentsTable: any[] = [];
+        const assignmentsTable: any[] = finalAssignmentsTable;
 
-        // Parse x_P_R_D format commonly used in routing/rostering
-        Object.entries(unifiedSolution).forEach(([key, val]) => {
-            if (val === 1 && typeof key === 'string' && key.startsWith('x_')) {
-                const parts = key.split('_');
-                if (parts.length >= 4) {
-                    const pilot = parseInt(parts[1]);
-                    const route = parseInt(parts[2]);
-                    const day = parseInt(parts[3]);
+        if (assignmentsTable.length === 0) {
+            // Parse x_P_R_D format commonly used in routing/rostering
+            Object.entries(unifiedSolution).forEach(([key, val]) => {
+                if (val === 1 && typeof key === 'string' && key.startsWith('x_')) {
+                    const parts = key.split('_');
+                    if (parts.length >= 4) {
+                        const pilot = parseInt(parts[1]);
+                        const route = parseInt(parts[2]);
+                        const day = parseInt(parts[3]);
 
-                    if (!isNaN(pilot) && !isNaN(route) && !isNaN(day)) {
-                        assignmentsTable.push({
-                            id: key,
-                            pilot: `Pilot ${pilot + 1}`,
-                            route: `Route ${route + 1}`,
-                            day: `Day ${day + 1}`
-                        });
+                        if (!isNaN(pilot) && !isNaN(route) && !isNaN(day)) {
+                            assignmentsTable.push({
+                                id: key,
+                                pilot: `Pilot ${pilot + 1}`,
+                                route: `Route ${route + 1}`,
+                                day: `Day ${day + 1}`
+                            });
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Sort table chronologically by Day, then Pilot
         assignmentsTable.sort((a, b) => {

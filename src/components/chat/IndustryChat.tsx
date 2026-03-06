@@ -298,20 +298,33 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             if (result.assignmentsTable && result.assignmentsTable.length > 0) {
                 // Construct standard Markdown table with Problem Details
                 const hardware = contextConfig?.hardware || 'Quantum Annealer';
+                let qubitCount = 0;
                 const pilots = contextConfig?.formData?.number_of_pilots || 0;
                 const days = contextConfig?.formData?.days || 0;
-                const qubitCount = pilots * days; // Derived from our formula
+
+                if (contextConfig.industry?.toLowerCase() === 'aviation') {
+                    qubitCount = pilots * days;
+                } else {
+                    // Try to derive it from the assignments, though this is a simplification
+                    qubitCount = result.assignmentsTable.length * 2;
+                }
 
                 tableHtml = `### Solution Details\n\n`;
-                tableHtml += `**Problem:** ${contextConfig?.problem || 'Pilot Scheduling'}\n`;
-                tableHtml += `**Hardware:** \`${hardware}\`\n`;
-                tableHtml += `**Resources:** ${qubitCount} Qubits Utilized\n\n`;
+                tableHtml += `| Problem | Hardware | Resources |\n`;
+                tableHtml += `|:---|:---|:---|\n`;
+                tableHtml += `| ${contextConfig?.problem || 'Quantum Solution'} | \`${hardware}\` | ${qubitCount} Qubits |\n\n`;
 
-                tableHtml += `| Day | Pilot | Route |\n`;
-                tableHtml += `|---|---|---|\n`;
+                const isFinance = contextConfig.industry?.toLowerCase() === 'finance';
+                const h1 = isFinance ? 'Status' : 'Period';
+                const h2 = isFinance ? 'Ticker' : 'Resource';
+                const h3 = isFinance ? 'Asset Details' : 'Assignment';
+
+                tableHtml += `| ${h1} | ${h2} | ${h3} |\n`;
+                tableHtml += `|:---|:---|:---|\n`;
 
                 result.assignmentsTable.forEach((row: any) => {
-                    tableHtml += `| **Day ${row.day}** | ${row.pilot} | ${row.route} |\n`;
+                    const dayVal = row.day.toString().startsWith('Day') ? row.day : `**${row.day}**`;
+                    tableHtml += `| ${dayVal} | **${row.pilot}** | ${row.route} |\n`;
                 });
             }
 
