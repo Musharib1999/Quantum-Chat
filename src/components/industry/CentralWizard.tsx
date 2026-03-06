@@ -66,17 +66,17 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         key={ind.label}
                                         onClick={() => onSelect('industry', ind.label)}
                                         className={`p-8 bg-card border rounded-2xl transition-all group flex flex-col items-center gap-4 shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300 w-48 ${isActive
-                                            ? 'border-[#2E65BF] ring-1 ring-[#2E65BF]/20 shadow-[0_0_20px_rgba(46,101,191,0.15)] bg-secondary/80'
-                                            : 'border-border hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5'
+                                            ? 'border-foreground ring-1 ring-foreground/20 shadow-[0_0_20px_rgba(0,0,0,0.15)] bg-secondary/80'
+                                            : 'border-border hover:border-foreground/50 hover:bg-foreground/5'
                                             }`}
                                     >
                                         <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-inner ${isActive
-                                            ? 'bg-[#2E65BF]/10 text-[#2E65BF]'
-                                            : 'bg-secondary text-muted-foreground group-hover:text-[#2E65BF] group-hover:bg-[#2E65BF]/10'
+                                            ? 'bg-foreground/10 text-foreground'
+                                            : 'bg-secondary text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10'
                                             }`}>
                                             {getIndustryIcon(ind.label)}
                                         </div>
-                                        <span className={`font-semibold text-xl tracking-tight transition-colors ${isActive ? 'text-[#2E65BF]' : 'text-foreground/90 group-hover:text-foreground'
+                                        <span className={`font-semibold text-xl tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground/90 group-hover:text-foreground'
                                             }`}>{ind.label}</span>
                                     </button>
                                 );
@@ -96,17 +96,17 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         key={svc.label}
                                         onClick={() => onSelect('service', svc.label)}
                                         className={`p-6 bg-card border rounded-xl transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md ${isActive
-                                            ? 'border-[#2E65BF] bg-[#2E65BF]/5'
-                                            : 'border-border hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5'
+                                            ? 'border-foreground bg-foreground/5'
+                                            : 'border-border hover:border-foreground/50 hover:bg-foreground/5'
                                             }`}
                                     >
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${isActive
-                                            ? 'bg-[#2E65BF]/10 text-[#2E65BF]'
-                                            : 'bg-secondary text-muted-foreground group-hover:text-[#2E65BF] group-hover:bg-[#2E65BF]/10'
+                                            ? 'bg-foreground/10 text-foreground'
+                                            : 'bg-secondary text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10'
                                             }`}>
                                             {getServiceIcon(svc.label)}
                                         </div>
-                                        <span className={`font-semibold text-lg transition-colors ${isActive ? 'text-[#2E65BF]' : 'text-foreground'}`}>{svc.label}</span>
+                                        <span className={`font-semibold text-lg transition-colors ${isActive ? 'text-foreground' : 'text-foreground'}`}>{svc.label}</span>
                                     </button>
                                 );
                             })}
@@ -128,12 +128,12 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                     <button
                                         key={prob.id || prob.label}
                                         onClick={() => onSelect('problem', prob.label)}
-                                        className="p-4 bg-card border border-border rounded-xl hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5 transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md"
+                                        className="p-4 bg-card border border-border rounded-xl hover:border-foreground/50 hover:bg-foreground/5 transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-[#2E65BF] group-hover:bg-[#2E65BF]/10 transition-colors shrink-0">
+                                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors shrink-0">
                                             <Zap size={16} />
                                         </div>
-                                        <span className="font-medium group-hover:text-[#2E65BF] transition-colors">{prob.label}</span>
+                                        <span className="font-medium group-hover:text-foreground transition-colors">{prob.label}</span>
                                     </button>
                                 ))
                             ) : (
@@ -163,7 +163,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         className="p-6 bg-card border border-border rounded-xl hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5 transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
                                     >
                                         <div className="w-full flex justify-between items-center mb-2">
-                                            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-[#2E65BF] group-hover:bg-[#2E65BF]/10 transition-colors">
+                                            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors">
                                                 {hw.provider === 'ibm' ? <Layers size={20} /> : <Cpu size={20} />}
                                             </div>
                                             <div className="text-xs font-mono text-green-500 border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded uppercase font-bold tracking-wider">Online</div>

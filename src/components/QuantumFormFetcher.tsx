@@ -140,8 +140,8 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                                 <div key={value} className="flex flex-col gap-2">
                                     <div
                                         className={`flex items-center justify-center p-2.5 rounded-xl border transition-all duration-300 group cursor-pointer ${isSelected
-                                            ? 'bg-[#2E65BF]/10 border-[#2E65BF] shadow-[0_0_15px_rgba(46,101,191,0.05)]'
-                                            : 'bg-secondary/30 border-border hover:border-[#2E65BF]/50'
+                                            ? 'bg-foreground/5 border-foreground shadow-[0_0_15px_rgba(0,0,0,0.05)]'
+                                            : 'bg-secondary/30 border-border hover:border-foreground/50'
                                             }`}
                                         onClick={() => {
                                             const current = formData[field.key] || [];
@@ -151,7 +151,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                                             handleInputChange(field.key, next);
                                         }}
                                     >
-                                        <span className={`text-xs font-medium tracking-tight ${isSelected ? 'text-[#2E65BF]' : 'text-foreground'}`}>
+                                        <span className={`text-xs font-medium tracking-tight ${isSelected ? 'text-foreground' : 'text-foreground/80'}`}>
                                             {label}
                                         </span>
                                     </div>
