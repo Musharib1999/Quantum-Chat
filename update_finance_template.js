@@ -186,10 +186,23 @@ async function updateFinance() {
         const PortfolioCompany = mongoose.models.PortfolioCompany || mongoose.model('PortfolioCompany', new Schema({}, { strict: false }));
         const QuantumForm = mongoose.models.QuantumForm || mongoose.model('QuantumForm', new Schema({}, { strict: false }));
 
-        // --- FETCH UNIQUE SECTORS ---
-        console.log("Fetching unique sectors from PortfolioCompany...");
-        const uniqueSectors = await PortfolioCompany.distinct('sector');
-        console.log(`Found ${uniqueSectors.length} sectors:`, uniqueSectors);
+        // --- FETCH & GROUP COMPANIES BY SECTOR ---
+        console.log("Fetching and grouping companies by sector...");
+        const companies = await PortfolioCompany.find({}, 'sector ticker').lean();
+
+        const sectorGroups = {};
+        companies.forEach(c => {
+            if (!sectorGroups[c.sector]) sectorGroups[c.sector] = [];
+            sectorGroups[c.sector].push(c.ticker);
+        });
+
+        const sectorOptions = Object.keys(sectorGroups).sort().map(sector => ({
+            label: sector,
+            value: sector,
+            subOptions: sectorGroups[sector].sort()
+        }));
+
+        console.log(`Found ${sectorOptions.length} sectors with company metadata.`);
 
         const result = await QuantumForm.updateOne(
             { industry: 'Finance', problem: 'Portfolio Optimization' },
@@ -200,8 +213,8 @@ async function updateFinance() {
                             key: "sector",
                             label: "Target Sectors",
                             type: "multi-select",
-                            options: uniqueSectors.sort(),
-                            description: "Select one or more industries to include in the stock universe."
+                            options: sectorOptions,
+                            description: "Select one or more industries. Hover/Expand to see constituent stocks."
                         },
                         {
                             key: "risk_threshold",

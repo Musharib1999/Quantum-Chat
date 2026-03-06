@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Settings, Play, Info, Layers } from 'lucide-react';
+import { Settings, Play, Info, Layers, ChevronDown, Building } from 'lucide-react';
 
 interface IField {
     label: string;
@@ -37,6 +37,7 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [expandedSectors, setExpandedSectors] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         const fetchForm = async () => {
@@ -129,30 +130,70 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                         </div>
                     </div>
                 ) : effectiveType === 'multi-select' ? (
-                    <div className="flex flex-wrap gap-2 pt-1 border-t border-border/20 mt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                         {field.options?.map((opt: any) => {
                             const label = typeof opt === 'string' ? opt : opt.label;
                             const value = typeof opt === 'string' ? opt : opt.value;
+                            const subOptions = typeof opt === 'object' ? opt.subOptions : null;
                             const isSelected = (formData[field.key] || []).includes(value);
+                            const isExpanded = expandedSectors[value];
 
                             return (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => {
-                                        const current = formData[field.key] || [];
-                                        const next = isSelected
-                                            ? current.filter((v: any) => v !== value)
-                                            : [...current, value];
-                                        handleInputChange(field.key, next);
-                                    }}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 ${isSelected
-                                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                        : 'bg-secondary/50 text-muted-foreground border-border hover:border-primary/50 hover:bg-secondary'
-                                        }`}
-                                >
-                                    {label}
-                                </button>
+                                <div key={value} className="flex flex-col gap-2">
+                                    <div
+                                        className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 group cursor-pointer ${isSelected
+                                                ? 'bg-[#1BB0CE]/10 border-[#1BB0CE] shadow-[0_0_15px_rgba(27,176,206,0.1)]'
+                                                : 'bg-secondary/30 border-border hover:border-[#1BB0CE]/50'
+                                            }`}
+                                        onClick={() => {
+                                            const current = formData[field.key] || [];
+                                            const next = isSelected
+                                                ? current.filter((v: any) => v !== value)
+                                                : [...current, value];
+                                            handleInputChange(field.key, next);
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isSelected ? 'bg-[#1BB0CE] text-white' : 'bg-secondary text-muted-foreground group-hover:text-[#1BB0CE]'
+                                                }`}>
+                                                <Building size={14} />
+                                            </div>
+                                            <span className={`text-sm font-bold tracking-tight ${isSelected ? 'text-[#1BB0CE]' : 'text-foreground'}`}>
+                                                {label}
+                                            </span>
+                                        </div>
+
+                                        {subOptions && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setExpandedSectors(prev => ({ ...prev, [value]: !prev[value] }));
+                                                }}
+                                                className={`p-1.5 rounded-lg hover:bg-secondary transition-all ${isExpanded ? 'rotate-180 text-[#1BB0CE]' : 'text-muted-foreground'}`}
+                                            >
+                                                <ChevronDown size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Expandable Sub-Options (Companies) */}
+                                    {isExpanded && subOptions && (
+                                        <div className="mx-2 p-3 bg-secondary/20 border-x border-b border-border/50 rounded-b-xl animate-in slide-in-from-top-2 duration-300">
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-2 px-1">Constituent Assets</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {subOptions.map((ticker: string) => (
+                                                    <span
+                                                        key={ticker}
+                                                        className="px-2 py-0.5 bg-card border border-border/50 rounded text-[10px] font-mono font-bold text-foreground"
+                                                    >
+                                                        {ticker}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             );
                         })}
                         {(!field.options || field.options.length === 0) && (
