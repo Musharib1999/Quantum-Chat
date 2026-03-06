@@ -597,11 +597,21 @@ Return ONLY the Python code. No markdown. No explanation.`);
         if (problem.toLowerCase().includes('portfolio optimization')) {
             try {
                 const PortfolioCompany = mongoose.models.PortfolioCompany || (await import('@/models/PortfolioCompany')).default;
-                const sector = formData.sector || 'Technology';
-                // Use case-insensitive regex for robustness
-                const companies = await PortfolioCompany.find({ sector: new RegExp(`^${sector}$`, 'i') }).limit(20).lean();
+                const sectorParam = formData.sector;
+                let query = {};
+
+                if (Array.isArray(sectorParam)) {
+                    query = { sector: { $in: sectorParam } };
+                } else if (typeof sectorParam === 'string' && sectorParam) {
+                    query = { sector: new RegExp(`^${sectorParam}$`, 'i') };
+                } else {
+                    query = { sector: 'Technology' }; // Default fallback
+                }
+
+                // Increase limit to 50 for multi-sector breath
+                const companies = await PortfolioCompany.find(query).limit(50).lean();
                 sanitizedFormData.portfolio_data = companies;
-                console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies for sector: "${sector}"`);
+                console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies for sectors:`, sectorParam);
             } catch (e) {
                 console.error("Portfolio data injection failed:", e);
             }

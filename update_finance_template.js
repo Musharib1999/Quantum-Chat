@@ -9,29 +9,38 @@ from dimod.reference.samplers import SimulatedAnnealingSampler
 # -----------------------------
 # FETCH DATA FROM INJECTED PARAMETERS
 # -----------------------------
-# The Node.js layer fetches real data from MongoDB and injects it here
-data = parameters['portfolio_data'] or []
+injected_data = parameters.get('portfolio_data', [])
+risk_threshold = float(parameters.get('risk_threshold', 100.0)) / 100.0
+
+# -----------------------------
+# PRE-PROCESS: Filter by Risk Threshold
+# -----------------------------
+data = [row for row in injected_data if (row.get('risk', 100) / 100.0) <= risk_threshold]
 
 if not data:
-    print(f"[QUANTUM_JSON]{json.dumps({'error': 'No company data found for the selected sector.', 'assignmentsTable': [], 'summary': 'Please select a different sector.'})}[/QUANTUM_JSON]")
+    msg = f"No companies found with risk <= {risk_threshold*100}%."
+    if not injected_data:
+        msg = "No portfolio data injected from backend."
+    print(f"[QUANTUM_JSON]{json.dumps({'error': msg, 'summary': 'Please adjust your risk threshold or sector selection.'})}[/QUANTUM_JSON]")
     exit(0)
 
 n = len(data)
 tickers = [row["ticker"] for row in data]
-# The Node.js layer provides nextYearReturn and risk as percentages
 returns = np.array([row["nextYearReturn"] / 100 for row in data])
 risk = np.array([row["risk"] / 100 for row in data])
 
 # -----------------------------
 # PARAMETERS FROM UI
 # -----------------------------
-risk_penalty = float(parameters.risk_penalty or 5.0)
-budget = int(parameters.max_companies or 3)
+risk_penalty = float(parameters.get('risk_penalty', 5.0))
+budget = int(parameters.get('max_companies', 3))
+
+# Ensure budget doesn't exceed available assets
+budget = min(budget, n)
 
 # -----------------------------
 # BUILD COVARIANCE MATRIX
 # -----------------------------
-# Simplified diagonal risk model
 cov_matrix = np.outer(risk, risk)
 
 # -----------------------------
@@ -95,13 +104,29 @@ for i in range(n):
 if len(portfolio) > 0:
     avg_risk = avg_risk / len(portfolio)
 
+# --- FIX: JSON Serialization for NumPy types (int8, etc) ---
+def sanitize_for_json(obj):
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_for_json(x) for x in obj]
+    if isinstance(obj, (np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64,
+                        np.uint8, np.uint16, np.uint32, np.uint64)):
+        return int(obj)
+    if isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+        return float(obj)
+    if isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    return obj
+
 result = {
     "assignmentsTable": [
         {"day": "Selected", "pilot": p["ticker"], "route": f"{p['company']} | Ret: {p['expected_return']} | Risk: {p['risk']}"}
         for p in portfolio
     ],
+    "best_solution": sanitize_for_json(best),
     "energy": float(energy),
-    "summary": f"Targeting {budget} assets in the {parameters.sector} sector. Quantum solver selected {len(portfolio)} stocks with an expected aggregate return of {total_return:.2f}% and an average portfolio risk of {avg_risk:.2f}%.",
+    "summary": f"Targeting {budget} assets. Quantum solver selected {len(portfolio)} stocks with an expected aggregate return of {total_return:.2f}% and an average portfolio risk of {avg_risk:.2f}%.",
 }
 
 # GENERATE PLOTLY CHART
@@ -123,7 +148,7 @@ try:
     )])
     
     fig.update_layout(
-        title=f"Portfolio Optimization: {parameters.sector} Sector",
+        title=f"Portfolio Optimization: Return vs Risk Profile",
         xaxis_title="Risk (Volatility %)",
         yaxis_title="Expected Return (%)",
         template="plotly_dark",
@@ -149,29 +174,39 @@ async function updateFinance() {
                 $set: {
                     fields: [
                         {
-                            id: "sector",
-                            label: "Target Sector",
-                            type: "select",
+                            key: "sector",
+                            label: "Target Sectors",
+                            type: "multiselect",
                             options: [
                                 "Technology", "Healthcare", "Finance", "Energy",
                                 "Consumer Discretionary", "Consumer Staples",
                                 "Industrials", "Telecommunications", "Utilities", "Materials"
                             ],
-                            description: "Filter the stock universe by a specific industry sector."
+                            description: "Select one or more industries to include in the stock universe."
                         },
                         {
-                            id: "risk_penalty",
+                            key: "risk_threshold",
+                            label: "Max Risk Per Asset (%)",
+                            type: "number",
+                            defaultValue: "25",
+                            placeholder: "e.g. 25",
+                            description: "Exclude stocks with risk higher than this value before optimization."
+                        },
+                        {
+                            key: "risk_penalty",
                             label: "Risk Aversion (0-10)",
                             type: "number",
+                            defaultValue: "5",
                             placeholder: "Higher = More Conservative",
                             description: "Controls the penalty weight for portfolio volatility."
                         },
                         {
-                            id: "max_companies",
+                            key: "max_companies",
                             label: "Portfolio Size (Target Assets)",
                             type: "number",
-                            placeholder: "e.g. 3",
-                            description: "The exact number of stocks the quantum solver should select."
+                            defaultValue: "5",
+                            placeholder: "e.g. 5",
+                            description: "The number of stocks the quantum solver should select."
                         }
                     ],
                     codeTemplates: [
@@ -180,7 +215,7 @@ async function updateFinance() {
                             code: pythonTemplate
                         }
                     ],
-                    qubitFormula: "10", // Usually ~10 per sector
+                    qubitFormula: "parameters.get('max_companies', 5) * 2",
                     maxQubitsPerBatch: 64,
                     active: true
                 }
