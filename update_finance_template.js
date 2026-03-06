@@ -217,8 +217,9 @@ async function updateFinance() {
                             code: pythonTemplate
                         }
                     ],
-                    qubitFormula: "parameters.get('max_companies', 5) * 2",
-                    maxQubitsPerBatch: 64,
+                    qubitFormula: "{{max_companies}} * 10",
+                    batchingEnabled: true,
+                    maxQubitsPerBatch: 20,
                     active: true
                 }
             }
