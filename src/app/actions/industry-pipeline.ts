@@ -609,11 +609,11 @@ Return ONLY the Python code. No markdown. No explanation.`);
                     query = { sector: 'Technology' }; // Default fallback
                 }
 
-                // Increase limit to 50 for multi-sector breath
-                const companies = await PortfolioCompany.find(query).limit(50).lean();
+                // Increase limit to 100 for full universe coverage across all sectors
+                const companies = await PortfolioCompany.find(query).limit(100).lean();
 
                 // --- SYNC FILTERING: Apply Risk Threshold in Backend for Batch Accuracy ---
-                const rawRisk = formData.fixed_risk_threshold;
+                const rawRisk = formData.risk_threshold;
                 const riskThreshold = rawRisk ? parseFloat(rawRisk) / 100 : 1.0;
                 const filteredCompanies = companies.filter((c: any) => (c.risk / 100) <= riskThreshold);
 

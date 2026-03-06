@@ -217,7 +217,7 @@ async function updateFinance() {
                             label: "Target Sectors",
                             type: "multi-select",
                             options: sectorOptions,
-                            description: "Select one or more industries. Hover/Expand to see constituent stocks."
+                            description: "Select one or more industries to include in the optimization pool."
                         },
                         {
                             key: "risk_threshold",
