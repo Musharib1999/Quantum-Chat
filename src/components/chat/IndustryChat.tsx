@@ -309,12 +309,21 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     qubitCount = result.assignmentsTable.length * 2;
                 }
 
-                tableHtml = `### Solution Details\n\n`;
-                tableHtml += `| Problem | Hardware | Resources |\n`;
-                tableHtml += `|:---|:---|:---|\n`;
-                tableHtml += `| ${contextConfig?.problem || 'Quantum Solution'} | \`${hardware}\` | ${qubitCount} Qubits |\n\n`;
-
                 const isFinance = contextConfig.industry?.toLowerCase() === 'finance';
+                tableHtml = `### Solution Details\n\n`;
+                tableHtml += `| Metric | Configuration |\n`;
+                tableHtml += `|:---|:---|\n`;
+                tableHtml += `| **Problem** | ${contextConfig?.problem || 'Quantum Solution'} |\n`;
+                tableHtml += `| **Hardware** | \`${hardware}\` |\n`;
+                tableHtml += `| **Resources** | ${qubitCount} Qubits |\n`;
+
+                if (isFinance && contextConfig?.formData?.sector) {
+                    const sectors = Array.isArray(contextConfig.formData.sector)
+                        ? contextConfig.formData.sector.join(', ')
+                        : contextConfig.formData.sector;
+                    tableHtml += `| **Universe** | ${sectors} |\n`;
+                }
+                tableHtml += `\n`;
                 const h1 = isFinance ? 'Status' : 'Period';
                 const h2 = isFinance ? 'Ticker' : 'Resource';
                 const h3 = isFinance ? 'Asset Details' : 'Assignment';

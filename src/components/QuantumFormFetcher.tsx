@@ -129,21 +129,36 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
                         </div>
                     </div>
                 ) : effectiveType === 'multi-select' ? (
-                    <select
-                        multiple
-                        value={formData[field.key] || []}
-                        onChange={(e) => {
-                            const values = Array.from(e.target.selectedOptions, option => option.value);
-                            handleInputChange(field.key, values);
-                        }}
-                        className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none h-32"
-                    >
+                    <div className="flex flex-wrap gap-2 pt-1 border-t border-border/20 mt-1">
                         {field.options?.map((opt: any) => {
                             const label = typeof opt === 'string' ? opt : opt.label;
                             const value = typeof opt === 'string' ? opt : opt.value;
-                            return <option key={value} value={value}>{label}</option>;
+                            const isSelected = (formData[field.key] || []).includes(value);
+
+                            return (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => {
+                                        const current = formData[field.key] || [];
+                                        const next = isSelected
+                                            ? current.filter((v: any) => v !== value)
+                                            : [...current, value];
+                                        handleInputChange(field.key, next);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 ${isSelected
+                                            ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                            : 'bg-secondary/50 text-muted-foreground border-border hover:border-primary/50 hover:bg-secondary'
+                                        }`}
+                                >
+                                    {label}
+                                </button>
+                            );
                         })}
-                    </select>
+                        {(!field.options || field.options.length === 0) && (
+                            <p className="text-[10px] text-muted-foreground italic p-2">No options available</p>
+                        )}
+                    </div>
                 ) : effectiveType === 'range' ? (
                     <div className="pt-2">
                         <input
