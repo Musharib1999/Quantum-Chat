@@ -255,7 +255,7 @@ async function updateFinance() {
                     ],
                     qubitFormula: "{{max_companies}} * 10",
                     batchingEnabled: true,
-                    maxQubitsPerBatch: 10,
+                    maxQubitsPerBatch: 25,
                     active: true
                 }
             }

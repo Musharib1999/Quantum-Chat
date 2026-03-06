@@ -227,38 +227,57 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
 
         try {
             for (let b = 1; b <= totalBatches; b++) {
+                console.log(`[IndustryChat] Starting Batch ${b}/${totalBatches}`);
                 setWorkflow(prev => ({ ...prev, kind: 'step2_loading', currentBatch: b } as any));
 
-                // 1. Generate code for current batch if not the first one (first was done in Step 1)
-                if (b > 1) {
-                    const genRes = await generateQuantumCode({
-                        problem: contextConfig.problem,
-                        industry: contextConfig.industry,
-                        service: contextConfig.service,
-                        hardware: contextConfig.hardware,
-                        formData: contextConfig.formData,
-                        batchIndex: b,
-                        lastBatchState
+                // Safety Fuse: If a single batch takes > 90s, force fail
+                const batchTimeout = setTimeout(() => {
+                    console.error(`[IndustryChat] Safety Fuse Tripped at Batch ${b}`);
+                    // We can't easily "cancel" the async call, but we can stop the loop
+                }, 90000);
+
+                try {
+                    // 1. Generate code for current batch if not the first one (first was done in Step 1)
+                    if (b > 1) {
+                        console.log(`[IndustryChat] Generating code for batch ${b}...`);
+                        const genRes = await generateQuantumCode({
+                            problem: contextConfig.problem,
+                            industry: contextConfig.industry,
+                            service: contextConfig.service,
+                            hardware: contextConfig.hardware,
+                            formData: contextConfig.formData,
+                            batchIndex: b,
+                            lastBatchState
+                        });
+                        currentBatchCode = genRes.code;
+                    }
+
+                    // 2. Run Simulator
+                    console.log(`[IndustryChat] Calling Simulator for batch ${b}...`);
+                    const simRes = await runQuantumSimulator({
+                        code: currentBatchCode,
+                        hardware: contextConfig.hardware
                     });
-                    currentBatchCode = genRes.code;
-                }
 
-                // 2. Run Simulator
-                const simRes = await runQuantumSimulator({
-                    code: currentBatchCode,
-                    hardware: contextConfig.hardware
-                });
+                    clearTimeout(batchTimeout);
 
-                if (simRes.error) {
-                    throw new Error(`Batch ${b} Failed: ${simRes.error}`);
-                }
+                    if (simRes.error) {
+                        console.error(`[IndustryChat] Simulator error in batch ${b}:`, simRes.error);
+                        throw new Error(`Batch ${b} Failed: ${simRes.error}`);
+                    }
 
-                combinedOutput += `\n\n--- BATCH ${b} ---\n${simRes.output}`;
+                    console.log(`[IndustryChat] Batch ${b} completed successfuilly.`);
+                    combinedOutput += `\n\n--- BATCH ${b} ---\n${simRes.output}`;
 
-                // 3. Extract state for next batch if needed
-                if (b < totalBatches) {
-                    const stateRes = await extractBatchState({ output: simRes.output });
-                    lastBatchState = stateRes.state;
+                    // 3. Extract state for next batch if needed
+                    if (b < totalBatches) {
+                        console.log(`[IndustryChat] Extracting state from batch ${b}...`);
+                        const stateRes = await extractBatchState({ output: simRes.output });
+                        lastBatchState = stateRes.state;
+                    }
+                } catch (err) {
+                    clearTimeout(batchTimeout);
+                    throw err;
                 }
             }
 

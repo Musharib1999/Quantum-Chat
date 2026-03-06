@@ -42,14 +42,17 @@ const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
 async function executeQuantumCircuit(circuitCode: string) {
     try {
         const url = `${QISKIT_SERVICE_URL}/execute`;
-        console.log(`[Quantum Sim] Sending request to: ${url}`);
+        console.log(`[Qiskit Sim] START | URL: ${url} | CodeSize: ${circuitCode.length}`);
+        console.time(`qiskit_exec_${url}`);
 
         const response = await axios.post(url, {
             code: circuitCode
         }, {
             headers: { 'X-API-Key': API_SECRET },
-            timeout: 20000
+            timeout: 30000
         });
+        console.timeEnd(`qiskit_exec_${url}`);
+        console.log(`[Qiskit Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length}`);
 
         return response.data;
     } catch (e: any) {
@@ -64,13 +67,14 @@ async function executeQuantumCircuit(circuitCode: string) {
 async function executeDWaveAnnealer(code: string) {
     try {
         const url = `${DWAVE_SERVICE_URL}/execute`;
-        console.log(`[DWave Sim] Sending request to: ${url}`);
+        console.log(`[DWave Sim] START | URL: ${url} | CodeSize: ${code.length}`);
+        console.time(`dwave_exec_${url}`);
 
         const response = await axios.post(url, {
             code: code
         }, {
             headers: { 'X-API-Key': API_SECRET },
-            timeout: 60000
+            timeout: 30000
         });
 
         return response.data;
@@ -281,7 +285,7 @@ export async function executeIndustryWorkflow(
                 last_batch_state: lastBatchState
             };
 
-            const isDWave = hardware.toLowerCase().includes('d-wave') || hardware.toLowerCase().includes('annealer');
+            const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing') || (templateCode && templateCode.includes('import dimod'));
             let generatedCode = "";
             let explanation = "";
             let attempts = 0;
@@ -737,13 +741,16 @@ export async function extractBatchState(config: {
     }
 }
 
+
 export async function runQuantumSimulator(config: {
     code: string; hardware: string;
 }): Promise<{ output: string; error?: string }> {
     const { code, hardware } = config;
-    const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
-
     try {
+        console.log(`[Simulator Router] START | HW: ${hardware} | CodeLen: ${code.length}`);
+        const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing') || (code && code.includes('import dimod'));
+        console.log(`[Simulator Router] Configured for: ${isDWave ? 'DWAVE/BQM' : 'QISKIT/GATE'}`);
+
         const result = isDWave
             ? await executeDWaveAnnealer(code)
             : await executeQuantumCircuit(code);
@@ -756,6 +763,7 @@ export async function runQuantumSimulator(config: {
 
         return { output: result.output || result.error || 'No output returned.', error: result.error };
     } catch (e: any) {
+        console.error("[Simulator Router] CRITICAL_FAIL:", e.message);
         return { output: '', error: e.message };
     }
 }
