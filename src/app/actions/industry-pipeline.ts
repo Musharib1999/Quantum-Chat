@@ -611,10 +611,16 @@ Return ONLY the Python code. No markdown. No explanation.`);
 
                 // Increase limit to 50 for multi-sector breath
                 const companies = await PortfolioCompany.find(query).limit(50).lean();
+
+                // --- SYNC FILTERING: Apply Risk Threshold in Backend for Batch Accuracy ---
+                const rawRisk = formData.fixed_risk_threshold;
+                const riskThreshold = rawRisk ? parseFloat(rawRisk) / 100 : 1.0;
+                const filteredCompanies = companies.filter((c: any) => (c.risk / 100) <= riskThreshold);
+
                 sanitizedFormData.portfolio_data = companies;
-                activeQubitCount = companies.length;
+                activeQubitCount = filteredCompanies.length;
                 sanitizedFormData.companies_count = activeQubitCount;
-                console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies. Active Qubit Count: ${activeQubitCount}`);
+                console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies. Filtered (Risk <= ${riskThreshold * 100}%): ${activeQubitCount}.`);
             } catch (e) {
                 console.error("Portfolio data injection failed:", e);
             }

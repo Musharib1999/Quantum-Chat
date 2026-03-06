@@ -26,10 +26,12 @@ batch_end = int(parameters.get('batch_end_index', len(filtered_data)))
 data = filtered_data[batch_start : batch_end + 1]
 
 if not data:
-    msg = f"No stocks in this batch slice ({batch_start}-{batch_end})."
     if not filtered_data:
-        msg = f"No companies found with risk <= {risk_threshold*100}%."
-    print(f"[QUANTUM_JSON]{json.dumps({'error': msg, 'summary': 'Waiting for next batch or adjust filters.'})}[/QUANTUM_JSON]")
+        msg = f"Universe Scan Alert: No companies found with risk <= {risk_threshold*100}%."
+        print(f"[QUANTUM_JSON]{json.dumps({'error': msg, 'summary': 'Please adjust risk filters or sectors.'})}[/QUANTUM_JSON]")
+    else:
+        # Unexpected slice request for non-empty universe. Backend-sync protection.
+        pass
     exit(0)
 
 print(f"Batch Processing: Assets {batch_start} to {batch_end} (Size: {len(data)})")
