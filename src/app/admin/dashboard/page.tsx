@@ -28,6 +28,7 @@ import ExperimentManager from '../../../components/admin/ExperimentManager';
 import MarketPromptManager from '../../../components/admin/MarketPromptManager';
 import LLMSettingsManager from '../../../components/admin/LLMSettingsManager';
 import StockSearchDebugger from '../../../components/admin/StockSearchDebugger';
+import HardwareManager from '../../../components/admin/HardwareManager';
 
 export default function AdminDashboard() {
     const { theme } = useTheme();
@@ -239,6 +240,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('forms'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<Cpu size={20} />}
+                        label="Hardware"
+                        active={activeTab === 'hardware'}
+                        onClick={() => { setActiveTab('hardware'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<ArrowUpCircle size={20} />}
                         label="Market Prompts"
                         active={activeTab === 'market_prompts'}
@@ -342,6 +349,7 @@ export default function AdminDashboard() {
                             {activeTab === 'use_cases' && <Briefcase className="text-purple-500" />}
                             {activeTab === 'experiments' && <Beaker className="text-purple-500" />}
                             {activeTab === 'forms' && <Layers className="text-primary" />}
+                            {activeTab === 'hardware' && <Cpu className="text-blue-500" />}
                             {activeTab === 'market_prompts' && <ArrowUpCircle className="text-green-500" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
                             {activeTab === 'llm_settings' && <Cpu className="text-orange-400" />}
@@ -559,6 +567,13 @@ export default function AdminDashboard() {
                     {activeTab === 'forms' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <FormArchitect />
+                        </div>
+                    )}
+
+                    {/* HARDWARE TAB */}
+                    {activeTab === 'hardware' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <HardwareManager />
                         </div>
                     )}
 

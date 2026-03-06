@@ -4,6 +4,7 @@ import dbConnect from '@/lib/db';
 import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
+import Hardware from '@/models/Hardware';
 
 // --- Types (Re-exported for Client) ---
 export type QaPairType = {
@@ -20,6 +21,16 @@ export type GuardrailType = {
     rule: string;
     type: 'banned_topic' | 'safety_check' | 'pii_masking';
     active: boolean;
+};
+
+export type HardwareType = {
+    id: string;
+    name: string;
+    provider: 'ibm' | 'ionq' | 'rigetti' | 'dwave' | 'other';
+    qubits: number;
+    status: 'Online' | 'Offline' | 'Maintenance';
+    description: string;
+    order: number;
 };
 
 export type ChatLogType = {
@@ -111,4 +122,49 @@ export async function getChatLogs() {
         activeGuardrails: l.activeGuardrails,
         timestamp: l.timestamp.toISOString(),
     }));
+}
+
+// --- Hardware Actions ---
+export async function getHardwares() {
+    await dbConnect();
+    const hws = await Hardware.find({}).sort({ order: 1 }).lean();
+    return hws.map((r: any) => ({
+        id: r._id.toString(),
+        name: r.name,
+        provider: r.provider,
+        qubits: r.qubits,
+        status: r.status,
+        description: r.description,
+        order: r.order
+    }));
+}
+
+export async function addHardware(data: any) {
+    await dbConnect();
+    const newHw = await Hardware.create(data);
+    return { success: true, id: newHw._id.toString() };
+}
+
+export async function updateHardware(id: string, data: any) {
+    await dbConnect();
+    await Hardware.findByIdAndUpdate(id, data);
+    return { success: true };
+}
+
+export async function toggleHardwareStatus(id: string) {
+    await dbConnect();
+    const hw = await Hardware.findById(id);
+    if (hw) {
+        if (hw.status === 'Online') hw.status = 'Offline';
+        else if (hw.status === 'Offline') hw.status = 'Maintenance';
+        else hw.status = 'Online';
+        await hw.save();
+    }
+    return { success: true };
+}
+
+export async function deleteHardware(id: string) {
+    await dbConnect();
+    await Hardware.findByIdAndDelete(id);
+    return { success: true };
 }
