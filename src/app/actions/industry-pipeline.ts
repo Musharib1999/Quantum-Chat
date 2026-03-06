@@ -835,12 +835,7 @@ STRICT RULES:
 - Use names like "Route X" or "Pilot Y" based on the data.
 - Mention if the total energy indicates a high-confidence stable solution.
 - Be direct and data-driven.
-- Do NOT use variable names like "x_0_0_0" in your final text.
-
-After the paragraph, generate a chart showing assignment counts:
-[CHART_DATA]
-{ "type": "bar", "data": [ {"name": "Total Assignments", "value": ${readableAssignments.length}} ] }
-[/CHART_DATA]`);
+- Do NOT use variable names like "x_0_0_0" in your final text.`);
 
         let text = '';
         try {
