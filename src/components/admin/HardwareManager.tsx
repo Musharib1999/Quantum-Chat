@@ -139,7 +139,7 @@ export default function HardwareManager() {
                     <div className="col-span-full flex justify-end">
                         <button
                             onClick={handleAdd}
-                            disabled={!newHw.name}
+                            disabled={!newHw.name || !newHw.description}
                             className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50"
                         >
                             <Save size={18} /> Save Hardware
@@ -158,8 +158,8 @@ export default function HardwareManager() {
                             <button
                                 onClick={() => handleToggleStatus(hw.id)}
                                 className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full border ${hw.status === 'Online' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                        hw.status === 'Offline' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                            'bg-orange-500/10 text-orange-500 border-orange-500/20'
+                                    hw.status === 'Offline' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                        'bg-orange-500/10 text-orange-500 border-orange-500/20'
                                     }`}
                             >
                                 {hw.status}
