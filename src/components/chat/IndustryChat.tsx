@@ -250,10 +250,10 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 });
 
                 if (simRes.error) {
-                    throw new Error(`Batch ${b} Failed: ${simRes.error}`);
+                    throw new Error(totalBatches > 1 ? `Batch ${b} Failed: ${simRes.error}` : simRes.error);
                 }
 
-                combinedOutput += `\n\n--- BATCH ${b} ---\n${simRes.output}`;
+                combinedOutput += totalBatches > 1 ? `\n\n--- BATCH ${b} ---\n${simRes.output}` : simRes.output;
 
                 // 3. Extract state for next batch if needed
                 if (b < totalBatches) {
@@ -274,7 +274,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             setWorkflow({
                 kind: 'step2_done',
                 code: initialCode,
-                simOutput: `Error during batch execution: ${e.message}`,
+                simOutput: totalBatches > 1 ? `Error during batch execution: ${e.message}` : `Simulator Error: ${e.message}`,
                 totalBatches
             });
         }
