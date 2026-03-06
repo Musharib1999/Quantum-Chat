@@ -302,7 +302,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 const days = contextConfig?.formData?.days || 0;
                 const qubitCount = pilots * days; // Derived from our formula
 
-                tableHtml = `### ⚛️ Quantum Solution Details\n\n`;
+                tableHtml = `### Solution Details\n\n`;
                 tableHtml += `**Problem:** ${contextConfig?.problem || 'Pilot Scheduling'}\n`;
                 tableHtml += `**Hardware:** \`${hardware}\`\n`;
                 tableHtml += `**Resources:** ${qubitCount} Qubits Utilized\n\n`;

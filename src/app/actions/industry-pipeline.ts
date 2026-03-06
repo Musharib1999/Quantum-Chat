@@ -835,7 +835,8 @@ STRICT RULES:
 - Use names like "Route X" or "Pilot Y" based on the data.
 - Mention if the total energy indicates a high-confidence stable solution.
 - Be direct and data-driven.
-- Do NOT use variable names like "x_0_0_0" in your final text.`);
+- Do NOT use variable names like "x_0_0_0" in your final text.
+- IMPORTANT: Do NOT include any [CHART_DATA] tags or JSON blocks. I will provide the visualization separately. ONLY PROVIDE THE TEXT SUMMARY.`);
 
         let text = '';
         try {
@@ -923,7 +924,7 @@ STRICT RULES:
                 return num.toString().split('').map(c => map[c] || c).join('');
             };
             const msg = `Explored a combinatorial space of 2${toSuperscript(qubitCount)} scenarios and converged to a minimum-energy configuration representing the optimal solution.`;
-            text += `\n\n*✨ ${msg}*`;
+            text += `\n\n${msg}`;
         }
 
         return { text, chartData, assignmentsTable };
