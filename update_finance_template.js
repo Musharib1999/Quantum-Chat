@@ -143,6 +143,9 @@ result = {
     ],
     "best_solution": sanitize_for_json(best),
     "energy": float(energy),
+    "total_budget": int(budget),
+    "total_qubits": int(n),
+    "batch_index": int(parameters.get('batch_index', 1)),
     "summary": f"Optimization Target: {budget} assets. Quantum solver converged to {len(portfolio)} stocks with an aggregate expected return of {total_return:.2f}% and a portfolio-wide average risk of {avg_risk:.2f}%.",
 }
 

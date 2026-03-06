@@ -782,19 +782,18 @@ export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string;
 }): Promise<{ text: string; chartData?: any; assignmentsTable?: any[] }> {
     const { problem, industry, hardware, rawOutput } = config;
-    const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
     try {
         const { provider, modelName } = await getDynamicLLM();
 
-        // --- PRE-PROCESS: Unify and De-Gibberish Multi-Batch Results ---
+        // --- PRE-PROCESS: Unify Results ---
         let unifiedSolution: Record<string, any> = {};
         let totalEnergy = 0;
-        let allFormattedAssignments: string[] = [];
-
         let extractedPlotlyChart: any = null;
         let finalAssignmentsTable: any[] = [];
         let finalSummary: string = "";
+        let globalTotalQubits = 0;
+        let globalBudget = 1;
 
         // 1. Try robust tagged extraction first
         const taggedMatches = [...rawOutput.matchAll(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/g)];
@@ -805,19 +804,20 @@ export async function interpretQuantumResults(config: {
                     const data = JSON.parse(match[1]);
                     if (data.best_solution) Object.assign(unifiedSolution, data.best_solution);
                     if (data.energy !== undefined) totalEnergy += data.energy;
-                    if (data.formatted_assignments) allFormattedAssignments.push(...data.formatted_assignments);
-                    if (data.plotly_chart) extractedPlotlyChart = data.plotly_chart;
+                    if (data.total_qubits) globalTotalQubits += data.total_qubits;
+                    if (data.total_budget) globalBudget = data.total_budget;
                     if (data.assignmentsTable) finalAssignmentsTable.push(...data.assignmentsTable);
+                    if (data.plotly_chart) extractedPlotlyChart = data.plotly_chart;
 
-                    // Only use summary if it's substantial and not a "Waiting" placeholder
                     if (data.summary && (!finalSummary || (!data.summary.includes('Waiting') && !data.summary.includes('No stocks')))) {
                         finalSummary = data.summary;
                     }
                 } catch (e) {
-                    console.warn("Failed to parse tagged JSON", e);
+                    console.error("Error parsing tagged JSON:", e);
                 }
             });
-        } else {
+        }
+        else {
             // 2. Fallback to naive brace matching if no tags found
             const jsonMatches = [...rawOutput.matchAll(/\{[\s\S]*?"best_solution"[\s\S]*?\}/g)];
             jsonMatches.forEach(match => {
@@ -825,147 +825,99 @@ export async function interpretQuantumResults(config: {
                     const data = JSON.parse(match[0]);
                     if (data.best_solution) {
                         Object.assign(unifiedSolution, data.best_solution);
+                        if (data.energy !== undefined) totalEnergy += data.energy;
+                        if (data.total_qubits) globalTotalQubits += data.total_qubits;
+                        if (data.total_budget) globalBudget = data.total_budget;
                     }
-                    if (data.energy !== undefined) {
-                        totalEnergy += data.energy;
-                    }
-                    if (data.formatted_assignments && Array.isArray(data.formatted_assignments)) {
-                        allFormattedAssignments.push(...data.formatted_assignments);
-                    }
+                    if (data.assignmentsTable) finalAssignmentsTable.push(...data.assignmentsTable);
                 } catch (e) {
-                    console.warn("Failed to parse legacy JSON during interpretation", e);
+                    console.error("Error parsing untagged JSON fallback:", e);
                 }
             });
         }
 
-        // Use formatted assignments if available, otherwise fallback to manual translation
-        let readableAssignments: string[] = allFormattedAssignments;
+        // --- GLOBAL TOURNAMENT WINNOWING (For Portfolio Optimization) ---
+        if (problem.toLowerCase().includes('portfolio optimization') && finalAssignmentsTable.length > 0) {
+            const getMetrics = (row: any) => {
+                const retStr = row.route.match(/Ret: ([\d.]+)%/);
+                const riskStr = row.route.match(/Risk: ([\d.]+)%/);
+                const ret = retStr ? parseFloat(retStr[1]) : 0;
+                const risk = riskStr ? parseFloat(riskStr[1]) : 1;
+                return { ret, risk, score: ret / (risk || 1) };
+            };
+
+            // Sort by performance score (Decreasing)
+            finalAssignmentsTable.sort((a, b) => getMetrics(b).score - getMetrics(a).score);
+
+            // Keep only the global best N
+            const selectedAssignments = finalAssignmentsTable.slice(0, globalBudget);
+
+            // Recalculate Global Stats
+            let globalTotalReturn = 0;
+            let globalAvgRisk = 0;
+            selectedAssignments.forEach(row => {
+                const m = getMetrics(row);
+                globalTotalReturn += m.ret;
+                globalAvgRisk += m.risk;
+            });
+            globalAvgRisk = selectedAssignments.length > 0 ? globalAvgRisk / selectedAssignments.length : 0;
+
+            finalAssignmentsTable = selectedAssignments;
+
+            // Re-generate Final Summary for Global Context
+            finalSummary = `Optimization Target: ${globalBudget} assets. Quantum solver converged to ${selectedAssignments.length} stocks across the entire ${globalTotalQubits || 'scanned'}-stock universe. Aggregate expected return is ${globalTotalReturn.toFixed(2)}% with a portfolio-wide average risk of ${globalAvgRisk.toFixed(2)}%.`;
+        }
+
+        // --- PREPARE READABLE ASSIGNMENTS ---
+        let readableAssignments: string[] = [];
+        finalAssignmentsTable.forEach(row => {
+            readableAssignments.push(`${row.pilot || row.ticker}: ${row.route}`);
+        });
 
         if (readableAssignments.length === 0) {
             Object.entries(unifiedSolution).forEach(([key, val]) => {
                 if (val === 1) {
-                    const match = key.match(/x_(\w+)_(\w+)(?:_(\w+))?/);
-                    if (match) {
-                        const [, p, r, d] = match;
-                        let desc = `Pilot ${p} scheduled for Flight ${r}`;
-                        if (d !== undefined) desc += ` on Day ${d}`;
-                        readableAssignments.push(desc);
-                    } else {
-                        readableAssignments.push(`${key.replace(/_/g, ' ')}: Assigned`);
-                    }
+                    readableAssignments.push(`${key.replace(/_/g, ' ')}: Assigned`);
                 }
             });
         }
 
         const cleanedInput = `
-GLOBAL SIMULATION RESULTS (Unified from all batches):
+GLOBAL SIMULATION RESULTS:
 Assignments:
 ${readableAssignments.length > 0 ? readableAssignments.join('\n') : 'No assignments found.'}
 Total Energy: ${totalEnergy.toFixed(2)}
 `;
 
-        const prompt = await getDynamicPrompt('industry_analysis', {
-            problem,
-            industry,
-            simulator: hardware,
-            output: cleanedInput
-        }, `You are a Quantum Computing analyst. Analyze this schedule generated by a D-Wave Quantum Annealer.
-Problem: ${problem} | Industry: ${industry}
-
-SCHEDULE DATA:
+        const prompt = `Analyze this quantum optimization result for ${problem} in ${industry}.
+RESULTS DATA:
 ${cleanedInput}
-
 STRICT RULES:
-- Translate the data into a professional executive summary.
-- Write exactly ONE paragraph of 5-6 lines maximum.
-- Use names like "Route X" or "Pilot Y" based on the data.
-- Mention if the total energy indicates a high-confidence stable solution.
-- Be direct and data-driven.
-- Do NOT use variable names like "x_0_0_0" in your final text.
-- IMPORTANT: Do NOT include any [CHART_DATA] tags or JSON blocks. I will provide the visualization separately. ONLY PROVIDE THE TEXT SUMMARY.`);
+- Write ONE paragraph (4-6 lines).
+- Be professional and data-driven.
+- Do NOT mention variable names like x_0.
+- If a summary was provided: "${finalSummary}", incorporate its global aggregate values.`;
 
-        // --- LLM SUMMARY GEN (Only if no deterministic summary provided) ---
         let text = finalSummary || '';
 
-        if (!text) {
+        // Only call LLM if finalSummary is empty or we want extra polish
+        if (!text || text.length < 50) {
             try {
-                if (provider === 'groq') {
-                    if (!GROQ_API_KEY) {
-                        text = "Analysis unavailable: Groq API Key is missing.";
-                    } else {
-                        const groq = new Groq({ apiKey: GROQ_API_KEY });
-                        const completion = await groq.chat.completions.create({
-                            messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
-                            model: modelName,
-                        });
-                        text = completion.choices[0]?.message?.content || 'Analysis complete.';
-                    }
-                } else {
-                    if (!GEMINI_API_KEY) {
-                        text = "Analysis unavailable: Gemini API Key is missing.";
-                    } else {
-                        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-                        const model = genAI.getGenerativeModel({ model: modelName });
-                        const result = await model.generateContent([
-                            "You are a Quantum Analysis expert.",
-                            prompt
-                        ]);
-                        text = result.response.text() || 'Analysis complete.';
-                    }
+                // Lazy-load Groq to avoid unnecessary imports
+                const { default: Groq } = await import('groq-sdk');
+                const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+                if (provider === 'groq' && GROQ_API_KEY) {
+                    const groq = new Groq({ apiKey: GROQ_API_KEY });
+                    const completion = await groq.chat.completions.create({
+                        messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
+                        model: modelName,
+                    });
+                    text = completion.choices[0]?.message?.content || text || 'Analysis complete.';
                 }
-            } catch (llmError: any) {
-                console.error("LLM Error during interpretation, falling back to deterministic only.", llmError);
-                text = `*Quantum Guru AI is currently offline. The experiment summary will be generated and added to the history once the AI service is restored.*`;
-            }
-        }
-
-        // --- DETERMINISTIC TABLE PARSER ---
-        const assignmentsTable: any[] = finalAssignmentsTable;
-
-        if (assignmentsTable.length === 0) {
-            // Parse x_P_R_D format commonly used in routing/rostering
-            Object.entries(unifiedSolution).forEach(([key, val]) => {
-                if (val === 1 && typeof key === 'string' && key.startsWith('x_')) {
-                    const parts = key.split('_');
-                    if (parts.length >= 4) {
-                        const pilot = parseInt(parts[1]);
-                        const route = parseInt(parts[2]);
-                        const day = parseInt(parts[3]);
-
-                        if (!isNaN(pilot) && !isNaN(route) && !isNaN(day)) {
-                            assignmentsTable.push({
-                                id: key,
-                                pilot: `Pilot ${pilot + 1}`,
-                                route: `Route ${route + 1}`,
-                                day: `Day ${day + 1}`
-                            });
-                        }
-                    }
-                }
-            });
-        }
-
-        // Sort table chronologically by Day, then Pilot
-        assignmentsTable.sort((a, b) => {
-            const dayA = parseInt(a.day.replace('Day ', ''));
-            const dayB = parseInt(b.day.replace('Day ', ''));
-            if (dayA !== dayB) return dayA - dayB;
-
-            const pA = parseInt(a.pilot.replace('Pilot ', ''));
-            const pB = parseInt(b.pilot.replace('Pilot ', ''));
-            return pA - pB;
-        });
-        let chartData = extractedPlotlyChart || null;
-        if (!chartData && text.includes("[CHART_DATA]")) {
-            // Use regex that allows for optional whitespace/newlines around tags
-            const chartMatch = text.match(/\[CHART_DATA\]\s*([\s\S]*?)\s*\[\/CHART_DATA\]/);
-            if (chartMatch && chartMatch[1]) {
-                try {
-                    chartData = JSON.parse(chartMatch[1]);
-                    text = text.replace(chartMatch[0], "").trim();
-                } catch (e: any) {
-                    console.error("Chart JSON Parse Error:", e, "Raw string:", chartMatch[1]);
-                }
+            } catch (e) {
+                console.warn("LLM call failed, using default summary:", e);
+                text = text || "Quantum simulation complete.";
             }
         }
 
@@ -979,9 +931,10 @@ STRICT RULES:
             text += `\n\n${msg}`;
         }
 
-        return { text, chartData, assignmentsTable };
+        return { text, chartData: extractedPlotlyChart, assignmentsTable: finalAssignmentsTable };
     } catch (e: any) {
-        return { text: "Analysis failed due to error: " + e.message, chartData: null, assignmentsTable: [] };
+        console.error("Critical error in interpretQuantumResults:", e);
+        return { text: "Analysis failed: " + e.message, assignmentsTable: [] };
     }
 }
 
