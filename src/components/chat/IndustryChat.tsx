@@ -296,13 +296,22 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             // Generate Markdown Data Table for Deterministic Routing Output
             let tableHtml = "";
             if (result.assignmentsTable && result.assignmentsTable.length > 0) {
-                // Construct standard Markdown table
-                tableHtml = `**Deterministic Quantum Assignments:**\n\n`;
+                // Construct standard Markdown table with Problem Details
+                const hardware = contextConfig?.hardware || 'Quantum Annealer';
+                const pilots = contextConfig?.formData?.number_of_pilots || 0;
+                const days = contextConfig?.formData?.days || 0;
+                const qubitCount = pilots * days; // Derived from our formula
+
+                tableHtml = `### ⚛️ Quantum Solution Details\n\n`;
+                tableHtml += `**Problem:** ${contextConfig?.problem || 'Pilot Scheduling'}\n`;
+                tableHtml += `**Hardware:** \`${hardware}\`\n`;
+                tableHtml += `**Resources:** ${qubitCount} Qubits Utilized\n\n`;
+
                 tableHtml += `| Day | Pilot | Route |\n`;
                 tableHtml += `|---|---|---|\n`;
 
                 result.assignmentsTable.forEach((row: any) => {
-                    tableHtml += `| **${row.day}** | ${row.pilot} | ${row.route} |\n`;
+                    tableHtml += `| **Day ${row.day}** | ${row.pilot} | ${row.route} |\n`;
                 });
             }
 
