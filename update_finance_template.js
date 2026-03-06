@@ -112,6 +112,7 @@ for i in range(n):
         portfolio.append({
             "ticker": tickers[i],
             "company": data[i]["company"],
+            "sector": data[i].get("sector", "Unknown"),
             "expected_return": f"{returns[i]*100:.2f}%",
             "risk": f"{risk[i]*100:.2f}%"
         })
@@ -138,7 +139,7 @@ def sanitize_for_json(obj):
 
 result = {
     "assignmentsTable": [
-        {"day": "Selected", "pilot": p["ticker"], "route": f"{p['company']} (Ret: {p['expected_return']}, Risk: {p['risk']})"}
+        {"sector": p["sector"], "pilot": p["ticker"], "route": f"{p['company']} (Ret: {p['expected_return']}, Risk: {p['risk']})"}
         for p in portfolio
     ],
     "best_solution": sanitize_for_json(best),
@@ -146,7 +147,9 @@ result = {
     "total_budget": int(budget),
     "total_qubits": int(n),
     "batch_index": int(parameters.get('batch_index', 1)),
-    "summary": f"Optimization Target: {budget} assets. Quantum solver converged to {len(portfolio)} stocks with an aggregate expected return of {total_return:.2f}% and a portfolio-wide average risk of {avg_risk:.2f}%.",
+    "total_universe": int(parameters.get('total_universe_size', n)),
+    "filtered_universe": int(parameters.get('filtered_universe_size', n)),
+    "summary": f"Injected Universe: {parameters.get('total_universe_size', n)} assets. {parameters.get('total_universe_size', n) - parameters.get('filtered_universe_size', n)} filtered by risk. Quantum solver processed {parameters.get('filtered_universe_size', n)} stocks across all sectors. Optimizing target: {budget} assets.",
 }
 
 # GENERATE PLOTLY CHART

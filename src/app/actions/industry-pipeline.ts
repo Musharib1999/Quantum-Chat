@@ -620,6 +620,8 @@ Return ONLY the Python code. No markdown. No explanation.`);
                 sanitizedFormData.portfolio_data = companies;
                 activeQubitCount = filteredCompanies.length;
                 sanitizedFormData.companies_count = activeQubitCount;
+                sanitizedFormData.total_universe_size = companies.length;
+                sanitizedFormData.filtered_universe_size = activeQubitCount;
                 console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies. Filtered (Risk <= ${riskThreshold * 100}%): ${activeQubitCount}.`);
             } catch (e) {
                 console.error("Portfolio data injection failed:", e);
@@ -779,9 +781,9 @@ export async function runQuantumSimulator(config: {
 }
 
 export async function interpretQuantumResults(config: {
-    problem: string; industry: string; hardware: string; rawOutput: string;
+    problem: string; industry: string; hardware: string; rawOutput: string; formData: any;
 }): Promise<{ text: string; chartData?: any; assignmentsTable?: any[] }> {
-    const { problem, industry, hardware, rawOutput } = config;
+    const { problem, industry, hardware, rawOutput, formData } = config;
 
     try {
         const { provider, modelName } = await getDynamicLLM();
@@ -843,7 +845,9 @@ export async function interpretQuantumResults(config: {
                 const riskStr = row.route.match(/Risk: ([\d.]+)%/);
                 const ret = retStr ? parseFloat(retStr[1]) : 0;
                 const risk = riskStr ? parseFloat(riskStr[1]) : 1;
-                return { ret, risk, score: ret / (risk || 1) };
+                // Score aligns with QUBO: Higher return is better, higher risk is worse (weighted by user penalty)
+                const penalty = parseFloat(formData.risk_penalty || "5") / 10;
+                return { ret, risk, score: ret - (penalty * risk * risk / 10) };
             };
 
             // Sort by performance score (Decreasing)
@@ -871,7 +875,8 @@ export async function interpretQuantumResults(config: {
         // --- PREPARE READABLE ASSIGNMENTS ---
         let readableAssignments: string[] = [];
         finalAssignmentsTable.forEach(row => {
-            readableAssignments.push(`${row.pilot || row.ticker}: ${row.route}`);
+            const sectorTag = row.sector ? `${row.sector}: ` : '';
+            readableAssignments.push(`${sectorTag}${row.pilot || row.ticker}: ${row.route}`);
         });
 
         if (readableAssignments.length === 0) {
@@ -921,13 +926,13 @@ STRICT RULES:
             }
         }
 
-        const qubitCount = Object.keys(unifiedSolution).length;
+        const qubitCount = globalTotalQubits || Object.keys(unifiedSolution).length;
         if (qubitCount > 0) {
             const toSuperscript = (num: number) => {
                 const map: { [key: string]: string } = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
                 return num.toString().split('').map(c => map[c] || c).join('');
             };
-            const msg = `Explored a combinatorial space of 2${toSuperscript(qubitCount)} scenarios and converged to a minimum-energy configuration representing the optimal solution.`;
+            const msg = `Quantum Exploration: Analyzed a combinatorial state-space of 2${toSuperscript(qubitCount)} possibilities across all sectors. Solver identified the minimum-energy portfolio configuration representing the global optimum.`;
             text += `\n\n${msg}`;
         }
 

@@ -289,6 +289,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 industry: contextConfig.industry,
                 hardware: contextConfig.hardware,
                 rawOutput: simOutput,
+                formData: contextConfig.formData,
             });
             stopTimer();
             setWorkflow({ kind: 'step3_done', code, simOutput, analysis: result.text, chartData: result.chartData });
