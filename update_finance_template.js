@@ -15,14 +15,24 @@ risk_threshold = float(parameters.get('risk_threshold', 100.0)) / 100.0
 # -----------------------------
 # PRE-PROCESS: Filter by Risk Threshold
 # -----------------------------
-data = [row for row in injected_data if (row.get('risk', 100) / 100.0) <= risk_threshold]
+filtered_data = [row for row in injected_data if (row.get('risk', 100) / 100.0) <= risk_threshold]
+
+# -----------------------------
+# BATCH PARTITIONING: Slice the Universe
+# -----------------------------
+# Use indices injected by the industry pipeline to partition the stock universe
+batch_start = int(parameters.get('batch_start_index', 0))
+batch_end = int(parameters.get('batch_end_index', len(filtered_data)))
+data = filtered_data[batch_start : batch_end + 1]
 
 if not data:
-    msg = f"No companies found with risk <= {risk_threshold*100}%."
-    if not injected_data:
-        msg = "No portfolio data injected from backend."
-    print(f"[QUANTUM_JSON]{json.dumps({'error': msg, 'summary': 'Please adjust your risk threshold or sector selection.'})}[/QUANTUM_JSON]")
+    msg = f"No stocks in this batch slice ({batch_start}-{batch_end})."
+    if not filtered_data:
+        msg = f"No companies found with risk <= {risk_threshold*100}%."
+    print(f"[QUANTUM_JSON]{json.dumps({'error': msg, 'summary': 'Waiting for next batch or adjust filters.'})}[/QUANTUM_JSON]")
     exit(0)
+
+print(f"Batch Processing: Assets {batch_start} to {batch_end} (Size: {len(data)})")
 
 n = len(data)
 tickers = [row["ticker"] for row in data]
