@@ -29,6 +29,7 @@ import MarketPromptManager from '../../../components/admin/MarketPromptManager';
 import LLMSettingsManager from '../../../components/admin/LLMSettingsManager';
 import StockSearchDebugger from '../../../components/admin/StockSearchDebugger';
 import HardwareManager from '../../../components/admin/HardwareManager';
+import BlockedSourceManager from '../../../components/admin/BlockedSourceManager';
 
 export default function AdminDashboard() {
     const { theme } = useTheme();
@@ -264,6 +265,12 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('articles'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
+                        icon={<ShieldAlert size={20} />}
+                        label="News Blocklist"
+                        active={activeTab === 'news_blocklist'}
+                        onClick={() => { setActiveTab('news_blocklist'); setIsMobileMenuOpen(false); }}
+                    />
+                    <SidebarLink
                         icon={<Briefcase size={20} />}
                         label="Use Cases"
                         active={activeTab === 'use_cases'}
@@ -351,6 +358,7 @@ export default function AdminDashboard() {
                             {activeTab === 'forms' && <Layers className="text-primary" />}
                             {activeTab === 'hardware' && <Cpu className="text-blue-500" />}
                             {activeTab === 'market_prompts' && <ArrowUpCircle className="text-green-500" />}
+                            {activeTab === 'news_blocklist' && <ShieldAlert className="text-red-500" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
                             {activeTab === 'llm_settings' && <Cpu className="text-orange-400" />}
                             {activeTab === 'stock_debug' && <Search className="text-blue-400" />}
@@ -588,6 +596,13 @@ export default function AdminDashboard() {
                     {activeTab === 'news' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <NewsManager />
+                        </div>
+                    )}
+
+                    {/* NEWS BLOCKLIST TAB */}
+                    {activeTab === 'news_blocklist' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <BlockedSourceManager />
                         </div>
                     )}
 

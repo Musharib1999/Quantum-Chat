@@ -127,12 +127,23 @@ export async function getDbNews(limit: number = 20, page: number = 1) {
         await dbConnect();
         const skip = (page - 1) * limit;
 
-        const news = await News.find()
+        // 1. Fetch Blocked Sources
+        const BlockedSource = (await import('@/models/BlockedSource')).default;
+        const blockedDocs = await BlockedSource.find({}, { name: 1 });
+        const blockedNames = blockedDocs.map(d => d.name);
+
+        // 2. Build Query
+        const query: any = {};
+        if (blockedNames.length > 0) {
+            query.source = { $nin: blockedNames };
+        }
+
+        const news = await News.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
-        const total = await News.countDocuments();
+        const total = await News.countDocuments(query);
 
         return {
             news: news.map(n => ({
