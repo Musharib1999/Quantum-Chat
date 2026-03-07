@@ -28,6 +28,11 @@ async function dbConnect() {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
+            maxPoolSize: 10, // Limit connections per serverless instance to prevent free-tier exhaustion
+            minPoolSize: 1,
+            serverSelectionTimeoutMS: 5000, // Fail fast after 5s instead of hanging
+            socketTimeoutMS: 45000,
+            family: 4 // Use IPv4 specifically to prevent IPv6 DNS resolution timeouts
         };
 
         cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {

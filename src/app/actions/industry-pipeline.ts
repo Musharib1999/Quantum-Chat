@@ -8,7 +8,11 @@ import LLMSetting from '@/models/LLMSetting';
 import dbConnect from '@/lib/db';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
+// In-process cache: avoids a DB round-trip on every pipeline call within the same Vercel instance
+let _llmSettingsCache: { provider: string; modelName: string } | null = null;
+
 async function getDynamicLLM() {
+    if (_llmSettingsCache) return _llmSettingsCache;
     await dbConnect();
     let provider = 'gemini';
     let modelName = 'gemini-2.0-flash-lite';
@@ -21,7 +25,8 @@ async function getDynamicLLM() {
     } catch (e) {
         console.error("Failed to fetch LLM settings, falling back to Gemini");
     }
-    return { provider, modelName };
+    _llmSettingsCache = { provider, modelName };
+    return _llmSettingsCache;
 }
 import { getDynamicPrompt } from './prompt-utils';
 import axios from 'axios';
