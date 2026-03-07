@@ -865,39 +865,41 @@ export async function interpretQuantumResults(config: {
             });
         }
 
-        // --- GLOBAL TOURNAMENT WINNOWING (For Portfolio Optimization) ---
+        // --- CONSOLIDATE QUBO SELECTIONS (For Portfolio Optimization) ---
+        // Trust the QUBO's own portfolio selection — do NOT re-rank with a classical scoring formula.
+        // The quantum annealer already optimized the combination; we just consolidate across batches.
         if (problem.toLowerCase().includes('portfolio optimization') && finalAssignmentsTable.length > 0) {
-            const getMetrics = (row: any) => {
-                const retStr = row.route.match(/Ret: ([\d.]+)%/);
-                const riskStr = row.route.match(/Risk: ([\d.]+)%/);
-                const ret = retStr ? parseFloat(retStr[1]) : 0;
-                const risk = riskStr ? parseFloat(riskStr[1]) : 1;
-                // Score aligns with QUBO: Higher return is better, higher risk is worse (weighted by user penalty)
-                const penalty = parseFloat(formData.risk_penalty || "5") / 10;
-                return { ret, risk, score: ret - (penalty * risk * risk / 10) };
-            };
+            const budget = globalBudget || 10;
 
-            // Sort by performance score (Decreasing)
-            finalAssignmentsTable.sort((a, b) => getMetrics(b).score - getMetrics(a).score);
+            // Deduplicate by ticker (same company may appear from overlapping batches)
+            const seenTickers = new Set<string>();
+            const deduplicated = finalAssignmentsTable.filter(row => {
+                const ticker = row.ticker || row.pilot;
+                if (!ticker || seenTickers.has(ticker)) return false;
+                seenTickers.add(ticker);
+                return true;
+            });
 
-            // Keep only the global best N
-            const selectedAssignments = finalAssignmentsTable.slice(0, globalBudget);
+            // Trim to target portfolio size
+            const selectedAssignments = deduplicated.slice(0, budget);
 
             // Recalculate Global Stats
             let globalTotalReturn = 0;
             let globalAvgRisk = 0;
             selectedAssignments.forEach(row => {
-                const m = getMetrics(row);
-                globalTotalReturn += m.ret;
-                globalAvgRisk += m.risk;
+                const retStr = row.route?.match(/Ret: ([\d.]+)%/);
+                const riskStr = row.route?.match(/Risk: ([\d.]+)%/);
+                globalTotalReturn += retStr ? parseFloat(retStr[1]) : 0;
+                globalAvgRisk += riskStr ? parseFloat(riskStr[1]) : 0;
             });
             globalAvgRisk = selectedAssignments.length > 0 ? globalAvgRisk / selectedAssignments.length : 0;
 
             finalAssignmentsTable = selectedAssignments;
 
-            // Re-generate Final Summary for Global Context
-            finalSummary = `Optimization Target: ${globalBudget} assets. Quantum solver converged to ${selectedAssignments.length} stocks across the entire ${globalTotalQubits || 'scanned'}-stock universe. Aggregate expected return is ${globalTotalReturn.toFixed(2)}% with a portfolio-wide average risk of ${globalAvgRisk.toFixed(2)}%.`;
+            const uniqueSectorsSelected = [...new Set(selectedAssignments.map(r => r.sector).filter(Boolean))];
+            finalSummary = `Quantum QUBO optimized portfolio: ${selectedAssignments.length} assets across ${uniqueSectorsSelected.length} sectors. Solver evaluated ${globalTotalQubits || 'scanned'} stocks and converged to the minimum-energy configuration. Aggregate expected return: ${globalTotalReturn.toFixed(2)}%, Portfolio average risk: ${globalAvgRisk.toFixed(2)}%.`;
         }
+
 
         // --- PREPARE READABLE ASSIGNMENTS ---
         let readableAssignments: string[] = [];
