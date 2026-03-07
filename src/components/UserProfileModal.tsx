@@ -89,7 +89,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 {isAuthenticated && user ? (
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all text-left"
+                        className="w-full flex items-center justify-center gap-2.5 px-3 py-2 rounded-lg text-sm text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all"
                     >
                         <LogOut size={14} className="text-black" />
                         Logout
@@ -97,7 +97,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 ) : (
                     <button
                         onClick={handleLogin}
-                        className="w-full px-3 py-2 rounded-lg text-sm text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all text-left"
+                        className="w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all"
                     >
                         Login
                     </button>
