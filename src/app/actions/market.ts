@@ -28,14 +28,20 @@ export async function getStockPrice(symbol: string) {
             return null;
         }
 
+        const format = (val: any) => {
+            if (val === undefined || val === null || val === "") return "0.00";
+            const num = parseFloat(val);
+            return isNaN(num) ? "0.00" : num.toFixed(2);
+        };
+
         return {
             symbol: data.symbol,
-            price: data.price,
-            change: data.change,
-            changePercent: data.changePercent,
+            price: format(data.price),
+            change: format(data.change),
+            changePercent: data.changePercent, // Usually already a string like "0.05%"
             volume: data.volume,
             latestTradingDay: data.latestTradingDay,
-            previousClose: data.previousClose
+            previousClose: format(data.previousClose)
         };
 
     } catch (error) {

@@ -110,18 +110,24 @@ export async function buildMarketContext(
         if (scrapedData) autonomousContext = scrapedData;
     }
 
+    const fmtNumeric = (val: any) => {
+        if (!val) return "0.00";
+        const n = parseFloat(String(val).replace(/[^0-9.]/g, ''));
+        return isNaN(n) ? "0.00" : n.toFixed(2);
+    };
+
     // 5. Finalize System Prompt Assembly
     if (realTimeData || contextConfig.realTimeData) {
         const rt = realTimeData || contextConfig.realTimeData;
         systemInstructions = await getDynamicPrompt('market_inquiry', {
             time: timeString,
             symbol: rt.symbol,
-            price: rt.price,
-            change: rt.change,
+            price: fmtNumeric(rt.price),
+            change: fmtNumeric(rt.change),
             changePercent: rt.changePercent,
             volume: rt.volume,
             date: rt.latestTradingDay,
-            close: rt.previousClose,
+            close: fmtNumeric(rt.previousClose),
             scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
         }, systemInstructions);
     } else {
