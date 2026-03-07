@@ -722,6 +722,18 @@ export async function generateQuantumCode(config: {
         delete (sanitizedFormData as any).__portfolioData;
         delete sanitizedFormData._portfolioDataRef;
 
+        // --- BACKWARD COMPAT: Replace {{parameters.xxx}} placeholders (legacy template format) ---
+        // Some templates (e.g. Aviation) still use {{parameters.key}} syntax.
+        // Apply substitution BEFORE DotDict injection so the Python code is valid.
+        Object.keys(sanitizedFormData).forEach(key => {
+            const val = sanitizedFormData[key];
+            const safeVal = (val === undefined || val === null || val === '') ? 'None' : val;
+            const re = new RegExp(`\\{\\{parameters\\.${key}\\}\\}`, 'g');
+            code = code.replace(re, String(safeVal));
+        });
+        // Replace any remaining unmatched {{parameters.xxx}} with None
+        code = code.replace(/\{\{parameters\.[^}]+\}\}/g, 'None');
+
         // Serialize only the small parameters (no large arrays)
         const paramsJson = JSON.stringify(sanitizedFormData);
         const portfolioJson = portfolioData ? JSON.stringify(portfolioData) : 'None';
