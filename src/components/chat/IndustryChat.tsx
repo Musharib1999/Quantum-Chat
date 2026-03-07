@@ -12,6 +12,7 @@ interface IndustryChatProps {
     contextConfig?: any;
     placeholder?: string;
     onAnalysisTriggered?: () => void;
+    onPipelineComplete?: () => void;
 }
 
 type WorkflowStage =
@@ -23,7 +24,7 @@ type WorkflowStage =
     | { kind: 'step3_loading'; code: string; simOutput: string }
     | { kind: 'step3_done'; code: string; simOutput: string; analysis: string; chartData?: any };
 
-export default function IndustryChat({ contextConfig, placeholder, onAnalysisTriggered }: IndustryChatProps) {
+export default function IndustryChat({ contextConfig, placeholder, onAnalysisTriggered, onPipelineComplete }: IndustryChatProps) {
     const { user } = useAuth();
     const {
         messages,
@@ -312,6 +313,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             });
             stopTimer();
             setWorkflow({ kind: 'step3_done', code, simOutput, analysis: result.text, chartData: result.chartData });
+            onPipelineComplete?.(); // Refresh experiment history once after pipeline finishes
 
             // Generate Markdown Data Table for Deterministic Routing Output
             let tableHtml = "";
@@ -384,6 +386,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         } catch (e: any) {
             stopTimer();
             setWorkflow({ kind: 'step3_done', code, simOutput, analysis: `Error: ${e.message}` });
+            onPipelineComplete?.();
+
         }
     };
 

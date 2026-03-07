@@ -34,6 +34,11 @@ export default function IndustryPage() {
     const [selectedExperiment, setSelectedExperiment] = useState<any | null>(null);
 
     // Fetch Metadata & Experiments on Mount/Auth
+    const refreshExperiments = async () => {
+        const exps = await getExperiments(user?.email);
+        if (exps) setExperiments(exps);
+    };
+
     useEffect(() => {
         const initData = async () => {
             try {
@@ -50,18 +55,12 @@ export default function IndustryPage() {
             }
         };
 
-        // Only run when we know auth state
         if (!isInitializing) {
             initData();
-
-            // Poll for experiment updates
-            const interval = setInterval(async () => {
-                const exps = await getExperiments(user?.email);
-                if (exps) setExperiments(exps);
-            }, 30000); // 30s — was 5s which hammered Atlas connections (confirmed via Vercel logs)
-            return () => clearInterval(interval);
+            // No polling — experiments refresh only on load and after pipeline completes
         }
     }, [user?.email, isInitializing]);
+
 
     const handleLogin = (userData: { email: string; firstName?: string; lastName?: string; phone?: string; plan?: 'Guest' | 'Pro' | 'Enterprise'; role?: string }) => {
         login(userData);
@@ -311,6 +310,7 @@ export default function IndustryPage() {
                                 <IndustryChat
                                     contextConfig={sessionConfig}
                                     placeholder={`Ask about ${sessionConfig.problem}...`}
+                                    onPipelineComplete={refreshExperiments}
                                 />
                             )}
                         </>
