@@ -447,7 +447,7 @@ export default function FormArchitect() {
                                 <p className="text-[9px] text-muted-foreground italic">Math for estimating problem size.</p>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Max Qubits / Batch</label>
+                                <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Batch Size Limit (Max Items)</label>
                                 <input
                                     type="number"
                                     value={maxQubitsPerBatch}

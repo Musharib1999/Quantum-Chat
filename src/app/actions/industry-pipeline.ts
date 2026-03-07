@@ -40,6 +40,8 @@ const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL || "http://127.0.0.1:800
 const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
 
 async function executeQuantumCircuit(circuitCode: string) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s explicit timeout
     try {
         const url = `${QISKIT_SERVICE_URL}/execute`;
         console.log(`[Qiskit Sim] START | URL: ${url} | CodeSize: ${circuitCode.length}`);
@@ -49,13 +51,19 @@ async function executeQuantumCircuit(circuitCode: string) {
             code: circuitCode
         }, {
             headers: { 'X-API-Key': API_SECRET },
-            timeout: 30000
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
         console.timeEnd(`qiskit_exec_${url}`);
         console.log(`[Qiskit Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length}`);
 
         return response.data;
     } catch (e: any) {
+        clearTimeout(timeoutId);
+        if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
+            console.error("[Qiskit Sim] TIMEOUT 25s: Request was forcefully aborted.");
+            return { error: "Qiskit Simulator Timeout (25s): The execution exceeded the maximum allowed time." };
+        }
         console.error("Simulator Execution Fail:", e.message);
         if (e.code === 'ECONNREFUSED') {
             return { error: "Qiskit Simulator is offline. Please ensure the Python service is running." };
@@ -65,6 +73,8 @@ async function executeQuantumCircuit(circuitCode: string) {
 }
 
 async function executeDWaveAnnealer(code: string) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s explicit timeout
     try {
         const url = `${DWAVE_SERVICE_URL}/execute`;
         console.log(`[DWave Sim] START | URL: ${url} | CodeSize: ${code.length}`);
@@ -74,11 +84,19 @@ async function executeDWaveAnnealer(code: string) {
             code: code
         }, {
             headers: { 'X-API-Key': API_SECRET },
-            timeout: 30000
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
+        console.timeEnd(`dwave_exec_${url}`);
+        console.log(`[DWave Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length}`);
 
         return response.data;
     } catch (e: any) {
+        clearTimeout(timeoutId);
+        if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
+            console.error("[DWave Sim] TIMEOUT 25s: Request was forcefully aborted.");
+            return { error: "D-Wave Simulator Timeout (25s): The execution exceeded the maximum allowed time." };
+        }
         console.error("D-Wave Execution Fail:", e.message);
         if (e.code === 'ECONNREFUSED') {
             return { error: "D-Wave Simulator is offline. Please ensure the Python service is running." };
