@@ -78,9 +78,9 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                             </div>
 
                             <div className="flex items-center justify-start mt-1 pt-1 border-t border-border/20">
-                                <span className={`text-[10px] font-sans font-normal ${(stock.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
-                                        (stock.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
-                                            'text-red-600'
+                                <span className={`text-[10px] font-normal ${(stock.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
+                                    (stock.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
+                                        'text-red-600'
                                     }`}>
                                     Quantum exposure: {stock.quantumExposureScore || 0}/5
                                 </span>

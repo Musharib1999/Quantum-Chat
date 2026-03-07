@@ -116,11 +116,11 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                             >
                                 <div className="flex justify-between items-start mb-1">
                                     <div className="flex flex-col gap-1">
-                                        <span className="text-[10px] tracking-wider text-muted-foreground font-mono">{item.source}</span>
+                                        <span className="text-[10px] tracking-wider text-muted-foreground">{item.source}</span>
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            <span className={`text-[9px] font-sans font-normal ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
-                                                    (item.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
-                                                        'text-red-600'
+                                            <span className={`text-[9px] font-normal ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
+                                                (item.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
+                                                    'text-red-600'
                                                 }`}>
                                                 Quantum exposure: {item.quantumExposureScore || 0}/5
                                             </span>
@@ -189,7 +189,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                         </div>
 
                         <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-border">
-                            <div className="flex items-center gap-3 mb-4 text-xs font-mono text-muted-foreground">
+                            <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
                                 <span className="text-blue-600 dark:text-blue-400">{selectedSummaryItem.source}</span>
                             </div>
 
