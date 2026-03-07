@@ -78,9 +78,9 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         router.push('/industry');
                         onClose();
                     }}
-                    className="w-full flex items-center justify-start px-3 py-3 rounded-lg bg-white border border-transparent text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all group"
+                    className="w-full flex items-center justify-start px-3 py-2 rounded-lg bg-white border border-transparent text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all group"
                 >
-                    <span className="text-xs font-semibold">Try Portfolio Optimization</span>
+                    <span className="text-sm font-medium">Try Portfolio Optimization</span>
                 </button>
             </div>
 
@@ -89,15 +89,14 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 {isAuthenticated && user ? (
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center justify-start gap-2.5 px-3 py-2 rounded-lg text-sm text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all"
+                        className="w-full flex items-center justify-start px-3 py-2 rounded-lg text-sm text-black font-medium hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all"
                     >
-                        <LogOut size={14} className="text-black" />
                         Logout
                     </button>
                 ) : (
                     <button
                         onClick={handleLogin}
-                        className="w-full flex items-center justify-start px-3 py-2 rounded-lg text-sm text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all"
+                        className="w-full flex items-center justify-start px-3 py-2 rounded-lg text-sm text-black font-medium hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all"
                     >
                         Login
                     </button>
