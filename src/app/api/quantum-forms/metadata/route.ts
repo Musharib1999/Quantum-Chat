@@ -46,7 +46,10 @@ export async function GET() {
         // Store in cache
         _metadataCache = { data: metadata, expiresAt: Date.now() + CACHE_TTL_MS };
 
-        return NextResponse.json(metadata);
+        return NextResponse.json(metadata, {
+            headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=60' }
+        });
+
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
