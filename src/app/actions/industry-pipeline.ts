@@ -79,7 +79,7 @@ async function executeQuantumCircuit(circuitCode: string) {
 
 async function executeDWaveAnnealer(code: string) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s explicit timeout
+    const timeoutId = setTimeout(() => controller.abort(), 59000); // 59s explicit timeout
     try {
         const url = `${DWAVE_SERVICE_URL}/execute`;
         console.log(`[DWave Sim] START | URL: ${url} | CodeSize: ${code.length}`);
@@ -99,7 +99,7 @@ async function executeDWaveAnnealer(code: string) {
     } catch (e: any) {
         clearTimeout(timeoutId);
         if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
-            console.error("[DWave Sim] TIMEOUT 25s: Request was forcefully aborted.");
+            console.error("[DWave Sim] TIMEOUT 59s: Request was forcefully aborted.");
             return { error: "D-Wave Simulator Timeout (59s): The execution exceeded the maximum allowed time." };
         }
         console.error("D-Wave Execution Fail:", e.message);
@@ -627,13 +627,31 @@ export async function generateQuantumCode(config: {
                 console.timeEnd(`generateCode_${problem}_portfolioDB`);
 
                 console.time(`generateCode_${problem}_portfolioFilter`);
+
+                // --- INTERLEAVING LOGIC: Ensure sector diversity across batches ---
+                const groups: Record<string, any[]> = {};
+                companies.forEach((c: any) => {
+                    const s = c.sector || 'Unknown';
+                    if (!groups[s]) groups[s] = [];
+                    groups[s].push(c);
+                });
+
+                const interleaved: any[] = [];
+                const sectorNames = Object.keys(groups);
+                const maxLen = Math.max(...sectorNames.map(s => groups[s].length), 0);
+                for (let i = 0; i < maxLen; i++) {
+                    sectorNames.forEach(s => {
+                        if (groups[s][i]) interleaved.push(groups[s][i]);
+                    });
+                }
+
                 // --- SYNC FILTERING: Apply Risk Threshold in Backend for Batch Accuracy ---
                 const rawRisk = formData.fixed_risk_threshold || formData.risk_threshold;
                 const riskThreshold = rawRisk ? parseFloat(rawRisk) / 100 : 1.0;
-                const filteredCompanies = companies.filter((c: any) => (c.risk / 100) <= riskThreshold);
+                const filteredCompanies = interleaved.filter((c: any) => (c.risk / 100) <= riskThreshold);
 
                 // Store separately — do NOT embed in sanitizedFormData to avoid 300MB RSC payload
-                const portfolioDataForPython = companies.map((c: any) => ({
+                const portfolioDataForPython = interleaved.map((c: any) => ({
                     ticker: c.ticker, company: c.company,
                     nextYearReturn: c.nextYearReturn, risk: c.risk, sector: c.sector
                 }));
@@ -641,10 +659,10 @@ export async function generateQuantumCode(config: {
                 (sanitizedFormData as any).__portfolioData = portfolioDataForPython; // kept separate
                 activeQubitCount = filteredCompanies.length;
                 sanitizedFormData.companies_count = activeQubitCount;
-                sanitizedFormData.total_universe_size = companies.length;
+                sanitizedFormData.total_universe_size = interleaved.length;
                 sanitizedFormData.filtered_universe_size = activeQubitCount;
                 console.timeEnd(`generateCode_${problem}_portfolioFilter`);
-                console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies. Filtered (Risk <= ${riskThreshold * 100}%): ${activeQubitCount}.`);
+                console.log(`[Quantum Workflow Actions] Injected ${interleaved.length} companies. Interleaved by Sector. Filtered (Risk <= ${riskThreshold * 100}%): ${activeQubitCount}.`);
             } catch (e) {
                 console.error("Portfolio data injection failed:", e);
             }
