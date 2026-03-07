@@ -78,7 +78,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         router.push('/industry');
                         onClose();
                     }}
-                    className="w-full flex items-center justify-center px-3 py-3 rounded-lg bg-white border border-[#00bcd4] text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all group"
+                    className="w-full flex items-center justify-center px-3 py-3 rounded-lg bg-white border border-transparent text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all group"
                 >
                     <span className="text-xs font-semibold">Try Portfolio Optimization</span>
                 </button>
@@ -97,9 +97,8 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 ) : (
                     <button
                         onClick={handleLogin}
-                        className="w-full px-3 py-2 rounded-lg text-sm text-foreground hover:ring-1 hover:ring-inset hover:ring-ring transition-all text-left"
+                        className="w-full px-3 py-2 rounded-lg text-sm text-black hover:ring-1 hover:ring-inset hover:ring-[#00bcd4] transition-all text-left"
                     >
-                        <Unlock size={14} className="mr-2.5" />
                         Login
                     </button>
                 )}
