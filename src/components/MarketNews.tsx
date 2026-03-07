@@ -114,20 +114,13 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                 ref={isLastElement ? lastNewsElementRef : null}
                                 className="p-4 bg-transparent border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2"
                             >
-                                <div className="flex justify-between items-start mb-1">
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[10px] tracking-wider text-muted-foreground">{item.source}</span>
-                                        <div className="flex items-center gap-1 mt-0.5">
-                                            <span className={`text-[9px] font-normal ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
-                                                (item.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
-                                                    'text-red-600'
-                                                }`}>
-                                                Quantum exposure: {item.quantumExposureScore || 0}/5
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'}`}>
-                                        {item.trend === 'up' ? '▲' : '▼'}
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] tracking-wider text-muted-foreground">{item.source}</span>
+                                    <span className={`text-[9px] font-normal ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
+                                        (item.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
+                                            'text-red-600'
+                                        }`}>
+                                        Quantum exposure: {item.quantumExposureScore || 0}/5
                                     </span>
                                 </div>
                                 <h4
@@ -137,7 +130,10 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                     {item.title}
                                 </h4>
 
-                                <div className="mt-2 flex items-center justify-end text-[10px] text-muted-foreground border-t border-border/30 pt-3">
+                                <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/30 pt-3">
+                                    <span className={`text-[10px] flex items-center gap-1 px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'}`}>
+                                        {item.trend === 'up' ? '▲ Up' : '▼ Down'}
+                                    </span>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setSelectedSummaryItem(item); }}
                                         className="flex items-center gap-1.5 text-white font-medium bg-[#3066bb] px-2.5 py-1 rounded hover:bg-[#255296] transition-colors shadow-sm"
