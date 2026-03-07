@@ -539,11 +539,14 @@ export async function generateQuantumCode(config: {
     const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
 
     try {
+        console.time(`generateCode_${problem}`);
+        console.time(`generateCode_${problem}_db`);
         await dbConnect();
         const mongoose = (await import('mongoose')).default;
         const QuantumForm = mongoose.models.QuantumForm || (await import('@/models/QuantumForm')).default;
 
         const { provider, modelName } = await getDynamicLLM();
+        console.timeEnd(`generateCode_${problem}_db`);
 
         console.log(`[Quantum Workflow Actions] generateQuantumCode | Ind: ${industry} | Svc: ${service} | Prob: ${problem} | HW: ${hardware}`);
 
@@ -551,11 +554,13 @@ export async function generateQuantumCode(config: {
         const svcResSearch = (!service || service === 'Gate-Model Circuit' || service === 'undefined')
             ? {} : { service: new RegExp(`^${service}$`, 'i') };
 
+        console.time(`generateCode_${problem}_mongooseForm`);
         const formDef = await QuantumForm.findOne({
             industry: new RegExp(`^${industry}$`, 'i'),
             ...svcResSearch,
             problem: new RegExp(`^${problem}$`, 'i')
         }).lean();
+        console.timeEnd(`generateCode_${problem}_mongooseForm`);
 
         console.log(`[Quantum Workflow Actions] Form Found: ${!!formDef} | Templates: ${formDef?.codeTemplates?.length || 0}`);
 
@@ -598,6 +603,7 @@ export async function generateQuantumCode(config: {
         // --- DATA INJECTION FOR PORTFOLIO OPTIMIZATION ---
         if (problem.toLowerCase().includes('portfolio optimization')) {
             try {
+                console.time(`generateCode_${problem}_portfolioDB`);
                 const PortfolioCompany = mongoose.models.PortfolioCompany || (await import('@/models/PortfolioCompany')).default;
                 const sectorParam = formData.sector;
                 let query = {};
@@ -613,7 +619,9 @@ export async function generateQuantumCode(config: {
                 // Increase limit to 100 for full universe coverage across all sectors
                 // OPTIMIZATION: Only fetch required fields to prevent memory/payload issues
                 const companies = await PortfolioCompany.find(query, 'ticker company nextYearReturn risk sector').limit(100).lean();
+                console.timeEnd(`generateCode_${problem}_portfolioDB`);
 
+                console.time(`generateCode_${problem}_portfolioFilter`);
                 // --- SYNC FILTERING: Apply Risk Threshold in Backend for Batch Accuracy ---
                 const rawRisk = formData.risk_threshold;
                 const riskThreshold = rawRisk ? parseFloat(rawRisk) / 100 : 1.0;
@@ -624,6 +632,7 @@ export async function generateQuantumCode(config: {
                 sanitizedFormData.companies_count = activeQubitCount;
                 sanitizedFormData.total_universe_size = companies.length;
                 sanitizedFormData.filtered_universe_size = activeQubitCount;
+                console.timeEnd(`generateCode_${problem}_portfolioFilter`);
                 console.log(`[Quantum Workflow Actions] Injected ${companies.length} companies. Filtered (Risk <= ${riskThreshold * 100}%): ${activeQubitCount}.`);
             } catch (e) {
                 console.error("Portfolio data injection failed:", e);
@@ -696,18 +705,8 @@ export async function generateQuantumCode(config: {
 
         code = code.trim();
 
-        // --- FINAL SAFETY: HARD TEMPLATE SUBSTITUTION & INJECTION ---
-        // 1. Hard Regex Substitution (Primary)
-        Object.entries(sanitizedFormData).forEach(([key, val]) => {
-            const bracedPlaceholder = new RegExp(`{{parameters\\.${key}}}`, 'g');
-            const cleanPlaceholder = new RegExp(`parameters\\.${key}`, 'g');
-
-            code = code.replace(bracedPlaceholder, String(val));
-            // Also catch cases where LLM "helped" by removing braces but keeping the word 'parameters.'
-            code = code.replace(cleanPlaceholder, String(val));
-        });
-
-        // 2. Python-Side Injection (Ultimate Fallback)
+        // --- FINAL SAFETY: DATA INJECTION ---
+        // We use Python-Side Dictionary Injection (More stable than arbitrary regex)
         const pythonInjections = `
 class DotDict(dict):
     def __getattr__(self, name): return self.get(name)
@@ -717,9 +716,8 @@ parameters = DotDict(${JSON.stringify(sanitizedFormData)})
 `;
         code = pythonInjections + "\n" + code;
 
-        // Clean up any remaining unmatched placeholders
+        // Clean up any unmatched braces explicitly to prevent Python syntax errors
         code = code.replace(/{{parameters\.[^}]+}}/g, 'None');
-
 
         // Always force correct dimod imports for D-Wave
         if (isDWave) {
@@ -728,8 +726,10 @@ parameters = DotDict(${JSON.stringify(sanitizedFormData)})
             code = correctImports + code;
         }
 
+        console.timeEnd(`generateCode_${problem}`);
         return { code, batchesTotal };
     } catch (e: any) {
+        console.error("GenerateCode Error:", e);
         return { code: '', batchesTotal: 1, error: e.message };
     }
 }
