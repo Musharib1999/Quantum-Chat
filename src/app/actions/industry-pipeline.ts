@@ -623,7 +623,7 @@ export async function generateQuantumCode(config: {
 
                 console.time(`generateCode_${problem}_portfolioFilter`);
                 // --- SYNC FILTERING: Apply Risk Threshold in Backend for Batch Accuracy ---
-                const rawRisk = formData.risk_threshold;
+                const rawRisk = formData.fixed_risk_threshold || formData.risk_threshold;
                 const riskThreshold = rawRisk ? parseFloat(rawRisk) / 100 : 1.0;
                 const filteredCompanies = companies.filter((c: any) => (c.risk / 100) <= riskThreshold);
 
