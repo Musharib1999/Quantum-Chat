@@ -58,7 +58,7 @@ export default function IndustryPage() {
             const interval = setInterval(async () => {
                 const exps = await getExperiments(user?.email);
                 if (exps) setExperiments(exps);
-            }, 5000);
+            }, 30000); // 30s — was 5s which hammered Atlas connections (confirmed via Vercel logs)
             return () => clearInterval(interval);
         }
     }, [user?.email, isInitializing]);

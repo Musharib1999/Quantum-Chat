@@ -632,7 +632,13 @@ export async function generateQuantumCode(config: {
                 const riskThreshold = rawRisk ? parseFloat(rawRisk) / 100 : 1.0;
                 const filteredCompanies = companies.filter((c: any) => (c.risk / 100) <= riskThreshold);
 
-                sanitizedFormData.portfolio_data = companies;
+                // Store separately — do NOT embed in sanitizedFormData to avoid 300MB RSC payload
+                const portfolioDataForPython = companies.map((c: any) => ({
+                    ticker: c.ticker, company: c.company,
+                    nextYearReturn: c.nextYearReturn, risk: c.risk, sector: c.sector
+                }));
+                sanitizedFormData._portfolioDataRef = '__PORTFOLIO_INJECTED__'; // placeholder only
+                (sanitizedFormData as any).__portfolioData = portfolioDataForPython; // kept separate
                 activeQubitCount = filteredCompanies.length;
                 sanitizedFormData.companies_count = activeQubitCount;
                 sanitizedFormData.total_universe_size = companies.length;
@@ -711,13 +717,23 @@ export async function generateQuantumCode(config: {
         code = code.trim();
 
         // --- FINAL SAFETY: DATA INJECTION ---
-        // We use Python-Side Dictionary Injection (More stable than arbitrary regex)
+        // Extract portfolio data before stringify to prevent 300MB RSC payload
+        const portfolioData = (sanitizedFormData as any).__portfolioData;
+        delete (sanitizedFormData as any).__portfolioData;
+        delete sanitizedFormData._portfolioDataRef;
+
+        // Serialize only the small parameters (no large arrays)
+        const paramsJson = JSON.stringify(sanitizedFormData);
+        const portfolioJson = portfolioData ? JSON.stringify(portfolioData) : 'None';
+
         const pythonInjections = `
 class DotDict(dict):
     def __getattr__(self, name): return self.get(name)
     def __setattr__(self, name, value): self[name] = value
 
-parameters = DotDict(${JSON.stringify(sanitizedFormData)})
+parameters = DotDict(${paramsJson})
+portfolio_data = ${portfolioJson}
+parameters['portfolio_data'] = portfolio_data
 `;
         code = pythonInjections + "\n" + code;
 
