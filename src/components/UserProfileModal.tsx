@@ -78,13 +78,10 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         router.push('/industry');
                         onClose();
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 hover:border-primary/40 transition-all group"
+                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg bg-black text-white hover:bg-zinc-800 transition-all group"
                 >
-                    <div className="flex flex-col items-start gap-0.5">
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-tighter">AI Suggestion</span>
-                        <span className="text-xs font-semibold text-foreground">Try Portfolio Optimization</span>
-                    </div>
-                    <Unlock size={14} className="text-primary group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">Try Portfolio Optimization</span>
+                    <Lock size={14} className="text-white group-hover:scale-110 transition-transform" />
                 </button>
             </div>
 
