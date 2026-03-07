@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info, X, ArrowRight, FileText } from 'lucide-react';
+import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info, X, ArrowRight, FileText, Sparkles } from 'lucide-react';
 import { getDbNews } from '@/app/actions/news-automation';
 // import QuantumHeatMap from './QuantumHeatMap';
 
@@ -142,7 +142,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                         onClick={(e) => { e.stopPropagation(); setSelectedSummaryItem(item); }}
                                         className="flex items-center gap-1.5 text-white font-medium bg-[#3066bb] px-2.5 py-1 rounded hover:bg-[#255296] transition-colors shadow-sm"
                                     >
-                                        <FileText size={12} /> Show Summary
+                                        <Sparkles size={12} /> Summary
                                     </button>
                                 </div>
                             </div>
@@ -177,7 +177,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                     >
                         <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
                             <div className="flex items-center gap-2 text-[#3066bb] font-semibold">
-                                <FileText size={16} />
+                                <Sparkles size={16} />
                                 <span>Quantum Guru Insight</span>
                             </div>
                             <button
