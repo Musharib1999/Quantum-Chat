@@ -850,9 +850,26 @@ export async function interpretQuantumResults(config: {
                     if (data.assignmentsTable) finalAssignmentsTable.push(...data.assignmentsTable);
                     if (data.plotly_chart) extractedPlotlyChart = data.plotly_chart;
 
+                    // Aviation fallback: build assignmentsTable from formatted_assignments strings
+                    // e.g. "Pilot 0 assigned to Route 1 on Day 2"
+                    if (!data.assignmentsTable && data.formatted_assignments && Array.isArray(data.formatted_assignments)) {
+                        data.formatted_assignments.forEach((assignment: string) => {
+                            const m = assignment.match(/Pilot (\d+) assigned to Route (\d+) on Day (\d+)/);
+                            if (m) {
+                                finalAssignmentsTable.push({
+                                    pilot: `Pilot ${m[1]}`,
+                                    route: `Route ${m[2]} | Day ${m[3]}`,
+                                    sector: `Day ${m[3]}`,
+                                    ticker: `P${m[1]}-R${m[2]}-D${m[3]}`,
+                                });
+                            }
+                        });
+                    }
+
                     if (data.summary && (!finalSummary || (!data.summary.includes('Waiting') && !data.summary.includes('No stocks')))) {
                         finalSummary = data.summary;
                     }
+
                 } catch (e) {
                     console.error("Error parsing tagged JSON:", e);
                 }
