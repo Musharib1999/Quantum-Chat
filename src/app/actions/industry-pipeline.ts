@@ -46,7 +46,7 @@ const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
 
 async function executeQuantumCircuit(circuitCode: string) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s explicit timeout
+    const timeoutId = setTimeout(() => controller.abort(), 59000); // 59s explicit timeout
     try {
         const url = `${QISKIT_SERVICE_URL}/execute`;
         console.log(`[Qiskit Sim] START | URL: ${url} | CodeSize: ${circuitCode.length}`);
@@ -66,8 +66,8 @@ async function executeQuantumCircuit(circuitCode: string) {
     } catch (e: any) {
         clearTimeout(timeoutId);
         if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
-            console.error("[Qiskit Sim] TIMEOUT 25s: Request was forcefully aborted.");
-            return { error: "Qiskit Simulator Timeout (25s): The execution exceeded the maximum allowed time." };
+            console.error("[Qiskit Sim] TIMEOUT 59s: Request was forcefully aborted.");
+            return { error: "Qiskit Simulator Timeout (59s): The execution exceeded the maximum allowed time." };
         }
         console.error("Simulator Execution Fail:", e.message);
         if (e.code === 'ECONNREFUSED') {
@@ -100,7 +100,7 @@ async function executeDWaveAnnealer(code: string) {
         clearTimeout(timeoutId);
         if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
             console.error("[DWave Sim] TIMEOUT 25s: Request was forcefully aborted.");
-            return { error: "D-Wave Simulator Timeout (25s): The execution exceeded the maximum allowed time." };
+            return { error: "D-Wave Simulator Timeout (59s): The execution exceeded the maximum allowed time." };
         }
         console.error("D-Wave Execution Fail:", e.message);
         if (e.code === 'ECONNREFUSED') {
