@@ -932,19 +932,20 @@ export async function interpretQuantumResults(config: {
 
             // Recalculate Global Stats
             let globalTotalReturn = 0;
-            let globalAvgRisk = 0;
+            let globalTotalRisk = 0;
             selectedAssignments.forEach(row => {
                 const retStr = row.route?.match(/Ret: ([\d.]+)%/);
                 const riskStr = row.route?.match(/Risk: ([\d.]+)%/);
                 globalTotalReturn += retStr ? parseFloat(retStr[1]) : 0;
-                globalAvgRisk += riskStr ? parseFloat(riskStr[1]) : 0;
+                globalTotalRisk += riskStr ? parseFloat(riskStr[1]) : 0;
             });
-            globalAvgRisk = selectedAssignments.length > 0 ? globalAvgRisk / selectedAssignments.length : 0;
+            const globalAvgReturn = selectedAssignments.length > 0 ? globalTotalReturn / selectedAssignments.length : 0;
+            const globalAvgRisk = selectedAssignments.length > 0 ? globalTotalRisk / selectedAssignments.length : 0;
 
             finalAssignmentsTable = selectedAssignments;
 
             const uniqueSectorsSelected = [...new Set(selectedAssignments.map(r => r.sector).filter(Boolean))];
-            finalSummary = `Quantum QUBO optimized portfolio: ${selectedAssignments.length} assets across ${uniqueSectorsSelected.length} sectors. Solver evaluated ${globalTotalQubits || 'scanned'} stocks and converged to the minimum-energy configuration. Aggregate expected return: ${globalTotalReturn.toFixed(2)}%, Portfolio average risk: ${globalAvgRisk.toFixed(2)}%.`;
+            finalSummary = `Quantum QUBO optimized portfolio: ${selectedAssignments.length} assets across ${uniqueSectorsSelected.length} sectors. Solver evaluated ${globalTotalQubits || 'scanned'} stocks and converged to the minimum-energy configuration. Average expected return: ${globalAvgReturn.toFixed(2)}%, Portfolio average risk: ${globalAvgRisk.toFixed(2)}%.`;
         }
 
 
