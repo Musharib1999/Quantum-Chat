@@ -320,15 +320,15 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             if (result.assignmentsTable && result.assignmentsTable.length > 0) {
                 // Construct standard Markdown table with Problem Details
                 const hardware = contextConfig?.hardware || 'Quantum Annealer';
-                let qubitCount = 0;
-                const pilots = contextConfig?.formData?.number_of_pilots || 0;
-                const days = contextConfig?.formData?.days || 0;
 
-                if (contextConfig.industry?.toLowerCase() === 'aviation') {
+                // Use the actual qubit count returned by the backend (same 'n' as in the Quantum Exploration message)
+                let qubitCount = result.qubitCount || 0;
+
+                // Fallback for aviation (form-based) if backend didn't report it
+                if (!qubitCount && contextConfig.industry?.toLowerCase() === 'aviation') {
+                    const pilots = contextConfig?.formData?.number_of_pilots || 0;
+                    const days = contextConfig?.formData?.days || 0;
                     qubitCount = pilots * days;
-                } else {
-                    // Try to derive it from the assignments, though this is a simplification
-                    qubitCount = result.assignmentsTable.length * 2;
                 }
 
                 const isFinance = contextConfig.industry?.toLowerCase() === 'finance';

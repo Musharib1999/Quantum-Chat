@@ -839,7 +839,7 @@ export async function runQuantumSimulator(config: {
 
 export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string; formData: any;
-}): Promise<{ text: string; chartData?: any; assignmentsTable?: any[] }> {
+}): Promise<{ text: string; chartData?: any; assignmentsTable?: any[]; qubitCount?: number }> {
     const { problem, industry, hardware, rawOutput, formData } = config;
 
     try {
@@ -1013,10 +1013,10 @@ STRICT RULES:
             text += `\n\n${msg}`;
         }
 
-        return { text, chartData: extractedPlotlyChart, assignmentsTable: finalAssignmentsTable };
+        return { text, chartData: extractedPlotlyChart, assignmentsTable: finalAssignmentsTable, qubitCount };
     } catch (e: any) {
         console.error("Critical error in interpretQuantumResults:", e);
-        return { text: "Analysis failed: " + e.message, assignmentsTable: [] };
+        return { text: "Analysis failed: " + e.message, assignmentsTable: [], qubitCount: 0 };
     }
 }
 
