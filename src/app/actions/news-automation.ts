@@ -46,19 +46,24 @@ export async function automateNewsSummarization() {
 Focus on technical implications, market impact, and industrial importance. 
 Keep it professional and industrial.
 
-Also, identify the primary country or region this news is associated with (e.g., where the company is based or where the breakthrough happened).
+Also, identify:
+1. The primary country or region this news is associated with.
+2. The Impact Level: Categorize as 'high', 'medium', or 'low' based on its significance to the global or regional market.
+3. Quantum Exposure Score: A value from 0 to 5 based on how deeply the news involves quantum computing technologies (0 = minimal/indirect, 5 = breakthrough/direct).
 
 Return the response in STRICT JSON format with these exact keys:
 {
   "summary": "The 200-word summary here...",
   "countryCode": "ISO 3166-1 alpha-3 code (e.g., USA, DEU, CHN)",
-  "countryName": "Full name of the country"
+  "countryName": "Full name of the country",
+  "impact": "high | medium | low",
+  "quantumExposureScore": number (0-5)
 }
 
 HEADLINE: ${item.title}
 SOURCE: ${item.source}`;
 
-            const prompt = await getDynamicPrompt('news_automation_v2', {
+            const prompt = await getDynamicPrompt('news_automation_v3', {
                 title: item.title,
                 source: item.source
             }, fallbackPrompt);
@@ -77,6 +82,8 @@ SOURCE: ${item.source}`;
                         summary = parsed.summary || summary;
                         countryCode = parsed.countryCode || "GLOBAL";
                         countryName = parsed.countryName || "International";
+                        if (parsed.impact) item.impact = parsed.impact;
+                        if (parsed.quantumExposureScore !== undefined) item.quantumExposureScore = Number(parsed.quantumExposureScore);
                     }
                 } catch (parseErr) {
                     console.warn("[Automation] Failed to parse JSON response, falling back to raw text", parseErr);
@@ -86,7 +93,9 @@ SOURCE: ${item.source}`;
                     await News.findByIdAndUpdate(existing._id, {
                         summary,
                         countryCode,
-                        countryName
+                        countryName,
+                        impact: item.impact || existing.impact,
+                        quantumExposureScore: item.quantumExposureScore || existing.quantumExposureScore
                     });
                 } else {
                     await News.create({
@@ -97,6 +106,7 @@ SOURCE: ${item.source}`;
                         impact: item.impact || 'medium',
                         trend: item.trend || 'up',
                         summary: summary,
+                        quantumExposureScore: item.quantumExposureScore || 0,
                         countryCode,
                         countryName
                     });

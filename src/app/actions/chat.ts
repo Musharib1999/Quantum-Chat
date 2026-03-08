@@ -539,7 +539,8 @@ export async function getMarketNews() {
             source: item.source,
             time: new Date(item.publishedAt || item.createdAt).toLocaleDateString(),
             impact: item.impact,
-            trend: item.trend
+            trend: item.trend,
+            quantumExposureScore: item.quantumExposureScore || 0
         }));
     } catch (error) {
         console.error("Failed to fetch market news from database:", error);

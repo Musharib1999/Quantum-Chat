@@ -116,9 +116,9 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                             >
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-[10px] tracking-wider text-muted-foreground">{item.source}</span>
-                                    <span className={`text-[9px] font-normal ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
-                                        (item.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
-                                            'text-red-600'
+                                    <span className={`text-[9px] font-normal tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
+                                        (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500' :
+                                            'text-red-500'
                                         }`}>
                                         Quantum exposure: {item.quantumExposureScore || 0}/5
                                     </span>
@@ -131,8 +131,11 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                 </h4>
 
                                 <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/30 pt-3">
-                                    <span className={`text-[10px] flex items-center gap-1 px-1.5 py-0.5 rounded ${item.trend === 'up' ? 'bg-green-500/10 text-green-500 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'}`}>
-                                        {item.trend === 'up' ? '▲ Up' : '▼ Down'}
+                                    <span className={`text-[10px] font-medium transition-colors ${item.impact === 'high' ? 'text-red-500' :
+                                        item.impact === 'medium' ? 'text-orange-500' :
+                                            'text-teal-500'
+                                        }`}>
+                                        {item.impact ? `${item.impact.charAt(0).toUpperCase() + item.impact.slice(1)} impact` : 'Medium impact'}
                                     </span>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setSelectedSummaryItem(item); }}
