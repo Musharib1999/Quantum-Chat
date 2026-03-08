@@ -164,6 +164,7 @@ export async function getDbNews(limit: number = 20, page: number = 1) {
                 impact: n.impact,
                 trend: n.trend,
                 summary: n.summary,
+                quantumExposureScore: n.quantumExposureScore || 0,
                 url: n.url
             })),
             hasMore: skip + news.length < total,
