@@ -50,6 +50,14 @@ const UserSchema = new mongoose.Schema({
     tokensUsed: {
         type: Number,
         default: 0,
+    },
+    simMinutesLimit: {
+        type: Number,
+        default: 5,
+    },
+    simMinutesUsed: {
+        type: Number,
+        default: 0,
     }
 });
 

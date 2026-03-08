@@ -13,6 +13,8 @@ interface User {
     role: string;
     tokenLimit?: number;
     tokensUsed?: number;
+    simMinutesLimit?: number;
+    simMinutesUsed?: number;
     createdAt: string;
 }
 
@@ -35,6 +37,8 @@ export default function UserManager() {
     const [newPlan, setNewPlan] = useState<'Guest' | 'Pro' | 'Enterprise'>('Guest');
     const [resetPassword, setResetPassword] = useState("");
     const [editTokenLimit, setEditTokenLimit] = useState<number>(100000);
+    const [editSimMinutesLimit, setEditSimMinutesLimit] = useState<number>(5);
+    const [editSimMinutesUsed, setEditSimMinutesUsed] = useState<number>(0);
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
 
@@ -122,7 +126,9 @@ export default function UserManager() {
             lastName: newLastName,
             phone: newPhone,
             plan: newPlan,
-            tokenLimit: editTokenLimit
+            tokenLimit: editTokenLimit,
+            simMinutesLimit: editSimMinutesLimit,
+            simMinutesUsed: editSimMinutesUsed
         };
 
         if (resetPassword) {
@@ -219,6 +225,7 @@ export default function UserManager() {
                                 <th className="p-4">Role</th>
                                 <th className="p-4">Status</th>
                                 <th className="p-4">Tokens</th>
+                                <th className="p-4">Sim Min</th>
                                 <th className="p-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -285,6 +292,23 @@ export default function UserManager() {
                                                 </div>
                                             </div>
                                         </td>
+                                        <td className="p-4">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
+                                                    <span className={((user.simMinutesUsed || 0) >= (user.simMinutesLimit || 5)) ? "text-red-500 font-bold" : "text-foreground"}>
+                                                        {(user.simMinutesUsed || 0).toFixed(1)}
+                                                    </span>
+                                                    <span>/</span>
+                                                    <span>{(user.simMinutesLimit || 5).toFixed(0)}</span>
+                                                </div>
+                                                <div className="w-24 h-1.5 rounded-full bg-secondary overflow-hidden">
+                                                    <div
+                                                        className={`h-full ${((user.simMinutesUsed || 0) >= (user.simMinutesLimit || 5)) ? 'bg-red-500' : 'bg-blue-500'}`}
+                                                        style={{ width: `${Math.min(((user.simMinutesUsed || 0) / (user.simMinutesLimit || 5)) * 100, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-2 items-center">
                                                 {user.role !== 'admin' && (
@@ -307,6 +331,8 @@ export default function UserManager() {
                                                         setNewPhone(user.phone || "");
                                                         setNewPlan(user.plan as any || 'Guest');
                                                         setEditTokenLimit(user.tokenLimit || 100000);
+                                                        setEditSimMinutesLimit(user.simMinutesLimit || 5);
+                                                        setEditSimMinutesUsed(user.simMinutesUsed || 0);
                                                         setResetPassword("");
                                                         setShowResetModal(true);
                                                     }}
@@ -521,6 +547,29 @@ export default function UserManager() {
                                         className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 font-mono"
                                         value={editTokenLimit}
                                         onChange={e => setEditTokenLimit(Number(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Row: Sim Minutes Limit & Used */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Sim Minutes Limit</label>
+                                    <input
+                                        type="number"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 font-mono"
+                                        value={editSimMinutesLimit}
+                                        onChange={e => setEditSimMinutesLimit(Number(e.target.value))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Sim Minutes Used</label>
+                                    <input
+                                        type="number"
+                                        step="0.5"
+                                        className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 font-mono"
+                                        value={editSimMinutesUsed}
+                                        onChange={e => setEditSimMinutesUsed(Number(e.target.value))}
                                     />
                                 </div>
                             </div>

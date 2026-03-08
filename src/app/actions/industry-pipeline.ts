@@ -51,6 +51,7 @@ async function executeQuantumCircuit(circuitCode: string) {
         const url = `${QISKIT_SERVICE_URL}/execute`;
         console.log(`[Qiskit Sim] START | URL: ${url} | CodeSize: ${circuitCode.length}`);
         console.time(`qiskit_exec_${url}`);
+        const startTime = Date.now();
 
         const response = await axios.post(url, {
             code: circuitCode
@@ -58,11 +59,12 @@ async function executeQuantumCircuit(circuitCode: string) {
             headers: { 'X-API-Key': API_SECRET },
             signal: controller.signal
         });
+        const executionTimeMs = Date.now() - startTime;
         clearTimeout(timeoutId);
         console.timeEnd(`qiskit_exec_${url}`);
-        console.log(`[Qiskit Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length}`);
+        console.log(`[Qiskit Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length} | Time: ${executionTimeMs}ms`);
 
-        return response.data;
+        return { ...response.data, executionTimeMs };
     } catch (e: any) {
         clearTimeout(timeoutId);
         if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
@@ -84,6 +86,7 @@ async function executeDWaveAnnealer(code: string) {
         const url = `${DWAVE_SERVICE_URL}/execute`;
         console.log(`[DWave Sim] START | URL: ${url} | CodeSize: ${code.length}`);
         console.time(`dwave_exec_${url}`);
+        const startTime = Date.now();
 
         const response = await axios.post(url, {
             code: code
@@ -91,11 +94,12 @@ async function executeDWaveAnnealer(code: string) {
             headers: { 'X-API-Key': API_SECRET },
             signal: controller.signal
         });
+        const executionTimeMs = Date.now() - startTime;
         clearTimeout(timeoutId);
         console.timeEnd(`dwave_exec_${url}`);
-        console.log(`[DWave Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length}`);
+        console.log(`[DWave Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length} | Time: ${executionTimeMs}ms`);
 
-        return response.data;
+        return { ...response.data, executionTimeMs };
     } catch (e: any) {
         clearTimeout(timeoutId);
         if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
@@ -291,6 +295,7 @@ export async function executeIndustryWorkflow(
 
         let combinedAnalysis = "";
         let combinedRawOutput = "";
+        let totalExecutionTimeMs = 0;
         let lastBatchState = "None (First Batch)";
         const totalDimension = sanitizedFormData[formDef?.batchKey || ''] || 1;
         const dimensionPerBatch = Math.ceil(totalDimension / batchesNeeded);
@@ -402,7 +407,11 @@ export async function executeIndustryWorkflow(
                         continue;
                     }
 
-                    console.log(`[Quantum Workflow] EXECUTED | Output length: ${finalExecutionResult.output?.length || 0}`);
+                    if (finalExecutionResult.executionTimeMs) {
+                        totalExecutionTimeMs += finalExecutionResult.executionTimeMs;
+                    }
+
+                    console.log(`[Quantum Workflow] EXECUTED | Output length: ${finalExecutionResult.output?.length || 0} | ExecTime: ${finalExecutionResult.executionTimeMs}ms`);
                     // SUCCESS
                     break;
 
@@ -505,13 +514,34 @@ ${combinedAnalysis}
             console.error("Final Save Failed:", saveError);
         }
 
+        // Calculate sim minutes used (rounded up to nearest 0.5 min)
+        const simSeconds = totalExecutionTimeMs / 1000;
+        let simMinutesDelta = Math.ceil((simSeconds / 60) * 2) / 2;
+        // Apply minimum charge of 0.5 min for any successful execution
+        if (simMinutesDelta < 0.5 && simMinutesDelta > 0) simMinutesDelta = 0.5;
+
+        // Deduct from DB if authenticated
+        if (userEmail && simMinutesDelta > 0) {
+            try {
+                const mongoose = (await import('mongoose')).default;
+                const User = mongoose.models.User || (await import('@/models/User')).default;
+                await User.findOneAndUpdate(
+                    { email: userEmail },
+                    { $inc: { simMinutesUsed: simMinutesDelta } }
+                );
+            } catch (dbErr) {
+                console.error("Failed to update user sim minutes:", dbErr);
+            }
+        }
+
         return {
             returnMode: 'direct',
             data: {
                 text: finalDisplay,
                 source: 'quantum_workflow_batched',
                 guardrailsStatus: 'passed',
-                activeGuardrails: ruleTexts
+                activeGuardrails: ruleTexts,
+                simMinutesDelta
             }
         };
     }
@@ -813,7 +843,7 @@ export async function extractBatchState(config: {
 
 export async function runQuantumSimulator(config: {
     code: string; hardware: string;
-}): Promise<{ output: string; error?: string }> {
+}): Promise<{ output: string; error?: string; executionTimeMs?: number }> {
     const { code, hardware } = config;
     try {
         console.log(`[Simulator Router] START | HW: ${hardware} | CodeLen: ${code.length}`);
@@ -827,10 +857,10 @@ export async function runQuantumSimulator(config: {
         // Handle structured JSON responses (counts, energy) from main.py
         if (result.success && !result.output) {
             const formattedOutput = `Simulation Successful.\nBest Solution: ${JSON.stringify(result.best_solution || result.counts || result, null, 2)}\n${result.energy !== undefined ? `Energy: ${result.energy}` : ''}`;
-            return { output: formattedOutput, error: result.error };
+            return { output: formattedOutput, error: result.error, executionTimeMs: result.executionTimeMs };
         }
 
-        return { output: result.output || result.error || 'No output returned.', error: result.error };
+        return { output: result.output || result.error || 'No output returned.', error: result.error, executionTimeMs: result.executionTimeMs };
     } catch (e: any) {
         console.error("[Simulator Router] CRITICAL_FAIL:", e.message);
         return { output: '', error: e.message };

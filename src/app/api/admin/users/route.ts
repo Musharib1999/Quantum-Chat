@@ -25,7 +25,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User already exists' }, { status: 400 });
         }
 
-        const user = await User.create(body);
+        const { plan } = body;
+
+        // Define plan-based limits
+        let simMinutesLimit = 5;
+        if (plan === 'Pro') simMinutesLimit = 30;
+        if (plan === 'Enterprise') simMinutesLimit = 120;
+
+        let tokenLimit = 100000;
+        if (plan === 'Pro') tokenLimit = 500000;
+        if (plan === 'Enterprise') tokenLimit = 2000000;
+
+        const user = await User.create({
+            ...body,
+            simMinutesLimit: body.simMinutesLimit || simMinutesLimit,
+            tokenLimit: body.tokenLimit || tokenLimit
+        });
         return NextResponse.json(user, { status: 201 });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
@@ -36,7 +51,7 @@ export async function PUT(req: Request) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { id, password, email, firstName, lastName, company, isApproved, phone, plan, tokenLimit, tokensUsed } = body;
+        const { id, password, email, firstName, lastName, company, isApproved, phone, plan, tokenLimit, tokensUsed, simMinutesLimit, simMinutesUsed } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -55,6 +70,8 @@ export async function PUT(req: Request) {
         if (password) updateData.password = password; // Since plain text is okay for now like the POST endpoint
         if (tokenLimit !== undefined) updateData.tokenLimit = Number(tokenLimit);
         if (tokensUsed !== undefined) updateData.tokensUsed = Number(tokensUsed);
+        if (simMinutesLimit !== undefined) updateData.simMinutesLimit = Number(simMinutesLimit);
+        if (simMinutesUsed !== undefined) updateData.simMinutesUsed = Number(simMinutesUsed);
 
         console.log("PUT /api/admin/users updateData:", updateData);
 

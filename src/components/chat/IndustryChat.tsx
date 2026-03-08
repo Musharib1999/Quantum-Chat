@@ -20,9 +20,9 @@ type WorkflowStage =
     | { kind: 'step1_loading' }
     | { kind: 'step1_done'; code: string; batchesTotal: number }
     | { kind: 'step2_loading'; code: string; currentBatch: number; totalBatches: number }
-    | { kind: 'step2_done'; code: string; simOutput: string; totalBatches: number }
-    | { kind: 'step3_loading'; code: string; simOutput: string }
-    | { kind: 'step3_done'; code: string; simOutput: string; analysis: string; chartData?: any };
+    | { kind: 'step2_done'; code: string; simOutput: string; totalBatches: number; totalExecTimeMs: number }
+    | { kind: 'step3_loading'; code: string; simOutput: string; totalExecTimeMs: number }
+    | { kind: 'step3_done'; code: string; simOutput: string; analysis: string; chartData?: any; totalExecTimeMs: number };
 
 export default function IndustryChat({ contextConfig, placeholder, onAnalysisTriggered, onPipelineComplete }: IndustryChatProps) {
     const { user } = useAuth();
@@ -205,6 +205,20 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 formData: contextConfig.formData,
                 batchIndex: 1, // Start with first batch
             });
+
+            // Check if user has enough sim minutes left
+            const limit = user?.simMinutesLimit ?? 5;
+            const used = user?.simMinutesUsed ?? 0;
+            const guestUsed = !user ? parseFloat(sessionStorage.getItem('qg_session_sim_minutes_used') || '0') : 0;
+            const totalUsed = user ? used : guestUsed;
+
+            if (totalUsed >= limit) {
+                stopTimer();
+                setWorkflow({ kind: 'step1_done', code: 'Error: Simulation minutes exhausted. Please contact admin to reset your quota.', batchesTotal: 1 });
+                addBotMessage('⚠️ **Simulation Blocked**: You have reached your allocated simulation minute limit. Please contact an administrator to increase your quota.');
+                return;
+            }
+
             stopTimer();
             setWorkflow({
                 kind: 'step1_done',
@@ -222,6 +236,16 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         let combinedOutput = "";
         let currentBatchCode = initialCode;
         let lastBatchState = "None";
+        let totalExecTimeMs = 0;
+
+        // Final check before starting long run
+        const limit = user?.simMinutesLimit ?? 5;
+        const used = user?.simMinutesUsed ?? 0;
+        const guestUsed = !user ? parseFloat(sessionStorage.getItem('qg_session_sim_minutes_used') || '0') : 0;
+        if ((user ? used : guestUsed) >= limit) {
+            addBotMessage('⚠️ **Simulation Blocked**: Simulation minute limit reached.');
+            return;
+        }
 
         setWorkflow({ kind: 'step2_loading', code: initialCode, currentBatch: 1, totalBatches });
         startTimer();
@@ -269,6 +293,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
 
                     console.log(`[IndustryChat] Batch ${b} completed successfuilly.`);
                     combinedOutput += `\n\n--- BATCH ${b} ---\n${simRes.output}`;
+                    if (simRes.executionTimeMs) totalExecTimeMs += simRes.executionTimeMs;
 
                     // 3. Extract state for next batch if needed
                     if (b < totalBatches) {
@@ -287,7 +312,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 kind: 'step2_done',
                 code: initialCode,
                 simOutput: combinedOutput.trim(),
-                totalBatches
+                totalBatches,
+                totalExecTimeMs
             });
         } catch (e: any) {
             stopTimer();
@@ -295,13 +321,14 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 kind: 'step2_done',
                 code: initialCode,
                 simOutput: `Error during batch execution: ${e.message}`,
-                totalBatches
+                totalBatches,
+                totalExecTimeMs: 0
             });
         }
     };
 
-    const runStep3 = async (code: string, simOutput: string) => {
-        setWorkflow({ kind: 'step3_loading', code, simOutput });
+    const runStep3 = async (code: string, simOutput: string, totalExecTimeMs: number) => {
+        setWorkflow({ kind: 'step3_loading', code, simOutput, totalExecTimeMs });
         startTimer();
         try {
             const result = await interpretQuantumResults({
@@ -312,8 +339,16 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 formData: contextConfig.formData,
             });
             stopTimer();
-            setWorkflow({ kind: 'step3_done', code, simOutput, analysis: result.text, chartData: result.chartData });
+            setWorkflow({ kind: 'step3_done', code, simOutput, analysis: result.text, chartData: result.chartData, totalExecTimeMs });
             onPipelineComplete?.(); // Refresh experiment history once after pipeline finishes
+
+            // Calculate sim minutes delta (round up to nearest 0.5)
+            const simSeconds = totalExecTimeMs / 1000;
+            let simMinutesDelta = Math.ceil((simSeconds / 60) * 2) / 2;
+            if (simMinutesDelta < 0.5 && simMinutesDelta > 0) simMinutesDelta = 0.5;
+
+            // Dispatch event for UI indicator
+            window.dispatchEvent(new CustomEvent('qg:simminutes-update', { detail: { delta: simMinutesDelta } }));
 
             // Generate Markdown Data Table for Deterministic Routing Output
             let tableHtml = "";
@@ -385,7 +420,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
 
         } catch (e: any) {
             stopTimer();
-            setWorkflow({ kind: 'step3_done', code, simOutput, analysis: `Error: ${e.message}` });
+            setWorkflow({ kind: 'step3_done', code, simOutput, analysis: `Error: ${e.message}`, totalExecTimeMs });
             onPipelineComplete?.();
 
         }
@@ -557,7 +592,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                             <button
                                                                 onClick={() => {
                                                                     if (step.num === 1) runStep2((workflow as any).code);
-                                                                    if (step.num === 2) runStep3((workflow as any).code, (workflow as any).simOutput);
+                                                                    if (step.num === 2) runStep3((workflow as any).code, (workflow as any).simOutput, (workflow as any).totalExecTimeMs);
                                                                 }}
                                                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-primary text-primary-foreground hover:opacity-90 transition-all font-medium"
                                                             >

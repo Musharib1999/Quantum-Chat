@@ -10,21 +10,35 @@ const STORAGE_KEY = 'qg_session_tokens_used';
 export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () => void }) {
     const { user, isAuthenticated, updateUser } = useAuth();
     const [tokensUsed, setTokensUsed] = useState<number>(0);
+    const [simMinutesUsed, setSimMinutesUsed] = useState<number>(0);
 
     const sessionTokenLimit = user?.tokenLimit || DEFAULT_GUEST_LIMIT;
+    const sessionSimLimit = user?.simMinutesLimit || 5;
+    const SIM_STORAGE_KEY = 'qg_session_sim_minutes_used';
 
     useEffect(() => {
+        // Tokens
         if (isAuthenticated && user?.tokensUsed !== undefined) {
             setTokensUsed(user.tokensUsed);
-            return;
+        } else {
+            const stored = sessionStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const parsed = parseInt(stored, 10);
+                if (!isNaN(parsed)) setTokensUsed(parsed);
+            }
         }
 
-        const stored = sessionStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            const parsed = parseInt(stored, 10);
-            if (!isNaN(parsed)) setTokensUsed(parsed);
+        // Sim Minutes
+        if (isAuthenticated && user?.simMinutesUsed !== undefined) {
+            setSimMinutesUsed(user.simMinutesUsed);
+        } else {
+            const stored = sessionStorage.getItem(SIM_STORAGE_KEY);
+            if (stored) {
+                const parsed = parseFloat(stored);
+                if (!isNaN(parsed)) setSimMinutesUsed(parsed);
+            }
         }
-    }, [isAuthenticated, user?.tokensUsed]);
+    }, [isAuthenticated, user?.tokensUsed, user?.simMinutesUsed]);
 
     useEffect(() => {
         const handleTokenUpdate = (e: Event) => {
@@ -40,9 +54,28 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
                 return newTotal;
             });
         };
+
+        const handleSimUpdate = (e: Event) => {
+            const { delta } = (e as CustomEvent<{ delta: number }>).detail;
+            if (typeof delta !== 'number' || isNaN(delta)) return;
+            setSimMinutesUsed((prev: number) => {
+                const newTotal = Math.min(prev + delta, sessionSimLimit);
+                if (!isAuthenticated) {
+                    sessionStorage.setItem(SIM_STORAGE_KEY, String(newTotal));
+                } else if (updateUser) {
+                    updateUser({ simMinutesUsed: newTotal });
+                }
+                return newTotal;
+            });
+        };
+
         window.addEventListener('qg:token-update', handleTokenUpdate);
-        return () => window.removeEventListener('qg:token-update', handleTokenUpdate);
-    }, [isAuthenticated, sessionTokenLimit, updateUser]);
+        window.addEventListener('qg:simminutes-update', handleSimUpdate);
+        return () => {
+            window.removeEventListener('qg:token-update', handleTokenUpdate);
+            window.removeEventListener('qg:simminutes-update', handleSimUpdate);
+        };
+    }, [isAuthenticated, sessionTokenLimit, sessionSimLimit, updateUser]);
 
     const remaining = Math.max(sessionTokenLimit - tokensUsed, 0);
     const fillPercent = Math.min((tokensUsed / sessionTokenLimit) * 100, 100);
@@ -91,12 +124,41 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
             </div>
 
             {/* Remaining label */}
-            <div className="flex justify-between items-center">
-                <span className="text-[9px] text-muted-foreground">
-                    {isCritical ? '⚠️ Almost out' : isWarning ? '⚠️ Low tokens' : 'Session'}
+            <div className="flex justify-between items-center mb-4">
+                <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none">
+                    {isCritical ? '⚠️ Almost out' : isWarning ? '⚠️ Low tokens' : 'Tokens'}
                 </span>
-                <span className="text-[9px] font-semibold tabular-nums text-muted-foreground">
+                <span className="text-[9px] font-semibold tabular-nums text-muted-foreground leading-none">
                     {remaining.toLocaleString()} remaining
+                </span>
+            </div>
+
+            {/* Sim Minutes Section */}
+            <div className="flex items-center justify-between gap-4 mb-2">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-foreground uppercase tracking-widest">
+                        Sim Minutes
+                    </span>
+                    <span className="text-[10px] font-mono tabular-nums ml-1 text-foreground">
+                        {simMinutesUsed.toFixed(1)} / {sessionSimLimit} min
+                    </span>
+                </div>
+            </div>
+
+            {/* Sim Minutes Progress bar */}
+            <div className="w-full h-1 bg-border rounded-full overflow-hidden mb-1.5">
+                <div
+                    className={`h-full rounded-full transition-all duration-700 ease-out ${simMinutesUsed / sessionSimLimit >= 0.9 ? 'bg-red-500' : 'bg-blue-500'}`}
+                    style={{ width: `${Math.min((simMinutesUsed / sessionSimLimit) * 100, 100)}%` }}
+                />
+            </div>
+
+            <div className="flex justify-between items-center">
+                <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none">
+                    {simMinutesUsed >= sessionSimLimit ? '⚠️ Exhausted' : 'Quota'}
+                </span>
+                <span className="text-[9px] font-semibold tabular-nums text-muted-foreground leading-none">
+                    {(sessionSimLimit - simMinutesUsed).toFixed(1)} min left
                 </span>
             </div>
         </div>

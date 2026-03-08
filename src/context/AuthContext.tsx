@@ -12,6 +12,8 @@ interface User {
     role?: string;
     tokenLimit?: number;
     tokensUsed?: number;
+    simMinutesLimit?: number;
+    simMinutesUsed?: number;
 }
 
 interface AuthContextType {
@@ -45,6 +47,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     role: parsed.role || 'user',
                     tokenLimit: parsed.tokenLimit,
                     tokensUsed: parsed.tokensUsed,
+                    simMinutesLimit: parsed.simMinutesLimit,
+                    simMinutesUsed: parsed.simMinutesUsed,
                 });
                 setIsAuthenticated(true);
 
@@ -55,7 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         if (!data.error) {
                             setUser(prev => {
                                 if (!prev) return prev;
-                                const updated = { ...prev, tokenLimit: data.tokenLimit, tokensUsed: data.tokensUsed };
+                                const updated = {
+                                    ...prev,
+                                    tokenLimit: data.tokenLimit,
+                                    tokensUsed: data.tokensUsed,
+                                    simMinutesLimit: data.simMinutesLimit ?? 5,
+                                    simMinutesUsed: data.simMinutesUsed ?? 0
+                                };
                                 localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
                                 return updated;
                             });
@@ -82,6 +92,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: userData.role || 'user',
             tokenLimit: userData.tokenLimit,
             tokensUsed: userData.tokensUsed,
+            simMinutesLimit: userData.simMinutesLimit ?? 5,
+            simMinutesUsed: userData.simMinutesUsed ?? 0,
         };
         setUser(newUser);
         setIsAuthenticated(true);

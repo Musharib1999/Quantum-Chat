@@ -40,7 +40,9 @@ export async function POST(req: Request) {
             plan: user.plan || 'Guest',
             role: user.role || 'user',
             tokenLimit: user.tokenLimit,
-            tokensUsed: user.tokensUsed
+            tokensUsed: user.tokensUsed,
+            simMinutesLimit: user.simMinutesLimit ?? 5,
+            simMinutesUsed: user.simMinutesUsed ?? 0
         });
 
     } catch (error) {
