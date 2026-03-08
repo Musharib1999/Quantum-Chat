@@ -28,6 +28,7 @@ export default function IndustryPage() {
     // Data State
     const [metadata, setMetadata] = useState<any>({ industries: [], services: [], problemMapping: {} });
     const [experiments, setExperiments] = useState<any[]>([]);
+    const [hardwareList, setHardwareList] = useState<any[]>([]);
     const [loadingExperiments, setLoadingExperiments] = useState(true);
 
     // Modal State
@@ -42,12 +43,14 @@ export default function IndustryPage() {
     useEffect(() => {
         const initData = async () => {
             try {
-                const [metaRes, expRes] = await Promise.all([
+                const [metaRes, expRes, hwRes] = await Promise.all([
                     axios.get('/api/quantum-forms/metadata'),
-                    getExperiments(user?.email)
+                    getExperiments(user?.email),
+                    axios.get('/api/hardware')
                 ]);
                 if (metaRes.data) setMetadata(metaRes.data);
                 if (expRes) setExperiments(expRes);
+                if (hwRes.data) setHardwareList(hwRes.data);
                 setLoadingExperiments(false);
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
@@ -232,25 +235,39 @@ export default function IndustryPage() {
                                 <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Hardware</h3>
                                 <div className="space-y-1">
                                     {(() => {
-                                        const mappedHw = (sessionConfig.industry && sessionConfig.problem && sessionConfig.service)
+                                        const mappedHwNames = (sessionConfig.industry && sessionConfig.problem && sessionConfig.service)
                                             ? (metadata.problemMapping[sessionConfig.industry]?.[sessionConfig.problem]?.[sessionConfig.service] || [])
-                                            : [];
+                                            : null;
 
-                                        if (mappedHw.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Service</div>;
+                                        if (mappedHwNames === null) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Service</div>;
+
+                                        // Filter hardwareList based on mappedHwNames (with normalization)
+                                        const filteredHws = mappedHwNames.length === 0
+                                            ? hardwareList
+                                            : hardwareList.filter(h => {
+                                                const nameNorm = h.name.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                const providerNorm = h.provider.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                return mappedHwNames.some((m: string) => {
+                                                    const mNorm = m.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                    return nameNorm.includes(mNorm) || mNorm.includes(providerNorm) || (mNorm === 'simulator' && nameNorm.includes('simulator'));
+                                                });
+                                            });
+
+                                        if (filteredHws.length === 0 && hardwareList.length > 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">No compatible hardware</div>;
 
                                         return (
                                             <div className="space-y-1">
-                                                {mappedHw.map((hwName: string) => {
-                                                    const isSelected = sessionConfig.hardware === hwName;
+                                                {filteredHws.map((hw: any) => {
+                                                    const isSelected = sessionConfig.hardware === hw.name;
                                                     return (
                                                         <div
-                                                            key={hwName}
+                                                            key={hw.id}
                                                             onClick={() => {
-                                                                setSessionConfig(prev => ({ ...prev, hardware: hwName }));
+                                                                setSessionConfig(prev => ({ ...prev, hardware: hw.name }));
                                                             }}
                                                             className={`group flex items-center justify-between w-full gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                                         >
-                                                            <span className="truncate" title={hwName}>{hwName}</span>
+                                                            <span className="truncate" title={hw.name}>{hw.name}</span>
                                                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-green-500 bg-green-500/10 border border-green-500/20 shrink-0 uppercase`}>Live</span>
                                                         </div>
                                                     );

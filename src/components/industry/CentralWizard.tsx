@@ -170,14 +170,35 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         ? (metadata.problemMapping[config.industry]?.[config.problem]?.[config.service] || [])
                                         : [];
 
+                                    // If no specific hardware is restricted, show all online hardware
+                                    if (mappedHws.length === 0) {
+                                        return hardwareOptions.map((hw) => (
+                                            <button
+                                                key={hw.id}
+                                                onClick={() => onSelect('hardware', hw.name)}
+                                                className="p-6 bg-card border border-border rounded-xl hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5 transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
+                                            >
+                                                <div className="w-full flex justify-between items-center mb-2">
+                                                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors">
+                                                        {hw.provider === 'ibm' ? <Layers size={20} /> : <Cpu size={20} />}
+                                                    </div>
+                                                    <div className="text-xs font-mono text-green-500 border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded uppercase font-bold tracking-wider">Online</div>
+                                                </div>
+                                                <span className="font-medium text-lg">{hw.name}</span>
+                                                <span className="text-xs text-muted-foreground font-mono">{hw.qubits} Qubits</span>
+                                                <span className="text-sm text-foreground/80 mt-1">{hw.description}</span>
+                                            </button>
+                                        ));
+                                    }
+
                                     const filtered = hardwareOptions.filter(h => {
-                                        const nameLower = h.name.toLowerCase();
-                                        const providerLower = h.provider.toLowerCase();
+                                        const nameNorm = h.name.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                        const providerNorm = h.provider.toLowerCase().replace(/-/g, '').replace(/ /g, '');
                                         return mappedHws.some((m: string) => {
-                                            const mLower = m.toLowerCase();
-                                            return nameLower.includes(mLower) ||
-                                                mLower.includes(providerLower) ||
-                                                (mLower === 'simulator' && nameLower.includes('simulator'));
+                                            const mNorm = m.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                            return nameNorm.includes(mNorm) ||
+                                                mNorm.includes(providerNorm) ||
+                                                (mNorm === 'simulator' && nameNorm.includes('simulator'));
                                         });
                                     });
 
