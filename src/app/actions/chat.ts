@@ -611,6 +611,15 @@ export async function debugStockFetch(prompt: string) {
             steps[steps.length - 1] = { name: "Final Summarization", status: "completed", result: "RESPONSE_GENERATED" };
         } else {
             steps.push({ name: "Process Halted", status: "info", result: "No valid ticker found" });
+
+            // Reprompt Fallback for Debugger
+            const repromptInstruction = `I noticed you're asking about a company or stock, but I couldn't identify the specific ticker symbol. Do NOT make up data. Instead, politely apologize and ask the user to provide the ticker (e.g., AAPL) or the full company name so you can fetch the latest data for them.`;
+            const chatModel = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+            const finalResult = await chatModel.generateContent([
+                { role: "system", text: repromptInstruction } as any,
+                { role: "user", text: prompt } as any
+            ]);
+            finalOutput = finalResult.response.text();
         }
 
         // --- Persist Debug Log ---

@@ -72,6 +72,8 @@ export async function buildMarketContext(
         }
     }
 
+    const tickerMissing = !targetSymbol;
+
     // 2. Data Fetching Layer (Real-time Market Data)
     let realTimeData = contextConfig.realTimeData;
     if (targetSymbol && !realTimeData) {
@@ -135,6 +137,10 @@ export async function buildMarketContext(
             targetSymbol: targetSymbol || (contextConfig.stockName ? contextConfig.stockName : "N/A"),
             scrapedData: autonomousContext ? `\nREFERENCE CONTEXT:\n${autonomousContext}\n` : ''
         }, systemInstructions);
+    }
+
+    if (tickerMissing) {
+        systemInstructions += `\n\nCRITICAL INSTRUCTION: I noticed you're asking about a company or stock, but I couldn't identify the specific ticker symbol. Do NOT make up data. Instead, politely apologize and ask the user to provide the ticker (e.g., AAPL) or the full company name so you can fetch the latest data for them.`;
     }
 
     return {
