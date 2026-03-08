@@ -564,16 +564,18 @@ export async function debugStockFetch(prompt: string) {
             tickerInstruction,
             prompt
         ]);
-        ticker = extraction.response.text().trim().replace(/[^a-zA-Z0-9-]/g, '');
-        steps[0] = { name: "Ticker Extraction", status: "completed", result: ticker };
+        ticker = extraction.response.text().trim().replace(/[^a-zA-Z0-9.-]/g, ''); // Allow dots and hyphens
+        if (ticker.length > 10) ticker = "NULL"; // Safety check for runaway text
+
+        steps[0] = { name: "Ticker Extraction", status: "completed", result: ticker || "NULL" };
 
         if (ticker && ticker !== 'NULL') {
             // Step 2: Fetching Market Data
             steps.push({ name: "Market Data Fetch", status: "processing" });
             rawMarketData = await getStockPrice(ticker);
-            steps[1] = { name: "Market Data Fetch", status: rawMarketData ? "completed" : "failed", result: rawMarketData };
+            steps[steps.length - 1] = { name: "Market Data Fetch", status: rawMarketData ? "completed" : "failed", result: rawMarketData ? `${rawMarketData.symbol} ($${rawMarketData.price})` : "FETCH_FAILED" };
 
-            // Step 3: Prompt Enrichement
+            // Step 3: Prompt Enrichment
             steps.push({ name: "Prompt Enrichment", status: "processing" });
             const timeString = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
             if (rawMarketData) {
@@ -589,13 +591,12 @@ export async function debugStockFetch(prompt: string) {
                     scrapedData: ""
                 }, "Fallback template");
             } else {
-                // FALLBACK for debugger if market data fails
                 enrichedPrompt = await getDynamicPrompt('market_news_fallback', {
                     targetSymbol: ticker,
                     scrapedData: ""
                 }, "Fallback news template");
             }
-            steps[2] = { name: "Prompt Enrichment", status: enrichedPrompt ? "completed" : "failed", result: enrichedPrompt };
+            steps[steps.length - 1] = { name: "Prompt Enrichment", status: enrichedPrompt ? "completed" : "failed", result: enrichedPrompt ? "ENRICHED_PROMPT_READY" : "ENRICHMENT_FAILED" };
 
             // Step 4: Final Summarization
             steps.push({ name: "Final Summarization", status: "processing" });
@@ -605,12 +606,16 @@ export async function debugStockFetch(prompt: string) {
                 { role: "user", text: prompt } as any
             ]);
             finalOutput = finalResult.response.text();
-            steps[3] = { name: "Final Summarization", status: "completed", result: finalOutput };
+            steps[steps.length - 1] = { name: "Final Summarization", status: "completed", result: "RESPONSE_GENERATED" };
+        } else {
+            steps.push({ name: "Process Halted", status: "info", result: "No valid ticker found" });
+        }
 
-            // --- Persist Debug Log ---
-            await ChatLog.create({
+        // --- Persist Debug Log ---
+        try {
+            const logEntry = await ChatLog.create({
                 userQuery: prompt,
-                aiResponse: finalOutput,
+                aiResponse: finalOutput || "No AI response generated in debug mode.",
                 source: 'stock_debugger',
                 ticker: ticker,
                 rawData: rawMarketData,
@@ -618,8 +623,10 @@ export async function debugStockFetch(prompt: string) {
                 mode: 'market',
                 guardrailsStatus: 'passed'
             });
-        } else {
-            steps.push({ name: "Process Halted", status: "info", result: "No ticker detected. Generic flow would trigger." });
+            steps.push({ name: "Persistent Log Captured", status: "completed", result: new Date(logEntry.timestamp).toLocaleString() });
+        } catch (logErr) {
+            console.error("Debug Logging Failed:", logErr);
+            steps.push({ name: "Logging Failed", status: "failed", result: "DB_ERROR" });
         }
 
         return {

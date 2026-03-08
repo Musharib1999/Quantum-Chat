@@ -198,10 +198,10 @@ export default function StockSearchDebugger() {
                                             <p className="text-[10px] text-muted-foreground uppercase">{step.status}</p>
                                         </div>
                                     </div>
-                                    {step.result && (
+                                    {(step.result !== undefined && step.result !== null) && (
                                         <div className="text-right">
                                             <span className="text-[10px] bg-secondary px-2 py-1 rounded-md font-mono">
-                                                {typeof step.result === 'string' ? step.result : 'DATA_OBJECT'}
+                                                {typeof step.result === 'string' ? (step.result || 'N/A') : 'DATA_OBJECT'}
                                             </span>
                                         </div>
                                     )}
