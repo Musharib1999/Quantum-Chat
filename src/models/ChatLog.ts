@@ -24,6 +24,7 @@ const ChatLogSchema = new mongoose.Schema({
     ticker: String,
     rawData: mongoose.Schema.Types.Mixed,
     systemPrompt: String,
+    tickerPrompt: String,
     mode: String,
     timestamp: {
         type: Date,

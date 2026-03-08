@@ -551,6 +551,7 @@ export async function debugStockFetch(prompt: string) {
     await dbConnect();
     const steps: any[] = [];
     let ticker = "NULL";
+    let tickerPrompt = "";
     let rawMarketData = null;
     let enrichedPrompt = "";
     let finalOutput = "";
@@ -559,6 +560,7 @@ export async function debugStockFetch(prompt: string) {
         // Step 1: Ticker Extraction
         steps.push({ name: "Ticker Extraction", status: "processing" });
         const tickerInstruction = await getDynamicPrompt('ticker_extraction', { prompt }, "Identify the stock ticker symbol from the user's text. Return ONLY the ticker (e.g., AAPL, TSLA, BTC-USD). If no specific public company or asset is mentioned, return 'NULL'.");
+        tickerPrompt = tickerInstruction;
         const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
         const extraction = await model.generateContent([
             tickerInstruction,
@@ -620,6 +622,7 @@ export async function debugStockFetch(prompt: string) {
                 ticker: ticker,
                 rawData: rawMarketData,
                 systemPrompt: enrichedPrompt,
+                tickerPrompt: tickerPrompt,
                 mode: 'market',
                 guardrailsStatus: 'passed'
             });
@@ -631,6 +634,7 @@ export async function debugStockFetch(prompt: string) {
 
         return {
             ticker,
+            tickerPrompt,
             rawMarketData,
             enrichedPrompt,
             finalOutput,

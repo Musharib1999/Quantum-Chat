@@ -54,12 +54,13 @@ export default function StockSearchDebugger() {
         setSelectedLog(log);
         setResult({
             ticker: log.ticker,
+            tickerPrompt: log.tickerPrompt,
             rawMarketData: log.rawData,
             enrichedPrompt: log.systemPrompt,
             finalOutput: log.aiResponse,
             steps: [
-                { name: "Ticker Extraction", status: "completed", result: log.ticker },
-                { name: "Market Data Fetch", status: log.rawData ? "completed" : "failed", result: log.rawData },
+                { name: "Ticker Extraction", status: "completed", result: log.ticker || "NULL" },
+                { name: "Market Data Fetch", status: log.rawData ? "completed" : "failed", result: log.rawData ? `${log.rawData.symbol} ($${log.rawData.price})` : "FETCH_FAILED" },
                 { name: "Persistent Log Captured", status: "completed", result: new Date(log.timestamp).toLocaleString() }
             ]
         });
@@ -225,6 +226,23 @@ export default function StockSearchDebugger() {
                     {/* AI Reasoning & Response */}
                     <div className="space-y-4">
                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">AI Logic & Output</h4>
+
+                        {/* Ticker Extraction Prompt */}
+                        {result.tickerPrompt && (
+                            <div className="bg-card/40 border border-border rounded-2xl overflow-hidden shadow-sm">
+                                <div className="bg-[#3066bb]/5 p-4 border-b border-border flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-[#3066bb]">
+                                        <Search size={16} />
+                                        <span className="text-xs font-bold uppercase tracking-wider">Ticker Selection Prompt</span>
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-secondary/10 max-h-[150px] overflow-y-auto">
+                                    <pre className="text-[10px] font-sans whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                                        {result.tickerPrompt}
+                                    </pre>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Enriched Prompt */}
                         <div className="bg-card/40 border border-border rounded-2xl overflow-hidden shadow-sm">
