@@ -33,6 +33,7 @@ export default function FormArchitect() {
     const [industry, setIndustry] = useState('');
     const [service, setService] = useState('');
     const [problem, setProblem] = useState('');
+    const [hardware, setHardware] = useState('Universal');
 
     // Config State
     const [editorMode, setEditorMode] = useState<'visual' | 'json'>('visual');
@@ -55,6 +56,7 @@ export default function FormArchitect() {
     // Data State
     const [existingForms, setExistingForms] = useState<IQuantumForm[]>([]);
     const [metadata, setMetadata] = useState<{ industries: any[], services: any[], problemMapping: any }>({ industries: [], services: [], problemMapping: {} });
+    const [hardwareList, setHardwareList] = useState<any[]>([]);
 
     useEffect(() => {
         fetchInitialData();
@@ -82,12 +84,14 @@ export default function FormArchitect() {
 
     const fetchInitialData = async () => {
         try {
-            const [formsRes, metaRes] = await Promise.all([
+            const [formsRes, metaRes, hwRes] = await Promise.all([
                 axios.get('/api/quantum-forms'),
-                axios.get('/api/quantum-forms/metadata')
+                axios.get('/api/quantum-forms/metadata'),
+                axios.get('/api/hardware')
             ]);
             setExistingForms(formsRes.data);
             setMetadata(metaRes.data);
+            setHardwareList(hwRes.data);
         } catch (error) {
             console.error("Failed to fetch admin data", error);
         }
@@ -101,6 +105,7 @@ export default function FormArchitect() {
                 industry,
                 service,
                 problem,
+                hardware,
                 active: true,
                 fields: [],
                 codeTemplates,
@@ -133,6 +138,7 @@ export default function FormArchitect() {
                         if (parsed.industry) payload.industry = parsed.industry;
                         if (parsed.service) payload.service = parsed.service;
                         if (parsed.problem) payload.problem = parsed.problem;
+                        if (parsed.hardware) payload.hardware = parsed.hardware;
                     } else {
                         throw new Error("Invalid JSON: Must be an Array of fields or a Form Object.");
                     }
@@ -160,6 +166,7 @@ export default function FormArchitect() {
             if (payload.industry) setIndustry(payload.industry);
             if (payload.service) setService(payload.service);
             if (payload.problem) setProblem(payload.problem);
+            if (payload.hardware) setHardware(payload.hardware);
 
             await axios.post('/api/quantum-forms', payload);
             setStatus('Form Saved Successfully!');
@@ -184,7 +191,9 @@ export default function FormArchitect() {
     const editForm = (form: IQuantumForm) => {
         setIndustry(form.industry);
         setService(form.service);
-        setProblem(form.problem);
+        setProblem(form.problem || '');
+        // @ts-ignore - hardware might be missing on old documents
+        setHardware(form.hardware || 'Universal');
         setFields(form.fields || []);
         setCodeTemplates(form.codeTemplates || []);
         setBatchingEnabled(form.batchingEnabled || false);
@@ -210,6 +219,7 @@ export default function FormArchitect() {
         setIndustry('');
         setService('');
         setProblem('');
+        setHardware('Universal');
         setFields([]);
         setJsonFields('[]');
         setCodeTemplates([]);
@@ -305,7 +315,13 @@ export default function FormArchitect() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-foreground leading-tight">{form.problem}</h3>
-                                        <p className="text-muted-foreground text-xs font-medium tracking-widest mt-1">{form.service}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">{form.service}</p>
+                                            <span className="text-[10px] text-[#3066bb] font-bold bg-[#3066bb]/5 px-1.5 py-0.5 rounded border border-[#3066bb]/10 font-mono">
+                                                {/* @ts-ignore */}
+                                                {form.hardware || 'Universal'}
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {form.fields && form.fields.slice(0, 3).map((f, i) => (
@@ -410,6 +426,20 @@ export default function FormArchitect() {
                             />
                             <datalist id="problems">
                                 {(metadata.problemMapping[industry]?.[service] || []).map((p: any) => <option key={p.id} value={p.label} />)}
+                            </datalist>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-semibold text-muted-foreground tracking-[0.2em]">Hardware Target</label>
+                            <input
+                                list="hardwares"
+                                value={hardware}
+                                onChange={(e) => setHardware(e.target.value)}
+                                placeholder="e.g. D-WAVE"
+                                className="w-full bg-[#3066bb]/5 border border-[#3066bb]/20 rounded-2xl px-5 py-4 text-[#3066bb] focus:outline-none focus:ring-2 focus:ring-[#3066bb]/20 transition-all font-bold"
+                            />
+                            <datalist id="hardwares">
+                                <option value="Universal" />
+                                {hardwareList.map(h => <option key={h.id} value={h.name} />)}
                             </datalist>
                         </div>
                     </div>

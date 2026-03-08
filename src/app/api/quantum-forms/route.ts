@@ -12,6 +12,7 @@ export async function GET(req: Request) {
         const industry = searchParams.get('industry');
         const service = searchParams.get('service');
         const problem = searchParams.get('problem');
+        const hardware = searchParams.get('hardware');
 
         // If no params, return all for Admin Overview
         if (!industry && !service && !problem) {
@@ -19,16 +20,28 @@ export async function GET(req: Request) {
             return NextResponse.json(allForms);
         }
 
-        if (!industry || !service || !problem) {
-            return NextResponse.json({ error: 'Missing mapping parameters' }, { status: 400 });
+        if (!industry || !service || !problem || !hardware) {
+            return NextResponse.json({ error: 'Missing mapping parameters (industry, service, problem, hardware)' }, { status: 400 });
         }
 
-        const form = await QuantumForm.findOne({
+        let form = await QuantumForm.findOne({
             industry,
             service,
             problem,
+            hardware,
             active: true
         });
+
+        // Fallback to Universal if specific hardware form is not found
+        if (!form && hardware !== 'Universal') {
+            form = await QuantumForm.findOne({
+                industry,
+                service,
+                problem,
+                hardware: 'Universal',
+                active: true
+            });
+        }
 
         if (!form) {
             return NextResponse.json({ error: 'No form mapped for this configuration' }, { status: 404 });
@@ -45,10 +58,10 @@ export async function POST(req: Request) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { industry, service, problem } = body;
+        const { industry, service, problem, hardware } = body;
 
         const updatedForm = await QuantumForm.findOneAndUpdate(
-            { industry, service, problem },
+            { industry, service, problem, hardware },
             body,
             { upsert: true, new: true, runValidators: true }
         );

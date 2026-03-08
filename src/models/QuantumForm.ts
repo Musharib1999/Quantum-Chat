@@ -13,6 +13,7 @@ export interface IQuantumForm extends Document {
     industry: string;
     service: string;
     problem: string;
+    hardware: string;
     description: string;
     fields: IQuantumField[];
     sections?: { section_name: string; fields: IQuantumField[] }[];
@@ -39,6 +40,7 @@ const QuantumFormSchema: Schema = new Schema({
     industry: { type: String, required: true },
     service: { type: String, required: true },
     problem: { type: String, required: true },
+    hardware: { type: String, required: true, default: "Universal" },
     description: { type: String },
     fields: { type: [QuantumFieldSchema], default: [] },
     sections: [{
@@ -57,7 +59,7 @@ const QuantumFormSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Ensure unique mapping for Industry + Service + Problem
-QuantumFormSchema.index({ industry: 1, service: 1, problem: 1 }, { unique: true });
+// Ensure unique mapping for Industry + Service + Problem + Hardware
+QuantumFormSchema.index({ industry: 1, service: 1, problem: 1, hardware: 1 }, { unique: true });
 
 export default mongoose.models.QuantumForm || mongoose.model<IQuantumForm>('QuantumForm', QuantumFormSchema);

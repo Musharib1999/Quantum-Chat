@@ -77,24 +77,40 @@ export default function IndustryPage() {
         return <IndustryLogin onLogin={handleLogin} />;
     }
 
-
-    // Steps Handler
     const handleWizardSelect = (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => {
+        let nextService: string | null = null;
+        let finalNextStep: any = null;
+
+        if (type === 'industry') finalNextStep = 'problem';
+        if (type === 'problem') {
+            const problemMapping = metadata.problemMapping?.[sessionConfig.industry!]?.[value];
+            const services = Object.keys(problemMapping || {});
+            if (services.length === 1) {
+                nextService = services[0];
+                finalNextStep = 'hardware';
+            } else {
+                finalNextStep = 'service';
+            }
+        }
+        if (type === 'service') finalNextStep = 'hardware';
+        if (type === 'hardware') finalNextStep = 'CHAT';
+
         setSessionConfig(prev => {
             const newConfig = { ...prev, [type]: value };
-            // Reset downstream selections if going back (conceptually)
+            if (nextService) newConfig.service = nextService;
+
+            // Reset downstream selections
             if (type === 'industry') { newConfig.problem = null; newConfig.service = null; newConfig.hardware = null; newConfig.formData = undefined; }
-            if (type === 'problem') { newConfig.service = null; newConfig.hardware = null; newConfig.formData = undefined; }
+            if (type === 'problem' && !nextService) { newConfig.service = null; newConfig.hardware = null; newConfig.formData = undefined; }
+            if (type === 'problem' && nextService) { newConfig.hardware = null; newConfig.formData = undefined; }
             if (type === 'service') { newConfig.hardware = null; newConfig.formData = undefined; }
             return newConfig;
         });
 
-        // Advance Wizard
-        if (type === 'industry') setWizardStep('problem');
-        if (type === 'problem') setWizardStep('service');
-        if (type === 'service') setWizardStep('hardware');
-        if (type === 'hardware') {
+        if (finalNextStep === 'CHAT') {
             setFlowStage('CHAT');
+        } else if (finalNextStep) {
+            setWizardStep(finalNextStep);
         }
     };
 
@@ -177,11 +193,7 @@ export default function IndustryPage() {
                                                     return (
                                                         <div
                                                             key={prob}
-                                                            onClick={() => {
-                                                                setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: undefined }));
-                                                                setFlowStage('SELECTION');
-                                                                setWizardStep('service');
-                                                            }}
+                                                            onClick={() => handleWizardSelect('problem', prob)}
                                                             className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                                         >
                                                             <span className="truncate" title={prob}>{prob}</span>
@@ -201,7 +213,7 @@ export default function IndustryPage() {
                                     {/* Dynamic Services based on Problem selection */}
                                     {(() => {
                                         const services = (sessionConfig.industry && sessionConfig.problem)
-                                            ? (metadata.problemMapping?.[sessionConfig.industry]?.[sessionConfig.problem] || [])
+                                            ? Object.keys(metadata.problemMapping?.[sessionConfig.industry]?.[sessionConfig.problem] || {})
                                             : [];
 
                                         if (services.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Problem</div>;
@@ -242,13 +254,13 @@ export default function IndustryPage() {
                                         if (mappedHwNames === null) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Service</div>;
 
                                         // Filter hardwareList based on mappedHwNames (with normalization)
-                                        const filteredHws = mappedHwNames.length === 0
+                                        const filteredHws = (!mappedHwNames || mappedHwNames.length === 0)
                                             ? hardwareList
                                             : hardwareList.filter(h => {
-                                                const nameNorm = h.name.toLowerCase().replace(/-/g, '').replace(/ /g, '');
-                                                const providerNorm = h.provider.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                const nameNorm = (h.name || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                const providerNorm = (h.provider || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
                                                 return mappedHwNames.some((m: string) => {
-                                                    const mNorm = m.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                    const mNorm = (m || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
                                                     return nameNorm.includes(mNorm) || mNorm.includes(providerNorm) || (mNorm === 'simulator' && nameNorm.includes('simulator'));
                                                 });
                                             });
@@ -330,6 +342,7 @@ export default function IndustryPage() {
                                                 industry={sessionConfig.industry!}
                                                 service={sessionConfig.service!}
                                                 problem={sessionConfig.problem!}
+                                                hardware={sessionConfig.hardware!}
                                                 initialData={sessionConfig.formData} // Handling re-run pre-fill
                                                 onSubmit={handleFormSubmit}
                                             />

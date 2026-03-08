@@ -28,11 +28,12 @@ interface QuantumFormFetcherProps {
     industry: string;
     service: string;
     problem: string;
+    hardware: string;
     initialData?: Record<string, any>;
     onSubmit: (formData: Record<string, any>) => void;
 }
 
-export default function QuantumFormFetcher({ industry, service, problem, initialData, onSubmit }: QuantumFormFetcherProps) {
+export default function QuantumFormFetcher({ industry, service, problem, hardware, initialData, onSubmit }: QuantumFormFetcherProps) {
     const [form, setForm] = useState<IForm | null>(null);
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true);
@@ -43,13 +44,15 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
         const fetchForm = async () => {
             setLoading(true);
             try {
-                const { data } = await axios.get(`/api/quantum-forms?industry=${industry}&service=${service}&problem=${problem}`);
+                const { data } = await axios.get(`/api/quantum-forms?industry=${industry}&service=${service}&problem=${problem}&hardware=${hardware}`);
                 setForm(data);
                 // Set default values
                 const defaults: Record<string, any> = {};
-                data.fields.forEach((f: IField) => {
-                    if (f.defaultValue) defaults[f.key] = f.defaultValue;
-                });
+                if (data.fields) {
+                    data.fields.forEach((f: IField) => {
+                        if (f.defaultValue) defaults[f.key] = f.defaultValue;
+                    });
+                }
                 // Merge with initialData if provided (for re-runs)
                 setFormData({ ...defaults, ...initialData });
             } catch (err: any) {
@@ -59,10 +62,10 @@ export default function QuantumFormFetcher({ industry, service, problem, initial
             }
         };
 
-        if (industry && service && problem) {
+        if (industry && service && problem && hardware) {
             fetchForm();
         }
-    }, [industry, service, problem]);
+    }, [industry, service, problem, hardware]);
 
     const handleInputChange = (key: string, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));

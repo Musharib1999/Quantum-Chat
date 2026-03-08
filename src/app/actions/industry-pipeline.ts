@@ -200,11 +200,22 @@ export async function executeIndustryWorkflow(
         const svcSearch = (!service || service === 'Gate-Model Circuit' || service === 'undefined')
             ? {} : { service: new RegExp(`^${service}$`, 'i') };
 
-        const formDef = await QuantumForm.findOne({
+        let formDef = await QuantumForm.findOne({
             industry: new RegExp(`^${industry}$`, 'i'),
             ...svcSearch,
-            problem: new RegExp(`^${problem}$`, 'i')
+            problem: new RegExp(`^${problem}$`, 'i'),
+            hardware: new RegExp(`^${hardware}$`, 'i')
         }).lean();
+
+        // Fallback to Universal for template retrieval
+        if (!formDef && hardware !== 'Universal') {
+            formDef = await QuantumForm.findOne({
+                industry: new RegExp(`^${industry}$`, 'i'),
+                ...svcSearch,
+                problem: new RegExp(`^${problem}$`, 'i'),
+                hardware: 'Universal'
+            }).lean();
+        }
         console.log(`[Quantum Workflow] Form Found: ${!!formDef}`);
 
         // --- STEP 1: DETERMINISTIC GUARDRAILS (Pre-LLM) ---
@@ -590,11 +601,22 @@ export async function generateQuantumCode(config: {
             ? {} : { service: new RegExp(`^${service}$`, 'i') };
 
         console.time(`generateCode_${problem}_mongooseForm`);
-        const formDef = await QuantumForm.findOne({
+        let formDef = await QuantumForm.findOne({
             industry: new RegExp(`^${industry}$`, 'i'),
             ...svcResSearch,
-            problem: new RegExp(`^${problem}$`, 'i')
+            problem: new RegExp(`^${problem}$`, 'i'),
+            hardware: new RegExp(`^${hardware}$`, 'i')
         }).lean();
+
+        // Fallback to Universal for template retrieval
+        if (!formDef && hardware !== 'Universal') {
+            formDef = await QuantumForm.findOne({
+                industry: new RegExp(`^${industry}$`, 'i'),
+                ...svcResSearch,
+                problem: new RegExp(`^${problem}$`, 'i'),
+                hardware: 'Universal'
+            }).lean();
+        }
         console.timeEnd(`generateCode_${problem}_mongooseForm`);
 
         console.log(`[Quantum Workflow Actions] Form Found: ${!!formDef} | Templates: ${formDef?.codeTemplates?.length || 0}`);
