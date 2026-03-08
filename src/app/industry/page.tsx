@@ -80,21 +80,17 @@ export default function IndustryPage() {
         setSessionConfig(prev => {
             const newConfig = { ...prev, [type]: value };
             // Reset downstream selections if going back (conceptually)
-            if (type === 'industry') { newConfig.service = null; newConfig.problem = null; newConfig.hardware = null; }
-            if (type === 'service') { newConfig.problem = null; newConfig.hardware = null; }
-            if (type === 'problem') { newConfig.hardware = null; }
+            if (type === 'industry') { newConfig.problem = null; newConfig.service = null; newConfig.hardware = null; newConfig.formData = undefined; }
+            if (type === 'problem') { newConfig.service = null; newConfig.hardware = null; newConfig.formData = undefined; }
+            if (type === 'service') { newConfig.hardware = null; newConfig.formData = undefined; }
             return newConfig;
         });
 
         // Advance Wizard
-        if (type === 'industry') setWizardStep('service');
-        if (type === 'service') setWizardStep('problem');
-        if (type === 'problem') setWizardStep('hardware');
+        if (type === 'industry') setWizardStep('problem');
+        if (type === 'problem') setWizardStep('service');
+        if (type === 'service') setWizardStep('hardware');
         if (type === 'hardware') {
-            // Wizard Complete -> Go to Next Stage (Form Entry -> Chat)
-            // Ideally we might want a "Form Entry" step in the wizard or move straight to chat
-            // Current logic assumes Chat handles form entry if formData is missing? 
-            // Wait, previous code had QuantumFormFetcher. Let's start Chat but maybe show FormFetcher in Layout?
             setFlowStage('CHAT');
         }
     };
@@ -148,7 +144,7 @@ export default function IndustryPage() {
                                                 onClick={() => {
                                                     setSessionConfig({ industry: ind.label, service: null, problem: null, hardware: null });
                                                     setFlowStage('SELECTION');
-                                                    setWizardStep('service');
+                                                    setWizardStep('problem');
                                                 }}
                                                 className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                             >
@@ -159,60 +155,72 @@ export default function IndustryPage() {
                                 </div>
                             </div>
 
-                            {/* Service Section */}
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Service</h3>
-                                <div className="space-y-1">
-                                    {metadata.services?.map((svc: any) => {
-                                        const isSelected = sessionConfig.service === svc.label;
-                                        return (
-                                            <div
-                                                key={svc.label}
-                                                onClick={() => {
-                                                    setSessionConfig(prev => ({ ...prev, service: svc.label, problem: null, hardware: null, formData: undefined }));
-                                                    setFlowStage('SELECTION');
-                                                    setWizardStep('problem');
-                                                }}
-                                                className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
-                                            >
-                                                <span className="truncate">{svc.label}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
                             {/* Problem Section */}
                             <div className="space-y-2">
                                 <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Problem</h3>
                                 <div className="space-y-1">
-                                    {/* Dynamic Problems based on Ind/Svc selection */}
+                                    {/* Dynamic Problems based on Industry selection */}
                                     {(() => {
-                                        const problems = (sessionConfig.industry && sessionConfig.service)
-                                            ? (metadata.problemMapping?.[sessionConfig.industry]?.[sessionConfig.service] || [])
+                                        const problems = sessionConfig.industry
+                                            ? Object.keys(metadata.problemMapping?.[sessionConfig.industry] || {})
                                             : [];
 
-                                        if (problems.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Industry & Service</div>;
+                                        if (problems.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Industry</div>;
 
                                         return (
                                             <div className="space-y-1">
-                                                {problems.map((prob: any) => {
-                                                    const isSelected = sessionConfig.problem === prob.label;
+                                                {problems.map((prob: string) => {
+                                                    const isSelected = sessionConfig.problem === prob;
                                                     return (
                                                         <div
-                                                            key={prob.label}
+                                                            key={prob}
                                                             onClick={() => {
-                                                                setSessionConfig(prev => ({ ...prev, problem: prob.label, hardware: null, formData: undefined }));
+                                                                setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: undefined }));
+                                                                setFlowStage('SELECTION');
+                                                                setWizardStep('service');
+                                                            }}
+                                                            className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                        >
+                                                            <span className="truncate" title={prob}>{prob}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* Service Section */}
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Service</h3>
+                                <div className="space-y-1">
+                                    {/* Dynamic Services based on Problem selection */}
+                                    {(() => {
+                                        const services = (sessionConfig.industry && sessionConfig.problem)
+                                            ? (metadata.problemMapping?.[sessionConfig.industry]?.[sessionConfig.problem] || [])
+                                            : [];
+
+                                        if (services.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Problem</div>;
+
+                                        return (
+                                            <div className="space-y-1">
+                                                {services.map((svc: string) => {
+                                                    const isSelected = sessionConfig.service === svc;
+                                                    return (
+                                                        <div
+                                                            key={svc}
+                                                            onClick={() => {
+                                                                setSessionConfig(prev => ({ ...prev, service: svc, hardware: null, formData: undefined }));
                                                                 setFlowStage('SELECTION');
                                                                 setWizardStep('hardware');
                                                             }}
                                                             className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                                         >
-                                                            <span className="truncate" title={prob.label}>{prob.label}</span>
+                                                            <span className="truncate">{svc}</span>
                                                         </div>
                                                     );
                                                 })}
-
                                             </div>
                                         );
                                     })()}
@@ -223,27 +231,33 @@ export default function IndustryPage() {
                             <div className="space-y-2">
                                 <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Hardware</h3>
                                 <div className="space-y-1">
-                                    {[
-                                        { id: 'ibm_brisbane', label: 'IBM Brisbane (127 Qubits)' },
-                                        { id: 'ionq_aria', label: 'IonQ Aria (25 Qubits)' },
-                                        { id: 'rigetti_aspen', label: 'Rigetti Aspen-M-3 (80 Qubits)' },
-                                        { id: 'dwave_advantage', label: 'D-Wave Advantage (500+) Qubits' }
-                                    ].map((hw: any) => {
-                                        const isSelected = sessionConfig.hardware === hw.label;
+                                    {(() => {
+                                        const mappedHw = (sessionConfig.industry && sessionConfig.problem && sessionConfig.service)
+                                            ? (metadata.problemMapping[sessionConfig.industry]?.[sessionConfig.problem]?.[sessionConfig.service] || [])
+                                            : [];
+
+                                        if (mappedHw.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Service</div>;
+
                                         return (
-                                            <div
-                                                key={hw.id}
-                                                onClick={() => {
-                                                    // Just update hardware, stay in place
-                                                    setSessionConfig(prev => ({ ...prev, hardware: hw.label }));
-                                                }}
-                                                className={`group flex items-center justify-between w-full gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
-                                            >
-                                                <span className="truncate" title={hw.label}>{hw.label}</span>
-                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-muted-foreground bg-muted shrink-0`}>Offline</span>
+                                            <div className="space-y-1">
+                                                {mappedHw.map((hwName: string) => {
+                                                    const isSelected = sessionConfig.hardware === hwName;
+                                                    return (
+                                                        <div
+                                                            key={hwName}
+                                                            onClick={() => {
+                                                                setSessionConfig(prev => ({ ...prev, hardware: hwName }));
+                                                            }}
+                                                            className={`group flex items-center justify-between w-full gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                        >
+                                                            <span className="truncate" title={hwName}>{hwName}</span>
+                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-green-500 bg-green-500/10 border border-green-500/20 shrink-0 uppercase`}>Live</span>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         );
-                                    })}
+                                    })()}
                                 </div>
                             </div>
                         </div>

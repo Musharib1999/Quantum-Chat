@@ -7,7 +7,7 @@ import { Briefcase, Cpu, Layers, Zap, Loader2, PlaneTakeoff, Shield, TrendingUp,
 interface CentralWizardProps {
     step: 'industry' | 'service' | 'problem' | 'hardware';
     metadata: any;
-    config: { industry: string | null, service: string | null };
+    config: { industry: string | null, service: string | null, problem: string | null, hardware: string | null };
     onSelect: (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => void;
 }
 
@@ -84,39 +84,9 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                         </div>
                     </div>
                 );
-            case 'service':
-                return (
-                    <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-light text-foreground tracking-tight">Select Service</h2>
-                        <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto">
-                            {metadata.services?.map((svc: any) => {
-                                const isActive = config.service === svc.label;
-                                return (
-                                    <button
-                                        key={svc.label}
-                                        onClick={() => onSelect('service', svc.label)}
-                                        className={`p-6 bg-card border rounded-xl transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md ${isActive
-                                            ? 'border-foreground bg-foreground/5'
-                                            : 'border-border hover:border-foreground/50 hover:bg-foreground/5'
-                                            }`}
-                                    >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${isActive
-                                            ? 'bg-foreground/10 text-foreground'
-                                            : 'bg-secondary text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10'
-                                            }`}>
-                                            {getServiceIcon(svc.label)}
-                                        </div>
-                                        <span className={`font-semibold text-lg transition-colors ${isActive ? 'text-foreground' : 'text-foreground'}`}>{svc.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                );
             case 'problem':
-                // Drill down to specific problems
-                const problems = (config.industry && config.service)
-                    ? (metadata.problemMapping[config.industry]?.[config.service] || [])
+                const problems = config.industry
+                    ? Object.keys(metadata.problemMapping?.[config.industry] || {})
                     : [];
 
                 return (
@@ -124,21 +94,60 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                         <h2 className="text-3xl font-light text-foreground tracking-tight">Select Problem</h2>
                         <div className="flex flex-wrap justify-center gap-3 max-w-xl mx-auto">
                             {problems.length > 0 ? (
-                                problems.map((prob: any) => (
+                                problems.map((prob: string) => (
                                     <button
-                                        key={prob.id || prob.label}
-                                        onClick={() => onSelect('problem', prob.label)}
+                                        key={prob}
+                                        onClick={() => onSelect('problem', prob)}
                                         className="p-4 bg-card border border-border rounded-xl hover:border-foreground/50 hover:bg-foreground/5 transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors shrink-0">
                                             <Zap size={16} />
                                         </div>
-                                        <span className="font-medium group-hover:text-foreground transition-colors">{prob.label}</span>
+                                        <span className="font-medium group-hover:text-foreground transition-colors">{prob}</span>
                                     </button>
                                 ))
                             ) : (
                                 <div className="text-muted-foreground py-8">
-                                    No mapped problems found for this combination.
+                                    No mapped problems found for this industry.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            case 'service':
+                const availableServices = (config.industry && config.problem)
+                    ? Object.keys(metadata.problemMapping?.[config.industry]?.[config.problem] || {})
+                    : [];
+
+                return (
+                    <div className="space-y-6 text-center">
+                        <h2 className="text-3xl font-light text-foreground tracking-tight">Select Service</h2>
+                        <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto">
+                            {availableServices.length > 0 ? (
+                                availableServices.map((svc: string) => {
+                                    const isActive = config.service === svc;
+                                    return (
+                                        <button
+                                            key={svc}
+                                            onClick={() => onSelect('service', svc)}
+                                            className={`p-6 bg-card border rounded-xl transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md ${isActive
+                                                ? 'border-foreground bg-foreground/5'
+                                                : 'border-border hover:border-foreground/50 hover:bg-foreground/5'
+                                                }`}
+                                        >
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${isActive
+                                                ? 'bg-foreground/10 text-foreground'
+                                                : 'bg-secondary text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10'
+                                                }`}>
+                                                {getServiceIcon(svc)}
+                                            </div>
+                                            <span className={`font-semibold text-lg transition-colors ${isActive ? 'text-foreground' : 'text-foreground'}`}>{svc}</span>
+                                        </button>
+                                    );
+                                })
+                            ) : (
+                                <div className="text-muted-foreground py-8">
+                                    No mapped services found for this problem.
                                 </div>
                             )}
                         </div>
@@ -156,28 +165,46 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                             </div>
                         ) : (
                             <div className="flex flex-wrap justify-center gap-4 max-w-3xl mx-auto">
-                                {hardwareOptions.map((hw) => (
-                                    <button
-                                        key={hw.id}
-                                        onClick={() => onSelect('hardware', hw.name)}
-                                        className="p-6 bg-card border border-border rounded-xl hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5 transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
-                                    >
-                                        <div className="w-full flex justify-between items-center mb-2">
-                                            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors">
-                                                {hw.provider === 'ibm' ? <Layers size={20} /> : <Cpu size={20} />}
-                                            </div>
-                                            <div className="text-xs font-mono text-green-500 border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded uppercase font-bold tracking-wider">Online</div>
+                                {(() => {
+                                    const mappedHws = (config.industry && config.problem && config.service)
+                                        ? (metadata.problemMapping[config.industry]?.[config.problem]?.[config.service] || [])
+                                        : [];
+
+                                    const filtered = hardwareOptions.filter(h => {
+                                        const nameLower = h.name.toLowerCase();
+                                        const providerLower = h.provider.toLowerCase();
+                                        return mappedHws.some((m: string) => {
+                                            const mLower = m.toLowerCase();
+                                            return nameLower.includes(mLower) ||
+                                                mLower.includes(providerLower) ||
+                                                (mLower === 'simulator' && nameLower.includes('simulator'));
+                                        });
+                                    });
+
+                                    if (filtered.length === 0) return (
+                                        <div className="p-8 border border-border border-dashed rounded-xl w-full text-muted-foreground">
+                                            No quantum simulators available for this problem.
                                         </div>
-                                        <span className="font-medium text-lg">{hw.name}</span>
-                                        <span className="text-xs text-muted-foreground font-mono">{hw.qubits} Qubits</span>
-                                        <span className="text-sm text-foreground/80 mt-1">{hw.description}</span>
-                                    </button>
-                                ))}
-                                {hardwareOptions.length === 0 && (
-                                    <div className="p-8 border border-border border-dashed rounded-xl w-full text-muted-foreground">
-                                        No quantum simulators available.
-                                    </div>
-                                )}
+                                    );
+
+                                    return filtered.map((hw) => (
+                                        <button
+                                            key={hw.id}
+                                            onClick={() => onSelect('hardware', hw.name)}
+                                            className="p-6 bg-card border border-border rounded-xl hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5 transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
+                                        >
+                                            <div className="w-full flex justify-between items-center mb-2">
+                                                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors">
+                                                    {hw.provider === 'ibm' ? <Layers size={20} /> : <Cpu size={20} />}
+                                                </div>
+                                                <div className="text-xs font-mono text-green-500 border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded uppercase font-bold tracking-wider">Online</div>
+                                            </div>
+                                            <span className="font-medium text-lg">{hw.name}</span>
+                                            <span className="text-xs text-muted-foreground font-mono">{hw.qubits} Qubits</span>
+                                            <span className="text-sm text-foreground/80 mt-1">{hw.description}</span>
+                                        </button>
+                                    ));
+                                })()}
                             </div>
                         )}
                     </div>
