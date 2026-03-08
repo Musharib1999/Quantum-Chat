@@ -280,7 +280,7 @@ export default function IndustryPage() {
                                                             className={`group flex items-center justify-between w-full gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
                                                         >
                                                             <span className="truncate" title={hw.name}>{hw.name}</span>
-                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-green-500 bg-green-500/10 border border-green-500/20 shrink-0 uppercase`}>Live</span>
+                                                            <span className={`text-[9px] text-green-500 shrink-0 uppercase`}>Live</span>
                                                         </div>
                                                     );
                                                 })}

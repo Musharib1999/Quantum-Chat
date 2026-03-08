@@ -50,8 +50,7 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
                         <span className="text-[10px] font-mono text-muted-foreground">
                             {new Date(exp.timestamp).toLocaleDateString()}
                         </span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${exp.success !== false ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                            }`}>
+                        <span className={`text-[9px] uppercase ${exp.success !== false ? 'text-green-500' : 'text-red-500'}`}>
                             {exp.success !== false ? 'Success' : 'Failed'}
                         </span>
                     </div>

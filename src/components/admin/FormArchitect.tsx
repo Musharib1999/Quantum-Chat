@@ -613,6 +613,7 @@ export default function FormArchitect() {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Target Hardware</label>
                                             <input
+                                                list="hardwares"
                                                 value={tmpl.hardware}
                                                 onChange={(e) => {
                                                     const updated = [...codeTemplates];
