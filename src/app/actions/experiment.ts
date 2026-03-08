@@ -3,27 +3,40 @@
 import dbConnect from '@/lib/db';
 import Experiment from '@/models/Experiment';
 
+/**
+ * Fetches a lightweight list of experiments for the sidebar/history panel.
+ * Only includes fields needed for display — excludes heavy fields like
+ * qiskitCode, results (raw output), analysis (LLM text), and chartData.
+ */
 export async function getExperiments(userEmail?: string, isAdmin: boolean = false) {
     await dbConnect();
     try {
-        // If not admin and no userEmail provided, return nothing (Guest state)
         if (!isAdmin && !userEmail) {
             return [];
         }
 
-        // Build query document
         const query: any = {};
         if (!isAdmin && userEmail) {
-            query.userId = userEmail; // Regular users only see their own
+            query.userId = userEmail;
         }
 
-        // Fetch last 50 experiments, newest first
-        const experiments = await Experiment.find(query)
+        // Only select lightweight fields needed for the list view
+        const experiments = await Experiment.find(query, {
+            _id: 1,
+            userId: 1,
+            industry: 1,
+            service: 1,
+            problem: 1,
+            hardware: 1,
+            parameters: 1,
+            timestamp: 1,
+            cacheKey: 1,
+            // Deliberately excluded: qiskitCode, results, analysis, chartData, assignmentsTable
+        })
             .sort({ timestamp: -1 })
             .limit(50)
             .lean();
 
-        // Convert _id and dates to reliable strings for UI serialization
         return experiments.map((exp: any) => ({
             ...exp,
             _id: exp._id.toString(),
@@ -32,5 +45,26 @@ export async function getExperiments(userEmail?: string, isAdmin: boolean = fals
     } catch (error) {
         console.error("Failed to fetch experiments:", error);
         return [];
+    }
+}
+
+/**
+ * Fetches the full experiment record (including heavy fields) for the detail modal.
+ * Only called on demand when a user clicks to view an experiment.
+ */
+export async function getExperimentById(id: string) {
+    await dbConnect();
+    try {
+        const Mongoose = (await import('mongoose')).default;
+        const exp = await Experiment.findById(new Mongoose.Types.ObjectId(id)).lean() as any;
+        if (!exp) return null;
+        return {
+            ...exp,
+            _id: exp._id.toString(),
+            timestamp: exp.timestamp.toISOString()
+        };
+    } catch (error) {
+        console.error("Failed to fetch experiment by id:", error);
+        return null;
     }
 }
