@@ -213,7 +213,7 @@ export async function executeIndustryWorkflow(
                 industry: new RegExp(`^${industry}$`, 'i'),
                 ...svcSearch,
                 problem: new RegExp(`^${problem}$`, 'i'),
-                hardware: 'Universal'
+                $or: [{ hardware: 'Universal' }, { hardware: { $exists: false } }]
             }).lean();
         }
         console.log(`[Quantum Workflow] Form Found: ${!!formDef}`);
@@ -614,7 +614,7 @@ export async function generateQuantumCode(config: {
                 industry: new RegExp(`^${industry}$`, 'i'),
                 ...svcResSearch,
                 problem: new RegExp(`^${problem}$`, 'i'),
-                hardware: 'Universal'
+                $or: [{ hardware: 'Universal' }, { hardware: { $exists: false } }]
             }).lean();
         }
         console.timeEnd(`generateCode_${problem}_mongooseForm`);

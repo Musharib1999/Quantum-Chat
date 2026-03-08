@@ -25,9 +25,9 @@ export async function GET(req: Request) {
         }
 
         let form = await QuantumForm.findOne({
-            industry,
-            service,
-            problem,
+            industry: new RegExp(`^${industry}$`, 'i'),
+            service: new RegExp(`^${service}$`, 'i'),
+            problem: new RegExp(`^${problem}$`, 'i'),
             hardware,
             active: true
         });
@@ -35,16 +35,19 @@ export async function GET(req: Request) {
         // Fallback to Universal if specific hardware form is not found
         if (!form && hardware !== 'Universal') {
             form = await QuantumForm.findOne({
-                industry,
-                service,
-                problem,
-                hardware: 'Universal',
+                industry: new RegExp(`^${industry}$`, 'i'),
+                service: new RegExp(`^${service}$`, 'i'),
+                problem: new RegExp(`^${problem}$`, 'i'),
+                $or: [{ hardware: 'Universal' }, { hardware: { $exists: false } }],
                 active: true
             });
         }
 
         if (!form) {
-            return NextResponse.json({ error: 'No form mapped for this configuration' }, { status: 404 });
+            return NextResponse.json({
+                error: 'No form mapped for this configuration',
+                debug: { industry, service, problem, hardware }
+            }, { status: 404 });
         }
 
         return NextResponse.json(form);
