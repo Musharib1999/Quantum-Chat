@@ -548,6 +548,7 @@ export async function getMarketNews() {
 }
 
 export async function debugStockFetch(prompt: string) {
+    await dbConnect();
     const steps: any[] = [];
     let ticker = "NULL";
     let rawMarketData = null;
@@ -605,6 +606,18 @@ export async function debugStockFetch(prompt: string) {
             ]);
             finalOutput = finalResult.response.text();
             steps[3] = { name: "Final Summarization", status: "completed", result: finalOutput };
+
+            // --- Persist Debug Log ---
+            await ChatLog.create({
+                userQuery: prompt,
+                aiResponse: finalOutput,
+                source: 'stock_debugger',
+                ticker: ticker,
+                rawData: rawMarketData,
+                systemPrompt: enrichedPrompt,
+                mode: 'market',
+                guardrailsStatus: 'passed'
+            });
         } else {
             steps.push({ name: "Process Halted", status: "info", result: "No ticker detected. Generic flow would trigger." });
         }
