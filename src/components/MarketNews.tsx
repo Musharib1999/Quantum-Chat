@@ -138,7 +138,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                 key={`${item.id}-${index}`}
                                 ref={isLastElement ? lastNewsElementRef : null}
                                 onClick={() => setSelectedSummaryItem(item)}
-                                className="p-4 bg-transparent border border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2 cursor-pointer"
+                                className="p-4 bg-transparent border border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2 cursor-pointer"
                             >
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-[12px] font-medium tracking-wider text-muted-foreground group-hover:text-[#3066bb] transition-colors">{item.source}</span>
