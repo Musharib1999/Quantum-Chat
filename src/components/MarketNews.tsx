@@ -142,7 +142,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                             >
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-[12px] font-medium tracking-wider text-muted-foreground group-hover:text-[#3066bb] transition-colors">{item.source}</span>
-                                    <span className={`text-[11px] font-semibold tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
+                                    <span className={`text-[11px] font-normal tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
                                         (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500' :
                                             'text-red-500'
                                         }`}>
