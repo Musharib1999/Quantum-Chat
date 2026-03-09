@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Atom, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 
 interface LoginUserData {
     email: string;
@@ -20,6 +21,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const { showToast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -46,6 +48,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
             }
 
             // Login successful
+            showToast('Login Successful', 'success');
             onLogin(data as LoginUserData);
 
             // Redirect to landing page to choose entry point

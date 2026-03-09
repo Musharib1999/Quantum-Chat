@@ -3,10 +3,12 @@
 import React, { useState, Suspense } from 'react';
 import { Mail, Lock, Atom, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function LoginForm() {
     const { login } = useAuth();
+    const { showToast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirect = searchParams.get('redirect') || '/';
@@ -57,6 +59,7 @@ function LoginForm() {
             if (mode === 'login') {
                 // Store full user profile in AuthContext
                 login(data);
+                showToast('Login Successful', 'success');
                 router.push(redirect);
             } else {
                 setSuccessMsg(data.message || 'Registration successful Your account is pending admin approval');

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
 import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info, X, ArrowRight, FileText, Sparkles } from 'lucide-react';
 import { getDbNews } from '@/app/actions/news-automation';
 // import QuantumHeatMap from './QuantumHeatMap';
@@ -25,6 +26,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
     const [news, setNews] = useState<NewsItem[]>([]);
     const [page, setPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [selectedSummaryItem, setSelectedSummaryItem] = useState<NewsItem | null>(null);
     const observer = useRef<IntersectionObserver | null>(null);
@@ -79,10 +81,33 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
 
     return (
         <div className="flex flex-col h-full bg-card/30">
-            <div className="p-6 border-b border-border">
-                <h3 className="text-foreground mb-4 flex items-center gap-2">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+                <h3 className="text-foreground flex items-center gap-2">
                     <Newspaper className="text-green-500 dark:text-green-400" size={18} /> Quantum News
                 </h3>
+                <button
+                    onClick={async () => {
+                        if (isRefreshing) return;
+                        setIsRefreshing(true);
+                        try {
+                            await axios.get('/api/admin/news/refresh');
+                            // Refresh current list from page 1
+                            setNews([]);
+                            setPage(1);
+                            setHasMore(true);
+                            await loadNews(1);
+                        } catch (err) {
+                            console.error("Refresh failed:", err);
+                        } finally {
+                            setIsRefreshing(false);
+                        }
+                    }}
+                    disabled={isRefreshing}
+                    className={`p-1.5 rounded-lg border border-border bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title="Refresh News Summaries"
+                >
+                    <Sparkles size={14} className={isRefreshing ? 'animate-spin text-[#3066bb]' : ''} />
+                </button>
             </div>
 
             {/* <div className="p-4 border-b border-border/10">
@@ -112,38 +137,21 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                             <div
                                 key={`${item.id}-${index}`}
                                 ref={isLastElement ? lastNewsElementRef : null}
-                                className="p-4 bg-transparent border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2"
+                                onClick={() => setSelectedSummaryItem(item)}
+                                className="p-4 bg-transparent border border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:ring-1 hover:ring-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2 cursor-pointer"
                             >
                                 <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[10px] tracking-wider text-muted-foreground">{item.source}</span>
-                                    <span className={`text-[9px] font-normal tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
+                                    <span className="text-[12px] font-medium tracking-wider text-muted-foreground group-hover:text-[#3066bb] transition-colors">{item.source}</span>
+                                    <span className={`text-[11px] font-semibold tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
                                         (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500' :
                                             'text-red-500'
                                         }`}>
                                         Quantum exposure: {item.quantumExposureScore || 0}/5
                                     </span>
                                 </div>
-                                <h4
-                                    className="text-sm font-medium leading-normal text-foreground transition-colors line-clamp-3 cursor-pointer"
-                                    onClick={() => setSelectedSummaryItem(item)}
-                                >
+                                <h4 className="text-sm font-medium leading-normal text-foreground transition-colors line-clamp-3">
                                     {item.title}
                                 </h4>
-
-                                <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/30 pt-3">
-                                    <span className={`text-[10px] font-medium transition-colors ${item.impact === 'high' ? 'text-red-500' :
-                                        item.impact === 'medium' ? 'text-orange-500' :
-                                            'text-teal-500'
-                                        }`}>
-                                        {item.impact ? `${item.impact.charAt(0).toUpperCase() + item.impact.slice(1)} impact` : 'Medium impact'}
-                                    </span>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setSelectedSummaryItem(item); }}
-                                        className="flex items-center gap-1.5 text-white font-medium bg-[#3066bb] px-2.5 py-1 rounded hover:bg-[#255296] transition-colors shadow-sm"
-                                    >
-                                        <Sparkles size={12} /> Summary
-                                    </button>
-                                </div>
                             </div>
                         );
                     })
@@ -188,7 +196,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                         </div>
 
                         <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-border">
-                            <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-3 mb-4 text-[14px] font-semibold text-muted-foreground">
                                 <span className="text-blue-600 dark:text-blue-400">{selectedSummaryItem.source}</span>
                             </div>
 
@@ -198,9 +206,12 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
 
                             <div className="text-[15px] leading-relaxed text-muted-foreground space-y-4">
                                 {selectedSummaryItem.summary ? (
-                                    selectedSummaryItem.summary.split('\\n').map((para, i) => (
-                                        <p key={i}>{para}</p>
-                                    ))
+                                    selectedSummaryItem.summary
+                                        .replace(/<[^>]*>?/gm, '') // Strip HTML tags
+                                        .split('\\n')
+                                        .map((para, i) => (
+                                            <p key={i}>{para}</p>
+                                        ))
                                 ) : (
                                     <p className="italic text-muted-foreground/70">No automated summary available for this article.</p>
                                 )}
