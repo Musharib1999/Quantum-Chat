@@ -148,7 +148,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                     </h4>
 
                                     <div className="pt-2 mt-1 border-t border-border/20">
-                                        <span className={`text-sm font-medium tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
+                                        <span className={`text-[12px] font-medium tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
                                             (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500' :
                                                 'text-red-500'
                                             }`}>
