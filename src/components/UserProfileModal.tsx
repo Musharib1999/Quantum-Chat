@@ -124,10 +124,6 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 </div>
             </div>
 
-            {/* Sub-footer */}
-            <div className="px-5 py-3 bg-muted/30 border-t border-border/40 text-[10px] text-muted-foreground text-center">
-                Quantum Computers Platform v1.2.4
-            </div>
         </div>
     );
 }
