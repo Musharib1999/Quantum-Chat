@@ -73,7 +73,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                     >
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm line-clamp-1">{stock.name}</span>
+                                <span className="text-sm font-medium line-clamp-1">{stock.name}</span>
                                 {activeStockId === stock._id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
                             </div>
 
