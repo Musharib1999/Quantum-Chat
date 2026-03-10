@@ -4,17 +4,25 @@ import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import IndustryChat from '@/components/chat/IndustryChat';
 import CentralWizard from '@/components/industry/CentralWizard';
+import SimulationReviewModal from '@/components/industry/SimulationReviewModal';
 import ExperimentHistoryList from '@/components/ExperimentHistoryList';
 import ExperimentDetailsModal from '@/components/ExperimentDetailsModal';
 import QuantumFormFetcher from '@/components/QuantumFormFetcher';
 import { getExperiments } from '@/app/actions/experiment';
 import axios from 'axios';
-import { ArrowLeft, CheckCircle2, BookOpen, ChevronRight, Layers } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, BookOpen, ChevronRight, Layers, Zap, Atom, Cpu, PlaneTakeoff, Shield, TrendingUp, Briefcase } from 'lucide-react';
 
 import IndustryLogin from '@/components/industry/IndustryLogin';
 import { useAuth } from '@/context/AuthContext';
 
 export default function IndustryPage() {
+    const getIndustryIcon = (label: string, size = 18) => {
+        const l = label.toLowerCase();
+        if (l.includes('aviation')) return <PlaneTakeoff size={size} />;
+        if (l.includes('cyber') || l.includes('security')) return <Shield size={size} />;
+        if (l.includes('finance')) return <TrendingUp size={size} />;
+        return <Briefcase size={size} />;
+    };
     // Auth Context
     const { isAuthenticated, user, login, isInitializing } = useAuth();
 
@@ -24,6 +32,9 @@ export default function IndustryPage() {
     // Config State
     const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null, formData?: any }>({ industry: null, service: null, problem: null, hardware: null });
     const [wizardStep, setWizardStep] = useState<'industry' | 'service' | 'problem' | 'hardware'>('industry');
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [pendingFormData, setPendingFormData] = useState<any>(null);
+    const [calculatedQubits, setCalculatedQubits] = useState(0);
 
     // Data State
     const [metadata, setMetadata] = useState<any>({ industries: [], services: [], problemMapping: {} });
@@ -119,8 +130,15 @@ export default function IndustryPage() {
     // But we need the Form Data to start the simulation. 
     // Let's render the FormFetcher as an overlay or inside the chat area if no formData.
 
-    const handleFormSubmit = (formData: any) => {
-        setSessionConfig(prev => ({ ...prev, formData }));
+    const handleFormSubmit = (formData: any, qubits: number) => {
+        setPendingFormData(formData);
+        setCalculatedQubits(qubits);
+        setShowReviewModal(true);
+    };
+
+    const handleExecute = () => {
+        setSessionConfig(prev => ({ ...prev, formData: pendingFormData }));
+        setShowReviewModal(false);
     };
 
     // Re-Run Logic
@@ -145,6 +163,15 @@ export default function IndustryPage() {
                 onReRun={handleReRun}
             />
 
+            <SimulationReviewModal
+                isOpen={showReviewModal}
+                onClose={() => setShowReviewModal(false)}
+                onExecute={handleExecute}
+                config={sessionConfig}
+                formData={pendingFormData || {}}
+                qubits={calculatedQubits}
+            />
+
             <AppLayout
                 currentMode="industry"
                 // Left Sidebar: Only show in Chat Mode (Selections) OR minimal back button in Selection Mode
@@ -152,32 +179,33 @@ export default function IndustryPage() {
                     flowStage === 'CHAT' ? (
                         <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
                             {/* Industry Section */}
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Industry</h3>
-                                <div className="space-y-1">
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-medium text-foreground px-2 text-left">Industry</h3>
+                                <div className="flex flex-col gap-2">
                                     {metadata.industries?.map((ind: any) => {
                                         const isSelected = sessionConfig.industry === ind.label;
                                         return (
-                                            <div
+                                            <button
                                                 key={ind.label}
-                                                onClick={() => {
-                                                    setSessionConfig({ industry: ind.label, service: null, problem: null, hardware: null });
-                                                    setFlowStage('SELECTION');
-                                                    setWizardStep('problem');
-                                                }}
-                                                className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                onClick={() => setSessionConfig(prev => ({ ...prev, industry: ind.label, problem: null, service: null, hardware: null, formData: null }))}
+                                                className={`w-full text-left p-3 rounded-xl transition-all group border ${isSelected ? 'bg-foreground/5 border-foreground shadow-[0_0_10px_rgba(0,0,0,0.05)]' : 'hover:bg-secondary/50 border-transparent'}`}
                                             >
-                                                <span className="truncate">{ind.label}</span>
-                                            </div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                        {getIndustryIcon(ind.label)}
+                                                    </div>
+                                                    <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{ind.label}</span>
+                                                </div>
+                                            </button>
                                         );
                                     })}
                                 </div>
                             </div>
 
                             {/* Problem Section */}
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Problem</h3>
-                                <div className="space-y-1">
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-medium text-foreground px-2 text-left">Problem</h3>
+                                <div className="flex flex-col gap-2">
                                     {/* Dynamic Problems based on Industry selection */}
                                     {(() => {
                                         const problems = sessionConfig.industry
@@ -191,13 +219,18 @@ export default function IndustryPage() {
                                                 {problems.map((prob: string) => {
                                                     const isSelected = sessionConfig.problem === prob;
                                                     return (
-                                                        <div
+                                                        <button
                                                             key={prob}
-                                                            onClick={() => handleWizardSelect('problem', prob)}
-                                                            className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                            onClick={() => setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: null }))}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all group border ${isSelected ? 'bg-foreground/5 border-foreground shadow-[0_0_10px_rgba(0,0,0,0.05)]' : 'hover:bg-secondary/50 border-transparent'}`}
                                                         >
-                                                            <span className="truncate" title={prob}>{prob}</span>
-                                                        </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                    <Zap size={14} />
+                                                                </div>
+                                                                <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{prob}</span>
+                                                            </div>
+                                                        </button>
                                                     );
                                                 })}
                                             </div>
@@ -207,9 +240,9 @@ export default function IndustryPage() {
                             </div>
 
                             {/* Service Section */}
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Service</h3>
-                                <div className="space-y-1">
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-medium text-foreground px-2 text-left">Service</h3>
+                                <div className="flex flex-col gap-2">
                                     {/* Dynamic Services based on Problem selection */}
                                     {(() => {
                                         const services = (sessionConfig.industry && sessionConfig.problem)
@@ -223,17 +256,18 @@ export default function IndustryPage() {
                                                 {services.map((svc: string) => {
                                                     const isSelected = sessionConfig.service === svc;
                                                     return (
-                                                        <div
+                                                        <button
                                                             key={svc}
-                                                            onClick={() => {
-                                                                setSessionConfig(prev => ({ ...prev, service: svc, hardware: null, formData: undefined }));
-                                                                setFlowStage('SELECTION');
-                                                                setWizardStep('hardware');
-                                                            }}
-                                                            className={`group flex items-center justify-start w-full py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                            onClick={() => setSessionConfig(prev => ({ ...prev, service: svc, hardware: null, formData: null }))}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all group border ${isSelected ? 'bg-foreground/5 border-foreground shadow-[0_0_10px_rgba(0,0,0,0.05)]' : 'hover:bg-secondary/50 border-transparent'}`}
                                                         >
-                                                            <span className="truncate">{svc}</span>
-                                                        </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                    <Atom size={14} />
+                                                                </div>
+                                                                <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{svc}</span>
+                                                            </div>
+                                                        </button>
                                                     );
                                                 })}
                                             </div>
@@ -243,9 +277,9 @@ export default function IndustryPage() {
                             </div>
 
                             {/* Hardware Section */}
-                            <div className="space-y-2">
-                                <h3 className="text-xs font-bold text-muted-foreground tracking-wider px-2 text-left">Hardware</h3>
-                                <div className="space-y-1">
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-medium text-foreground px-2 text-left">Hardware</h3>
+                                <div className="flex flex-col gap-2">
                                     {(() => {
                                         const mappedHwNames = (sessionConfig.industry && sessionConfig.problem && sessionConfig.service)
                                             ? (metadata.problemMapping[sessionConfig.industry]?.[sessionConfig.problem]?.[sessionConfig.service] || [])
@@ -272,16 +306,21 @@ export default function IndustryPage() {
                                                 {filteredHws.map((hw: any) => {
                                                     const isSelected = sessionConfig.hardware === hw.name;
                                                     return (
-                                                        <div
+                                                        <button
                                                             key={hw.id}
-                                                            onClick={() => {
-                                                                setSessionConfig(prev => ({ ...prev, hardware: hw.name }));
-                                                            }}
-                                                            className={`group flex items-center justify-between w-full gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer border ${isSelected ? 'bg-card text-foreground font-medium shadow-sm border-ring' : 'border-transparent hover:bg-secondary/40 text-muted-foreground'}`}
+                                                            onClick={() => setSessionConfig(prev => ({ ...prev, hardware: hw.name }))}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all group border ${isSelected ? 'bg-foreground/5 border-foreground shadow-[0_0_10px_rgba(0,0,0,0.05)]' : 'hover:bg-secondary/50 border-transparent'}`}
                                                         >
-                                                            <span className="truncate" title={hw.name}>{hw.name}</span>
-                                                            <span className={`text-[9px] text-green-500 shrink-0 uppercase`}>Live</span>
-                                                        </div>
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                        <Cpu size={14} />
+                                                                    </div>
+                                                                    <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{hw.name}</span>
+                                                                </div>
+                                                                <span className={`text-[9px] font-bold uppercase ${isSelected ? 'text-foreground' : 'text-green-500'}`}>Live</span>
+                                                            </div>
+                                                        </button>
                                                     );
                                                 })}
                                             </div>
@@ -297,12 +336,12 @@ export default function IndustryPage() {
                     <div className="h-full overflow-hidden flex flex-col">
                         {/* Article & Learn Link Card */}
                         <div className="p-4 border-b border-border shrink-0 mt-1">
-                            <a href="/article-learn" className="block w-full p-4 rounded-xl bg-card border border-border hover:border-ring hover:shadow-md transition-all duration-200 group">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <a href="/article-learn" className="block w-full p-4 rounded-xl bg-card border border-border hover:border-foreground/50 hover:shadow-lg transition-all duration-300 group">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                                         Analyze Quantum Information
                                     </h3>
-                                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                                 </div>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
                                     Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain

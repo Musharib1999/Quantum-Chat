@@ -30,7 +30,7 @@ interface QuantumFormFetcherProps {
     problem: string;
     hardware: string;
     initialData?: Record<string, any>;
-    onSubmit: (formData: Record<string, any>) => void;
+    onSubmit: (formData: Record<string, any>, qubits: number) => void;
 }
 
 export default function QuantumFormFetcher({ industry, service, problem, hardware, initialData, onSubmit }: QuantumFormFetcherProps) {
@@ -203,7 +203,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
             <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center">
                 <Settings className="text-muted-foreground animate-spin" size={20} />
             </div>
-            <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Hydrating Quantum Parameters...</p>
+            <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Loading input data form</p>
         </div>
     );
 
@@ -235,49 +235,12 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                 )}
             </div>
 
-            {/* Complexity & Batching Widget */}
-            {form.qubitFormula ? (
-                <div className="bg-card border border-border p-5 rounded-2xl flex items-center justify-between group overflow-hidden relative shadow-sm transition-all hover:shadow-md hover:border-black/20 font-sans">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-black/[0.02] rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-
-                    <div className="flex items-center gap-4 relative z-10 w-full font-sans">
-                        <div className="w-10 h-10 rounded-full bg-secondary/50 border border-border flex items-center justify-center text-foreground shrink-0 group-hover:bg-black group-hover:text-white transition-colors duration-300">
-                            <Layers size={18} />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-extrabold text-black uppercase tracking-tight">Complexity Forecast</span>
-                                <span className="text-[9px] font-bold text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-border uppercase tracking-widest">Qubits</span>
-                            </div>
-                        </div>
-
-                        <div className="text-right shrink-0 font-sans">
-                            <div className="text-3xl font-black text-black leading-none tracking-tighter transition-all duration-300 group-hover:scale-110">
-                                {qubits > 0 ? qubits : '0'}
-                            </div>
-                            {form.batchingEnabled && (
-                                <div className="flex items-center justify-end gap-1 mt-1.5 font-sans">
-                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border transition-all duration-300 ${batches > 1 ? 'bg-black text-white border-black' : 'bg-secondary text-muted-foreground border-border'}`}>
-                                        {batches > 1 ? `${batches} BATCHES` : 'SINGLE BATCH'}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div className="bg-secondary/20 border border-dashed border-border p-4 rounded-xl text-center">
-                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                        Quantum capacity: Not Configured
-                    </p>
-                </div>
-            )}
 
             <button
-                onClick={() => onSubmit(formData)}
-                className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5"
+                onClick={() => onSubmit(formData, qubits)}
+                className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5"
             >
-                <Play size={18} fill="currentColor" /> Execute Quantum Workflow
+                Next <ChevronDown size={18} className="-rotate-90" />
             </button>
         </div>
     );

@@ -146,7 +146,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    Enter Workspace <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    Sign In <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                                 </span>
                             )}
                         </button>

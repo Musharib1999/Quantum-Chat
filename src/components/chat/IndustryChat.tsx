@@ -372,7 +372,6 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 tableHtml += `|:---|:---|\n`;
                 tableHtml += `| **Problem** | ${contextConfig?.problem || 'Quantum Solution'} |\n`;
                 tableHtml += `| **Hardware** | \`${hardware}\` |\n`;
-                tableHtml += `| **Resources** | ${qubitCount} Qubits |\n`;
 
                 if (isFinance && contextConfig?.formData?.sector) {
                     const sectors = Array.isArray(contextConfig.formData.sector)
