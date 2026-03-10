@@ -82,7 +82,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
     return (
         <div className="flex flex-col h-full bg-card/30">
             <div className="p-6 border-b border-border flex items-center justify-between">
-                <h3 className="text-foreground flex items-center gap-2">
+                <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
                     <Newspaper className="text-green-500 dark:text-green-400" size={18} /> Quantum News
                 </h3>
                 <button
@@ -142,7 +142,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                             >
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-[12px] font-medium tracking-wider text-muted-foreground group-hover:text-[#3066bb] transition-colors">{item.source}</span>
-                                    <span className={`text-[11px] font-normal tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
+                                    <span className={`text-sm font-medium tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
                                         (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500' :
                                             'text-red-500'
                                         }`}>

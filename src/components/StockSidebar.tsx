@@ -38,7 +38,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
     return (
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border">
-                <h3 className="text-foreground mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-medium text-foreground mb-4 flex items-center gap-2">
                     <TrendingUp className="text-green-400" size={18} /> Quantum Stocks
                 </h3>
                 <div className="relative">
@@ -78,7 +78,7 @@ export default function StockSidebar({ onSelect, activeStockId }: StockSidebarPr
                             </div>
 
                             <div className="flex items-center justify-start mt-1 pt-1 border-t border-border/20">
-                                <span className={`text-[11px] font-normal ${(stock.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
+                                <span className={`text-sm font-medium ${(stock.quantumExposureScore || 0) >= 4 ? 'text-green-600' :
                                     (stock.quantumExposureScore || 0) >= 2 ? 'text-orange-600' :
                                         'text-red-600'
                                     }`}>
