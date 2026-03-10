@@ -110,6 +110,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             const botMsgId = Date.now() + 1;
             setStreamingMessageId(botMsgId);
 
+            setIsTyping(false); // Stop typing just as the bubble appears
             setMessages(prev => [...prev, {
                 id: botMsgId,
                 text: "",

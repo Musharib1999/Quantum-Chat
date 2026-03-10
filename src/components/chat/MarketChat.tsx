@@ -132,7 +132,7 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                         </div>
                     ))}
 
-                    {isTyping && (
+                    {isTyping && messages[messages.length - 1]?.sender !== 'bot' && (
                         <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <div className="flex flex-row items-center gap-4">
                                 <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-border p-1 flex items-center justify-center shrink-0">

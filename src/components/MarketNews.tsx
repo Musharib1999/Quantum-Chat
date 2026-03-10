@@ -140,18 +140,22 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                 onClick={() => setSelectedSummaryItem(item)}
                                 className="p-4 bg-transparent border border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2 cursor-pointer"
                             >
-                                <div className="flex justify-between items-center mb-1">
+                                <div className="flex flex-col gap-2">
                                     <span className="text-[12px] font-medium tracking-wider text-muted-foreground group-hover:text-[#3066bb] transition-colors">{item.source}</span>
-                                    <span className={`text-sm font-medium tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
-                                        (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500' :
-                                            'text-red-500'
-                                        }`}>
-                                        Quantum exposure: {item.quantumExposureScore || 0}/5
-                                    </span>
+
+                                    <h4 className="text-sm font-medium text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                                        {item.title}
+                                    </h4>
+
+                                    <div className="pt-2 mt-1 border-t border-border/20">
+                                        <span className={`text-sm font-medium tracking-wide ${(item.quantumExposureScore || 0) >= 4 ? 'text-green-500' :
+                                            (item.quantumExposureScore || 0) >= 2 ? 'text-orange-500' :
+                                                'text-red-500'
+                                            }`}>
+                                            Quantum exposure: {item.quantumExposureScore || 0}/5
+                                        </span>
+                                    </div>
                                 </div>
-                                <h4 className="text-sm font-medium leading-normal text-foreground transition-colors line-clamp-3">
-                                    {item.title}
-                                </h4>
                             </div>
                         );
                     })
