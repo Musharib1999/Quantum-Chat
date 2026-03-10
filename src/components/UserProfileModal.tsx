@@ -118,7 +118,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
                         >
                             <Unlock size={16} />
-                            <span>Sign In to Workspace</span>
+                            <span>Sign In</span>
                         </button>
                     )}
                 </div>
