@@ -81,7 +81,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
 
     return (
         <div className="flex flex-col h-full bg-card/30">
-            <div className="p-6 border-b border-border flex items-center justify-between">
+            <div className="px-5 py-3 border-b border-border flex items-center justify-between">
                 <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
                     <Newspaper className="text-green-500 dark:text-green-400" size={18} /> Quantum News
                 </h3>
@@ -114,7 +114,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                 <QuantumHeatMap />
             </div> */}
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-border">
+            <div className="flex-1 overflow-y-auto px-2 py-1 space-y-1 scrollbar-thin scrollbar-thumb-border">
                 {isLoading && news.length === 0 ? (
                     Array(5).fill(0).map((_, i) => (
                         <div key={i} className="p-4 bg-transparent border border-transparent rounded-xl flex flex-col gap-3">
@@ -138,7 +138,7 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                                 key={`${item.id}-${index}`}
                                 ref={isLastElement ? lastNewsElementRef : null}
                                 onClick={() => setSelectedSummaryItem(item)}
-                                className="p-4 bg-transparent border border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2 cursor-pointer"
+                                className="px-3 py-2 bg-transparent border border-transparent text-muted-foreground hover:bg-card hover:border-ring hover:text-foreground hover:shadow-md transition-all duration-200 rounded-xl group relative overflow-hidden flex flex-col gap-2 cursor-pointer"
                             >
                                 <div className="flex flex-col gap-2">
                                     <span className="text-[12px] font-medium tracking-wider text-muted-foreground group-hover:text-[#3066bb] transition-colors">{item.source}</span>
