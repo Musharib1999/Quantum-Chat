@@ -48,8 +48,14 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
                 const newTotal = Math.min(prev + delta, sessionTokenLimit);
                 if (!isAuthenticated) {
                     sessionStorage.setItem(STORAGE_KEY, String(newTotal));
-                } else if (updateUser) {
+                } else if (updateUser && user?.email) {
                     updateUser({ tokensUsed: newTotal });
+                    // Sync delta to backend
+                    fetch('/api/auth/sync-usage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email, tokensDelta: delta })
+                    }).catch(err => console.error("Failed to sync token usage", err));
                 }
                 return newTotal;
             });
@@ -62,8 +68,14 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
                 const newTotal = Math.min(prev + delta, sessionSimLimit);
                 if (!isAuthenticated) {
                     sessionStorage.setItem(SIM_STORAGE_KEY, String(newTotal));
-                } else if (updateUser) {
+                } else if (updateUser && user?.email) {
                     updateUser({ simMinutesUsed: newTotal });
+                    // Sync delta to backend
+                    fetch('/api/auth/sync-usage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email, simMinutesDelta: delta })
+                    }).catch(err => console.error("Failed to sync sim minutes usage", err));
                 }
                 return newTotal;
             });
