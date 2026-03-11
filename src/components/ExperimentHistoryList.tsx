@@ -47,21 +47,28 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
                         onClick={() => onSelectExperiment(exp)}
                         className="group w-full text-left px-3 py-2 rounded-xl bg-transparent border border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md transition-all duration-200"
                     >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-[12px] font-medium text-muted-foreground">
+                        <div className="flex flex-col gap-1">
+                            {/* Industry & Hardware Row */}
+                            <div className="flex items-center gap-2 text-[12px] font-medium text-primary">
+                                <span className="truncate max-w-[120px]">{exp.industry}</span>
+                                <span className="w-1 h-1 rounded-full bg-primary/20 shrink-0"></span>
+                                <span className="truncate">{exp.hardware}</span>
+                            </div>
+
+                            {/* Date Row */}
+                            <div className="text-[11px] text-muted-foreground">
                                 {new Date(exp.timestamp).toLocaleDateString()}
-                            </span>
-                            <span className={`text-[12px] font-medium tracking-wide border-t border-border/20 ${exp.success !== false ? 'text-green-500' : 'text-red-500'}`}>
+                            </div>
+
+                            {/* Problem Name */}
+                            <div className="font-medium text-[12px] text-foreground line-clamp-1 transition-colors">
+                                {exp.problem || "Untitled Experiment"}
+                            </div>
+
+                            {/* Status Row */}
+                            <div className={`text-[11px] font-medium tracking-wide ${exp.success !== false ? 'text-green-500' : 'text-red-500'}`}>
                                 {exp.success !== false ? 'Success' : 'Failed'}
-                            </span>
-                        </div>
-                        <div className="font-medium text-[12px] text-foreground mb-1 line-clamp-1 transition-colors">
-                            {exp.problem || "Untitled Experiment"}
-                        </div>
-                        <div className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
-                            <span className="truncate max-w-[120px]">{exp.industry}</span>
-                            <span className="w-1 h-1 rounded-full bg-border"></span>
-                            <span className="truncate">{exp.hardware}</span>
+                            </div>
                         </div>
                     </button>
                 ))}
