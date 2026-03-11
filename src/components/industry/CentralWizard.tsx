@@ -67,7 +67,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         onClick={() => onSelect('industry', ind.label)}
                                         className={`p-8 bg-card border rounded-2xl transition-all group flex flex-col items-center gap-4 shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300 w-48 ${isActive
                                             ? 'border-foreground ring-1 ring-foreground/20 shadow-[0_0_20px_rgba(0,0,0,0.15)] bg-secondary/80'
-                                            : 'border-border hover:border-foreground/50 hover:bg-foreground/5'
+                                            : 'border-border hover:border-ring hover:bg-card hover:shadow-md'
                                             }`}
                                     >
                                         <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-inner ${isActive
@@ -98,7 +98,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                     <button
                                         key={prob}
                                         onClick={() => onSelect('problem', prob)}
-                                        className="p-4 bg-card border border-border rounded-xl hover:border-foreground/50 hover:bg-foreground/5 transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md"
+                                        className="p-4 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors shrink-0">
                                             <Zap size={16} />
@@ -132,7 +132,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                             onClick={() => onSelect('service', svc)}
                                             className={`p-6 bg-card border rounded-xl transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md ${isActive
                                                 ? 'border-foreground bg-foreground/5'
-                                                : 'border-border hover:border-foreground/50 hover:bg-foreground/5'
+                                                : 'border-border hover:border-ring hover:bg-card'
                                                 }`}
                                         >
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${isActive
@@ -176,7 +176,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                             <button
                                                 key={hw.id}
                                                 onClick={() => onSelect('hardware', hw.name)}
-                                                className="p-6 bg-card border border-border rounded-xl hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5 transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
+                                                className="p-6 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
                                             >
                                                 <div className="w-full flex justify-between items-center mb-1">
                                                     <span className="text-xl font-semibold tracking-tight">{hw.name}</span>
@@ -209,7 +209,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         <button
                                             key={hw.id}
                                             onClick={() => onSelect('hardware', hw.name)}
-                                            className="p-6 bg-card border border-border rounded-xl hover:border-[#2E65BF]/50 hover:bg-[#2E65BF]/5 transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
+                                            className="p-6 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
                                         >
                                             <div className="w-full flex justify-between items-center mb-1">
                                                 <span className="text-xl font-semibold tracking-tight">{hw.name}</span>
