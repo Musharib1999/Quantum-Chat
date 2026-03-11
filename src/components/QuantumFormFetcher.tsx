@@ -251,7 +251,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
             <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center">
                 <Settings className="text-muted-foreground animate-spin" size={20} />
             </div>
-            <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Loading input data form</p>
+            <p className="text-muted-foreground text-xs">Loading input data form</p>
         </div>
     );
 
