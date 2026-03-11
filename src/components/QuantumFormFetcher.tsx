@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Settings, Play, Info, Layers, ChevronDown, Building } from 'lucide-react';
+import { Settings, Play, Info, Layers, ChevronDown, Building, X } from 'lucide-react';
 
 interface IField {
     label: string;
@@ -165,7 +165,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                                                 }}
                                                 className="hover:bg-white/20 rounded-full p-0.5 transition-colors cursor-pointer"
                                             >
-                                                <Play size={8} className="rotate-45" />
+                                                <X size={10} />
                                             </span>
                                         </span>
                                     );
