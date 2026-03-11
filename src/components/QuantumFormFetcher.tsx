@@ -39,6 +39,14 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expandedSectors, setExpandedSectors] = useState<Record<string, boolean>>({});
+    const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+
+    // Close dropdowns on click outside
+    useEffect(() => {
+        const handleClickOutside = () => setOpenDropdowns({});
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         const fetchForm = async () => {
@@ -133,36 +141,76 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                         </div>
                     </div>
                 ) : effectiveType === 'multi-select' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        {field.options?.map((opt: any) => {
-                            const label = typeof opt === 'string' ? opt : opt.label;
-                            const value = typeof opt === 'string' ? opt : opt.value;
-                            const isSelected = (formData[field.key] || []).includes(value);
-
-                            return (
-                                <div key={value} className="flex flex-col gap-2">
-                                    <div
-                                        className={`flex items-center justify-center p-2.5 rounded-xl border transition-all duration-300 group cursor-pointer ${isSelected
-                                            ? 'bg-foreground/5 border-foreground shadow-[0_0_15px_rgba(0,0,0,0.05)]'
-                                            : 'bg-secondary/30 border-border hover:border-foreground/50'
-                                            }`}
-                                        onClick={() => {
-                                            const current = formData[field.key] || [];
-                                            const next = isSelected
-                                                ? current.filter((v: any) => v !== value)
-                                                : [...current, value];
-                                            handleInputChange(field.key, next);
-                                        }}
-                                    >
-                                        <span className={`text-xs font-medium tracking-tight ${isSelected ? 'text-foreground' : 'text-foreground/80'}`}>
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            type="button"
+                            onClick={() => setOpenDropdowns(prev => ({ ...prev, [field.key]: !prev[field.key] }))}
+                            className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-left transition-all duration-300 min-h-[50px] flex flex-wrap gap-2 items-center group ${openDropdowns[field.key] ? 'border-ring ring-1 ring-ring/20' : 'border-border hover:border-ring/50'}`}
+                        >
+                            {(formData[field.key] || []).length > 0 ? (
+                                (formData[field.key] || []).map((val: string) => {
+                                    const opt = field.options?.find(o => (typeof o === 'string' ? o : o.value) === val);
+                                    const label = opt ? (typeof opt === 'string' ? opt : opt.label) : val;
+                                    return (
+                                        <span
+                                            key={val}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#3066bb] text-white text-[11px] font-bold shadow-sm animate-in zoom-in-95"
+                                        >
                                             {label}
+                                            <span
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const next = (formData[field.key] || []).filter((v: any) => v !== val);
+                                                    handleInputChange(field.key, next);
+                                                }}
+                                                className="hover:bg-white/20 rounded-full p-0.5 transition-colors cursor-pointer"
+                                            >
+                                                <Play size={8} className="rotate-45" />
+                                            </span>
                                         </span>
-                                    </div>
+                                    );
+                                })
+                            ) : (
+                                <span className="text-muted-foreground/50 text-sm">Select options...</span>
+                            )}
+                            <div className="ml-auto text-muted-foreground group-hover:text-foreground transition-colors">
+                                <ChevronDown size={14} className={`transition-transform duration-300 ${openDropdowns[field.key] ? 'rotate-180' : ''}`} />
+                            </div>
+                        </button>
+
+                        {openDropdowns[field.key] && (
+                            <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-card/95 backdrop-blur-2xl border border-border shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                                <div className="max-h-60 overflow-y-auto p-2 space-y-1 scrollbar-hide">
+                                    {field.options?.map((opt: any) => {
+                                        const label = typeof opt === 'string' ? opt : opt.label;
+                                        const value = typeof opt === 'string' ? opt : opt.value;
+                                        const isSelected = (formData[field.key] || []).includes(value);
+
+                                        return (
+                                            <div
+                                                key={value}
+                                                onClick={() => {
+                                                    const current = formData[field.key] || [];
+                                                    const next = isSelected
+                                                        ? current.filter((v: any) => v !== value)
+                                                        : [...current, value];
+                                                    handleInputChange(field.key, next);
+                                                }}
+                                                className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                            >
+                                                <span className="text-xs font-medium">{label}</span>
+                                                {isSelected && (
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(48,102,187,0.5)]" />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    {(!field.options || field.options.length === 0) && (
+                                        <p className="text-[10px] text-muted-foreground italic p-4 text-center">No options available</p>
+                                    )}
                                 </div>
-                            );
-                        })}
-                        {(!field.options || field.options.length === 0) && (
-                            <p className="text-[10px] text-muted-foreground italic p-2">No options available</p>
+                            </div>
                         )}
                     </div>
                 ) : effectiveType === 'range' ? (
