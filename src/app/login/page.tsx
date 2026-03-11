@@ -96,9 +96,6 @@ function LoginForm() {
                         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-secondary/30 border border-white/10 mb-2 shadow-inner overflow-hidden">
                             <img src="/qg-icon.png" alt="Quantum Guru" className="w-14 h-14 object-contain" />
                         </div>
-                        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'rgb(48, 102, 187)' }}>
-                            {mode === 'login' ? 'Login' : 'Register'}
-                        </h1>
                         <p className="text-sm text-muted-foreground">
                             {mode === 'login' ? 'Enter your credentials to access the workspace' : 'Request approval from administrator'}
                         </p>
