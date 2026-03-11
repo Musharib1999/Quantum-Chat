@@ -179,8 +179,8 @@ export default function IndustryPage() {
                     flowStage === 'CHAT' ? (
                         <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
                             {/* Industry Section */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-medium text-foreground px-2 text-left">Industry</h3>
+                            <div className="space-y-4 px-2">
+                                <h3 className="text-sm font-medium text-foreground px-2 text-left">Industry</h3>
                                 <div className="flex flex-col gap-2">
                                     {metadata.industries?.map((ind: any) => {
                                         const isSelected = sessionConfig.industry === ind.label;
@@ -188,13 +188,13 @@ export default function IndustryPage() {
                                             <button
                                                 key={ind.label}
                                                 onClick={() => setSessionConfig(prev => ({ ...prev, industry: ind.label, problem: null, service: null, hardware: null, formData: null }))}
-                                                className={`w-full text-left p-3 rounded-xl transition-all group border ${isSelected ? 'bg-foreground/5 border-foreground shadow-[0_0_10px_rgba(0,0,0,0.05)]' : 'hover:bg-secondary/50 border-transparent'}`}
+                                                className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
                                                         {getIndustryIcon(ind.label)}
                                                     </div>
-                                                    <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{ind.label}</span>
+                                                    <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{ind.label}</span>
                                                 </div>
                                             </button>
                                         );
@@ -203,8 +203,8 @@ export default function IndustryPage() {
                             </div>
 
                             {/* Problem Section */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-medium text-foreground px-2 text-left">Problem</h3>
+                            <div className="space-y-4 px-2">
+                                <h3 className="text-sm font-medium text-foreground px-2 text-left">Problem</h3>
                                 <div className="flex flex-col gap-2">
                                     {/* Dynamic Problems based on Industry selection */}
                                     {(() => {
@@ -222,13 +222,13 @@ export default function IndustryPage() {
                                                         <button
                                                             key={prob}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: null }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all group border ${isSelected ? 'bg-foreground/5 border-foreground shadow-[0_0_10px_rgba(0,0,0,0.05)]' : 'hover:bg-secondary/50 border-transparent'}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
                                                                     <Zap size={14} />
                                                                 </div>
-                                                                <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{prob}</span>
+                                                                <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{prob}</span>
                                                             </div>
                                                         </button>
                                                     );
@@ -240,8 +240,8 @@ export default function IndustryPage() {
                             </div>
 
                             {/* Service Section */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-medium text-foreground px-2 text-left">Service</h3>
+                            <div className="space-y-4 px-2">
+                                <h3 className="text-sm font-medium text-foreground px-2 text-left">Service</h3>
                                 <div className="flex flex-col gap-2">
                                     {/* Dynamic Services based on Problem selection */}
                                     {(() => {
@@ -259,13 +259,13 @@ export default function IndustryPage() {
                                                         <button
                                                             key={svc}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, service: svc, hardware: null, formData: null }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all group border ${isSelected ? 'bg-foreground/5 border-foreground shadow-[0_0_10px_rgba(0,0,0,0.05)]' : 'hover:bg-secondary/50 border-transparent'}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
                                                                     <Atom size={14} />
                                                                 </div>
-                                                                <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{svc}</span>
+                                                                <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{svc}</span>
                                                             </div>
                                                         </button>
                                                     );
@@ -277,8 +277,8 @@ export default function IndustryPage() {
                             </div>
 
                             {/* Hardware Section */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-medium text-foreground px-2 text-left">Hardware</h3>
+                            <div className="space-y-4 px-2">
+                                <h3 className="text-sm font-medium text-foreground px-2 text-left">Hardware</h3>
                                 <div className="flex flex-col gap-2">
                                     {(() => {
                                         const mappedHwNames = (sessionConfig.industry && sessionConfig.problem && sessionConfig.service)
@@ -309,14 +309,14 @@ export default function IndustryPage() {
                                                         <button
                                                             key={hw.id}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, hardware: hw.name }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all group border ${isSelected ? 'bg-foreground/5 border-foreground shadow-[0_0_10px_rgba(0,0,0,0.05)]' : 'hover:bg-secondary/50 border-transparent'}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
                                                                         <Cpu size={14} />
                                                                     </div>
-                                                                    <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{hw.name}</span>
+                                                                    <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{hw.name}</span>
                                                                 </div>
                                                                 <span className={`text-[9px] font-bold uppercase ${isSelected ? 'text-foreground' : 'text-green-500'}`}>Live</span>
                                                             </div>
