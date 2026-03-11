@@ -161,7 +161,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                         {loadingHw ? (
                             <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
                                 <Loader2 className="animate-spin w-8 h-8 mb-4" />
-                                <p className="text-sm font-medium">Booting Simulators...</p>
+                                <p className="text-sm font-medium">Booting Quantum Simulator</p>
                             </div>
                         ) : (
                             <div className="flex flex-wrap justify-center gap-4 max-w-3xl mx-auto">
