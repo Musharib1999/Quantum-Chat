@@ -52,7 +52,7 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => onReRun(display)}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-md hover:bg-primary/90 transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#3066bb] text-white text-sm font-bold shadow-md hover:bg-[#3066bb]/90 transition-colors"
                             >
                                 <Play size={16} fill="currentColor" /> Re-Run
                             </button>
