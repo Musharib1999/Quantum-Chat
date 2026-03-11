@@ -339,7 +339,7 @@ export default function IndustryPage() {
                                     </h3>
                                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                                 </div>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                <p className="text-xs text-muted-foreground font-medium leading-relaxed">
                                     Feed and analyze your collateral like scientific papers, articles and latest news in the quantum domain
                                 </p>
                             </a>
