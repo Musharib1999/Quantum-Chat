@@ -334,7 +334,7 @@ export default function IndustryPage() {
                         <div className="px-2 py-3 border-b border-border shrink-0">
                             <a href="/article-learn" className="block w-full px-3 py-3 rounded-xl bg-transparent border border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md transition-all duration-200 group">
                                 <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-lg font-medium text-foreground tracking-wider flex items-center gap-2">
+                                    <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
                                         Analyze Quantum Information
                                     </h3>
                                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
