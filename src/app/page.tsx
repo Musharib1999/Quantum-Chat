@@ -117,7 +117,7 @@ export default function LandingPage() {
 
           {/* Card 2: Quantum Assistant */}
           <FeatureCard
-            href={isAuthenticated ? "/quantum-assistant" : "/login?redirect=/quantum-assistant"}
+            href="/quantum-assistant"
             icon={<Bot size={32} />}
             title="Quantum Guru LLM"
             description="A 400M-parameter architecture optimized via large-scale domain-adaptive fine-tuning on 100M curated quantum-computing tokens"
@@ -129,7 +129,7 @@ export default function LandingPage() {
 
           {/* Card 3: Market Intelligence */}
           <FeatureCard
-            href={isAuthenticated ? "/market" : "/login?redirect=/market"}
+            href="/market"
             icon={<TrendingUp size={32} />}
             title="Quantum Stocks and Market Intelligence"
             description="Current market analysis of your quantum asset"
