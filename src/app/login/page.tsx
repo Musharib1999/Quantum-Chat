@@ -100,7 +100,7 @@ function LoginForm() {
                             {mode === 'login' ? 'Login' : 'Register'}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {mode === 'login' ? 'Enter your credentials to access the workspace' : 'Register to request approval from an administrator'}
+                            {mode === 'login' ? 'Enter your credentials to access the workspace' : 'Request approval from administrator'}
                         </p>
                     </div>
 
