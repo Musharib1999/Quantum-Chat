@@ -91,17 +91,19 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             </div>
 
             <div className="p-2 space-y-1">
-                {/* Module Highlight CTA */}
-                <button
-                    onClick={handleTryPortfolio}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all group shadow-lg shadow-primary/20"
-                >
-                    <div className="flex items-center gap-2.5">
-                        <Layout size={16} />
-                        <span className="text-sm font-semibold">Portfolio Optimization</span>
-                    </div>
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </button>
+                {/* Module Highlight CTA - hidden when already in industry module */}
+                {!pathname?.startsWith('/industry') && (
+                    <button
+                        onClick={handleTryPortfolio}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all group shadow-lg shadow-primary/20"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <Layout size={16} />
+                            <span className="text-sm font-semibold">Portfolio Optimization</span>
+                        </div>
+                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    </button>
+                )}
 
                 <div className="pt-2">
                     {isAuthenticated ? (
