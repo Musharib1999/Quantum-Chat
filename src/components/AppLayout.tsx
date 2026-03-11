@@ -67,7 +67,7 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
 
                 {/* Left Sidebar */}
                 <aside className={`
-                z-40 bg-card/80 backdrop-blur-2xl border-r border-border flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+                z-40 bg-card md:bg-card/80 backdrop-blur-2xl border-r border-border flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
                 ${isMobile ? 'fixed inset-y-0 left-0 h-full shadow-2xl' : 'relative h-full'}
                 ${isSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 -translate-x-10 opacity-0 overflow-hidden'}
             `}>
@@ -122,7 +122,7 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                         )}
 
                         <aside className={`
-                        z-40 bg-card/80 backdrop-blur-2xl border-l border-border flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+                        z-40 bg-card md:bg-card/80 backdrop-blur-2xl border-l border-border flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
                         ${isMobile ? 'fixed inset-y-0 right-0 h-full shadow-2xl' : 'relative h-full'}
                         ${isRightSidebarOpen ? 'w-80 translate-x-0 opacity-100' : 'w-0 translate-x-10 opacity-0 overflow-hidden'}
                     `}>
