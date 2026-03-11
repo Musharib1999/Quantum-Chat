@@ -180,7 +180,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                             >
                                                 <div className="w-full flex justify-between items-center mb-1">
                                                     <span className="text-xl font-light tracking-tight">{hw.name}</span>
-                                                <div className="text-sm font-medium text-green-500 uppercase tracking-wider">Online</div>
+                                                <div className="text-sm font-medium text-green-500">Online</div>
                                                 </div>
                                                 <span className="text-sm text-muted-foreground font-mono">{hw.qubits} Qubits</span>
                                                 <p className="text-sm text-foreground/80 mt-1 leading-relaxed">{hw.description}</p>
@@ -213,7 +213,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         >
                                             <div className="w-full flex justify-between items-center mb-1">
                                                 <span className="text-xl font-light tracking-tight">{hw.name}</span>
-                                                <div className="text-sm font-semibold text-green-500 uppercase tracking-wider">Online</div>
+                                                <div className="text-sm font-semibold text-green-500">Online</div>
                                             </div>
                                             <span className="text-sm text-muted-foreground font-mono">{hw.qubits} Qubits</span>
                                             <p className="text-sm text-foreground/80 mt-1 leading-relaxed">{hw.description}</p>

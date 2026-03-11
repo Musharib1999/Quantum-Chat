@@ -51,7 +51,7 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
                             <span className="text-[12px] font-medium text-muted-foreground">
                                 {new Date(exp.timestamp).toLocaleDateString()}
                             </span>
-                            <span className={`text-[12px] font-medium tracking-wide border-t border-border/20 uppercase ${exp.success !== false ? 'text-green-500' : 'text-red-500'}`}>
+                            <span className={`text-[12px] font-medium tracking-wide border-t border-border/20 ${exp.success !== false ? 'text-green-500' : 'text-red-500'}`}>
                                 {exp.success !== false ? 'Success' : 'Failed'}
                             </span>
                         </div>

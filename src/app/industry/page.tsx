@@ -314,7 +314,7 @@ export default function IndustryPage() {
                                                                     </div>
                                                                     <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{hw.name}</span>
                                                                 </div>
-                                                                <span className="text-[9px] font-semibold uppercase text-green-500">Live</span>
+                                                                <span className="text-[9px] font-semibold text-green-500">Live</span>
                                                             </div>
                                                         </button>
                                                     );
