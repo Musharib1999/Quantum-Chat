@@ -540,7 +540,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                 <div className="flex items-center gap-3">
                                                     {/* Step circle */}
                                                     <div
-                                                        className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border text-xs font-bold transition-all
+                                                        className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border text-xs font-semibold transition-all
                                                         ${isDone ? 'text-white'
                                                                 : isVerifying ? 'border-blue-500 text-blue-500'
                                                                     : isActive ? 'border-primary text-primary'
@@ -638,7 +638,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                         <button
                             onClick={() => sendMessage()}
                             disabled={!inputValue.trim() || isTyping}
-                            className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-bold"
+                            className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-semibold"
                             style={{ backgroundColor: 'rgb(48, 102, 187)' }}
                         >
                             {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}

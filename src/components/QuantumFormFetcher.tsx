@@ -154,7 +154,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                                     return (
                                         <span
                                             key={val}
-                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#3066bb] text-white text-[11px] font-bold shadow-sm animate-in zoom-in-95"
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#3066bb] text-white text-[11px] font-semibold shadow-sm animate-in zoom-in-95"
                                         >
                                             {label}
                                             <span

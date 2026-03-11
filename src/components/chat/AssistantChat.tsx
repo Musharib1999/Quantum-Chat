@@ -91,7 +91,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                             <div className="mx-auto mb-8 group-hover:scale-105 transition-transform duration-500 flex justify-center">
                                 <img src="/qg-icon.png" alt="Quantum Guru" className="h-[90px] w-auto object-contain" />
                             </div>
-                            <h2 className="text-3xl font-bold tracking-tight mb-4 text-foreground hidden">
+                            <h2 className="text-3xl font-semibold tracking-tight mb-4 text-foreground hidden">
                                 Quantum Assistant
                             </h2>
                             <p className="text-muted-foreground text-lg font-light max-w-2xl mx-auto leading-relaxed">
@@ -114,7 +114,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                         <button
                             onClick={() => sendMessage()}
                             disabled={!inputValue.trim() || isTyping}
-                            className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-bold flex items-center justify-center"
+                            className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-semibold flex items-center justify-center"
                             style={{ backgroundColor: 'rgb(48, 102, 187)' }}
                         >
                             {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}

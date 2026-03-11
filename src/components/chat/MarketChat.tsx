@@ -215,7 +215,7 @@ export default function MarketChat({ contextConfig, placeholder, onAnalysisTrigg
                                 }
                             }}
                             disabled={!inputValue.trim() || isTyping}
-                            className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-bold"
+                            className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-semibold"
                             style={{ backgroundColor: 'rgb(48, 102, 187)' }}
                         >
                             {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}

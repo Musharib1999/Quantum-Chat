@@ -11,8 +11,7 @@ import QuantumFormFetcher from '@/components/QuantumFormFetcher';
 import { getExperiments } from '@/app/actions/experiment';
 import axios from 'axios';
 import { ArrowLeft, CheckCircle2, BookOpen, ChevronRight, Layers, Zap, Atom, Cpu, PlaneTakeoff, Shield, TrendingUp, Briefcase } from 'lucide-react';
-
-import IndustryLogin from '@/components/industry/IndustryLogin';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 export default function IndustryPage() {
@@ -25,6 +24,7 @@ export default function IndustryPage() {
     };
     // Auth Context
     const { isAuthenticated, user, login, isInitializing } = useAuth();
+    const router = useRouter();
 
     // Flow State: 'wip' means using wizard, 'chat' means using chat
     const [flowStage, setFlowStage] = useState<'SELECTION' | 'CHAT'>('SELECTION');
@@ -76,16 +76,23 @@ export default function IndustryPage() {
     }, [user?.email, isInitializing]);
 
 
-    const handleLogin = (userData: { email: string; firstName?: string; lastName?: string; phone?: string; plan?: 'Guest' | 'Pro' | 'Enterprise'; role?: string }) => {
-        login(userData);
-    };
 
-    if (isInitializing) {
-        return <div className="min-h-screen bg-background flex items-center justify-center" />;
-    }
-
-    if (!isAuthenticated) {
-        return <IndustryLogin onLogin={handleLogin} />;
+    if (isInitializing || !isAuthenticated) {
+        if (!isInitializing && !isAuthenticated) {
+            router.push('/login?redirect=/industry');
+        }
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center font-semibold">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-secondary/30 border border-white/10 flex items-center justify-center animate-pulse">
+                        <Atom size={24} className="text-primary animate-spin-slow" />
+                    </div>
+                    <p className="text-sm text-muted-foreground tracking-widest uppercase animate-pulse">
+                        {isInitializing ? 'Initializing Session' : 'Redirecting to Login'}
+                    </p>
+                </div>
+            </div>
+        );
     }
 
     const handleWizardSelect = (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => {
@@ -318,7 +325,7 @@ export default function IndustryPage() {
                                                                     </div>
                                                                     <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{hw.name}</span>
                                                                 </div>
-                                                                <span className="text-[9px] font-bold uppercase text-green-500">Live</span>
+                                                                <span className="text-[9px] font-semibold uppercase text-green-500">Live</span>
                                                             </div>
                                                         </button>
                                                     );

@@ -53,14 +53,14 @@ export default function LandingPage() {
               {isAuthenticated ? (
                 <button
                   onClick={() => logout()}
-                  className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white dark:bg-transparent dark:border-[#3066bb] dark:text-[#5c8deb] dark:hover:bg-[#3066bb] dark:hover:text-white font-bold rounded transition-all shadow-sm text-sm"
+                  className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white dark:bg-transparent dark:border-[#3066bb] dark:text-[#5c8deb] dark:hover:bg-[#3066bb] dark:hover:text-white font-semibold rounded transition-all shadow-sm text-sm"
                 >
                   Logout
                 </button>
               ) : (
                 <Link
                   href="/login"
-                  className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white dark:bg-transparent dark:border-[#3066bb] dark:text-[#5c8deb] dark:hover:bg-[#3066bb] dark:hover:text-white font-bold rounded transition-all shadow-sm text-sm"
+                  className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white dark:bg-transparent dark:border-[#3066bb] dark:text-[#5c8deb] dark:hover:bg-[#3066bb] dark:hover:text-white font-semibold rounded transition-all shadow-sm text-sm"
                 >
                   Login
                 </Link>
@@ -85,7 +85,7 @@ export default function LandingPage() {
         <div className="text-center max-w-3xl mx-auto mb-20 animate-fade-in-up">
           {/* System Status Removed */}
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-semibold tracking-tight mb-6 leading-tight">
             The Future of <br />
             <span className="text-[rgb(48,102,187)]">
               Quantum Analysis
@@ -223,7 +223,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
       />
 
       {/* Lock/Unlock Status Badge */}
-      <div className={`absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide backdrop-blur-md border shadow-sm transition-all
+      <div className={`absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wide backdrop-blur-md border shadow-sm transition-all
         ${isLocked
           ? (isDarkMode ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-red-50 text-red-600 border-red-100')
           : (isDarkMode ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border-emerald-100')
@@ -238,7 +238,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
           {icon}
         </div>
 
-        <h3 className="text-2xl font-bold mb-3">{title}</h3>
+        <h3 className="text-2xl font-semibold mb-3">{title}</h3>
         <p className={`text-sm leading-relaxed mb-8 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
           {description}
         </p>
