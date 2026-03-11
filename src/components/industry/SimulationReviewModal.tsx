@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { X, Play, Building, Zap, Cpu, Clock, Layers, Atom } from 'lucide-react';
+import { X, Play } from 'lucide-react';
 
 interface SimulationReviewModalProps {
     isOpen: boolean;
@@ -29,8 +29,7 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                 {/* Header */}
                 <div className="p-6 md:p-8 border-b border-border flex items-center justify-between bg-secondary/30">
                     <div className="space-y-1">
-                        <h2 className="text-2xl font-semibold tracking-tight text-foreground">Simulation Review</h2>
-                        <p className="text-sm text-muted-foreground italic">Verify your parameters before allocating quantum resources.</p>
+                        <p className="text-base font-medium text-gray-900 dark:text-foreground">Verify your parameters before allocating quantum resources.</p>
                     </div>
                     <button 
                         onClick={onClose}
@@ -43,25 +42,19 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar max-h-[70vh]">
                     
-                    {/* 1. Problem Definition */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-primary font-medium uppercase tracking-widest text-[10px]">
-                            <Zap size={12} />
+                        <div className="text-primary font-medium uppercase tracking-widest text-[10px]">
                             Problem Definition
                         </div>
-                        <div className="bg-secondary/40 border border-border rounded-2xl p-4 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-medium text-foreground">{config.problem}</h3>
-                                <p className="text-xs text-muted-foreground mt-0.5">{config.industry} &bull; {config.service}</p>
-                            </div>
-                            <Building className="text-muted-foreground opacity-20" size={32} />
+                        <div className="bg-secondary/40 border border-border rounded-2xl p-4">
+                            <h3 className="text-lg font-medium text-foreground">{config.problem}</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">{config.industry} &bull; {config.service}</p>
                         </div>
                     </div>
 
                     {/* 2. Input Details */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-primary font-medium uppercase tracking-widest text-[10px]">
-                            <Layers size={12} />
+                        <div className="text-primary font-medium uppercase tracking-widest text-[10px]">
                             Input Details
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -76,42 +69,28 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                         </div>
                     </div>
 
-                    {/* 3. Resource Allocation */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-primary font-medium uppercase tracking-widest text-[10px]">
-                                <Cpu size={12} />
-                                Hardware
-                            </div>
-                            <div className="p-4 rounded-2xl bg-secondary/40 border border-border">
-                                <span className="text-sm font-medium text-foreground">{config.hardware}</span>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                    <span className="text-[10px] text-green-500 font-bold uppercase">Online</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-primary font-medium uppercase tracking-widest text-[10px]">
-                                <Atom size={12} />
-                                Qubits
-                            </div>
-                            <div className="p-4 rounded-2xl bg-secondary/40 border border-border">
-                                <span className="text-sm font-medium text-foreground">{qubits} Active Qubits</span>
-                                <p className="text-[10px] text-muted-foreground mt-2">Resource allocation confirmed.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 4. ETA & Status */}
+                    {/* 3. Resource & Queue Metrics */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-primary font-medium uppercase tracking-widest text-[10px]">
-                            <Clock size={12} />
-                            ETA (Estimated Time)
+                        <div className="text-primary font-medium uppercase tracking-widest text-[10px]">
+                            Resource Allocation & Status
                         </div>
-                        <div className="p-4 rounded-2xl bg-secondary/40 border border-border flex items-center justify-between">
-                            <span className="text-sm font-medium text-foreground">~45 - 90 Seconds</span>
-                            <span className="text-[10px] text-muted-foreground">Queue Position: 1</span>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-secondary/40 border border-border rounded-2xl p-4">
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Hardware</span>
+                                <span className="text-xs font-semibold text-foreground truncate">{config.hardware}</span>
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Qubits</span>
+                                <span className="text-xs font-semibold text-foreground">{qubits} Active</span>
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">ETA</span>
+                                <span className="text-xs font-semibold text-foreground">~45-90s</span>
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Queue</span>
+                                <span className="text-xs font-semibold text-foreground">Queue : 1</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -122,7 +101,7 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                         onClick={onExecute}
                         className="w-full bg-primary text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-xl shadow-primary/20"
                     >
-                        <Play size={18} fill="currentColor" /> Execute Quantum Pipeline
+                        Execute Quantum Pipeline
                     </button>
                 </div>
             </div>
