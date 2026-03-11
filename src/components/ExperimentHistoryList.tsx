@@ -38,13 +38,13 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
     }
 
     return (
-        <div className="flex flex-col space-y-3 p-4 h-full overflow-y-auto scrollbar-hide">
-            <h3 className="text-sm font-medium text-foreground mb-4 px-1">Recent Experiments</h3>
+        <div className="flex flex-col space-y-1 px-2 py-3 h-full overflow-y-auto scrollbar-hide">
+            <h3 className="text-sm font-medium text-foreground mb-2 px-3">Recent Experiments</h3>
             {experiments.map((exp) => (
                 <button
                     key={exp._id}
                     onClick={() => onSelectExperiment(exp)}
-                    className="group w-full text-left p-3 rounded-xl bg-transparent border border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md transition-all duration-200"
+                    className="group w-full text-left px-3 py-2 rounded-xl bg-transparent border border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md transition-all duration-200"
                 >
                     <div className="flex justify-between items-start mb-2">
                         <span className="text-[12px] font-medium text-muted-foreground">
