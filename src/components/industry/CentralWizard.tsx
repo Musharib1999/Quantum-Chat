@@ -57,26 +57,26 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
             case 'industry':
                 return (
                     <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-light text-foreground tracking-tight">Select Industry</h2>
-                        <div className="flex flex-wrap justify-center gap-6 max-w-4xl mx-auto">
+                        <h2 className="text-2xl md:text-3xl font-light text-foreground tracking-tight">Select Industry</h2>
+                        <div className="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-4 md:gap-6 max-w-4xl mx-auto">
                             {metadata.industries?.map((ind: any) => {
                                 const isActive = config.industry === ind.label;
                                 return (
                                     <button
                                         key={ind.label}
                                         onClick={() => onSelect('industry', ind.label)}
-                                        className={`p-8 bg-card border rounded-2xl transition-all group flex flex-col items-center gap-4 shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300 w-48 ${isActive
+                                        className={`p-5 md:p-8 bg-card border rounded-2xl transition-all group flex flex-col items-center gap-3 md:gap-4 shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300 md:w-48 active:scale-[0.98] ${isActive
                                             ? 'border-foreground ring-1 ring-foreground/20 shadow-[0_0_20px_rgba(0,0,0,0.15)] bg-secondary/80'
                                             : 'border-border hover:border-ring hover:bg-card hover:shadow-md'
                                             }`}
                                     >
-                                        <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-inner ${isActive
+                                        <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-inner ${isActive
                                             ? 'bg-foreground/10 text-foreground'
                                             : 'bg-secondary text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10'
                                             }`}>
                                             {getIndustryIcon(ind.label)}
                                         </div>
-                                        <span className={`font-semibold text-xl tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground/90 group-hover:text-foreground'
+                                        <span className={`font-semibold text-base md:text-xl tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground/90 group-hover:text-foreground'
                                             }`}>{ind.label}</span>
                                     </button>
                                 );
@@ -91,19 +91,19 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
 
                 return (
                     <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-light text-foreground tracking-tight">Select Problem</h2>
-                        <div className="flex flex-wrap justify-center gap-3 max-w-xl mx-auto">
+                        <h2 className="text-2xl md:text-3xl font-light text-foreground tracking-tight">Select Problem</h2>
+                        <div className="flex flex-col md:flex-wrap md:flex-row justify-center gap-3 max-w-xl mx-auto w-full">
                             {problems.length > 0 ? (
                                 problems.map((prob: string) => (
                                     <button
                                         key={prob}
                                         onClick={() => onSelect('problem', prob)}
-                                        className="p-4 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md"
+                                        className="w-full p-3 md:p-4 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md active:scale-[0.98]"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors shrink-0">
                                             <Zap size={16} />
                                         </div>
-                                        <span className="text-xl font-semibold tracking-tight group-hover:text-foreground transition-colors">{prob}</span>
+                                        <span className="text-base md:text-xl font-semibold tracking-tight group-hover:text-foreground transition-colors">{prob}</span>
                                     </button>
                                 ))
                             ) : (
@@ -121,8 +121,8 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
 
                 return (
                     <div className="space-y-6 text-center">
-                        <h2 className="text-3xl font-light text-foreground tracking-tight">Select Service</h2>
-                        <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto">
+                        <h2 className="text-2xl md:text-3xl font-light text-foreground tracking-tight">Select Service</h2>
+                        <div className="flex flex-col md:flex-wrap md:flex-row justify-center gap-3 md:gap-4 max-w-2xl mx-auto w-full">
                             {availableServices.length > 0 ? (
                                 availableServices.map((svc: string) => {
                                     const isActive = config.service === svc;
@@ -130,7 +130,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         <button
                                             key={svc}
                                             onClick={() => onSelect('service', svc)}
-                                            className={`p-6 bg-card border rounded-xl transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md ${isActive
+                                            className={`w-full p-4 md:p-6 bg-card border rounded-xl transition-all group flex items-center gap-4 text-left shadow-sm hover:shadow-md active:scale-[0.98] ${isActive
                                                 ? 'border-foreground bg-foreground/5'
                                                 : 'border-border hover:border-ring hover:bg-card'
                                                 }`}
@@ -141,7 +141,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                                 }`}>
                                                 {getServiceIcon(svc)}
                                             </div>
-                                            <span className={`text-xl font-semibold tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground'}`}>{svc}</span>
+                                            <span className={`text-base md:text-xl font-semibold tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground'}`}>{svc}</span>
                                         </button>
                                     );
                                 })
@@ -230,7 +230,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] w-full p-4">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] w-full p-3 md:p-4">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={step}

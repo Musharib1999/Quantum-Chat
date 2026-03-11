@@ -83,7 +83,7 @@ export default function MarketPage() {
                 <MarketNews onSelect={handleNewsSelect} />
             }
         >
-            <div className="flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 64px)' }}>
+            <div className="flex-1 w-full h-full overflow-hidden relative">
                 <MarketChat
                     contextConfig={{
                         stockUrl: selectedStock?.url,

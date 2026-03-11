@@ -79,28 +79,26 @@ export default function LandingPage() {
       </nav>
 
       {/* Main Content */}
-      <main className="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto">
+      <main className="relative z-10 pt-24 md:pt-32 pb-12 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto">
 
         {/* Hero Section */}
-        <div className="text-center max-w-3xl mx-auto mb-20 animate-fade-in-up">
-          {/* System Status Removed */}
+        <div className="text-center max-w-3xl mx-auto mb-10 md:mb-20 animate-fade-in-up">
 
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-tight mb-6 leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-semibold tracking-tight mb-4 md:mb-6 leading-tight">
             The Future of <br />
             <span className="text-[rgb(48,102,187)]">
               Quantum Analysis
             </span>
           </h1>
 
-          <p className={`text-lg md:text-xl mb-10 leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`text-base md:text-xl mb-6 md:mb-10 leading-relaxed px-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
             Select your specialized interface below to begin your journey of respective quantum domain
           </p>
-
 
         </div>
 
         {/* Cards Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8">
 
           {/* Card 1: Quantum Industry */}
           <FeatureCard
@@ -210,7 +208,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
     <Link
       href={href}
       onClick={(e) => href === '#' && e.preventDefault()}
-      className={`group relative p-8 rounded-3xl border transition-all duration-300 ${href === '#' ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1'} overflow-hidden flex flex-col justify-between h-full
+      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-300 ${href === '#' ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1 active:scale-[0.99]'} overflow-hidden flex flex-col justify-between h-full min-h-[220px] md:min-h-0
       ${isDarkMode
           ? `bg-slate-900/50 border-white/5 ${href !== '#' ? 'hover:bg-slate-900 ' + colors.border : ''}`
           : `bg-white border-slate-100 ${href !== '#' ? 'hover:border-slate-200' : ''}`

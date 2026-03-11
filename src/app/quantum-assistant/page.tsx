@@ -15,19 +15,26 @@ export default function QuantumAssistantPage() {
                 {/* Left: Branding */}
                 <div className="flex items-center pointer-events-auto">
                     <a href="https://www.quantumcomputers.guru/">
-                        <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
+                        <img src="/logo.png" alt="Quantum Guru" className="h-[36px] md:h-[62px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
                     </a>
                 </div>
 
                 {/* Right: Token Indicator & Burger Menu */}
                 <div className="pointer-events-auto flex items-start gap-4">
-                    {/* Re-using TokenUsageIndicator, but overriding its default border-b to look like a floating card */}
-                    <div className="bg-card/90 backdrop-blur-xl border border-border shadow-lg rounded-2xl overflow-hidden min-w-[200px]">
-                        {/* We use negative margins or just let its internal padding handle it */}
+                    {/* On mobile, collapse the token indicator to save space */}
+                    <div className="bg-card/90 backdrop-blur-xl border border-border shadow-lg rounded-2xl overflow-hidden hidden sm:block min-w-[200px]">
                         <div className="[&>div]:border-none [&>div]:px-3 [&>div]:py-2.5">
                             <TokenUsageIndicator onMenuClick={() => setIsProfileModalOpen(true)} />
                         </div>
                     </div>
+                    {/* Mobile: compact profile/menu button only */}
+                    <button
+                        onClick={() => setIsProfileModalOpen(true)}
+                        className="sm:hidden w-10 h-10 bg-card/90 backdrop-blur-md border border-border rounded-xl flex items-center justify-center text-foreground shadow-lg"
+                        title="Account"
+                    >
+                        <span className="text-sm font-medium">QG</span>
+                    </button>
                 </div>
             </header>
 
@@ -38,7 +45,7 @@ export default function QuantumAssistantPage() {
             />
 
             {/* Main Chat Area */}
-            <main className="flex-1 w-full h-full relative z-10 pt-20">
+            <main className="flex-1 w-full h-full relative z-10 pt-16 md:pt-20">
                 <AssistantChat />
             </main>
         </div>

@@ -44,9 +44,11 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
             <div className="h-screen w-full bg-background text-foreground flex overflow-hidden relative font-sans antialiased text-sm">
 
                 {/* Fixed Logo */}
-                <div className={`fixed top-2 left-4 md:top-4 md:left-8 z-[60] transition-opacity duration-300 ${!isSidebarOpen && isMobile ? 'opacity-0' : 'opacity-100'}`}>
+                <div className={`fixed z-[60] transition-all duration-300 pointer-events-auto
+                    ${isMobile && !isSidebarOpen ? 'top-4 left-[60px]' : 'top-2 left-4 md:top-4 md:left-8'}
+                `}>
                     <a href="https://www.quantumcomputers.guru/">
-                        <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
+                        <img src="/logo.png" alt="Quantum Guru" className="h-[36px] md:h-[62px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-sm" />
                     </a>
                 </div>
 
@@ -99,7 +101,7 @@ export default function AppLayout({ children, sidebarContent, rightSidebarConten
                     </button>
                 )}
 
-                <main className="flex-1 flex flex-col h-full relative min-w-0 w-full overflow-hidden z-10 bg-transparent">
+                <main className="flex-1 flex flex-col h-full relative min-w-0 w-full overflow-hidden z-10 bg-transparent pt-[72px] md:pt-0">
                     {children}
                 </main>
 
