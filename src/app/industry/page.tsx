@@ -191,7 +191,7 @@ export default function IndustryPage() {
                                                 className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                    <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-[#3066bb]' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
                                                         {getIndustryIcon(ind.label)}
                                                     </div>
                                                     <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{ind.label}</span>
@@ -225,7 +225,7 @@ export default function IndustryPage() {
                                                             className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-[#3066bb]' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
                                                                     <Zap size={14} />
                                                                 </div>
                                                                 <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{prob}</span>
@@ -262,7 +262,7 @@ export default function IndustryPage() {
                                                             className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-[#3066bb]' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
                                                                     <Atom size={14} />
                                                                 </div>
                                                                 <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{svc}</span>
@@ -313,7 +313,7 @@ export default function IndustryPage() {
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                    <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-foreground text-[#3066bb]' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
                                                                         <Cpu size={14} />
                                                                     </div>
                                                                     <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{hw.name}</span>
