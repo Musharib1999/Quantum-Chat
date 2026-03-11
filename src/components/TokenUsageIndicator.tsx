@@ -91,10 +91,10 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
             {/* Top row: token label + count + big circular burger button */}
             <div className="flex items-center justify-between gap-4 mb-2">
                 <div className="flex items-center gap-1.5 transition-colors">
-                    <span className="text-sm font-medium text-foreground leading-normal">
+                    <span className="text-[12px] font-medium text-foreground leading-normal">
                         QG Token
                     </span>
-                    <span className="text-sm font-medium tabular-nums ml-1 text-foreground leading-normal">
+                    <span className="text-[12px] font-medium tabular-nums ml-1 text-foreground leading-normal">
                         {tokensUsed.toLocaleString()} / {sessionTokenLimit.toLocaleString()}
                     </span>
                 </div>
@@ -136,10 +136,10 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
             {/* Sim Minutes Section */}
             <div className="flex items-center justify-between gap-4 mb-2">
                 <div className="flex items-center gap-1.5 transition-colors">
-                    <span className="text-sm font-medium text-foreground leading-normal">
+                    <span className="text-[12px] font-medium text-foreground leading-normal">
                         Simulator minutes
                     </span>
-                    <span className="text-sm font-medium tabular-nums ml-1 text-foreground leading-normal">
+                    <span className="text-[12px] font-medium tabular-nums ml-1 text-foreground leading-normal">
                         {simMinutesUsed.toFixed(1)} / {sessionSimLimit} min
                     </span>
                 </div>
