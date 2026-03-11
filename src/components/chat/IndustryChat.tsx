@@ -558,7 +558,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                         <div className="flex items-center gap-2">
                                                             {step.num === 2 && (
                                                                 <span
-                                                                    className="text-[10px] font-black text-white px-2 py-0.5 rounded-full border border-primary/20 shadow-sm"
+                                                                    className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full border border-primary/20 shadow-sm"
                                                                     style={{ backgroundColor: '#3066bb' }}
                                                                 >
                                                                     Batch {currentBatch}/{totalBatches}
