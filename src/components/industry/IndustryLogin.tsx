@@ -80,8 +80,8 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
 
                     {/* Header */}
                     <div className="text-center space-y-2">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/50 border border-white/10 mb-4 shadow-inner">
-                            <Atom size={32} className="text-primary animate-spin-slow" />
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-secondary/30 border border-white/10 mb-4 shadow-inner overflow-hidden">
+                            <img src="/qg-icon.png" alt="Quantum Guru" className="w-14 h-14 object-contain" />
                         </div>
                         <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'rgb(48, 102, 187)' }}>
                             Login
