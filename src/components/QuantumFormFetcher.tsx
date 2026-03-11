@@ -127,7 +127,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                         <select
                             value={formData[field.key] || ''}
                             onChange={(e) => handleInputChange(field.key, e.target.value)}
-                            className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-ring transition-all appearance-none"
+                            className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-gray-900 dark:text-foreground focus:outline-none focus:border-ring transition-all appearance-none"
                         >
                             <option value="" disabled>Select option</option>
                             {field.options?.map((opt: any) => {
@@ -229,7 +229,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                     <textarea
                         value={formData[field.key] || ''}
                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                        className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-all min-h-[100px]"
+                        className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-gray-900 dark:text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-all min-h-[100px]"
                         placeholder={field.description || "Enter details..."}
                     />
                 ) : (
@@ -237,7 +237,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                         type={field.type === 'number' ? 'number' : 'text'}
                         value={formData[field.key] || ''}
                         onChange={(e) => handleInputChange(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
-                        className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-all"
+                        className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-gray-900 dark:text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-all"
                         placeholder={field.description}
                     />
                 )}
