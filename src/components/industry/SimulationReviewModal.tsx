@@ -92,8 +92,8 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                                 <span className="text-xs font-semibold text-foreground">~45-90s</span>
                             </div>
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[10px] text-muted-foreground font-medium">Queue</span>
-                                <span className="text-xs font-semibold text-foreground">Queue : 1</span>
+                                <span className="text-[10px] text-muted-foreground font-medium">Position</span>
+                                <span className="text-xs font-semibold text-foreground">1</span>
                             </div>
                         </div>
                     </div>
