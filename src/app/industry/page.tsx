@@ -336,9 +336,9 @@ export default function IndustryPage() {
                     <div className="h-full overflow-hidden flex flex-col">
                         {/* Article & Learn Link Card */}
                         <div className="p-4 border-b border-border shrink-0 mt-1">
-                            <a href="/article-learn" className="block w-full p-4 rounded-xl bg-card border border-border hover:border-foreground/50 hover:shadow-lg transition-all duration-300 group">
+                            <a href="/article-learn" className="block w-full p-4 rounded-xl bg-transparent border border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md transition-all duration-200 group">
                                 <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-[12px] font-medium text-muted-foreground group-hover:text-[#3066bb] transition-colors tracking-wider flex items-center gap-2">
+                                    <h3 className="text-sm font-medium text-foreground tracking-wider flex items-center gap-2">
                                         Analyze Quantum Information
                                     </h3>
                                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
