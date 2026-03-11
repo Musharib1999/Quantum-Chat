@@ -23,18 +23,7 @@ export default function ArticlePage() {
         if (!isInitializing && !isAuthenticated) {
             router.replace('/login?redirect=/article-learn');
         }
-        return (
-            <div className="min-h-screen bg-background flex items-center justify-center font-semibold">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-secondary/30 border border-white/10 flex items-center justify-center animate-pulse">
-                        <Atom size={24} className="text-primary animate-spin-slow" />
-                    </div>
-                    <p className="text-sm text-muted-foreground tracking-widest uppercase animate-pulse">
-                        {isInitializing ? 'Initializing Session' : 'Redirecting to Login'}
-                    </p>
-                </div>
-            </div>
-        );
+        return <div className="min-h-screen bg-background" />;
     }
 
     const contextConfig = selectedArticle ? {
