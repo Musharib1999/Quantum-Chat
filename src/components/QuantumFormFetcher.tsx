@@ -286,7 +286,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
 
             <button
                 onClick={() => onSubmit(formData, qubits)}
-                className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-black/5"
+                className="w-full bg-[#3066bb] text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-[#3066bb]/10"
             >
                 Next <ChevronDown size={18} className="-rotate-90" />
             </button>

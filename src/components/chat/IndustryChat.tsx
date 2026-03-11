@@ -561,7 +561,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                                     className="text-[10px] font-black text-white px-2 py-0.5 rounded-full border border-primary/20 shadow-sm"
                                                                     style={{ backgroundColor: '#3066bb' }}
                                                                 >
-                                                                    BATCH {currentBatch}/{totalBatches}
+                                                                    Batch {currentBatch}/{totalBatches}
                                                                 </span>
                                                             )}
                                                             <Loader2 size={14} className="animate-spin text-primary shrink-0" />
@@ -593,7 +593,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                                     if (step.num === 1) runStep2((workflow as any).code);
                                                                     if (step.num === 2) runStep3((workflow as any).code, (workflow as any).simOutput, (workflow as any).totalExecTimeMs);
                                                                 }}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-primary text-primary-foreground hover:opacity-90 transition-all font-medium"
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#3066bb] text-white hover:opacity-90 transition-all font-medium"
                                                             >
                                                                 Continue <ChevronRight size={11} />
                                                             </button>

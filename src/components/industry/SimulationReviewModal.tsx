@@ -103,7 +103,7 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                 <div className="p-6 md:p-8 border-t border-border bg-secondary/10">
                     <button
                         onClick={onExecute}
-                        className="w-full bg-primary text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-xl shadow-primary/20"
+                        className="w-full bg-[#3066bb] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-xl shadow-[#3066bb]/20"
                     >
                         Execute
                     </button>
