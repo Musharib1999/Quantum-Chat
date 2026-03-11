@@ -76,7 +76,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                             }`}>
                                             {getIndustryIcon(ind.label)}
                                         </div>
-                                        <span className={`font-semibold text-base md:text-xl tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground/90 group-hover:text-foreground'
+                                        <span className={`font-light text-base md:text-xl tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground/90 group-hover:text-foreground'
                                             }`}>{ind.label}</span>
                                     </button>
                                 );
@@ -103,7 +103,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-foreground/10 transition-colors shrink-0">
                                             <Zap size={16} />
                                         </div>
-                                        <span className="text-base md:text-xl font-semibold tracking-tight group-hover:text-foreground transition-colors">{prob}</span>
+                                        <span className="text-base md:text-xl font-light tracking-tight group-hover:text-foreground transition-colors">{prob}</span>
                                     </button>
                                 ))
                             ) : (
@@ -141,7 +141,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                                 }`}>
                                                 {getServiceIcon(svc)}
                                             </div>
-                                            <span className={`text-base md:text-xl font-semibold tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground'}`}>{svc}</span>
+                                            <span className={`text-base md:text-xl font-light tracking-tight transition-colors ${isActive ? 'text-foreground' : 'text-foreground'}`}>{svc}</span>
                                         </button>
                                     );
                                 })
@@ -179,7 +179,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                                 className="p-6 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
                                             >
                                                 <div className="w-full flex justify-between items-center mb-1">
-                                                    <span className="text-xl font-semibold tracking-tight">{hw.name}</span>
+                                                    <span className="text-xl font-light tracking-tight">{hw.name}</span>
                                                 <div className="text-sm font-medium text-green-500 uppercase tracking-wider">Online</div>
                                                 </div>
                                                 <span className="text-sm text-muted-foreground font-mono">{hw.qubits} Qubits</span>
@@ -212,7 +212,7 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                             className="p-6 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
                                         >
                                             <div className="w-full flex justify-between items-center mb-1">
-                                                <span className="text-xl font-semibold tracking-tight">{hw.name}</span>
+                                                <span className="text-xl font-light tracking-tight">{hw.name}</span>
                                                 <div className="text-sm font-semibold text-green-500 uppercase tracking-wider">Online</div>
                                             </div>
                                             <span className="text-sm text-muted-foreground font-mono">{hw.qubits} Qubits</span>
