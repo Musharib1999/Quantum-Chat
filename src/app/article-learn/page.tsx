@@ -21,7 +21,7 @@ export default function ArticlePage() {
 
     if (isInitializing || !isAuthenticated) {
         if (!isInitializing && !isAuthenticated) {
-            router.push('/login?redirect=/article-learn');
+            router.replace('/login?redirect=/article-learn');
         }
         return (
             <div className="min-h-screen bg-background flex items-center justify-center font-semibold">

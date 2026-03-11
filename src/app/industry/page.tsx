@@ -79,7 +79,7 @@ export default function IndustryPage() {
 
     if (isInitializing || !isAuthenticated) {
         if (!isInitializing && !isAuthenticated) {
-            router.push('/login?redirect=/industry');
+            router.replace('/login?redirect=/industry');
         }
         return (
             <div className="min-h-screen bg-background flex items-center justify-center font-semibold">
