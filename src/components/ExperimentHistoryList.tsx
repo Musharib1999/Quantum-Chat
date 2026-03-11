@@ -39,7 +39,7 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
-            <h3 className="text-sm font-medium text-foreground px-5 py-3">Recent Experiments</h3>
+            <h3 className="text-lg font-medium text-foreground px-5 py-3">Recent Experiments</h3>
             <div className="flex-1 overflow-y-auto px-2 py-1 space-y-1 scrollbar-hide">
                 {experiments.map((exp) => (
                     <button
@@ -48,24 +48,24 @@ export default function ExperimentHistoryList({ experiments, loading, onSelectEx
                         className="group w-full text-left px-3 py-2 rounded-xl bg-transparent border border-transparent text-foreground hover:bg-card hover:border-ring hover:shadow-md transition-all duration-200"
                     >
                         <div className="flex flex-col gap-1">
-                            {/* Industry & Hardware Row */}
-                            <div className="flex items-center gap-2 text-[12px] font-medium text-primary">
-                                <span className="truncate max-w-[120px]">{exp.industry}</span>
-                                <span className="w-1 h-1 rounded-full bg-primary/20 shrink-0"></span>
-                                <span className="truncate">{exp.hardware}</span>
+                            {/* Row 1: Industry/Hardware & Date (Horizontally Aligned) */}
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 text-[12px] font-medium text-primary truncate max-w-[70%]">
+                                    <span className="truncate">{exp.industry}</span>
+                                    <span className="w-1 h-1 rounded-full bg-primary/20 shrink-0"></span>
+                                    <span className="truncate">{exp.hardware}</span>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground shrink-0">
+                                    {new Date(exp.timestamp).toLocaleDateString()}
+                                </div>
                             </div>
 
-                            {/* Date Row */}
-                            <div className="text-[11px] text-muted-foreground">
-                                {new Date(exp.timestamp).toLocaleDateString()}
-                            </div>
-
-                            {/* Problem Name */}
+                            {/* Row 2: Problem Name */}
                             <div className="font-medium text-[12px] text-foreground line-clamp-1 transition-colors">
                                 {exp.problem || "Untitled Experiment"}
                             </div>
 
-                            {/* Status Row */}
+                            {/* Row 3: Status Row */}
                             <div className={`text-[11px] font-medium tracking-wide ${exp.success !== false ? 'text-green-500' : 'text-red-500'}`}>
                                 {exp.success !== false ? 'Success' : 'Failed'}
                             </div>
