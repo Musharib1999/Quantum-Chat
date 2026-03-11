@@ -43,7 +43,7 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar max-h-[70vh]">
                     
                     <div className="space-y-4">
-                        <div className="text-primary font-medium uppercase tracking-widest text-[10px]">
+                        <div className="text-primary font-medium text-[10px]">
                             Problem Definition
                         </div>
                         <div className="bg-secondary/40 border border-border rounded-2xl p-4">
@@ -54,13 +54,13 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
 
                     {/* 2. Input Details */}
                     <div className="space-y-4">
-                        <div className="text-primary font-medium uppercase tracking-widest text-[10px]">
+                        <div className="text-primary font-medium text-[10px]">
                             Input Details
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {inputEntries.map(([key, value]) => (
                                 <div key={key} className="p-3 rounded-xl bg-secondary/20 border border-border/50 flex flex-col gap-1">
-                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{key.replace(/_/g, ' ')}</span>
+                                    <span className="text-[10px] text-muted-foreground font-medium">{key.replace(/_/g, ' ')}</span>
                                     <span className="text-sm font-medium text-foreground truncate">
                                         {Array.isArray(value) ? value.join(', ') : String(value)}
                                     </span>
@@ -71,24 +71,24 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
 
                     {/* 3. Resource & Queue Metrics */}
                     <div className="space-y-4">
-                        <div className="text-primary font-medium uppercase tracking-widest text-[10px]">
+                        <div className="text-primary font-medium text-[10px]">
                             Resource Allocation & Status
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-secondary/40 border border-border rounded-2xl p-4">
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Hardware</span>
+                                <span className="text-[10px] text-muted-foreground font-medium">Hardware</span>
                                 <span className="text-xs font-semibold text-foreground truncate">{config.hardware}</span>
                             </div>
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Qubits</span>
+                                <span className="text-[10px] text-muted-foreground font-medium">Qubits</span>
                                 <span className="text-xs font-semibold text-foreground">{qubits} Active</span>
                             </div>
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">ETA</span>
+                                <span className="text-[10px] text-muted-foreground font-medium">ETA</span>
                                 <span className="text-xs font-semibold text-foreground">~45-90s</span>
                             </div>
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Queue</span>
+                                <span className="text-[10px] text-muted-foreground font-medium">Queue</span>
                                 <span className="text-xs font-semibold text-foreground">Queue : 1</span>
                             </div>
                         </div>
