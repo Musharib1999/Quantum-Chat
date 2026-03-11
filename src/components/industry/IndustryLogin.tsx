@@ -91,7 +91,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Email</label>
+                            <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">Email</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Mail size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -107,7 +107,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Password</label>
+                            <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">Password</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Lock size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -138,7 +138,7 @@ export default function IndustryLogin({ onLogin }: IndustryLoginProps) {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group border border-primary/50"
+                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-semibold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group border border-primary/50"
                         >
                             {loading ? (
                                 <span className="flex items-center gap-2">
