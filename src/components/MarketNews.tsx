@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info, X, ArrowRight, FileText, Sparkles } from 'lucide-react';
+import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info, X, ArrowRight, FileText, Sparkles, RotateCw } from 'lucide-react';
 import { getDbNews } from '@/app/actions/news-automation';
 // import QuantumHeatMap from './QuantumHeatMap';
 
@@ -104,9 +104,9 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                     }}
                     disabled={isRefreshing}
                     className={`p-1.5 rounded-lg border border-border bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    title="Refresh News Summaries"
+                    title="Refresh news"
                 >
-                    <Sparkles size={14} className={isRefreshing ? 'animate-spin text-[#3066bb]' : ''} />
+                    <RotateCw size={14} className={isRefreshing ? 'animate-spin text-[#3066bb]' : ''} />
                 </button>
             </div>
 

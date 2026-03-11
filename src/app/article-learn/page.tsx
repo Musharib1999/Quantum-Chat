@@ -6,8 +6,8 @@ import ChatInterface from '@/components/ChatInterface';
 import ArticleSidebar from '@/components/ArticleSidebar';
 import UseCaseSidebar from '@/components/UseCaseSidebar';
 import ArticleChat from '@/components/chat/ArticleChat';
-import IndustryLogin from '@/components/industry/IndustryLogin';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function ArticlePage() {
     const { isAuthenticated, user, login, isInitializing } = useAuth();
