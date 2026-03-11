@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X, Play } from 'lucide-react';
+import { getQuantumStateSpaceName } from '@/lib/quantum-utils';
 
 interface SimulationReviewModalProps {
     isOpen: boolean;
@@ -81,7 +82,10 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                             </div>
                             <div className="flex flex-col gap-0.5">
                                 <span className="text-[10px] text-muted-foreground font-medium">Qubits</span>
-                                <span className="text-xs font-semibold text-foreground">{qubits} Active</span>
+                                <span className="text-xs font-semibold text-foreground truncate">{qubits} Active</span>
+                                <span className="text-[9px] text-primary/80 font-medium">
+                                    {getQuantumStateSpaceName(qubits)} States
+                                </span>
                             </div>
                             <div className="flex flex-col gap-0.5">
                                 <span className="text-[10px] text-muted-foreground font-medium">ETA</span>

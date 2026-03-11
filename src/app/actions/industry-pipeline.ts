@@ -1057,11 +1057,12 @@ STRICT RULES:
 
         const qubitCount = globalTotalQubits || Object.keys(unifiedSolution).length;
         if (qubitCount > 0) {
+            const { getQuantumStateSpaceName } = await import('@/lib/quantum-utils');
             const toSuperscript = (num: number) => {
                 const map: { [key: string]: string } = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
                 return num.toString().split('').map(c => map[c] || c).join('');
             };
-            const msg = `Quantum Exploration: Assessed a combinatorial space of 2${toSuperscript(qubitCount)} potential portfolio states across sectors. The optimization engine determined the minimum-energy configuration, yielding the globally optimal portfolio solution under the specified constraints.`;
+            const msg = `Quantum Exploration: Assessed a combinatorial space of 2${toSuperscript(qubitCount)} (${getQuantumStateSpaceName(qubitCount)}) potential states. The optimization engine determined the minimum-energy configuration, yielding the globally optimal solution under the specified constraints.`;
             text += `\n\n${msg}`;
         }
 
