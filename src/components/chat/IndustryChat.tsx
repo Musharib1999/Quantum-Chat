@@ -453,41 +453,41 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         };
 
         return (
-            <div className="grid grid-cols-1 xl:grid-cols-7 gap-4 my-6">
+            <div className="grid grid-cols-1 xl:grid-cols-8 gap-4 my-6">
                 {/* 1. Summary Table */}
-                <div className="xl:col-span-2 bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                <div className="xl:col-span-3 bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                     <div className="bg-muted/50 px-4 py-3 border-b border-border">
                         <h4 className="text-xs text-foreground tracking-wider">QUBO Optimized Portfolio</h4>
                     </div>
                     <table className="w-full text-left">
                         <tbody className="divide-y divide-border">
                             <tr>
-                                <td className="w-[100px] pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Sectors</td>
-                                <td className="px-1.5 py-3 text-sm text-[#111827] text-right">{metrics.sectorsCount}</td>
+                                <td className="pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Sectors</td>
+                                <td className="px-1.5 py-3 text-sm text-[#111827]">{metrics.sectorsCount}</td>
                             </tr>
                             <tr>
-                                <td className="w-[100px] pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Assets</td>
-                                <td className="px-1.5 py-3 text-sm text-[#111827] text-right">{metrics.assetsCount}</td>
+                                <td className="pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Assets</td>
+                                <td className="px-1.5 py-3 text-sm text-[#111827]">{metrics.assetsCount}</td>
                             </tr>
                             <tr>
-                                <td className="w-[100px] pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Stocks</td>
-                                <td className="px-1.5 py-3 text-sm text-[#111827] text-right">{metrics.universeSize}</td>
+                                <td className="pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Stocks</td>
+                                <td className="px-1.5 py-3 text-sm text-[#111827]">{metrics.universeSize}</td>
                             </tr>
                             <tr>
-                                <td className="w-[100px] pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Avg Return</td>
-                                <td className="px-1.5 py-3 text-sm text-[#10b981] text-right">{metrics.avgReturn.toFixed(2)}%</td>
+                                <td className="pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Avg Return</td>
+                                <td className="px-1.5 py-3 text-sm text-[#10b981]">{metrics.avgReturn.toFixed(2)}%</td>
                             </tr>
                             <tr>
-                                <td className="w-[100px] pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Avg Risk</td>
-                                <td className="px-1.5 py-3 text-sm text-[#ef4444] text-right">{metrics.avgRisk.toFixed(2)}%</td>
+                                <td className="pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Avg Risk</td>
+                                <td className="px-1.5 py-3 text-sm text-[#ef4444]">{metrics.avgRisk.toFixed(2)}%</td>
                             </tr>
                             <tr>
-                                <td className="w-[100px] pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Portfolio States</td>
-                                <td className="px-1.5 py-3 text-sm text-[#111827] text-right">2{toSuperscript(qubitCount)}</td>
+                                <td className="pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Portfolio States</td>
+                                <td className="px-1.5 py-3 text-sm text-[#111827]">2{toSuperscript(qubitCount)}</td>
                             </tr>
                             <tr>
-                                <td className="w-[100px] pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Combinatorial Scale</td>
-                                <td className="px-1.5 py-3 text-sm text-[#111827] text-right">{getQuantumStateSpaceName(qubitCount)}</td>
+                                <td className="pl-2 pr-1.5 py-3 text-xs text-[#111827] bg-secondary/10 tracking-tight">Combinatorial Scale</td>
+                                <td className="px-1.5 py-3 text-sm text-[#111827]">{getQuantumStateSpaceName(qubitCount)}</td>
                             </tr>
                         </tbody>
                     </table>
