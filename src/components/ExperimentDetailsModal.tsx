@@ -109,13 +109,11 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="fixed inset-0 top-[80px] z-[70] bg-white dark:bg-card flex flex-col border-t border-border"
+                        className="fixed inset-0 top-[80px] z-[70] bg-white dark:bg-[#0a0a0a] flex flex-col border-t border-border"
                     >
-                        <div className="p-4 border-b border-border flex items-center justify-between bg-white dark:bg-card">
-                            <div className="flex items-center gap-4">
-                                <img src="/logo.png" alt="Quantum Guru" className="h-[36px] md:h-[62px] w-auto object-contain" />
-                                <div className="h-8 w-px bg-border hidden md:block" />
-                                <span className="text-[#111827] dark:text-foreground text-sm font-bold hidden md:block">Quantum Source Code</span>
+                        <div className="p-4 border-b border-border flex items-center justify-between bg-white dark:bg-[#111111]">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[#111827] dark:text-foreground text-sm font-bold">Quantum Source Code</span>
                             </div>
                             <button 
                                 onClick={() => setViewingCode(false)}
@@ -124,7 +122,7 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                                 <X size={20} />
                             </button>
                         </div>
-                        <div className="flex-1 overflow-auto p-8 lg:p-12 custom-scrollbar bg-white dark:bg-card">
+                        <div className="flex-1 overflow-auto p-8 lg:p-12 custom-scrollbar bg-white dark:bg-[#0a0a0a]">
                             <pre className="text-sm font-mono text-[#111827]/80 dark:text-foreground/80 leading-relaxed max-w-5xl mx-auto">{display.qiskitCode || "# No code available"}</pre>
                         </div>
                     </motion.div>
