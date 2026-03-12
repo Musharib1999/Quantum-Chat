@@ -109,11 +109,11 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="fixed inset-0 top-[80px] z-[70] bg-white dark:bg-[#0a0a0a] flex flex-col border-t border-border"
+                        className="fixed inset-0 top-[80px] z-[70] bg-white flex flex-col border-t border-border"
                     >
-                        <div className="p-4 border-b border-border flex items-center justify-between bg-white dark:bg-[#111111]">
+                        <div className="p-4 border-b border-border flex items-center justify-between bg-white">
                             <div className="flex items-center gap-2">
-                                <span className="text-[#111827] dark:text-foreground text-sm font-bold truncate">Quantum code for {display.hardware}</span>
+                                <span className="text-[#111827] text-sm font-bold truncate">Quantum code for {display.hardware}</span>
                             </div>
                             <button 
                                 onClick={() => setViewingCode(false)}
@@ -122,8 +122,8 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                                 <X size={20} />
                             </button>
                         </div>
-                        <div className="flex-1 overflow-auto p-8 lg:p-12 custom-scrollbar bg-white dark:bg-[#0a0a0a]">
-                            <pre className="text-sm font-mono text-[#111827]/80 dark:text-foreground/80 leading-relaxed max-w-5xl mx-auto whitespace-pre-wrap break-words">{display.qiskitCode || "# No code available"}</pre>
+                        <div className="flex-1 overflow-auto p-8 lg:p-12 custom-scrollbar bg-white">
+                            <pre className="text-sm font-mono text-[#111827]/80 leading-relaxed max-w-5xl mx-auto whitespace-pre-wrap break-words">{display.qiskitCode || "# No code available"}</pre>
                         </div>
                     </motion.div>
                 )}
