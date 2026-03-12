@@ -430,53 +430,60 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
     const isLoading = workflow.kind === 'step1_loading' || workflow.kind === 'step2_loading' || workflow.kind === 'step3_loading';
     const currentStepNum = workflow.kind === 'idle' ? 0 : workflow.kind === 'step1_loading' ? 1 : workflow.kind === 'step1_done' ? 1 : workflow.kind === 'step2_loading' ? 2 : workflow.kind === 'step2_done' ? 2 : 3;
     
-    const renderDynamicTables = (assignments: any[]) => {
+    const renderDynamicTables = (assignments: any[], portfolioMetrics?: any) => {
         if (!blueprint?.outputTables || blueprint.outputTables.length === 0) return null;
 
         return (
             <div className="space-y-6 my-6">
-                {blueprint.outputTables.map((table: any, tIdx: number) => (
-                    <div key={tIdx} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-                        <div className="px-4 py-2 border-b border-border bg-secondary/30">
-                            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{table.name}</h4>
-                        </div>
-                        <div className="max-h-[300px] overflow-y-auto overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
-                                    <tr>
-                                        {table.mapping.map((col: any, cIdx: number) => (
-                                            <th key={cIdx} className="px-3 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">{col.label}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {assignments.map((row: any, rIdx: number) => (
-                                        <tr key={rIdx} className="hover:bg-muted/40 transition-colors">
-                                            {table.mapping.map((col: any, cIdx: number) => {
-                                                const val = row[col.resultKey];
-                                                const displayVal = col.type === 'percentage' 
-                                                    ? (typeof val === 'number' ? `${val.toFixed(2)}%` : val)
-                                                    : col.type === 'number'
-                                                        ? (typeof val === 'number' ? val.toLocaleString() : val)
-                                                        : val;
-                                                
-                                                const colorClass = col.type === 'percentage' && typeof val === 'number' 
-                                                    ? (val > 0 ? 'text-[#10b981]' : val < 0 ? 'text-[#ef4444]' : 'text-[#111827]')
-                                                    : 'text-[#111827]';
+                {blueprint.outputTables.map((table: any, tIdx: number) => {
+                    // Decide if this table is for "Summary" (one row from portfolioMetrics) 
+                    // or "Details" (many rows from assignments)
+                    const isSummaryTable = table.mapping.some((col: any) => portfolioMetrics && portfolioMetrics[col.resultKey] !== undefined);
+                    const rowsData = isSummaryTable ? [portfolioMetrics] : assignments;
 
-                                                return (
-                                                    <td key={cIdx} className={`px-3 py-3 text-sm ${colorClass}`}>
-                                                        {displayVal || '-'}
-                                                    </td>
-                                                );
-                                            })}
+                    return (
+                        <div key={tIdx} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                            <div className="px-4 py-2 border-b border-border bg-secondary/30">
+                                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{table.name}</h4>
+                            </div>
+                            <div className="max-h-[300px] overflow-y-auto overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
+                                        <tr>
+                                            {table.mapping.map((col: any, cIdx: number) => (
+                                                <th key={cIdx} className="px-3 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">{col.label}</th>
+                                            ))}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {rowsData.map((row: any, rIdx: number) => (
+                                            <tr key={rIdx} className="hover:bg-muted/40 transition-colors">
+                                                {table.mapping.map((col: any, cIdx: number) => {
+                                                    const val = row ? row[col.resultKey] : undefined;
+                                                    const displayVal = col.type === 'percentage' 
+                                                        ? (typeof val === 'number' ? `${val.toFixed(2)}%` : val)
+                                                        : col.type === 'number'
+                                                            ? (typeof val === 'number' ? val.toLocaleString() : val)
+                                                            : val;
+                                                    
+                                                    const colorClass = col.type === 'percentage' && typeof val === 'number' 
+                                                        ? (val > 0 ? 'text-[#10b981]' : val < 0 ? 'text-[#ef4444]' : 'text-[#111827]')
+                                                        : 'text-[#111827]';
+
+                                                    return (
+                                                        <td key={cIdx} className={`px-3 py-3 text-sm ${colorClass}`}>
+                                                            {displayVal || (rIdx === 0 && isSummaryTable ? '0' : '-')}
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         );
     };
@@ -618,7 +625,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                 <div className="flex-1 min-w-0 flex flex-col gap-3">
                                     {msg.portfolioMetrics && blueprint?.outputTables && blueprint.outputTables.length > 0 ? (
                                         <div className="w-full overflow-hidden">
-                                            {renderDynamicTables(msg.assignmentsTable || [])}
+                                            {renderDynamicTables(msg.assignmentsTable || [], msg.portfolioMetrics)}
                                         </div>
                                     ) : msg.portfolioMetrics ? (
                                         <div className="w-full overflow-hidden">
