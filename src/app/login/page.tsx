@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, Suspense } from 'react';
-import { Mail, Lock, Atom, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Atom, ArrowRight, ShieldCheck, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter, useSearchParams } from 'next/navigation';
+import QuantumBackground from '@/components/QuantumBackground';
 
 function LoginForm() {
     const { login } = useAuth();
@@ -74,46 +75,48 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden">
+        <div className="min-h-screen w-full flex items-center justify-center bg-zinc-950 relative overflow-hidden selection:bg-purple-500/30">
+            {/* Background Effects */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <QuantumBackground />
+            </div>
+            <div className="fixed inset-0 bg-zinc-950/80 z-0 pointer-events-none backdrop-blur-[2px]" />
             {/* Logo */}
             <div className="absolute top-6 left-6 z-20">
                 <a href="https://www.quantumcomputers.guru/">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity" />
+                    <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity invert brightness-0" />
                 </a>
             </div>
 
-            {/* Background glow effects */}
-            <div className="absolute inset-0 z-0">
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] animate-pulse delay-1000" />
-            </div>
+            {/* Removed pulse glows to use QuantumBackground directly */}
 
-            <div className="relative z-10 w-full max-w-md p-8">
-                <div className="bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 space-y-6 animate-in zoom-in-95 fade-in duration-700">
+            <div className="relative z-10 w-full max-w-md p-6 md:p-8">
+                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-3xl p-6 md:p-8 space-y-6 animate-in zoom-in-95 fade-in duration-700 group hover:border-white/20 transition-all duration-500">
 
                     {/* Header */}
-                    <div className="text-center space-y-2">
-                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-secondary/30 border border-white/10 mb-2 shadow-inner overflow-hidden">
+                    <div className="text-center space-y-2 relative">
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/5 border border-white/10 mb-2 backdrop-blur-md shadow-2xl shadow-purple-500/10 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
                             <img src="/qg-icon.png" alt="Quantum Guru" className="w-14 h-14 object-contain" />
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            {mode === 'login' ? 'Enter your credentials to access the workspace' : 'Request approval from administrator'}
+                        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400 tracking-tight">Quantum Guru</h1>
+                        <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] font-medium">
+                            {mode === 'login' ? 'Enter Workspace' : 'Account Registration'}
                         </p>
                     </div>
 
                     {/* Mode Toggle */}
-                    <div className="flex p-1 bg-secondary/50 rounded-xl">
+                    <div className="flex p-1 bg-zinc-950/50 border border-white/5 rounded-xl">
                         <button
                             type="button"
                             onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }}
-                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-[#3066bb] text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${mode === 'login' ? 'bg-white text-black shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             Login
                         </button>
                         <button
                             type="button"
                             onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); }}
-                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'signup' ? 'bg-[#3066bb] text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${mode === 'signup' ? 'bg-white text-black shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             Register
                         </button>
@@ -130,7 +133,7 @@ function LoginForm() {
                                             type="text"
                                             value={firstName}
                                             onChange={(e) => setFirstName(e.target.value)}
-                                            className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                            className="w-full bg-zinc-950/50 border border-white/10 rounded-xl py-3 px-4 text-sm font-medium text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all shadow-inner"
                                             placeholder=""
                                         />
                                     </div>
@@ -140,7 +143,7 @@ function LoginForm() {
                                             type="text"
                                             value={lastName}
                                             onChange={(e) => setLastName(e.target.value)}
-                                            className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                            className="w-full bg-zinc-950/50 border border-white/10 rounded-xl py-3 px-4 text-sm font-medium text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all shadow-inner"
                                             placeholder=""
                                         />
                                     </div>
@@ -151,7 +154,7 @@ function LoginForm() {
                                         type="text"
                                         value={company}
                                         onChange={(e) => setCompany(e.target.value)}
-                                        className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                        className="w-full bg-zinc-950/50 border border-white/10 rounded-xl py-3 px-4 text-sm font-medium text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all shadow-inner"
                                         placeholder=""
                                     />
                                 </div>
@@ -168,7 +171,7 @@ function LoginForm() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                    className="w-full bg-zinc-950/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm font-medium text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all shadow-inner"
                                     placeholder=""
                                 />
                             </div>
@@ -184,7 +187,7 @@ function LoginForm() {
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
+                                    className="w-full bg-zinc-950/50 border border-white/10 rounded-xl py-3 pl-11 pr-12 text-sm font-medium text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all shadow-inner"
                                     placeholder=""
                                 />
                                 <button
@@ -212,19 +215,23 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-[#3066bb] hover:bg-[#3066bb]/90 text-white py-3.5 mt-2 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-[#3066bb]/20 flex items-center justify-center gap-2 group border border-[#3066bb]/50"
+                            className="w-full bg-white text-black hover:bg-zinc-200 py-3.5 mt-2 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2 group border border-white/20 disabled:opacity-50"
                         >
                             {loading ? (
                                 <span className="flex items-center gap-2">
-                                    <ShieldCheck size={18} className="animate-pulse" /> Processing...
+                                    <Loader2 size={18} className="animate-spin" /> Authenticating...
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    {mode === 'login' ? 'Login' : 'Register'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    {mode === 'login' ? 'Access System' : 'Request Access'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                                 </span>
                             )}
                         </button>
                     </form>
+                    {/* Footer */}
+                    <footer className="text-center pt-2">
+                        <p className="text-[10px] text-zinc-700 font-mono tracking-wider">SECURE SYSTEM ACCESS • AUTHORIZED ONLY</p>
+                    </footer>
                 </div>
             </div>
         </div>
