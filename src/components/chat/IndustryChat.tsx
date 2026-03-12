@@ -440,15 +440,16 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         };
 
         const getQuantumStateSpaceName = (n: number) => {
-            if (n < 10) return "Thousands";
-            if (n < 40) return "Trillions";
-            if (n < 50) return "Quadrillions";
-            if (n < 60) return "Quintillions";
-            if (n < 70) return "Sextillions";
-            if (n < 80) return "Septillions";
-            if (n < 90) return "Octillions";
-            if (n < 100) return "Nonillions";
-            return "Decillions+";
+            if (n < 20) return "Thousands";
+            if (n < 30) return "Millions";
+            if (n < 40) return "Billions";
+            if (n < 50) return "Trillions";
+            if (n < 60) return "Quadrillions";
+            if (n < 70) return "Quintillions";
+            if (n < 80) return "Sextillions";
+            if (n < 90) return "Septillions";
+            if (n < 100) return "Octillions";
+            return "Nonillions+";
         };
 
         return (
