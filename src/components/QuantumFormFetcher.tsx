@@ -119,7 +119,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
 
         return (
             <div key={field.key} className="space-y-2 relative">
-                <label className="text-xs font-medium text-muted-foreground">
+                <label className="text-sm font-medium text-[#111827]">
                     {field.label} {field.required && <span className="text-red-400">*</span>}
                 </label>
                 {effectiveType === 'select' ? (
@@ -221,7 +221,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                             onChange={(e) => handleInputChange(field.key, parseInt(e.target.value))}
                             className="w-full accent-primary h-1 bg-secondary rounded-lg appearance-none cursor-pointer"
                         />
-                        <div className="flex justify-between text-[10px] text-muted-foreground mt-2 font-mono">
+                        <div className="flex justify-between text-[10px] text-[#111827]/60 mt-2 font-mono">
                             <span>{formData[field.key] || 0}</span>
                         </div>
                     </div>
@@ -241,7 +241,7 @@ export default function QuantumFormFetcher({ industry, service, problem, hardwar
                         placeholder={field.description}
                     />
                 )}
-                {field.description && <p className="text-[10px] text-muted-foreground italic">{field.description}</p>}
+                {field.description && <p className="text-[10px] text-[#111827]/60">{field.description}</p>}
             </div>
         );
     };
