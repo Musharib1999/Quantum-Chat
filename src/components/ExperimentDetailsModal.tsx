@@ -109,22 +109,22 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="fixed inset-0 z-[70] bg-[#0a0a0a] flex flex-col"
+                        className="fixed inset-0 top-[80px] z-[70] bg-white dark:bg-card flex flex-col border-t border-border"
                     >
-                        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                        <div className="p-4 border-b border-border flex items-center justify-between bg-white dark:bg-card">
                             <div className="flex flex-col">
-                                <span className="text-white text-sm font-bold">Quantum Source Code</span>
-                                <span className="text-white/40 text-[10px] font-mono">Qiskit/BQM Implementation</span>
+                                <span className="text-[#111827] dark:text-foreground text-sm font-bold">Quantum Source Code</span>
+                                <span className="text-[#111827]/40 dark:text-foreground/40 text-[10px] font-mono">Qiskit/BQM Implementation</span>
                             </div>
                             <button 
                                 onClick={() => setViewingCode(false)}
-                                className="px-4 py-2 rounded-xl bg-white/10 text-white text-xs hover:bg-white/20 transition-all font-bold"
+                                className="px-4 py-2 rounded-xl bg-[#3066bb] text-white text-xs hover:bg-[#3066bb]/90 transition-all font-bold shadow-md shadow-[#3066bb]/20"
                             >
                                 Exit Fullscreen
                             </button>
                         </div>
-                        <div className="flex-1 overflow-auto p-8 lg:p-12 custom-scrollbar">
-                            <pre className="text-sm font-mono text-green-400/90 leading-relaxed max-w-5xl mx-auto">{display.qiskitCode || "# No code available"}</pre>
+                        <div className="flex-1 overflow-auto p-8 lg:p-12 custom-scrollbar bg-white dark:bg-card">
+                            <pre className="text-sm font-mono text-[#111827]/80 dark:text-foreground/80 leading-relaxed max-w-5xl mx-auto">{display.qiskitCode || "# No code available"}</pre>
                         </div>
                     </motion.div>
                 )}
