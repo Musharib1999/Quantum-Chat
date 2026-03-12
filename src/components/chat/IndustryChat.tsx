@@ -501,21 +501,21 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
                                 <tr>
+                                    <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Asset</th>
                                     <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Sector</th>
                                     <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Ticker</th>
                                     <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Return</th>
                                     <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Risk</th>
-                                    <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Asset</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {assignments.map((row: any, idx: number) => (
                                     <tr key={idx} className="hover:bg-muted/40 transition-colors group">
+                                        <td className="px-4 py-3 text-[11px] font-mono text-muted-foreground leading-relaxed italic">{row.route?.split('(')[0].trim()}</td>
                                         <td className="px-4 py-3 text-xs text-muted-foreground/80 group-hover:text-foreground transition-colors tracking-tight">{row.sector}</td>
                                         <td className="px-4 py-3 text-sm text-foreground">{row.ticker}</td>
                                         <td className="px-4 py-3 text-sm text-[#10b981]">{row.return !== undefined ? `${row.return.toFixed(2)}%` : '-'}</td>
                                         <td className="px-4 py-3 text-sm text-[#ef4444]">{row.risk !== undefined ? `${row.risk.toFixed(2)}%` : '-'}</td>
-                                        <td className="px-4 py-3 text-[11px] font-mono text-muted-foreground leading-relaxed italic">{row.route?.split('(')[0].trim()}</td>
                                     </tr>
                                 ))}
                             </tbody>
