@@ -122,7 +122,7 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                         className="w-full bg-[#3066bb] text-white py-4.5 rounded-2xl font-bold text-base flex items-center justify-center gap-3 hover:bg-[#3066bb]/90 transition-all active:scale-[0.99] shadow-xl shadow-[#3066bb]/20"
                     >
                         <Play size={18} fill="currentColor" />
-                        Authorize & Execute Simulation
+                        Execute
                     </button>
                 </div>
             </div>
