@@ -123,7 +123,7 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                             </button>
                         </div>
                         <div className="flex-1 overflow-auto p-8 lg:p-12 custom-scrollbar bg-white dark:bg-[#0a0a0a]">
-                            <pre className="text-sm font-mono text-[#111827]/80 dark:text-foreground/80 leading-relaxed max-w-5xl mx-auto">{display.qiskitCode || "# No code available"}</pre>
+                            <pre className="text-sm font-mono text-[#111827]/80 dark:text-foreground/80 leading-relaxed max-w-5xl mx-auto whitespace-pre-wrap break-words">{display.qiskitCode || "# No code available"}</pre>
                         </div>
                     </motion.div>
                 )}
