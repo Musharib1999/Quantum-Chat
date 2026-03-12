@@ -542,16 +542,26 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                         </div>
                                     )}
                                 </div>
-                                <div className={`rounded-2xl px-5 py-4 shadow-sm text-base leading-relaxed whitespace-pre-wrap ${msg.sender === 'user' ? 'bg-secondary text-foreground border border-border rounded-br-none' : msg.sender === 'system' ? 'bg-muted text-muted-foreground text-sm text-center w-full rounded-lg border border-border' : 'bg-card text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden'}`}>
-                                    {msg.sender === 'bot' || msg.sender === 'user' ? (
-                                        <>
-                                            {msg.portfolioMetrics && <PortfolioResultsSideBySide metrics={msg.portfolioMetrics} assignments={msg.assignmentsTable || []} qubitCount={msg.portfolioMetrics.qubitCount || 0} />}
-                                            <MarkdownRenderer content={msg.text} />
-                                            {msg.chartData && <QuantumChart data={msg.chartData.data} />}
-                                        </>
-                                    ) : (
-                                        <span className="flex items-center justify-center gap-2"><ShieldCheck size={14} />{msg.text}</span>
+                                <div className="flex-1 min-w-0 flex flex-col gap-3">
+                                    {msg.portfolioMetrics && (
+                                        <div className="w-full overflow-visible -mx-0 md:-mx-4 lg:-mx-8">
+                                            <PortfolioResultsSideBySide 
+                                                metrics={msg.portfolioMetrics} 
+                                                assignments={msg.assignmentsTable || []} 
+                                                qubitCount={msg.portfolioMetrics.qubitCount || 0} 
+                                            />
+                                        </div>
                                     )}
+                                    <div className={`rounded-2xl px-5 py-4 shadow-sm text-base leading-relaxed whitespace-pre-wrap ${msg.sender === 'user' ? 'bg-secondary text-foreground border border-border rounded-br-none self-end' : msg.sender === 'system' ? 'bg-muted text-muted-foreground text-sm text-center w-full rounded-lg border border-border' : 'bg-card text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden self-start'}`}>
+                                        {msg.sender === 'bot' || msg.sender === 'user' ? (
+                                            <>
+                                                <MarkdownRenderer content={msg.text} />
+                                                {msg.chartData && <QuantumChart data={msg.chartData.data} />}
+                                            </>
+                                        ) : (
+                                            <span className="flex items-center justify-center gap-2"><ShieldCheck size={14} />{msg.text}</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
