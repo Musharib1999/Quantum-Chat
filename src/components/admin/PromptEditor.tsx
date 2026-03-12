@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Save, AlertCircle, RefreshCw, CheckCircle2, FileText, Code } from 'lucide-react';
-import { useTheme } from '@/components/ThemeContext';
 
 interface SystemPrompt {
     _id: string;
@@ -15,8 +14,7 @@ interface SystemPrompt {
 }
 
 export default function PromptEditor() {
-    const { theme } = useTheme();
-    const isDarkMode = theme === 'dark';
+    const isDarkMode = false;
 
     const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -100,9 +98,9 @@ export default function PromptEditor() {
 
     if (prompts.length === 0) {
         return (
-            <div className={`p-8 text-center rounded-lg border ${isDarkMode ? 'border-white/10 text-slate-400' : 'border-slate-200 text-slate-500 bg-white'}`}>
+            <div className="p-8 text-center rounded-lg border border-slate-200 text-slate-500 bg-white">
                 <AlertCircle size={40} className="mx-auto mb-4 opacity-50" />
-                <h3 className={`text-xl font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>No Prompts Found</h3>
+                <h3 className="text-xl font-medium mb-2 text-slate-900">No Prompts Found</h3>
                 <p>The database seed script needs to run to initialize the base prompts.</p>
                 <button onClick={fetchPrompts} className="mt-4 px-4 py-2 bg-[#3066bb] hover:bg-[#255299] text-white rounded">Retry Connection</button>
             </div>
@@ -110,22 +108,19 @@ export default function PromptEditor() {
     }
 
     return (
-        <div className={`border rounded-xl overflow-hidden shadow-sm ${isDarkMode ? 'bg-slate-900 border-white/5' : 'bg-white border-slate-200'}`}>
-            <div className={`p-6 border-b flex justify-between items-center sm:flex-row flex-col gap-4 ${isDarkMode ? 'border-white/5' : 'border-slate-100'}`}>
+        <div className="border rounded-xl overflow-hidden shadow-sm bg-white border-slate-200">
+            <div className="p-6 border-b flex justify-between items-center sm:flex-row flex-col gap-4 border-slate-100">
                 <div>
-                    <h2 className={`text-xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900">
                         <Code className="text-[#3066bb]" size={24} />
                         Dynamic System Instructions
                     </h2>
-                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Control exactly how the AI behaves and structures responses for different modules.</p>
+                    <p className="text-sm mt-1 text-slate-500">Control exactly how the AI behaves and structures responses for different modules.</p>
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <select
-                        className={`text-sm rounded-lg border block w-full sm:w-64 p-2.5 outline-none ${isDarkMode
-                                ? 'bg-slate-950 border-white/10 text-white focus:border-[#3066bb]'
-                                : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-[#3066bb]'
-                            }`}
+                        className="text-sm rounded-lg border block w-full sm:w-64 p-2.5 outline-none bg-slate-50 border-slate-200 text-slate-900 focus:border-[#3066bb]"
                         value={selectedCategory}
                         onChange={handleCategoryChange}
                     >
@@ -136,11 +131,11 @@ export default function PromptEditor() {
                 </div>
             </div>
 
-            <div className={`flex flex-col md:flex-row h-full md:h-[600px] divide-y md:divide-y-0 md:divide-x ${isDarkMode ? 'divide-white/5' : 'divide-slate-100'}`}>
+            <div className="flex flex-col md:flex-row h-full md:h-[600px] divide-y md:divide-y-0 md:divide-x divide-slate-100">
                 {/* Left Panel: Editor */}
-                <div className={`flex-1 flex flex-col p-6 relative ${isDarkMode ? 'bg-slate-950/50' : 'bg-slate-50/50'}`}>
+                <div className="flex-1 flex flex-col p-6 relative bg-slate-50/50">
                     <div className="flex justify-between items-center mb-3">
-                        <label className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Prompt Template</label>
+                        <label className="text-sm font-medium text-slate-700">Prompt Template</label>
                         {statusMessage && (
                             <div className={`text-xs px-3 py-1 rounded flex items-center gap-1.5 animate-in fade-in ${statusMessage.type === 'success' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                                 {statusMessage.type === 'success' ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
@@ -150,10 +145,7 @@ export default function PromptEditor() {
                     </div>
 
                     <textarea
-                        className={`flex-1 w-full border rounded-lg p-4 font-mono text-sm leading-relaxed resize-none focus:outline-none focus:border-[#3066bb] transition-colors scrollbar-thin ${isDarkMode
-                                ? 'bg-slate-900 border-white/10 text-slate-300 scrollbar-thumb-slate-700'
-                                : 'bg-white border-slate-200 text-slate-700 scrollbar-thumb-slate-300'
-                            }`}
+                        className="flex-1 w-full border rounded-lg p-4 font-mono text-sm leading-relaxed resize-none focus:outline-none focus:border-[#3066bb] transition-colors scrollbar-thin bg-white border-slate-200 text-slate-700 scrollbar-thumb-slate-300"
                         value={currentTemplate}
                         onChange={(e) => setCurrentTemplate(e.target.value)}
                         placeholder="Enter the underlying system prompt instructions here..."
@@ -164,7 +156,7 @@ export default function PromptEditor() {
                             onClick={handleSave}
                             disabled={isSaving || currentTemplate === activePrompt?.template}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded text-sm font-medium transition-all ${currentTemplate === activePrompt?.template
-                                    ? (isDarkMode ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed')
+                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                     : 'bg-[#3066bb] hover:bg-[#255299] text-white shadow-sm'
                                 }`}
                         >
@@ -175,31 +167,31 @@ export default function PromptEditor() {
                 </div>
 
                 {/* Right Panel: Helper Context */}
-                <div className={`w-full md:w-80 p-6 flex flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
-                    <h3 className={`font-medium mb-2 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                        <FileText size={16} className={isDarkMode ? 'text-slate-400' : 'text-slate-500'} />
+                <div className="w-full md:w-80 p-6 flex flex-col bg-white">
+                    <h3 className="font-medium mb-2 flex items-center gap-2 text-slate-900">
+                        <FileText size={16} className="text-slate-500" />
                         Variables Required
                     </h3>
-                    <p className={`text-xs mb-6 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <p className="text-xs mb-6 text-slate-500">
                         The backend code injects real-time data into this prompt. You <strong>must</strong> include the following tags in your text to prevent application errors.
                     </p>
 
-                    <div className={`space-y-3 overflow-y-auto scrollbar-thin pr-2 ${isDarkMode ? 'scrollbar-thumb-slate-700' : 'scrollbar-thumb-slate-300'}`}>
+                    <div className="space-y-3 overflow-y-auto scrollbar-thin pr-2 scrollbar-thumb-slate-300">
                         {activePrompt?.availableTags.map(tag => (
-                            <div key={tag} className={`flex flex-col gap-1 p-3 border rounded ${isDarkMode ? 'bg-slate-950 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                            <div key={tag} className="flex flex-col gap-1 p-3 border rounded bg-slate-50 border-slate-100">
                                 <code className="text-[#3066bb] text-xs font-bold">{tag}</code>
                             </div>
                         ))}
                         {(!activePrompt?.availableTags || activePrompt.availableTags.length === 0) && (
-                            <div className={`text-sm italic ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>No variables required for this prompt.</div>
+                            <div className="text-sm italic text-slate-400">No variables required for this prompt.</div>
                         )}
                     </div>
 
-                    <div className={`mt-8 pt-6 border-t ${isDarkMode ? 'border-white/5' : 'border-slate-100'}`}>
-                        <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Category Info</h4>
-                        <p className={`text-xs leading-relaxed mb-1 font-mono ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>ID: {activePrompt?.category}</p>
-                        <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{activePrompt?.description}</p>
-                        <p className={`text-[10px] mt-4 ${isDarkMode ? 'text-slate-600' : 'text-slate-400'}`}>Last Updated: {activePrompt ? new Date(activePrompt.updatedAt).toLocaleString() : 'N/A'}</p>
+                    <div className="mt-8 pt-6 border-t border-slate-100">
+                        <h4 className="text-sm font-medium mb-2 text-slate-700">Category Info</h4>
+                        <p className="text-xs leading-relaxed mb-1 font-mono text-slate-400">ID: {activePrompt?.category}</p>
+                        <p className="text-xs leading-relaxed text-slate-500">{activePrompt?.description}</p>
+                        <p className="text-[10px] mt-4 text-slate-400">Last Updated: {activePrompt ? new Date(activePrompt.updatedAt).toLocaleString() : 'N/A'}</p>
                     </div>
                 </div>
             </div>

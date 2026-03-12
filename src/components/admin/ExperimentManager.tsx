@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { getExperiments } from '@/app/actions/experiment';
-import { Beaker, Search, Eye, RefreshCw, Cpu, CheckCircle2, Clock } from 'lucide-react';
 import ExperimentDetailsModal from '../ExperimentDetailsModal';
 
 export default function ExperimentManager() {
@@ -13,7 +12,6 @@ export default function ExperimentManager() {
 
     const loadExperiments = async () => {
         setLoading(true);
-        // Call the server action with isAdmin = true
         const exps = await getExperiments(undefined, true);
         if (exps) setExperiments(exps);
         setLoading(false);
@@ -30,109 +28,90 @@ export default function ExperimentManager() {
     );
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header / Stats */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <Beaker className="text-purple-500" />
-                        Experiment History
-                    </h2>
-                    <p className="text-muted-foreground">Global logs of all quantum simulations across the platform.</p>
+                    <h2 className="text-xl font-semibold text-slate-900">Experiment history</h2>
+                    <p className="text-sm text-slate-500">Global logs of all quantum simulations across the platform.</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                        <input
-                            type="text"
-                            placeholder="Search problems, users..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="bg-card border border-border rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-64"
-                        />
-                    </div>
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Search problems, users..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="flex-1 md:w-64 px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
+                    />
                     <button
                         onClick={loadExperiments}
-                        className="p-2.5 bg-secondary text-foreground rounded-xl border border-border hover:bg-card hover:border-primary transition-all shadow-sm"
-                        title="Refresh"
+                        className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold text-sm transition-colors"
                     >
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                        {loading ? 'Refreshing...' : 'Refresh'}
                     </button>
                 </div>
             </div>
 
-            {/* Data Table */}
-            <div className="bg-card/50 backdrop-blur-md rounded-2xl border border-border overflow-hidden shadow-sm">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-secondary/50 text-muted-foreground">
+                    <table className="w-full text-left text-sm text-slate-600">
+                        <thead className="bg-slate-50 text-slate-900 border-b border-slate-200 font-semibold">
                             <tr>
-                                <th className="px-6 py-4 font-medium">Experiment Name (Problem)</th>
-                                <th className="px-6 py-4 font-medium">User ID</th>
-                                <th className="px-6 py-4 font-medium">Hardware</th>
-                                <th className="px-6 py-4 font-medium">Date & Time</th>
-                                <th className="px-6 py-4 font-medium">Metrics</th>
-                                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                                <th className="px-6 py-4">Experiment (Problem)</th>
+                                <th className="px-6 py-4">User</th>
+                                <th className="px-6 py-4">Hardware</th>
+                                <th className="px-6 py-4">Date & Time</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        <div className="flex justify-center items-center gap-2">
-                                            <RefreshCw className="animate-spin w-5 h-5" /> Syncing Global Logs...
-                                        </div>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                        Syncing global logs...
                                     </td>
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        <Beaker size={32} className="mx-auto opacity-20 mb-3" />
-                                        <p>No experiments found matching your criteria.</p>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                        No experiments found matching your criteria.
                                     </td>
                                 </tr>
-                            ) : filtered.map((exp) => (
-                                <tr key={exp._id} className="hover:bg-secondary/40 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="font-medium text-foreground">{exp.problem || "Untitled"}</div>
-                                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                            {exp.industry} <span className="opacity-50">•</span> {exp.service}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-xs font-mono bg-secondary px-2 py-1 rounded text-muted-foreground">
-                                            {exp.userId || "Guest"}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1.5 text-xs bg-primary/10 text-primary w-fit px-2 py-1 rounded-md mb-1 font-medium">
-                                            <Cpu size={12} /> {exp.hardware}
-                                        </div>
-                                        <div className="text-xs flex items-center gap-1 text-green-500 font-medium">
-                                            <CheckCircle2 size={12} /> Success
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-foreground">{new Date(exp.timestamp).toLocaleDateString()}</div>
-                                        <div className="text-xs text-muted-foreground">{new Date(exp.timestamp).toLocaleTimeString()}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1 text-[11px] font-mono">
-                                            <div className="flex items-center gap-1 text-muted-foreground"><Clock size={10} /> Time: ~2.4s</div>
-                                            <div className="flex items-center gap-1 text-muted-foreground">Tokens: N/A</div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => setSelectedExp(exp)}
-                                            className="px-3 py-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ml-auto"
-                                        >
-                                            <Eye size={14} /> View Details
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                            ) : (
+                                filtered.map((exp) => (
+                                    <tr key={exp._id} className="hover:bg-slate-50 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <div className="font-semibold text-slate-900 line-clamp-1">{exp.problem || "Untitled"}</div>
+                                            <div className="text-[10px] text-slate-400 mt-0.5">
+                                                {exp.industry} • {exp.service}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="text-[10px] font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 text-slate-500">
+                                                {exp.userId || "Guest"}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-semibold text-slate-900">{exp.hardware}</span>
+                                                <span className="text-[10px] text-green-600 font-bold">Success</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-slate-900 text-xs">{new Date(exp.timestamp).toLocaleDateString()}</div>
+                                            <div className="text-[10px] text-slate-400">{new Date(exp.timestamp).toLocaleTimeString()}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                onClick={() => setSelectedExp(exp)}
+                                                className="text-[#3066bb] hover:underline font-semibold text-xs transition-colors"
+                                            >
+                                                View details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

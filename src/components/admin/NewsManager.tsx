@@ -1,36 +1,32 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Newspaper, Loader2, RefreshCw, Trash, ExternalLink, Activity } from 'lucide-react';
 import axios from 'axios';
-import { useTheme } from '@/components/ThemeContext';
 
 interface NewsItem {
     _id: string;
     title: string;
-    source: string;
+    description: string;
     url: string;
     publishedAt: string;
-    impact: 'high' | 'medium' | 'low';
-    trend: 'up' | 'down';
-    createdAt: string;
+    source?: string;
 }
 
 export default function NewsManager() {
-    const { theme } = useTheme();
-    const isDarkMode = theme === 'dark';
-
     const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isScraping, setIsScraping] = useState(false);
-    const [scrapeStatus, setScrapeStatus] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [url, setUrl] = useState('');
+    const [source, setSource] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchNews();
     }, []);
 
     const fetchNews = async () => {
-        setLoading(true);
         try {
             const res = await axios.get('/api/news');
             setNews(res.data);
@@ -41,118 +37,159 @@ export default function NewsManager() {
         }
     };
 
-    const handleScrape = async () => {
-        setIsScraping(true);
-        setScrapeStatus({ message: 'Scraping live data from Python backend...', type: null });
+    const resetForm = () => {
+        setTitle('');
+        setDescription('');
+        setUrl('');
+        setSource('');
+        setEditingId(null);
+    };
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!title || !url) return;
+
+        setIsSubmitting(true);
         try {
-            const res = await axios.post('/api/admin/scrape');
-            if (res.data.success) {
-                setScrapeStatus({ message: res.data.message, type: 'success' });
-                await fetchNews(); // Refresh the list
+            if (editingId) {
+                const res = await axios.put(`/api/news?id=${editingId}`, { title, description, url, source });
+                setNews(news.map(n => n._id === editingId ? res.data : n));
             } else {
-                setScrapeStatus({ message: 'Scraping failed.', type: 'error' });
+                const res = await axios.post('/api/news', { title, description, url, source });
+                setNews([res.data, ...news]);
             }
-        } catch (error: any) {
-            setScrapeStatus({ message: error.response?.data?.error || 'Failed to trigger scraper', type: 'error' });
+            resetForm();
+        } catch (error) {
+            console.error('Failed to save news item', error);
         } finally {
-            setIsScraping(false);
-            // Clear success message after 5 seconds
-            setTimeout(() => {
-                setScrapeStatus(prev => prev.type === 'success' ? { message: '', type: null } : prev);
-            }, 5000);
+            setIsSubmitting(false);
         }
     };
 
+    const handleEdit = (item: NewsItem) => {
+        setTitle(item.title);
+        setDescription(item.description);
+        setUrl(item.url);
+        setSource(item.source || '');
+        setEditingId(item._id);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this news item?")) return;
         try {
             await axios.delete(`/api/news?id=${id}`);
             setNews(news.filter(n => n._id !== id));
         } catch (error) {
-            console.error('Failed to delete news', error);
+            console.error('Failed to delete news item', error);
         }
     };
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <div>
-                    <h2 className={`text-xl font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                        <Newspaper className="text-[#3066bb]" size={24} /> News Integration
-                    </h2>
-                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage automated news scraping from Google News.</p>
-                </div>
-
-                <button
-                    onClick={handleScrape}
-                    disabled={isScraping}
-                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-sm"
-                >
-                    {isScraping ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                    {isScraping ? 'Scraping...' : 'Run Scraper Now'}
-                </button>
+                <h2 className="text-xl font-semibold text-slate-900">Quantum news feed</h2>
             </div>
 
-            {scrapeStatus.message && (
-                <div className={`p-4 rounded-lg border text-sm flex items-center gap-2 ${scrapeStatus.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
-                    <Activity size={16} /> {scrapeStatus.message}
+            {/* Add/Edit Form */}
+            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-slate-200 bg-white space-y-4 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                        type="text"
+                        placeholder="News title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-slate-50 text-slate-900"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Source (e.g. Google News)"
+                        value={source}
+                        onChange={(e) => setSource(e.target.value)}
+                        className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-slate-50 text-slate-900"
+                    />
                 </div>
-            )}
+                <div className="space-y-4">
+                    <input
+                        type="text"
+                        placeholder="Article url"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-slate-50 text-slate-900"
+                    />
+                    <textarea
+                        placeholder="Short description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        rows={3}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] resize-none bg-slate-50 text-slate-900"
+                    />
+                </div>
+                <div className="flex gap-2 pt-2">
+                    <button
+                        type="submit"
+                        disabled={isSubmitting || !title || !url}
+                        className="bg-[#3066bb] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+                    >
+                        {isSubmitting ? 'Saving...' : editingId ? 'Update news' : 'Add news item'}
+                    </button>
+                    {editingId && (
+                        <button
+                            type="button"
+                            onClick={resetForm}
+                            className="px-6 py-2.5 text-slate-500 hover:text-slate-900 text-sm font-semibold transition-all"
+                        >
+                            Cancel
+                        </button>
+                    )}
+                </div>
+            </form>
 
-            {/* List */}
-            {loading ? (
-                <div className="flex justify-center p-12"><Loader2 className={`animate-spin w-8 h-8 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} /></div>
-            ) : (
-                <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
-                    <table className={`w-full text-left text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                        <thead className={isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-50 text-slate-900'}>
-                            <tr>
-                                <th className="px-5 py-4 font-medium">Headline & Source</th>
-                                <th className="px-5 py-4 font-medium w-32">Indicators</th>
-                                <th className="px-5 py-4 font-medium text-right w-24">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className={`divide-y ${isDarkMode ? 'divide-white/5' : 'divide-slate-200'}`}>
-                            {news.map((item) => (
-                                <tr key={item._id} className={`group transition-colors ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}>
-                                    <td className="px-5 py-4">
-                                        <div className={`font-medium line-clamp-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{item.title}</div>
-                                        <div className={`flex items-center gap-3 mt-1.5 text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                                            <span className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>{item.source}</span>
-                                            <span>•</span>
-                                            <span>{new Date(item.publishedAt || item.createdAt).toLocaleDateString()}</span>
-                                            <a href={item.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'text-[#3066bb] hover:text-[#255299]' : 'text-[#3066bb] hover:text-[#255299]'}`}>
-                                                Read <ExternalLink size={10} />
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-4 align-top">
-                                        <div className="flex flex-col gap-1.5">
-                                            <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] w-fit font-medium ${item.trend === 'up' ? 'bg-green-500/20 text-green-500 border border-green-500/20' : 'bg-red-500/20 text-red-500 border border-red-500/20'}`}>
-                                                {item.trend === 'up' ? 'UPTREND ▲' : 'DOWNTREND ▼'}
-                                            </span>
-                                            <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] w-fit font-medium ${item.impact === 'high' ? 'bg-orange-500/20 text-orange-500 border border-orange-500/20' : 'bg-slate-500/20 text-slate-500 border border-slate-500/20'}`}>
-                                                {item.impact.toUpperCase()} IMPACT
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-4 text-right align-top">
-                                        <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100">
-                                            <Trash size={16} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {news.length === 0 && (
-                                <tr>
-                                    <td colSpan={3} className="px-5 py-12 text-center text-slate-500">
-                                        No news articles yet. Click "Run Scraper Now" to fetch live data.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            {/* News List */}
+            <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                {loading ? (
+                    <div className="p-12 text-center text-sm text-slate-400">Loading news items...</div>
+                ) : news.length === 0 ? (
+                    <div className="p-12 text-center text-sm text-slate-500">No news found. add one above.</div>
+                ) : (
+                    <div className="divide-y divide-slate-100">
+                        {news.map((item) => (
+                            <div key={item._id} className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-slate-50 transition-colors group">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-3 mb-1.5">
+                                        <h4 className="font-semibold text-slate-900 truncate">
+                                            {item.title}
+                                        </h4>
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">
+                                            {item.source || 'Standard source'}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">
+                                        {item.description}
+                                    </p>
+                                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-block mt-2.5 text-xs text-[#3066bb] hover:underline">
+                                        Read full article
+                                    </a>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <button
+                                        onClick={() => handleEdit(item)}
+                                        className="text-slate-600 hover:text-slate-900 font-semibold text-xs transition-colors"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(item._id)}
+                                        className="text-red-500 hover:text-red-600 font-semibold text-xs transition-colors"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

@@ -37,6 +37,21 @@ export async function POST(req: NextRequest) {
     }
 }
 
+export async function PUT(req: NextRequest) {
+    await dbConnect();
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+
+        const body = await req.json();
+        const stock = await Stock.findByIdAndUpdate(id, body, { new: true });
+        return NextResponse.json(stock);
+    } catch (error) {
+        return NextResponse.json({ error: 'Failed to update stock' }, { status: 500 });
+    }
+}
+
 export async function DELETE(req: NextRequest) {
     await dbConnect();
     try {

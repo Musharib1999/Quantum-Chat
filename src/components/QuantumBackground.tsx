@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { useTheme } from './ThemeContext';
 
 const QuantumBackground = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const { theme } = useTheme();
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -20,10 +18,10 @@ const QuantumBackground = () => {
         canvas.width = width;
         canvas.height = height;
 
-        // Theme-aware colors
-        const particleColor = theme === 'dark' ? '255, 255, 255' : '24, 24, 27'; // White vs Zinc-900
-        const lineOpacityFactor = theme === 'dark' ? 0.08 : 0.15; // Slightly stronger lines in light mode
-        const particleOpacityFactor = theme === 'dark' ? 0.5 : 0.6;
+        // Hardcoded light mode colors
+        const particleColor = '24, 24, 27'; // Zinc-900
+        const lineOpacityFactor = 0.15; // Slightly stronger lines in light mode
+        const particleOpacityFactor = 0.6;
 
         const particles: Particle[] = [];
         const particleCount = Math.min(Math.floor(width * height / 15000), 100); // Responsive count
@@ -113,7 +111,7 @@ const QuantumBackground = () => {
         return () => {
             window.removeEventListener('resize', handleResize);
         };
-    }, [theme]); // Re-run effect when theme changes
+    }, []);
 
     return (
         <canvas

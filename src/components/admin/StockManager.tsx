@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash, ExternalLink, Loader2 } from 'lucide-react';
 import axios from 'axios';
-import { useTheme } from '@/components/ThemeContext';
 
 interface Stock {
     _id: string;
@@ -12,14 +10,12 @@ interface Stock {
 }
 
 export default function StockManager() {
-    const { theme } = useTheme();
-    const isDarkMode = theme === 'dark';
-
     const [stocks, setStocks] = useState<Stock[]>([]);
     const [loading, setLoading] = useState(true);
-    const [newName, setNewName] = useState('');
-    const [newUrl, setNewUrl] = useState('');
+    const [name, setName] = useState('');
+    const [url, setUrl] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchStocks();
@@ -36,24 +32,41 @@ export default function StockManager() {
         }
     };
 
-    const handleAdd = async (e: React.FormEvent) => {
+    const resetForm = () => {
+        setName('');
+        setUrl('');
+        setEditingId(null);
+    };
+
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newName || !newUrl) return;
+        if (!name || !url) return;
 
         setIsSubmitting(true);
         try {
-            const res = await axios.post('/api/stocks', { name: newName, url: newUrl });
-            setStocks([...stocks, res.data]);
-            setNewName('');
-            setNewUrl('');
+            if (editingId) {
+                const res = await axios.put(`/api/stocks?id=${editingId}`, { name, url });
+                setStocks(stocks.map(s => s._id === editingId ? res.data : s));
+            } else {
+                const res = await axios.post('/api/stocks', { name, url });
+                setStocks([...stocks, res.data]);
+            }
+            resetForm();
         } catch (error) {
-            console.error('Failed to add stock', error);
+            console.error('Failed to save stock', error);
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    const handleEdit = (stock: Stock) => {
+        setName(stock.name);
+        setUrl(stock.url);
+        setEditingId(stock._id);
+    };
+
     const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this stock?")) return;
         try {
             await axios.delete(`/api/stocks?id=${id}`);
             setStocks(stocks.filter(s => s._id !== id));
@@ -65,63 +78,84 @@ export default function StockManager() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Stock Watchlist</h2>
+                <h2 className="text-xl font-semibold text-slate-900">Stock watchlist</h2>
             </div>
 
-            {/* Add Form */}
-            <form onSubmit={handleAdd} className={`p-4 rounded-lg border space-y-4 ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
+            {/* Add/Edit Form */}
+            <form onSubmit={handleSave} className="p-4 rounded-lg border space-y-4 bg-white border-slate-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                         type="text"
-                        placeholder="Stock Name (e.g. IonQ Inc.)"
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        className={`border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] ${isDarkMode ? 'bg-slate-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                        placeholder="Stock name (e.g. IonQ Inc.)"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] bg-slate-50 border-slate-200 text-slate-900"
                     />
                     <input
                         type="text"
-                        placeholder="Analysis URL"
-                        value={newUrl}
-                        onChange={(e) => setNewUrl(e.target.value)}
-                        className={`border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] ${isDarkMode ? 'bg-slate-950 border-white/10 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                        placeholder="Analysis url"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] bg-slate-50 border-slate-200 text-slate-900"
                     />
                 </div>
-                <button
-                    type="submit"
-                    disabled={isSubmitting || !newName || !newUrl}
-                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                    {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                    Add Stock
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        type="submit"
+                        disabled={isSubmitting || !name || !url}
+                        className="bg-[#3066bb] hover:bg-[#255299] text-white px-6 py-2 rounded text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                        {isSubmitting ? 'Saving...' : editingId ? 'Update stock' : 'Add stock'}
+                    </button>
+                    {editingId && (
+                        <button
+                            type="button"
+                            onClick={resetForm}
+                            className="px-6 py-2 text-slate-500 hover:text-slate-900 text-sm font-semibold transition-all"
+                        >
+                            Cancel
+                        </button>
+                    )}
+                </div>
             </form>
 
             {/* List */}
             {loading ? (
-                <div className="flex justify-center p-8"><Loader2 className={`animate-spin ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} /></div>
+                <div className="flex justify-center p-8 text-slate-400 text-sm">Loading stocks...</div>
             ) : (
-                <div className={`rounded-lg border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
-                    <table className={`w-full text-left text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                        <thead className={isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-50 text-slate-900'}>
+                <div className="rounded-lg border overflow-hidden bg-white border-slate-200">
+                    <table className="w-full text-left text-sm text-slate-600">
+                        <thead className="bg-slate-50 text-slate-900 border-b border-slate-200">
                             <tr>
-                                <th className="px-4 py-3 font-medium">Name</th>
-                                <th className="px-4 py-3 font-medium">Link</th>
-                                <th className="px-4 py-3 font-medium text-right">Actions</th>
+                                <th className="px-4 py-3 font-semibold">Name</th>
+                                <th className="px-4 py-3 font-semibold">Link</th>
+                                <th className="px-4 py-3 font-semibold text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className={`divide-y ${isDarkMode ? 'divide-white/5' : 'divide-slate-200'}`}>
+                        <tbody className="divide-y divide-slate-200">
                             {stocks.map((stock) => (
-                                <tr key={stock._id} className={`transition-colors ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}>
-                                    <td className="px-4 py-3">{stock.name}</td>
+                                <tr key={stock._id} className="transition-colors hover:bg-slate-50">
+                                    <td className="px-4 py-3 text-slate-900 font-medium">{stock.name}</td>
                                     <td className="px-4 py-3">
-                                        <a href={stock.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 ${isDarkMode ? 'text-[#3066bb] hover:text-[#255299]' : 'text-[#3066bb] hover:text-[#255299]'}`}>
-                                            View <ExternalLink size={12} />
+                                        <a href={stock.url} target="_blank" rel="noopener noreferrer" className="text-[#3066bb] hover:underline">
+                                            View analyst report
                                         </a>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <button onClick={() => handleDelete(stock._id)} className="text-red-500 hover:text-red-400 p-1 hover:bg-red-500/10 rounded">
-                                            <Trash size={14} />
-                                        </button>
+                                        <div className="flex justify-end gap-3">
+                                            <button
+                                                onClick={() => handleEdit(stock)}
+                                                className="text-slate-600 hover:text-slate-900 font-semibold text-xs"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(stock._id)}
+                                                className="text-red-500 hover:text-red-600 font-semibold text-xs"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

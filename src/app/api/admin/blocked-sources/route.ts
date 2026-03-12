@@ -25,6 +25,21 @@ export async function POST(req: Request) {
     }
 }
 
+export async function PUT(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+        if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+
+        const { name } = await req.json();
+        await dbConnect();
+        const source = await BlockedSource.findByIdAndUpdate(id, { name }, { new: true });
+        return NextResponse.json(source);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
 export async function DELETE(req: Request) {
     try {
         const { searchParams } = new URL(req.url);

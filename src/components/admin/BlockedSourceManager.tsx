@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Trash2, Plus, Loader2, Globe } from 'lucide-react';
 import axios from 'axios';
-import { useTheme } from '@/components/ThemeContext';
 
 interface BlockedSource {
     _id: string;
@@ -12,13 +10,11 @@ interface BlockedSource {
 }
 
 export default function BlockedSourceManager() {
-    const { theme } = useTheme();
-    const isDarkMode = theme === 'dark';
-
     const [sources, setSources] = useState<BlockedSource[]>([]);
-    const [newName, setNewName] = useState('');
+    const [name, setName] = useState('');
     const [loading, setLoading] = useState(true);
-    const [adding, setAdding] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchSources();
@@ -36,23 +32,39 @@ export default function BlockedSourceManager() {
         }
     };
 
-    const handleAdd = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newName.trim()) return;
+    const resetForm = () => {
+        setName('');
+        setEditingId(null);
+    };
 
-        setAdding(true);
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+
+        setIsSubmitting(true);
         try {
-            const res = await axios.post('/api/admin/blocked-sources', { name: newName.trim() });
-            setSources([res.data, ...sources]);
-            setNewName('');
+            if (editingId) {
+                const res = await axios.put(`/api/admin/blocked-sources?id=${editingId}`, { name: name.trim() });
+                setSources(sources.map(s => s._id === editingId ? res.data : s));
+            } else {
+                const res = await axios.post('/api/admin/blocked-sources', { name: name.trim() });
+                setSources([res.data, ...sources]);
+            }
+            resetForm();
         } catch (error) {
-            console.error('Failed to add blocked source', error);
+            console.error('Failed to save blocked source', error);
         } finally {
-            setAdding(false);
+            setIsSubmitting(false);
         }
     };
 
+    const handleEdit = (source: BlockedSource) => {
+        setName(source.name);
+        setEditingId(source._id);
+    };
+
     const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to unblock this source?")) return;
         try {
             await axios.delete(`/api/admin/blocked-sources?id=${id}`);
             setSources(sources.filter(s => s._id !== id));
@@ -65,52 +77,54 @@ export default function BlockedSourceManager() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className={`text-xl font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                        <ShieldAlert className="text-red-500" size={24} /> News Portal Blocklist
-                    </h2>
-                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <h2 className="text-xl font-semibold text-slate-900">News portal blocklist</h2>
+                    <p className="text-sm mt-1 text-slate-500">
                         Blocked portals will have their news stored in the database but hidden from the frontend.
                     </p>
                 </div>
             </div>
 
-            {/* Add Form */}
-            <form onSubmit={handleAdd} className={`p-4 rounded-xl border flex gap-3 ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
-                <div className="relative flex-1">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Enter portal name (e.g. Google News, Reuters)"
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2 rounded-lg border text-sm transition-all focus:outline-none focus:ring-1 focus:ring-[#3066bb] ${isDarkMode ? 'bg-slate-800 border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
-                    />
-                </div>
+            {/* Add/Edit Form */}
+            <form onSubmit={handleSave} className="p-4 rounded-xl border border-slate-200 flex gap-3 bg-white shadow-sm">
+                <input
+                    type="text"
+                    placeholder="Enter portal name (e.g. Google News, Reuters)"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-slate-50 text-slate-900"
+                />
                 <button
                     type="submit"
-                    disabled={adding || !newName.trim()}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-sm"
+                    disabled={isSubmitting || !name.trim()}
+                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                 >
-                    {adding ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                    Block Portal
+                    {isSubmitting ? 'Saving...' : editingId ? 'Update portal' : 'Block portal'}
                 </button>
+                {editingId && (
+                    <button
+                        type="button"
+                        onClick={resetForm}
+                        className="px-4 py-2.5 text-slate-500 hover:text-slate-900 text-sm font-semibold"
+                    >
+                        Cancel
+                    </button>
+                )}
             </form>
 
             {/* List */}
-            <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
-                <table className={`w-full text-left text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                    <thead className={isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-50 text-slate-900'}>
+            <div className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+                <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 text-slate-900 border-b border-slate-200">
                         <tr>
-                            <th className="px-5 py-4 font-medium">Portal Name</th>
-                            <th className="px-5 py-4 font-medium">Added At</th>
-                            <th className="px-5 py-4 font-medium text-right w-24">Actions</th>
+                            <th className="px-5 py-4 font-semibold">Portal name</th>
+                            <th className="px-5 py-4 font-semibold">Added at</th>
+                            <th className="px-5 py-4 font-semibold text-right w-40">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className={`divide-y ${isDarkMode ? 'divide-white/5' : 'divide-slate-200'}`}>
+                    <tbody className="divide-y divide-slate-100">
                         {loading ? (
                             <tr>
-                                <td colSpan={3} className="px-5 py-12 text-center">
-                                    <Loader2 className="animate-spin w-6 h-6 mx-auto mb-2 text-slate-500" />
+                                <td colSpan={3} className="px-5 py-12 text-center text-slate-400">
                                     Loading blocklist...
                                 </td>
                             </tr>
@@ -122,21 +136,28 @@ export default function BlockedSourceManager() {
                             </tr>
                         ) : (
                             sources.map((source) => (
-                                <tr key={source._id} className={`group transition-colors ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}>
-                                    <td className="px-5 py-4 font-medium tracking-tight">
+                                <tr key={source._id} className="group transition-colors hover:bg-slate-50">
+                                    <td className="px-5 py-4 font-semibold text-slate-800">
                                         {source.name}
                                     </td>
-                                    <td className="px-5 py-4 text-xs opacity-60 font-sans">
+                                    <td className="px-5 py-4 text-xs text-slate-500">
                                         {new Date(source.createdAt).toLocaleString()}
                                     </td>
                                     <td className="px-5 py-4 text-right">
-                                        <button
-                                            onClick={() => handleDelete(source._id)}
-                                            className="text-red-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-lg transition-colors"
-                                            title="Unblock Portal"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <div className="flex justify-end gap-3">
+                                            <button
+                                                onClick={() => handleEdit(source)}
+                                                className="text-slate-600 hover:text-slate-900 font-semibold text-xs"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(source._id)}
+                                                className="text-red-500 hover:text-red-600 font-semibold text-xs"
+                                            >
+                                                Unblock
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))

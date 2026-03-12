@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Save, Loader2, Zap, Cpu, AlertCircle, Info } from 'lucide-react';
 import axios from 'axios';
 
 const PROVIDER_MODELS = {
@@ -60,77 +59,62 @@ export default function LLMSettingsManager() {
     if (loading) {
         return (
             <div className="flex items-center justify-center p-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="text-slate-400 text-sm">Loading infrastructure settings...</div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-primary/10 p-6 rounded-2xl border border-primary/20 backdrop-blur-md">
-                <h3 className="flex items-center gap-2 font-bold text-primary text-lg">
-                    <Zap size={24} /> Hybrid LLM Infrastructure
-                </h3>
-                <p className="text-muted-foreground text-sm mt-1">
-                    Toggle the brain of Quantum Guru. This setting affects all AI features across the platform.
-                </p>
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-slate-900">Core intelligence configuration</h2>
             </div>
 
-            <div className="bg-card/70 backdrop-blur-md p-8 rounded-2xl border border-border shadow-xl space-y-8">
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-8">
                 {/* Provider Selection */}
                 <div>
-                    <label className="text-sm font-bold text-muted-foreground uppercase mb-4 block tracking-wider">Active Provider</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase mb-4 block tracking-wider">Active intelligence provider</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                             onClick={() => setSettings({ ...settings, activeProvider: 'groq', activeModel: PROVIDER_MODELS.groq[0].id })}
-                            className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 active:scale-95 ${settings.activeProvider === 'groq'
-                                ? 'border-orange-500 bg-orange-500/10 text-orange-500 shadow-lg shadow-orange-500/10'
-                                : 'border-border bg-secondary/20 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'
+                            className={`p-6 rounded-2xl border transition-all flex flex-col items-center gap-3 ${settings.activeProvider === 'groq'
+                                ? 'border-[#3066bb] bg-[#3066bb]/5 text-[#3066bb]'
+                                : 'border-slate-100 bg-slate-50 text-slate-400 opacity-60 hover:opacity-100 hover:bg-slate-100'
                                 }`}
                         >
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Groq_logo.svg/1024px-Groq_logo.svg.png" className="h-6 object-contain" alt="Groq"
-                                onError={(e) => { (e.target as any).src = "https://groq.com/wp-content/uploads/2023/12/GROQ_Logo_Horizontal_White.png" }}
-                            />
-                            <span className="font-bold text-lg">GROQ (Llama)</span>
-                            <span className="text-[10px] uppercase tracking-widest font-mono font-bold">Ultra Low Latency</span>
+                            <span className="font-bold text-lg">Groq / Llama</span>
+                            <span className="text-[10px] uppercase tracking-widest font-semibold">Low latency execution</span>
                         </button>
 
                         <button
                             onClick={() => setSettings({ ...settings, activeProvider: 'gemini', activeModel: PROVIDER_MODELS.gemini[0].id })}
-                            className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 active:scale-95 ${settings.activeProvider === 'gemini'
-                                ? 'border-blue-500 bg-blue-500/10 text-blue-500 shadow-lg shadow-blue-500/10'
-                                : 'border-border bg-secondary/20 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'
+                            className={`p-6 rounded-2xl border transition-all flex flex-col items-center gap-3 ${settings.activeProvider === 'gemini'
+                                ? 'border-[#3066bb] bg-[#3066bb]/5 text-[#3066bb]'
+                                : 'border-slate-100 bg-slate-50 text-slate-400 opacity-60 hover:opacity-100 hover:bg-slate-100'
                                 }`}
                         >
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/1024px-Google_Gemini_logo.svg.png" className="h-6 object-contain" alt="Gemini" />
                             <span className="font-bold text-lg">Google Gemini</span>
-                            <span className="text-[10px] uppercase tracking-widest font-mono font-bold">Advanced Reasoning</span>
+                            <span className="text-[10px] uppercase tracking-widest font-semibold">Advanced reasoning engine</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Model Selection */}
-                <div className="pt-6 border-t border-border/50">
-                    <label className="text-sm font-bold text-muted-foreground uppercase mb-4 block tracking-wider">Model Selection</label>
-                    <div className="relative">
-                        <select
-                            value={settings.activeModel}
-                            onChange={(e) => setSettings({ ...settings, activeModel: e.target.value })}
-                            className="w-full p-4 bg-secondary/30 border border-border rounded-xl text-foreground font-medium appearance-none focus:ring-2 focus:ring-primary outline-none transition-all cursor-pointer"
-                        >
-                            {PROVIDER_MODELS[settings.activeProvider as keyof typeof PROVIDER_MODELS].map(model => (
-                                <option key={model.id} value={model.id} className="bg-card text-foreground">
-                                    {model.name} ({model.id})
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                            <Cpu size={18} />
-                        </div>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground bg-secondary/20 p-3 rounded-lg border border-border/50">
-                        <Info size={14} className="text-primary" />
-                        <span>Changing the model will reset active conversation contexts on refresh.</span>
+                <div className="pt-6 border-t border-slate-100">
+                    <label className="text-xs font-bold text-slate-500 uppercase mb-4 block tracking-wider">Specific model architecture</label>
+                    <select
+                        value={settings.activeModel}
+                        onChange={(e) => setSettings({ ...settings, activeModel: e.target.value })}
+                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium outline-none focus:ring-1 focus:ring-[#3066bb] transition-all cursor-pointer text-sm"
+                    >
+                        {PROVIDER_MODELS[settings.activeProvider as keyof typeof PROVIDER_MODELS].map(model => (
+                            <option key={model.id} value={model.id}>
+                                {model.name}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <span>Changing the model architecture will affect system accuracy and response speed across the entire platform.</span>
                     </div>
                 </div>
 
@@ -138,13 +122,13 @@ export default function LLMSettingsManager() {
                 <div className="pt-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {status === 'success' && (
-                            <div className="flex items-center gap-1.5 text-green-500 text-sm font-bold bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
-                                <Zap size={14} fill="currentColor" /> Settings Saved Live
+                            <div className="text-green-600 text-xs font-bold px-3 py-1 bg-green-50 rounded-full border border-green-100">
+                                Configuration deployed successfully
                             </div>
                         )}
                         {status === 'error' && (
-                            <div className="text-red-400 text-sm flex items-center gap-1.5 font-bold">
-                                <AlertCircle size={16} /> Error saving settings
+                            <div className="text-red-500 text-xs font-bold px-3 py-1 bg-red-50 rounded-full border border-red-100">
+                                Error deploying configuration
                             </div>
                         )}
                     </div>
@@ -152,10 +136,9 @@ export default function LLMSettingsManager() {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
+                        className="bg-[#3066bb] hover:bg-[#255299] text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-sm disabled:opacity-50 text-sm"
                     >
-                        {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                        Deploy Core Configuration
+                        {saving ? 'Deploying...' : 'Deploy core configuration'}
                     </button>
                 </div>
             </div>
