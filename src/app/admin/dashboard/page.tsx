@@ -15,8 +15,6 @@ import {
     getChatLogs,
     type QaPairType as QaPair, type GuardrailType as Guardrail, type ChatLogType
 } from '../../actions/admin';
-import { useTheme } from '@/components/ThemeContext';
-import ThemeToggle from '../../../components/ThemeToggle';
 import StockManager from '../../../components/admin/StockManager';
 import ArticleManager from '../../../components/admin/ArticleManager';
 import ProblemConsole from '../../../components/admin/ProblemConsole';
@@ -32,8 +30,7 @@ import HardwareManager from '../../../components/admin/HardwareManager';
 import BlockedSourceManager from '../../../components/admin/BlockedSourceManager';
 
 export default function AdminDashboard() {
-    const { theme } = useTheme();
-    const isDarkMode = theme === 'dark';
+    const isDarkMode = false;
     const router = useRouter();
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const initialTab = searchParams?.get('tab') || "knowledge_base";
@@ -313,23 +310,6 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('llm_settings'); setIsMobileMenuOpen(false); }}
                     />
                 </nav>
-
-                <div className={`p-4 border-t ${isDarkMode ? 'border-white/10' : 'border-slate-200'} space-y-2`}>
-                    <button
-                        onClick={() => setShowPasswordModal(true)}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-lg transition-all font-medium group text-sm"
-                    >
-                        <Key size={18} className="group-hover:text-orange-500 transition-colors" />
-                        Change Password
-                    </button>
-                    <button
-                        onClick={() => router.push('/admin/login')}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-all font-medium group text-sm"
-                    >
-                        <LogOut size={18} className="group-hover:rotate-12 transition-transform" />
-                        Logout
-                    </button>
-                </div>
             </aside>
 
             {/* Main Content */}
@@ -366,11 +346,29 @@ export default function AdminDashboard() {
                         </h2>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <ThemeToggle />
-                        <div className="text-sm text-right">
-                            <p className="font-bold text-muted-foreground dark:text-zinc-200">Administrator</p>
-                            <p className="text-[10px] text-green-500 font-medium tracking-widest uppercase">● System Online</p>
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                             <button
+                                onClick={() => setShowPasswordModal(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 rounded-lg transition-all font-medium text-xs border border-transparent hover:border-slate-200"
+                            >
+                                <Key size={14} />
+                                Password
+                            </button>
+                            <button
+                                onClick={() => router.push('/admin/login')}
+                                className="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:bg-red-50/80 hover:text-red-600 rounded-lg transition-all font-medium text-xs border border-transparent hover:border-red-100"
+                            >
+                                <LogOut size={14} />
+                                Logout
+                            </button>
+                        </div>
+
+                        <div className="h-4 w-px bg-slate-200" />
+
+                        <div className="text-xs text-right hidden sm:block">
+                            <p className="font-bold text-slate-900">Administrator</p>
+                            <p className="text-[10px] text-green-500 font-medium tracking-widest uppercase">● Online</p>
                         </div>
                         <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-foreground border border-border font-bold">A</div>
                     </div>
@@ -785,8 +783,7 @@ export default function AdminDashboard() {
 
 // Components
 function SidebarLink({ icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) {
-    const { theme } = useTheme();
-    const isDarkMode = theme === 'dark';
+    const isDarkMode = false;
 
     // Same styling logic as landing page feature cards
     return (
