@@ -456,37 +456,37 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 {/* 1. Summary Table */}
                 <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                     <div className="bg-muted/50 px-4 py-3 border-b border-border">
-                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">QUBO Optimized Portfolio</h4>
+                        <h4 className="text-xs text-foreground tracking-wider">QUBO Optimized Portfolio</h4>
                     </div>
                     <table className="w-full text-left">
                         <tbody className="divide-y divide-border">
                             <tr>
-                                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground bg-secondary/10 uppercase tracking-tight">Sectors</td>
-                                <td className="px-4 py-3 text-sm font-bold text-[#3066bb]">{metrics.sectorsCount} industries</td>
+                                <td className="px-4 py-3 text-xs text-muted-foreground bg-secondary/10 tracking-tight">Sectors</td>
+                                <td className="px-4 py-3 text-sm text-[#3066bb]">{metrics.sectorsCount} industries</td>
                             </tr>
                             <tr>
-                                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground bg-secondary/10 uppercase tracking-tight">Assets</td>
-                                <td className="px-4 py-3 text-sm font-extrabold text-foreground">{metrics.assetsCount} selections</td>
+                                <td className="px-4 py-3 text-xs text-muted-foreground bg-secondary/10 tracking-tight">Assets</td>
+                                <td className="px-4 py-3 text-sm text-foreground">{metrics.assetsCount} selections</td>
                             </tr>
                             <tr>
-                                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground bg-secondary/10 uppercase tracking-tight">Stocks</td>
-                                <td className="px-4 py-3 text-sm font-extrabold text-foreground">{metrics.universeSize} universe</td>
+                                <td className="px-4 py-3 text-xs text-muted-foreground bg-secondary/10 tracking-tight">Stocks</td>
+                                <td className="px-4 py-3 text-sm text-foreground">{metrics.universeSize} universe</td>
                             </tr>
                             <tr>
-                                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground bg-secondary/10 uppercase tracking-tight">Avg Return</td>
-                                <td className="px-4 py-3 text-sm font-black text-[#10b981]">{metrics.avgReturn.toFixed(2)}%</td>
+                                <td className="px-4 py-3 text-xs text-muted-foreground bg-secondary/10 tracking-tight">Avg Return</td>
+                                <td className="px-4 py-3 text-sm text-[#10b981]">{metrics.avgReturn.toFixed(2)}%</td>
                             </tr>
                             <tr>
-                                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground bg-secondary/10 uppercase tracking-tight">Avg Risk</td>
-                                <td className="px-4 py-3 text-sm font-black text-[#ef4444]">{metrics.avgRisk.toFixed(2)}%</td>
+                                <td className="px-4 py-3 text-xs text-muted-foreground bg-secondary/10 tracking-tight">Avg Risk</td>
+                                <td className="px-4 py-3 text-sm text-[#ef4444]">{metrics.avgRisk.toFixed(2)}%</td>
                             </tr>
                             <tr>
-                                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground bg-secondary/10 uppercase tracking-tight">Portfolio States</td>
-                                <td className="px-4 py-3 text-sm font-mono font-black text-foreground">2{toSuperscript(qubitCount)}</td>
+                                <td className="px-4 py-3 text-xs text-muted-foreground bg-secondary/10 tracking-tight">Portfolio States</td>
+                                <td className="px-4 py-3 text-sm font-mono text-foreground">2{toSuperscript(qubitCount)}</td>
                             </tr>
                             <tr>
-                                <td className="px-4 py-3 text-xs font-semibold text-muted-foreground bg-secondary/10 uppercase tracking-tight">Combinatorial Scale</td>
-                                <td className="px-4 py-3 text-sm font-extrabold text-[#3066bb]">{getQuantumStateSpaceName(qubitCount)}</td>
+                                <td className="px-4 py-3 text-xs text-muted-foreground bg-secondary/10 tracking-tight">Combinatorial Scale</td>
+                                <td className="px-4 py-3 text-sm text-[#3066bb]">{getQuantumStateSpaceName(qubitCount)}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -495,26 +495,26 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 {/* 2. Detailed Table */}
                 <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                     <div className="bg-muted/50 px-4 py-3 border-b border-border">
-                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Asset Allocation</h4>
+                        <h4 className="text-xs text-foreground tracking-wider">Asset Allocation</h4>
                     </div>
                     <div className="max-h-[380px] overflow-y-auto overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
                                 <tr>
-                                    <th className="px-4 py-3 text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest bg-secondary/5">Sector</th>
-                                    <th className="px-4 py-3 text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest bg-secondary/5">Ticker</th>
-                                    <th className="px-4 py-3 text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest bg-secondary/5">Return</th>
-                                    <th className="px-4 py-3 text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest bg-secondary/5">Risk</th>
-                                    <th className="px-4 py-3 text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest bg-secondary/5">Asset</th>
+                                    <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Sector</th>
+                                    <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Ticker</th>
+                                    <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Return</th>
+                                    <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Risk</th>
+                                    <th className="px-4 py-3 text-[10px] text-muted-foreground tracking-widest bg-secondary/5">Asset</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {assignments.map((row: any, idx: number) => (
                                     <tr key={idx} className="hover:bg-muted/40 transition-colors group">
-                                        <td className="px-4 py-3 text-xs font-semibold text-muted-foreground/80 group-hover:text-foreground transition-colors uppercase tracking-tight">{row.sector}</td>
-                                        <td className="px-4 py-3 text-sm font-black text-foreground">{row.ticker}</td>
-                                        <td className="px-4 py-3 text-sm font-black text-[#10b981]">{row.return !== undefined ? `${row.return.toFixed(2)}%` : '-'}</td>
-                                        <td className="px-4 py-3 text-sm font-black text-[#ef4444]">{row.risk !== undefined ? `${row.risk.toFixed(2)}%` : '-'}</td>
+                                        <td className="px-4 py-3 text-xs text-muted-foreground/80 group-hover:text-foreground transition-colors tracking-tight">{row.sector}</td>
+                                        <td className="px-4 py-3 text-sm text-foreground">{row.ticker}</td>
+                                        <td className="px-4 py-3 text-sm text-[#10b981]">{row.return !== undefined ? `${row.return.toFixed(2)}%` : '-'}</td>
+                                        <td className="px-4 py-3 text-sm text-[#ef4444]">{row.risk !== undefined ? `${row.risk.toFixed(2)}%` : '-'}</td>
                                         <td className="px-4 py-3 text-[11px] font-mono text-muted-foreground leading-relaxed italic">{row.route?.split('(')[0].trim()}</td>
                                     </tr>
                                 ))}
