@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
     BarChart3, FileText, Lock, ShieldAlert, MessageSquare, Plus, Trash2, Save,
     LogOut, Search, ChevronDown, CheckCircle, AlertTriangle, Menu, X, TrendingUp, BookOpen, Layers, User as UserIcon, Newspaper, Briefcase,
-    Key, Loader2, Beaker, ArrowUpCircle, Cpu
+    Key, Loader2, Beaker, ArrowUpCircle, Cpu, Terminal
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -19,7 +19,7 @@ import { useTheme } from '@/components/ThemeContext';
 import ThemeToggle from '../../../components/ThemeToggle';
 import StockManager from '../../../components/admin/StockManager';
 import ArticleManager from '../../../components/admin/ArticleManager';
-import FormArchitect from '../../../components/admin/FormArchitect';
+import ProblemConsole from '../../../components/admin/ProblemConsole';
 import UserManager from '../../../components/admin/UserManager';
 import NewsManager from '../../../components/admin/NewsManager';
 import PromptEditor from '../../../components/admin/PromptEditor';
@@ -235,8 +235,8 @@ export default function AdminDashboard() {
                         onClick={() => { setActiveTab('stocks'); setIsMobileMenuOpen(false); }}
                     />
                     <SidebarLink
-                        icon={<Plus size={20} />}
-                        label="Form Architect"
+                        icon={<Terminal size={20} />}
+                        label="Problem Console"
                         active={activeTab === 'forms'}
                         onClick={() => { setActiveTab('forms'); setIsMobileMenuOpen(false); }}
                     />
@@ -355,14 +355,14 @@ export default function AdminDashboard() {
                             {activeTab === 'articles' && <BookOpen className="text-blue-400" />}
                             {activeTab === 'use_cases' && <Briefcase className="text-purple-500" />}
                             {activeTab === 'experiments' && <Beaker className="text-purple-500" />}
-                            {activeTab === 'forms' && <Layers className="text-primary" />}
+                            {activeTab === 'forms' && <Terminal className="text-primary" />}
                             {activeTab === 'hardware' && <Cpu className="text-blue-500" />}
                             {activeTab === 'market_prompts' && <ArrowUpCircle className="text-green-500" />}
                             {activeTab === 'news_blocklist' && <ShieldAlert className="text-red-500" />}
                             {activeTab === 'users' && <UserIcon className="text-blue-400" />}
                             {activeTab === 'llm_settings' && <Cpu className="text-orange-400" />}
                             {activeTab === 'stock_debug' && <Search className="text-blue-400" />}
-                            {activeTab.replace('_', ' ')}
+                            {activeTab === 'forms' ? 'problem console' : activeTab.replace('_', ' ')}
                         </h2>
                     </div>
 
@@ -571,10 +571,10 @@ export default function AdminDashboard() {
                         </div>
                     )}
 
-                    {/* FORMS TAB */}
+                    {/* PROBLEM CONSOLE TAB */}
                     {activeTab === 'forms' && (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <FormArchitect />
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
+                            <ProblemConsole />
                         </div>
                     )}
 
