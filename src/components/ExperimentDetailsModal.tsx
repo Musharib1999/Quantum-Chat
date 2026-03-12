@@ -113,7 +113,7 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                     >
                         <div className="p-4 border-b border-border flex items-center justify-between bg-white dark:bg-[#111111]">
                             <div className="flex items-center gap-2">
-                                <span className="text-[#111827] dark:text-foreground text-sm font-bold">Quantum Source Code</span>
+                                <span className="text-[#111827] dark:text-foreground text-sm font-bold truncate">Quantum code for {display.hardware}</span>
                             </div>
                             <button 
                                 onClick={() => setViewingCode(false)}
@@ -219,27 +219,15 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                                 <section className="space-y-4">
                                     <div className="flex items-center gap-4">
                                         <span className="text-[#111827] font-bold text-xs tracking-wide">
-                                            Generated Qiskit/Python Code
+                                            Quantum code for {display.hardware}
                                         </span>
                                         <div className="h-px bg-border flex-1" />
                                         <button 
                                             onClick={() => setViewingCode(true)}
                                             className="px-4 py-1.5 rounded-lg bg-[#3066bb]/10 text-[#3066bb] text-[10px] font-bold hover:bg-[#3066bb]/20 transition-all border border-[#3066bb]/20"
                                         >
-                                            View Source
+                                            View code
                                         </button>
-                                    </div>
-                                    <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 overflow-hidden shadow-inner relative group">
-                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a0a0a]/80" />
-                                        <pre className="text-[11px] font-mono text-green-400/60 leading-relaxed overflow-hidden h-24">{display.qiskitCode || "# No code available"}</pre>
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button 
-                                                onClick={() => setViewingCode(true)}
-                                                className="px-6 py-2 rounded-xl bg-white/10 backdrop-blur-md text-white text-xs font-bold border border-white/20"
-                                            >
-                                                Open Fullscreen
-                                            </button>
-                                        </div>
                                     </div>
                                 </section>
 
