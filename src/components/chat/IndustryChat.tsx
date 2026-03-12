@@ -456,9 +456,6 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             <div className="grid grid-cols-1 xl:grid-cols-8 gap-4 my-6">
                 {/* 1. Summary Table */}
                 <div className="xl:col-span-3 bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-                    <div className="bg-muted/50 px-4 py-3 border-b border-border">
-                        <h4 className="text-xs text-foreground tracking-wider">QUBO Optimized Portfolio</h4>
-                    </div>
                     <table className="w-full text-left">
                         <tbody className="divide-y divide-border">
                             <tr>
@@ -495,9 +492,6 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
 
                 {/* 2. Detailed Table */}
                 <div className="xl:col-span-5 bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-                    <div className="bg-muted/50 px-4 py-3 border-b border-border">
-                        <h4 className="text-xs text-foreground tracking-wider">Asset Allocation</h4>
-                    </div>
                     <div className="max-h-[380px] overflow-y-auto overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
