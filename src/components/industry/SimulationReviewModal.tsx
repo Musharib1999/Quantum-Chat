@@ -60,36 +60,36 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                     <div className="space-y-4">
                         <div className="bg-secondary/40 border border-border rounded-2xl p-6">
                             <h3 className="text-xl font-bold text-[#111827] dark:text-foreground tracking-tight">{config.problem}</h3>
-                            <p className="text-xs text-muted-foreground mt-1 mb-6 flex items-center gap-2">
+                            <p className="text-xs text-[#111827]/70 mt-1 mb-6 flex items-center gap-2">
                                 <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">{config.industry}</span>
                                 <span className="text-border">|</span>
-                                <span>{config.service}</span>
+                                <span className="font-medium">{config.service}</span>
                             </p>
                             
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-6 pt-6 border-t border-border">
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Hardware</span>
+                                    <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Hardware</span>
                                     <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{config.hardware}</span>
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
-                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Scale</span>
+                                    <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Scale</span>
                                     <div className="flex flex-col">
                                         <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{qubits} Qubits</span>
-                                        <span className="text-[9px] text-[#3066bb] font-bold uppercase tracking-tighter">
+                                        <span className="text-[9px] text-[#3066bb] font-bold">
                                             {getQuantumStateSpaceName(qubits)} States
                                         </span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
-                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">ETA</span>
+                                    <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">ETA</span>
                                     <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{formatETA(batches * 25)}</span>
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
-                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Batches</span>
+                                    <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Batches</span>
                                     <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{batches}</span>
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
-                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Queue</span>
+                                    <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Queue</span>
                                     <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">#1 Status</span>
                                 </div>
                             </div>
@@ -99,13 +99,13 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                     {/* 2. Input Details */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-4">
-                            <span className="text-[#111827] font-bold text-xs uppercase tracking-widest">Solution Parameters</span>
+                            <span className="text-[#111827] font-bold text-xs tracking-wide">Solution Parameters</span>
                             <div className="h-px bg-border flex-1" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {inputEntries.map(([key, value]) => (
                                 <div key={key} className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1.5 hover:shadow-md transition-all duration-300">
-                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">{formatLabel(key)}</span>
+                                    <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">{formatLabel(key)}</span>
                                     <span className="text-sm font-bold text-[#111827] dark:text-foreground truncate">
                                         {Array.isArray(value) ? value.join(', ') : String(value)}
                                     </span>
