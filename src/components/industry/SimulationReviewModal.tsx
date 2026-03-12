@@ -90,7 +90,7 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
                                     <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Queue</span>
-                                    <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">#1 Status</span>
+                                    <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">#1</span>
                                 </div>
                             </div>
                         </div>
