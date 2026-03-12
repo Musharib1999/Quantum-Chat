@@ -118,9 +118,9 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                             </div>
                             <button 
                                 onClick={() => setViewingCode(false)}
-                                className="px-4 py-2 rounded-xl bg-[#3066bb] text-white text-xs hover:bg-[#3066bb]/90 transition-all font-bold shadow-md shadow-[#3066bb]/20"
+                                className="p-2 hover:bg-secondary rounded-xl text-muted-foreground hover:text-foreground transition-colors"
                             >
-                                Exit Fullscreen
+                                <X size={20} />
                             </button>
                         </div>
                         <div className="flex-1 overflow-auto p-8 lg:p-12 custom-scrollbar bg-white dark:bg-card">
