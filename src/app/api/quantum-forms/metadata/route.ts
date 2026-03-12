@@ -29,15 +29,14 @@ export async function GET() {
             industries: industries.map((name: string) => ({ id: name.toLowerCase().replace(/ /g, '_'), label: name })),
             services: services.map((name: string) => ({ id: name.toLowerCase().replace(/ /g, '_'), label: name })),
             problemMapping: allForms.reduce((acc: any, form) => {
-                const industry = form.industry;
-                const service = form.service;
-                const problem = form.problem;
+                const { industry, problem, service, hardware } = form;
 
                 if (!acc[industry]) acc[industry] = {};
-                if (!acc[industry][service]) acc[industry][service] = [];
+                if (!acc[industry][problem]) acc[industry][problem] = {};
+                if (!acc[industry][problem][service]) acc[industry][problem][service] = [];
 
-                if (!acc[industry][service].includes(problem)) {
-                    acc[industry][service].push(problem);
+                if (hardware && !acc[industry][problem][service].includes(hardware)) {
+                    acc[industry][problem][service].push(hardware);
                 }
                 return acc;
             }, {})
