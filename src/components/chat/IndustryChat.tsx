@@ -411,7 +411,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     results: { output: simOutput },
                     analysis: fullMsg,
                     chartData: result.chartData,
-                    assignmentsTable: result.assignmentsTable
+                    assignmentsTable: result.assignmentsTable,
+                    portfolioMetrics: result.portfolioMetrics
                 });
             } catch (saveError) {
                 console.error("Experiment save failed in UI", saveError);

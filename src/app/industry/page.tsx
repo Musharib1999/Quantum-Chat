@@ -139,6 +139,8 @@ export default function IndustryPage() {
         setShowReviewModal(false);
     };
 
+    const [initialFormData, setInitialFormData] = useState<any>(null);
+
     // Re-Run Logic
     const handleReRun = (experiment: any) => {
         setSessionConfig({
@@ -146,8 +148,9 @@ export default function IndustryPage() {
             service: experiment.service,
             problem: experiment.problem,
             hardware: experiment.hardware,
-            formData: experiment.parameters // Pre-fill
+            formData: undefined // Ensure we go to the form, not chat
         });
+        setInitialFormData(experiment.parameters);
         setFlowStage('CHAT');
         setSelectedExperiment(null); // Close modal
     };
@@ -381,7 +384,7 @@ export default function IndustryPage() {
                                                 service={sessionConfig.service!}
                                                 problem={sessionConfig.problem!}
                                                 hardware={sessionConfig.hardware!}
-                                                initialData={sessionConfig.formData} // Handling re-run pre-fill
+                                                initialData={initialFormData} // Handling re-run pre-fill
                                                 onSubmit={handleFormSubmit}
                                             />
                                         </div>

@@ -1117,6 +1117,7 @@ export async function savePipelineExperiment(data: {
     analysis: string;
     chartData?: any;
     assignmentsTable?: any[];
+    portfolioMetrics?: any;
 }) {
     try {
         await dbConnect();
@@ -1137,6 +1138,7 @@ export async function savePipelineExperiment(data: {
             analysis: data.analysis,
             chartData: data.chartData,
             assignmentsTable: data.assignmentsTable,
+            portfolioMetrics: data.portfolioMetrics,
             timestamp: new Date()
         });
         return { success: true };
