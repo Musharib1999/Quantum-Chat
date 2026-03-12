@@ -102,16 +102,22 @@ export default function ProblemConsole() {
 
     const fetchInitialData = async () => {
         try {
+            console.log("Fetching Initial Admin Data...");
             const [formsRes, metaRes, hwRes] = await Promise.all([
                 axios.get('/api/quantum-forms'),
                 axios.get('/api/quantum-forms/metadata'),
                 axios.get('/api/hardware')
             ]);
+            console.log("Forms Received:", formsRes.data.length);
+            console.log("Metadata Received:", !!metaRes.data);
+            console.log("Hardware Received:", hwRes.data.length);
+            
             setExistingForms(formsRes.data);
             setMetadata(metaRes.data);
             setHardwareList(hwRes.data);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to fetch admin data", error);
+            setStatus("Critical Error: " + error.message);
         }
     };
 
@@ -213,7 +219,7 @@ export default function ProblemConsole() {
                 <div className="space-y-2">
                     <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Problem Context</label>
                     <input list="problems" value={problem} onChange={e => setProblem(e.target.value)} placeholder="e.g. Portfolio Opt" className="w-full bg-secondary/30 border border-border rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-primary" />
-                    <datalist id="problems">{(metadata.problemMapping[industry]?.[service] || []).map((p: any) => <option key={p.id} value={p.label} />)}</datalist>
+                    <datalist id="problems">{(metadata.problemMapping[industry]?.[service] || []).map((p: string) => <option key={p} value={p} />)}</datalist>
                 </div>
                 <div className="space-y-2">
                     <label className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">Hardware Target</label>

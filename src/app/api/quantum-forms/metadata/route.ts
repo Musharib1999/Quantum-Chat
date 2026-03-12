@@ -30,23 +30,14 @@ export async function GET() {
             services: services.map((name: string) => ({ id: name.toLowerCase().replace(/ /g, '_'), label: name })),
             problemMapping: allForms.reduce((acc: any, form) => {
                 const industry = form.industry;
-                const problem = form.problem;
                 const service = form.service;
-                const hardware = form.codeTemplates?.map((t: any) => t.hardware) || [];
+                const problem = form.problem;
 
                 if (!acc[industry]) acc[industry] = {};
-                if (!acc[industry][problem]) acc[industry][problem] = {};
+                if (!acc[industry][service]) acc[industry][service] = [];
 
-                // Map services to their hardware
-                if (!acc[industry][problem][service]) {
-                    acc[industry][problem][service] = hardware;
-                } else {
-                    // Merge hardware lists if needed (though usually 1:1 problem:service:form)
-                    hardware.forEach((hw: string) => {
-                        if (!acc[industry][problem][service].includes(hw)) {
-                            acc[industry][problem][service].push(hw);
-                        }
-                    });
+                if (!acc[industry][service].includes(problem)) {
+                    acc[industry][service].push(problem);
                 }
                 return acc;
             }, {})
