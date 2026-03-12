@@ -436,9 +436,12 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         return (
             <div className="space-y-6 my-6">
                 {blueprint.outputTables.map((table: any, tIdx: number) => {
-                    // Decide if this table is for "Summary" (one row from portfolioMetrics) 
-                    // or "Details" (many rows from assignments)
-                    const isSummaryTable = table.mapping.some((col: any) => portfolioMetrics && portfolioMetrics[col.resultKey] !== undefined);
+                    // Decide if this table is for "Summary" (global metrics) or "Details" (list data)
+                    const isSummaryTable = table.mapping.some((col: any) => {
+                        const key = col.resultKey?.trim();
+                        return portfolioMetrics && portfolioMetrics[key] !== undefined && portfolioMetrics[key] !== null;
+                    });
+                    
                     const rowsData = isSummaryTable ? [portfolioMetrics] : assignments;
 
                     return (
