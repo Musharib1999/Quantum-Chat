@@ -44,21 +44,21 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                     className="bg-card w-full max-w-4xl h-[90vh] rounded-2xl border border-border shadow-2xl flex flex-col overflow-hidden"
                 >
                     {/* Header */}
-                    <div className="p-4 border-b border-border flex items-center justify-between bg-card">
-                        <div className="flex flex-col">
-                            <h2 className="text-lg font-bold text-foreground">Experiment Details</h2>
-                            <span className="text-xs text-muted-foreground font-mono">ID: {display._id}</span>
+                    <div className="p-6 md:p-8 border-b border-border flex items-center justify-between bg-white dark:bg-card">
+                        <div className="space-y-1">
+                            <h2 className="text-xl font-bold text-[#111827] dark:text-foreground tracking-tight">Experiment Details</h2>
+                            <span className="text-[10px] text-[#111827]/60 font-mono">ID: {display._id}</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => onReRun(display)}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#3066bb] text-white text-sm font-bold shadow-md hover:bg-[#3066bb]/90 transition-colors"
+                                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#3066bb] text-white text-sm font-bold shadow-xl shadow-[#3066bb]/20 hover:bg-[#3066bb]/90 transition-all active:scale-[0.98]"
                             >
                                 <Play size={16} fill="currentColor" /> Re-Run
                             </button>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                                className="p-2 hover:bg-secondary rounded-xl text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 <X size={20} />
                             </button>
@@ -69,32 +69,35 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                     <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-background/50">
 
                         {/* 1. Configuration Grid */}
-                        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="p-4 rounded-xl bg-card border border-border">
-                                <span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Industry</span>
-                                <span className="text-sm font-medium">{display.industry}</span>
+                        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1 transition-all hover:shadow-md">
+                                <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Industry</span>
+                                <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{display.industry}</span>
                             </div>
-                            <div className="p-4 rounded-xl bg-card border border-border">
-                                <span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Service</span>
-                                <span className="text-sm font-medium">{display.service}</span>
+                            <div className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1 transition-all hover:shadow-md">
+                                <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Service</span>
+                                <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{display.service}</span>
                             </div>
-                            <div className="p-4 rounded-xl bg-card border border-border">
-                                <span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Problem</span>
-                                <span className="text-sm font-medium">{display.problem}</span>
+                            <div className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1 transition-all hover:shadow-md">
+                                <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Problem</span>
+                                <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{display.problem}</span>
                             </div>
-                            <div className="p-4 rounded-xl bg-card border border-border">
-                                <span className="text-xs text-muted-foreground uppercase tracking-wider block mb-1">Hardware</span>
-                                <span className="text-sm font-medium">{display.hardware}</span>
+                            <div className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1 transition-all hover:shadow-md">
+                                <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Hardware</span>
+                                <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{display.hardware}</span>
                             </div>
                         </section>
 
                         {/* 2. Inputs (Form Data) */}
-                        <section className="space-y-3">
-                            <h3 className="flex items-center gap-2 text-sm font-bold text-muted-foreground uppercase tracking-wider">
-                                <Database size={16} /> Input Parameters
-                            </h3>
-                            <div className="bg-card border border-border rounded-xl p-4 overflow-auto max-h-48">
-                                <pre className="text-xs font-mono text-foreground/80">{JSON.stringify(display.parameters, null, 2)}</pre>
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-4">
+                                <span className="text-[#111827] font-bold text-xs tracking-wide flex items-center gap-2">
+                                    <Database size={14} className="text-[#111827]/60" /> Input Parameters
+                                </span>
+                                <div className="h-px bg-border flex-1" />
+                            </div>
+                            <div className="bg-white dark:bg-card border border-border rounded-2xl p-6 overflow-auto max-h-48 group transition-all">
+                                <pre className="text-xs font-mono text-[#111827]/80 dark:text-foreground/80 leading-relaxed">{JSON.stringify(display.parameters, null, 2)}</pre>
                             </div>
                         </section>
 
@@ -109,27 +112,33 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                         {/* 3. Generated Code — only once full data is loaded */}
                         {!loading && (
                             <>
-                                <section className="space-y-3">
-                                    <h3 className="flex items-center gap-2 text-sm font-bold text-muted-foreground uppercase tracking-wider">
-                                        <Code2 size={16} /> Generated Qiskit/Python Code
-                                    </h3>
-                                    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 overflow-auto max-h-64">
-                                        <pre className="text-xs font-mono text-green-400 leading-relaxed">{display.qiskitCode || "# No code available"}</pre>
+                                <section className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-[#111827] font-bold text-xs tracking-wide flex items-center gap-2">
+                                            <Code2 size={14} className="text-[#111827]/60" /> Generated Qiskit/Python Code
+                                        </span>
+                                        <div className="h-px bg-border flex-1" />
+                                    </div>
+                                    <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 overflow-auto max-h-80 shadow-inner">
+                                        <pre className="text-xs font-mono text-green-400/90 leading-relaxed scrollbar-hide">{display.qiskitCode || "# No code available"}</pre>
                                     </div>
                                 </section>
 
                                 {/* 4. Results & Analysis */}
-                                <section className="space-y-3">
-                                    <h3 className="flex items-center gap-2 text-sm font-bold text-muted-foreground uppercase tracking-wider">
-                                        <Terminal size={16} /> System Output & Analysis
-                                    </h3>
+                                <section className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-[#111827] font-bold text-xs tracking-wide flex items-center gap-2">
+                                            <Terminal size={14} className="text-[#111827]/60" /> System Output & Analysis
+                                        </span>
+                                        <div className="h-px bg-border flex-1" />
+                                    </div>
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <div className="bg-card border border-border rounded-xl p-6">
                                             <MarkdownRenderer content={display.analysis || "No analysis available."} />
                                         </div>
                                         {display.chartData && (
                                             <div className="bg-card border border-border rounded-xl p-6 flex flex-col items-center justify-center min-h-[300px]">
-                                                <h4 className="text-xs font-bold text-muted-foreground mb-4 w-full text-left flex items-center gap-2">
+                                                <h4 className="text-[10px] text-[#111827]/60 font-bold mb-4 w-full text-left flex items-center gap-2">
                                                     <BarChart2 size={14} /> Visualization
                                                 </h4>
                                                 <QuantumChart data={display.chartData.data} />
