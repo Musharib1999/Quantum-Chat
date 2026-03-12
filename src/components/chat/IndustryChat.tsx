@@ -508,7 +508,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                     <tr key={idx} className="hover:bg-muted/40 transition-colors group">
                                         <td className="pl-2 pr-1.5 py-3 text-sm text-[#111827] leading-relaxed">{row.route?.split('(')[0].trim()}</td>
                                         <td className="px-1.5 py-3 text-sm text-[#111827] tracking-tight">{row.sector}</td>
-                                        <td className="px-1.5 py-3 text-sm text-[#111827]">{row.ticker}</td>
+                                        <td className="px-1.5 py-3 text-sm text-[#111827]">{row.ticker || row.pilot || row.asset || 'N/A'}</td>
                                         <td className="px-1.5 py-3 text-sm text-[#10b981]">{row.return !== undefined ? `${row.return.toFixed(2)}%` : '-'}</td>
                                         <td className="px-1.5 py-3 text-sm text-[#ef4444]">{row.risk !== undefined ? `${row.risk.toFixed(2)}%` : '-'}</td>
                                     </tr>

@@ -25,13 +25,26 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
     // Filter relevant input details (exclude empty or technical fields if needed)
     const inputEntries = Object.entries(formData).filter(([_, v]) => v !== undefined && v !== '');
 
+    const formatETA = (seconds: number) => {
+        if (seconds < 60) return `~${seconds}s`;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `~${mins}m${secs > 0 ? ` ${secs}s` : ''}`;
+    };
+
+    const formatLabel = (key: string) => {
+        return key.split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-card border border-border rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
                 {/* Header */}
-                <div className="p-6 md:p-8 border-b border-border flex items-center justify-between bg-secondary/30">
+                <div className="p-6 md:p-8 border-b border-border flex items-center justify-between bg-white dark:bg-card">
                     <div className="space-y-1">
-                        <p className="text-base font-medium text-gray-900 dark:text-foreground">Verify your parameters before allocating quantum resources.</p>
+                        <p className="text-base font-medium text-[#111827] dark:text-foreground">Verify your parameters before allocating quantum resources.</p>
                     </div>
                     <button 
                         onClick={onClose}
@@ -42,36 +55,42 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar max-h-[70vh]">
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar max-h-[75vh]">
                     
                     <div className="space-y-4">
-                        <div className="bg-secondary/40 border border-border rounded-2xl p-5">
-                            <h3 className="text-lg font-medium text-foreground">{config.problem}</h3>
-                            <p className="text-xs text-muted-foreground mt-0.5 mb-6">{config.industry} &bull; {config.service}</p>
+                        <div className="bg-secondary/40 border border-border rounded-2xl p-6">
+                            <h3 className="text-xl font-bold text-[#111827] dark:text-foreground tracking-tight">{config.problem}</h3>
+                            <p className="text-xs text-muted-foreground mt-1 mb-6 flex items-center gap-2">
+                                <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">{config.industry}</span>
+                                <span className="text-border">|</span>
+                                <span>{config.service}</span>
+                            </p>
                             
-                            <div className="grid grid-cols-3 md:grid-cols-5 gap-4 pt-4 border-t border-border/50">
-                                <div className="flex flex-col gap-0.5">
-                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Hardware</span>
-                                    <span className="text-xs text-[#111827] dark:text-foreground truncate font-medium">{config.hardware}</span>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 pt-6 border-t border-border">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Hardware</span>
+                                    <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{config.hardware}</span>
                                 </div>
-                                <div className="flex flex-col gap-0.5">
-                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Qubits</span>
-                                    <span className="text-xs text-[#111827] dark:text-foreground truncate font-medium">{qubits} Active</span>
-                                    <span className="text-[9px] text-primary/80 font-medium whitespace-nowrap">
-                                        {getQuantumStateSpaceName(qubits)} States
-                                    </span>
+                                <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
+                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Scale</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{qubits} Qubits</span>
+                                        <span className="text-[9px] text-[#3066bb] font-bold uppercase tracking-tighter">
+                                            {getQuantumStateSpaceName(qubits)} States
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col gap-0.5">
-                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">ETA</span>
-                                    <span className="text-xs text-[#111827] dark:text-foreground font-medium">~{batches * 25}s</span>
+                                <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
+                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">ETA</span>
+                                    <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{formatETA(batches * 25)}</span>
                                 </div>
-                                <div className="flex flex-col gap-0.5">
-                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Batches</span>
-                                    <span className="text-xs text-[#111827] dark:text-foreground font-medium">{batches}</span>
+                                <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
+                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Batches</span>
+                                    <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{batches}</span>
                                 </div>
-                                <div className="flex flex-col gap-0.5">
-                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Queue</span>
-                                    <span className="text-xs text-[#111827] dark:text-foreground font-medium">#1</span>
+                                <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
+                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Queue</span>
+                                    <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">#1 Status</span>
                                 </div>
                             </div>
                         </div>
@@ -79,14 +98,15 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
 
                     {/* 2. Input Details */}
                     <div className="space-y-4">
-                        <div className="text-primary font-medium text-[10px] uppercase tracking-wider">
-                            Input Details
+                        <div className="flex items-center gap-4">
+                            <span className="text-[#111827] font-bold text-xs uppercase tracking-widest">Solution Parameters</span>
+                            <div className="h-px bg-border flex-1" />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {inputEntries.map(([key, value]) => (
-                                <div key={key} className="p-4 rounded-2xl bg-secondary/20 border border-border/50 flex flex-col gap-1 hover:border-primary/20 transition-colors">
-                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">{key.replace(/_/g, ' ')}</span>
-                                    <span className="text-sm font-medium text-[#111827] dark:text-foreground truncate">
+                                <div key={key} className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1.5 hover:shadow-md transition-all duration-300">
+                                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">{formatLabel(key)}</span>
+                                    <span className="text-sm font-bold text-[#111827] dark:text-foreground truncate">
                                         {Array.isArray(value) ? value.join(', ') : String(value)}
                                     </span>
                                 </div>
@@ -96,12 +116,13 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                 </div>
 
                 {/* Footer / Execute Action */}
-                <div className="p-6 md:p-8 border-t border-border bg-secondary/10">
+                <div className="p-6 md:p-8 border-t border-border bg-white dark:bg-card">
                     <button
                         onClick={onExecute}
-                        className="w-full bg-[#3066bb] text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-3 hover:opacity-90 transition-all active:scale-[0.98] shadow-xl shadow-[#3066bb]/10"
+                        className="w-full bg-[#3066bb] text-white py-4.5 rounded-2xl font-bold text-base flex items-center justify-center gap-3 hover:bg-[#3066bb]/90 transition-all active:scale-[0.99] shadow-xl shadow-[#3066bb]/20"
                     >
-                        Execute Simulation
+                        <Play size={18} fill="currentColor" />
+                        Authorize & Execute Simulation
                     </button>
                 </div>
             </div>

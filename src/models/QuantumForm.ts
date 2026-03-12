@@ -23,6 +23,20 @@ export interface IQuantumForm extends Document {
     maxQubitsPerBatch?: number;
     qubitFormula?: string;
     batchKey?: string; // e.g. 'days' or 'time_steps'
+    outputMapping?: {
+        resultKey: string;
+        label: string;
+        type: 'text' | 'number' | 'percentage' | 'boolean';
+        priority?: number;
+    }[];
+    interpretationPrompt?: string;
+    chartConfig?: {
+        type: 'bar' | 'line' | 'pie' | 'scatter';
+        xKey: string;
+        yKey: string;
+        label: string;
+    }[];
+    executionEnvironment?: 'python-qiskit' | 'python-dwave';
     createdAt: Date;
 }
 
@@ -56,6 +70,20 @@ const QuantumFormSchema: Schema = new Schema({
     maxQubitsPerBatch: { type: Number, default: 64 },
     qubitFormula: { type: String, default: "" },
     batchKey: { type: String, default: "" },
+    outputMapping: [{
+        resultKey: String,
+        label: String,
+        type: { type: String, enum: ['text', 'number', 'percentage', 'boolean'] },
+        priority: Number
+    }],
+    interpretationPrompt: { type: String },
+    chartConfig: [{
+        type: { type: String, enum: ['bar', 'line', 'pie', 'scatter'] },
+        xKey: String,
+        yKey: String,
+        label: String
+    }],
+    executionEnvironment: { type: String, enum: ['python-qiskit', 'python-dwave'] },
     createdAt: { type: Date, default: Date.now }
 });
 

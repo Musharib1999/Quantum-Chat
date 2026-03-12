@@ -31,6 +31,7 @@ async function getDynamicLLM() {
 import { getDynamicPrompt } from './prompt-utils';
 import axios from 'axios';
 import crypto from 'crypto';
+import { ProblemRegistry } from '@/lib/industry/problem-registry';
 
 interface IndustryPipelineDeps {
     getDynamicPrompt: (category: string, replacements: Record<string, any>, fallback: string) => Promise<string>;
@@ -897,6 +898,12 @@ export async function interpretQuantumResults(config: {
     try {
         const { provider, modelName } = await getDynamicLLM();
 
+        // --- MODULAR HANDLER INJECTION ---
+        const handler = ProblemRegistry.getHandler(problem, { industry, hardware, formData });
+        // Note: For now, we continue with legacy logic but this is where 
+        // specialized interpretation will eventually be fully delegated.
+        console.log(`[Quantum Pipeline] Using Handler: ${handler.constructor.name}`);
+
         // --- PRE-PROCESS: Unify Results ---
         let unifiedSolution: Record<string, any> = {};
         let totalEnergy = 0;
@@ -999,6 +1006,9 @@ export async function interpretQuantumResults(config: {
                 // Add granular fields for the table
                 row.return = retVal;
                 row.risk = riskVal;
+                // Normalize property names to prevent "blank columnUniverse" bugs
+                if (row.pilot && !row.ticker) row.ticker = row.pilot;
+                if (!row.asset) row.asset = row.ticker || row.pilot || 'Asset';
             });
             globalAvgReturn = selectedAssignments.length > 0 ? globalTotalReturn / selectedAssignments.length : 0;
             globalAvgRisk = selectedAssignments.length > 0 ? globalTotalRisk / selectedAssignments.length : 0;
