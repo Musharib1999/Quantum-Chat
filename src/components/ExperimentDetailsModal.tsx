@@ -112,9 +112,10 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                         className="fixed inset-0 top-[80px] z-[70] bg-white dark:bg-card flex flex-col border-t border-border"
                     >
                         <div className="p-4 border-b border-border flex items-center justify-between bg-white dark:bg-card">
-                            <div className="flex flex-col">
-                                <span className="text-[#111827] dark:text-foreground text-sm font-bold">Quantum Source Code</span>
-                                <span className="text-[#111827]/40 dark:text-foreground/40 text-[10px] font-mono">Qiskit/BQM Implementation</span>
+                            <div className="flex items-center gap-4">
+                                <img src="/logo.png" alt="Quantum Guru" className="h-[36px] md:h-[62px] w-auto object-contain" />
+                                <div className="h-8 w-px bg-border hidden md:block" />
+                                <span className="text-[#111827] dark:text-foreground text-sm font-bold hidden md:block">Quantum Source Code</span>
                             </div>
                             <button 
                                 onClick={() => setViewingCode(false)}
@@ -131,7 +132,11 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
 
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    animate={{ 
+                        opacity: viewingCode ? 0 : 1, 
+                        scale: viewingCode ? 0.98 : 1,
+                        display: viewingCode ? 'none' : 'flex'
+                    }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="bg-card w-full max-w-4xl h-[90vh] rounded-2xl border border-border shadow-2xl flex flex-col overflow-hidden"
                 >
