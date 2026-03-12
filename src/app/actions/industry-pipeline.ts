@@ -990,8 +990,15 @@ export async function interpretQuantumResults(config: {
             selectedAssignments.forEach(row => {
                 const retStr = row.route?.match(/Ret: ([\d.]+)%/);
                 const riskStr = row.route?.match(/Risk: ([\d.]+)%/);
-                globalTotalReturn += retStr ? parseFloat(retStr[1]) : 0;
-                globalTotalRisk += riskStr ? parseFloat(riskStr[1]) : 0;
+                const retVal = retStr ? parseFloat(retStr[1]) : 0;
+                const riskVal = riskStr ? parseFloat(riskStr[1]) : 0;
+                
+                globalTotalReturn += retVal;
+                globalTotalRisk += riskVal;
+                
+                // Add granular fields for the table
+                row.return = retVal;
+                row.risk = riskVal;
             });
             globalAvgReturn = selectedAssignments.length > 0 ? globalTotalReturn / selectedAssignments.length : 0;
             globalAvgRisk = selectedAssignments.length > 0 ? globalTotalRisk / selectedAssignments.length : 0;

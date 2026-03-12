@@ -482,7 +482,9 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                 <tr>
                                     <th className="px-3 py-2.5 font-bold text-foreground">Sector</th>
                                     <th className="px-3 py-2.5 font-bold text-foreground">Ticker</th>
-                                    <th className="px-3 py-2.5 font-bold text-foreground">Asset Details</th>
+                                    <th className="px-3 py-2.5 font-bold text-foreground">Return</th>
+                                    <th className="px-3 py-2.5 font-bold text-foreground">Risk</th>
+                                    <th className="px-3 py-2.5 font-bold text-foreground">Details</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -490,7 +492,9 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                     <tr key={idx} className="hover:bg-muted/30 transition-colors">
                                         <td className="px-3 py-2 text-muted-foreground font-medium">{row.sector}</td>
                                         <td className="px-3 py-2 font-bold text-foreground">{row.ticker}</td>
-                                        <td className="px-3 py-2 text-[10px] font-mono whitespace-nowrap">{row.route}</td>
+                                        <td className="px-3 py-2 font-bold text-green-500">{row.return !== undefined ? `${row.return.toFixed(2)}%` : '-'}</td>
+                                        <td className="px-3 py-2 font-bold text-red-500">{row.risk !== undefined ? `${row.risk.toFixed(2)}%` : '-'}</td>
+                                        <td className="px-3 py-2 text-[10px] font-mono whitespace-nowrap text-muted-foreground">{row.route}</td>
                                     </tr>
                                 ))}
                             </tbody>
