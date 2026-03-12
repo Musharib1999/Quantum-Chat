@@ -35,6 +35,7 @@ export default function IndustryPage() {
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [pendingFormData, setPendingFormData] = useState<any>(null);
     const [calculatedQubits, setCalculatedQubits] = useState(0);
+    const [calculatedBatches, setCalculatedBatches] = useState(1);
 
     // Data State
     const [metadata, setMetadata] = useState<any>({ industries: [], services: [], problemMapping: {} });
@@ -126,9 +127,10 @@ export default function IndustryPage() {
     // But we need the Form Data to start the simulation. 
     // Let's render the FormFetcher as an overlay or inside the chat area if no formData.
 
-    const handleFormSubmit = (formData: any, qubits: number) => {
+    const handleFormSubmit = (formData: any, qubits: number, batches: number) => {
         setPendingFormData(formData);
         setCalculatedQubits(qubits);
+        setCalculatedBatches(batches);
         setShowReviewModal(true);
     };
 
@@ -166,6 +168,7 @@ export default function IndustryPage() {
                 config={sessionConfig}
                 formData={pendingFormData || {}}
                 qubits={calculatedQubits}
+                batches={calculatedBatches}
             />
 
             <AppLayout

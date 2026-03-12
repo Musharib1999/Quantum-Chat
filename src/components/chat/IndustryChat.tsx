@@ -496,11 +496,11 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
                                 <tr>
-                                    <th className="pl-2 pr-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5 uppercase">Asset</th>
-                                    <th className="px-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5 uppercase">Sector</th>
-                                    <th className="px-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5 uppercase">Ticker</th>
-                                    <th className="px-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5 uppercase">Return</th>
-                                    <th className="px-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5 uppercase">Risk</th>
+                                    <th className="pl-2 pr-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">Asset</th>
+                                    <th className="px-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">Sector</th>
+                                    <th className="px-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">Ticker</th>
+                                    <th className="px-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">Return</th>
+                                    <th className="px-1.5 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">Risk</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
