@@ -569,7 +569,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col gap-3">
                                     {msg.portfolioMetrics && (
-                                        <div className="w-full overflow-visible -mx-0 md:-mx-4 lg:-mx-8">
+                                        <div className="w-full overflow-hidden">
                                             <PortfolioResultsSideBySide 
                                                 metrics={msg.portfolioMetrics} 
                                                 assignments={msg.assignmentsTable || []} 
