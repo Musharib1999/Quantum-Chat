@@ -511,7 +511,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                             <tbody className="divide-y divide-border">
                                 {assignments.map((row: any, idx: number) => (
                                     <tr key={idx} className="hover:bg-muted/40 transition-colors group">
-                                        <td className="px-4 py-3 text-[11px] font-mono text-muted-foreground leading-relaxed italic">{row.route?.split('(')[0].trim()}</td>
+                                        <td className="px-4 py-3 text-[11px] font-mono text-muted-foreground leading-relaxed">{row.route?.split('(')[0].trim()}</td>
                                         <td className="px-4 py-3 text-xs text-muted-foreground/80 group-hover:text-[#111827] transition-colors tracking-tight">{row.sector}</td>
                                         <td className="px-4 py-3 text-sm text-[#111827]">{row.ticker}</td>
                                         <td className="px-4 py-3 text-sm text-[#10b981]">{row.return !== undefined ? `${row.return.toFixed(2)}%` : '-'}</td>
