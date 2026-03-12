@@ -395,8 +395,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             }
 
             // Inject final analysis as a bot message
-            const fullMsg = `${tableHtml}\n\n${result.text}`;
-            addBotMessage(fullMsg, result.chartData);
+            const fullMsg = result.portfolioMetrics ? result.text : `${tableHtml}\n\n${result.text}`;
+            addBotMessage(fullMsg, result.chartData, result.portfolioMetrics, result.assignmentsTable);
 
             // SAVE to DB
             try {
@@ -433,6 +433,73 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         { num: 2, label: 'Run Simulator', desc: 'Execute the program on the selected quantum simulator or hardware' },
         { num: 3, label: 'Interpret Results', desc: 'Quantum Guru AI analyzes measurement outputs and explains the solution in human terms' }
     ];
+    const PortfolioResultsSideBySide = ({ metrics, assignments, qubitCount }: { metrics: any, assignments: any[], qubitCount: number }) => {
+        const toSuperscript = (num: number) => {
+            const map: { [key: string]: string } = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+            return num.toString().split('').map(c => map[c] || c).join('');
+        };
+
+        const getQuantumStateSpaceName = (n: number) => {
+            if (n < 10) return "Thousands";
+            if (n < 40) return "Trillions";
+            if (n < 50) return "Quadrillions";
+            if (n < 60) return "Quintillions";
+            if (n < 70) return "Sextillions";
+            if (n < 80) return "Septillions";
+            if (n < 90) return "Octillions";
+            if (n < 100) return "Nonillions";
+            return "Decillions+";
+        };
+
+        return (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 my-6">
+                {/* 1. Summary Table */}
+                <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-muted/50 px-4 py-2 border-b border-border">
+                        <h4 className="text-xs font-bold text-foreground">QUBO Optimized Portfolio</h4>
+                    </div>
+                    <table className="w-full text-left text-xs">
+                        <tbody className="divide-y divide-border">
+                            <tr><td className="px-4 py-2.5 font-medium text-muted-foreground bg-secondary/20">Sectors</td><td className="px-4 py-2.5 font-bold text-primary">{metrics.sectorsCount} industries</td></tr>
+                            <tr><td className="px-4 py-2.5 font-medium text-muted-foreground bg-secondary/20">Assets</td><td className="px-4 py-2.5 font-bold text-foreground">{metrics.assetsCount} selections</td></tr>
+                            <tr><td className="px-4 py-2.5 font-medium text-muted-foreground bg-secondary/20">Stocks</td><td className="px-4 py-2.5 font-bold text-foreground">{metrics.universeSize} universe</td></tr>
+                            <tr><td className="px-4 py-2.5 font-medium text-muted-foreground bg-secondary/20">Avg Return</td><td className="px-4 py-2.5 font-bold text-green-500">{metrics.avgReturn.toFixed(2)}%</td></tr>
+                            <tr><td className="px-4 py-2.5 font-medium text-muted-foreground bg-secondary/20">Avg Risk</td><td className="px-4 py-2.5 font-bold text-red-500">{metrics.avgRisk.toFixed(2)}%</td></tr>
+                            <tr><td className="px-4 py-2.5 font-medium text-muted-foreground bg-secondary/20">Portfolio States</td><td className="px-4 py-2.5 font-mono font-bold text-primary">2{toSuperscript(qubitCount)}</td></tr>
+                            <tr><td className="px-4 py-2.5 font-medium text-muted-foreground bg-secondary/20">Combinatorial Scale</td><td className="px-4 py-2.5 font-bold text-blue-500">{getQuantumStateSpaceName(qubitCount)}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* 2. Detailed Table */}
+                <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-muted/50 px-4 py-2 border-b border-border">
+                        <h4 className="text-xs font-bold text-foreground">Asset Allocation</h4>
+                    </div>
+                    <div className="max-h-[310px] overflow-y-auto overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                            <thead className="sticky top-0 bg-muted/90 backdrop-blur-sm z-10 border-b border-border">
+                                <tr>
+                                    <th className="px-3 py-2.5 font-bold text-foreground">Sector</th>
+                                    <th className="px-3 py-2.5 font-bold text-foreground">Ticker</th>
+                                    <th className="px-3 py-2.5 font-bold text-foreground">Asset Details</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {assignments.map((row: any, idx: number) => (
+                                    <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                                        <td className="px-3 py-2 text-muted-foreground font-medium">{row.sector}</td>
+                                        <td className="px-3 py-2 font-bold text-foreground">{row.ticker}</td>
+                                        <td className="px-3 py-2 text-[10px] font-mono whitespace-nowrap">{row.route}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="flex flex-col h-full w-full overflow-hidden">
@@ -478,6 +545,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                 <div className={`rounded-2xl px-5 py-4 shadow-sm text-base leading-relaxed whitespace-pre-wrap ${msg.sender === 'user' ? 'bg-secondary text-foreground border border-border rounded-br-none' : msg.sender === 'system' ? 'bg-muted text-muted-foreground text-sm text-center w-full rounded-lg border border-border' : 'bg-card text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden'}`}>
                                     {msg.sender === 'bot' || msg.sender === 'user' ? (
                                         <>
+                                            {msg.portfolioMetrics && <PortfolioResultsSideBySide metrics={msg.portfolioMetrics} assignments={msg.assignmentsTable || []} qubitCount={msg.portfolioMetrics.qubitCount || 0} />}
                                             <MarkdownRenderer content={msg.text} />
                                             {msg.chartData && <QuantumChart data={msg.chartData.data} />}
                                         </>

@@ -891,7 +891,7 @@ export async function runQuantumSimulator(config: {
 
 export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string; formData: any;
-}): Promise<{ text: string; chartData?: any; assignmentsTable?: any[]; qubitCount?: number }> {
+}): Promise<{ text: string; chartData?: any; assignmentsTable?: any[]; qubitCount?: number; portfolioMetrics?: any }> {
     const { problem, industry, hardware, rawOutput, formData } = config;
 
     try {
@@ -904,7 +904,9 @@ export async function interpretQuantumResults(config: {
         let finalAssignmentsTable: any[] = [];
         let finalSummary: string = "";
         let globalTotalQubits = 0;
-        let globalBudget = 1;
+        let globalBudget = 10;
+        let globalAvgReturn = 0;
+        let globalAvgRisk = 0;
 
         // 1. Try robust tagged extraction first
         const taggedMatches = [...rawOutput.matchAll(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/g)];
@@ -991,8 +993,8 @@ export async function interpretQuantumResults(config: {
                 globalTotalReturn += retStr ? parseFloat(retStr[1]) : 0;
                 globalTotalRisk += riskStr ? parseFloat(riskStr[1]) : 0;
             });
-            const globalAvgReturn = selectedAssignments.length > 0 ? globalTotalReturn / selectedAssignments.length : 0;
-            const globalAvgRisk = selectedAssignments.length > 0 ? globalTotalRisk / selectedAssignments.length : 0;
+            globalAvgReturn = selectedAssignments.length > 0 ? globalTotalReturn / selectedAssignments.length : 0;
+            globalAvgRisk = selectedAssignments.length > 0 ? globalTotalRisk / selectedAssignments.length : 0;
 
             finalAssignmentsTable = selectedAssignments;
 
@@ -1066,7 +1068,20 @@ STRICT RULES:
             text += `\n\n${msg}`;
         }
 
-        return { text, chartData: extractedPlotlyChart, assignmentsTable: finalAssignmentsTable, qubitCount };
+        return { 
+            text, 
+            chartData: extractedPlotlyChart, 
+            assignmentsTable: finalAssignmentsTable, 
+            qubitCount,
+            portfolioMetrics: problem.toLowerCase().includes('portfolio optimization') ? {
+                avgReturn: globalAvgReturn,
+                avgRisk: globalAvgRisk,
+                assetsCount: finalAssignmentsTable.length,
+                sectorsCount: new Set(finalAssignmentsTable.map(r => r.sector).filter(Boolean)).size,
+                universeSize: globalTotalQubits || finalAssignmentsTable.length,
+                qubitCount: qubitCount
+            } : null
+        };
     } catch (e: any) {
         console.error("Critical error in interpretQuantumResults:", e);
         return { text: "Analysis failed: " + e.message, assignmentsTable: [], qubitCount: 0 };
