@@ -8,6 +8,8 @@ import SimulationReviewModal from '@/components/industry/SimulationReviewModal';
 import ExperimentHistoryList from '@/components/ExperimentHistoryList';
 import ExperimentDetailsModal from '@/components/ExperimentDetailsModal';
 import QuantumFormFetcher from '@/components/QuantumFormFetcher';
+import ProblemSubmissionPortal from '@/components/industry/ProblemSubmissionPortal';
+import MySubmissionsModal from '@/components/industry/MySubmissionsModal';
 import { getExperiments } from '@/app/actions/experiment';
 import axios from 'axios';
 import { ArrowLeft, CheckCircle2, BookOpen, ChevronRight, Layers, Zap, Atom, Cpu, PlaneTakeoff, Shield, TrendingUp, Briefcase } from 'lucide-react';
@@ -32,6 +34,7 @@ export default function IndustryPage() {
     // Config State
     const [sessionConfig, setSessionConfig] = useState<{ industry: string | null, service: string | null, problem: string | null, hardware: string | null, formData?: any }>({ industry: null, service: null, problem: null, hardware: null });
     const [wizardStep, setWizardStep] = useState<'industry' | 'service' | 'problem' | 'hardware'>('industry');
+    const [isSubmissionMode, setIsSubmissionMode] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [pendingFormData, setPendingFormData] = useState<any>(null);
     const [pendingBlueprint, setPendingBlueprint] = useState<any>(null);
@@ -47,12 +50,19 @@ export default function IndustryPage() {
     // Modal State
     const [selectedExperiment, setSelectedExperiment] = useState<any | null>(null);
     const [initialFormData, setInitialFormData] = useState<any>(null);
+    const [showMySubmissions, setShowMySubmissions] = useState(false);
 
     // Fetch Metadata & Experiments on Mount/Auth
     const refreshExperiments = async () => {
         const exps = await getExperiments(user?.email);
         if (exps) setExperiments(exps);
     };
+
+    useEffect(() => {
+        const handleOpenSubmissions = () => setShowMySubmissions(true);
+        window.addEventListener('open-my-submissions', handleOpenSubmissions);
+        return () => window.removeEventListener('open-my-submissions', handleOpenSubmissions);
+    }, []);
 
     useEffect(() => {
         const initData = async () => {
@@ -91,7 +101,15 @@ export default function IndustryPage() {
         let nextService: string | null = null;
         let finalNextStep: any = null;
 
-        if (type === 'industry') finalNextStep = 'problem';
+        if (type === 'industry') {
+            if (value === 'CREATE_EXPERIMENT') {
+                setIsSubmissionMode(true);
+                finalNextStep = 'industry'; // Stay on industry but it will render categories
+                return;
+            }
+            finalNextStep = isSubmissionMode ? 'service' : 'problem';
+        }
+
         if (type === 'problem') {
             const problemMapping = metadata.problemMapping?.[sessionConfig.industry!]?.[value];
             const services = Object.keys(problemMapping || {});
@@ -103,7 +121,9 @@ export default function IndustryPage() {
             }
         }
         if (type === 'service') finalNextStep = 'hardware';
-        if (type === 'hardware') finalNextStep = 'CHAT';
+        if (type === 'hardware') {
+            finalNextStep = isSubmissionMode ? 'SUBMISSION' : 'CHAT';
+        }
 
         setSessionConfig(prev => {
             const newConfig = { ...prev, [type]: value };
@@ -119,6 +139,8 @@ export default function IndustryPage() {
 
         if (finalNextStep === 'CHAT') {
             setFlowStage('CHAT');
+        } else if (finalNextStep === 'SUBMISSION') {
+            setFlowStage('CHAT'); // We hijack CHAT mode but render SubmissionPortal
         } else if (finalNextStep) {
             setWizardStep(finalNextStep);
         }
@@ -160,6 +182,12 @@ export default function IndustryPage() {
     // Render Logic
     return (
         <>
+            <MySubmissionsModal
+                isOpen={showMySubmissions}
+                onClose={() => setShowMySubmissions(false)}
+                userEmail={user?.email || ''}
+            />
+
             <ExperimentDetailsModal
                 experiment={selectedExperiment}
                 onClose={() => setSelectedExperiment(null)}
@@ -371,12 +399,26 @@ export default function IndustryPage() {
                             metadata={metadata}
                             config={sessionConfig}
                             onSelect={handleWizardSelect}
+                            isSubmissionMode={isSubmissionMode}
                         />
                     )}
 
                     {flowStage === 'CHAT' && (
                         <>
-                            {!sessionConfig.formData ? (
+                            {isSubmissionMode ? (
+                                <ProblemSubmissionPortal
+                                    industry={sessionConfig.industry!}
+                                    service={sessionConfig.service!}
+                                    hardware={sessionConfig.hardware!}
+                                    userEmail={user?.email || 'anonymous'}
+                                    onReset={() => {
+                                        setIsSubmissionMode(false);
+                                        setFlowStage('SELECTION');
+                                        setWizardStep('industry');
+                                        setSessionConfig({ industry: null, service: null, problem: null, hardware: null });
+                                    }}
+                                />
+                            ) : !sessionConfig.formData ? (
                                 // Step 5 of Flow: Form Entry (Before actual Chat triggers)
                                 <div className="absolute inset-0 p-4">
                                     <div className="h-full w-full overflow-y-auto custom-scrollbar flex justify-center py-4">

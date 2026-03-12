@@ -44,7 +44,7 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                 {/* Header */}
                 <div className="p-6 md:p-8 border-b border-border flex items-center justify-between bg-white dark:bg-card">
                     <div className="space-y-1">
-                        <p className="text-base font-medium text-[#111827] dark:text-foreground">Verify your parameters before allocating quantum resources.</p>
+                        <h2 className="text-xl font-semibold text-[#111827] dark:text-foreground">Simulation Review</h2>
                     </div>
                     <button 
                         onClick={onClose}

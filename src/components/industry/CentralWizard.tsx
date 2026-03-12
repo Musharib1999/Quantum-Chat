@@ -8,10 +8,11 @@ interface CentralWizardProps {
     step: 'industry' | 'service' | 'problem' | 'hardware';
     metadata: any;
     config: { industry: string | null, service: string | null, problem: string | null, hardware: string | null };
+    isSubmissionMode?: boolean;
     onSelect: (type: 'industry' | 'service' | 'problem' | 'hardware', value: string) => void;
 }
 
-export default function CentralWizard({ step, metadata, config, onSelect }: CentralWizardProps) {
+export default function CentralWizard({ step, metadata, config, onSelect, isSubmissionMode }: CentralWizardProps) {
     const [hardwareOptions, setHardwareOptions] = useState<any[]>([]);
     const [loadingHw, setLoadingHw] = useState(false);
 
@@ -81,6 +82,19 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                     </button>
                                 );
                             })}
+                            
+                            {/* Create Your Experiment Card */}
+                            <button
+                                onClick={() => onSelect('industry', 'CREATE_EXPERIMENT')}
+                                className={`p-5 md:p-8 bg-primary/5 border border-dashed border-primary/30 rounded-2xl transition-all group flex flex-col items-center gap-3 md:gap-4 shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300 md:w-48 active:scale-[0.98] hover:bg-primary/10 hover:border-primary/50`}
+                            >
+                                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-inner bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white`}>
+                                    <Zap size={24} />
+                                </div>
+                                <span className={`font-medium text-base md:text-xl tracking-tight text-primary transition-colors`}>
+                                    Create Experiment
+                                </span>
+                            </button>
                         </div>
                     </div>
                 );
@@ -115,9 +129,11 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                     </div>
                 );
             case 'service':
-                const availableServices = (config.industry && config.problem)
-                    ? Object.keys(metadata.problemMapping?.[config.industry]?.[config.problem] || {})
-                    : [];
+                const availableServices = isSubmissionMode 
+                    ? metadata.services?.map((s: any) => s.label) || []
+                    : (config.industry && config.problem)
+                        ? Object.keys(metadata.problemMapping?.[config.industry]?.[config.problem] || {})
+                        : [];
 
                 return (
                     <div className="space-y-6 text-center">
@@ -166,9 +182,11 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                         ) : (
                             <div className="flex flex-wrap justify-center gap-4 max-w-3xl mx-auto">
                                 {(() => {
-                                    const mappedHws = (config.industry && config.problem && config.service)
-                                        ? (metadata.problemMapping[config.industry]?.[config.problem]?.[config.service] || [])
-                                        : [];
+                                    const mappedHws = (isSubmissionMode)
+                                        ? [] // Empty list means show all in the logic below
+                                        : (config.industry && config.problem && config.service)
+                                            ? (metadata.problemMapping[config.industry]?.[config.problem]?.[config.service] || [])
+                                            : [];
 
                                     // If no specific hardware is restricted, show all online hardware
                                     if (mappedHws.length === 0) {
