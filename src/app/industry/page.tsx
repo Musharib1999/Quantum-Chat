@@ -45,6 +45,7 @@ export default function IndustryPage() {
 
     // Modal State
     const [selectedExperiment, setSelectedExperiment] = useState<any | null>(null);
+    const [initialFormData, setInitialFormData] = useState<any>(null);
 
     // Fetch Metadata & Experiments on Mount/Auth
     const refreshExperiments = async () => {
@@ -139,7 +140,6 @@ export default function IndustryPage() {
         setShowReviewModal(false);
     };
 
-    const [initialFormData, setInitialFormData] = useState<any>(null);
 
     // Re-Run Logic
     const handleReRun = (experiment: any) => {
