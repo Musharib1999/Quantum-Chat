@@ -106,14 +106,14 @@ function LoginForm() {
                         <button
                             type="button"
                             onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }}
-                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-[#3066bb] text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                             Login
                         </button>
                         <button
                             type="button"
                             onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); }}
-                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'signup' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'signup' ? 'bg-[#3066bb] text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                             Register
                         </button>
@@ -212,7 +212,7 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3.5 mt-2 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group border border-primary/50"
+                            className="w-full bg-[#3066bb] hover:bg-[#3066bb]/90 text-white py-3.5 mt-2 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-[#3066bb]/20 flex items-center justify-center gap-2 group border border-[#3066bb]/50"
                         >
                             {loading ? (
                                 <span className="flex items-center gap-2">
