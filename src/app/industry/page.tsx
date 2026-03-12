@@ -34,6 +34,7 @@ export default function IndustryPage() {
     const [wizardStep, setWizardStep] = useState<'industry' | 'service' | 'problem' | 'hardware'>('industry');
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [pendingFormData, setPendingFormData] = useState<any>(null);
+    const [pendingBlueprint, setPendingBlueprint] = useState<any>(null);
     const [calculatedQubits, setCalculatedQubits] = useState(0);
     const [calculatedBatches, setCalculatedBatches] = useState(1);
 
@@ -128,15 +129,16 @@ export default function IndustryPage() {
     // But we need the Form Data to start the simulation. 
     // Let's render the FormFetcher as an overlay or inside the chat area if no formData.
 
-    const handleFormSubmit = (formData: any, qubits: number, batches: number) => {
+    const handleFormSubmit = (formData: Record<string, any>, qubits: number, batches: number, form: any) => {
         setPendingFormData(formData);
         setCalculatedQubits(qubits);
         setCalculatedBatches(batches);
+        setPendingBlueprint(form); // Store the blueprint
         setShowReviewModal(true);
     };
 
     const handleExecute = () => {
-        setSessionConfig(prev => ({ ...prev, formData: pendingFormData }));
+        setSessionConfig(prev => ({ ...prev, formData: pendingFormData, blueprint: pendingBlueprint }));
         setShowReviewModal(false);
     };
 
@@ -385,7 +387,13 @@ export default function IndustryPage() {
                                                 problem={sessionConfig.problem!}
                                                 hardware={sessionConfig.hardware!}
                                                 initialData={initialFormData} // Handling re-run pre-fill
-                                                onSubmit={handleFormSubmit}
+                                                onSubmit={(formData: any, qubits: number, batches: number, form: any) => {
+                                                    setPendingFormData(formData);
+                                                    setCalculatedQubits(qubits);
+                                                    setCalculatedBatches(batches);
+                                                    setPendingBlueprint(form);
+                                                    setShowReviewModal(true);
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -394,6 +402,7 @@ export default function IndustryPage() {
                                 // Final Step: Chat Interface
                                 <IndustryChat
                                     contextConfig={sessionConfig}
+                                    blueprint={(sessionConfig as any).blueprint}
                                     placeholder={`Ask about ${sessionConfig.problem}...`}
                                     onPipelineComplete={refreshExperiments}
                                 />

@@ -13,6 +13,7 @@ interface IndustryChatProps {
     placeholder?: string;
     onAnalysisTriggered?: () => void;
     onPipelineComplete?: () => void;
+    blueprint?: any;
 }
 
 type WorkflowStage =
@@ -24,7 +25,7 @@ type WorkflowStage =
     | { kind: 'step3_loading'; code: string; simOutput: string; totalExecTimeMs: number }
     | { kind: 'step3_done'; code: string; simOutput: string; analysis: string; chartData?: any; totalExecTimeMs: number };
 
-export default function IndustryChat({ contextConfig, placeholder, onAnalysisTriggered, onPipelineComplete }: IndustryChatProps) {
+export default function IndustryChat({ contextConfig, placeholder, onAnalysisTriggered, onPipelineComplete, blueprint }: IndustryChatProps) {
     const { user } = useAuth();
     const {
         messages,
@@ -428,6 +429,57 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
 
     const isLoading = workflow.kind === 'step1_loading' || workflow.kind === 'step2_loading' || workflow.kind === 'step3_loading';
     const currentStepNum = workflow.kind === 'idle' ? 0 : workflow.kind === 'step1_loading' ? 1 : workflow.kind === 'step1_done' ? 1 : workflow.kind === 'step2_loading' ? 2 : workflow.kind === 'step2_done' ? 2 : 3;
+    
+    const renderDynamicTables = (assignments: any[]) => {
+        if (!blueprint?.outputTables || blueprint.outputTables.length === 0) return null;
+
+        return (
+            <div className="space-y-6 my-6">
+                {blueprint.outputTables.map((table: any, tIdx: number) => (
+                    <div key={tIdx} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                        <div className="px-4 py-2 border-b border-border bg-secondary/30">
+                            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{table.name}</h4>
+                        </div>
+                        <div className="max-h-[300px] overflow-y-auto overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
+                                    <tr>
+                                        {table.mapping.map((col: any, cIdx: number) => (
+                                            <th key={cIdx} className="px-3 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">{col.label}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {assignments.map((row: any, rIdx: number) => (
+                                        <tr key={rIdx} className="hover:bg-muted/40 transition-colors">
+                                            {table.mapping.map((col: any, cIdx: number) => {
+                                                const val = row[col.resultKey];
+                                                const displayVal = col.type === 'percentage' 
+                                                    ? (typeof val === 'number' ? `${val.toFixed(2)}%` : val)
+                                                    : col.type === 'number'
+                                                        ? (typeof val === 'number' ? val.toLocaleString() : val)
+                                                        : val;
+                                                
+                                                const colorClass = col.type === 'percentage' && typeof val === 'number' 
+                                                    ? (val > 0 ? 'text-[#10b981]' : val < 0 ? 'text-[#ef4444]' : 'text-[#111827]')
+                                                    : 'text-[#111827]';
+
+                                                return (
+                                                    <td key={cIdx} className={`px-3 py-3 text-sm ${colorClass}`}>
+                                                        {displayVal || '-'}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
 
     const steps = [
         { num: 1, label: 'Generate Quantum Code', desc: 'Quantum Guru AI converts the problem into optimized quantum circuits or BQM models' },
@@ -564,7 +616,11 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col gap-3">
-                                    {msg.portfolioMetrics && (
+                                    {msg.portfolioMetrics && blueprint?.outputTables && blueprint.outputTables.length > 0 ? (
+                                        <div className="w-full overflow-hidden">
+                                            {renderDynamicTables(msg.assignmentsTable || [])}
+                                        </div>
+                                    ) : msg.portfolioMetrics ? (
                                         <div className="w-full overflow-hidden">
                                             <PortfolioResultsSideBySide 
                                                 metrics={msg.portfolioMetrics} 
@@ -572,7 +628,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                 qubitCount={msg.portfolioMetrics.qubitCount || 0} 
                                             />
                                         </div>
-                                    )}
+                                    ) : null}
                                     <div className={`rounded-2xl px-5 py-4 shadow-sm text-base leading-relaxed whitespace-pre-wrap ${msg.sender === 'user' ? 'bg-secondary text-foreground border border-border rounded-br-none self-end' : msg.sender === 'system' ? 'bg-muted text-muted-foreground text-sm text-center w-full rounded-lg border border-border' : 'bg-card text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden self-start'}`}>
                                         {msg.sender === 'bot' || msg.sender === 'user' ? (
                                             <>

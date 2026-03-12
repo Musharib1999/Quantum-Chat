@@ -29,6 +29,15 @@ export interface IQuantumForm extends Document {
         type: 'text' | 'number' | 'percentage' | 'boolean';
         priority?: number;
     }[];
+    outputTables?: {
+        name: string;
+        mapping: {
+            resultKey: string;
+            label: string;
+            type: 'text' | 'number' | 'percentage' | 'boolean';
+            priority?: number;
+        }[];
+    }[];
     interpretationPrompt?: string;
     chartConfig?: {
         type: 'bar' | 'line' | 'pie' | 'scatter';
@@ -39,6 +48,13 @@ export interface IQuantumForm extends Document {
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
     createdAt: Date;
 }
+
+const OutputMappingSchema = new Schema({
+    resultKey: String,
+    label: String,
+    type: { type: String, enum: ['text', 'number', 'percentage', 'boolean'] },
+    priority: Number
+});
 
 const QuantumFieldSchema = new Schema({
     label: { type: String, required: true },
@@ -70,11 +86,10 @@ const QuantumFormSchema: Schema = new Schema({
     maxQubitsPerBatch: { type: Number, default: 64 },
     qubitFormula: { type: String, default: "" },
     batchKey: { type: String, default: "" },
-    outputMapping: [{
-        resultKey: String,
-        label: String,
-        type: { type: String, enum: ['text', 'number', 'percentage', 'boolean'] },
-        priority: Number
+    outputMapping: [OutputMappingSchema],
+    outputTables: [{
+        name: { type: String, required: true },
+        mapping: [OutputMappingSchema]
     }],
     interpretationPrompt: { type: String },
     chartConfig: [{

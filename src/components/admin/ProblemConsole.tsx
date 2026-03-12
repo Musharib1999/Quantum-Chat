@@ -48,6 +48,7 @@ interface IQuantumForm {
     qubitFormula?: string;
     batchKey?: string;
     outputMapping?: IOutputMapping[];
+    outputTables?: { name: string; mapping: IOutputMapping[] }[];
     interpretationPrompt?: string;
     chartConfig?: IChartConfig[];
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
@@ -78,6 +79,7 @@ export default function ProblemConsole() {
 
     // Tab 3: Output State
     const [outputMapping, setOutputMapping] = useState<IOutputMapping[]>([]);
+    const [outputTables, setOutputTables] = useState<{ name: string; mapping: IOutputMapping[] }[]>([]);
     const [chartConfig, setChartConfig] = useState<IChartConfig[]>([]);
 
     // Tab 4: AI State
@@ -139,6 +141,7 @@ export default function ProblemConsole() {
                 qubitFormula,
                 batchKey,
                 outputMapping,
+                outputTables,
                 chartConfig,
                 interpretationPrompt,
                 executionEnvironment
@@ -182,6 +185,16 @@ export default function ProblemConsole() {
         setQubitFormula(form.qubitFormula || '');
         setBatchKey(form.batchKey || '');
         setOutputMapping(form.outputMapping || []);
+        
+        // Migrate or load outputTables
+        if (form.outputTables && form.outputTables.length > 0) {
+            setOutputTables(form.outputTables);
+        } else if (form.outputMapping && form.outputMapping.length > 0) {
+            setOutputTables([{ name: 'Standard Results', mapping: form.outputMapping }]);
+        } else {
+            setOutputTables([]);
+        }
+
         setChartConfig(form.chartConfig || []);
         setInterpretationPrompt(form.interpretationPrompt || '');
         setExecutionEnvironment(form.executionEnvironment || 'python-qiskit');
@@ -196,7 +209,7 @@ export default function ProblemConsole() {
         setIndustry(''); setService(''); setProblem(''); setHardware('Universal');
         setDescription(''); setFields([]); setJsonFields('[]'); setCodeTemplates([]);
         setBatchingEnabled(false); setMaxQubitsPerBatch(64); setQubitFormula('');
-        setBatchKey(''); setOutputMapping([]); setChartConfig([]);
+        setBatchKey(''); setOutputMapping([]); setOutputTables([]); setChartConfig([]);
         setInterpretationPrompt(''); setExecutionEnvironment('python-qiskit');
         setView('editor'); setActiveTab('input');
     };
@@ -336,45 +349,113 @@ export default function ProblemConsole() {
     );
 
     const renderOutputTab = () => (
-        <div className="space-y-8 animate-in fade-in">
-            <div className="space-y-6">
+        <div className="space-y-12 animate-in fade-in">
+            <div className="space-y-8">
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold flex items-center gap-2 tracking-tight">
-                        <Activity size={16} className="text-[#3066bb]" /> Result Mapping (Table)
+                        <Activity size={16} className="text-[#3066bb]" /> Result Mappings (Output Tables)
                     </h3>
-                    <button onClick={() => setOutputMapping([...outputMapping, { resultKey: '', label: '', type: 'text', priority: 1 }])} className="text-[10px] font-bold bg-[#3066bb] text-white px-3 py-1.5 rounded-lg">+ Add Column</button>
+                    <button 
+                        onClick={() => setOutputTables([...outputTables, { name: 'New Table', mapping: [{ resultKey: '', label: '', type: 'text', priority: 1 }] }])} 
+                        className="text-[10px] font-bold bg-[#3066bb] text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#255299] transition-all"
+                    >
+                        <Plus size={14} /> Add Output Table
+                    </button>
                 </div>
-                <div className="bg-white border border-border rounded-2xl overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-secondary/30 border-b border-border">
-                            <tr className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                <th className="p-4">Pointer (JSON Key)</th>
-                                <th className="p-4">UI Label</th>
-                                <th className="p-4">Data Type</th>
-                                <th className="p-4">Sort</th>
-                                <th className="p-4 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {outputMapping.map((m, i) => (
-                                <tr key={i} className="group">
-                                    <td className="p-2"><input value={m.resultKey} onChange={e => { const up = [...outputMapping]; up[i].resultKey = e.target.value; setOutputMapping(up); }} placeholder="e.g. ticker" className="w-full p-2 bg-transparent text-xs font-mono outline-none" /></td>
-                                    <td className="p-2"><input value={m.label} onChange={e => { const up = [...outputMapping]; up[i].label = e.target.value; setOutputMapping(up); }} placeholder="e.g. Asset Name" className="w-full p-2 bg-transparent text-xs outline-none" /></td>
-                                    <td className="p-2">
-                                        <select value={m.type} onChange={e => { const up = [...outputMapping]; up[i].type = e.target.value as any; setOutputMapping(up); }} className="text-xs bg-transparent outline-none cursor-pointer">
-                                            {['text', 'number', 'percentage', 'boolean'].map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </td>
-                                    <td className="p-2"><input type="number" value={m.priority} onChange={e => { const up = [...outputMapping]; up[i].priority = parseInt(e.target.value); setOutputMapping(up); }} className="w-12 p-2 bg-transparent text-xs appearance-none outline-none" /></td>
-                                    <td className="p-2 text-center"><button onClick={() => setOutputMapping(outputMapping.filter((_, idx) => idx !== i))} className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg"><Trash2 size={14} /></button></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+
+                {outputTables.map((table, tableIdx) => (
+                    <div key={tableIdx} className="bg-white border border-border shadow-sm rounded-[32px] overflow-hidden group hover:border-[#3066bb]/30 transition-all">
+                        <div className="p-6 border-b border-border bg-secondary/10 flex items-center justify-between">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="p-2 bg-white rounded-lg border border-border text-[#3066bb] font-bold text-[10px] uppercase">Table {tableIdx + 1}</div>
+                                <input 
+                                    value={table.name} 
+                                    onChange={e => {
+                                        const up = [...outputTables];
+                                        up[tableIdx].name = e.target.value;
+                                        setOutputTables(up);
+                                    }}
+                                    placeholder="Enter Table Name (e.g. Asset Allocation)"
+                                    className="bg-transparent text-sm font-bold border-none focus:ring-0 w-full md:w-1/2 p-0 placeholder:text-muted-foreground/50"
+                                />
+                            </div>
+                            <button 
+                                onClick={() => setOutputTables(outputTables.filter((_, idx) => idx !== tableIdx))}
+                                className="p-2 hover:bg-red-500/10 text-red-400 rounded-xl transition-all"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-secondary/30 border-b border-border">
+                                    <tr className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                        <th className="p-4 w-1/4">Pointer (JSON Key)</th>
+                                        <th className="p-4 w-1/4">UI Label</th>
+                                        <th className="p-4 w-1/4">Data Type</th>
+                                        <th className="p-4 w-16">Sort</th>
+                                        <th className="p-4 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {table.mapping.map((m, fieldIdx) => (
+                                        <tr key={fieldIdx} className="group/row">
+                                            <td className="p-2"><input value={m.resultKey} onChange={e => { const up = [...outputTables]; up[tableIdx].mapping[fieldIdx].resultKey = e.target.value; setOutputTables(up); }} placeholder="e.g. ticker" className="w-full p-2 bg-transparent text-xs font-mono outline-none" /></td>
+                                            <td className="p-2"><input value={m.label} onChange={e => { const up = [...outputTables]; up[tableIdx].mapping[fieldIdx].label = e.target.value; setOutputTables(up); }} placeholder="e.g. Asset Name" className="w-full p-2 bg-transparent text-xs outline-none" /></td>
+                                            <td className="p-2">
+                                                <select value={m.type} onChange={e => { const up = [...outputTables]; up[tableIdx].mapping[fieldIdx].type = e.target.value as any; setOutputTables(up); }} className="text-xs bg-transparent outline-none cursor-pointer w-full">
+                                                    {['text', 'number', 'percentage', 'boolean'].map(t => <option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                            </td>
+                                            <td className="p-2"><input type="number" value={m.priority} onChange={e => { const up = [...outputTables]; up[tableIdx].mapping[fieldIdx].priority = parseInt(e.target.value); setOutputTables(up); }} className="w-12 p-2 bg-transparent text-xs appearance-none outline-none" /></td>
+                                            <td className="p-2 text-center">
+                                                <button onClick={() => {
+                                                    const up = [...outputTables];
+                                                    up[tableIdx].mapping = up[tableIdx].mapping.filter((_, idx) => idx !== fieldIdx);
+                                                    setOutputTables(up);
+                                                }} className="p-2 hover:bg-red-500/10 text-red-300 hover:text-red-500 rounded-lg transition-colors">
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    <tr>
+                                        <td colSpan={5} className="p-2">
+                                            <button 
+                                                onClick={() => {
+                                                    const up = [...outputTables];
+                                                    up[tableIdx].mapping.push({ resultKey: '', label: '', type: 'text', priority: up[tableIdx].mapping.length + 1 });
+                                                    setOutputTables(up);
+                                                }}
+                                                className="w-full py-2 border border-dashed border-border rounded-xl text-[10px] font-bold text-muted-foreground hover:text-[#3066bb] hover:border-[#3066bb]/50 hover:bg-secondary/20 transition-all"
+                                            >
+                                                + Add Column to {table.name || 'Table'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ))}
+
+                {outputTables.length === 0 && (
+                    <div className="py-20 text-center border-2 border-dashed border-border rounded-[32px] bg-secondary/5">
+                        <div className="flex flex-col items-center gap-3">
+                            <Activity size={32} className="text-muted-foreground/30" />
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No Output Mappings Defined</p>
+                            <button 
+                                onClick={() => setOutputTables([{ name: 'Standard Results', mapping: [{ resultKey: '', label: '', type: 'text', priority: 1 }] }])}
+                                className="mt-2 px-6 py-3 bg-[#3066bb] text-white rounded-2xl text-xs font-bold shadow-lg shadow-[#3066bb]/20"
+                            >
+                                Generate Default Mapping
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            <div className="pt-8 border-t border-border space-y-6">
+            <div className="pt-12 border-t border-border space-y-6">
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold flex items-center gap-2 tracking-tight">
                         <BarChart2 size={16} className="text-[#3066bb]" /> Visualization (Charts)
