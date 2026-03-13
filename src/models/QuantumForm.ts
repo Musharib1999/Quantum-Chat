@@ -47,6 +47,7 @@ export interface IQuantumForm extends Document {
     }[];
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
     createdAt: Date;
+    updatedAt: Date;
 }
 
 const OutputMappingSchema = new Schema({
@@ -100,7 +101,7 @@ const QuantumFormSchema: Schema = new Schema({
     }],
     executionEnvironment: { type: String, enum: ['python-qiskit', 'python-dwave'] },
     createdAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 // Ensure unique mapping for Industry + Service + Problem + Hardware
 QuantumFormSchema.index({ industry: 1, service: 1, problem: 1, hardware: 1 }, { unique: true });

@@ -48,6 +48,7 @@ interface IQuantumForm {
     chartConfig?: IChartConfig[];
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
     createdAt?: string;
+    updatedAt?: string;
 }
 
 export default function ProblemConsole() {
@@ -450,7 +451,12 @@ export default function ProblemConsole() {
                                     {form.active && <span className="text-[10px] text-green-600 font-bold uppercase">Active</span>}
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1">{form.problem}</h3>
-                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">{form.service} • {form.hardware}</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">{form.service} • {form.hardware}</div>
+                                <div className="flex flex-col gap-1 mb-4">
+                                    <span className="text-[9px] font-mono text-slate-400">ID: {form._id?.substring(form._id.length - 8)}</span>
+                                    <span className="text-[9px] text-slate-400 italic">Created: {form.createdAt ? new Date(form.createdAt).toLocaleString() : 'N/A'}</span>
+                                    <span className="text-[9px] text-slate-400 italic">Modified: {form.updatedAt ? new Date(form.updatedAt).toLocaleString() : 'N/A'}</span>
+                                </div>
                                 <p className="text-xs text-slate-500 line-clamp-2 mb-6 flex-1">{form.description}</p>
                                 <button onClick={() => editForm(form)} className="w-full py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-[#3066bb] hover:text-white hover:border-[#3066bb] transition-all uppercase tracking-widest mt-auto">
                                     Configure
