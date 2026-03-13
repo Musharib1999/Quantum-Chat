@@ -1040,9 +1040,14 @@ export async function interpretQuantumResults(config: {
                 // Add granular fields for the table
                 row.return = retVal;
                 row.risk = riskVal;
+
+                // Extract clean name from route (e.g. "Chevron (Ret: 7.00%...)" -> "Chevron")
+                const nameMatch = row.route?.match(/^([^(]+)/);
+                const cleanName = nameMatch ? nameMatch[1].trim() : null;
+
                 // Normalize property names to prevent "blank columnUniverse" bugs
                 if (row.pilot && !row.ticker) row.ticker = row.pilot;
-                if (!row.asset) row.asset = row.ticker || row.pilot || 'Asset';
+                if (!row.asset) row.asset = cleanName || row.ticker || row.pilot || 'Asset';
             });
             globalAvgReturn = selectedAssignments.length > 0 ? globalTotalReturn / selectedAssignments.length : 0;
             globalAvgRisk = selectedAssignments.length > 0 ? globalTotalRisk / selectedAssignments.length : 0;
