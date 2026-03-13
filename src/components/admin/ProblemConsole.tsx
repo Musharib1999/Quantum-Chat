@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Trash2 } from 'lucide-react';
 
 interface IField {
     label: string;
@@ -48,8 +47,6 @@ interface IQuantumForm {
     interpretationPrompt?: string;
     chartConfig?: IChartConfig[];
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
-    status?: 'pending_approval' | 'live' | 'rejected';
-    createdBy?: string;
     createdAt?: string;
 }
 
@@ -82,9 +79,6 @@ export default function ProblemConsole() {
 
     // Tab 4: AI State
     const [interpretationPrompt, setInterpretationPrompt] = useState('');
-
-    // Inbox / Overview Filter
-    const [listFilter, setListFilter] = useState<'live' | 'pending' | 'rejected'>('live');
 
     // UI State
     const [loading, setLoading] = useState(false);
@@ -140,10 +134,8 @@ export default function ProblemConsole() {
                 outputTables,
                 chartConfig,
                 interpretationPrompt,
-                executionEnvironment,
-                status: 'live' // Admin created/edited are live by default
+                executionEnvironment
             };
-            // ... same as before
 
             if (editorMode === 'json') {
                 try {
@@ -208,16 +200,6 @@ export default function ProblemConsole() {
         setBatchKey(''); setOutputMapping([]); setOutputTables([]); setChartConfig([]);
         setInterpretationPrompt(''); setExecutionEnvironment('python-qiskit');
         setView('editor'); setActiveTab('input');
-    };
-
-    const handleAction = async (id: string, action: 'live' | 'rejected') => {
-        try {
-            await axios.patch(`/api/quantum-forms/${id}`, { status: action, active: action === 'live' });
-            setStatus(`Problem ${action}`);
-            fetchInitialData();
-        } catch (error: any) {
-            setStatus("Error: " + error.message);
-        }
     };
 
     const renderInputTab = () => (
@@ -460,45 +442,22 @@ export default function ProblemConsole() {
                         </button>
                     </div>
 
-                    <div className="flex gap-4 border-b border-slate-100 mb-6">
-                        <button onClick={() => setListFilter('live')} className={`pb-4 px-4 text-xs font-bold transition-all border-b-2 ${listFilter === 'live' ? 'border-[#3066bb] text-[#3066bb]' : 'border-transparent text-slate-400'}`}>Library ({existingForms.filter(f => f.status !== 'pending_approval' && f.status !== 'rejected').length})</button>
-                        <button onClick={() => setListFilter('pending')} className={`pb-4 px-4 text-xs font-bold transition-all border-b-2 ${listFilter === 'pending' ? 'border-[#3066bb] text-[#3066bb]' : 'border-transparent text-slate-400'}`}>Inbox ({existingForms.filter(f => f.status === 'pending_approval' || (f as any).status === undefined && (f as any).createdBy).length})</button>
-                        <button onClick={() => setListFilter('rejected')} className={`pb-4 px-4 text-xs font-bold transition-all border-b-2 ${listFilter === 'rejected' ? 'border-[#3066bb] text-[#3066bb]' : 'border-transparent text-slate-400'}`}>Rejected</button>
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {existingForms
-                            .filter(f => {
-                                if (listFilter === 'live') return f.status === 'live' || !f.status;
-                                if (listFilter === 'pending') return f.status === 'pending_approval';
-                                if (listFilter === 'rejected') return f.status === 'rejected';
-                                return true;
-                            })
-                            .map((form) => (
+                        {existingForms.map((form) => (
                             <div key={form._id} className="bg-white border border-slate-200 p-6 rounded-2xl hover:border-[#3066bb] hover:shadow-md transition-all flex flex-col min-h-[220px]">
                                 <div className="flex items-center justify-between mb-4">
                                     <span className="text-[10px] font-bold text-[#3066bb] uppercase bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{form.industry}</span>
-                                    {form.createdBy && <span className="text-[10px] text-slate-400 font-medium">By: {form.createdBy.split('@')[0]}</span>}
+                                    {form.active && <span className="text-[10px] text-green-600 font-bold uppercase">Active</span>}
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1">{form.problem}</h3>
                                 <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">{form.service} • {form.hardware}</div>
                                 <p className="text-xs text-slate-500 line-clamp-2 mb-6 flex-1">{form.description}</p>
-                                
-                                {listFilter === 'pending' ? (
-                                    <div className="flex gap-2">
-                                        <button onClick={() => editForm(form)} className="flex-1 py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all uppercase">Review</button>
-                                        <button onClick={() => handleAction(form._id!, 'live')} className="flex-1 py-2.5 rounded-xl bg-[#3066bb] text-white text-[10px] font-bold hover:bg-[#255299] transition-all uppercase">Approve</button>
-                                        <button onClick={() => handleAction(form._id!, 'rejected')} className="px-4 py-2.5 rounded-xl border border-red-100 text-red-500 hover:bg-red-50 transition-all"><Trash2 size={14}/></button>
-                                    </div>
-                                ) : (
-                                    <button onClick={() => editForm(form)} className="w-full py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-[#3066bb] hover:text-white hover:border-[#3066bb] transition-all uppercase tracking-widest mt-auto">
-                                        Configure
-                                    </button>
-                                )}
+                                <button onClick={() => editForm(form)} className="w-full py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-[#3066bb] hover:text-white hover:border-[#3066bb] transition-all uppercase tracking-widest mt-auto">
+                                    Configure
+                                </button>
                             </div>
                         ))}
                     </div>
-                    {existingForms.length === 0 && <div className="py-20 text-center text-slate-400 text-sm italic">no blueprints found</div>}
                     {existingForms.length === 0 && <div className="py-20 text-center text-slate-400 text-sm italic">no blueprints found</div>}
                 </div>
             ) : (

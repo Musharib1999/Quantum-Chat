@@ -46,8 +46,6 @@ export interface IQuantumForm extends Document {
         label: string;
     }[];
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
-    status: 'pending_approval' | 'live' | 'rejected';
-    createdBy?: string;
     createdAt: Date;
 }
 
@@ -101,13 +99,10 @@ const QuantumFormSchema: Schema = new Schema({
         label: String
     }],
     executionEnvironment: { type: String, enum: ['python-qiskit', 'python-dwave'] },
-    status: { type: String, enum: ['pending_approval', 'live', 'rejected'], default: 'live' },
-    createdBy: { type: String },
     createdAt: { type: Date, default: Date.now }
 });
 
-// Unique mapping for Industry + Service + Problem + Hardware
-// Added createdBy to unique index to allow users to propose private problems even if a live one exists
-QuantumFormSchema.index({ industry: 1, service: 1, problem: 1, hardware: 1, createdBy: 1 }, { unique: true });
+// Ensure unique mapping for Industry + Service + Problem + Hardware
+QuantumFormSchema.index({ industry: 1, service: 1, problem: 1, hardware: 1 }, { unique: true });
 
 export default mongoose.models.QuantumForm || mongoose.model<IQuantumForm>('QuantumForm', QuantumFormSchema);

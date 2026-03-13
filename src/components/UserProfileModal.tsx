@@ -106,22 +106,6 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 )}
 
                 <div className="pt-2">
-                    {isAuthenticated && (
-                        <button
-                            onClick={() => {
-                                // We'll assume the parent component handles opening the Submissions modal
-                                // or we can handle it here if we refactor. 
-                                // For simplicity, let's trigger a custom event or use a prop if available.
-                                (window as any).dispatchEvent(new CustomEvent('open-my-submissions'));
-                                onClose();
-                            }}
-                            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-[#3066bb] hover:bg-[#3066bb]/5 transition-all"
-                        >
-                            <Layout size={16} />
-                            <span>My Submissions</span>
-                        </button>
-                    )}
-
                     {isAuthenticated ? (
                         <button
                             onClick={handleLogout}
