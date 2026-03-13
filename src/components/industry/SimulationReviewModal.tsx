@@ -40,18 +40,14 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-card border border-border rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-                {/* Header */}
-                <div className="p-6 md:p-8 border-b border-border flex items-center justify-between bg-white dark:bg-card">
-                    <div className="space-y-1">
-                    </div>
-                    <button 
-                        onClick={onClose}
-                        className="p-2 hover:bg-secondary rounded-xl text-muted-foreground transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
+            <div className="bg-card border border-border rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 relative">
+                {/* Absolute Close Button */}
+                <button 
+                    onClick={onClose}
+                    className="absolute top-6 right-6 p-2 hover:bg-secondary rounded-xl text-muted-foreground transition-colors z-20"
+                >
+                    <X size={20} />
+                </button>
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar max-h-[75vh]">
