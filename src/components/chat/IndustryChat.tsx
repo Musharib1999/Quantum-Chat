@@ -483,32 +483,44 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                 <table className="w-full text-left border-collapse">
                                     <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
                                         <tr>
-                                            {table.mapping.map((col: any, cIdx: number) => (
-                                                <th key={cIdx} className="px-3 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">{col.label}</th>
-                                            ))}
+                                            {(() => {
+                                                const mapping = [...table.mapping];
+                                                if (tIdx === 0 && !mapping.some(m => m.resultKey === 'combinatorialSize')) {
+                                                    mapping.push({ label: 'Combinatorial Size', resultKey: 'combinatorialSize', type: 'text', priority: 100 });
+                                                }
+                                                return mapping.sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0)).map((col: any, cIdx: number) => (
+                                                    <th key={cIdx} className="px-3 py-3 text-[10px] text-[#111827] font-normal tracking-widest bg-secondary/5">{col.label}</th>
+                                                ));
+                                            })()}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
                                         {rowsData.map((row: any, rIdx: number) => (
                                             <tr key={rIdx} className="hover:bg-muted/40 transition-colors">
-                                                {table.mapping.map((col: any, cIdx: number) => {
-                                                    const val = row ? row[col.resultKey] : undefined;
-                                                    const displayVal = col.type === 'percentage' 
-                                                        ? (typeof val === 'number' ? `${val.toFixed(2)}%` : val)
-                                                        : col.type === 'number'
-                                                            ? (typeof val === 'number' ? val.toLocaleString() : val)
-                                                            : val;
-                                                    
-                                                    const colorClass = col.type === 'percentage' && typeof val === 'number' 
-                                                        ? (val > 0 ? 'text-[#10b981]' : val < 0 ? 'text-[#ef4444]' : 'text-[#111827]')
-                                                        : 'text-[#111827]';
+                                                {(() => {
+                                                    const mapping = [...table.mapping];
+                                                    if (tIdx === 0 && !mapping.some(m => m.resultKey === 'combinatorialSize')) {
+                                                        mapping.push({ label: 'Combinatorial Size', resultKey: 'combinatorialSize', type: 'text', priority: 100 });
+                                                    }
+                                                    return mapping.sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0)).map((col: any, cIdx: number) => {
+                                                        const val = row ? row[col.resultKey] : undefined;
+                                                        const displayVal = col.type === 'percentage' 
+                                                            ? (typeof val === 'number' ? `${val.toFixed(2)}%` : val)
+                                                            : col.type === 'number'
+                                                                ? (typeof val === 'number' ? val.toLocaleString() : val)
+                                                                : val;
+                                                        
+                                                        const colorClass = col.type === 'percentage' && typeof val === 'number' 
+                                                            ? (val > 0 ? 'text-[#10b981]' : val < 0 ? 'text-[#ef4444]' : 'text-[#111827]')
+                                                            : 'text-[#111827]';
 
-                                                    return (
-                                                        <td key={cIdx} className={`px-3 py-3 text-sm ${colorClass}`}>
-                                                            {displayVal || (rIdx === 0 && isSummaryTable ? '0' : '-')}
-                                                        </td>
-                                                    );
-                                                })}
+                                                        return (
+                                                            <td key={cIdx} className={`px-3 py-3 text-sm ${colorClass}`}>
+                                                                {displayVal || (rIdx === 0 && isSummaryTable ? '0' : '-')}
+                                                            </td>
+                                                        );
+                                                    });
+                                                })()}
                                             </tr>
                                         ))}
                                     </tbody>

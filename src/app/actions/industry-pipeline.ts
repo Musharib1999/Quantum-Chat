@@ -877,6 +877,20 @@ export async function runQuantumSimulator(config: {
     }
 }
 
+// Helper for human-readable quantum scale
+function getQuantumStateSpaceName(n: number) {
+    if (n < 20) return "Thousands";
+    if (n < 30) return "Millions";
+    if (n < 40) return "Billions";
+    if (n < 50) return "Trillions";
+    if (n < 60) return "Quadrillions";
+    if (n < 70) return "Quintillions";
+    if (n < 80) return "Sextillions";
+    if (n < 90) return "Septillions";
+    if (n < 100) return "Octillions";
+    return "Nonillions+";
+}
+
 export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string; formData: any; service?: string;
 }): Promise<{ 
@@ -886,6 +900,7 @@ export async function interpretQuantumResults(config: {
     qubitCount?: number; 
     portfolioMetrics?: any;
     outputTables?: any[];
+    combinatorialSize?: string;
 }> {
     const { problem, industry, hardware, rawOutput, formData } = config;
 
@@ -1024,11 +1039,66 @@ export async function interpretQuantumResults(config: {
         }
 
 
+        // --- DYNAMIC ROW SYNTHESIS ---
+        // If the code didn't provide an explicit assignmentsTable, we build one from best_solution
+        if (finalAssignmentsTable.length === 0 && Object.keys(unifiedSolution).length > 0) {
+            Object.entries(unifiedSolution).forEach(([key, val]) => {
+                const row: Record<string, any> = { id: key };
+                
+                // If it's a binary assignment (1), we definitely want it in the table
+                if (val === 1 || val === true || val === "1") {
+                    row.status = "Selected";
+                    row.assignment = "Assigned";
+                } else if (val === 0 || val === false || val === "0") {
+                    row.status = "Not Selected";
+                    row.assignment = "Unassigned";
+                } else {
+                    row.value = val;
+                }
+
+                // Try to find if this 'key' should be mapped to specific blueprint columns
+                // e.g. if the key is "drug_A" and the blueprint has a resultKey "molecule"
+                // we'll put the ligand name in that slot.
+                if (blueprint?.outputTables) {
+                    blueprint.outputTables.forEach((table: any) => {
+                        table.mapping.forEach((col: any) => {
+                            // If the resultKey is something generic like 'variable', put the key there
+                            if (col.resultKey === 'variable' || col.resultKey === 'item' || col.resultKey === 'key') {
+                                row[col.resultKey] = key;
+                            }
+                            // Fallback: If the row doesn't have the value for this column yet, 
+                            // and the variable name 'key' seems to contain data, use it.
+                            if (row[col.resultKey] === undefined) {
+                                // If val is 1, this row represents this specific variable being 'True'
+                                // So we treat the variable name itself as the identity
+                                row[col.resultKey] = (val === 1 || val === true || val === "1") ? key : "-";
+                            }
+                        });
+                    });
+                } else {
+                    // Fallback for no blueprint
+                    row.ticker = key;
+                    row.pilot = key;
+                }
+                
+                finalAssignmentsTable.push(row);
+            });
+
+            // If it's a huge binary vector, only show the '1's to keep table clean
+            if (finalAssignmentsTable.length > 20) {
+                const activeOnes = finalAssignmentsTable.filter(r => r.status === "Selected");
+                if (activeOnes.length > 0) finalAssignmentsTable = activeOnes;
+            }
+        }
+
+
         // --- PREPARE READABLE ASSIGNMENTS ---
         let readableAssignments: string[] = [];
         finalAssignmentsTable.forEach(row => {
             const sectorTag = row.sector ? `${row.sector}: ` : '';
-            readableAssignments.push(`${sectorTag}${row.pilot || row.ticker}: ${row.route}`);
+            const mainLabel = row.ticker || row.pilot || row.id || row.item || 'Item';
+            const valueLabel = row.route || row.assignment || row.status || 'Active';
+            readableAssignments.push(`${sectorTag}${mainLabel}: ${valueLabel}`);
         });
 
         if (readableAssignments.length === 0) {
@@ -1085,7 +1155,8 @@ STRICT RULES:
                 const map: { [key: string]: string } = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
                 return num.toString().split('').map(c => map[c] || c).join('');
             };
-            const msg = `Quantum Exploration: Assessed a combinatorial space of 2${toSuperscript(qubitCount)} (${getQuantumStateSpaceName(qubitCount)}) potential states. The optimization engine determined the minimum-energy configuration, yielding the globally optimal solution under the specified constraints.`;
+            const sizeStr = qubitCount > 0 ? `2${toSuperscript(qubitCount)} (${getQuantumStateSpaceName(qubitCount)})` : "";
+            const msg = `Quantum Exploration: Assessed a combinatorial space of ${sizeStr}. The optimization engine determined the minimum-energy configuration, yielding the globally optimal solution under the specified constraints.`;
             text += `\n\n${msg}`;
         }
 
@@ -1094,13 +1165,15 @@ STRICT RULES:
             chartData: extractedPlotlyChart, 
             assignmentsTable: finalAssignmentsTable, 
             qubitCount,
+            combinatorialSize: qubitCount > 0 ? `2^${qubitCount} (${getQuantumStateSpaceName(qubitCount)})` : "N/A",
             portfolioMetrics: problem.toLowerCase().includes('portfolio optimization') ? {
                 avgReturn: globalAvgReturn,
                 avgRisk: globalAvgRisk,
                 assetsCount: finalAssignmentsTable.length,
                 sectorsCount: new Set(finalAssignmentsTable.map(r => r.sector).filter(Boolean)).size,
                 universeSize: globalTotalQubits || finalAssignmentsTable.length,
-                qubitCount: qubitCount
+                qubitCount: qubitCount,
+                combinatorialSize: qubitCount > 0 ? `2^${qubitCount} (${getQuantumStateSpaceName(qubitCount)})` : "N/A"
             } : null,
             outputTables: blueprint?.outputTables || []
         };

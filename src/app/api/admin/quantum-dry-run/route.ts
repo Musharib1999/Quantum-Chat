@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
         // --- COLUMN DISCOVERY ---
         // Look for common data keys in the result, especially in structured [QUANTUM_JSON]
-        const suggestions: string[] = [];
+        const suggestions: string[] = ["variable", "value", "assignment", "status"];
         const rawOutput = (result.output || "");
         
         // 1. Try robust tagged extraction first (Standard format)
