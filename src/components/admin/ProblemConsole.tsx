@@ -163,6 +163,29 @@ export default function ProblemConsole() {
         }
     };
 
+    const handleToggleActive = async (form: IQuantumForm) => {
+        try {
+            const newActive = !form.active;
+            await axios.patch(`/api/quantum-forms/${form._id}`, { active: newActive });
+            setExistingForms(prev => prev.map(f => f._id === form._id ? { ...f, active: newActive } : f));
+            setStatus(`${form.problem} has been ${newActive ? 'activated' : 'deactivated'}`);
+        } catch (error: any) {
+            setStatus('Error toggling status: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
+    const handleDelete = async (form: IQuantumForm) => {
+        if (!window.confirm(`Are you sure you want to delete the blueprint for "${form.problem}"? This action cannot be undone.`)) return;
+        
+        try {
+            await axios.delete(`/api/quantum-forms/${form._id}`);
+            setExistingForms(prev => prev.filter(f => f._id !== form._id));
+            setStatus(`${form.problem} deleted successfully`);
+        } catch (error: any) {
+            setStatus('Error deleting blueprint: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
     const editForm = (form: IQuantumForm) => {
         setIndustry(form.industry);
         setService(form.service);
@@ -458,9 +481,31 @@ export default function ProblemConsole() {
                                     <span className="text-[9px] text-slate-400 italic">Modified: {form.updatedAt ? new Date(form.updatedAt).toLocaleString() : 'N/A'}</span>
                                 </div>
                                 <p className="text-xs text-slate-500 line-clamp-2 mb-6 flex-1">{form.description}</p>
-                                <button onClick={() => editForm(form)} className="w-full py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-[#3066bb] hover:text-white hover:border-[#3066bb] transition-all uppercase tracking-widest mt-auto">
-                                    Configure
-                                </button>
+                                
+                                <div className="grid grid-cols-3 gap-2 mt-auto">
+                                    <button 
+                                        onClick={() => editForm(form)} 
+                                        className="py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[9px] font-bold text-slate-600 hover:bg-[#3066bb] hover:text-white hover:border-[#3066bb] transition-all uppercase tracking-tight"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button 
+                                        onClick={() => handleToggleActive(form)} 
+                                        className={`py-2.5 rounded-xl border transition-all uppercase text-[9px] font-bold tracking-tight ${
+                                            form.active 
+                                                ? 'bg-amber-50 border-amber-100 text-amber-600 hover:bg-amber-600 hover:text-white hover:border-amber-600' 
+                                                : 'bg-green-50 border-green-100 text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600'
+                                        }`}
+                                    >
+                                        {form.active ? 'Hide' : 'Show'}
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDelete(form)} 
+                                        className="py-2.5 rounded-xl border border-red-50 bg-red-50 text-[9px] font-bold text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all uppercase tracking-tight"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
