@@ -42,18 +42,41 @@ export async function POST(req: Request) {
         }
 
         // --- COLUMN DISCOVERY ---
-        // Look for common data keys in the result
+        // Look for common data keys in the result, especially in structured [QUANTUM_JSON]
         const suggestions: string[] = [];
+        const rawOutput = (result.output || "");
         
+        // 1. Try robust tagged extraction first (Standard format)
+        const jsonMatch = rawOutput.match(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/);
+        if (jsonMatch) {
+            try {
+                const data = JSON.parse(jsonMatch[1]);
+                
+                // If it has a table, the keys of the FIRST row are the best suggestions
+                if (data.assignmentsTable && Array.isArray(data.assignmentsTable) && data.assignmentsTable.length > 0) {
+                    const firstRow = data.assignmentsTable[0];
+                    if (firstRow && typeof firstRow === 'object') {
+                        suggestions.push(...Object.keys(firstRow));
+                    }
+                }
+                
+                // Also suggest top-level data keys (excluding big ones)
+                suggestions.push(...Object.keys(data).filter(k => 
+                    !['assignmentsTable', 'plotly_chart', 'chartData', 'best_solution'].includes(k)
+                ));
+            } catch (e) {
+                console.error("Dry run JSON parsing failed:", e);
+            }
+        }
+
+        // 2. Fallback to general object discovery from the raw result
         if (result.results && Array.isArray(result.results)) {
-            // If it returns a list of results (standard for our tables)
             const firstRow = result.results[0];
             if (firstRow && typeof firstRow === 'object') {
                 suggestions.push(...Object.keys(firstRow));
             }
         } else if (typeof result === 'object') {
-            // General object discovery
-            suggestions.push(...Object.keys(result).filter(k => k !== 'error' && k !== 'executionTimeMs'));
+            suggestions.push(...Object.keys(result).filter(k => !['error', 'executionTimeMs', 'output', 'success'].includes(k)));
         }
 
         return NextResponse.json({

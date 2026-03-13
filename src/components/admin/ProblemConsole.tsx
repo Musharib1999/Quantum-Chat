@@ -413,29 +413,42 @@ export default function ProblemConsole() {
                 <h3 className="text-sm font-bold text-slate-900">Result tables</h3>
                 <div className="flex items-center gap-4">
                     {suggestions.length > 0 && (
-                        <div className="flex items-center gap-2 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100">
-                            <span className="text-[10px] font-bold text-blue-600 uppercase">Suggested Column:</span>
-                            <div className="flex gap-2">
-                                {suggestions.slice(0, 5).map(s => (
+                        <div className="flex items-start gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100 animate-in slide-in-from-top-2">
+                            <div className="pt-1">
+                                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mb-1">Dry Run Suggestions:</span>
+                                <p className="text-[9px] text-blue-400 font-medium">Click to add as table column</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2 flex-1">
+                                {suggestions.map(s => (
                                     <button 
                                         key={s} 
                                         onClick={() => {
                                             const up = [...outputTables];
-                                            if (up.length === 0) up.push({ name: 'Results', mapping: [] });
-                                            // Add to the first table
-                                            up[0].mapping.push({ 
+                                            if (up.length === 0) up.push({ name: 'Standard Results', mapping: [] });
+                                            // Add to the last table by default or first if preferred
+                                            const targetTable = up[up.length - 1];
+                                            if (targetTable.mapping.some(m => m.resultKey === s)) return; // Prevent dupes
+                                            
+                                            targetTable.mapping.push({ 
                                                 resultKey: s, 
                                                 label: s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '), 
-                                                type: 'text', 
-                                                priority: up[0].mapping.length + 1 
+                                                type: s.includes('energy') || s.includes('qubit') ? 'number' : 'text', 
+                                                priority: targetTable.mapping.length + 1 
                                             });
                                             setOutputTables(up);
                                         }}
-                                        className="text-[9px] font-bold bg-white text-[#3066bb] px-2 py-0.5 rounded border border-blue-200 hover:bg-[#3066bb] hover:text-white transition-all"
+                                        className="text-[10px] font-bold bg-white text-[#3066bb] px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-[#3066bb] hover:text-white transition-all shadow-sm flex items-center gap-1.5 group"
                                     >
-                                        + {s}
+                                        <span className="text-blue-300 group-hover:text-white/50">+</span>
+                                        {s}
                                     </button>
                                 ))}
+                                <button 
+                                    onClick={() => setSuggestions([])}
+                                    className="text-[10px] font-bold text-slate-400 hover:text-slate-600 px-3 py-1.5"
+                                >
+                                    Clear
+                                </button>
                             </div>
                         </div>
                     )}
