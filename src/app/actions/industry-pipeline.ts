@@ -933,6 +933,7 @@ export async function interpretQuantumResults(config: {
         let globalBudget = 10;
         let globalAvgReturn = 0;
         let globalAvgRisk = 0;
+        let globalMetrics: Record<string, any> = {};
 
         // 1. Try robust tagged extraction first
         const taggedMatches = [...rawOutput.matchAll(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/g)];
@@ -947,6 +948,13 @@ export async function interpretQuantumResults(config: {
                     if (data.total_budget) globalBudget = data.total_budget;
                     if (data.assignmentsTable) finalAssignmentsTable.push(...data.assignmentsTable);
                     if (data.plotly_chart) extractedPlotlyChart = data.plotly_chart;
+
+                    // Collect all top-level keys as global metrics (summary data)
+                    Object.entries(data).forEach(([key, val]) => {
+                        if (!['best_solution', 'assignmentsTable', 'plotly_chart', 'formatted_assignments', 'summary', 'text'].includes(key)) {
+                            globalMetrics[key] = val;
+                        }
+                    });
 
                     // Aviation fallback: build assignmentsTable from formatted_assignments strings
                     // e.g. "Pilot 0 assigned to Route 1 on Day 2"
@@ -986,6 +994,13 @@ export async function interpretQuantumResults(config: {
                         if (data.total_budget) globalBudget = data.total_budget;
                     }
                     if (data.assignmentsTable) finalAssignmentsTable.push(...data.assignmentsTable);
+                    
+                    // Collect metrics from untagged fallback
+                    Object.entries(data).forEach(([key, val]) => {
+                        if (!['best_solution', 'assignmentsTable', 'plotly_chart', 'summary', 'text'].includes(key)) {
+                            globalMetrics[key] = val;
+                        }
+                    });
                 } catch (e) {
                     console.error("Error parsing untagged JSON fallback:", e);
                 }
@@ -1148,6 +1163,8 @@ STRICT RULES:
             }
         }
 
+        let combinatorialSizeStr = "N/A";
+
         const qubitCount = globalTotalQubits || Object.keys(unifiedSolution).length;
         if (qubitCount > 0) {
             const { getQuantumStateSpaceName } = await import('@/lib/quantum-utils');
@@ -1157,6 +1174,7 @@ STRICT RULES:
             };
             const sizeStr = qubitCount > 0 ? `2${toSuperscript(qubitCount)} (${getQuantumStateSpaceName(qubitCount)})` : "";
             const msg = `Quantum Exploration: Assessed a combinatorial space of ${sizeStr}. The optimization engine determined the minimum-energy configuration, yielding the globally optimal solution under the specified constraints.`;
+            combinatorialSizeStr = sizeStr || (qubitCount > 0 ? `2^${qubitCount} (${getQuantumStateSpaceName(qubitCount)})` : "N/A");
             text += `\n\n${msg}`;
         }
 
@@ -1165,16 +1183,17 @@ STRICT RULES:
             chartData: extractedPlotlyChart, 
             assignmentsTable: finalAssignmentsTable, 
             qubitCount,
-            combinatorialSize: qubitCount > 0 ? `2^${qubitCount} (${getQuantumStateSpaceName(qubitCount)})` : "N/A",
-            portfolioMetrics: problem.toLowerCase().includes('portfolio optimization') ? {
-                avgReturn: globalAvgReturn,
-                avgRisk: globalAvgRisk,
+            combinatorialSize: combinatorialSizeStr,
+            portfolioMetrics: {
+                ...globalMetrics,
+                avgReturn: globalAvgReturn || globalMetrics.avgReturn,
+                avgRisk: globalAvgRisk || globalMetrics.avgRisk,
                 assetsCount: finalAssignmentsTable.length,
                 sectorsCount: new Set(finalAssignmentsTable.map(r => r.sector).filter(Boolean)).size,
                 universeSize: globalTotalQubits || finalAssignmentsTable.length,
                 qubitCount: qubitCount,
-                combinatorialSize: qubitCount > 0 ? `2^${qubitCount} (${getQuantumStateSpaceName(qubitCount)})` : "N/A"
-            } : null,
+                combinatorialSize: combinatorialSizeStr
+            },
             outputTables: blueprint?.outputTables || []
         };
     } catch (e: any) {
