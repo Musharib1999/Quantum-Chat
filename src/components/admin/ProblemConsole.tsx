@@ -89,6 +89,9 @@ export default function ProblemConsole() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingField, setEditingField] = useState<IField | null>(null);
     const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
+    const [dryRunning, setDryRunning] = useState(false);
+    const [dryRunResult, setDryRunResult] = useState<any | null>(null);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
 
     // Data State
     const [existingForms, setExistingForms] = useState<IQuantumForm[]>([]);
@@ -112,6 +115,31 @@ export default function ProblemConsole() {
         } catch (error: any) {
             console.error("Failed to fetch admin data", error);
             setStatus("Error: " + error.message);
+        }
+    };
+
+    const handleDryRun = async () => {
+        if (codeTemplates.length === 0) {
+            alert("Please add at least one code template to perform a dry run.");
+            return;
+        }
+        setDryRunning(true);
+        setStatus("Running quantum simulation dry run...");
+        try {
+            // Find the template for the current hardware, or fallback to Universal
+            const template = codeTemplates.find(t => t.hardware === hardware) || codeTemplates[0];
+            const res = await axios.post('/api/admin/quantum-dry-run', {
+                code: template.code,
+                hardware: template.hardware
+            });
+            setDryRunResult(res.data.rawResult);
+            setSuggestions(res.data.suggestions || []);
+            setStatus("Dry run successful. Check suggestions in Data Mapping.");
+            setActiveTab('output'); // Switch to output tab to see suggestions
+        } catch (error: any) {
+            setStatus("Dry Run Error: " + (error.response?.data?.error || error.message));
+        } finally {
+            setDryRunning(false);
         }
     };
 
@@ -344,7 +372,16 @@ export default function ProblemConsole() {
             <div className="space-y-4 pt-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-900">Algorithm templates</h3>
-                    <button onClick={() => setCodeTemplates([...codeTemplates, { hardware: 'Universal', code: '' }])} className="text-xs font-bold text-[#3066bb] hover:underline">Add hardware override</button>
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={handleDryRun} 
+                            disabled={dryRunning || codeTemplates.length === 0}
+                            className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50"
+                        >
+                            {dryRunning ? 'Executing...' : 'Dry run (Test)'}
+                        </button>
+                        <button onClick={() => setCodeTemplates([...codeTemplates, { hardware: 'Universal', code: '' }])} className="text-xs font-bold text-[#3066bb] hover:underline">Add hardware override</button>
+                    </div>
                 </div>
                 <div className="space-y-4">
                     {codeTemplates.map((t, i) => (
@@ -366,7 +403,36 @@ export default function ProblemConsole() {
         <div className="space-y-10">
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-slate-900">Result tables</h3>
-                <button onClick={() => setOutputTables([...outputTables, { name: 'Results', mapping: [{ resultKey: '', label: '', type: 'text', priority: 1 }] }])} className="text-xs font-bold text-[#3066bb] hover:underline">+ Add table</button>
+                <div className="flex items-center gap-4">
+                    {suggestions.length > 0 && (
+                        <div className="flex items-center gap-2 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100">
+                            <span className="text-[10px] font-bold text-blue-600 uppercase">Suggested Column:</span>
+                            <div className="flex gap-2">
+                                {suggestions.slice(0, 5).map(s => (
+                                    <button 
+                                        key={s} 
+                                        onClick={() => {
+                                            const up = [...outputTables];
+                                            if (up.length === 0) up.push({ name: 'Results', mapping: [] });
+                                            // Add to the first table
+                                            up[0].mapping.push({ 
+                                                resultKey: s, 
+                                                label: s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '), 
+                                                type: 'text', 
+                                                priority: up[0].mapping.length + 1 
+                                            });
+                                            setOutputTables(up);
+                                        }}
+                                        className="text-[9px] font-bold bg-white text-[#3066bb] px-2 py-0.5 rounded border border-blue-200 hover:bg-[#3066bb] hover:text-white transition-all"
+                                    >
+                                        + {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    <button onClick={() => setOutputTables([...outputTables, { name: 'Results', mapping: [{ resultKey: '', label: '', type: 'text', priority: 1 }] }])} className="text-xs font-bold text-[#3066bb] hover:underline">+ Add table</button>
+                </div>
             </div>
 
             {outputTables.map((table, tableIdx) => (

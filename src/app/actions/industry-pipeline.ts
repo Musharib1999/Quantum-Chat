@@ -29,6 +29,7 @@ async function getDynamicLLM() {
     return _llmSettingsCache;
 }
 import { getDynamicPrompt } from './prompt-utils';
+import { executeQuantumCircuit, executeDWaveAnnealer } from '@/lib/quantum-simulator';
 import axios from 'axios';
 import crypto from 'crypto';
 import { ProblemRegistry } from '@/lib/industry/problem-registry';
@@ -41,79 +42,6 @@ interface IndustryPipelineDeps {
 
 const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL || "http://127.0.0.1:8001";
 const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL || "http://127.0.0.1:8002";
-
-// --- Quantum Execution Helpers ---
-const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
-
-async function executeQuantumCircuit(circuitCode: string) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 59000); // 59s explicit timeout
-    try {
-        const url = `${QISKIT_SERVICE_URL}/execute`;
-        console.log(`[Qiskit Sim] START | URL: ${url} | CodeSize: ${circuitCode.length}`);
-        console.time(`qiskit_exec_${url}`);
-        const startTime = Date.now();
-
-        const response = await axios.post(url, {
-            code: circuitCode
-        }, {
-            headers: { 'X-API-Key': API_SECRET },
-            signal: controller.signal
-        });
-        const executionTimeMs = Date.now() - startTime;
-        clearTimeout(timeoutId);
-        console.timeEnd(`qiskit_exec_${url}`);
-        console.log(`[Qiskit Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length} | Time: ${executionTimeMs}ms`);
-
-        return { ...response.data, executionTimeMs };
-    } catch (e: any) {
-        clearTimeout(timeoutId);
-        if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
-            console.error("[Qiskit Sim] TIMEOUT 59s: Request was forcefully aborted.");
-            return { error: "Qiskit Simulator Timeout (59s): The execution exceeded the maximum allowed time." };
-        }
-        console.error("Simulator Execution Fail:", e.message);
-        if (e.code === 'ECONNREFUSED') {
-            return { error: "Qiskit Simulator is offline. Please ensure the Python service is running." };
-        }
-        return { error: `Quantum Service Error: ${e.message}` };
-    }
-}
-
-async function executeDWaveAnnealer(code: string) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 59000); // 59s explicit timeout
-    try {
-        const url = `${DWAVE_SERVICE_URL}/execute`;
-        console.log(`[DWave Sim] START | URL: ${url} | CodeSize: ${code.length}`);
-        console.time(`dwave_exec_${url}`);
-        const startTime = Date.now();
-
-        const response = await axios.post(url, {
-            code: code
-        }, {
-            headers: { 'X-API-Key': API_SECRET },
-            signal: controller.signal
-        });
-        const executionTimeMs = Date.now() - startTime;
-        clearTimeout(timeoutId);
-        console.timeEnd(`dwave_exec_${url}`);
-        console.log(`[DWave Sim] SUCCESS | ResLen: ${JSON.stringify(response.data).length} | Time: ${executionTimeMs}ms`);
-
-        return { ...response.data, executionTimeMs };
-    } catch (e: any) {
-        clearTimeout(timeoutId);
-        if (axios.isCancel(e) || e.name === 'CanceledError' || e.message === 'canceled') {
-            console.error("[DWave Sim] TIMEOUT 59s: Request was forcefully aborted.");
-            return { error: "D-Wave Simulator Timeout (59s): The execution exceeded the maximum allowed time." };
-        }
-        console.error("D-Wave Execution Fail:", e.message);
-        if (e.code === 'ECONNREFUSED') {
-            return { error: "D-Wave Simulator is offline. Please ensure the Python service is running." };
-        }
-        return { error: `Quantum Service Error: ${e.message}` };
-    }
-}
 
 // --- Robustness Helpers ---
 
