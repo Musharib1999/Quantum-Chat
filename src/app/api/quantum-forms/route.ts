@@ -24,23 +24,24 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing mapping parameters (industry, service, problem, hardware)' }, { status: 400 });
         }
 
-        let form = await QuantumForm.findOne({
+        // Fetch all active forms for this industry/service/problem
+        const forms = await QuantumForm.find({
             industry: new RegExp(`^${industry}$`, 'i'),
             service: new RegExp(`^${service}$`, 'i'),
             problem: new RegExp(`^${problem}$`, 'i'),
-            hardware,
             active: true
         });
 
-        // Fallback to Universal if specific hardware form is not found
-        if (!form && hardware !== 'Universal') {
-            form = await QuantumForm.findOne({
-                industry: new RegExp(`^${industry}$`, 'i'),
-                service: new RegExp(`^${service}$`, 'i'),
-                problem: new RegExp(`^${problem}$`, 'i'),
-                $or: [{ hardware: 'Universal' }, { hardware: { $exists: false } }],
-                active: true
-            });
+        // Normalize hardware name for comparison: lowercase and remove symbols
+        const normalize = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const targetHwNorm = normalize(hardware || '');
+
+        // 1. Try to find an exact (normalized) match
+        let form = forms.find(f => normalize(f.hardware) === targetHwNorm);
+
+        // 2. Fallback to Universal if no specific match found
+        if (!form && targetHwNorm !== 'universal') {
+            form = forms.find(f => normalize(f.hardware) === 'universal' || !f.hardware);
         }
 
         if (!form) {

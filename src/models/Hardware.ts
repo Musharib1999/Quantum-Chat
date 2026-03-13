@@ -6,6 +6,7 @@ export interface IHardware extends Document {
     qubits: number;
     status: 'Online' | 'Offline' | 'Maintenance';
     description: string;
+    serviceUrl?: string;
     order: number;
     createdAt: Date;
     updatedAt: Date;
@@ -27,6 +28,7 @@ const HardwareSchema: Schema = new Schema({
         default: 'Online'
     },
     description: { type: String, required: true },
+    serviceUrl: { type: String, required: false },
     order: { type: Number, required: true, default: 0 },
 }, {
     timestamps: true,

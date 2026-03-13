@@ -7,11 +7,11 @@ const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
 /**
  * Executes Qiskit/Python code on the external simulator service.
  */
-export async function executeQuantumCircuit(circuitCode: string) {
+export async function executeQuantumCircuit(circuitCode: string, overrideUrl?: string) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 59000); // 59s explicit timeout
     try {
-        const url = `${QISKIT_SERVICE_URL}/execute`;
+        const url = `${overrideUrl || QISKIT_SERVICE_URL}/execute`;
         const startTime = Date.now();
 
         const response = await axios.post(url, {
@@ -40,11 +40,11 @@ export async function executeQuantumCircuit(circuitCode: string) {
 /**
  * Executes D-Wave/Python code on the external annealer service.
  */
-export async function executeDWaveAnnealer(code: string) {
+export async function executeDWaveAnnealer(code: string, overrideUrl?: string) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 59000); // 59s explicit timeout
     try {
-        const url = `${DWAVE_SERVICE_URL}/execute`;
+        const url = `${overrideUrl || DWAVE_SERVICE_URL}/execute`;
         const startTime = Date.now();
 
         const response = await axios.post(url, {

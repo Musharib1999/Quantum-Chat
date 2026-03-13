@@ -90,7 +90,22 @@ async function validateQuantumCode(code: string, hardware: string): Promise<{ va
 
     // 3. Syntax Pre-check via Service (Layer 3)
     try {
-        const endpoint = hardware.toLowerCase().includes('d-wave') ? `${DWAVE_SERVICE_URL}/validate` : `${QISKIT_SERVICE_URL}/validate`;
+        await dbConnect();
+        const mongoose = (await import('mongoose')).default;
+        const Hardware = mongoose.models.Hardware || (await import('@/models/Hardware')).default;
+        
+        const normalize = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const targetHwNorm = normalize(hardware);
+        
+        const hwRecord = await Hardware.findOne({ 
+            $or: [
+                { name: hardware }, 
+                { name: new RegExp(`^${hardware}$`, 'i') }
+            ] 
+        }).lean();
+
+        const serviceUrl = hwRecord?.serviceUrl || (hardware.toLowerCase().includes('d-wave') ? DWAVE_SERVICE_URL : QISKIT_SERVICE_URL);
+        const endpoint = hardware.toLowerCase().includes('d-wave') ? `${serviceUrl}/validate` : `${serviceUrl}/validate`;
         const verify = await axios.post(endpoint, { code });
         if (!verify.data.valid) {
             return { valid: false, error: `Syntax Error: ${verify.data.error}` };
@@ -797,13 +812,26 @@ export async function runQuantumSimulator(config: {
 }): Promise<{ output: string; error?: string; executionTimeMs?: number }> {
     const { code, hardware } = config;
     try {
-        console.log(`[Simulator Router] START | HW: ${hardware} | CodeLen: ${code.length}`);
+        await dbConnect();
+        const mongoose = (await import('mongoose')).default;
+        const Hardware = mongoose.models.Hardware || (await import('@/models/Hardware')).default;
+        
+        // Find hardware record for dynamic URL routing
+        const hwRecord = await Hardware.findOne({ 
+            $or: [
+                { name: hardware }, 
+                { name: new RegExp(`^${hardware}$`, 'i') }
+            ] 
+        }).lean();
+
+        const serviceUrl = hwRecord?.serviceUrl;
+        console.log(`[Simulator Router] START | HW: ${hardware} | URL: ${serviceUrl || 'Default'} | CodeLen: ${code.length}`);
         const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing') || (code && code.includes('import dimod'));
         console.log(`[Simulator Router] Configured for: ${isDWave ? 'DWAVE/BQM' : 'QISKIT/GATE'}`);
 
         const result = isDWave
-            ? await executeDWaveAnnealer(code)
-            : await executeQuantumCircuit(code);
+            ? await executeDWaveAnnealer(code, serviceUrl)
+            : await executeQuantumCircuit(code, serviceUrl);
 
         // Handle structured JSON responses (counts, energy) from main.py
         if (result.success && !result.output) {

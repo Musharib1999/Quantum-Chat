@@ -283,8 +283,16 @@ export default function ProblemConsole() {
                 </div>
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase">Hardware</label>
-                    <input list="hardwares" value={hardware} onChange={e => setHardware(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-semibold text-[#3066bb]" />
-                    <datalist id="hardwares"><option value="Universal" />{hardwareList.map(h => <option key={h.id} value={h.name} />)}</datalist>
+                    <select 
+                        value={hardware} 
+                        onChange={e => setHardware(e.target.value)} 
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold text-[#3066bb]"
+                    >
+                        <option value="Universal">Universal (All hardware)</option>
+                        {hardwareList.map(h => (
+                            <option key={h.id} value={h.name}>{h.name}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 

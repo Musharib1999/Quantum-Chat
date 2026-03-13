@@ -30,6 +30,7 @@ export type HardwareType = {
     qubits: number;
     status: 'Online' | 'Offline' | 'Maintenance';
     description: string;
+    serviceUrl?: string;
     order: number;
 };
 
@@ -135,6 +136,7 @@ export async function getHardwares() {
         qubits: r.qubits,
         status: r.status,
         description: r.description,
+        serviceUrl: r.serviceUrl,
         order: r.order
     }));
 }

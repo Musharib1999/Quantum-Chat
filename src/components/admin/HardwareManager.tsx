@@ -15,7 +15,8 @@ export default function HardwareManager() {
         qubits: 0,
         order: 0,
         name: '',
-        description: ''
+        description: '',
+        serviceUrl: ''
     });
 
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -40,7 +41,7 @@ export default function HardwareManager() {
         if (!newHw.name || !newHw.description) return;
         await addHardware({ ...newHw } as any);
         setIsAdding(false);
-        setNewHw({ provider: 'ibm', status: 'Online', qubits: 0, order: 0, name: '', description: '' });
+        setNewHw({ provider: 'ibm', status: 'Online', qubits: 0, order: 0, name: '', description: '', serviceUrl: '' });
         loadHardware();
     };
 
@@ -58,7 +59,14 @@ export default function HardwareManager() {
     const handleSaveEdit = async (id: string) => {
         const item = hardwares.find(h => h.id === id);
         if (item) {
-            await updateHardware(id, { name: item.name, description: item.description, qubits: item.qubits, order: item.order, provider: item.provider });
+            await updateHardware(id, { 
+                name: item.name, 
+                description: item.description, 
+                qubits: item.qubits, 
+                order: item.order, 
+                provider: item.provider,
+                serviceUrl: item.serviceUrl
+            });
             setEditingId(null);
             loadHardware();
         }
@@ -142,6 +150,16 @@ export default function HardwareManager() {
                                 onChange={e => setNewHw({ ...newHw, description: e.target.value })}
                             />
                         </div>
+
+                        <div className="space-y-1.5 md:col-span-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Service URL (For Backend Routing)</label>
+                            <input
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-mono"
+                                placeholder="https://your-service-url.com"
+                                value={newHw.serviceUrl || ''}
+                                onChange={e => setNewHw({ ...newHw, serviceUrl: e.target.value })}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex justify-end pt-2">
@@ -203,6 +221,14 @@ export default function HardwareManager() {
                                     value={hw.description}
                                     onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, description: e.target.value } : h))}
                                 />
+                                <div className="space-y-1">
+                                    <label className="text-[9px] text-slate-400 uppercase font-bold">Service URL</label>
+                                    <input
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
+                                        value={hw.serviceUrl || ''}
+                                        onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, serviceUrl: e.target.value } : h))}
+                                    />
+                                </div>
                                 <div className="flex gap-2 pt-1">
                                     <button onClick={() => handleSaveEdit(hw.id)} className="flex-1 bg-[#3066bb] text-white p-2 rounded-lg text-xs font-bold">Save</button>
                                     <button onClick={() => { setEditingId(null); loadHardware(); }} className="flex-1 bg-slate-100 text-slate-500 p-2 rounded-lg text-xs font-bold">Cancel</button>
