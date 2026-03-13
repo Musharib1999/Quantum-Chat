@@ -10,6 +10,7 @@ export interface Message {
     chartData?: any;
     portfolioMetrics?: any;
     assignmentsTable?: any[];
+    outputTables?: any[];
 }
 
 import { useAuth } from '@/context/AuthContext';
@@ -151,7 +152,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         }
     }, [mode, contextConfig, isAuthenticated, user?.email, inputValue]);
 
-    const addBotMessage = (text: string, chartData?: any, portfolioMetrics?: any, assignmentsTable?: any[]) => {
+    const addBotMessage = (text: string, chartData?: any, portfolioMetrics?: any, assignmentsTable?: any[], outputTables?: any[]) => {
         const botMsgId = Date.now() + 1;
         setMessages(prev => [...prev, {
             id: botMsgId,
@@ -160,7 +161,8 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             chartData,
             portfolioMetrics,
-            assignmentsTable
+            assignmentsTable,
+            outputTables
         }]);
     };
 

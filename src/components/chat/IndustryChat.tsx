@@ -338,6 +338,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 hardware: contextConfig.hardware,
                 rawOutput: simOutput,
                 formData: contextConfig.formData,
+                service: contextConfig.service
             });
             stopTimer();
             setWorkflow({ kind: 'step3_done', code, simOutput, analysis: result.text, chartData: result.chartData, totalExecTimeMs });
@@ -381,23 +382,50 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     tableHtml += `| **Universe** | ${sectors} |\n`;
                 }
                 tableHtml += `\n`;
-                const h1 = isFinance ? 'Status' : 'Period';
-                const h2 = isFinance ? 'Ticker' : 'Resource';
-                const h3 = isFinance ? 'Asset Details' : 'Assignment';
 
-                tableHtml += `| ${h1} | ${h2} | ${h3} |\n`;
-                tableHtml += `|:---|:---|:---|\n`;
+                // --- DYNAMIC TABLE HEADERS ---
+                // If the blueprint or result has outputTables, use the first one's mapping
+                const tableConfig = result.outputTables?.[0] || blueprint?.outputTables?.[0];
+                
+                if (tableConfig && tableConfig.mapping && tableConfig.mapping.length > 0) {
+                    const sortedMapping = [...tableConfig.mapping].sort((a, b) => (a.priority || 0) - (b.priority || 0));
+                    
+                    // Headers
+                    tableHtml += `| ${sortedMapping.map(m => m.label).join(' | ')} |\n`;
+                    tableHtml += `| ${sortedMapping.map(() => ':---').join(' | ')} |\n`;
 
-                result.assignmentsTable.forEach((row: any) => {
-                    const label = row.sector || row.day || 'Selected';
-                    const displayLabel = label.toString().startsWith('Day') ? label : `**${label}**`;
-                    tableHtml += `| ${displayLabel} | **${row.pilot || row.ticker}** | ${row.route} |\n`;
-                });
+                    // Rows
+                    result.assignmentsTable.forEach((row: any) => {
+                        const rowVals = sortedMapping.map(col => {
+                            const val = row[col.resultKey];
+                            if (val === undefined || val === null) return '-';
+                            if (col.type === 'percentage') return `${typeof val === 'number' ? val.toFixed(2) : val}%`;
+                            if (col.type === 'number' && typeof val === 'number') return val.toLocaleString();
+                            if (col.type === 'boolean') return val ? '✅' : '❌';
+                            return `**${val}**`;
+                        });
+                        tableHtml += `| ${rowVals.join(' | ')} |\n`;
+                    });
+                } else {
+                    // Fallback to old hardcoded logic if no mapping exists
+                    const h1 = isFinance ? 'Status' : 'Period';
+                    const h2 = isFinance ? 'Ticker' : 'Resource';
+                    const h3 = isFinance ? 'Assignment' : 'Value';
+
+                    tableHtml += `| ${h1} | ${h2} | ${h3} |\n`;
+                    tableHtml += `|:---|:---|:---|\n`;
+
+                    result.assignmentsTable.forEach((row: any) => {
+                        const label = row.sector || row.day || 'Selected';
+                        const displayLabel = label.toString().startsWith('Day') ? label : `**${label}**`;
+                        tableHtml += `| ${displayLabel} | **${row.pilot || row.ticker || '-'}** | ${row.route || row.assignment || '-'} |\n`;
+                    });
+                }
             }
 
             // Inject final analysis as a bot message
             const fullMsg = result.portfolioMetrics ? result.text : `${tableHtml}\n\n${result.text}`;
-            addBotMessage(fullMsg, result.chartData, result.portfolioMetrics, result.assignmentsTable);
+            addBotMessage(fullMsg, result.chartData, result.portfolioMetrics, result.assignmentsTable, result.outputTables);
 
             // SAVE to DB
             try {
@@ -413,7 +441,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     analysis: fullMsg,
                     chartData: result.chartData,
                     assignmentsTable: result.assignmentsTable,
-                    portfolioMetrics: result.portfolioMetrics
+                    portfolioMetrics: result.portfolioMetrics,
+                    outputTables: result.outputTables || []
                 });
             } catch (saveError) {
                 console.error("Experiment save failed in UI", saveError);
@@ -430,12 +459,13 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
     const isLoading = workflow.kind === 'step1_loading' || workflow.kind === 'step2_loading' || workflow.kind === 'step3_loading';
     const currentStepNum = workflow.kind === 'idle' ? 0 : workflow.kind === 'step1_loading' ? 1 : workflow.kind === 'step1_done' ? 1 : workflow.kind === 'step2_loading' ? 2 : workflow.kind === 'step2_done' ? 2 : 3;
     
-    const renderDynamicTables = (assignments: any[], portfolioMetrics?: any) => {
-        if (!blueprint?.outputTables || blueprint.outputTables.length === 0) return null;
+    const renderDynamicTables = (assignments: any[], portfolioMetrics?: any, tables?: any[]) => {
+        const activeTables = tables || blueprint?.outputTables;
+        if (!activeTables || activeTables.length === 0) return null;
 
         return (
             <div className="space-y-6 my-6">
-                {blueprint.outputTables.map((table: any, tIdx: number) => {
+                {activeTables.map((table: any, tIdx: number) => {
                     // Decide if this table is for "Summary" (global metrics) or "Details" (list data)
                     const isSummaryTable = table.mapping.some((col: any) => {
                         const key = col.resultKey?.trim();
@@ -626,17 +656,9 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col gap-3">
-                                    {msg.portfolioMetrics && blueprint?.outputTables && blueprint.outputTables.length > 0 ? (
+                                    {(msg.portfolioMetrics || (msg.outputTables && msg.outputTables.length > 0)) ? (
                                         <div className="w-full overflow-hidden">
-                                            {renderDynamicTables(msg.assignmentsTable || [], msg.portfolioMetrics)}
-                                        </div>
-                                    ) : msg.portfolioMetrics ? (
-                                        <div className="w-full overflow-hidden">
-                                            <PortfolioResultsSideBySide 
-                                                metrics={msg.portfolioMetrics} 
-                                                assignments={msg.assignmentsTable || []} 
-                                                qubitCount={msg.portfolioMetrics.qubitCount || 0} 
-                                            />
+                                            {renderDynamicTables(msg.assignmentsTable || [], msg.portfolioMetrics, msg.outputTables)}
                                         </div>
                                     ) : null}
                                     <div className={`rounded-2xl px-5 py-4 shadow-sm text-base leading-relaxed whitespace-pre-wrap ${msg.sender === 'user' ? 'bg-secondary text-foreground border border-border rounded-br-none self-end' : msg.sender === 'system' ? 'bg-muted text-muted-foreground text-sm text-center w-full rounded-lg border border-border' : 'bg-card text-card-foreground border border-border rounded-bl-none shadow-sm min-w-0 max-w-full overflow-hidden self-start'}`}>

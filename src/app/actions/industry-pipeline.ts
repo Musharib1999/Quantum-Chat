@@ -878,12 +878,29 @@ export async function runQuantumSimulator(config: {
 }
 
 export async function interpretQuantumResults(config: {
-    problem: string; industry: string; hardware: string; rawOutput: string; formData: any;
-}): Promise<{ text: string; chartData?: any; assignmentsTable?: any[]; qubitCount?: number; portfolioMetrics?: any }> {
+    problem: string; industry: string; hardware: string; rawOutput: string; formData: any; service?: string;
+}): Promise<{ 
+    text: string; 
+    chartData?: any; 
+    assignmentsTable?: any[]; 
+    qubitCount?: number; 
+    portfolioMetrics?: any;
+    outputTables?: any[];
+}> {
     const { problem, industry, hardware, rawOutput, formData } = config;
 
     try {
         const { provider, modelName } = await getDynamicLLM();
+
+        // Fetch blueprint for dynamic output mapping
+        const mongoose = (await import('mongoose')).default;
+        const QuantumForm = mongoose.models.QuantumForm || (await import('@/models/QuantumForm')).default;
+        const blueprint = await QuantumForm.findOne({
+            industry,
+            service: config.service || { $exists: true }, // ProblemRegistry usually has the service
+            problem,
+            hardware: { $in: [hardware, 'Universal'] }
+        }).sort({ hardware: -1 }).lean();
 
         // --- MODULAR HANDLER INJECTION ---
         const handler = ProblemRegistry.getHandler(problem, { industry, hardware, formData });
@@ -1084,7 +1101,8 @@ STRICT RULES:
                 sectorsCount: new Set(finalAssignmentsTable.map(r => r.sector).filter(Boolean)).size,
                 universeSize: globalTotalQubits || finalAssignmentsTable.length,
                 qubitCount: qubitCount
-            } : null
+            } : null,
+            outputTables: blueprint?.outputTables || []
         };
     } catch (e: any) {
         console.error("Critical error in interpretQuantumResults:", e);
@@ -1106,6 +1124,7 @@ export async function savePipelineExperiment(data: {
     assignmentsTable?: any[];
     portfolioMetrics?: any;
     qubitCount?: number;
+    outputTables?: any[];
 }) {
     try {
         await dbConnect();
@@ -1128,6 +1147,7 @@ export async function savePipelineExperiment(data: {
             assignmentsTable: data.assignmentsTable,
             portfolioMetrics: data.portfolioMetrics,
             qubitCount: data.qubitCount || 0,
+            outputTables: data.outputTables || [],
             timestamp: new Date()
         });
         return { success: true };

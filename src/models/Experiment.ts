@@ -15,6 +15,7 @@ export interface IExperiment extends Document {
     assignmentsTable?: any[]; // Structured output data
     portfolioMetrics?: any; // Specialized finance metrics
     qubitCount?: number; 
+    outputTables?: any[]; // Dynamic table configuration
     cacheKey?: string; // SHA-256 hash for result caching
 }
 
@@ -33,6 +34,7 @@ const ExperimentSchema: Schema = new Schema({
     assignmentsTable: { type: Schema.Types.Mixed },
     portfolioMetrics: { type: Schema.Types.Mixed },
     qubitCount: { type: Number, default: 0 },
+    outputTables: { type: Schema.Types.Mixed },
     cacheKey: { type: String, index: true }
 });
 

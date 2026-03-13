@@ -35,67 +35,83 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
     // Use full data if loaded, fall back to lightweight record for metadata
     const display = fullData || experiment;
 
-    const PortfolioResultsPreview = ({ metrics, assignments, qubitCount }: { metrics: any, assignments: any[], qubitCount: number }) => {
-        if (!metrics && (!assignments || assignments.length === 0)) return null;
-
-        const toSuperscript = (num: number) => {
-            const map: { [key: string]: string } = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
-            return num.toString().split('').map(c => map[c] || c).join('');
-        };
-
-        return (
-            <div className="grid grid-cols-1 gap-6 my-4">
-                {metrics && (
-                    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm max-w-md">
+    const DynamicResultsTable = ({ tables, assignments, portfolioMetrics }: { tables: any[], assignments: any[], portfolioMetrics?: any }) => {
+        if (!tables || tables.length === 0) {
+            // Fallback for older experiments without stored outputTables
+            if (!assignments || assignments.length === 0) return null;
+            return (
+                <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                    <div className="max-h-[300px] overflow-y-auto">
                         <table className="w-full text-left">
+                            <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
+                                <tr>
+                                    <th className="pl-3 pr-2 py-2.5 text-[10px] text-[#111827] font-semibold tracking-wider bg-secondary/5">Assignment</th>
+                                    <th className="px-2 py-2.5 text-[10px] text-[#111827] font-semibold tracking-wider bg-secondary/5 text-right">Value</th>
+                                </tr>
+                            </thead>
                             <tbody className="divide-y divide-border">
-                                <tr>
-                                    <td className="pl-3 pr-2 py-2.5 text-[11px] text-[#111827] bg-secondary/10 font-medium">Sectors</td>
-                                    <td className="px-3 py-2.5 text-xs text-[#111827]">{metrics.sectorsCount}</td>
-                                </tr>
-                                <tr>
-                                    <td className="pl-3 pr-2 py-2.5 text-[11px] text-[#111827] bg-secondary/10 font-medium">Assets</td>
-                                    <td className="px-3 py-2.5 text-xs text-[#111827]">{metrics.assetsCount}</td>
-                                </tr>
-                                <tr>
-                                    <td className="pl-3 pr-2 py-2.5 text-[11px] text-[#111827] bg-secondary/10 font-medium">Avg Return</td>
-                                    <td className="px-3 py-2.5 text-xs text-[#10b981] font-bold">{metrics.avgReturn?.toFixed(2)}%</td>
-                                </tr>
-                                <tr>
-                                    <td className="pl-3 pr-2 py-2.5 text-[11px] text-[#111827] bg-secondary/10 font-medium">Avg Risk</td>
-                                    <td className="px-3 py-2.5 text-xs text-[#ef4444] font-bold">{metrics.avgRisk?.toFixed(2)}%</td>
-                                </tr>
+                                {assignments.map((row: any, idx: number) => (
+                                    <tr key={idx} className="hover:bg-muted/40 transition-colors">
+                                        <td className="pl-3 pr-2 py-2.5 text-xs text-[#111827]">{row.ticker || row.pilot || row.asset || 'Item'}</td>
+                                        <td className="px-2 py-2.5 text-xs text-right">{row.route || row.assignment || '-'}</td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
-                )}
+                </div>
+            );
+        }
 
-                {assignments && assignments.length > 0 && (
-                    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-                        <div className="max-h-[300px] overflow-y-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
-                                    <tr>
-                                        <th className="pl-3 pr-2 py-2.5 text-[10px] text-[#111827] font-semibold tracking-wider bg-secondary/5">Asset</th>
-                                        <th className="px-2 py-2.5 text-[10px] text-[#111827] font-semibold tracking-wider bg-secondary/5">Sector</th>
-                                        <th className="px-2 py-2.5 text-[10px] text-[#111827] font-semibold tracking-wider bg-secondary/5">Ticker</th>
-                                        <th className="px-2 py-2.5 text-[10px] text-[#111827] font-semibold tracking-wider bg-secondary/5 text-right">Return</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {assignments.map((row: any, idx: number) => (
-                                        <tr key={idx} className="hover:bg-muted/40 transition-colors">
-                                            <td className="pl-3 pr-2 py-2.5 text-xs text-[#111827]">{row.route?.split('(')[0].trim()}</td>
-                                            <td className="px-2 py-2.5 text-xs text-[#111827]">{row.sector}</td>
-                                            <td className="px-2 py-2.5 text-xs text-[#111827] font-mono font-bold">{row.ticker || row.pilot || row.asset || 'N/A'}</td>
-                                            <td className="px-2 py-2.5 text-xs text-[#10b981] font-bold text-right">{row.return !== undefined ? `${row.return.toFixed(2)}%` : '-'}</td>
+        return (
+            <div className="space-y-6">
+                {tables.map((table, tIdx) => {
+                    const isSummary = table.mapping.some((col: any) => portfolioMetrics && portfolioMetrics[col.resultKey] !== undefined);
+                    const rows = isSummary ? [portfolioMetrics] : assignments;
+
+                    return (
+                        <div key={tIdx} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                            <div className="px-3 py-1.5 border-b border-border bg-secondary/10 flex items-center justify-between">
+                                <span className="text-[10px] text-[#111827]/60 font-bold uppercase tracking-wider">{table.name}</span>
+                            </div>
+                            <div className="max-h-[300px] overflow-y-auto overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="sticky top-0 bg-muted/95 backdrop-blur-md z-10 border-b border-border">
+                                        <tr>
+                                            {table.mapping.sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0)).map((col: any, cIdx: number) => (
+                                                <th key={cIdx} className="px-3 py-2.5 text-[10px] text-[#111827] font-semibold tracking-wider bg-secondary/5">{col.label}</th>
+                                            ))}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {rows.map((row, rIdx) => (
+                                            <tr key={rIdx} className="hover:bg-muted/40 transition-colors">
+                                                {table.mapping.map((col: any, cIdx: number) => {
+                                                    const val = row[col.resultKey];
+                                                    const displayVal = col.type === 'percentage' 
+                                                        ? (typeof val === 'number' ? `${val.toFixed(2)}%` : val)
+                                                        : col.type === 'number'
+                                                            ? (typeof val === 'number' ? val.toLocaleString() : val)
+                                                            : val;
+                                                    
+                                                    const colorClass = col.type === 'percentage' && typeof val === 'number' 
+                                                        ? (val > 0 ? 'text-[#10b981]' : val < 0 ? 'text-[#ef4444]' : 'text-[#111827]')
+                                                        : 'text-[#111827]';
+
+                                                    return (
+                                                        <td key={cIdx} className={`px-3 py-2.5 text-xs font-medium ${colorClass}`}>
+                                                            {displayVal || '-'}
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })}
             </div>
         );
     };
@@ -244,10 +260,10 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                                         <div className="h-px bg-border flex-1" />
                                     </div>
                                     
-                                    <PortfolioResultsPreview 
-                                        metrics={display.portfolioMetrics}
+                                    <DynamicResultsTable 
+                                        tables={display.outputTables}
                                         assignments={display.assignmentsTable}
-                                        qubitCount={display.qubitCount || 0}
+                                        portfolioMetrics={display.portfolioMetrics}
                                     />
 
                                     <div className="flex flex-col gap-6">
