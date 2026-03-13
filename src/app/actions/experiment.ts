@@ -31,6 +31,7 @@ export async function getExperiments(userEmail?: string, isAdmin: boolean = fals
             parameters: 1,
             timestamp: 1,
             cacheKey: 1,
+            qubitCount: 1,
             // Deliberately excluded: qiskitCode, results, analysis, chartData, assignmentsTable
         })
             .sort({ timestamp: -1 })

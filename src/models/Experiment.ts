@@ -14,6 +14,7 @@ export interface IExperiment extends Document {
     chartData?: any; // The chart configuration
     assignmentsTable?: any[]; // Structured output data
     portfolioMetrics?: any; // Specialized finance metrics
+    qubitCount?: number; 
     cacheKey?: string; // SHA-256 hash for result caching
 }
 
@@ -31,6 +32,7 @@ const ExperimentSchema: Schema = new Schema({
     chartData: { type: Schema.Types.Mixed },
     assignmentsTable: { type: Schema.Types.Mixed },
     portfolioMetrics: { type: Schema.Types.Mixed },
+    qubitCount: { type: Number, default: 0 },
     cacheKey: { type: String, index: true }
 });
 

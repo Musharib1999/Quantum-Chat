@@ -125,6 +125,26 @@ function getWorkflowCacheKey(problem: string, service: string, hardware: string,
     return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+/**
+ * Shared Helper: Applies dynamic parameters to code templates.
+ * Supports legacy {{key}} and newer {{parameters.key}} formats.
+ */
+function applyParametersToCode(code: string, params: any): string {
+    let finalCode = code;
+    Object.keys(params).forEach(key => {
+        const val = params[key];
+        const safeVal = (val === undefined || val === null || val === '') ? 'None' : val;
+        // Support both formats
+        const reParams = new RegExp(`\\{\\{parameters\\.${key}\\}\\}`, 'g');
+        const reKey = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+        finalCode = finalCode.replace(reParams, String(safeVal)).replace(reKey, String(safeVal));
+    });
+    // Clean up any remaining unmatched placeholders
+    finalCode = finalCode.replace(/\{\{parameters\.[^}]+\}\}/g, 'None');
+    finalCode = finalCode.replace(/\{\{[^}]+\}\}/g, 'None');
+    return finalCode;
+}
+
 
 export async function executeIndustryWorkflow(
     contextConfig: any,
@@ -230,21 +250,26 @@ export async function executeIndustryWorkflow(
         }
 
         // --- STEP 3: BATCHING ORCHESTRATION ---
-        let batchesNeeded = 1;
-        if (formDef?.batchingEnabled && formDef.qubitFormula) {
-            let formula = formDef.qubitFormula;
-            Object.keys(sanitizedFormData).forEach(key => {
-                const regex = new RegExp(`{{${key}}}`, 'g');
-                formula = formula.replace(regex, String(sanitizedFormData[key]));
-            });
+        if (formDef?.qubitFormula) {
             try {
+                let formula = formDef.qubitFormula;
+                Object.keys(sanitizedFormData).forEach(key => {
+                    const regex = new RegExp(`{{${key}}}`, 'g');
+                    formula = formula.replace(regex, String(sanitizedFormData[key]));
+                });
                 const sanitizedMath = formula.replace(/[^0-9+\-*/().\s]/g, '');
                 const qubits = Math.ceil(eval(sanitizedMath));
-                if (qubits > (formDef.maxQubitsPerBatch || 64)) {
-                    batchesNeeded = Math.ceil(qubits / (formDef.maxQubitsPerBatch || 64));
-                }
+                (contextConfig as any).estimatedQubits = qubits;
             } catch (e) {
-                console.error("Batch calculation failed:", e);
+                console.error("Qubit calculation failed:", e);
+            }
+        }
+
+        let batchesNeeded = 1;
+        if (formDef?.batchingEnabled && (contextConfig as any).estimatedQubits) {
+            const qubits = (contextConfig as any).estimatedQubits;
+            if (qubits > (formDef.maxQubitsPerBatch || 64)) {
+                batchesNeeded = Math.ceil(qubits / (formDef.maxQubitsPerBatch || 64));
             }
         }
 
@@ -328,10 +353,13 @@ export async function executeIndustryWorkflow(
                 }
 
                 try {
-                    const content = contentStr;
-                    const parsed = JSON.parse(content);
+                    const parsed = JSON.parse(contentStr);
                     generatedCode = parsed.code || "";
                     explanation = parsed.explanation || "";
+
+                    // --- STEP 3.5: DETERMINISTIC PLACEHOLDER REPLACEMENT ---
+                    // Enforce replacement even on LLM output to fix legacy template issues
+                    generatedCode = applyParametersToCode(generatedCode, batchFormData);
 
                     console.log(`[Quantum Workflow] GENERATED | Attempt: ${attempts} | Code Length: ${generatedCode.length}`);
 
@@ -364,6 +392,17 @@ export async function executeIndustryWorkflow(
 
                     if (finalExecutionResult.executionTimeMs) {
                         totalExecutionTimeMs += finalExecutionResult.executionTimeMs;
+                    }
+
+                    // Extract exact qubit count from output if available
+                    const jsonMatch = rawSimulatorOutput.match(/\[QUANTUM_JSON\]([\s\S]*?)\[\/QUANTUM_JSON\]/);
+                    if (jsonMatch) {
+                        try {
+                            const data = JSON.parse(jsonMatch[1]);
+                            if (data.total_qubits) {
+                                (contextConfig as any).estimatedQubits = Math.max((contextConfig as any).estimatedQubits || 0, data.total_qubits);
+                            }
+                        } catch (e) {}
                     }
 
                     console.log(`[Quantum Workflow] EXECUTED | Output length: ${finalExecutionResult.output?.length || 0} | ExecTime: ${finalExecutionResult.executionTimeMs}ms`);
@@ -462,6 +501,7 @@ ${combinedAnalysis}
                 qiskitCode: "BATCHED_EXECUTION",
                 results: { raw: combinedRawOutput },
                 analysis: finalDisplay,
+                qubitCount: (contextConfig as any).estimatedQubits || 0,
                 cacheKey: getWorkflowCacheKey(problem, service, hardware, formData),
                 timestamp: new Date()
             });
@@ -736,17 +776,8 @@ export async function generateQuantumCode(config: {
         delete (sanitizedFormData as any).__portfolioData;
         delete sanitizedFormData._portfolioDataRef;
 
-        // --- BACKWARD COMPAT: Replace {{parameters.xxx}} placeholders (legacy template format) ---
-        // Some templates (e.g. Aviation) still use {{parameters.key}} syntax.
-        // Apply substitution BEFORE DotDict injection so the Python code is valid.
-        Object.keys(sanitizedFormData).forEach(key => {
-            const val = sanitizedFormData[key];
-            const safeVal = (val === undefined || val === null || val === '') ? 'None' : val;
-            const re = new RegExp(`\\{\\{parameters\\.${key}\\}\\}`, 'g');
-            code = code.replace(re, String(safeVal));
-        });
-        // Replace any remaining unmatched {{parameters.xxx}} with None
-        code = code.replace(/\{\{parameters\.[^}]+\}\}/g, 'None');
+        // Perform template replacement
+        code = applyParametersToCode(code, sanitizedFormData);
 
         // Serialize only the small parameters (no large arrays)
         const paramsJson = JSON.stringify(sanitizedFormData);
@@ -1074,6 +1105,7 @@ export async function savePipelineExperiment(data: {
     chartData?: any;
     assignmentsTable?: any[];
     portfolioMetrics?: any;
+    qubitCount?: number;
 }) {
     try {
         await dbConnect();
@@ -1095,6 +1127,7 @@ export async function savePipelineExperiment(data: {
             chartData: data.chartData,
             assignmentsTable: data.assignmentsTable,
             portfolioMetrics: data.portfolioMetrics,
+            qubitCount: data.qubitCount || 0,
             timestamp: new Date()
         });
         return { success: true };

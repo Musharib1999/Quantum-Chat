@@ -181,6 +181,10 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                                 <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Hardware</span>
                                 <span className="text-[13px] text-[#111827] dark:text-foreground font-bold">{display.hardware}</span>
                             </div>
+                            <div className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1 transition-all hover:shadow-md">
+                                <span className="text-[10px] text-[#111827]/60 font-semibold tracking-wide">Computational Complexity</span>
+                                <span className="text-[13px] text-[#3066bb] font-bold">{display.qubitCount || 0} Qubits</span>
+                            </div>
                         </section>
 
                         {/* 2. Input Parameters */}
