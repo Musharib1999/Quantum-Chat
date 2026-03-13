@@ -72,11 +72,7 @@ export default function IndustryPage() {
                     getExperiments(user?.email),
                     axios.get('/api/hardware')
                 ]);
-                if (metaRes.data && !metaRes.data.error) {
-                    setMetadata(metaRes.data);
-                } else if (metaRes.data?.error) {
-                    console.error("Metadata API error:", metaRes.data.error);
-                }
+                if (metaRes.data) setMetadata(metaRes.data);
                 if (expRes) setExperiments(expRes);
                 if (hwRes.data) setHardwareList(hwRes.data);
                 setLoadingExperiments(false);
@@ -111,8 +107,7 @@ export default function IndustryPage() {
                 finalNextStep = 'industry'; // Stay on industry but it will render categories
                 return;
             }
-            setIsSubmissionMode(false); // Reset regular flow
-            finalNextStep = 'problem';
+            finalNextStep = isSubmissionMode ? 'service' : 'problem';
         }
 
         if (type === 'problem') {
@@ -224,10 +219,7 @@ export default function IndustryPage() {
                                         return (
                                             <button
                                                 key={ind.label}
-                                                onClick={() => {
-                                                    setIsSubmissionMode(false);
-                                                    setSessionConfig(prev => ({ ...prev, industry: ind.label, problem: null, service: null, hardware: null, formData: null }));
-                                                }}
+                                                onClick={() => setSessionConfig(prev => ({ ...prev, industry: ind.label, problem: null, service: null, hardware: null, formData: null }))}
                                                 className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -261,10 +253,7 @@ export default function IndustryPage() {
                                                     return (
                                                         <button
                                                             key={prob}
-                                                            onClick={() => {
-                                                                setIsSubmissionMode(false);
-                                                                setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: null }));
-                                                            }}
+                                                            onClick={() => setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: null }))}
                                                             className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                                         >
                                                             <div className="flex items-center gap-3">

@@ -108,7 +108,6 @@ const QuantumFormSchema: Schema = new Schema({
 
 // Unique mapping for Industry + Service + Problem + Hardware
 // Added createdBy to unique index to allow users to propose private problems even if a live one exists
-// Index for faster lookups
-QuantumFormSchema.index({ industry: 1, service: 1, problem: 1, hardware: 1, createdBy: 1 });
+QuantumFormSchema.index({ industry: 1, service: 1, problem: 1, hardware: 1, createdBy: 1 }, { unique: true });
 
 export default mongoose.models.QuantumForm || mongoose.model<IQuantumForm>('QuantumForm', QuantumFormSchema);
