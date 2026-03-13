@@ -85,6 +85,7 @@ export default function ProblemConsole() {
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('');
     const [view, setView] = useState<'editor' | 'overview'>('overview');
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingField, setEditingField] = useState<IField | null>(null);
     const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
@@ -137,6 +138,10 @@ export default function ProblemConsole() {
                 interpretationPrompt,
                 executionEnvironment
             };
+
+            if (editingId) {
+                payload._id = editingId;
+            }
 
             if (editorMode === 'json') {
                 try {
@@ -213,12 +218,16 @@ export default function ProblemConsole() {
         setExecutionEnvironment(form.executionEnvironment || 'python-qiskit');
         setJsonFields(JSON.stringify(form.fields || [], null, 2));
         setEditorMode('visual');
+        setEditingId(form._id || null); // Set the ID of the form being edited
         setView('editor');
         setActiveTab('input');
     };
 
     const resetForm = () => {
-        setIndustry(''); setService(''); setProblem(''); setHardware('Universal');
+        setEditingId(null); // Clear ID for new records
+        setIndustry('');
+        setService('');
+        setProblem(''); setHardware('Universal');
         setDescription(''); setFields([]); setJsonFields('[]'); setCodeTemplates([]);
         setBatchingEnabled(false); setMaxQubitsPerBatch(64); setQubitFormula('');
         setBatchKey(''); setOutputMapping([]); setOutputTables([]); setChartConfig([]);

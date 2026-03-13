@@ -24,7 +24,7 @@ interface MarkdownRendererProps {
 
 export default function MarkdownRenderer({ content, hideLinks }: MarkdownRendererProps) {
     return (
-        <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent">
+        <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:mb-6 prose-pre:p-0 prose-pre:bg-transparent">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{

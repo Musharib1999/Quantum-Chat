@@ -246,13 +246,13 @@ export default function ExperimentDetailsModal({ experiment, onClose, onReRun }:
                                         qubitCount={display.qubitCount || 0}
                                     />
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div className="bg-white dark:bg-card border border-border rounded-2xl p-6 shadow-sm">
+                                    <div className="flex flex-col gap-6">
+                                        <div className="bg-white dark:bg-card border border-border rounded-2xl p-6 shadow-sm w-full">
                                             <div className="text-[10px] text-[#111827]/60 font-bold mb-4 tracking-wide">Analysis</div>
                                             <MarkdownRenderer content={display.analysis || "No analysis available."} />
                                         </div>
                                         {display.chartData && (
-                                            <div className="bg-white dark:bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center min-h-[300px]">
+                                            <div className="bg-white dark:bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center min-h-[300px] w-full">
                                                 <div className="text-[10px] text-[#111827]/60 font-bold mb-4 w-full text-left tracking-wide">Visualization</div>
                                                 <QuantumChart data={display.chartData.data} />
                                             </div>

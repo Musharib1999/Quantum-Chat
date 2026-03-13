@@ -61,10 +61,13 @@ export async function POST(req: Request) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { industry, service, problem, hardware } = body;
+        const { _id, industry, service, problem, hardware } = body;
+
+        // Determine filter: Prefer _id if editing, fallback to composite key for new/upsert
+        const filter = _id ? { _id } : { industry, service, problem, hardware };
 
         const updatedForm = await QuantumForm.findOneAndUpdate(
-            { industry, service, problem, hardware },
+            filter,
             body,
             { upsert: true, new: true, runValidators: true }
         );
