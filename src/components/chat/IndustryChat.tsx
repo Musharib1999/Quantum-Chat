@@ -423,9 +423,40 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                 }
             }
 
+            // Auto-generate chart if missing
+            let finalChartData = result.chartData;
+            if (!finalChartData && result.assignmentsTable && result.assignmentsTable.length > 0) {
+                const candidateKeys = ['energy', 'return', 'risk', 'value', 'weight'];
+                let yKey = '';
+                const firstRow = result.assignmentsTable[0];
+                for (const key of candidateKeys) {
+                    if (firstRow[key] !== undefined) {
+                        const val = firstRow[key];
+                        if (typeof val === 'number' || (typeof val === 'string' && val.match(/-?\d+\.?\d*/))) {
+                            yKey = key;
+                            break;
+                        }
+                    }
+                }
+                if (yKey) {
+                    const chartPoints = result.assignmentsTable.slice(0, 15).map((row: any) => {
+                        let val = row[yKey];
+                        if (typeof val === 'string') {
+                            const match = val.match(/-?\d+\.?\d*/);
+                            val = match ? parseFloat(match[0]) : 0;
+                        }
+                        return {
+                            name: row.pose || row.ticker || row.asset || row.variable || row.label || 'Item',
+                            value: val
+                        };
+                    });
+                    finalChartData = { data: chartPoints };
+                }
+            }
+
             // Inject final analysis as a bot message
             const fullMsg = result.portfolioMetrics ? result.text : `${tableHtml}\n\n${result.text}`;
-            addBotMessage(fullMsg, result.chartData, result.portfolioMetrics, result.assignmentsTable, result.outputTables);
+            addBotMessage(fullMsg, finalChartData, result.portfolioMetrics, result.assignmentsTable, result.outputTables);
 
             // SAVE to DB
             try {
@@ -439,7 +470,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     qiskitCode: code,
                     results: { output: simOutput },
                     analysis: fullMsg,
-                    chartData: result.chartData,
+                    chartData: finalChartData,
                     assignmentsTable: result.assignmentsTable,
                     portfolioMetrics: result.portfolioMetrics,
                     outputTables: result.outputTables || []
