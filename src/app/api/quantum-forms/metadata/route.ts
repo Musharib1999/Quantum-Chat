@@ -19,10 +19,13 @@ export async function GET() {
         await dbConnect();
 
         // Aggregate unique Industries, Services, and Problems
+        // We only show 'live' problems in the main wizard
+        const query = { active: true, status: { $ne: 'pending_approval' } };
+
         const [industries, services, allForms] = await Promise.all([
-            QuantumForm.distinct('industry', { active: true }),
-            QuantumForm.distinct('service', { active: true }),
-            QuantumForm.find({ active: true }, 'industry service problem')
+            QuantumForm.distinct('industry', query),
+            QuantumForm.distinct('service', query),
+            QuantumForm.find(query, 'industry service problem hardware')
         ]);
 
         const metadata = {
