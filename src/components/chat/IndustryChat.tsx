@@ -555,8 +555,9 @@ const InChatPipeline = ({
     useEffect(() => {
         if (workflow.kind === 'step1_done') {
             const currentCode = workflow.code;
+            const fd = (workflow as any).formData;
             if (currentCode && !currentCode.startsWith('Error:')) {
-                runStep2(currentCode);
+                runStep2(currentCode, undefined, fd);
             }
         }
     }, [workflow.kind]);
@@ -566,17 +567,18 @@ const InChatPipeline = ({
             const currentCode = workflow.code;
             const output = workflow.simOutput;
             const time = workflow.totalExecTimeMs;
+            const fd = (workflow as any).formData;
             if (currentCode && output && !output.startsWith('Error:')) {
-                runStep3(currentCode, output, time);
+                runStep3(currentCode, output, time, undefined, fd);
             }
         }
     }, [workflow.kind]);
 
     const runStep1 = async (overriddenBlueprint?: any, overriddenFormData?: any) => {
         const bp = overriddenBlueprint || blueprint;
-        const fd = overriddenFormData || contextConfig.formData;
+        const fd = overriddenFormData || contextConfig.formData || {};
         
-        setWorkflow({ kind: 'step1_loading' });
+        setWorkflow({ kind: 'step1_loading', formData: fd } as any);
         startTimer();
         try {
             const result = await generateQuantumCode({
@@ -605,8 +607,9 @@ const InChatPipeline = ({
             setWorkflow({
                 kind: 'step1_done',
                 code: result.code || result.error || 'No code generated.',
-                batchesTotal: result.batchesTotal || 1
-            });
+                batchesTotal: result.batchesTotal || 1,
+                formData: fd
+            } as any);
         } catch (e: any) {
             stopTimer();
             setWorkflow({ kind: 'step1_done', code: `Error: ${e.message}`, batchesTotal: 1 });
@@ -615,7 +618,7 @@ const InChatPipeline = ({
 
     const runStep2 = async (initialCode: string, overriddenBlueprint?: any, overriddenFormData?: any) => {
         const bp = overriddenBlueprint || blueprint;
-        const fd = overriddenFormData || contextConfig.formData;
+        const fd = overriddenFormData || (workflow as any).formData || contextConfig.formData || {};
         const totalBatches = (workflow as any).batchesTotal || 1;
         let combinedOutput = "";
         let currentBatchCode = initialCode;
@@ -692,23 +695,32 @@ const InChatPipeline = ({
             }
 
             stopTimer();
-            setWorkflow({
+            setWorkflow(prev => ({
+                ...prev,
                 kind: 'step2_done',
                 code: initialCode,
                 simOutput: combinedOutput.trim(),
                 totalBatches,
-                totalExecTimeMs
-            });
+                totalExecTimeMs,
+                formData: fd
+            } as any));
         } catch (e: any) {
             stopTimer();
             setWorkflow({ kind: 'step2_done', code: initialCode, simOutput: `Error: ${e.message}`, totalBatches, totalExecTimeMs: 0 });
         }
     };
 
-    const runStep3 = async (initialCode: string, simOutput: string, totalExecTimeMs: number, overriddenBlueprint?: any, overriddenFormData?: any) => {
+    const runStep3 = async (
+        initialCode: string, 
+        simOutput: string, 
+        totalExecutionTimeMs: number,
+        overriddenBlueprint?: any,
+        overriddenFormData?: any
+    ) => {
         const bp = overriddenBlueprint || blueprint;
-        const fd = overriddenFormData || contextConfig.formData;
-        setWorkflow({ kind: 'step3_loading', code: initialCode, simOutput, totalExecTimeMs });
+        const fd = overriddenFormData || (workflow as any).formData || contextConfig.formData || {};
+        
+        setWorkflow({ kind: 'step3_loading', code: initialCode, simOutput, totalExecTimeMs: totalExecutionTimeMs } as any);
         startTimer();
         try {
             const result = await interpretQuantumResults({
@@ -720,11 +732,11 @@ const InChatPipeline = ({
                 rawOutput: simOutput,
             });
             stopTimer();
-            setWorkflow({ kind: 'step3_done', code: initialCode, simOutput, analysis: result.text, chartData: result.chartData, totalExecTimeMs });
+            setWorkflow({ kind: 'step3_done', code: initialCode, simOutput, analysis: result.text, chartData: result.chartData, totalExecTimeMs: totalExecutionTimeMs });
             onPipelineComplete?.();
 
             // Sim minutes update
-            const simSeconds = totalExecTimeMs / 1000;
+            const simSeconds = totalExecutionTimeMs / 1000;
             let simMinutesDelta = Math.ceil((simSeconds / 60) * 2) / 2;
             if (simMinutesDelta < 0.5 && simMinutesDelta > 0) simMinutesDelta = 0.5;
             window.dispatchEvent(new CustomEvent('qg:simminutes-update', { detail: { delta: simMinutesDelta } }));
@@ -843,7 +855,7 @@ const InChatPipeline = ({
                     service: contextConfig.service || 'Unknown',
                     problem: contextConfig.problem || 'Unknown',
                     hardware: contextConfig.hardware || 'Unknown',
-                    parameters: contextConfig.formData,
+                    parameters: fd,
                     qiskitCode: initialCode,
                     results: { output: simOutput },
                     analysis: fullMsg,
@@ -858,7 +870,7 @@ const InChatPipeline = ({
 
         } catch (e: any) {
             stopTimer();
-            setWorkflow({ kind: 'step3_done', code: initialCode, simOutput, analysis: `Error: ${e.message}`, totalExecTimeMs });
+            setWorkflow({ kind: 'step3_done', code: initialCode, simOutput, analysis: `Error: ${e.message}`, totalExecTimeMs: totalExecutionTimeMs });
             onPipelineComplete?.();
 
         }
