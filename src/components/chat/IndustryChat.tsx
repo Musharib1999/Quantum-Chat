@@ -38,6 +38,12 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
     const [formData, setFormData] = useState<Record<string, any>>(message.workflowData?.formData || {});
     const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
 
+    useEffect(() => {
+        if (isReadOnly && message.workflowData?.formData) {
+            setFormData(message.workflowData.formData);
+        }
+    }, [message.workflowData?.formData, isReadOnly]);
+
     const calculateComplexity = () => {
         if (!blueprint || !blueprint.qubitFormula) return { qubits: 0, batches: 1 };
         let formula = blueprint.qubitFormula;
@@ -72,7 +78,7 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(blueprint.fields || []).map((field: any) => (
                     <div key={field.key} className="space-y-1.5">
-                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-tight">{field.label}</label>
+                        <label className="text-sm font-medium text-muted-foreground tracking-tight">{field.label}</label>
                         {field.type === 'select' || field.type === 'dropdown' ? (
                             <select 
                                 disabled={isReadOnly}
@@ -129,7 +135,7 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
             {!isReadOnly && (
                 <button 
                     onClick={() => onSubmit(formData, qubits, batches)}
-                    className="w-full bg-[#3066bb] text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]"
+                    className="w-full bg-[#3066bb] text-white py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]"
                 >
                     Next <ChevronRight size={14} />
                 </button>
@@ -148,30 +154,30 @@ const InChatReview = ({ message, onExecute }: { message: Message, onExecute: () 
         <div className="bg-secondary/40 border border-border rounded-2xl p-4 md:p-6 space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4 border-b border-border/50">
                 <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Hardware</span>
-                    <span className="text-xs font-medium text-foreground">{config?.hardware}</span>
+                    <span className="text-xs text-muted-foreground font-medium">Hardware</span>
+                    <span className="text-sm font-medium text-foreground">{config?.hardware}</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Scale</span>
-                    <span className="text-xs font-medium text-foreground">{qubits} Qubits</span>
+                    <span className="text-xs text-muted-foreground font-medium">Scale</span>
+                    <span className="text-sm font-medium text-foreground">{qubits} Qubits</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">ETA</span>
-                    <span className="text-xs font-medium text-foreground">{formatETA(batches! * 25)}</span>
+                    <span className="text-xs text-muted-foreground font-medium">ETA</span>
+                    <span className="text-sm font-medium text-foreground">{formatETA(batches! * 25)}</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Batches</span>
-                    <span className="text-xs font-medium text-foreground">{batches}</span>
+                    <span className="text-xs text-muted-foreground font-medium">Batches</span>
+                    <span className="text-sm font-medium text-foreground">{batches}</span>
                 </div>
             </div>
 
             <div className="space-y-3">
-                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Parameters</span>
+                <span className="text-sm font-medium text-muted-foreground">Parameters</span>
                 <div className="flex flex-wrap gap-2">
                     {inputEntries.map(([k, v]) => (
                         <div key={k} className="px-3 py-1.5 rounded-lg bg-card border border-border flex flex-col gap-0.5">
-                            <span className="text-[9px] text-muted-foreground font-medium uppercase">{k.replace(/_/g, ' ')}</span>
-                            <span className="text-[11px] font-medium text-foreground">{Array.isArray(v) ? v.join(', ') : String(v)}</span>
+                            <span className="text-xs text-muted-foreground font-medium">{k.replace(/_/g, ' ')}</span>
+                            <span className="text-sm font-medium text-foreground">{Array.isArray(v) ? v.join(', ') : String(v)}</span>
                         </div>
                     ))}
                 </div>
@@ -187,44 +193,104 @@ const InChatReview = ({ message, onExecute }: { message: Message, onExecute: () 
     );
 };
 
-const InChatPipeline = ({ message, workflow, elapsedSeconds, onComplete }: { message: Message, workflow: any, elapsedSeconds: number, onComplete: (analysis: string, chartData?: any) => void }) => {
-    // This uses the shared 'workflow' state from IndustryChat
+const InChatPipeline = ({ 
+    message, 
+    workflow, 
+    elapsedSeconds, 
+    onComplete, 
+    onViewContent, 
+    onRunStep2, 
+    onRunStep3 
+}: { 
+    message: Message, 
+    workflow: any, 
+    elapsedSeconds: number, 
+    onComplete: (analysis: string, chartData?: any) => void,
+    onViewContent: (label: string, content: string) => void,
+    onRunStep2: (code: string) => void,
+    onRunStep3: (code: string, output: string, time: number) => void
+}) => {
+    // Only show interactive buttons for the CURRENT active pipeline
+    const isCurrent = workflow.kind !== 'idle' && workflow.kind !== 'step3_done';
+    
     const steps = [
-        { num: 1, label: 'Generate Quantum Code', desc: 'Transforming problem into circuits' },
-        { num: 2, label: 'Execute Quantum Job', desc: 'Running on simulator/hardware' },
-        { num: 3, label: 'Interpret Results', desc: 'Analyzing and explaining output' }
+        { num: 1, label: 'Generate Quantum Code', desc: 'Transforming problem into optimized quantum circuits' },
+        { num: 2, label: 'Execute Quantum Job', desc: 'Running on selected quantum simulator or hardware' },
+        { num: 3, label: 'Interpret Results', desc: 'Analyzing measurement outputs and explaining outcomes' }
     ];
 
     return (
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-border/50">
+        <div className="bg-card border border-border rounded-2xl p-4 md:p-6 space-y-5 shadow-sm">
+            <div className="flex items-center justify-between pb-3 border-b border-border/50">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-xs font-bold text-foreground">Simulation Pipeline</span>
+                    <div className={`w-2 h-2 rounded-full ${isCurrent ? 'bg-primary animate-pulse' : 'bg-muted'}`} />
+                    <span className="text-sm font-semibold text-foreground">Simulation Pipeline</span>
                 </div>
-                <span className="text-xs font-mono text-muted-foreground">{elapsedSeconds}s</span>
+                {isCurrent && <span className="text-xs font-mono text-muted-foreground">{elapsedSeconds}s</span>}
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
                 {steps.map(step => {
                     const isDone = 
                         (step.num === 1 && ['step1_done', 'step2_loading', 'step2_done', 'step3_loading', 'step3_done'].includes(workflow.kind)) ||
                         (step.num === 2 && ['step2_done', 'step3_loading', 'step3_done'].includes(workflow.kind)) ||
                         (step.num === 3 && ['step3_done'].includes(workflow.kind));
-                    const isActive = 
+                    const isActive = isCurrent && (
                         (step.num === 1 && workflow.kind === 'step1_loading') ||
                         (step.num === 2 && workflow.kind === 'step2_loading') ||
-                        (step.num === 3 && workflow.kind === 'step3_loading');
+                        (step.num === 3 && workflow.kind === 'step3_loading')
+                    );
+                    const isVerifying = isCurrent && (
+                        (step.num === 1 && workflow.kind === 'step1_done') ||
+                        (step.num === 2 && workflow.kind === 'step2_done')
+                    );
+                    const isPending = !isDone && !isActive && !isVerifying;
+
+                    const stepOutput = step.num === 1 ? workflow.code : step.num === 2 ? workflow.simOutput : null;
                     
                     return (
-                        <div key={step.num} className={`flex items-start gap-3 transition-opacity ${!isDone && !isActive ? 'opacity-30' : 'opacity-100'}`}>
-                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${isDone ? 'bg-[#3066bb] border-[#3066bb] text-white' : isActive ? 'border-primary text-primary animate-pulse' : 'border-border text-muted-foreground'}`}>
-                                {isDone ? '✓' : step.num}
+                        <div key={step.num} className={`transition-all duration-300 ${isPending ? 'opacity-30' : 'opacity-100'}`}>
+                            <div className="flex items-start gap-4">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border shrink-0 transition-all ${isDone ? 'bg-[#3066bb] border-[#3066bb] text-white' : isActive ? 'border-primary text-primary animate-pulse' : 'border-border text-muted-foreground'}`}>
+                                    {isDone ? '✓' : step.num}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-foreground leading-snug">{step.label}</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">{step.desc}</div>
+                                </div>
+                                {isActive && <Loader2 size={14} className="animate-spin text-primary shrink-0 mt-0.5" />}
+                                {isDone && stepOutput && !isVerifying && (
+                                    <button 
+                                        onClick={() => onViewContent(step.label, stepOutput)}
+                                        className="text-primary hover:underline text-xs flex items-center gap-1 font-medium"
+                                    >
+                                        <Eye size={12} /> View
+                                    </button>
+                                )}
                             </div>
-                            <div className="flex-1">
-                                <div className="text-[11px] font-medium text-foreground leading-none">{step.label}</div>
-                                <div className="text-[10px] text-muted-foreground mt-1">{step.desc}</div>
-                            </div>
-                            {isActive && <Loader2 size={12} className="animate-spin text-primary mt-1" />}
+
+                            {/* Verification Block */}
+                            {isVerifying && (
+                                <div className="mt-3 ml-10 p-3 bg-secondary/50 border border-border rounded-xl space-y-2.5 animate-in slide-in-from-top-2 duration-300">
+                                    <div className="text-xs text-muted-foreground font-medium">Review output before final analysis:</div>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => onViewContent(step.label, stepOutput!)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#3066bb] text-white hover:opacity-90 transition-all shadow-sm"
+                                        >
+                                            <Eye size={12} /> View Output
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                if (step.num === 1) onRunStep2(workflow.code);
+                                                if (step.num === 2) onRunStep3(workflow.code, workflow.simOutput, workflow.totalExecTimeMs);
+                                            }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#3066bb] text-white hover:opacity-90 transition-all font-semibold"
+                                        >
+                                            Continue <ChevronRight size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -288,10 +354,12 @@ const InChatPipeline = ({ message, workflow, elapsedSeconds, onComplete }: { mes
 
     // Workflow Transitions
     const handleFormTransition = (msg: Message, formData: any, qubits: number, batches: number) => {
-        // 1. Mark current form as passive (optional if we use isReadOnly)
-        // 2. Clear subsequent messages if this is an edit? (User said scroll up, so maybe just append)
-        // For simplicity, let's append the "Review" message.
-        
+        // Update the original form message with the submitted data
+        setMessages(prev => prev.map(m => m.id === msg.id ? { 
+            ...m, 
+            workflowData: { ...m.workflowData, formData } 
+        } : m));
+
         const botMsgId = Date.now();
         setMessages(prev => [...prev, {
             id: botMsgId,
@@ -1065,6 +1133,9 @@ const InChatPipeline = ({ message, workflow, elapsedSeconds, onComplete }: { mes
                                                 workflow={workflow}
                                                 elapsedSeconds={elapsedSeconds}
                                                 onComplete={(analysis, chartData) => handlePipelineComplete(msg, analysis, chartData)}
+                                                onViewContent={(label, content) => setViewingContent({ label, content })}
+                                                onRunStep2={runStep2}
+                                                onRunStep3={runStep3}
                                             />
                                         </div>
                                     )}
