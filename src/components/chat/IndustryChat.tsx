@@ -529,7 +529,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     return (
                         <div key={tIdx} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                             <div className="px-4 py-2 border-b border-border bg-secondary/30">
-                                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{table.name}</h4>
+                                <h4 className="text-[10px] font-bold text-muted-foreground tracking-wider">{table.name}</h4>
                             </div>
                             <div className="max-h-[300px] overflow-y-auto overflow-x-auto">
                                 <table className="w-full text-left border-collapse">

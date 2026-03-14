@@ -40,7 +40,7 @@ export default function QuantumChart({ data }: QuantumChartProps) {
 
     return (
         <div className="w-full h-[320px] mt-6 bg-white p-6 rounded-2xl border border-slate-200 animate-in slide-in-from-bottom-4 duration-1000 shadow-sm">
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-2">{chartLabel}</h4>
+            <h4 className="text-[10px] font-bold text-slate-400 tracking-widest mb-6 border-b border-slate-50 pb-2">{chartLabel}</h4>
             <ResponsiveContainer width="100%" height="80%">
                 <BarChart data={rechartsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <XAxis
