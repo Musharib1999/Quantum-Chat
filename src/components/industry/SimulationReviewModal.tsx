@@ -101,9 +101,19 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                             {inputEntries.map(([key, value]) => (
                                 <div key={key} className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1.5 hover:shadow-md transition-all duration-300">
                                     <span className="text-sm text-[#111827]/60 font-semibold tracking-wide">{formatLabel(key)}</span>
-                                    <span className="text-sm font-medium text-[#111827] dark:text-foreground truncate">
-                                        {Array.isArray(value) ? value.join(', ') : String(value)}
-                                    </span>
+                                    <div className="text-sm font-medium text-[#111827] dark:text-foreground leading-relaxed">
+                                        {Array.isArray(value) ? (
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {value.map((v, i) => (
+                                                    <span key={i} className="bg-primary/5 text-primary px-2 py-0.5 rounded text-[11px] font-medium border border-primary/10">
+                                                        {String(v)}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="whitespace-pre-wrap">{String(value)}</span>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
