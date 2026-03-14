@@ -395,20 +395,28 @@ const InChatPipeline = ({
 
     const handleFormTransition = (msg: Message, formData: any, qubits: number, batches: number) => {
         const botMsgId = Date.now();
-        setMessages(prev => [...prev, {
-            id: botMsgId,
-            text: `Please review your simulation settings:`,
-            sender: 'bot',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            workflowType: 'review',
-            workflowData: {
-                formData,
-                qubits,
-                batches,
-                config: contextConfig,
-                blueprint: msg.workflowData?.blueprint
-            }
-        }]);
+        setMessages(prev => {
+            // Update the form message with the data so it remains visible and pre-filled
+            const updated = prev.map(m => m.id === msg.id ? {
+                ...m,
+                workflowData: { ...m.workflowData, formData }
+            } : m);
+            
+            return [...updated, {
+                id: botMsgId,
+                text: `Please review your simulation settings:`,
+                sender: 'bot',
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                workflowType: 'review',
+                workflowData: {
+                    formData,
+                    qubits,
+                    batches,
+                    config: contextConfig,
+                    blueprint: msg.workflowData?.blueprint
+                }
+            }];
+        });
     };
 
     const handleReviewTransition = async (msg: Message) => {
