@@ -124,7 +124,7 @@ export default function ProblemConsole() {
             return;
         }
         setDryRunning(true);
-        setStatus("Running quantum simulation dry run...");
+        setStatus("Running quantum simulation dry run, generating chart mapping suggestions...");
         try {
             // Find the template for the current hardware, or fallback to Universal
             const template = codeTemplates.find(t => t.hardware === hardware) || codeTemplates[0];
@@ -499,8 +499,43 @@ export default function ProblemConsole() {
             ))}
 
             <div className="pt-8 border-t border-slate-100 space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-900">Charts</h3>
+                <div className="flex items-center gap-4">
+                    {suggestions.length > 0 && (
+                        <div className="flex items-start gap-4 bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 animate-in slide-in-from-top-2">
+                             <div className="pt-1">
+                                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">Apply to Chart:</span>
+                                <p className="text-[9px] text-emerald-400 font-medium">Click to set as axis key</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2 flex-1">
+                                {suggestions.map(s => (
+                                    <div key={s} className="flex gap-1">
+                                        <button 
+                                            onClick={() => {
+                                                const up = [...chartConfig];
+                                                if (up.length === 0) up.push({ type: 'bar', xKey: '', yKey: '', label: 'Quantum Distribution' });
+                                                up[0].xKey = s;
+                                                setChartConfig(up);
+                                            }}
+                                            className="text-[10px] font-bold bg-white text-emerald-600 px-2 py-1 rounded-md border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                                        >
+                                            Set X: {s}
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                const up = [...chartConfig];
+                                                if (up.length === 0) up.push({ type: 'bar', xKey: '', yKey: '', label: 'Quantum Distribution' });
+                                                up[0].yKey = s;
+                                                setChartConfig(up);
+                                            }}
+                                            className="text-[10px] font-bold bg-white text-emerald-600 px-2 py-1 rounded-md border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                                        >
+                                            Set Y: {s}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     <button onClick={() => setChartConfig([...chartConfig, { type: 'bar', xKey: '', yKey: '', label: '' }])} className="text-xs font-bold text-[#3066bb] hover:underline">+ Add chart</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -522,11 +557,19 @@ export default function ProblemConsole() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] text-slate-400 font-bold uppercase">X data</label>
-                                    <input value={c.xKey} onChange={e => { const up = [...chartConfig]; up[i].xKey = e.target.value; setChartConfig(up); }} className="w-full p-2 bg-slate-50 border border-slate-100 rounded text-xs font-mono" />
+                                    <input 
+                                        value={c.xKey} 
+                                        onChange={e => { const up = [...chartConfig]; up[i].xKey = e.target.value; setChartConfig(up); }} 
+                                        className={`w-full p-2 bg-slate-50 border rounded text-xs font-mono transition-all ${c.xKey ? 'border-emerald-200 text-emerald-600' : 'border-slate-100'}`} 
+                                    />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] text-slate-400 font-bold uppercase">Y data</label>
-                                    <input value={c.yKey} onChange={e => { const up = [...chartConfig]; up[i].yKey = e.target.value; setChartConfig(up); }} className="w-full p-2 bg-slate-50 border border-slate-100 rounded text-xs font-mono" />
+                                    <input 
+                                        value={c.yKey} 
+                                        onChange={e => { const up = [...chartConfig]; up[i].yKey = e.target.value; setChartConfig(up); }} 
+                                        className={`w-full p-2 bg-slate-50 border rounded text-xs font-mono transition-all ${c.yKey ? 'border-emerald-200 text-emerald-600' : 'border-slate-100'}`} 
+                                    />
                                 </div>
                             </div>
                         </div>

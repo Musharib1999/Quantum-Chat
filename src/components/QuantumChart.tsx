@@ -35,43 +35,43 @@ export default function QuantumChart({ data }: QuantumChartProps) {
         );
     }
 
-    // Legacy Recharts implementation
     const rechartsData = Array.isArray(data) ? data : data?.data || [];
+    const chartLabel = data?.label || "Quantum Histogram / Probability Distribution";
 
     return (
-        <div className="w-full h-[300px] mt-6 bg-card/50 p-6 rounded-2xl border border-border animate-in slide-in-from-bottom-4 duration-1000">
-            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-6 border-b border-border pb-2">Quantum Histogram / Probability Distribution</h4>
+        <div className="w-full h-[320px] mt-6 bg-white p-6 rounded-2xl border border-slate-200 animate-in slide-in-from-bottom-4 duration-1000 shadow-sm">
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-2">{chartLabel}</h4>
             <ResponsiveContainer width="100%" height="80%">
                 <BarChart data={rechartsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <XAxis
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 700 }}
+                        tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 700 }}
+                        tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }}
                     />
                     <Tooltip
                         contentStyle={{
-                            backgroundColor: 'var(--popover)',
-                            border: '1px solid var(--border)',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #f1f5f9',
                             borderRadius: '12px',
                             fontSize: '12px',
-                            color: 'var(--popover-foreground)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                            color: '#334155',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
                         }}
-                        itemStyle={{ color: 'var(--foreground)' }}
-                        cursor={{ fill: 'var(--muted)' }}
+                        itemStyle={{ color: '#3066bb', fontWeight: 'bold' }}
+                        cursor={{ fill: '#f8fafc' }}
                     />
                     <Bar
                         dataKey="value"
-                        radius={[4, 4, 0, 0]}
+                        radius={[6, 6, 0, 0]}
                     >
                         {rechartsData.map((entry: any, index: number) => (
-                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'var(--primary)' : 'var(--secondary)'} fillOpacity={0.9} />
+                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#3066bb' : '#3066bb'} fillOpacity={0.9} />
                         ))}
                     </Bar>
                 </BarChart>

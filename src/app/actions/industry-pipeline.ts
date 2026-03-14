@@ -1183,9 +1183,37 @@ STRICT RULES:
             text += `\n\n${msg}`;
         }
 
+        // --- DYNAMIC CHART GENERATION ---
+        let dynamicChartData = null;
+        if (blueprint?.chartConfig && blueprint.chartConfig.length > 0) {
+            const config = blueprint.chartConfig[0];
+            
+            // Try to build from assignments table (more descriptive labels) 
+            // otherwise fallback to raw solution keys
+            const sourceData = (finalAssignmentsTable && finalAssignmentsTable.length > 0) 
+                ? finalAssignmentsTable 
+                : Object.entries(unifiedSolution).map(([k, v]) => ({ key: k, value: v }));
+
+            const chartPoints = sourceData.map((item: any) => {
+                const xVal = item[config.xKey] || item.key || item.ticker || item.asset || "Item";
+                const yVal = item[config.yKey] || (typeof item.value === 'number' ? item.value : (item.value === 1 || item.value === "1" ? 1 : 0));
+                
+                return {
+                    name: xVal,
+                    value: yVal
+                };
+            });
+
+            dynamicChartData = {
+                type: 'recharts',
+                data: chartPoints,
+                label: config.label || "Quantum Probability Distribution"
+            };
+        }
+
         return { 
             text, 
-            chartData: extractedPlotlyChart, 
+            chartData: dynamicChartData || extractedPlotlyChart, 
             assignmentsTable: finalAssignmentsTable, 
             qubitCount,
             combinatorialSize: combinatorialSizeStr,
