@@ -147,7 +147,7 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
     );
 };
 
-const InChatReview = ({ message, onExecute, onEdit }: { message: Message, onExecute: () => void, onEdit: () => void }) => {
+const InChatReview = ({ message, onExecute, onEdit, isDisabled }: { message: Message, onExecute: () => void, onEdit: () => void, isDisabled?: boolean }) => {
     const { formData, qubits, batches, config } = message.workflowData || {};
     const inputEntries = Object.entries(formData || {}).filter(([_, v]) => v !== undefined && v !== '');
 
@@ -188,14 +188,16 @@ const InChatReview = ({ message, onExecute, onEdit }: { message: Message, onExec
 
             <div className="flex gap-3">
                 <button 
+                    disabled={isDisabled}
                     onClick={onEdit}
-                    className="flex-1 bg-background border border-[#3066bb] text-[#3066bb] py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#3066bb]/5 transition-all shadow-sm"
+                    className="flex-1 bg-background border border-[#3066bb] text-[#3066bb] py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#3066bb]/5 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <Edit3 size={14} /> Edit Config
+                    <Edit3 size={14} /> Edit
                 </button>
                 <button 
+                    disabled={isDisabled}
                     onClick={onExecute}
-                    className="flex-[2] bg-[#3066bb] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#3066bb]/90 transition-all shadow-xl shadow-[#3066bb]/10"
+                    className="flex-[2] bg-[#3066bb] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#3066bb]/90 transition-all shadow-xl shadow-[#3066bb]/10 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Play size={14} fill="currentColor" /> Execute Simulation
                 </button>
@@ -374,32 +376,39 @@ const InChatPipeline = ({
             fetchInitialForm();
         }
     }, [contextConfig, messages.length]);
-    
-    const handleEditTransition = (msg: Message) => {
-        setMessages(prev => prev.map(m => m.id === msg.id ? { 
-            ...m, 
-            text: `Please configure the parameters for **${m.workflowData?.config?.problem || 'Quantum Solution'}** simulation:`,
-            workflowType: 'form' 
-        } : m));
+       const handleEditTransition = (msg: Message) => {
+        // Rollback the form message to be the latest active one
+        // and remove the review message to avoid confusion
+        setMessages(prev => {
+            const index = prev.findIndex(m => m.id === msg.id);
+            if (index === -1) return prev;
+            
+            // Remove the review message
+            const newMsgs = [...prev];
+            newMsgs.splice(index, 1);
+            
+            // The previous message should be the form. We don't need to do anything 
+            // because our rendering logic makes the latest message editable.
+            return newMsgs;
+        });
     };
-    const handleFormTransition = (msg: Message, formData: any, qubits: number, batches: number) => {
-        // Update the original form message with the submitted data
-        setMessages(prev => prev.map(m => m.id === msg.id ? { 
-            ...m, 
-            text: `Please review your simulation settings:`,
-            workflowType: 'review', // Transition this specific message to review OR keep as form and add new review?
-            // Actually, to make it editable, we should probably REPLACE the current message or transform it.
-            // Let's transform it to review.
-            workflowData: { ...m.workflowData, formData, qubits, batches } 
-        } : m));
 
-        // Note: The previous logic ADDED a new message for review. 
-        // If we want "Edit" to work smoothly in a chat thread without clutter, 
-        // transforming the current message is better.
-        // However, if we want to keep history of changes, we add new ones.
-        // User said "User should be able to make modifications to input form after reviewing"
-        
-        // Let's stick to the current "Add New Message" pattern but allow "Edit" to transform review back to form.
+    const handleFormTransition = (msg: Message, formData: any, qubits: number, batches: number) => {
+        const botMsgId = Date.now();
+        setMessages(prev => [...prev, {
+            id: botMsgId,
+            text: `Please review your simulation settings:`,
+            sender: 'bot',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            workflowType: 'review',
+            workflowData: {
+                formData,
+                qubits,
+                batches,
+                config: contextConfig,
+                blueprint: msg.workflowData?.blueprint
+            }
+        }]);
     };
 
     const handleReviewTransition = async (msg: Message) => {
@@ -1138,6 +1147,7 @@ const InChatPipeline = ({
                                         <div className="mt-4">
                                             <InChatReview 
                                                 message={msg}
+                                                isDisabled={isLocked}
                                                 onExecute={() => handleReviewTransition(msg)}
                                                 onEdit={() => handleEditTransition(msg)}
                                             />
