@@ -365,6 +365,15 @@ export default function IndustryPage() {
                 }
             >
                 <div className="flex flex-col h-full bg-background relative w-full">
+                    {flowStage === 'SELECTION' && (
+                        <CentralWizard
+                            step={wizardStep}
+                            metadata={metadata}
+                            config={sessionConfig}
+                            onSelect={handleWizardSelect}
+                        />
+                    )}
+
                     {flowStage === 'CHAT' && (
                         <IndustryChat
                             contextConfig={sessionConfig}
