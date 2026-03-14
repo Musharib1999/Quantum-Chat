@@ -1,162 +1,95 @@
-from fastapi import FastAPI, HTTPException, Header, Depends
-from pydantic import BaseModel
-import sys
-import io
-import contextlib
-import traceback
+import subprocess
+import tempfile
 import os
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Optional
+import sys
+from fastapi.middleware.cors import CORSMiddleware
 
-# Initialize FastAPI
-app = FastAPI(title="Quantum Calculation Backend")
+app = FastAPI(title="D-Wave Code Executor API (Local)")
 
-# Security
-API_SECRET = os.getenv("API_SECRET_KEY", "dev_secret_key_123")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-async def verify_api_key(x_api_key: str = Header(None)):
-    if x_api_key != API_SECRET:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
-
-# Data Models
-class QiskitRequest(BaseModel):
+class CodeExecutionRequest(BaseModel):
     code: str
-    shots: int = 1024
 
-class DWaveRequest(BaseModel):
-    code: str
+class ExecutionResponse(BaseModel):
+    output: str
+    error: Optional[str] = None
+    success: bool = True
 
-# -----------------
-# Qiskit Execution
-# -----------------
-@app.post("/api/simulate/qiskit", dependencies=[Depends(verify_api_key)])
-async def simulate_qiskit(request: QiskitRequest):
+@app.get("/")
+def read_root():
+    return {"message": "D-Wave Executor Service (Local) Running"}
+
+@app.post("/validate")
+def validate_code(request: CodeExecutionRequest):
     try:
-        # Import Qiskit libraries inside the function to ensure isolation
-        from qiskit import QuantumCircuit, transpile
-        from qiskit_aer import AerSimulator
-        
-        # Safe execution environment
-        local_scope = {
-            'QuantumCircuit': QuantumCircuit,
-            'AerSimulator': AerSimulator,
-            'transpile': transpile
-        }
-        
-        # Execute the submitted code
-        # The user's code must define a 'circuit' variable
-        exec(request.code, {}, local_scope)
-        
-        if 'circuit' not in local_scope:
-            return {"success": False, "error": "The code did not define a 'circuit' variable."}
-            
-        circuit = local_scope['circuit']
-        
-        # Basic validation
-        if not isinstance(circuit, QuantumCircuit):
-             return {"success": False, "error": "'circuit' is not a valid Qiskit QuantumCircuit."}
-
-        # Run Simulation
-        simulator = AerSimulator()
-        compiled_circuit = transpile(circuit, simulator)
-        job = simulator.run(compiled_circuit, shots=request.shots)
-        result = job.result()
-        counts = result.get_counts()
-        
-        return {
-            "success": True,
-            "counts": counts,
-            "qubits": circuit.num_qubits,
-            "depth": circuit.depth()
-        }
-
+        compile(request.code, '<string>', 'exec')
+        return {"valid": True, "error": None}
+    except SyntaxError as e:
+        return {"valid": False, "error": f"Syntax Error: {str(e)}"}
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        }
+        return {"valid": False, "error": str(e)}
 
-# -----------------
-# D-Wave Execution
-# -----------------
-@app.post("/api/simulate/dwave", dependencies=[Depends(verify_api_key)])
-async def simulate_dwave(request: DWaveRequest):
+@app.post("/execute", response_model=ExecutionResponse)
+async def execute_code(request: CodeExecutionRequest):
+    # Create a temporary file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as tmp:
+        script_content = "import sys\n"
+        script_content += "from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\n"
+        script_content += "import numpy as np\n"
+        script_content += request.code
+        
+        tmp.write(script_content)
+        tmp_path = tmp.name
+
     try:
-        import dimod
-        # Check for imports
+        # Run the script in a subprocess for isolation
+        result = subprocess.run(
+            [sys.executable, tmp_path],
+            capture_output=True,
+            text=True,
+            timeout=60 # 1 minute timeout for annealing
+        )
         
-        local_scope = {'dimod': dimod}
-        
-        # Execute Code
-        # Expected to define 'bqm'
-        exec(request.code, {}, local_scope)
-        
-        if 'bqm' not in local_scope:
-            return {"success": False, "error": "The code did not define a 'bqm' variable."}
-            
-        bqm = local_scope['bqm']
-        
-        # Run Simulated Annealing (Software)
-        if len(bqm) < 20:
-            sampler = dimod.ExactSolver()
-        else:
-            from dimod import SimulatedAnnealingSampler
-            sampler = SimulatedAnnealingSampler()
-            
-        sampleset = sampler.sample(bqm)
-        best_sample = sampleset.first.sample
-        energy = sampleset.first.energy
-        
-        # Format counts
-        counts = {}
-        sorted_vars = sorted(bqm.variables)
-        
-        for datum in sampleset.data(['sample', 'num_occurrences']):
-            bitstring = "".join(str(int(datum.sample[v])) for v in sorted_vars)
-            counts[bitstring] = counts.get(bitstring, 0) + datum.num_occurrences
+        output = result.stdout
+        error_msg = None
+        success = True
 
-        return {
-            "success": True,
-            "counts": counts,
-            "best_solution": {str(k): int(v) for k, v in best_sample.items()},
-            "energy": float(energy)
-        }
+        if result.returncode != 0:
+            error_msg = f"Runtime Error (Exit {result.returncode}):\n{result.stderr}"
+            success = False
+        elif result.stderr:
+            output += "\n--- Warnings/Info ---\n" + result.stderr
 
+    except subprocess.TimeoutExpired:
+        error_msg = "Execution timed out (60s limit)."
+        output = ""
+        success = False
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        }
+        error_msg = f"Unexpected Service Error: {str(e)}"
+        output = ""
+        success = False
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+    
+    return ExecutionResponse(
+        output=output if output else "",
+        error=error_msg,
+        success=success
+    )
 
-@app.get("/api/news", dependencies=[Depends(verify_api_key)])
-async def get_news(query: str = 'quantum computing OR "quantum technology"'):
-    try:
-        from pygooglenews import GoogleNews
-        gn = GoogleNews(lang='en', country='US')
-        
-        search_results = gn.search(query)
-        entries = search_results.get('entries', [])[:15]
-        
-        formatted_news = []
-        for entry in entries:
-            # Simple impact/trend assignment for demo purposes
-            title_lower = entry.title.lower()
-            impact = "high" if any(w in title_lower for w in ["breakthrough", "major", "funding", "ibm", "google"]) else "medium"
-            trend = "up" if any(w in title_lower for w in ["growth", "up", "bull", "success", "advance"]) else "down"
-
-            formatted_news.append({
-                "title": entry.title,
-                "url": entry.link,
-                "publishedAt": entry.published,
-                "source": entry.source.title if hasattr(entry, 'source') else "Google News",
-                "impact": impact,
-                "trend": trend
-            })
-            
-        return {"success": True, "news": formatted_news}
-    except Exception as e:
-        return {"success": False, "error": str(e), "traceback": traceback.format_exc()}
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "Quantum Backend"}
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.environ.get("PORT", 8002))
+    uvicorn.run(app, host="0.0.0.0", port=port)

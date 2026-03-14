@@ -27,6 +27,7 @@ type WorkflowStage =
 
 export default function IndustryChat({ contextConfig, placeholder, onAnalysisTriggered, onPipelineComplete, blueprint }: IndustryChatProps) {
     const { user } = useAuth();
+    const problem = blueprint?.name || 'Quantum Problem';
     const {
         messages,
         inputValue,
@@ -491,11 +492,31 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
     const currentStepNum = workflow.kind === 'idle' ? 0 : workflow.kind === 'step1_loading' ? 1 : workflow.kind === 'step1_done' ? 1 : workflow.kind === 'step2_loading' ? 2 : workflow.kind === 'step2_done' ? 2 : 3;
     
     const renderDynamicTables = (assignments: any[], portfolioMetrics?: any, tables?: any[]) => {
-        const activeTables = tables || blueprint?.outputTables;
+        let activeTables = tables || blueprint?.outputTables;
+
+        // BREADCRUMB: Zero-Code Table Synthesizer
+        // If no table mapping exists, automatically synthesize one from the result keys
+        if ((!activeTables || activeTables.length === 0) && assignments && assignments.length > 0) {
+            const firstRow = assignments[0];
+            const autoMapping = Object.keys(firstRow)
+                .filter(key => key !== 'id' && key !== 'combinatorialSize')
+                .map((key, idx) => ({
+                    label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                    resultKey: key,
+                    type: typeof firstRow[key] === 'number' ? 'number' : 'text',
+                    priority: idx
+                }));
+            
+            activeTables = [{
+                name: 'Generated Simulation Results',
+                mapping: autoMapping
+            }];
+        }
+
         if (!activeTables || activeTables.length === 0) return null;
 
         return (
-            <div className="space-y-6 my-6">
+            <div className="space-y-6 my-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 {activeTables.map((table: any, tIdx: number) => {
                     // Decide if this table is for "Summary" (global metrics) or "Details" (list data)
                     const isSummaryTable = table.mapping.some((col: any) => {
@@ -565,8 +586,8 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
     };
 
     const steps = [
-        { num: 1, label: 'Generate Quantum Code', desc: 'Quantum Guru AI converts the problem into optimized quantum circuits or BQM models' },
-        { num: 2, label: 'Run Simulator', desc: 'Execute the program on the selected quantum simulator or hardware' },
+        { num: 1, label: 'Generate Quantum Code', desc: 'Quantum Guru AI transforms the problem into optimized quantum circuits or BQM models' },
+        { num: 2, label: 'Execute Quantum Job', desc: 'Execute the program on the selected quantum simulator or hardware' },
         { num: 3, label: 'Interpret Results', desc: 'Quantum Guru AI analyzes measurement outputs and explains the solution in human terms' }
     ];
     const PortfolioResultsSideBySide = ({ metrics, assignments, qubitCount }: { metrics: any, assignments: any[], qubitCount: number }) => {
@@ -726,9 +747,9 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                 {/* Header */}
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="text-[10px] text-muted-foreground tracking-wide leading-none mb-0.5">Quantum Pipeline</div>
+                                        <div className="text-xs text-muted-foreground tracking-wide leading-none mb-0.5">Quantum Pipeline</div>
                                         <div className="text-xs text-foreground">
-                                            {contextConfig?.hardware?.includes('D-Wave') || contextConfig?.hardware?.includes('Annealing') ? 'D-Wave Annealing' : 'Gate-Model Circuit'}
+                                            For {problem} using {contextConfig?.hardware || 'Quantum Hardware'}
                                         </div>
                                     </div>
                                     {isLoading && (
@@ -781,14 +802,14 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="text-xs text-foreground truncate">{step.label}</div>
-                                                        <div className="text-[10px] text-muted-foreground">{step.desc}</div>
+                                                        <div className="text-xs text-muted-foreground">{step.desc}</div>
                                                     </div>
                                                     {/* Right-side action */}
                                                     {isActive && (
                                                         <div className="flex items-center gap-2">
                                                             {step.num === 2 && (
                                                                 <span
-                                                                    className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full border border-primary/20 shadow-sm"
+                                                                    className="text-xs font-semibold text-white px-2 py-0.5 rounded-full border border-primary/20 shadow-sm"
                                                                     style={{ backgroundColor: '#3066bb' }}
                                                                 >
                                                                     Batch {currentBatch}/{totalBatches}
@@ -800,9 +821,9 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                     {isDone && stepOutput && (
                                                         <button
                                                             onClick={() => setViewingContent({ label: step.label, content: stepOutput })}
-                                                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-muted-foreground hover:text-foreground border border-border hover:border-primary/30 hover:bg-secondary transition-all shrink-0"
+                                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs bg-[#3066bb] text-white hover:opacity-90 transition-all shrink-0 shadow-sm"
                                                         >
-                                                            <Eye size={10} /> View
+                                                            <Eye size={11} /> View
                                                         </button>
                                                     )}
                                                 </div>
@@ -810,11 +831,11 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                                 {/* Verify + Continue block — shown after step completes */}
                                                 {isVerifying && (
                                                     <div className="mt-3 ml-9 p-3 bg-secondary/50 border border-border rounded-xl space-y-2">
-                                                        <div className="text-[10px] text-muted-foreground font-medium">Review the output above before proceeding.</div>
+                                                        <div className="text-xs text-muted-foreground font-medium">Review the output before proceeding</div>
                                                         <div className="flex items-center gap-2">
                                                             <button
                                                                 onClick={() => setViewingContent({ label: step.label, content: stepOutput! })}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-border hover:bg-secondary text-muted-foreground hover:text-foreground transition-all"
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#3066bb] text-white hover:opacity-90 transition-all shadow-sm"
                                                             >
                                                                 <Eye size={11} /> View Output
                                                             </button>

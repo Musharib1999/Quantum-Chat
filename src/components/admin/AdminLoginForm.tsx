@@ -57,8 +57,8 @@ export default function AdminLoginForm() {
 
                     {/* Header */}
                     <div className="text-center space-y-2">
-                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-secondary/30 border border-white/10 mb-2 shadow-inner overflow-hidden">
-                            <ShieldCheck className="w-12 h-12 text-primary" />
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white border border-white/10 mb-2 shadow-inner overflow-hidden p-3">
+                            <img src="/qg-icon.png" alt="Quantum Guru" className="w-full h-full object-contain" />
                         </div>
                         <h1 className="text-2xl font-bold tracking-tight">Quantum Guru</h1>
                         <p className="text-sm text-muted-foreground uppercase tracking-widest font-medium">Administration Portal</p>

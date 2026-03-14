@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 pydantic
-qiskit
-qiskit-aer
+python-multipart
+# Minimal D-Wave Backend (Simulated Annealing only)
 dimod
-pygooglenews
+numpy
+# Note: dwave-ocean-sdk, dwave-system, and matplotlib removed
