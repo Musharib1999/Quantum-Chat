@@ -245,18 +245,26 @@ export default function IndustryPage() {
                                             <div className="space-y-1">
                                                 {problems.map((prob: string) => {
                                                     const isSelected = sessionConfig.problem === prob;
+                                                    const isChatMode = flowStage === 'CHAT';
+                                                    
                                                     return (
                                                         <button
                                                             key={prob}
-                                                            disabled={flowStage === 'CHAT'}
+                                                            disabled={isChatMode}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: null }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'} ${flowStage === 'CHAT' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
+                                                                (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
+                                                            } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                <div className={`p-2 rounded-lg transition-colors ${
+                                                                    (isSelected && !isChatMode) ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground'
+                                                                } ${!isChatMode ? 'group-hover:bg-secondary group-hover:text-foreground' : ''}`}>
                                                                     <Zap size={14} />
                                                                 </div>
-                                                                <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{prob}</span>
+                                                                <span className={`text-sm font-medium transition-colors ${
+                                                                    (isSelected || isChatMode) ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                                                                }`}>{prob}</span>
                                                             </div>
                                                         </button>
                                                     );
@@ -283,18 +291,26 @@ export default function IndustryPage() {
                                             <div className="space-y-1">
                                                 {services.map((svc: string) => {
                                                     const isSelected = sessionConfig.service === svc;
+                                                    const isChatMode = flowStage === 'CHAT';
+
                                                     return (
                                                         <button
                                                             key={svc}
-                                                            disabled={flowStage === 'CHAT'}
+                                                            disabled={isChatMode}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, service: svc, hardware: null, formData: null }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'} ${flowStage === 'CHAT' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
+                                                                (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
+                                                            } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                <div className={`p-2 rounded-lg transition-colors ${
+                                                                    (isSelected && !isChatMode) ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground'
+                                                                } ${!isChatMode ? 'group-hover:bg-secondary group-hover:text-foreground' : ''}`}>
                                                                     <Atom size={14} />
                                                                 </div>
-                                                                <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{svc}</span>
+                                                                <span className={`text-sm font-medium transition-colors ${
+                                                                    (isSelected || isChatMode) ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                                                                }`}>{svc}</span>
                                                             </div>
                                                         </button>
                                                     );
@@ -334,19 +350,27 @@ export default function IndustryPage() {
                                             <div className="space-y-1">
                                                 {filteredHws.map((hw: any) => {
                                                     const isSelected = sessionConfig.hardware === hw.name;
+                                                    const isChatMode = flowStage === 'CHAT';
+
                                                     return (
                                                         <button
                                                             key={hw.id}
-                                                            disabled={flowStage === 'CHAT'}
+                                                            disabled={isChatMode}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, hardware: hw.name }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'} ${flowStage === 'CHAT' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
+                                                                (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
+                                                            } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                                    <div className={`p-2 rounded-lg transition-colors ${
+                                                                        (isSelected && !isChatMode) ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground'
+                                                                    } ${!isChatMode ? 'group-hover:bg-secondary group-hover:text-foreground' : ''}`}>
                                                                         <Cpu size={14} />
                                                                     </div>
-                                                                    <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{hw.name}</span>
+                                                                    <span className={`text-sm font-medium transition-colors ${
+                                                                        (isSelected || isChatMode) ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                                                                    }`}>{hw.name}</span>
                                                                 </div>
                                                                 <span className="text-[9px] font-semibold text-green-500">Live</span>
                                                             </div>
