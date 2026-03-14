@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, User, StopCircle, ShieldCheck, Eye, X, ChevronRight, Play, Loader2, Info, Settings, ChevronDown } from 'lucide-react';
+import { Send, User, StopCircle, ShieldCheck, Eye, X, ChevronRight, Play, Loader2, Info, Settings, ChevronDown, Edit3 } from 'lucide-react';
 import axios from 'axios';
 import { Message } from '@/hooks/useQuantumChat';
 import MarkdownRenderer from '../MarkdownRenderer';
@@ -129,7 +129,7 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
                                 type={field.type === 'number' ? 'number' : 'text'}
                                 value={formData[field.key] || ''}
                                 onChange={(e) => handleInput(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
-                                className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50"
+                                className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                         )}
                     </div>
@@ -147,7 +147,7 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
     );
 };
 
-const InChatReview = ({ message, onExecute }: { message: Message, onExecute: () => void }) => {
+const InChatReview = ({ message, onExecute, onEdit }: { message: Message, onExecute: () => void, onEdit: () => void }) => {
     const { formData, qubits, batches, config } = message.workflowData || {};
     const inputEntries = Object.entries(formData || {}).filter(([_, v]) => v !== undefined && v !== '');
 
@@ -186,12 +186,20 @@ const InChatReview = ({ message, onExecute }: { message: Message, onExecute: () 
                 </div>
             </div>
 
-            <button 
-                onClick={onExecute}
-                className="w-full bg-[#3066bb] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#3066bb]/90 transition-all shadow-xl shadow-[#3066bb]/10"
-            >
-                <Play size={14} fill="currentColor" /> Execute Simulation
-            </button>
+            <div className="flex gap-3">
+                <button 
+                    onClick={onEdit}
+                    className="flex-1 bg-background border border-[#3066bb] text-[#3066bb] py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#3066bb]/5 transition-all shadow-sm"
+                >
+                    <Edit3 size={14} /> Edit Config
+                </button>
+                <button 
+                    onClick={onExecute}
+                    className="flex-[2] bg-[#3066bb] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#3066bb]/90 transition-all shadow-xl shadow-[#3066bb]/10"
+                >
+                    <Play size={14} fill="currentColor" /> Execute Simulation
+                </button>
+            </div>
         </div>
     );
 };
@@ -366,30 +374,32 @@ const InChatPipeline = ({
             fetchInitialForm();
         }
     }, [contextConfig, messages.length]);
-
-    // Workflow Transitions
+    
+    const handleEditTransition = (msg: Message) => {
+        setMessages(prev => prev.map(m => m.id === msg.id ? { 
+            ...m, 
+            text: `Please configure the parameters for **${m.workflowData?.config?.problem || 'Quantum Solution'}** simulation:`,
+            workflowType: 'form' 
+        } : m));
+    };
     const handleFormTransition = (msg: Message, formData: any, qubits: number, batches: number) => {
         // Update the original form message with the submitted data
         setMessages(prev => prev.map(m => m.id === msg.id ? { 
             ...m, 
-            workflowData: { ...m.workflowData, formData } 
+            text: `Please review your simulation settings:`,
+            workflowType: 'review', // Transition this specific message to review OR keep as form and add new review?
+            // Actually, to make it editable, we should probably REPLACE the current message or transform it.
+            // Let's transform it to review.
+            workflowData: { ...m.workflowData, formData, qubits, batches } 
         } : m));
 
-        const botMsgId = Date.now();
-        setMessages(prev => [...prev, {
-            id: botMsgId,
-            text: `Please review your simulation settings:`,
-            sender: 'bot',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            workflowType: 'review',
-            workflowData: {
-                formData,
-                qubits,
-                batches,
-                config: contextConfig,
-                blueprint: msg.workflowData?.blueprint
-            }
-        }]);
+        // Note: The previous logic ADDED a new message for review. 
+        // If we want "Edit" to work smoothly in a chat thread without clutter, 
+        // transforming the current message is better.
+        // However, if we want to keep history of changes, we add new ones.
+        // User said "User should be able to make modifications to input form after reviewing"
+        
+        // Let's stick to the current "Add New Message" pattern but allow "Edit" to transform review back to form.
     };
 
     const handleReviewTransition = async (msg: Message) => {
@@ -861,11 +871,13 @@ const InChatPipeline = ({
                 console.error("Experiment save failed in UI", saveError);
             }
 
+            setIsLocked(false);
+
         } catch (e: any) {
             stopTimer();
             setWorkflow({ kind: 'step3_done', code: initialCode, simOutput, analysis: `Error: ${e.message}`, totalExecTimeMs: totalExecutionTimeMs });
             onPipelineComplete?.();
-
+            setIsLocked(false);
         }
     };
 
@@ -1127,6 +1139,7 @@ const InChatPipeline = ({
                                             <InChatReview 
                                                 message={msg}
                                                 onExecute={() => handleReviewTransition(msg)}
+                                                onEdit={() => handleEditTransition(msg)}
                                             />
                                         </div>
                                     )}
