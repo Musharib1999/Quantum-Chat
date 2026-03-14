@@ -260,7 +260,19 @@ const InChatPipeline = ({
                                     <div className="text-sm font-medium text-foreground leading-snug">{step.label}</div>
                                     <div className="text-xs text-muted-foreground mt-0.5">{step.desc}</div>
                                 </div>
-                                {isActive && <Loader2 size={14} className="animate-spin text-primary shrink-0 mt-0.5" />}
+                                {isActive && (
+                                    <div className="flex items-center gap-2">
+                                        {step.num === 2 && (
+                                            <span 
+                                                className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full border border-primary/20 shadow-sm"
+                                                style={{ backgroundColor: '#3066bb' }}
+                                            >
+                                                Batch {(workflow as any).currentBatch || 1}/{(workflow as any).totalBatches || 1}
+                                            </span>
+                                        )}
+                                        <Loader2 size={14} className="animate-spin text-primary shrink-0 mt-0.5" />
+                                    </div>
+                                )}
                                 {isDone && stepOutput && !isVerifying && (
                                     <button 
                                         onClick={() => onViewContent(step.label, stepOutput)}
