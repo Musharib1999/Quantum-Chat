@@ -57,6 +57,15 @@ export default function IndustryPage() {
     useEffect(() => {
         const initData = async () => {
             try {
+                // Restore from localStorage
+                const savedConfig = localStorage.getItem('qg_industry_config');
+                const savedStage = localStorage.getItem('qg_industry_stage');
+                const savedStep = localStorage.getItem('qg_industry_step');
+                
+                if (savedConfig) setSessionConfig(JSON.parse(savedConfig));
+                if (savedStage) setFlowStage(savedStage as any);
+                if (savedStep) setWizardStep(savedStep as any);
+
                 const [metaRes, expRes, hwRes] = await Promise.all([
                     axios.get('/api/quantum-forms/metadata'),
                     getExperiments(user?.email),
@@ -74,9 +83,17 @@ export default function IndustryPage() {
 
         if (!isInitializing) {
             initData();
-            // No polling — experiments refresh only on load and after pipeline completes
         }
     }, [user?.email, isInitializing]);
+
+    // Persist State
+    useEffect(() => {
+        if (!isInitializing) {
+            localStorage.setItem('qg_industry_config', JSON.stringify(sessionConfig));
+            localStorage.setItem('qg_industry_stage', flowStage);
+            localStorage.setItem('qg_industry_step', wizardStep);
+        }
+    }, [sessionConfig, flowStage, wizardStep, isInitializing]);
 
 
 
@@ -191,7 +208,13 @@ export default function IndustryPage() {
                                         return (
                                             <button
                                                 key={ind.label}
-                                                onClick={() => setSessionConfig(prev => ({ ...prev, industry: ind.label, problem: null, service: null, hardware: null, formData: null }))}
+                                                onClick={() => {
+                                                    setSessionConfig(prev => ({ ...prev, industry: ind.label, problem: null, service: null, hardware: null, formData: null }));
+                                                    if (flowStage === 'CHAT') {
+                                                        setFlowStage('SELECTION');
+                                                        setWizardStep('problem');
+                                                    }
+                                                }}
                                                 className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -225,8 +248,9 @@ export default function IndustryPage() {
                                                     return (
                                                         <button
                                                             key={prob}
+                                                            disabled={flowStage === 'CHAT'}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: null }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'} ${flowStage === 'CHAT' ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
@@ -262,8 +286,9 @@ export default function IndustryPage() {
                                                     return (
                                                         <button
                                                             key={svc}
+                                                            disabled={flowStage === 'CHAT'}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, service: svc, hardware: null, formData: null }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'} ${flowStage === 'CHAT' ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
@@ -312,8 +337,9 @@ export default function IndustryPage() {
                                                     return (
                                                         <button
                                                             key={hw.id}
+                                                            disabled={flowStage === 'CHAT'}
                                                             onClick={() => setSessionConfig(prev => ({ ...prev, hardware: hw.name }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
+                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'} ${flowStage === 'CHAT' ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">

@@ -39,10 +39,27 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
     const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
-        if (isReadOnly && message.workflowData?.formData) {
+        if (!message.workflowData?.blueprint?.id) return;
+        const storageKey = `qg_form_draft_${message.workflowData.blueprint.id}`;
+        
+        // 1. Initial Load from storage
+        const saved = sessionStorage.getItem(storageKey);
+        if (saved) {
+            try {
+                setFormData(JSON.parse(saved));
+            } catch (e) { console.error("Draft load failed:", e); }
+        } else if (isReadOnly && message.workflowData?.formData) {
+            // Fallback to message data if read-only and no draft
             setFormData(message.workflowData.formData);
         }
-    }, [message.workflowData?.formData, isReadOnly]);
+    }, [message.workflowData?.blueprint?.id, isReadOnly]);
+
+    // 2. Persist to storage on change
+    useEffect(() => {
+        if (isReadOnly || !message.workflowData?.blueprint?.id) return;
+        const storageKey = `qg_form_draft_${message.workflowData.blueprint.id}`;
+        sessionStorage.setItem(storageKey, JSON.stringify(formData));
+    }, [formData, isReadOnly, message.workflowData?.blueprint?.id]);
 
     const calculateComplexity = () => {
         if (!blueprint || !blueprint.qubitFormula) return { qubits: 0, batches: 1 };
