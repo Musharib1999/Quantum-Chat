@@ -64,28 +64,28 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-6 pt-6 border-t border-border">
                                 <div className="flex flex-col gap-1">
                                     <span className="text-sm text-[#111827]/60 font-semibold tracking-wide">Hardware</span>
-                                    <span className="text-sm text-[#111827] dark:text-foreground font-bold">{config.hardware}</span>
+                                    <span className="text-sm text-[#111827] dark:text-foreground font-medium">{config.hardware}</span>
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
                                     <span className="text-sm text-[#111827]/60 font-semibold tracking-wide">Scale</span>
                                     <div className="flex flex-col">
-                                        <span className="text-sm text-[#111827] dark:text-foreground font-bold">{qubits} Qubits</span>
-                                        <span className="text-sm text-[#3066bb] font-bold">
+                                        <span className="text-sm text-[#111827] dark:text-foreground font-medium">{qubits} Qubits</span>
+                                        <span className="text-sm text-[#3066bb] font-medium">
                                             {getQuantumStateSpaceName(qubits)} States
                                         </span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
                                     <span className="text-sm text-[#111827]/60 font-semibold tracking-wide">ETA</span>
-                                    <span className="text-sm text-[#111827] dark:text-foreground font-bold">{formatETA(batches * 25)}</span>
+                                    <span className="text-sm text-[#111827] dark:text-foreground font-medium">{formatETA(batches * 25)}</span>
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
                                     <span className="text-sm text-[#111827]/60 font-semibold tracking-wide">Batches</span>
-                                    <span className="text-sm text-[#111827] dark:text-foreground font-bold">{batches}</span>
+                                    <span className="text-sm text-[#111827] dark:text-foreground font-medium">{batches}</span>
                                 </div>
                                 <div className="flex flex-col gap-1 md:border-l md:border-border md:pl-6">
                                     <span className="text-sm text-[#111827]/60 font-semibold tracking-wide">Queue</span>
-                                    <span className="text-sm text-[#111827] dark:text-foreground font-bold">#1</span>
+                                    <span className="text-sm text-[#111827] dark:text-foreground font-medium">#1</span>
                                 </div>
                             </div>
                         </div>
@@ -94,14 +94,14 @@ export default function SimulationReviewModal({ isOpen, onClose, onExecute, conf
                     {/* 2. Input Details */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-4">
-                            <span className="text-[#111827] font-bold text-sm tracking-wide">Solution Parameters</span>
+                            <span className="text-[#111827] font-semibold text-sm tracking-wide">Solution Parameters</span>
                             <div className="h-px bg-border flex-1" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {inputEntries.map(([key, value]) => (
                                 <div key={key} className="p-4 rounded-2xl bg-white dark:bg-card border border-border flex flex-col gap-1.5 hover:shadow-md transition-all duration-300">
                                     <span className="text-sm text-[#111827]/60 font-semibold tracking-wide">{formatLabel(key)}</span>
-                                    <span className="text-sm font-bold text-[#111827] dark:text-foreground truncate">
+                                    <span className="text-sm font-medium text-[#111827] dark:text-foreground truncate">
                                         {Array.isArray(value) ? value.join(', ') : String(value)}
                                     </span>
                                 </div>
