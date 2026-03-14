@@ -94,31 +94,34 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
                                 ))}
                             </select>
                         ) : field.type === 'multi-select' ? (
-                            <div className="flex flex-wrap gap-1.5 p-2 bg-secondary/30 border border-border rounded-xl min-h-[40px]">
-                                {(formData[field.key] || []).map((v: string) => (
-                                    <span key={v} className="bg-[#3066bb] text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                        {v} {!isReadOnly && <X size={10} className="cursor-pointer" onClick={() => handleInput(field.key, formData[field.key].filter((x:any)=>x!==v))} />}
-                                    </span>
-                                ))}
-                                {!isReadOnly && (
-                                    <select 
-                                        className="bg-transparent text-[10px] outline-none border-none text-muted-foreground"
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (!val) return;
-                                            const current = formData[field.key] || [];
-                                            if (!current.includes(val)) handleInput(field.key, [...current, val]);
-                                            e.target.value = "";
-                                        }}
-                                    >
-                                        <option value="">Add...</option>
-                                        {field.options?.map((opt: any) => (
-                                            <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
-                                                {typeof opt === 'string' ? opt : opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                )}
+                            <div className="flex flex-wrap gap-2 pt-1">
+                                {field.options?.map((opt: any) => {
+                                    const value = typeof opt === 'string' ? opt : opt.value;
+                                    const label = typeof opt === 'string' ? opt : opt.label;
+                                    const isSelected = (formData[field.key] || []).includes(value);
+                                    
+                                    return (
+                                        <button
+                                            key={value}
+                                            disabled={isReadOnly}
+                                            onClick={() => {
+                                                const current = formData[field.key] || [];
+                                                if (isSelected) {
+                                                    handleInput(field.key, current.filter((v: any) => v !== value));
+                                                } else {
+                                                    handleInput(field.key, [...current, value]);
+                                                }
+                                            }}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+                                                isSelected 
+                                                ? 'bg-[#3066bb] text-white border-[#3066bb] shadow-sm' 
+                                                : 'bg-secondary/40 text-muted-foreground border-border hover:bg-secondary/60'
+                                            } disabled:opacity-50`}
+                                        >
+                                            {label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <input 
@@ -261,7 +264,7 @@ const InChatPipeline = ({
                                 {isDone && stepOutput && !isVerifying && (
                                     <button 
                                         onClick={() => onViewContent(step.label, stepOutput)}
-                                        className="text-primary hover:underline text-xs flex items-center gap-1 font-medium"
+                                        className="bg-[#3066bb] text-white px-3 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 hover:opacity-90 transition-all shadow-sm"
                                     >
                                         <Eye size={12} /> View
                                     </button>
@@ -275,7 +278,7 @@ const InChatPipeline = ({
                                     <div className="flex items-center gap-2">
                                         <button 
                                             onClick={() => onViewContent(step.label, stepOutput!)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#3066bb] text-white hover:opacity-90 transition-all shadow-sm"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] bg-[#3066bb] text-white hover:opacity-90 transition-all shadow-sm font-semibold"
                                         >
                                             <Eye size={12} /> View Output
                                         </button>
@@ -284,7 +287,7 @@ const InChatPipeline = ({
                                                 if (step.num === 1) onRunStep2(workflow.code);
                                                 if (step.num === 2) onRunStep3(workflow.code, workflow.simOutput, workflow.totalExecTimeMs);
                                             }}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#3066bb] text-white hover:opacity-90 transition-all font-semibold"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] bg-[#3066bb] text-white hover:opacity-90 transition-all font-semibold"
                                         >
                                             Continue <ChevronRight size={12} />
                                         </button>
