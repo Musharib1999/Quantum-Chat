@@ -197,193 +197,195 @@ export default function IndustryPage() {
                 currentMode="industry"
                 // Left Sidebar: Only show in Chat Mode (Selections) OR minimal back button in Selection Mode
                 sidebarContent={
-                    flowStage === 'CHAT' ? (
-                        <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
-                            {/* Industry Section */}
-                            <div className="space-y-4 px-2">
-                                <h3 className="text-sm font-medium text-foreground px-2 text-left">Industry</h3>
-                                <div className="flex flex-col gap-2">
-                                    {metadata.industries?.map((ind: any) => {
-                                        const isSelected = sessionConfig.industry === ind.label;
-                                        return (
-                                            <button
-                                                key={ind.label}
-                                                onClick={() => {
-                                                    setSessionConfig(prev => ({ ...prev, industry: ind.label, problem: null, service: null, hardware: null, formData: null }));
-                                                    if (flowStage === 'CHAT') {
-                                                        setFlowStage('SELECTION');
-                                                        setWizardStep('problem');
-                                                    }
-                                                }}
-                                                className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
-                                                        {getIndustryIcon(ind.label)}
-                                                    </div>
-                                                    <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{ind.label}</span>
+                    <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-100px)] custom-scrollbar">
+                        {/* Industry Section - Always Visible */}
+                        <div className="space-y-4 px-2">
+                            <h3 className="text-sm font-medium text-foreground px-2 text-left">Industry</h3>
+                            <div className="flex flex-col gap-2">
+                                {metadata.industries?.map((ind: any) => {
+                                    const isSelected = sessionConfig.industry === ind.label;
+                                    return (
+                                        <button
+                                            key={ind.label}
+                                            onClick={() => {
+                                                setSessionConfig(prev => ({ ...prev, industry: ind.label, problem: null, service: null, hardware: null, formData: null }));
+                                                if (flowStage === 'CHAT') {
+                                                    setFlowStage('SELECTION');
+                                                    setWizardStep('problem');
+                                                } else if (flowStage === 'SELECTION') {
+                                                    setWizardStep('problem');
+                                                }
+                                            }}
+                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${isSelected ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent hover:bg-card hover:border-ring hover:shadow-md'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'}`}>
+                                                    {getIndustryIcon(ind.label)}
                                                 </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Problem Section */}
-                            <div className="space-y-4 px-2">
-                                <h3 className="text-sm font-medium text-foreground px-2 text-left">Problem</h3>
-                                <div className="flex flex-col gap-2">
-                                    {/* Dynamic Problems based on Industry selection */}
-                                    {(() => {
-                                        const problems = sessionConfig.industry
-                                            ? Object.keys(metadata.problemMapping?.[sessionConfig.industry] || {})
-                                            : [];
-
-                                        if (problems.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Industry</div>;
-
-                                        return (
-                                            <div className="space-y-1">
-                                                {problems.map((prob: string) => {
-                                                    const isSelected = sessionConfig.problem === prob;
-                                                    const isChatMode = flowStage === 'CHAT';
-                                                    
-                                                    return (
-                                                        <button
-                                                            key={prob}
-                                                            disabled={isChatMode}
-                                                            onClick={() => setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: null }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
-                                                                (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
-                                                            } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className={`p-2 rounded-lg transition-colors ${
-                                                                    (isSelected && !isChatMode) ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground'
-                                                                } ${!isChatMode ? 'group-hover:bg-secondary group-hover:text-foreground' : ''}`}>
-                                                                    <Zap size={14} />
-                                                                </div>
-                                                                <span className={`text-sm font-medium transition-colors ${
-                                                                    (isSelected || isChatMode) ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
-                                                                }`}>{prob}</span>
-                                                            </div>
-                                                        </button>
-                                                    );
-                                                })}
+                                                <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>{ind.label}</span>
                                             </div>
-                                        );
-                                    })()}
-                                </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
+                        </div>
 
-                            {/* Service Section */}
-                            <div className="space-y-4 px-2">
-                                <h3 className="text-sm font-medium text-foreground px-2 text-left">Service</h3>
-                                <div className="flex flex-col gap-2">
-                                    {/* Dynamic Services based on Problem selection */}
-                                    {(() => {
-                                        const services = (sessionConfig.industry && sessionConfig.problem)
-                                            ? Object.keys(metadata.problemMapping?.[sessionConfig.industry]?.[sessionConfig.problem] || {})
-                                            : [];
+                        {/* Problem, Service, Hardware - Only in CHAT Mode (Status View) */}
+                        {flowStage === 'CHAT' && (
+                            <>
+                                {/* Problem Section */}
+                                <div className="space-y-4 px-2">
+                                    <h3 className="text-sm font-medium text-foreground px-2 text-left">Problem</h3>
+                                    <div className="flex flex-col gap-2">
+                                        {(() => {
+                                            const problems = sessionConfig.industry
+                                                ? Object.keys(metadata.problemMapping?.[sessionConfig.industry] || {})
+                                                : [];
 
-                                        if (services.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Problem</div>;
+                                            if (problems.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Industry</div>;
 
-                                        return (
-                                            <div className="space-y-1">
-                                                {services.map((svc: string) => {
-                                                    const isSelected = sessionConfig.service === svc;
-                                                    const isChatMode = flowStage === 'CHAT';
-
-                                                    return (
-                                                        <button
-                                                            key={svc}
-                                                            disabled={isChatMode}
-                                                            onClick={() => setSessionConfig(prev => ({ ...prev, service: svc, hardware: null, formData: null }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
-                                                                (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
-                                                            } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className={`p-2 rounded-lg transition-colors ${
-                                                                    (isSelected && !isChatMode) ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground'
-                                                                } ${!isChatMode ? 'group-hover:bg-secondary group-hover:text-foreground' : ''}`}>
-                                                                    <Atom size={14} />
-                                                                </div>
-                                                                <span className={`text-sm font-medium transition-colors ${
-                                                                    (isSelected || isChatMode) ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
-                                                                }`}>{svc}</span>
-                                                            </div>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-
-                            {/* Hardware Section */}
-                            <div className="space-y-4 px-2">
-                                <h3 className="text-sm font-medium text-foreground px-2 text-left">Hardware</h3>
-                                <div className="flex flex-col gap-2">
-                                    {(() => {
-                                        const mappedHwNames = (sessionConfig.industry && sessionConfig.problem && sessionConfig.service)
-                                            ? (metadata.problemMapping[sessionConfig.industry]?.[sessionConfig.problem]?.[sessionConfig.service] || [])
-                                            : null;
-
-                                        if (mappedHwNames === null) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Service</div>;
-
-                                        // Filter hardwareList based on mappedHwNames (with normalization)
-                                        const filteredHws = (!mappedHwNames || mappedHwNames.length === 0)
-                                            ? hardwareList
-                                            : hardwareList.filter(h => {
-                                                const nameNorm = (h.name || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
-                                                const providerNorm = (h.provider || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
-                                                return mappedHwNames.some((m: string) => {
-                                                    const mNorm = (m || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
-                                                    return nameNorm.includes(mNorm) || mNorm.includes(providerNorm) || (mNorm === 'simulator' && nameNorm.includes('simulator'));
-                                                });
-                                            });
-
-                                        if (filteredHws.length === 0 && hardwareList.length > 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">No compatible hardware</div>;
-
-                                        return (
-                                            <div className="space-y-1">
-                                                {filteredHws.map((hw: any) => {
-                                                    const isSelected = sessionConfig.hardware === hw.name;
-                                                    const isChatMode = flowStage === 'CHAT';
-
-                                                    return (
-                                                        <button
-                                                            key={hw.id}
-                                                            disabled={isChatMode}
-                                                            onClick={() => setSessionConfig(prev => ({ ...prev, hardware: hw.name }))}
-                                                            className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
-                                                                (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
-                                                            } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
-                                                        >
-                                                            <div className="flex items-center justify-between">
+                                            return (
+                                                <div className="space-y-1">
+                                                    {problems.map((prob: string) => {
+                                                        const isSelected = sessionConfig.problem === prob;
+                                                        const isChatMode = flowStage === 'CHAT';
+                                                        
+                                                        return (
+                                                            <button
+                                                                key={prob}
+                                                                disabled={isChatMode}
+                                                                onClick={() => setSessionConfig(prev => ({ ...prev, problem: prob, service: null, hardware: null, formData: null }))}
+                                                                className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
+                                                                    (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
+                                                                } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
+                                                            >
                                                                 <div className="flex items-center gap-3">
                                                                     <div className={`p-2 rounded-lg transition-colors ${
                                                                         (isSelected && !isChatMode) ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground'
                                                                     } ${!isChatMode ? 'group-hover:bg-secondary group-hover:text-foreground' : ''}`}>
-                                                                        <Cpu size={14} />
+                                                                        <Zap size={14} />
                                                                     </div>
                                                                     <span className={`text-sm font-medium transition-colors ${
                                                                         (isSelected || isChatMode) ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
-                                                                    }`}>{hw.name}</span>
+                                                                    }`}>{prob}</span>
                                                                 </div>
-                                                                <span className="text-[9px] font-semibold text-green-500">Live</span>
-                                                            </div>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        );
-                                    })()}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    ) : null // Blank sidebar during wizard as requested
+
+                                {/* Service Section */}
+                                <div className="space-y-4 px-2">
+                                    <h3 className="text-sm font-medium text-foreground px-2 text-left">Service</h3>
+                                    <div className="flex flex-col gap-2">
+                                        {(() => {
+                                            const services = (sessionConfig.industry && sessionConfig.problem)
+                                                ? Object.keys(metadata.problemMapping?.[sessionConfig.industry]?.[sessionConfig.problem] || {})
+                                                : [];
+
+                                            if (services.length === 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Problem</div>;
+
+                                            return (
+                                                <div className="space-y-1">
+                                                    {services.map((svc: string) => {
+                                                        const isSelected = sessionConfig.service === svc;
+                                                        const isChatMode = flowStage === 'CHAT';
+
+                                                        return (
+                                                            <button
+                                                                key={svc}
+                                                                disabled={isChatMode}
+                                                                onClick={() => setSessionConfig(prev => ({ ...prev, service: svc, hardware: null, formData: null }))}
+                                                                className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
+                                                                    (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
+                                                                } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`p-2 rounded-lg transition-colors ${
+                                                                        (isSelected && !isChatMode) ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground'
+                                                                    } ${!isChatMode ? 'group-hover:bg-secondary group-hover:text-foreground' : ''}`}>
+                                                                        <Atom size={14} />
+                                                                    </div>
+                                                                    <span className={`text-sm font-medium transition-colors ${
+                                                                        (isSelected || isChatMode) ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                                                                    }`}>{svc}</span>
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+
+                                {/* Hardware Section */}
+                                <div className="space-y-4 px-2">
+                                    <h3 className="text-sm font-medium text-foreground px-2 text-left">Hardware</h3>
+                                    <div className="flex flex-col gap-2">
+                                        {(() => {
+                                            const mappedHwNames = (sessionConfig.industry && sessionConfig.problem && sessionConfig.service)
+                                                ? (metadata.problemMapping[sessionConfig.industry]?.[sessionConfig.problem]?.[sessionConfig.service] || [])
+                                                : null;
+
+                                            if (mappedHwNames === null) return <div className="text-xs text-muted-foreground px-2 italic text-left">Select Service</div>;
+
+                                            const filteredHws = (!mappedHwNames || mappedHwNames.length === 0)
+                                                ? hardwareList
+                                                : hardwareList.filter(h => {
+                                                    const nameNorm = (h.name || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                    const providerNorm = (h.provider || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                    return mappedHwNames.some((m: string) => {
+                                                        const mNorm = (m || '').toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                        return nameNorm.includes(mNorm) || mNorm.includes(providerNorm) || (mNorm === 'simulator' && nameNorm.includes('simulator'));
+                                                    });
+                                                });
+
+                                            if (filteredHws.length === 0 && hardwareList.length > 0) return <div className="text-xs text-muted-foreground px-2 italic text-left">No compatible hardware</div>;
+
+                                            return (
+                                                <div className="space-y-1">
+                                                    {filteredHws.map((hw: any) => {
+                                                        const isSelected = sessionConfig.hardware === hw.name;
+                                                        const isChatMode = flowStage === 'CHAT';
+
+                                                        return (
+                                                            <button
+                                                                key={hw.id}
+                                                                disabled={isChatMode}
+                                                                onClick={() => setSessionConfig(prev => ({ ...prev, hardware: hw.name }))}
+                                                                className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border ${
+                                                                    (isSelected && !isChatMode) ? 'bg-card border-ring shadow-md' : 'bg-transparent border-transparent'
+                                                                } ${!isChatMode ? 'hover:bg-card hover:border-ring hover:shadow-md' : 'cursor-default'}`}
+                                                            >
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className={`p-2 rounded-lg transition-colors ${
+                                                                            (isSelected && !isChatMode) ? 'bg-[#3066bb] text-white' : 'bg-muted text-muted-foreground'
+                                                                        } ${!isChatMode ? 'group-hover:bg-secondary group-hover:text-foreground' : ''}`}>
+                                                                            <Cpu size={14} />
+                                                                        </div>
+                                                                        <span className={`text-sm font-medium transition-colors ${
+                                                                            (isSelected || isChatMode) ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                                                                        }`}>{hw.name}</span>
+                                                                    </div>
+                                                                    <span className="text-[9px] font-semibold text-green-500">Live</span>
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 }
                 // Right Sidebar: Experiment History
                 rightSidebarContent={
