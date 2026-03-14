@@ -61,7 +61,9 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold">
-                                {(user.firstName || user.name || 'U').substring(0, 1).toUpperCase()}
+                                {user.firstName && user.lastName 
+                                    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+                                    : (user.firstName || user.name || 'U').substring(0, 2).toUpperCase()}
                             </div>
                             <div className="flex flex-col min-w-0">
                                 <span className="text-sm font-semibold text-foreground truncate">

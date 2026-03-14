@@ -119,7 +119,11 @@ export default function TokenUsageIndicator({ onMenuClick }: { onMenuClick?: () 
                         className="w-9 h-9 shrink-0 rounded-[14px] bg-secondary border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 shadow-sm"
                     >
                         {isAuthenticated && user ? (
-                            <span className="text-sm font-medium">{(user.firstName || user.email || 'U').substring(0, 2).toUpperCase()}</span>
+                            <span className="text-sm font-medium">
+                                {user.firstName && user.lastName 
+                                    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+                                    : (user.firstName || user.email || 'U').substring(0, 2).toUpperCase()}
+                            </span>
                         ) : (
                             <UserIcon size={17} strokeWidth={2.2} />
                         )}
