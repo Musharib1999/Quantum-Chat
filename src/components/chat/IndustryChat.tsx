@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, User, StopCircle, ShieldCheck, Eye, X, ChevronRight, Play, Loader2 } from 'lucide-react';
+import { Send, User, StopCircle, ShieldCheck, Eye, X, ChevronRight, Play, Loader2, Info, Settings, ChevronDown } from 'lucide-react';
+import axios from 'axios';
+import { Message } from '@/hooks/useQuantumChat';
 import MarkdownRenderer from '../MarkdownRenderer';
 import QuantumChart from '../QuantumChart';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
@@ -28,8 +30,211 @@ type WorkflowStage =
 export default function IndustryChat({ contextConfig, placeholder, onAnalysisTriggered, onPipelineComplete, blueprint }: IndustryChatProps) {
     const { user } = useAuth();
     const problem = blueprint?.name || 'Quantum Problem';
+
+// --- In-Chat Sub-Components ---
+
+const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isReadOnly: boolean, onSubmit: (formData: any, qubits: number, batches: number) => void }) => {
+    const blueprint = message.workflowData?.blueprint;
+    const [formData, setFormData] = useState<Record<string, any>>(message.workflowData?.formData || {});
+    const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+
+    const calculateComplexity = () => {
+        if (!blueprint || !blueprint.qubitFormula) return { qubits: 0, batches: 1 };
+        let formula = blueprint.qubitFormula;
+        Object.keys(formData).forEach(key => {
+            const val = formData[key] === undefined || formData[key] === '' ? 0 : formData[key];
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            formula = formula.replace(regex, String(val));
+        });
+        formula = formula.replace(/{{[^}]+}}/g, '0');
+        try {
+            const sanitized = formula.replace(/[^0-9+\-*/().\s]/g, '');
+            const qubits = Math.max(0, Math.ceil(eval(sanitized) || 0));
+            let batches = 1;
+            if (blueprint.batchingEnabled && blueprint.maxQubitsPerBatch && qubits > blueprint.maxQubitsPerBatch) {
+                batches = Math.ceil(qubits / blueprint.maxQubitsPerBatch);
+            }
+            return { qubits, batches };
+        } catch (e) { return { qubits: 0, batches: 1 }; }
+    };
+
+    const { qubits, batches } = calculateComplexity();
+
+    const handleInput = (key: string, val: any) => {
+        if (isReadOnly) return;
+        setFormData(prev => ({ ...prev, [key]: val }));
+    };
+
+    if (!blueprint) return null;
+
+    return (
+        <div className={`bg-card border border-border rounded-2xl p-4 md:p-6 space-y-6 shadow-sm transition-opacity ${isReadOnly ? 'opacity-90' : 'opacity-100'}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(blueprint.fields || []).map((field: any) => (
+                    <div key={field.key} className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-tight">{field.label}</label>
+                        {field.type === 'select' || field.type === 'dropdown' ? (
+                            <select 
+                                disabled={isReadOnly}
+                                value={formData[field.key] || ''}
+                                onChange={(e) => handleInput(field.key, e.target.value)}
+                                className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50"
+                            >
+                                <option value="" disabled>Select...</option>
+                                {field.options?.map((opt: any) => (
+                                    <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
+                                        {typeof opt === 'string' ? opt : opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : field.type === 'multi-select' ? (
+                            <div className="flex flex-wrap gap-1.5 p-2 bg-secondary/30 border border-border rounded-xl min-h-[40px]">
+                                {(formData[field.key] || []).map((v: string) => (
+                                    <span key={v} className="bg-[#3066bb] text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                        {v} {!isReadOnly && <X size={10} className="cursor-pointer" onClick={() => handleInput(field.key, formData[field.key].filter((x:any)=>x!==v))} />}
+                                    </span>
+                                ))}
+                                {!isReadOnly && (
+                                    <select 
+                                        className="bg-transparent text-[10px] outline-none border-none text-muted-foreground"
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (!val) return;
+                                            const current = formData[field.key] || [];
+                                            if (!current.includes(val)) handleInput(field.key, [...current, val]);
+                                            e.target.value = "";
+                                        }}
+                                    >
+                                        <option value="">Add...</option>
+                                        {field.options?.map((opt: any) => (
+                                            <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
+                                                {typeof opt === 'string' ? opt : opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                        ) : (
+                            <input 
+                                disabled={isReadOnly}
+                                type={field.type === 'number' ? 'number' : 'text'}
+                                value={formData[field.key] || ''}
+                                onChange={(e) => handleInput(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
+                                className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50"
+                            />
+                        )}
+                    </div>
+                ))}
+            </div>
+            {!isReadOnly && (
+                <button 
+                    onClick={() => onSubmit(formData, qubits, batches)}
+                    className="w-full bg-[#3066bb] text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-[0.98]"
+                >
+                    Next <ChevronRight size={14} />
+                </button>
+            )}
+        </div>
+    );
+};
+
+const InChatReview = ({ message, onExecute }: { message: Message, onExecute: () => void }) => {
+    const { formData, qubits, batches, config } = message.workflowData || {};
+    const inputEntries = Object.entries(formData || {}).filter(([_, v]) => v !== undefined && v !== '');
+
+    const formatETA = (s: number) => s < 60 ? `~${s}s` : `~${Math.floor(s/60)}m ${s%60}s`;
+    
+    return (
+        <div className="bg-secondary/40 border border-border rounded-2xl p-4 md:p-6 space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4 border-b border-border/50">
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Hardware</span>
+                    <span className="text-xs font-medium text-foreground">{config?.hardware}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Scale</span>
+                    <span className="text-xs font-medium text-foreground">{qubits} Qubits</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">ETA</span>
+                    <span className="text-xs font-medium text-foreground">{formatETA(batches! * 25)}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Batches</span>
+                    <span className="text-xs font-medium text-foreground">{batches}</span>
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Parameters</span>
+                <div className="flex flex-wrap gap-2">
+                    {inputEntries.map(([k, v]) => (
+                        <div key={k} className="px-3 py-1.5 rounded-lg bg-card border border-border flex flex-col gap-0.5">
+                            <span className="text-[9px] text-muted-foreground font-medium uppercase">{k.replace(/_/g, ' ')}</span>
+                            <span className="text-[11px] font-medium text-foreground">{Array.isArray(v) ? v.join(', ') : String(v)}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <button 
+                onClick={onExecute}
+                className="w-full bg-[#3066bb] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#3066bb]/90 transition-all shadow-xl shadow-[#3066bb]/10"
+            >
+                <Play size={14} fill="currentColor" /> Execute Simulation
+            </button>
+        </div>
+    );
+};
+
+const InChatPipeline = ({ message, workflow, elapsedSeconds, onComplete }: { message: Message, workflow: any, elapsedSeconds: number, onComplete: (analysis: string, chartData?: any) => void }) => {
+    // This uses the shared 'workflow' state from IndustryChat
+    const steps = [
+        { num: 1, label: 'Generate Quantum Code', desc: 'Transforming problem into circuits' },
+        { num: 2, label: 'Execute Quantum Job', desc: 'Running on simulator/hardware' },
+        { num: 3, label: 'Interpret Results', desc: 'Analyzing and explaining output' }
+    ];
+
+    return (
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-xs font-bold text-foreground">Simulation Pipeline</span>
+                </div>
+                <span className="text-xs font-mono text-muted-foreground">{elapsedSeconds}s</span>
+            </div>
+            <div className="space-y-4">
+                {steps.map(step => {
+                    const isDone = 
+                        (step.num === 1 && ['step1_done', 'step2_loading', 'step2_done', 'step3_loading', 'step3_done'].includes(workflow.kind)) ||
+                        (step.num === 2 && ['step2_done', 'step3_loading', 'step3_done'].includes(workflow.kind)) ||
+                        (step.num === 3 && ['step3_done'].includes(workflow.kind));
+                    const isActive = 
+                        (step.num === 1 && workflow.kind === 'step1_loading') ||
+                        (step.num === 2 && workflow.kind === 'step2_loading') ||
+                        (step.num === 3 && workflow.kind === 'step3_loading');
+                    
+                    return (
+                        <div key={step.num} className={`flex items-start gap-3 transition-opacity ${!isDone && !isActive ? 'opacity-30' : 'opacity-100'}`}>
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${isDone ? 'bg-[#3066bb] border-[#3066bb] text-white' : isActive ? 'border-primary text-primary animate-pulse' : 'border-border text-muted-foreground'}`}>
+                                {isDone ? '✓' : step.num}
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-[11px] font-medium text-foreground leading-none">{step.label}</div>
+                                <div className="text-[10px] text-muted-foreground mt-1">{step.desc}</div>
+                            </div>
+                            {isActive && <Loader2 size={12} className="animate-spin text-primary mt-1" />}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
     const {
         messages,
+        setMessages,
         inputValue,
         setInputValue,
         isTyping,
@@ -44,8 +249,91 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
     const [workflow, setWorkflow] = useState<WorkflowStage>({ kind: 'idle' });
     const [viewingContent, setViewingContent] = useState<{ label: string; content: string } | null>(null);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const [isLocked, setIsLocked] = useState(false);
     const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
     const lastTriggeredFormRef = useRef<string | null>(null);
+
+    // Initial Form Message
+    useEffect(() => {
+        if (messages.length === 0 && contextConfig?.problem) {
+            // Check if we already have a form for this problem to avoid dups
+            const formKey = `${contextConfig.industry}-${contextConfig.service}-${contextConfig.problem}-${contextConfig.hardware}`;
+            if (lastTriggeredFormRef.current === formKey) return;
+            lastTriggeredFormRef.current = formKey;
+
+            const fetchInitialForm = async () => {
+                try {
+                    const { data } = await axios.get(`/api/quantum-forms?industry=${contextConfig.industry}&service=${contextConfig.service}&problem=${contextConfig.problem}&hardware=${contextConfig.hardware}`);
+                    
+                    const botMsgId = Date.now();
+                    setMessages([{
+                        id: botMsgId,
+                        text: `Please configure the parameters for **${contextConfig.problem}** simulation:`,
+                        sender: 'bot',
+                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        workflowType: 'form',
+                        workflowData: {
+                            blueprint: data,
+                            formData: {}, // Default empty or pre-fill
+                            config: contextConfig
+                        }
+                    }]);
+                } catch (e) {
+                    console.error("Failed to fetch initial form:", e);
+                }
+            };
+            fetchInitialForm();
+        }
+    }, [contextConfig, messages.length]);
+
+    // Workflow Transitions
+    const handleFormTransition = (msg: Message, formData: any, qubits: number, batches: number) => {
+        // 1. Mark current form as passive (optional if we use isReadOnly)
+        // 2. Clear subsequent messages if this is an edit? (User said scroll up, so maybe just append)
+        // For simplicity, let's append the "Review" message.
+        
+        const botMsgId = Date.now();
+        setMessages(prev => [...prev, {
+            id: botMsgId,
+            text: `Please review your simulation settings:`,
+            sender: 'bot',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            workflowType: 'review',
+            workflowData: {
+                formData,
+                qubits,
+                batches,
+                config: contextConfig,
+                blueprint: msg.workflowData?.blueprint
+            }
+        }]);
+    };
+
+    const handleReviewTransition = async (msg: Message) => {
+        // Trigger Step 1 (Code Generation)
+        const botMsgId = Date.now();
+        setMessages(prev => [...prev, {
+            id: botMsgId,
+            text: `Quantum Pipeline initialized for **${msg.workflowData?.config.problem}**:`,
+            sender: 'bot',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            workflowType: 'pipeline',
+            workflowData: msg.workflowData
+        }]);
+        
+        // Lock UI
+        setIsLocked(true);
+        
+        // Start actual execution
+        runStep1(msg.workflowData?.blueprint, msg.workflowData?.formData);
+    };
+
+    const handlePipelineComplete = (msg: Message, analysis: string, chartData?: any) => {
+        setIsLocked(false);
+        // Step 3_done logic handles adding the message usually, 
+        // but since we are in-chat, we can just let useQuantumChat's effect handle it 
+        // OR manually add the result message here if we want more control.
+    };
 
     // Parse raw output into table if it contains key:value pairs
     const parseOutputTable = (output: string): string => {
@@ -195,16 +483,40 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         }
     }, [contextConfig]);
 
-    const runStep1 = async () => {
+    // Trigger workflow steps based on state
+    useEffect(() => {
+        if (workflow.kind === 'step1_done') {
+            const currentCode = workflow.code;
+            if (currentCode && !currentCode.startsWith('Error:')) {
+                runStep2(currentCode);
+            }
+        }
+    }, [workflow.kind]);
+
+    useEffect(() => {
+        if (workflow.kind === 'step2_done') {
+            const currentCode = workflow.code;
+            const output = workflow.simOutput;
+            const time = workflow.totalExecTimeMs;
+            if (currentCode && output && !output.startsWith('Error:')) {
+                runStep3(currentCode, output, time);
+            }
+        }
+    }, [workflow.kind]);
+
+    const runStep1 = async (overriddenBlueprint?: any, overriddenFormData?: any) => {
+        const bp = overriddenBlueprint || blueprint;
+        const fd = overriddenFormData || contextConfig.formData;
+        
         setWorkflow({ kind: 'step1_loading' });
         startTimer();
         try {
             const result = await generateQuantumCode({
-                problem: contextConfig.problem,
-                industry: contextConfig.industry,
-                service: contextConfig.service,
-                hardware: contextConfig.hardware,
-                formData: contextConfig.formData,
+                problem: bp?.name || contextConfig.problem,
+                industry: bp?.industry || contextConfig.industry,
+                service: bp?.service || contextConfig.service,
+                hardware: bp?.hardware || contextConfig.hardware,
+                formData: fd,
                 batchIndex: 1, // Start with first batch
             });
 
@@ -233,7 +545,9 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
         }
     };
 
-    const runStep2 = async (initialCode: string) => {
+    const runStep2 = async (initialCode: string, overriddenBlueprint?: any, overriddenFormData?: any) => {
+        const bp = overriddenBlueprint || blueprint;
+        const fd = overriddenFormData || contextConfig.formData;
         const totalBatches = (workflow as any).batchesTotal || 1;
         let combinedOutput = "";
         let currentBatchCode = initialCode;
@@ -268,11 +582,11 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     if (b > 1) {
                         console.log(`[IndustryChat] Generating code for batch ${b}...`);
                         const genRes = await generateQuantumCode({
-                            problem: contextConfig.problem,
-                            industry: contextConfig.industry,
-                            service: contextConfig.service,
-                            hardware: contextConfig.hardware,
-                            formData: contextConfig.formData,
+                            problem: bp?.name || contextConfig.problem,
+                            industry: bp?.industry || contextConfig.industry,
+                            service: bp?.service || contextConfig.service,
+                            hardware: bp?.hardware || contextConfig.hardware,
+                            formData: fd,
                             batchIndex: b,
                             lastBatchState
                         });
@@ -319,41 +633,35 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
             });
         } catch (e: any) {
             stopTimer();
-            setWorkflow({
-                kind: 'step2_done',
-                code: initialCode,
-                simOutput: `Error during batch execution: ${e.message}`,
-                totalBatches,
-                totalExecTimeMs: 0
-            });
+            setWorkflow({ kind: 'step2_done', code: initialCode, simOutput: `Error: ${e.message}`, totalBatches, totalExecTimeMs: 0 });
         }
     };
 
-    const runStep3 = async (code: string, simOutput: string, totalExecTimeMs: number) => {
-        setWorkflow({ kind: 'step3_loading', code, simOutput, totalExecTimeMs });
+    const runStep3 = async (initialCode: string, simOutput: string, totalExecTimeMs: number, overriddenBlueprint?: any, overriddenFormData?: any) => {
+        const bp = overriddenBlueprint || blueprint;
+        const fd = overriddenFormData || contextConfig.formData;
+        setWorkflow({ kind: 'step3_loading', code: initialCode, simOutput, totalExecTimeMs });
         startTimer();
         try {
             const result = await interpretQuantumResults({
-                problem: contextConfig.problem,
-                industry: contextConfig.industry,
-                hardware: contextConfig.hardware,
+                problem: bp?.name || contextConfig.problem,
+                industry: bp?.industry || contextConfig.industry,
+                service: bp?.service || contextConfig.service,
+                hardware: bp?.hardware || contextConfig.hardware,
+                formData: fd,
                 rawOutput: simOutput,
-                formData: contextConfig.formData,
-                service: contextConfig.service
             });
             stopTimer();
-            setWorkflow({ kind: 'step3_done', code, simOutput, analysis: result.text, chartData: result.chartData, totalExecTimeMs });
-            onPipelineComplete?.(); // Refresh experiment history once after pipeline finishes
+            setWorkflow({ kind: 'step3_done', code: initialCode, simOutput, analysis: result.text, chartData: result.chartData, totalExecTimeMs });
+            onPipelineComplete?.();
 
-            // Calculate sim minutes delta (round up to nearest 0.5)
+            // Sim minutes update
             const simSeconds = totalExecTimeMs / 1000;
             let simMinutesDelta = Math.ceil((simSeconds / 60) * 2) / 2;
             if (simMinutesDelta < 0.5 && simMinutesDelta > 0) simMinutesDelta = 0.5;
-
-            // Dispatch event for UI indicator
             window.dispatchEvent(new CustomEvent('qg:simminutes-update', { detail: { delta: simMinutesDelta } }));
 
-            // Generate Markdown Data Table for Deterministic Routing Output
+            // Add results to chat
             let tableHtml = "";
             if (result.assignmentsTable && result.assignmentsTable.length > 0) {
                 // Construct standard Markdown table with Problem Details
@@ -468,7 +776,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                     problem: contextConfig.problem || 'Unknown',
                     hardware: contextConfig.hardware || 'Unknown',
                     parameters: contextConfig.formData,
-                    qiskitCode: code,
+                    qiskitCode: initialCode,
                     results: { output: simOutput },
                     analysis: fullMsg,
                     chartData: finalChartData,
@@ -482,7 +790,7 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
 
         } catch (e: any) {
             stopTimer();
-            setWorkflow({ kind: 'step3_done', code, simOutput, analysis: `Error: ${e.message}`, totalExecTimeMs });
+            setWorkflow({ kind: 'step3_done', code: initialCode, simOutput, analysis: `Error: ${e.message}`, totalExecTimeMs });
             onPipelineComplete?.();
 
         }
@@ -729,6 +1037,37 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                                         {msg.sender === 'bot' || msg.sender === 'user' ? (
                                             <>
                                                 <MarkdownRenderer content={msg.text} />
+                                    
+                                    {/* Workflow Messages */}
+                                    {msg.workflowType === 'form' && (
+                                        <div className="mt-4">
+                                            <InChatForm 
+                                                message={msg}
+                                                isReadOnly={messages[messages.length-1].id !== msg.id}
+                                                onSubmit={(formData, qubits, batches) => handleFormTransition(msg, formData, qubits, batches)}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {msg.workflowType === 'review' && (
+                                        <div className="mt-4">
+                                            <InChatReview 
+                                                message={msg}
+                                                onExecute={() => handleReviewTransition(msg)}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {msg.workflowType === 'pipeline' && (
+                                        <div className="mt-4">
+                                            <InChatPipeline 
+                                                message={msg}
+                                                workflow={workflow}
+                                                elapsedSeconds={elapsedSeconds}
+                                                onComplete={(analysis, chartData) => handlePipelineComplete(msg, analysis, chartData)}
+                                            />
+                                        </div>
+                                    )}
                                                 {msg.chartData && <QuantumChart data={msg.chartData.data} />}
                                             </>
                                         ) : (
@@ -883,16 +1222,17 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
                             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
                             placeholder={placeholder || "Ask QUANTUM GURU AI..."}
                             rows={1}
-                            className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
+                            disabled={isLocked}
+                            className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide disabled:opacity-50"
                             style={{ minHeight: '52px' }}
                         />
                         <button
                             onClick={() => sendMessage()}
-                            disabled={!inputValue.trim() || isTyping}
+                            disabled={isLocked || !inputValue.trim() || isTyping}
                             className="p-3 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-1 font-semibold"
                             style={{ backgroundColor: 'rgb(48, 102, 187)' }}
                         >
-                            {isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}
+                            {isLocked ? <Loader2 size={18} className="animate-spin" /> : isTyping ? <StopCircle size={18} className="animate-pulse" /> : <Send size={18} fill="currentColor" />}
                         </button>
                     </div>
                 </div>

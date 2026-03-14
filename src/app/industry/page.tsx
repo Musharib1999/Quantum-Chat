@@ -365,49 +365,13 @@ export default function IndustryPage() {
                 }
             >
                 <div className="flex flex-col h-full bg-background relative w-full">
-                    {flowStage === 'SELECTION' && (
-                        <CentralWizard
-                            step={wizardStep}
-                            metadata={metadata}
-                            config={sessionConfig}
-                            onSelect={handleWizardSelect}
-                        />
-                    )}
-
                     {flowStage === 'CHAT' && (
-                        <>
-                            {!sessionConfig.formData ? (
-                                // Step 5 of Flow: Form Entry (Before actual Chat triggers)
-                                <div className="absolute inset-0 p-4">
-                                    <div className="h-full w-full overflow-y-auto custom-scrollbar flex justify-center py-4">
-                                        <div className="max-w-3xl w-full my-auto">
-                                            <QuantumFormFetcher
-                                                industry={sessionConfig.industry!}
-                                                service={sessionConfig.service!}
-                                                problem={sessionConfig.problem!}
-                                                hardware={sessionConfig.hardware!}
-                                                initialData={initialFormData} // Handling re-run pre-fill
-                                                onSubmit={(formData: any, qubits: number, batches: number, form: any) => {
-                                                    setPendingFormData(formData);
-                                                    setCalculatedQubits(qubits);
-                                                    setCalculatedBatches(batches);
-                                                    setPendingBlueprint(form);
-                                                    setShowReviewModal(true);
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                // Final Step: Chat Interface
-                                <IndustryChat
-                                    contextConfig={sessionConfig}
-                                    blueprint={(sessionConfig as any).blueprint}
-                                    placeholder={`Ask about ${sessionConfig.problem}...`}
-                                    onPipelineComplete={refreshExperiments}
-                                />
-                            )}
-                        </>
+                        <IndustryChat
+                            contextConfig={sessionConfig}
+                            blueprint={(sessionConfig as any).blueprint}
+                            placeholder={`Ask about ${sessionConfig.problem}...`}
+                            onPipelineComplete={refreshExperiments}
+                        />
                     )}
                 </div>
             </AppLayout>

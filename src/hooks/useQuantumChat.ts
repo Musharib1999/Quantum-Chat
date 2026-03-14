@@ -11,6 +11,17 @@ export interface Message {
     portfolioMetrics?: any;
     assignmentsTable?: any[];
     outputTables?: any[];
+    
+    // Workflow Metadata
+    workflowType?: 'form' | 'review' | 'pipeline' | 'result';
+    workflowData?: {
+        blueprint?: any;
+        formData?: any;
+        qubits?: number;
+        batches?: number;
+        config?: any;
+        isEdited?: boolean;
+    };
 }
 
 import { useAuth } from '@/context/AuthContext';
@@ -168,6 +179,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
 
     return {
         messages,
+        setMessages,
         inputValue,
         setInputValue,
         isTyping,
