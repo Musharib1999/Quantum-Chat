@@ -15,7 +15,8 @@ export async function POST(req: Request) {
 
         const isDWave = executionEnvironment === 'python-dwave' || 
                         hardware?.toLowerCase().includes('d-wave') || 
-                        hardware?.toLowerCase().includes('annealer');
+                        hardware?.toLowerCase().includes('annealer') ||
+                        (code && (code.includes('import dimod') || code.includes('dwave.system') || code.includes('import neal') || code.includes('LeapHybridSampler')));
         
         // --- PLACEHOLDER REPLACEMENT ---
         // For dry runs, we need to replace {{key}} with mock values so the code doesn't crash
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
             if (lowKey.includes('assets') || lowKey.includes('tickers')) return "AAPL, MSFT, GOOGL";
             if (lowKey.includes('risk') || lowKey.includes('alpha')) return "0.5";
             
-            return "1.0"; // Generic fallback
+            return "1"; // Generic fallback (integer for robustness)
         });
 
         // --- HARDWARE ROUTING ---

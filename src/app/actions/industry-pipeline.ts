@@ -860,7 +860,10 @@ export async function runQuantumSimulator(config: {
         const mongoose = (await import('mongoose')).default;
         const Hardware = mongoose.models.Hardware || (await import('@/models/Hardware')).default;
         
-        const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing') || (code && code.includes('import dimod'));
+        const isDWave = hardware?.toLowerCase().includes('d-wave') || 
+                        hardware?.toLowerCase().includes('annealing') || 
+                        (code && (code.includes('import dimod') || code.includes('dwave.system') || code.includes('import neal') || code.includes('LeapHybridSampler')));
+        
         console.log(`[Simulator Router] Configured for: ${isDWave ? 'DWAVE/BQM' : 'QISKIT/GATE'}`);
 
         // Find hardware record for dynamic URL routing
