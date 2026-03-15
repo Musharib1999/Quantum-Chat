@@ -860,18 +860,25 @@ export async function runQuantumSimulator(config: {
         const mongoose = (await import('mongoose')).default;
         const Hardware = mongoose.models.Hardware || (await import('@/models/Hardware')).default;
         
+        const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing') || (code && code.includes('import dimod'));
+        console.log(`[Simulator Router] Configured for: ${isDWave ? 'DWAVE/BQM' : 'QISKIT/GATE'}`);
+
         // Find hardware record for dynamic URL routing
         const hwRecord = await Hardware.findOne({ 
-            $or: [
-                { name: hardware }, 
-                { name: new RegExp(`^${hardware}$`, 'i') }
-            ] 
-        }).lean();
+            $and: [
+                { 
+                    $or: [
+                        { name: hardware }, 
+                        { name: new RegExp(`^${hardware}$`, 'i') },
+                        { name: 'Universal' }
+                    ] 
+                },
+                { provider: isDWave ? 'dwave' : { $ne: 'dwave' } }
+            ]
+        }).sort({ name: -1 }).lean();
 
         const serviceUrl = hwRecord?.serviceUrl;
         console.log(`[Simulator Router] START | HW: ${hardware} | URL: ${serviceUrl || 'Default'} | CodeLen: ${code.length}`);
-        const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing') || (code && code.includes('import dimod'));
-        console.log(`[Simulator Router] Configured for: ${isDWave ? 'DWAVE/BQM' : 'QISKIT/GATE'}`);
 
         const result = isDWave
             ? await executeDWaveAnnealer(code, serviceUrl)

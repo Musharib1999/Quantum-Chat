@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { executeQuantumCircuit, executeDWaveAnnealer } from '@/lib/quantum-simulator';
+import dbConnect from '@/lib/db';
+import Hardware from '@/models/Hardware';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,13 +33,34 @@ export async function POST(req: Request) {
             if (lowKey.includes('assets') || lowKey.includes('tickers')) return "AAPL, MSFT, GOOGL";
             if (lowKey.includes('risk') || lowKey.includes('alpha')) return "0.5";
             
-            return "1"; // Generic fallback
+            return "1.0"; // Generic fallback
         });
+
+        // --- HARDWARE ROUTING ---
+        let serviceUrl: string | undefined = undefined;
+        try {
+            await dbConnect();
+            const hwRecord = await Hardware.findOne({ 
+                $and: [
+                    { 
+                        $or: [
+                            { name: hardware }, 
+                            { name: new RegExp(`^${hardware}$`, 'i') },
+                            { name: 'Universal' }
+                        ] 
+                    },
+                    { provider: isDWave ? 'dwave' : { $ne: 'dwave' } }
+                ]
+            }).sort({ name: -1 }).lean(); // Prioritize specific hardware over Universal
+            serviceUrl = hwRecord?.serviceUrl;
+        } catch (e) {
+            console.error("Dry run hardware lookup failed:", e);
+        }
 
         // --- DRY RUN EXECUTION ---
         const result = isDWave 
-            ? await executeDWaveAnnealer(processedCode) 
-            : await executeQuantumCircuit(processedCode);
+            ? await executeDWaveAnnealer(processedCode, serviceUrl) 
+            : await executeQuantumCircuit(processedCode, serviceUrl);
 
         if (result.error) {
             return NextResponse.json({ error: result.error }, { status: 500 });
