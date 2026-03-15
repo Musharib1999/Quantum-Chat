@@ -130,7 +130,8 @@ export default function ProblemConsole() {
             const template = codeTemplates.find(t => t.hardware === hardware) || codeTemplates[0];
             const res = await axios.post('/api/admin/quantum-dry-run', {
                 code: template.code,
-                hardware: template.hardware
+                hardware: template.hardware,
+                executionEnvironment // Pass the specific environment toggle
             });
             setDryRunResult(res.data.rawResult);
             setSuggestions(res.data.suggestions || []);

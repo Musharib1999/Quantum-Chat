@@ -5,13 +5,15 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     try {
-        const { code, hardware, mockParams } = await req.json();
+        const { code, hardware, mockParams, executionEnvironment } = await req.json();
 
         if (!code) {
             return NextResponse.json({ error: 'No code provided' }, { status: 400 });
         }
 
-        const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealer');
+        const isDWave = executionEnvironment === 'python-dwave' || 
+                        hardware?.toLowerCase().includes('d-wave') || 
+                        hardware?.toLowerCase().includes('annealer');
         
         // --- PLACEHOLDER REPLACEMENT ---
         // For dry runs, we need to replace {{key}} with mock values so the code doesn't crash
