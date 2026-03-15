@@ -31,7 +31,7 @@ export async function POST(req: Request) {
             if (lowKey.includes('assets') || lowKey.includes('tickers')) return "AAPL, MSFT, GOOGL";
             if (lowKey.includes('risk') || lowKey.includes('alpha')) return "0.5";
             
-            return "1.0"; // Generic fallback
+            return "1"; // Generic fallback
         });
 
         // --- DRY RUN EXECUTION ---

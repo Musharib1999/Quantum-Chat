@@ -43,10 +43,27 @@ def validate_code(request: CodeExecutionRequest):
 async def execute_code(request: CodeExecutionRequest):
     # Create a temporary file
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as tmp:
-        script_content = "import sys\n"
-        script_content += "from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler\n"
-        script_content += "import numpy as np\n"
-        script_content += request.code
+        # Shim to handle Real D-Wave imports in a local environment
+        shim = """
+import sys
+import types
+from dimod import SimulatedAnnealingSampler
+
+# Mock dwave.system if it doesnt exist
+try:
+    import dwave.system
+except ImportError:
+    dwave_mock = types.ModuleType("dwave")
+    sys.modules["dwave"] = dwave_mock
+    dwave_system_mock = types.ModuleType("dwave.system")
+    sys.modules["dwave.system"] = dwave_system_mock
+    # Map LeapHybridSampler to SimulatedAnnealingSampler
+    dwave_system_mock.LeapHybridSampler = SimulatedAnnealingSampler
+
+from dimod import BinaryQuadraticModel, SimulatedAnnealingSampler
+import numpy as np
+"""
+        script_content = shim + request.code
         
         tmp.write(script_content)
         tmp_path = tmp.name

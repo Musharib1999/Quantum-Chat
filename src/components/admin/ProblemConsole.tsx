@@ -402,7 +402,7 @@ export default function ProblemConsole() {
                             <textarea value={t.code} onChange={e => { const up = [...codeTemplates]; up[i].code = e.target.value; setCodeTemplates(up); }} className="w-full h-48 bg-transparent text-green-400 font-mono text-xs outline-none border-t border-slate-800 pt-4" placeholder="# write qiskit code here..." />
                         </div>
                     ))}
-                    {codeTemplates.length === 0 && <div className="text-center py-12 border border-dashed border-slate-200 rounded-2xl text-[10px] text-slate-400 font-bold">using default llm generation</div>}
+                    {codeTemplates.length === 0 && <div className="text-center py-12 border border-dashed border-slate-200 rounded-2xl text-[10px] text-red-400 font-bold uppercase tracking-wider">Algorithm template required. LLM Generation is disabled for stability.</div>}
                 </div>
             </div>
         </div>

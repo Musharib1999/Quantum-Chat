@@ -7,6 +7,7 @@ export class ProblemRegistry {
     private static handlers: Record<string, any> = {
         'portfolio optimization': PortfolioOptimizationHandler,
         'workforce scheduling': SchedulingHandler,
+        'transport for london': SchedulingHandler,
         // Add more mappings here as handlers are implemented
     };
 

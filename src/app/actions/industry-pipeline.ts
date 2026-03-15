@@ -239,14 +239,22 @@ export async function executeIndustryWorkflow(
 
         // --- STEP 2: TEMPLATE LOOKUP ---
         let templateCode = "";
-        if (formDef?.codeTemplates) {
+        if (formDef?.codeTemplates && formDef.codeTemplates.length > 0) {
             const sanitizeStr = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
             const hwSanitized = sanitizeStr(hardware);
+            
+            // 1. Precise/Partial match
             const matched = formDef.codeTemplates.find((t: any) => {
                 const tSanitized = sanitizeStr(t.hardware);
                 return hwSanitized.includes(tSanitized) || tSanitized.includes(hwSanitized);
             });
-            templateCode = matched?.code || "";
+            
+            // 2. Fallback to Universal template or first template
+            templateCode = matched?.code || 
+                          formDef.codeTemplates.find((t: any) => sanitizeStr(t.hardware) === 'universal')?.code ||
+                          formDef.codeTemplates[0].code;
+            
+            console.log(`[Quantum Workflow] Template Match | Req: ${hardware} | Found: ${!!templateCode}`);
         }
 
         // --- STEP 3: BATCHING ORCHESTRATION ---
@@ -614,7 +622,12 @@ export async function generateQuantumCode(config: {
                 const tSanitized = sanitizeStr(t.hardware);
                 return hwSanitized.includes(tSanitized) || tSanitized.includes(hwSanitized);
             });
-            templateCode = matched?.code || "";
+            
+            // Fallback to Universal or first template if no specific HW match
+            templateCode = matched?.code || 
+                          formDef.codeTemplates.find((t: any) => sanitizeStr(t.hardware) === 'universal')?.code ||
+                          formDef.codeTemplates[0].code;
+
             console.log(`[Quantum Workflow Actions] Template Match Search | HW: ${hwSanitized} | Result Found: ${!!templateCode}`);
         }
 

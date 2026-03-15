@@ -3,8 +3,8 @@ import { IIndustryResult } from '../../types';
 
 export class SchedulingHandler extends BaseIndustryHandler {
     async interpretResults(rawOutput: string, formData: any): Promise<IIndustryResult> {
-        const drivers = parseInt(formData.drivers || '4');
-        const shifts = parseInt(formData.shifts || '4');
+        const drivers = parseInt(formData.number_of_drivers || formData.drivers || '4');
+        const shifts = parseInt(formData.number_of_shifts || formData.shifts || '4');
         const totalQubits = drivers * shifts;
 
         // 1. Build the QUBO matrix (for visualization/debugging if needed, but our core needs interpretation)
@@ -43,9 +43,9 @@ export class SchedulingHandler extends BaseIndustryHandler {
      * Replicates the Python build() logic for the backend simulation
      */
     buildQUBO(formData: any): Record<string, number> {
-        const drivers = parseInt(formData.drivers || '4');
-        const shifts = parseInt(formData.shifts || '4');
-        const shiftPenalty = parseInt(formData.shift_penalty || '10');
+        const drivers = parseInt(formData.number_of_drivers || formData.drivers || '4');
+        const shifts = parseInt(formData.number_of_shifts || formData.shifts || '4');
+        const shiftPenalty = parseInt(formData.shift_penalty || formData.penalty || '10');
         const driverPenalty = parseInt(formData.driver_penalty || '10');
         const prefWeight = parseInt(formData.preference_weight || '2');
 
