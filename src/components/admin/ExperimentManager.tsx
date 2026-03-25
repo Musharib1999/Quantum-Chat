@@ -8,6 +8,7 @@ export default function ExperimentManager() {
     const [experiments, setExperiments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [sourceFilter, setSourceFilter] = useState<'All' | 'Web' | 'API'>('All');
     const [selectedExp, setSelectedExp] = useState<any | null>(null);
 
     const loadExperiments = async () => {
@@ -21,11 +22,15 @@ export default function ExperimentManager() {
         loadExperiments();
     }, []);
 
-    const filtered = experiments.filter(exp =>
-        (exp.problem && exp.problem.toLowerCase().includes(search.toLowerCase())) ||
-        (exp.userId && exp.userId.toLowerCase().includes(search.toLowerCase())) ||
-        (exp.industry && exp.industry.toLowerCase().includes(search.toLowerCase()))
-    );
+    const filtered = experiments.filter(exp => {
+        const matchesSearch = (exp.problem && exp.problem.toLowerCase().includes(search.toLowerCase())) ||
+            (exp.userId && exp.userId.toLowerCase().includes(search.toLowerCase())) ||
+            (exp.industry && exp.industry.toLowerCase().includes(search.toLowerCase()));
+        
+        const matchesSource = sourceFilter === 'All' || exp.source === sourceFilter;
+        
+        return matchesSearch && matchesSource;
+    });
 
     return (
         <div className="space-y-6">
@@ -36,6 +41,15 @@ export default function ExperimentManager() {
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
+                    <select 
+                        value={sourceFilter}
+                        onChange={(e) => setSourceFilter(e.target.value as any)}
+                        className="px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-xs font-semibold text-slate-600"
+                    >
+                        <option value="All">All Sources</option>
+                        <option value="Web">Web Dashboard</option>
+                        <option value="API">External API</option>
+                    </select>
                     <input
                         type="text"
                         placeholder="Search problems, users..."
@@ -82,8 +96,11 @@ export default function ExperimentManager() {
                                     <tr key={exp._id} className="hover:bg-slate-50 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="font-semibold text-slate-900 line-clamp-1">{exp.problem || "Untitled"}</div>
-                                            <div className="text-[10px] text-slate-400 mt-0.5">
-                                                {exp.industry} • {exp.service}
+                                            <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                                                <span>{exp.industry} • {exp.service}</span>
+                                                <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold ${exp.source === 'API' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                                                    {exp.source || 'Web'}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

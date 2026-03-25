@@ -17,6 +17,7 @@ export interface IExperiment extends Document {
     qubitCount?: number; 
     outputTables?: any[]; // Dynamic table configuration
     cacheKey?: string; // SHA-256 hash for result caching
+    source: string; // "Web" or "API"
 }
 
 const ExperimentSchema: Schema = new Schema({
@@ -35,7 +36,8 @@ const ExperimentSchema: Schema = new Schema({
     portfolioMetrics: { type: Schema.Types.Mixed },
     qubitCount: { type: Number, default: 0 },
     outputTables: { type: Schema.Types.Mixed },
-    cacheKey: { type: String, index: true }
+    cacheKey: { type: String, index: true },
+    source: { type: String, default: 'Web', index: true }
 });
 
 export default mongoose.models.Experiment || mongoose.model<IExperiment>('Experiment', ExperimentSchema);

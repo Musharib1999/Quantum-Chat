@@ -14,6 +14,7 @@ interface User {
     tokensUsed?: number;
     simMinutesLimit?: number;
     simMinutesUsed?: number;
+    apiKey?: string;
 }
 
 interface AuthContextType {
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     tokensUsed: parsed.tokensUsed,
                     simMinutesLimit: parsed.simMinutesLimit,
                     simMinutesUsed: parsed.simMinutesUsed,
+                    apiKey: parsed.apiKey || '',
                 });
                 setIsAuthenticated(true);
 
@@ -64,7 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                                     tokenLimit: data.tokenLimit,
                                     tokensUsed: data.tokensUsed,
                                     simMinutesLimit: data.simMinutesLimit ?? 5,
-                                    simMinutesUsed: data.simMinutesUsed ?? 0
+                                    simMinutesUsed: data.simMinutesUsed ?? 0,
+                                    apiKey: data.apiKey || ''
                                 };
                                 localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
                                 return updated;
@@ -94,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             tokensUsed: userData.tokensUsed,
             simMinutesLimit: userData.simMinutesLimit ?? 5,
             simMinutesUsed: userData.simMinutesUsed ?? 0,
+            apiKey: userData.apiKey || '',
         };
         setUser(newUser);
         setIsAuthenticated(true);

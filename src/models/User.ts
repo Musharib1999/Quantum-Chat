@@ -58,6 +58,16 @@ const UserSchema = new mongoose.Schema({
     simMinutesUsed: {
         type: Number,
         default: 0,
+    },
+    apiKey: {
+        type: String,
+        unique: true,
+        sparse: true, // Only for users who have a key
+        index: true,
+    },
+    apiEnabled: {
+        type: Boolean,
+        default: false,
     }
 });
 

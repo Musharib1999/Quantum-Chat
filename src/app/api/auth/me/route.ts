@@ -31,7 +31,8 @@ export async function GET(req: Request) {
             tokenLimit: user.tokenLimit,
             tokensUsed: user.tokensUsed,
             simMinutesLimit: user.simMinutesLimit ?? 5,
-            simMinutesUsed: user.simMinutesUsed ?? 0
+            simMinutesUsed: user.simMinutesUsed ?? 0,
+            apiKey: user.apiKey || ''
         });
 
     } catch (error) {

@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '../../../../lib/db';
+import dbConnect from '@/lib/db';
 import User from '../../../../models/User';
 
 export const dynamic = 'force-dynamic';
+
+function generateApiKey() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = 'pb_';
+    for (let i = 0; i < 32; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
 
 export async function GET() {
     try {
@@ -39,7 +48,9 @@ export async function POST(req: Request) {
         const user = await User.create({
             ...body,
             simMinutesLimit: body.simMinutesLimit || simMinutesLimit,
-            tokenLimit: body.tokenLimit || tokenLimit
+            tokenLimit: body.tokenLimit || tokenLimit,
+            apiKey: (body.isApproved || body.role === 'admin') ? generateApiKey() : undefined,
+            apiEnabled: body.isApproved || body.role === 'admin'
         });
         return NextResponse.json(user, { status: 201 });
     } catch (error) {
@@ -51,7 +62,11 @@ export async function PUT(req: Request) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { id, password, email, firstName, lastName, company, isApproved, phone, plan, tokenLimit, tokensUsed, simMinutesLimit, simMinutesUsed } = body;
+        const { 
+            id, password, email, firstName, lastName, company, 
+            isApproved, phone, plan, tokenLimit, tokensUsed, 
+            simMinutesLimit, simMinutesUsed, apiKey, apiEnabled 
+        } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -72,8 +87,26 @@ export async function PUT(req: Request) {
         if (tokensUsed !== undefined) updateData.tokensUsed = Number(tokensUsed);
         if (simMinutesLimit !== undefined) updateData.simMinutesLimit = Number(simMinutesLimit);
         if (simMinutesUsed !== undefined) updateData.simMinutesUsed = Number(simMinutesUsed);
+        if (apiKey !== undefined) updateData.apiKey = apiKey;
+        if (apiEnabled !== undefined) updateData.apiEnabled = apiEnabled;
 
         console.log("PUT /api/admin/users updateData:", updateData);
+
+        const userToUpdate = await User.findById(id);
+        if (!userToUpdate) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+
+        // Auto-generate API Key if not present and becoming approved
+        if (isApproved === true && !userToUpdate.apiKey) {
+            updateData.apiKey = generateApiKey();
+            updateData.apiEnabled = true;
+        }
+
+        // Auto-disable API Key if account is being revoked
+        if (isApproved === false) {
+            updateData.apiEnabled = false;
+        }
 
         const user = await User.findByIdAndUpdate(id, updateData, { new: true });
 

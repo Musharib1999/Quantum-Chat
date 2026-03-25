@@ -17,6 +17,8 @@ interface User {
     tokensUsed?: number;
     simMinutesLimit?: number;
     simMinutesUsed?: number;
+    apiKey?: string;
+    apiEnabled?: boolean;
     createdAt: string;
 }
 
@@ -40,6 +42,8 @@ export default function UserManager() {
     const [tokenLimit, setTokenLimit] = useState<number>(100000);
     const [simMinutesLimit, setSimMinutesLimit] = useState<number>(5);
     const [simMinutesUsed, setSimMinutesUsed] = useState<number>(0);
+    const [apiKey, setApiKey] = useState("");
+    const [apiEnabled, setApiEnabled] = useState(false);
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
 
@@ -70,6 +74,8 @@ export default function UserManager() {
         setTokenLimit(100000);
         setSimMinutesLimit(5);
         setSimMinutesUsed(0);
+        setApiKey("");
+        setApiEnabled(false);
         setFormError("");
         setSelectedUser(null);
     };
@@ -90,6 +96,8 @@ export default function UserManager() {
                 lastName,
                 phone,
                 plan,
+                apiKey: "",
+                apiEnabled: false
             });
 
             setUsers([res.data, ...users]);
@@ -126,7 +134,9 @@ export default function UserManager() {
             plan,
             tokenLimit,
             simMinutesLimit,
-            simMinutesUsed
+            simMinutesUsed,
+            apiKey,
+            apiEnabled
         };
 
         if (password) {
@@ -156,6 +166,15 @@ export default function UserManager() {
         } catch (error) {
             console.error("Status update failed", error);
         }
+    };
+
+    const generateNewApiKey = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = 'pb_'; // Prime Blazar prefix
+        for (let i = 0; i < 32; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setApiKey(result);
     };
 
     const filteredUsers = users.filter(u =>
@@ -287,6 +306,8 @@ export default function UserManager() {
                                                         setTokenLimit(user.tokenLimit || 100000);
                                                         setSimMinutesLimit(user.simMinutesLimit || 5);
                                                         setSimMinutesUsed(user.simMinutesUsed || 0);
+                                                        setApiKey(user.apiKey || "");
+                                                        setApiEnabled(user.apiEnabled || false);
                                                         setPassword("");
                                                         setShowEditModal(true);
                                                     }}
@@ -485,6 +506,37 @@ export default function UserManager() {
                                         onChange={e => setSimMinutesUsed(Number(e.target.value))}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-100 space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase">API Access & Key</label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-slate-400 font-semibold">{apiEnabled ? 'ENABLED' : 'DISABLED'}</span>
+                                        <button 
+                                            onClick={() => setApiEnabled(!apiEnabled)}
+                                            className={`w-8 h-4 rounded-full transition-colors relative ${apiEnabled ? 'bg-green-500' : 'bg-slate-300'}`}
+                                        >
+                                            <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${apiEnabled ? 'left-4.5' : 'left-0.5'}`} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-xs font-mono placeholder:text-slate-300"
+                                        placeholder="No API Key generated"
+                                        value={apiKey}
+                                        readOnly
+                                    />
+                                    <button 
+                                        onClick={generateNewApiKey}
+                                        className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-bold transition-colors"
+                                    >
+                                        GENERATE
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-slate-400">API Key allows users to bypass the dashboard and run simulations programmatically.</p>
                             </div>
 
                             <div className="pt-4 border-t border-slate-100">

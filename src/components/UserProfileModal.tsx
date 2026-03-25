@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout } from 'lucide-react';
+import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout, Key, Copy, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -13,6 +13,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
     const router = useRouter();
     const pathname = usePathname();
     const cardRef = useRef<HTMLDivElement>(null);
+    const [copied, setCopied] = React.useState(false);
 
     // Close when clicking anywhere outside the card
     useEffect(() => {
@@ -47,6 +48,14 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             router.push(`/login?redirect=${encodeURIComponent('/industry')}`);
         }
         onClose();
+    };
+
+    const handleCopyKey = () => {
+        if (user?.apiKey) {
+            navigator.clipboard.writeText(user.apiKey);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
     };
 
     return (
@@ -105,6 +114,28 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         </div>
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </button>
+                )}
+
+                {/* API Key Section */}
+                {isAuthenticated && user?.apiKey && (
+                    <div className="mx-2 mt-4 p-3 rounded-xl bg-primary/5 border border-primary/10 space-y-2">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-wider">
+                            <Key size={12} />
+                            <span>Developer API Key</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <code className="flex-1 text-[10px] font-mono p-1.5 bg-background border border-border/50 rounded text-muted-foreground truncate">
+                                {user.apiKey}
+                            </code>
+                            <button 
+                                onClick={handleCopyKey}
+                                className="p-1.5 hover:bg-primary/10 rounded transition-colors text-primary"
+                                title="Copy to clipboard"
+                            >
+                                {copied ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
+                        </div>
+                    </div>
                 )}
 
                 <div className="pt-2">
