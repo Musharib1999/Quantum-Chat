@@ -63,10 +63,10 @@ export default function ApiDocsPage() {
             <div className="max-w-7xl mx-auto px-6 pt-32 pb-20">
                 {/* Hero */}
                 <header className="mb-16">
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 mb-6">
+                    <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 mb-6 text-center lg:text-left">
                         Quantum Guru <span className="text-[#3066bb]">Developer API</span>
                     </h1>
-                    <p className="text-lg text-slate-500 leading-relaxed max-w-3xl">
+                    <p className="text-lg text-slate-500 leading-relaxed max-w-3xl text-center lg:text-left mx-auto lg:mx-0">
                         Integrate quantum and classical simulation power directly into your own applications with our robust, high-performance developer gateway.
                     </p>
                 </header>
@@ -76,19 +76,19 @@ export default function ApiDocsPage() {
                     <aside className="lg:col-span-1 border-r border-slate-100 pr-8 hidden lg:block text-slate-400">
                         <div className="sticky top-32 space-y-8">
                                 <div className="space-y-3">
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Getting Started</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Getting Started</h3>
                                     <div className="space-y-2">
                                         <a href="#auth" className="block py-1 text-sm text-[rgb(48,102,187)] font-semibold border-l-2 border-[#3066bb] pl-4 -ml-[1px]">Authentication</a>
                                         <a href="#endpoints" className="block py-1 text-sm pl-4 hover:text-slate-900 transition-colors">Endpoints</a>
-                                        <a href="#notes" className="block py-1 text-sm pl-4 hover:text-slate-900 transition-colors">Safety & Limits</a>
+                                        <a href="#notes" className="block py-1 text-sm pl-4 hover:text-slate-900 transition-colors font-medium">Safety & Limits</a>
                                     </div>
                                 </div>
                                 <div className="space-y-3">
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Reference</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Reference</h3>
                                     <div className="space-y-2 pl-4">
-                                        <code className="block py-1 text-[#3066bb] text-sm font-bold">POST /simulation/execute</code>
-                                        <code className="block py-1 text-[#3066bb] text-sm font-bold">GET /user/usage</code>
-                                        <code className="block py-1 text-[#3066bb] text-sm font-bold">GET /simulation/history</code>
+                                        <code className="block py-1 text-[#3066bb] text-sm font-semibold">POST /simulation/execute</code>
+                                        <code className="block py-1 text-[#3066bb] text-sm font-semibold">GET /user/usage</code>
+                                        <code className="block py-1 text-[#3066bb] text-sm font-semibold">GET /simulation/history</code>
                                     </div>
                                 </div>
                         </div>
@@ -99,23 +99,23 @@ export default function ApiDocsPage() {
                         
                         {/* Authentication */}
                         <section id="auth" className="scroll-mt-32">
-                            <h2 className="text-2xl font-bold mb-6">Authentication</h2>
+                            <h2 className="text-2xl font-semibold mb-6">Authentication</h2>
                             <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm space-y-6">
                                 <p className="text-slate-600 leading-relaxed text-[15px]">
-                                    All API requests require an **API Key**, which must be passed in the <code className="bg-slate-50 px-2 py-0.5 rounded text-[#3066bb] font-mono text-sm border border-slate-100">Authorization</code> header as a Bearer token.
+                                    All API requests require an <span className="font-semibold text-slate-900">API Key</span>, which must be passed in the <code className="bg-slate-50 px-2 py-0.5 rounded text-[#3066bb] font-mono text-sm border border-slate-100">Authorization</code> header as a Bearer token.
                                 </p>
                                 <div className="bg-white border border-slate-200 rounded-2xl p-6 text-slate-700 font-mono text-sm overflow-x-auto shadow-sm">
                                     <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                                        <span className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-none">Header Format</span>
+                                        <span className="text-sm font-semibold text-slate-400 uppercase tracking-widest leading-none">Header Format</span>
                                         <span className="text-sm text-slate-400 leading-none">HTTP/1.1</span>
                                     </div>
                                     <div className="py-2">
-                                        <span className="text-[#3066bb] font-bold">{"Authorization:"}</span> <span className="text-slate-400 text-sm">Bearer</span> <span className="text-emerald-600 font-bold">pb_your_api_key_here</span>
+                                        <span className="text-[#3066bb] font-semibold">{"Authorization:"}</span> <span className="text-slate-400 text-sm">Bearer</span> <span className="text-emerald-600 font-semibold">pb_your_api_key_here</span>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4 p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
                                     <p className="text-sm text-slate-500 leading-relaxed">
-                                        Tip: You can find or generate your API keys in your <Link href="/login" className="text-[#3066bb] font-bold underline underline-offset-4">User Profile</Link> once your account has been approved by the platform administrator.
+                                        Tip: You can find or generate your API keys in your <Link href="/login" className="text-[#3066bb] font-semibold underline underline-offset-4">User Profile</Link> once your account has been approved by the platform administrator.
                                     </p>
                                 </div>
                             </div>
@@ -123,13 +123,13 @@ export default function ApiDocsPage() {
 
                         {/* Endpoints */}
                         <section id="endpoints" className="scroll-mt-32 space-y-20">
-                            <h2 className="text-2xl font-bold">API Reference</h2>
+                            <h2 className="text-2xl font-semibold text-slate-900">API Reference</h2>
 
                             {/* Execute */}
                             <div className="space-y-8">
                                 <div className="flex items-center gap-4">
-                                    <span className="px-3 py-1 bg-[#3066bb]/5 text-[#3066bb] text-sm font-bold uppercase rounded-lg border border-[#3066bb]/10 shadow-sm">POST</span>
-                                    <h3 className="text-lg font-bold text-slate-800">/api/v1/simulation/execute</h3>
+                                    <span className="px-3 py-1 bg-[#3066bb]/5 text-[#3066bb] text-sm font-semibold uppercase rounded-lg border border-[#3066bb]/10 shadow-sm">POST</span>
+                                    <h3 className="text-lg font-semibold text-slate-800">/api/v1/simulation/execute</h3>
                                 </div>
                                 <p className="text-slate-600 leading-relaxed text-[15px]">
                                     Submit optimization code to a specific solver backend. Use this for programmatic execution of D-Wave QUBOs, Qiskit circuits, or OR-Tools solvers.
@@ -137,7 +137,7 @@ export default function ApiDocsPage() {
                                 <div className="grid grid-cols-1 gap-8">
                                     <div className="bg-white border border-slate-200 rounded-3xl p-8 text-slate-700 font-mono text-sm overflow-x-auto shadow-md relative">
                                         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-                                            <span className="text-slate-400 uppercase tracking-widest text-sm font-bold">Example Request Body</span>
+                                            <span className="text-slate-400 uppercase tracking-widest text-sm font-semibold">Example Request Body</span>
                                             <span className="text-slate-400 text-sm">JSON / application/json</span>
                                         </div>
                                         {`{
@@ -150,18 +150,18 @@ export default function ApiDocsPage() {
 }`}
                                     </div>
                                     <div className="space-y-4 px-2">
-                                        <h4 className="text-sm font-bold text-slate-400 uppercase tracking-[0.15em]">Parameters</h4>
+                                        <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-[0.15em]">Parameters</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="p-5 bg-white border border-slate-100 rounded-3xl group hover:border-[#3066bb]/20 transition-colors">
-                                                <code className="text-[#3066bb] font-bold block mb-2 text-sm">provider</code>
+                                                <code className="text-[#3066bb] font-semibold block mb-2 text-sm">provider</code>
                                                 <p className="text-sm text-slate-500 leading-relaxed italic">Ecosystem identifier (e.g., dwave).</p>
                                             </div>
                                             <div className="p-5 bg-white border border-slate-100 rounded-3xl group hover:border-[#3066bb]/20 transition-colors">
-                                                <code className="text-[#3066bb] font-bold block mb-2 text-sm">hardware</code>
+                                                <code className="text-[#3066bb] font-semibold block mb-2 text-sm">hardware</code>
                                                 <p className="text-sm text-slate-500 leading-relaxed italic">Backend target (QPU/Hybrid/SIM).</p>
                                             </div>
                                             <div className="p-5 bg-white border border-slate-100 rounded-3xl group hover:border-[#3066bb]/20 transition-colors">
-                                                <code className="text-[#3066bb] font-bold block mb-2 text-sm">code</code>
+                                                <code className="text-[#3066bb] font-semibold block mb-2 text-sm">code</code>
                                                 <p className="text-sm text-slate-500 leading-relaxed italic">The core logic string to solve.</p>
                                             </div>
                                         </div>
@@ -174,16 +174,16 @@ export default function ApiDocsPage() {
                             {/* Usage */}
                             <div className="space-y-8">
                                 <div className="flex items-center gap-4">
-                                    <span className="px-3 py-1 bg-slate-50 text-slate-500 text-sm font-bold uppercase rounded-lg border border-slate-100 shadow-sm">GET</span>
-                                    <h3 className="text-lg font-bold text-slate-800">/api/v1/user/usage</h3>
+                                    <span className="px-3 py-1 bg-slate-50 text-slate-500 text-sm font-semibold uppercase rounded-lg border border-slate-100 shadow-sm">GET</span>
+                                    <h3 className="text-lg font-semibold text-slate-800">/api/v1/user/usage</h3>
                                 </div>
                                 <p className="text-slate-600 leading-relaxed text-[15px]">
                                     Retrieve your current quota limits and real-time consumption stats across simulation minutes and tokens.
                                 </p>
                                 <div className="bg-white border border-slate-200 rounded-3xl p-8 text-slate-700 font-mono text-sm overflow-x-auto w-full shadow-md">
                                     <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-                                        <span className="text-slate-400 uppercase tracking-widest text-sm font-bold">Standard Response</span>
-                                        <span className="text-emerald-500 text-sm font-bold">200 OK</span>
+                                        <span className="text-slate-400 uppercase tracking-widest text-sm font-semibold">Standard Response</span>
+                                        <span className="text-emerald-500 text-sm font-semibold">200 OK</span>
                                     </div>
                                     {`{
   "plan": "Enterprise",
@@ -198,14 +198,14 @@ export default function ApiDocsPage() {
 
                         {/* Safety Section */}
                         <section id="notes" className="scroll-mt-32 pb-12">
-                            <h2 className="text-2xl font-bold mb-8">Platform Safety & Policy</h2>
+                            <h2 className="text-2xl font-semibold mb-8 text-slate-900">Platform Safety & Policy</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="p-8 bg-slate-50/80 rounded-3xl border border-slate-100 transition-all hover:shadow-lg">
-                                    <h4 className="font-bold text-slate-900 mb-2">Maximum Timeouts</h4>
-                                    <p className="text-sm text-slate-500 leading-relaxed">All execution requests are strictly capped at **300 seconds (5 minutes)** to ensure platform availability across all nodes.</p>
+                                    <h4 className="font-semibold text-slate-900 mb-2">Maximum Timeouts</h4>
+                                    <p className="text-sm text-slate-500 leading-relaxed">All execution requests are strictly capped at <span className="font-semibold text-slate-900">300 seconds (5 minutes)</span> to ensure platform availability across all nodes.</p>
                                 </div>
                                 <div className="p-8 bg-slate-50/80 rounded-3xl border border-slate-100 transition-all hover:shadow-lg">
-                                    <h4 className="font-bold text-slate-900 mb-2">Isolated Sandbox</h4>
+                                    <h4 className="font-semibold text-slate-900 mb-2">Isolated Sandbox</h4>
                                     <p className="text-sm text-slate-500 leading-relaxed">Environments are non-persistent. No outbound networking is permitted during code execution for security.</p>
                                 </div>
                             </div>
@@ -237,7 +237,7 @@ export default function ApiDocsPage() {
                     <Link 
                         href="/api-docs" 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-2xl font-bold text-slate-900 flex items-center gap-3"
+                        className="text-2xl font-semibold text-slate-900 flex items-center gap-3"
                     >
                         <Zap className="text-[#3066bb]" size={28} />
                         API Documentation
@@ -251,7 +251,7 @@ export default function ApiDocsPage() {
                                 logout();
                                 setIsMobileMenuOpen(false);
                             }}
-                            className="text-2xl font-bold text-red-500"
+                            className="text-2xl font-semibold text-red-500"
                         >
                             Logout
                         </button>
@@ -259,7 +259,7 @@ export default function ApiDocsPage() {
                         <Link
                             href="/login"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="text-2xl font-bold text-[#3066bb]"
+                            className="text-2xl font-semibold text-[#3066bb]"
                         >
                             Login
                         </Link>
