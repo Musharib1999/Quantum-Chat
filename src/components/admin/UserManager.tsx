@@ -44,6 +44,7 @@ export default function UserManager() {
     const [simMinutesUsed, setSimMinutesUsed] = useState<number>(0);
     const [apiKey, setApiKey] = useState("");
     const [apiEnabled, setApiEnabled] = useState(false);
+    const [role, setRole] = useState<'user' | 'admin' | 'enterprise'>('user');
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
 
@@ -76,6 +77,7 @@ export default function UserManager() {
         setSimMinutesUsed(0);
         setApiKey("");
         setApiEnabled(false);
+        setRole('user');
         setFormError("");
         setSelectedUser(null);
     };
@@ -96,6 +98,7 @@ export default function UserManager() {
                 lastName,
                 phone,
                 plan,
+                role,
                 apiKey: "",
                 apiEnabled: false
             });
@@ -132,6 +135,7 @@ export default function UserManager() {
             lastName,
             phone,
             plan,
+            role,
             tokenLimit,
             simMinutesLimit,
             simMinutesUsed,
@@ -245,6 +249,8 @@ export default function UserManager() {
                                         <td className="px-5 py-4">
                                             {user.role === 'admin' ? (
                                                 <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-bold border border-blue-100">Admin</span>
+                                            ) : user.role === 'enterprise' ? (
+                                                <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold border border-purple-100">Enterprise</span>
                                             ) : user.isApproved ? (
                                                 <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded text-[10px] font-bold border border-green-100">Active</span>
                                             ) : (
@@ -308,6 +314,7 @@ export default function UserManager() {
                                                         setSimMinutesUsed(user.simMinutesUsed || 0);
                                                         setApiKey(user.apiKey || "");
                                                         setApiEnabled(user.apiEnabled || false);
+                                                        setRole(user.role as any || 'user');
                                                         setPassword("");
                                                         setShowEditModal(true);
                                                     }}
@@ -396,6 +403,19 @@ export default function UserManager() {
                                 </select>
                             </div>
 
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase">System Role</label>
+                                <select
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold"
+                                    value={role}
+                                    onChange={e => setRole(e.target.value as any)}
+                                >
+                                    <option value="user">Standard User</option>
+                                    <option value="enterprise">Enterprise Partner</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                            </div>
+
                             {formError && (
                                 <p className="text-xs text-red-500 bg-red-50 p-2 rounded border border-red-100">{formError}</p>
                             )}
@@ -476,6 +496,21 @@ export default function UserManager() {
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase">System Role</label>
+                                    <select
+                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold"
+                                        value={role}
+                                        onChange={e => setRole(e.target.value as any)}
+                                    >
+                                        <option value="user">Standard User</option>
+                                        <option value="enterprise">Enterprise Partner</option>
+                                        <option value="admin">Administrator</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Token limit</label>
                                     <input
                                         type="number"
@@ -484,9 +519,6 @@ export default function UserManager() {
                                         onChange={e => setTokenLimit(Number(e.target.value))}
                                     />
                                 </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Sim minutes limit</label>
                                     <input
@@ -496,6 +528,9 @@ export default function UserManager() {
                                         onChange={e => setSimMinutesLimit(Number(e.target.value))}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Sim minutes used</label>
                                     <input

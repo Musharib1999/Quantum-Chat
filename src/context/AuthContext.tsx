@@ -9,7 +9,7 @@ interface User {
     lastName?: string;
     phone?: string;
     plan?: 'Guest' | 'Pro' | 'Enterprise';
-    role?: string;
+    role?: 'user' | 'admin' | 'enterprise';
     tokenLimit?: number;
     tokensUsed?: number;
     simMinutesLimit?: number;

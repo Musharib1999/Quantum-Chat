@@ -64,7 +64,7 @@ export async function PUT(req: Request) {
         const body = await req.json();
         const { 
             id, password, email, firstName, lastName, company, 
-            isApproved, phone, plan, tokenLimit, tokensUsed, 
+            isApproved, phone, plan, role, tokenLimit, tokensUsed, 
             simMinutesLimit, simMinutesUsed, apiKey, apiEnabled 
         } = body;
 
@@ -82,7 +82,8 @@ export async function PUT(req: Request) {
         if (isApproved !== undefined) updateData.isApproved = isApproved;
         if (phone !== undefined) updateData.phone = phone;
         if (plan !== undefined) updateData.plan = plan;
-        if (password) updateData.password = password; // Since plain text is okay for now like the POST endpoint
+        if (role !== undefined) updateData.role = role;
+        if (password) updateData.password = password;
         if (tokenLimit !== undefined) updateData.tokenLimit = Number(tokenLimit);
         if (tokensUsed !== undefined) updateData.tokensUsed = Number(tokensUsed);
         if (simMinutesLimit !== undefined) updateData.simMinutesLimit = Number(simMinutesLimit);
