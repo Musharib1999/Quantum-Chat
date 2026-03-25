@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Shield, Cpu, ArrowRight, TrendingUp, BookOpen, Bot, Lock as LockIcon, Unlock as UnlockIcon, LogOut, Sun, Moon, CheckCircle, Menu, X, Atom } from 'lucide-react';
+import { Shield, Cpu, ArrowRight, TrendingUp, BookOpen, Bot, Lock as LockIcon, Unlock as UnlockIcon, LogOut, Sun, Moon, CheckCircle, Menu, X, Atom, Zap } from 'lucide-react';
 
 export default function LandingPage() {
   const { isAuthenticated, logout } = useAuth();
@@ -47,6 +47,13 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-8">
+            <Link 
+              href="/api-docs" 
+              className="text-sm font-semibold text-slate-500 hover:text-[#3066bb] transition-colors"
+            >
+              API Docs
+            </Link>
+
             {/* Actions */}
             <div className="flex items-center gap-4">
               {isAuthenticated ? (
@@ -150,8 +157,44 @@ export default function LandingPage() {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden flex flex-col items-center justify-center space-y-8 bg-white text-slate-900">
-          {/* Mobile Links - Removed */}
+        <div className="fixed inset-0 z-[60] md:hidden flex flex-col items-center justify-center space-y-8 bg-white text-slate-900 animate-in fade-in zoom-in duration-300">
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 transition-colors"
+          >
+            <X size={32} />
+          </button>
+          
+          <Link 
+            href="/api-docs" 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="text-2xl font-bold text-slate-900 flex items-center gap-3"
+          >
+            <Zap className="text-[#3066bb]" size={28} />
+            API Documentation
+          </Link>
+
+          <div className="w-12 h-0.5 bg-slate-100 rounded-full" />
+
+          {isAuthenticated ? (
+            <button
+              onClick={() => {
+                logout();
+                setIsMobileMenuOpen(false);
+              }}
+              className="text-2xl font-bold text-red-500"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-2xl font-bold text-[#3066bb]"
+            >
+              Login
+            </Link>
+          )}
         </div>
       )}
 
