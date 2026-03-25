@@ -53,7 +53,7 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
             {/* Left: Branding */}
             <div className="flex items-center gap-4">
                 <Link href="/">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto object-contain cursor-pointer" />
+                    <img src="/logo.png" alt="Quantum Guru" className="h-[32px] md:h-[50px] w-auto object-contain cursor-pointer transition-opacity hover:opacity-90" />
                 </Link>
                 <div className="h-6 w-px bg-slate-100 mx-2" />
                 <span className="text-sm font-semibold text-slate-900 tracking-tight">Developer Console</span>
@@ -106,9 +106,9 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
                 <button
                     onClick={onRun}
                     disabled={isExecuting || !selectedHardware}
-                    className="flex items-center gap-2.5 bg-[#3066bb] hover:bg-[#255299] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md shadow-[#3066bb]/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                    className="flex items-center justify-center bg-[#3066bb] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md shadow-[#3066bb]/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none min-w-[120px]"
                 >
-                    {isExecuting ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} fill="currentColor" />}
+                    {isExecuting ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
                     <span>Run code</span>
                 </button>
             </div>
