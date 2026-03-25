@@ -55,8 +55,6 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
                 <Link href="/">
                     <img src="/logo.png" alt="Quantum Guru" className="h-[32px] md:h-[50px] w-auto object-contain cursor-pointer transition-opacity hover:opacity-90" />
                 </Link>
-                <div className="h-6 w-px bg-slate-100 mx-2" />
-                <span className="text-sm font-semibold text-slate-900 tracking-tight">Developer Console</span>
             </div>
 
             {/* Center: Hardware Selector */}
@@ -83,11 +81,11 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
                                             onHardwareSelect(hw);
                                             setShowHwDropdown(false);
                                         }}
-                                        className={`w-full flex flex-col items-start gap-0.5 px-4 py-3 rounded-lg text-left transition-all hover:bg-slate-50 ${selectedHardware?.id === hw.id ? 'bg-[#3066bb]/5 text-[#3066bb]' : 'text-slate-600'}`}
+                                        className={`w-full flex flex-col items-start gap-0.5 px-4 py-3 rounded-lg text-left transition-all hover:bg-slate-50 \${selectedHardware?.id === hw.id ? 'bg-[#3066bb]/5 text-[#3066bb]' : 'text-slate-600'}`}
                                     >
                                         <div className="flex items-center justify-between w-full">
                                             <span className="text-sm font-bold truncate">{hw.name}</span>
-                                            <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${hw.status === 'Online' ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-50'}`}>
+                                            <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded \${hw.status === 'Online' ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-50'}`}>
                                                 {hw.status}
                                             </div>
                                         </div>
@@ -100,9 +98,8 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
                 </div>
             </div>
 
-            {/* Right: Actions & Usage */}
+            {/* Right: Actions */}
             <div className="flex items-center gap-6">
-                <TokenUsageIndicator />
                 <button
                     onClick={onRun}
                     disabled={isExecuting || !selectedHardware}
