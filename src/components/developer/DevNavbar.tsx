@@ -57,8 +57,9 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
                 </Link>
             </div>
 
-            {/* Center: Hardware Selector */}
-            <div className="flex-1 flex justify-center max-w-2xl mx-auto px-4">
+            {/* Right: Actions */}
+            <div className="flex items-center gap-4">
+                {/* Hardware Selector */}
                 <div className="relative w-64">
                     <button
                         onClick={() => setShowHwDropdown(!showHwDropdown)}
@@ -72,7 +73,7 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
                     </button>
 
                     {showHwDropdown && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[60]">
+                        <div className="absolute top-full left-auto right-0 mt-2 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[60] min-w-[240px]">
                             <div className="p-1 max-h-64 overflow-y-auto">
                                 {hardwares.map((hw) => (
                                     <button
@@ -81,11 +82,11 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
                                             onHardwareSelect(hw);
                                             setShowHwDropdown(false);
                                         }}
-                                        className={`w-full flex flex-col items-start gap-0.5 px-4 py-3 rounded-lg text-left transition-all hover:bg-slate-50 \${selectedHardware?.id === hw.id ? 'bg-[#3066bb]/5 text-[#3066bb]' : 'text-slate-600'}`}
+                                        className={`w-full flex flex-col items-start gap-0.5 px-4 py-3 rounded-lg text-left transition-all hover:bg-slate-50 ${selectedHardware?.id === hw.id ? 'bg-[#3066bb]/5 text-[#3066bb]' : 'text-slate-600'}`}
                                     >
                                         <div className="flex items-center justify-between w-full">
                                             <span className="text-sm font-bold truncate">{hw.name}</span>
-                                            <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded \${hw.status === 'Online' ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-50'}`}>
+                                            <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${hw.status === 'Online' ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-50'}`}>
                                                 {hw.status}
                                             </div>
                                         </div>
@@ -96,10 +97,8 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
                         </div>
                     )}
                 </div>
-            </div>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-6">
+                {/* Run Button */}
                 <button
                     onClick={onRun}
                     disabled={isExecuting || !selectedHardware}
