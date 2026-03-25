@@ -68,48 +68,48 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                     <X size={20} />
                 </button>
 
-                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                    <Key className="w-5 h-5 text-orange-400" /> Security Settings
+                <h3 className="text-xl font-bold mb-6 text-slate-900">
+                    Security Settings
                 </h3>
 
                 <form onSubmit={handleAdminPasswordChange} className="space-y-4">
                     {passwordError && (
-                        <div className="text-sm text-red-400 bg-red-500/10 p-3 rounded-xl border border-red-500/20 flex items-center gap-2">
-                            <AlertTriangle size={16} /> {passwordError}
+                        <div className="text-sm text-red-500 bg-red-50 p-3 rounded-xl border border-red-100 flex items-center gap-2">
+                             {passwordError}
                         </div>
                     )}
                     {passwordSuccess && (
-                        <div className="text-sm text-green-400 bg-green-500/10 p-3 rounded-xl border border-green-500/20 flex items-center gap-2">
-                            <CheckCircle size={16} /> Password updated successfully!
+                        <div className="text-sm text-green-600 bg-green-50 p-3 rounded-xl border border-green-100 flex items-center gap-2">
+                             Password updated successfully!
                         </div>
                     )}
 
                     <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Current Password</label>
+                        <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Current password</label>
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 font-mono"
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
                             value={currentPassword}
                             onChange={e => setCurrentPassword(e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">New Password</label>
+                        <label className="text-xs font-semibold text-slate-500 mb-1.5 block">New password</label>
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 font-mono"
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
                             value={newAdminPassword}
                             onChange={e => setNewAdminPassword(e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Confirm New Password</label>
+                        <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Confirm new password</label>
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-secondary/30 border border-border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 font-mono"
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                         />
@@ -118,10 +118,9 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                     <button
                         type="submit"
                         disabled={passwordLoading || passwordSuccess}
-                        className="w-full mt-2 bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all font-sans"
+                        className="w-full mt-2 bg-[#3066bb] hover:bg-[#255299] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all font-sans shadow-sm shadow-[#3066bb]/20"
                     >
-                        {passwordLoading ? <Loader2 className="animate-spin w-5 h-5" /> : <Save size={18} />}
-                        Update Password
+                        {passwordLoading ? <Loader2 className="animate-spin w-5 h-5" /> : "Update Password"}
                     </button>
                 </form>
             </div>
