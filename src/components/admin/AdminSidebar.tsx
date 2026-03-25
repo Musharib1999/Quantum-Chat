@@ -52,7 +52,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
                 border-slate-200 bg-white/70
             `}>
-                <div className="p-6 border-b flex items-center justify-between border-slate-200 h-24">
+                <div className="p-6 border-b flex items-center justify-between border-slate-200 h-20">
                     <a href="https://www.quantumcomputers.guru/" target="_self" className="flex items-center hover:opacity-90 transition-opacity">
                         <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain" />
                     </a>

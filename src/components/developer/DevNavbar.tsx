@@ -49,11 +49,11 @@ export default function DevNavbar({ selectedHardware, onHardwareSelect, onRun, i
     }, []);
 
     return (
-        <nav className="h-16 border-b border-slate-100 bg-white flex items-center justify-between px-6 z-50 sticky top-0 shadow-sm">
+        <nav className="h-20 border-b border-slate-100 bg-white flex items-center justify-between px-6 md:px-8 z-50 sticky top-0 shadow-sm">
             {/* Left: Branding */}
             <div className="flex items-center gap-4">
                 <Link href="/">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-[32px] md:h-[50px] w-auto object-contain cursor-pointer transition-opacity hover:opacity-90" />
+                    <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain cursor-pointer transition-opacity hover:opacity-90 drop-shadow-sm" />
                 </Link>
             </div>
 
