@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { getHardwares, addHardware, updateHardware, toggleHardwareStatus, deleteHardware, type HardwareType } from '@/app/actions/admin';
 
 export default function HardwareManager() {
     const [hardwares, setHardwares] = useState<HardwareType[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
+    const [checkingIds, setCheckingIds] = useState<string[]>([]);
 
     // Form State
     const [newHw, setNewHw] = useState<Partial<HardwareType>>({
@@ -69,6 +71,26 @@ export default function HardwareManager() {
             });
             setEditingId(null);
             loadHardware();
+        }
+    };
+
+    const handleCheckStatus = async (hw: HardwareType) => {
+        setCheckingIds(prev => [...prev, hw.id]);
+        try {
+            const res = await axios.post('/api/admin/hardware/status', {
+                serviceUrl: hw.serviceUrl,
+                provider: hw.provider
+            });
+            
+            if (res.data.success) {
+                alert(`✅ ${hw.name} is ONLINE.\nReachable at: ${hw.serviceUrl}`);
+            } else {
+                alert(`❌ ${hw.name} is currently OFFLINE.\nReason: ${res.data.error || 'No response from server'}`);
+            }
+        } catch (e: any) {
+            alert(`❌ Error pinging ${hw.name}: ${e.message}`);
+        } finally {
+            setCheckingIds(prev => prev.filter(id => id !== hw.id));
         }
     };
 
@@ -249,6 +271,13 @@ export default function HardwareManager() {
                                     className="text-slate-600 hover:text-slate-900 font-semibold text-xs"
                                 >
                                     Edit
+                                </button>
+                                <button
+                                    onClick={() => handleCheckStatus(hw)}
+                                    disabled={checkingIds.includes(hw.id)}
+                                    className="text-[#3066bb] hover:underline font-semibold text-xs disabled:opacity-50"
+                                >
+                                    {checkingIds.includes(hw.id) ? 'Checking...' : 'Check Status'}
                                 </button>
                                 <button
                                     onClick={() => handleDelete(hw.id)}
