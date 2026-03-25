@@ -49,7 +49,6 @@ export default function AdminDashboard() {
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 transition-colors duration-500 ease-in-out">
                 <AdminNavbar 
-                    activeTab={activeTab} 
                     setIsMobileMenuOpen={setIsMobileMenuOpen} 
                     setShowPasswordModal={setShowPasswordModal} 
                 />
