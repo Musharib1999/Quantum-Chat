@@ -121,7 +121,6 @@ export default function ApiDocsPage() {
                                     <div className="space-y-2">
                                         <a href="#auth" className="block py-1 text-sm text-[rgb(48,102,187)] font-semibold border-l-2 border-[#3066bb] pl-4 -ml-[1px]">Authentication</a>
                                         <a href="#endpoints" className="block py-1 text-sm pl-4 hover:text-slate-900 transition-colors">Endpoints</a>
-                                        <a href="#notes" className="block py-1 text-sm pl-4 hover:text-slate-900 transition-colors font-medium">Safety & Limits</a>
                                     </div>
                                 </div>
                                 <div className="space-y-3">
@@ -233,30 +232,6 @@ export default function ApiDocsPage() {
                             </div>
                         </section>
 
-                        {/* Safety Section */}
-                        <section id="notes" className="scroll-mt-32 pb-12">
-                            <h2 className="text-2xl font-semibold mb-8 text-slate-900 border-b border-slate-100 pb-4">Platform Safety & Policy</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="p-8 bg-slate-50/80 rounded-3xl border border-slate-100 transition-all hover:shadow-lg">
-                                    <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                        <Zap size={18} className="text-[#3066bb]" />
-                                        Maximum Timeouts
-                                    </h4>
-                                    <p className="text-sm text-slate-500 leading-relaxed">
-                                        Quantum Guru implements strict runtime limits to ensure fair resource distribution. All execution requests are capped at <span className="font-semibold text-slate-900">300 seconds (5 minutes)</span>. If a solver exceeds this threshold, the request will be automatically terminated.
-                                    </p>
-                                </div>
-                                <div className="p-8 bg-slate-50/80 rounded-3xl border border-slate-100 transition-all hover:shadow-lg">
-                                    <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                        <ChevronLeft size={18} className="text-[#3066bb] rotate-180" />
-                                        Isolated Sandbox
-                                    </h4>
-                                    <p className="text-sm text-slate-500 leading-relaxed">
-                                        Your code runs within a secure, ephemeral container. These environments are non-persistent and <span className="font-semibold text-slate-900">completely isolated from outbound networking</span>. This prevents data exfiltration and ensures your IP remains protected.
-                                    </p>
-                                </div>
-                            </div>
-                        </section>
 
                     </main>
                 </div>
