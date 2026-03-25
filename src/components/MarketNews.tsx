@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { Newspaper, Loader2, Newspaper as NewspaperIcon, Info, X, ArrowRight, FileText, Sparkles, RotateCw } from 'lucide-react';
 import { getDbNews } from '@/app/actions/news-automation';
+import { useAuth } from '@/context/AuthContext';
 // import QuantumHeatMap from './QuantumHeatMap';
 
 interface NewsItem {
@@ -23,6 +24,7 @@ interface MarketNewsProps {
 }
 
 export default function MarketNews({ onSelect }: MarketNewsProps) {
+    const { user } = useAuth();
     const [news, setNews] = useState<NewsItem[]>([]);
     const [page, setPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -85,29 +87,31 @@ export default function MarketNews({ onSelect }: MarketNewsProps) {
                 <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
                     <Newspaper className="text-green-500 dark:text-green-400" size={18} /> Quantum News
                 </h3>
-                <button
-                    onClick={async () => {
-                        if (isRefreshing) return;
-                        setIsRefreshing(true);
-                        try {
-                            await axios.get('/api/admin/news/refresh');
-                            // Refresh current list from page 1
-                            setNews([]);
-                            setPage(1);
-                            setHasMore(true);
-                            await loadNews(1);
-                        } catch (err) {
-                            console.error("Refresh failed:", err);
-                        } finally {
-                            setIsRefreshing(false);
-                        }
-                    }}
-                    disabled={isRefreshing}
-                    className={`p-1.5 rounded-lg border border-border bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    title="Refresh news"
-                >
-                    <RotateCw size={14} className={isRefreshing ? 'animate-spin text-[#3066bb]' : ''} />
-                </button>
+                {user?.role === 'admin' && (
+                    <button
+                        onClick={async () => {
+                            if (isRefreshing) return;
+                            setIsRefreshing(true);
+                            try {
+                                await axios.get('/api/admin/news/refresh');
+                                // Refresh current list from page 1
+                                setNews([]);
+                                setPage(1);
+                                setHasMore(true);
+                                await loadNews(1);
+                            } catch (err) {
+                                console.error("Refresh failed:", err);
+                            } finally {
+                                setIsRefreshing(false);
+                            }
+                        }}
+                        disabled={isRefreshing}
+                        className={`p-1.5 rounded-lg border border-border bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title="Refresh news"
+                    >
+                        <RotateCw size={14} className={isRefreshing ? 'animate-spin text-[#3066bb]' : ''} />
+                    </button>
+                )}
             </div>
 
             {/* <div className="p-4 border-b border-border/10">
