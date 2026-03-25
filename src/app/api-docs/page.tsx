@@ -69,7 +69,7 @@ export default function ApiDocsPage() {
                                     All API requests require an **API Key**, which must be passed in the <code className="bg-slate-100 px-1.5 py-0.5 rounded text-orange-600 font-mono text-xs">Authorization</code> header as a Bearer token.
                                 </p>
                                 <div className="bg-slate-900 rounded-xl p-5 text-indigo-300 font-mono text-sm overflow-x-auto">
-                                    <span className="text-slate-500">// Header Example</span><br/>
+                                    <span className="text-slate-500">{"// Header Example"}</span><br/>
                                     Authorization: <span className="text-slate-100">Bearer</span> <span className="text-emerald-400">pb_your_api_key_here</span>
                                 </div>
                                 <div className="flex items-start gap-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
