@@ -3,11 +3,52 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { ChevronLeft, Zap, Menu, X, ArrowRight } from 'lucide-react';
+import { ChevronLeft, Zap, Menu, X, ArrowRight, Copy, CheckCircle } from 'lucide-react';
+
+function CopyButton({ text }: { text: string }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-50 text-slate-500 rounded-lg transition-all border border-slate-200 text-[13px] font-semibold shadow-sm active:scale-95"
+        >
+            {copied ? <CheckCircle size={14} className="text-emerald-500" /> : <Copy size={14} />}
+            {copied ? 'Copied!' : 'Copy'}
+        </button>
+    );
+}
 
 export default function ApiDocsPage() {
     const { isAuthenticated, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const authHeaderSnippet = `Authorization: Bearer pb_your_api_key_here`;
+    const executeSnippet = `{
+  "provider": "dwave",    // Options: dwave, qiskit, or ortools
+  "hardware": "hybrid",   // Options: simulator, qpu, or hybrid
+  "code": "import dimod; # ... your logic",
+  "metadata": {
+    "project": "Logistics-A"
+  }
+}`;
+    const usageSnippet = `{
+  "plan": "Enterprise",
+  "simMinutesLimit": 100,
+  "simMinutesUsed": 12.5,
+  "tokensUsed": 5000,
+  "apiEnabled": true
+}`;
 
     return (
         <div className="min-h-screen bg-white text-slate-900 font-sans pb-0">
@@ -104,7 +145,10 @@ export default function ApiDocsPage() {
                                 <p className="text-slate-600 leading-relaxed text-[15px]">
                                     All API requests require an <span className="font-semibold text-slate-900">API Key</span>, which must be passed in the <code className="bg-slate-50 px-2 py-0.5 rounded text-[#3066bb] font-mono text-sm border border-slate-100">Authorization</code> header as a Bearer token.
                                 </p>
-                                <div className="bg-white border border-slate-200 rounded-2xl p-6 text-slate-700 font-mono text-sm overflow-x-auto shadow-sm">
+                                <div className="bg-white border border-slate-200 rounded-2xl p-6 text-slate-700 font-mono text-sm overflow-x-auto shadow-sm relative group">
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <CopyButton text={authHeaderSnippet} />
+                                    </div>
                                     <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
                                         <span className="text-sm font-semibold text-slate-400 uppercase tracking-widest leading-none">Header Format</span>
                                         <span className="text-sm text-slate-400 leading-none">HTTP/1.1</span>
@@ -135,19 +179,15 @@ export default function ApiDocsPage() {
                                     Submit optimization code to a specific solver backend. Use this for programmatic execution of D-Wave QUBOs, Qiskit circuits, or OR-Tools solvers.
                                 </p>
                                 <div className="grid grid-cols-1 gap-8">
-                                    <div className="bg-white border border-slate-200 rounded-3xl p-8 text-slate-700 font-mono text-sm overflow-x-auto shadow-md relative">
+                                    <div className="bg-white border border-slate-200 rounded-3xl p-8 text-slate-700 font-mono text-sm overflow-x-auto shadow-md relative group">
+                                        <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <CopyButton text={executeSnippet} />
+                                        </div>
                                         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
                                             <span className="text-slate-400 uppercase tracking-widest text-sm font-semibold">Example Request Body</span>
                                             <span className="text-slate-400 text-sm">JSON / application/json</span>
                                         </div>
-                                        {`{
-  "provider": "dwave",    // Options: dwave, qiskit, or ortools
-  "hardware": "hybrid",   // Options: simulator, qpu, or hybrid
-  "code": "import dimod; # ... your logic",
-  "metadata": {
-    "project": "Logistics-A"
-  }
-}`}
+                                        <pre>{executeSnippet}</pre>
                                     </div>
                                     <div className="space-y-4 px-2">
                                         <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-[0.15em]">Parameters</h4>
@@ -180,33 +220,40 @@ export default function ApiDocsPage() {
                                 <p className="text-slate-600 leading-relaxed text-[15px]">
                                     Retrieve your current quota limits and real-time consumption stats across simulation minutes and tokens.
                                 </p>
-                                <div className="bg-white border border-slate-200 rounded-3xl p-8 text-slate-700 font-mono text-sm overflow-x-auto w-full shadow-md">
+                                <div className="bg-white border border-slate-200 rounded-3xl p-8 text-slate-700 font-mono text-sm overflow-x-auto w-full shadow-md relative group">
+                                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <CopyButton text={usageSnippet} />
+                                    </div>
                                     <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
                                         <span className="text-slate-400 uppercase tracking-widest text-sm font-semibold">Standard Response</span>
                                         <span className="text-emerald-500 text-sm font-semibold">200 OK</span>
                                     </div>
-                                    {`{
-  "plan": "Enterprise",
-  "simMinutesLimit": 100,
-  "simMinutesUsed": 12.5,
-  "tokensUsed": 5000,
-  "apiEnabled": true
-}`}
+                                    <pre>{usageSnippet}</pre>
                                 </div>
                             </div>
                         </section>
 
                         {/* Safety Section */}
                         <section id="notes" className="scroll-mt-32 pb-12">
-                            <h2 className="text-2xl font-semibold mb-8 text-slate-900">Platform Safety & Policy</h2>
+                            <h2 className="text-2xl font-semibold mb-8 text-slate-900 border-b border-slate-100 pb-4">Platform Safety & Policy</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="p-8 bg-slate-50/80 rounded-3xl border border-slate-100 transition-all hover:shadow-lg">
-                                    <h4 className="font-semibold text-slate-900 mb-2">Maximum Timeouts</h4>
-                                    <p className="text-sm text-slate-500 leading-relaxed">All execution requests are strictly capped at <span className="font-semibold text-slate-900">300 seconds (5 minutes)</span> to ensure platform availability across all nodes.</p>
+                                    <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                                        <Zap size={18} className="text-[#3066bb]" />
+                                        Maximum Timeouts
+                                    </h4>
+                                    <p className="text-sm text-slate-500 leading-relaxed">
+                                        Quantum Guru implements strict runtime limits to ensure fair resource distribution. All execution requests are capped at <span className="font-semibold text-slate-900">300 seconds (5 minutes)</span>. If a solver exceeds this threshold, the request will be automatically terminated.
+                                    </p>
                                 </div>
                                 <div className="p-8 bg-slate-50/80 rounded-3xl border border-slate-100 transition-all hover:shadow-lg">
-                                    <h4 className="font-semibold text-slate-900 mb-2">Isolated Sandbox</h4>
-                                    <p className="text-sm text-slate-500 leading-relaxed">Environments are non-persistent. No outbound networking is permitted during code execution for security.</p>
+                                    <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                                        <ChevronLeft size={18} className="text-[#3066bb] rotate-180" />
+                                        Isolated Sandbox
+                                    </h4>
+                                    <p className="text-sm text-slate-500 leading-relaxed">
+                                        Your code runs within a secure, ephemeral container. These environments are non-persistent and <span className="font-semibold text-slate-900">completely isolated from outbound networking</span>. This prevents data exfiltration and ensures your IP remains protected.
+                                    </p>
                                 </div>
                             </div>
                         </section>
