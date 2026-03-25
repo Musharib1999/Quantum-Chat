@@ -147,6 +147,13 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                         active={activeTab === 'llm_settings'}
                         onClick={() => handleNav('llm_settings')}
                     />
+                    <div className="h-px bg-slate-100 my-4" />
+                    <button
+                        onClick={() => window.location.href = '/developer'}
+                        className="w-full flex items-center px-4 py-3 rounded-lg transition-all border text-slate-600 hover:bg-[#3066bb]/5 hover:text-[#3066bb] border-transparent hover:border-[#3066bb]/30"
+                    >
+                        <span className="font-bold text-sm">Developer Console</span>
+                    </button>
                 </nav>
             </aside>
         </>
