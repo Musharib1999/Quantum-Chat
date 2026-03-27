@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react';
-import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout, Key, Copy, Check } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout, Key, Copy, Check, Shield } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
+import UserPasswordModal from './UserPasswordModal';
 
 interface UserProfileModalProps {
     isOpen: boolean;
@@ -13,11 +14,12 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
     const router = useRouter();
     const pathname = usePathname();
     const cardRef = useRef<HTMLDivElement>(null);
-    const [copied, setCopied] = React.useState(false);
+    const [copied, setCopied] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
     // Close when clicking anywhere outside the card
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || isPasswordModalOpen) return;
         const handleMouseDown = (e: MouseEvent) => {
             if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
                 onClose();
@@ -116,6 +118,17 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     </button>
                 )}
 
+                {/* Password Change Button */}
+                {isAuthenticated && (
+                    <button
+                        onClick={() => setIsPasswordModalOpen(true)}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
+                    >
+                        <Shield size={16} />
+                        <span>Security Settings</span>
+                    </button>
+                )}
+
                 {/* API Key Section */}
                 {isAuthenticated && user?.apiKey && (
                     <div className="mx-2 mt-4 p-3 rounded-xl bg-primary/5 border border-primary/10 space-y-2">
@@ -158,7 +171,12 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     )}
                 </div>
             </div>
-
+            
+            {/* Sub-modals */}
+            <UserPasswordModal 
+                isOpen={isPasswordModalOpen} 
+                onClose={() => setIsPasswordModalOpen(false)} 
+            />
         </div>
     );
 }
