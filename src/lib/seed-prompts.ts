@@ -92,7 +92,7 @@ SOURCE: {{source}}`
     {
         category: 'industry_qiskit',
         title: 'Industry Sim: Qiskit Code Gen',
-        description: 'Pass 1 of the Qiskit Simulation workflow. Generates Python simulation code.',
+        description: 'Pass 1 of the Qiskit Simulation workflow. Generates Python simulation code with V2 Primitives.',
         availableTags: ['{{industry}}', '{{service}}', '{{problem}}', '{{hardware}}', '{{parameters}}'],
         template: `Generate a complete, self-contained Python Qiskit script for the following quantum computing problem:
 Industry: {{industry}}
@@ -102,11 +102,13 @@ Hardware: {{hardware}}
 Parameters: {{parameters}}
 
 Rules (VERY IMPORTANT):
-1. Use qiskit and qiskit_aer for simulation
-2. Build a QuantumCircuit, add gates, add measurements
-3. Run with AerSimulator: from qiskit_aer import AerSimulator; sim = AerSimulator(); job = sim.run(circuit, shots=1024, seed_simulator=42); result = job.result(); counts = result.get_counts(); print(f"Results: {counts}")
-4. Print the measurement counts clearly
-5. Return ONLY the Python code, no markdown, no explanation`
+1. Use Qiskit 1.x and modern V2 Primitives
+2. Import: from qiskit.primitives import StatevectorSampler
+3. Initialize: sampler = StatevectorSampler()
+4. For Optimization: Use from qiskit_algorithms import SamplingVQE; vqe = SamplingVQE(sampler=sampler, optimizer=COBYLA())
+5. For Circuits: job = sampler.run([circuit]); result = job.result(); pub_result = result[0]; counts = pub_result.data.meas.get_counts(); print(f"Results: {counts}")
+6. Print the measurement counts clearly.
+7. Return ONLY the Python code, no markdown, no explanation`
     },
     {
         category: 'industry_dwave',
