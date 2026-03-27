@@ -83,9 +83,11 @@ export default function HardwareManager() {
             });
             
             if (res.data.success) {
-                alert(`✅ ${hw.name} is ONLINE.\nReachable at: ${hw.serviceUrl}`);
+                alert(`✅ ${hw.name} is ONLINE.\nReachable and Authenticated at: ${hw.serviceUrl}`);
+            } else if (res.data.status === 'Unauthorized') {
+                alert(`⚠️ ${hw.name} is UNAUTHORIZED.\n${res.data.error}\n\nAction: Ensure your API_SECRET_KEY matches the one on the backend simulator.`);
             } else {
-                alert(`❌ ${hw.name} is currently OFFLINE.\nReason: ${res.data.error || 'No response from server'}`);
+                alert(`❌ ${hw.name} is OFFLINE.\nReason: ${res.data.error || 'No response from server'}`);
             }
         } catch (e: any) {
             alert(`❌ Error pinging ${hw.name}: ${e.message}`);

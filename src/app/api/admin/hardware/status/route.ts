@@ -23,21 +23,35 @@ export async function POST(req: NextRequest) {
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 sec timeout
 
         try {
-            // We just need to see if the server responds at all
+            const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
+            
+            // We need to see if the server responds AND accepts our key
             const response = await fetch(serviceUrl, {
                 method: 'GET',
+                headers: { 'X-API-Key': API_SECRET },
                 signal: controller.signal,
                 cache: 'no-store'
             });
 
             clearTimeout(timeoutId);
 
-            // Even if it returns 401/404, the server is "Online" (Reachable)
-            // Error codes like 500+ or network errors denote "Offline"
+            // Granular status interpretation
+            if (response.status === 401) {
+                return NextResponse.json({ 
+                    success: false, 
+                    status: 'Unauthorized', 
+                    error: 'Authentication failed. Check your API_SECRET_KEY settings.' 
+                });
+            }
+
             if (response.status < 500) {
                 return NextResponse.json({ success: true, status: 'Online' });
             } else {
-                return NextResponse.json({ success: false, status: 'Offline', error: `Server error: ${response.status}` });
+                return NextResponse.json({ 
+                    success: false, 
+                    status: 'Offline', 
+                    error: `Server reported error: ${response.status}` 
+                });
             }
         } catch (fetchError: any) {
             clearTimeout(timeoutId);
