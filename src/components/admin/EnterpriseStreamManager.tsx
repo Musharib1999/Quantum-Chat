@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { getExperiments } from '@/app/actions/experiment';
 import { Play, Square, Activity, Database, Workflow, CheckCircle, XCircle } from 'lucide-react';
 
@@ -14,6 +15,9 @@ export default function EnterpriseStreamManager() {
     const [isPolling, setIsPolling] = useState(true);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Enterprise Users for Dropdown
+    const [enterpriseUsers, setEnterpriseUsers] = useState<any[]>([]);
+
     // Form State
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
@@ -25,6 +29,7 @@ export default function EnterpriseStreamManager() {
 
     useEffect(() => {
         fetchPipelines();
+        fetchEnterpriseUsers();
         return () => stopPolling();
     }, []);
 
@@ -35,6 +40,19 @@ export default function EnterpriseStreamManager() {
             stopPolling();
         }
     }, [viewMode, isPolling]);
+
+    const fetchEnterpriseUsers = async () => {
+        try {
+            const res = await axios.get('/api/admin/users');
+            if (Array.isArray(res.data)) {
+                // Filter users who have the 'enterprise' role
+                const eUsers = res.data.filter((u: any) => u.role === 'enterprise');
+                setEnterpriseUsers(eUsers);
+            }
+        } catch (error) {
+            console.error("Failed to fetch enterprise users", error);
+        }
+    };
 
     const fetchPipelines = async () => {
         try {
@@ -139,8 +157,20 @@ export default function EnterpriseStreamManager() {
                     {showForm && (
                         <form onSubmit={handleCreatePipeline} className="mb-8 p-6 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-4">
                             <div className="col-span-1">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Enterprise Name</label>
-                                <input required value={formData.enterpriseName} onChange={e => setFormData({...formData, enterpriseName: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="e.g., Acme Corp" />
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Enterprise Account</label>
+                                <select 
+                                    required 
+                                    value={formData.enterpriseName} 
+                                    onChange={e => setFormData({...formData, enterpriseName: e.target.value})} 
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                                >
+                                    <option value="" disabled>Select an Enterprise Account</option>
+                                    {enterpriseUsers.map(user => (
+                                        <option key={user._id} value={user.company || user.email}>
+                                            {user.company || user.firstName || 'Unnamed'} ({user.email})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="col-span-1">
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Problem Blueprint ID</label>
