@@ -12,6 +12,7 @@ export default function EnterpriseDashboardPage() {
     const router = useRouter();
     const [isClient, setIsClient] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'datapoints' | 'telemetry' | 'pipelines'>('datapoints');
 
     useEffect(() => {
         setIsClient(true);
@@ -49,9 +50,25 @@ export default function EnterpriseDashboardPage() {
                 </div>
                 
                 <nav className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto">
-                    <button className="w-full text-left px-4 py-3 rounded-xl bg-white border border-slate-200 shadow-sm text-[#3066bb] font-bold text-sm tracking-wide transition-all">
-                        Control Center
+                    <button 
+                        onClick={() => setActiveTab('datapoints')}
+                        className={`w-full text-left px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all ${activeTab === 'datapoints' ? 'bg-white border border-slate-200 shadow-sm text-[#3066bb]' : 'border border-transparent hover:bg-slate-100/80 text-slate-600 hover:text-slate-900'}`}
+                    >
+                        Datapoints
                     </button>
+                    <button 
+                        onClick={() => setActiveTab('telemetry')}
+                        className={`w-full text-left px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all ${activeTab === 'telemetry' ? 'bg-white border border-slate-200 shadow-sm text-[#3066bb]' : 'border border-transparent hover:bg-slate-100/80 text-slate-600 hover:text-slate-900'}`}
+                    >
+                        Live Telemetry
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('pipelines')}
+                        className={`w-full text-left px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all ${activeTab === 'pipelines' ? 'bg-white border border-slate-200 shadow-sm text-[#3066bb]' : 'border border-transparent hover:bg-slate-100/80 text-slate-600 hover:text-slate-900'}`}
+                    >
+                        Active Pipelines
+                    </button>
+                    <div className="my-2 border-t border-slate-200"></div>
                     <button 
                         onClick={() => router.push('/industry')} 
                         className="w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-slate-100/80 text-slate-600 hover:text-slate-900 font-bold text-sm tracking-wide transition-all"
@@ -78,7 +95,7 @@ export default function EnterpriseDashboardPage() {
                 <div className="p-4 md:p-8 max-w-[1400px] mx-auto min-h-full">
                     {/* Add top spacing for mobile to clear logo */}
                     <div className="h-16 md:h-0"></div>
-                    <EnterpriseClientDashboard />
+                    <EnterpriseClientDashboard viewMode={activeTab} />
                 </div>
             </main>
 

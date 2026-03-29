@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-export default function EnterpriseClientDashboard() {
+interface EnterpriseClientDashboardProps {
+    viewMode: 'datapoints' | 'telemetry' | 'pipelines';
+}
+
+export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClientDashboardProps) {
     const [pipelines, setPipelines] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<'manager' | 'visualizer'>('visualizer');
     
     const [liveShots, setLiveShots] = useState<any[]>([]);
     const [isPolling, setIsPolling] = useState(true);
@@ -20,7 +23,7 @@ export default function EnterpriseClientDashboard() {
     }, []);
 
     useEffect(() => {
-        if (viewMode === 'visualizer' && isPolling) {
+        if (viewMode === 'telemetry' && isPolling) {
             startPolling();
         } else {
             stopPolling();
@@ -98,27 +101,18 @@ export default function EnterpriseClientDashboard() {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-900">Enterprise Control Center</h2>
-                    <p className="text-sm text-slate-500 mt-1">Monitor high-frequency streams and manage your API integration endpoints.</p>
-                </div>
-                <div className="flex items-center p-1 bg-slate-50 rounded-xl border border-slate-200">
-                    <button 
-                        onClick={() => setViewMode('manager')}
-                        className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${viewMode === 'manager' ? 'bg-white text-[#3066bb] shadow-sm ring-1 ring-slate-200/50' : 'text-slate-600 hover:text-slate-900'}`}
-                    >
-                        Active Pipelines
-                    </button>
-                    <button 
-                        onClick={() => setViewMode('visualizer')}
-                        className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${viewMode === 'visualizer' ? 'bg-[#3066bb] text-white shadow-sm ring-1 ring-[#3066bb]/50' : 'text-slate-600 hover:text-slate-900'}`}
-                    >
-                        Live Telemetry
-                    </button>
+                    <h2 className="text-2xl font-bold text-slate-900">
+                        {viewMode === 'datapoints' ? 'Metrics & Analytics' : viewMode === 'telemetry' ? 'Live Stream Telemetry' : 'Pipeline Configuration'}
+                    </h2>
+                    <p className="text-sm text-slate-500 mt-1">
+                        {viewMode === 'datapoints' ? 'Track your API utilization, webhook delivery success, and queue health.' : viewMode === 'telemetry' ? 'Monitor high-frequency streams bypassing through your integration endpoints.' : 'Manage your active mathematical mappings and automated webhook targets.'}
+                    </p>
                 </div>
             </div>
 
-            {/* KPI Metric Cards (Frontend Placeholder - Backend logic deferred to Future Scope) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* DATAPOINTS TAB (Frontend Placeholder) */}
+            {viewMode === 'datapoints' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
                     <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4">Total API Shots</h5>
                     <div>
@@ -149,9 +143,11 @@ export default function EnterpriseClientDashboard() {
                     </div>
                 </div>
             </div>
+            )}
 
-            {viewMode === 'manager' && (
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm p-6">
+            {/* PIPELINES TAB */}
+            {viewMode === 'pipelines' && (
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="mb-6">
                         <h3 className="font-bold text-slate-900 text-lg">Your Data Pipelines</h3>
                         <p className="text-sm text-slate-500 mt-1">These endpoints are configured by Quantum Guru administrators. Update your receiving Webhook URL here.</p>
@@ -211,8 +207,9 @@ export default function EnterpriseClientDashboard() {
                 </div>
             )}
 
-            {viewMode === 'visualizer' && (
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[650px]">
+            {/* TELEMETRY TAB */}
+            {viewMode === 'telemetry' && (
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[650px] animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center px-6">
                         <div className="flex items-center gap-4">
                             <span className="text-slate-900 text-xs font-sans font-bold tracking-[0.2em]">Enterprise Telemetry</span>
