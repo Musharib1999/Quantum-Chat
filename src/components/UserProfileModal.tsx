@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout, Key, Copy, Check, Shield } from 'lucide-react';
+import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout, Key, Copy, Check, Shield, Activity } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import UserPasswordModal from './UserPasswordModal';
@@ -115,6 +115,23 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             <span className="text-sm font-semibold">Portfolio Optimization</span>
                         </div>
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    </button>
+                )}
+
+                {/* Enterprise Dashboard Button */}
+                {isAuthenticated && user?.role === 'enterprise' && (
+                    <button
+                        onClick={() => {
+                            router.push('/enterprise/dashboard');
+                            onClose();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 mt-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all group shadow-md"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <Activity size={16} className="text-cyan-400" />
+                            <span className="text-sm font-semibold tracking-wider">ENTERPRISE PORTAL</span>
+                        </div>
+                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-slate-400" />
                     </button>
                 )}
 
