@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateApiKey } from '@/lib/api-auth';
 import DataPipeline from '@/models/DataPipeline';
 import dbConnect from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         await dbConnect();
-        const user = await authenticateApiKey(req);
-        if (!user || user.role !== 'admin') {
-            return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
-        }
-
         const pipelines = await DataPipeline.find().sort({ createdAt: -1 });
         return NextResponse.json({ success: true, pipelines });
     } catch (error: any) {
@@ -21,11 +15,6 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         await dbConnect();
-        const user = await authenticateApiKey(req);
-        if (!user || user.role !== 'admin') {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
         const body = await req.json();
         
         // Ensure problem mapping and URL exist
