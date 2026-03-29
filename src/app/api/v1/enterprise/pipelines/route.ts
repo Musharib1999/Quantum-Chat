@@ -13,10 +13,12 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized: Enterprise API access required' }, { status: 401 });
         }
 
-        // Fetch pipelines scoped ONLY to this exact enterprise user
-        // We link via company name, or if we introduce linkedEmail later
+        // We link via company name, or fallback defensively to their email if company is undefined
         const pipelines = await DataPipeline.find({ 
-            enterpriseName: new RegExp(`^${user.company}$`, 'i') 
+            $or: [
+                { enterpriseName: user.company ? new RegExp(`^${user.company}$`, 'i') : { $exists: false } },
+                { enterpriseName: user.email ? new RegExp(`^${user.email}$`, 'i') : { $exists: false } }
+            ]
         }).sort({ createdAt: -1 });
 
         return NextResponse.json({ success: true, pipelines });
@@ -39,10 +41,13 @@ export async function PUT(req: NextRequest) {
 
         if (!pipelineId || !webhookUrl) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
 
-        // Ensure this pipeline actually belongs to the user's company
+        // Ensure this pipeline actually belongs to the user's company or email mapping
         const pipeline = await DataPipeline.findOne({ 
             _id: pipelineId,
-            enterpriseName: new RegExp(`^${user.company}$`, 'i') 
+            $or: [
+                { enterpriseName: user.company ? new RegExp(`^${user.company}$`, 'i') : { $exists: false } },
+                { enterpriseName: user.email ? new RegExp(`^${user.email}$`, 'i') : { $exists: false } }
+            ]
         });
 
         if (!pipeline) {
