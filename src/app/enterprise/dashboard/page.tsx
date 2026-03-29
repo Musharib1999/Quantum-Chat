@@ -5,11 +5,13 @@ import EnterpriseClientDashboard from '@/components/enterprise/EnterpriseClientD
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import UserProfileModal from '@/components/UserProfileModal';
 
 export default function EnterpriseDashboardPage() {
     const { user, isAuthenticated, logout } = useAuth();
     const router = useRouter();
     const [isClient, setIsClient] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
@@ -38,7 +40,7 @@ export default function EnterpriseDashboardPage() {
             {/* Left Sidebar */}
             <aside className="fixed inset-y-0 left-0 w-64 md:w-80 bg-slate-50 border-r border-slate-200 flex flex-col pt-20 z-40">
                 <div className="p-6 border-b border-slate-200">
-                     <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                     <div className="text-xs font-bold text-slate-500 mb-1">
                           <span className="text-[#3066bb]">Enterprise Portal</span>
                      </div>
                      <div className="font-bold text-slate-900 truncate">
@@ -60,10 +62,13 @@ export default function EnterpriseDashboardPage() {
 
                 <div className="p-4 border-t border-slate-200">
                     <button 
-                        onClick={() => { logout(); router.push('/login'); }} 
-                        className="w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-red-50 text-red-500 hover:text-red-600 font-bold text-sm tracking-wide transition-all"
+                        onClick={() => setIsProfileModalOpen(true)} 
+                        className="w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-sm transition-all flex items-center gap-3"
                     >
-                        Sign Out
+                        <div className="w-8 h-8 rounded-full bg-[#3066bb] text-white flex items-center justify-center text-sm font-bold">
+                            {(user as any)?.firstName?.[0] || user?.name?.[0] || 'U'}
+                        </div>
+                        <span className="truncate">Profile & Settings</span>
                     </button>
                 </div>
             </aside>
@@ -76,6 +81,8 @@ export default function EnterpriseDashboardPage() {
                     <EnterpriseClientDashboard />
                 </div>
             </main>
+
+            <UserProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
         </div>
     );
 }

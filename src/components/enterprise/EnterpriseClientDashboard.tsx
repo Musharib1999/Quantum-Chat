@@ -65,7 +65,7 @@ export default function EnterpriseClientDashboard() {
     const startPolling = () => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         fetchLatestShots();
-        pollIntervalRef.current = setInterval(fetchLatestShots, 3000); 
+        pollIntervalRef.current = setInterval(fetchLatestShots, 60000); 
     };
 
     const stopPolling = () => {
@@ -104,16 +104,49 @@ export default function EnterpriseClientDashboard() {
                 <div className="flex items-center p-1 bg-slate-50 rounded-xl border border-slate-200">
                     <button 
                         onClick={() => setViewMode('manager')}
-                        className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${viewMode === 'manager' ? 'bg-white text-[#3066bb] shadow-sm ring-1 ring-slate-200/50' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${viewMode === 'manager' ? 'bg-white text-[#3066bb] shadow-sm ring-1 ring-slate-200/50' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         Active Pipelines
                     </button>
                     <button 
                         onClick={() => setViewMode('visualizer')}
-                        className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${viewMode === 'visualizer' ? 'bg-[#3066bb] text-white shadow-sm ring-1 ring-[#3066bb]/50' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${viewMode === 'visualizer' ? 'bg-[#3066bb] text-white shadow-sm ring-1 ring-[#3066bb]/50' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         Live Telemetry
                     </button>
+                </div>
+            </div>
+
+            {/* KPI Metric Cards (Frontend Placeholder - Backend logic deferred to Future Scope) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4">Total API Shots</h5>
+                    <div>
+                        <div className="text-3xl font-bold text-slate-900">8,452</div>
+                        <div className="text-xs font-semibold text-[#3066bb] mt-2">10,000 monthly limit</div>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4">Active Backlog</h5>
+                    <div>
+                        <div className="text-3xl font-bold text-slate-900">12</div>
+                        <div className="text-xs font-semibold text-orange-500 mt-2">Payloads in FIFO queue</div>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4">Avg Processing Time</h5>
+                    <div>
+                        <div className="text-3xl font-bold text-slate-900">24.5<span className="text-lg text-slate-400 ml-1">ms</span></div>
+                        <div className="text-xs font-semibold text-green-500 mt-2">Standard Simulator speed</div>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-[#3066bb]/5 rounded-bl-full border-b border-l border-[#3066bb]/10"></div>
+                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4 relative z-10">Webhook Success</h5>
+                    <div className="relative z-10">
+                        <div className="text-3xl font-bold text-slate-900">99.8<span className="text-lg text-slate-400 ml-1">%</span></div>
+                        <div className="text-xs font-semibold text-[#3066bb] mt-2">Delivery strictly 200 OK</div>
+                    </div>
                 </div>
             </div>
 
@@ -126,7 +159,7 @@ export default function EnterpriseClientDashboard() {
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-slate-800">
-                            <thead className="bg-slate-50 text-slate-900 border-y border-slate-200 font-bold text-xs uppercase tracking-wide">
+                            <thead className="bg-slate-50 text-slate-900 border-y border-slate-200 font-bold text-xs tracking-wide">
                                 <tr>
                                     <th className="px-6 py-4">Status</th>
                                     <th className="px-6 py-4">Problem ID Mapping</th>
@@ -141,7 +174,7 @@ export default function EnterpriseClientDashboard() {
                                 ) : pipelines.map(p => (
                                     <tr key={p._id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${p.status === 'active' ? 'bg-blue-50 text-[#3066bb] border border-blue-100' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                                            <span className={`px-3 py-1 rounded-md text-[11px] font-bold tracking-wider ${p.status === 'active' ? 'bg-blue-50 text-[#3066bb] border border-blue-100' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
                                                 {p.status}
                                             </span>
                                         </td>
@@ -165,7 +198,7 @@ export default function EnterpriseClientDashboard() {
                                                         onClick={() => { setEditingPipeline(p._id); setTempWebhook(p.webhookUrl || ''); }}
                                                         className="text-[11px] font-bold text-[#3066bb] hover:underline"
                                                     >
-                                                        EDIT ROUTE
+                                                        Edit Route
                                                     </button>
                                                 </div>
                                             )}
@@ -182,13 +215,13 @@ export default function EnterpriseClientDashboard() {
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[650px]">
                     <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center px-6">
                         <div className="flex items-center gap-4">
-                            <span className="text-slate-900 text-xs font-sans font-bold tracking-[0.2em]">ENTERPRISE TELEMETRY</span>
+                            <span className="text-slate-900 text-xs font-sans font-bold tracking-[0.2em]">Enterprise Telemetry</span>
                         </div>
                         <button 
                             onClick={() => setIsPolling(!isPolling)}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border ${isPolling ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50' : 'bg-[#3066bb] text-white border-[#3066bb] hover:bg-[#3066bb]/90'}`}
                         >
-                            {isPolling ? 'SUSPEND POLLING' : 'RESUME SYNC'}
+                            {isPolling ? 'Pause Pipeline' : 'Resume Pipeline'}
                         </button>
                     </div>
 
@@ -196,7 +229,7 @@ export default function EnterpriseClientDashboard() {
                         {/* INBOUND STREAM */}
                         <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white">
                             <h4 className="text-slate-900 flex flex-col font-sans text-xs font-bold mb-6 tracking-wider gap-1">
-                                <span>INBOUND PACKETS</span>
+                                <span>Inbound Packets</span>
                                 <span className="text-[10px] text-slate-500 font-semibold">POST /v1/stream</span>
                             </h4>
                             <div className="flex-1 space-y-4 font-sans text-[11px]">
@@ -215,8 +248,8 @@ export default function EnterpriseClientDashboard() {
                         {/* QUANTUM EMBEDDING CORE */}
                         <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-slate-50/50">
                             <h4 className="text-[#3066bb] flex flex-col font-sans text-xs font-bold mb-6 tracking-wider gap-1">
-                                <span>QUANTUM ENGINE</span>
-                                <span className="text-[10px] text-slate-500 font-semibold">EMBEDDING NODE</span>
+                                <span>Quantum Engine</span>
+                                <span className="text-[10px] text-slate-500 font-semibold">Embedding Node</span>
                             </h4>
                             <div className="flex-1 flex flex-col items-center justify-center space-y-8">
                                 {isPolling ? (
@@ -226,7 +259,7 @@ export default function EnterpriseClientDashboard() {
                                             <div className="absolute inset-3 rounded-full border border-b-transparent border-[#3066bb]/30 animate-[spin_3s_linear_infinite_reverse]"></div>
                                             <div className="absolute inset-6 rounded-full border border-t-transparent border-[#3066bb] animate-[spin_2s_linear_infinite]"></div>
                                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                                                <div className="text-center font-sans text-[10px] font-bold text-[#3066bb] tracking-[0.2em] animate-pulse">PROCESSING</div>
+                                                <div className="text-center font-sans text-[10px] font-bold text-[#3066bb] tracking-[0.2em] animate-pulse">Processing</div>
                                             </div>
                                         </div>
                                         <div className="bg-white border border-slate-200 rounded-xl p-5 w-full shadow-sm">
@@ -247,7 +280,7 @@ export default function EnterpriseClientDashboard() {
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="text-slate-500 font-sans text-[11px] font-bold tracking-widest border border-slate-200 px-4 py-2 rounded-lg bg-white">SYNC SUSPENDED</div>
+                                    <div className="text-slate-500 font-sans text-[11px] font-bold tracking-widest border border-slate-200 px-4 py-2 rounded-lg bg-white">Pipeline Paused</div>
                                 )}
                             </div>
                         </div>
