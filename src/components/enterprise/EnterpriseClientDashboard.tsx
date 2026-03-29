@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 interface EnterpriseClientDashboardProps {
     viewMode: 'datapoints' | 'telemetry' | 'pipelines';
 }
 
 export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClientDashboardProps) {
+    const { user } = useAuth();
     const [pipelines, setPipelines] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     
@@ -31,10 +33,11 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
     }, [viewMode, isPolling]);
 
     const getAuthHeaders = () => {
+        const key = user?.apiKey || '';
         return { 
             'Content-Type': 'application/json',
-            'X-API-Key': localStorage.getItem('guru_api_key') || '',
-            'Authorization': `Bearer ${localStorage.getItem('guru_api_key') || ''}`
+            'X-API-Key': key,
+            'Authorization': `Bearer ${key}`
         };
     };
 
