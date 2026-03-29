@@ -36,7 +36,7 @@ export default function ExperimentManager() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-900">Experiment history</h2>
+                    <h2 className="text-xl font-semibold text-slate-900">Shot Log Viewer</h2>
                     <p className="text-sm text-slate-500">Global logs of all quantum simulations across the platform.</p>
                 </div>
 
@@ -71,7 +71,7 @@ export default function ExperimentManager() {
                     <table className="w-full text-left text-sm text-slate-600">
                         <thead className="bg-slate-50 text-slate-900 border-b border-slate-200 font-semibold">
                             <tr>
-                                <th className="px-6 py-4">Experiment (Problem)</th>
+                                <th className="px-6 py-4">Shot (Problem)</th>
                                 <th className="px-6 py-4">User</th>
                                 <th className="px-6 py-4">Hardware</th>
                                 <th className="px-6 py-4">Date & Time</th>
@@ -88,7 +88,7 @@ export default function ExperimentManager() {
                             ) : filtered.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                                        No experiments found matching your criteria.
+                                        No shots found matching your criteria.
                                     </td>
                                 </tr>
                             ) : (

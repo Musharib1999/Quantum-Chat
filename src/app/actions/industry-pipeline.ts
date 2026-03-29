@@ -37,7 +37,7 @@ import { ProblemRegistry } from '@/lib/industry/problem-registry';
 interface IndustryPipelineDeps {
     getDynamicPrompt: (category: string, replacements: Record<string, any>, fallback: string) => Promise<string>;
     QuantumForm: any;
-    Experiment: any;
+    Shot: any;
 }
 
 const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL || "http://127.0.0.1:8001";
@@ -151,7 +151,7 @@ export async function executeIndustryWorkflow(
     ruleTexts: string[],
     deps: IndustryPipelineDeps
 ): Promise<any> {
-    const { getDynamicPrompt, QuantumForm, Experiment } = deps;
+    const { getDynamicPrompt, QuantumForm, Shot } = deps;
     const { provider, modelName } = await getDynamicLLM();
     const { industry, service, problem, hardware, formData, userEmail } = contextConfig;
 
@@ -201,7 +201,7 @@ export async function executeIndustryWorkflow(
 
         // --- STEP 1.5: SHA-256 RESULT CACHING ---
         const cacheKey = getWorkflowCacheKey(problem, service, hardware, formData);
-        const cachedResult = await Experiment.findOne({ cacheKey }).sort({ timestamp: -1 }).lean();
+        const cachedResult = await Shot.findOne({ cacheKey }).sort({ timestamp: -1 }).lean();
 
         if (cachedResult) {
             console.log(`[Quantum Workflow] CACHE_HIT | Problem: ${problem} | Key: ${cacheKey}`);
@@ -502,7 +502,7 @@ ${combinedAnalysis}
 **Final Consolidation:** Sequential continuity was maintained by carrying the end-state of each batch into the next.`;
 
         try {
-            await Experiment.create({
+            await Shot.create({
                 userId: userEmail,
                 industry, service, problem, hardware,
                 parameters: formData,
@@ -1279,9 +1279,9 @@ export async function savePipelineExperiment(data: {
 
         // Lazy-load to prevent circular import or schema loading timing issues
         const mongoose = (await import('mongoose')).default;
-        const Experiment = mongoose.models.Experiment || (await import('@/models/Experiment')).default;
+        const Shot = mongoose.models.Shot || (await import('@/models/Shot')).default;
 
-        await Experiment.create({
+        await Shot.create({
             userId: data.userId || 'anonymous',
             industry: data.industry,
             service: data.service,

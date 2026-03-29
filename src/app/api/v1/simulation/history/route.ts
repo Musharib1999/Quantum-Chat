@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from '@/lib/api-auth';
-import Experiment from '@/models/Experiment';
+import Shot from '@/models/Shot';
 import dbConnect from '@/lib/db';
 
 export async function GET(req: NextRequest) {
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
         const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50);
 
         // 3. Fetch user's simulation experiments from the API source
-        const experiments = await Experiment.find({ 
+        const experiments = await Shot.find({ 
             userId: user._id, 
             source: 'API' 
         })

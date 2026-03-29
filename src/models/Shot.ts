@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IExperiment extends Document {
+export interface IShot extends Document {
     userId?: string; // Optional for now, useful for future auth
     timestamp: Date;
     industry: string;
@@ -20,7 +20,7 @@ export interface IExperiment extends Document {
     source: string; // "Web" or "API"
 }
 
-const ExperimentSchema: Schema = new Schema({
+const ShotSchema: Schema = new Schema({
     userId: { type: String, index: true },
     timestamp: { type: Date, default: Date.now },
     industry: { type: String, required: true },
@@ -38,6 +38,6 @@ const ExperimentSchema: Schema = new Schema({
     outputTables: { type: Schema.Types.Mixed },
     cacheKey: { type: String, index: true },
     source: { type: String, default: 'Web', index: true }
-});
+}, { collection: 'experiments' }); // <--- Explicit collection mapping to PRESERVE historical execution logs!
 
-export default mongoose.models.Experiment || mongoose.model<IExperiment>('Experiment', ExperimentSchema);
+export default mongoose.models.Shot || mongoose.model<IShot>('Shot', ShotSchema);

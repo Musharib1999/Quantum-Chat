@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticateApiKey } from '@/lib/api-auth';
 import { executeQuantumCircuit, executeDWaveAnnealer, executeORTools } from '@/lib/quantum-simulator';
-import Experiment from '@/models/Experiment';
+import Shot from '@/models/Shot';
 import User from '@/models/User';
 import dbConnect from '@/lib/db';
 
@@ -66,8 +66,8 @@ export async function POST(req: NextRequest) {
             $inc: { simMinutesUsed: durationMin }
         });
 
-        // 6. Log the experiment for Administrative Auditing
-        const experiment = await Experiment.create({
+        // 6. Log the shot for Administrative Auditing
+        const shot = await Shot.create({
             userId: user._id,
             timestamp: new Date(),
             industry: 'API-External',
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            experimentId: experiment._id,
+            shotId: shot._id,
             provider,
             hardware,
             results: executionResult,

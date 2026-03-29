@@ -118,7 +118,12 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                         onClick={() => handleNav('use_cases')}
                     />
                     <SidebarLink
-                        label="Experiments"
+                        label="Enterprise Streams"
+                        active={activeTab === 'enterprise_streams'}
+                        onClick={() => handleNav('enterprise_streams')}
+                    />
+                    <SidebarLink
+                        label="Shot Logs"
                         active={activeTab === 'experiments'}
                         onClick={() => handleNav('experiments')}
                     />

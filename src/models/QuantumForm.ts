@@ -46,6 +46,7 @@ export interface IQuantumForm extends Document {
         label: string;
     }[];
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
+    category?: 'public' | 'enterprise';
     createdAt: Date;
     updatedAt: Date;
 }
@@ -100,6 +101,7 @@ const QuantumFormSchema: Schema = new Schema({
         label: String
     }],
     executionEnvironment: { type: String, enum: ['python-qiskit', 'python-dwave'] },
+    category: { type: String, enum: ['public', 'enterprise'], default: 'public' },
     createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 

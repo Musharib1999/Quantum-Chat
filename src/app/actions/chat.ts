@@ -8,7 +8,7 @@ import dbConnect from '@/lib/db';
 import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
-import Experiment from '@/models/Experiment';
+import Shot from '@/models/Shot';
 import News from '@/models/News';
 import User from '@/models/User';
 import SystemPrompt from '@/models/SystemPrompt';
@@ -409,7 +409,7 @@ export async function chatWithGroq(
                 GEMINI_MODEL,
                 getDynamicPrompt,
                 QuantumForm,
-                Experiment
+                Shot
             };
             const industryResult = await executeIndustryWorkflow(contextConfig, ruleTexts, industryDeps);
 

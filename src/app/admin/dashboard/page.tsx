@@ -17,6 +17,7 @@ import NewsManager from '../../../components/admin/NewsManager';
 import PromptEditor from '../../../components/admin/PromptEditor';
 import UseCaseManager from '../../../components/admin/UseCaseManager';
 import ExperimentManager from '../../../components/admin/ExperimentManager';
+import EnterpriseStreamManager from '../../../components/admin/EnterpriseStreamManager';
 import MarketPromptManager from '../../../components/admin/MarketPromptManager';
 import LLMSettingsManager from '../../../components/admin/LLMSettingsManager';
 import StockSearchDebugger from '../../../components/admin/StockSearchDebugger';
@@ -77,6 +78,7 @@ export default function AdminDashboard() {
                     {activeTab === 'news' && <NewsManager />}
                     {activeTab === 'news_blocklist' && <BlockedSourceManager />}
                     {activeTab === 'use_cases' && <UseCaseManager />}
+                    {activeTab === 'enterprise_streams' && <EnterpriseStreamManager />}
                     {activeTab === 'experiments' && <ExperimentManager />}
                     {activeTab === 'users' && <UserManager />}
                     {activeTab === 'analytics' && (

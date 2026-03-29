@@ -1,7 +1,7 @@
 "use server";
 
 import dbConnect from '@/lib/db';
-import Experiment from '@/models/Experiment';
+import Shot from '@/models/Shot';
 
 /**
  * Fetches a lightweight list of experiments for the sidebar/history panel.
@@ -21,7 +21,7 @@ export async function getExperiments(userEmail?: string, isAdmin: boolean = fals
         }
 
         // Only select lightweight fields needed for the list view
-        const experiments = await Experiment.find(query, {
+        const experiments = await Shot.find(query, {
             _id: 1,
             userId: 1,
             industry: 1,
@@ -57,7 +57,7 @@ export async function getExperimentById(id: string) {
     await dbConnect();
     try {
         const Mongoose = (await import('mongoose')).default;
-        const exp = await Experiment.findById(new Mongoose.Types.ObjectId(id)).lean() as any;
+        const exp = await Shot.findById(new Mongoose.Types.ObjectId(id)).lean() as any;
         if (!exp) return null;
         return {
             ...exp,
