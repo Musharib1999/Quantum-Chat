@@ -214,6 +214,7 @@ export default function EnterpriseStreamManager() {
                                 <tr>
                                     <th className="px-6 py-4">Enterprise</th>
                                     <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Pipeline ID (Integration Key)</th>
                                     <th className="px-6 py-4">Problem Mapping</th>
                                     <th className="px-6 py-4">Webhook target</th>
                                 </tr>
@@ -235,7 +236,20 @@ export default function EnterpriseStreamManager() {
                                                 {p.status}
                                             </button>
                                         </td>
-                                        <td className="px-6 py-4 font-mono text-[10px] bg-slate-50 border border-slate-200 rounded p-1 inline-block mt-2 ml-6 text-slate-500">{p.problemId}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2 group">
+                                                <span className="text-[10px] font-mono bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-200">
+                                                    {p._id}
+                                                </span>
+                                                <button 
+                                                    onClick={() => { navigator.clipboard.writeText(p._id); alert("Pipeline ID copied!"); }}
+                                                    className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-[#3066bb] underline transition-opacity"
+                                                >
+                                                    COPY
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 font-mono text-[10px] text-slate-500">{p.problemId}</td>
                                         <td className="px-6 py-4 text-xs font-mono text-slate-500 truncate max-w-[200px]">{p.webhookUrl}</td>
                                     </tr>
                                 ))}
