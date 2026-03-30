@@ -36,3 +36,26 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to create pipeline', message: error.message }, { status: 500 });
     }
 }
+
+export async function PUT(req: NextRequest) {
+    try {
+        await dbConnect();
+        const body = await req.json();
+        
+        if (!body.pipelineId || !body.status) {
+            return NextResponse.json({ error: 'Missing required fields (pipelineId, status)' }, { status: 400 });
+        }
+
+        const pipeline = await DataPipeline.findById(body.pipelineId);
+        if (!pipeline) {
+            return NextResponse.json({ error: 'Pipeline not found' }, { status: 404 });
+        }
+
+        pipeline.status = body.status;
+        await pipeline.save();
+
+        return NextResponse.json({ success: true, pipeline });
+    } catch (error: any) {
+        return NextResponse.json({ error: 'Failed to update pipeline status', message: error.message }, { status: 500 });
+    }
+}

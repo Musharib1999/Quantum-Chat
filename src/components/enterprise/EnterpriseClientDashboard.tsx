@@ -100,6 +100,25 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
         }
     };
 
+    const handleToggleStatus = async (pipelineId: string, currentStatus: string) => {
+        try {
+            const newStatus = currentStatus === 'active' ? 'draft' : 'active';
+            const res = await fetch('/api/v1/enterprise/pipelines', {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ pipelineId, status: newStatus })
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchPipelines();
+            } else {
+                alert(data.error);
+            }
+        } catch (error) {
+            alert("Failed to toggle status.");
+        }
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -173,9 +192,12 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                                 ) : pipelines.map(p => (
                                     <tr key={p._id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-md text-[11px] font-bold tracking-wider ${p.status === 'active' ? 'bg-blue-50 text-[#3066bb] border border-blue-100' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                                            <button 
+                                                onClick={() => handleToggleStatus(p._id, p.status)}
+                                                className={`px-3 py-1 rounded-md text-[11px] font-bold tracking-wider transition-all border ${p.status === 'active' ? 'bg-blue-50 text-[#3066bb] border-blue-100 hover:bg-blue-100' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'}`}
+                                            >
                                                 {p.status}
-                                            </span>
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 font-sans text-[12px] text-slate-900 font-bold">{p.problemId}</td>
                                         <td className="px-6 py-4">

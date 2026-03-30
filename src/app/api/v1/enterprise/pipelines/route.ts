@@ -37,9 +37,9 @@ export async function PUT(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { pipelineId, webhookUrl } = body;
+        const { pipelineId, webhookUrl, status } = body;
 
-        if (!pipelineId || !webhookUrl) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+        if (!pipelineId) return NextResponse.json({ error: 'Missing pipelineId' }, { status: 400 });
 
         // Ensure this pipeline actually belongs to the user's company or email mapping
         const pipeline = await DataPipeline.findOne({ 
@@ -54,7 +54,8 @@ export async function PUT(req: NextRequest) {
              return NextResponse.json({ error: 'Pipeline not found or permission denied' }, { status: 403 });
         }
 
-        pipeline.webhookUrl = webhookUrl;
+        if (webhookUrl !== undefined) pipeline.webhookUrl = webhookUrl;
+        if (status !== undefined) pipeline.status = status;
         await pipeline.save();
 
         return NextResponse.json({ success: true, pipeline });

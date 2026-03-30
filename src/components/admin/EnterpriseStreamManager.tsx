@@ -95,6 +95,28 @@ export default function EnterpriseStreamManager() {
         }
     };
 
+    const handleToggleStatus = async (pipelineId: string, currentStatus: string) => {
+        try {
+            const newStatus = currentStatus === 'active' ? 'draft' : 'active';
+            const res = await fetch('/api/admin/pipelines', {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-API-Key': localStorage.getItem('guru_api_key') || ''
+                },
+                body: JSON.stringify({ pipelineId, status: newStatus })
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchPipelines();
+            } else {
+                alert(data.error);
+            }
+        } catch (error) {
+            alert("Failed to toggle status.");
+        }
+    };
+
     const handleCreatePipeline = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -205,7 +227,13 @@ export default function EnterpriseStreamManager() {
                                     <tr key={p._id} className="hover:bg-slate-50">
                                         <td className="px-6 py-4 font-bold text-slate-900">{p.enterpriseName}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}`}>{p.status}</span>
+                                            <button 
+                                                onClick={() => handleToggleStatus(p._id, p.status)}
+                                                className={`px-3 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 ${p.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+                                            >
+                                                {p.status === 'active' ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                                                {p.status}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 font-mono text-[10px] bg-slate-50 border border-slate-200 rounded p-1 inline-block mt-2 ml-6 text-slate-500">{p.problemId}</td>
                                         <td className="px-6 py-4 text-xs font-mono text-slate-500 truncate max-w-[200px]">{p.webhookUrl}</td>
