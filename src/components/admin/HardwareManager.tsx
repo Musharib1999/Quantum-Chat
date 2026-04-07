@@ -18,7 +18,9 @@ export default function HardwareManager() {
         order: 0,
         name: '',
         description: '',
-        serviceUrl: ''
+        serviceUrl: '',
+        testCode: '',
+        testOutput: ''
     });
 
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function HardwareManager() {
         if (!newHw.name || !newHw.description) return;
         await addHardware({ ...newHw } as any);
         setIsAdding(false);
-        setNewHw({ provider: 'ibm', status: 'Online', qubits: 0, order: 0, name: '', description: '', serviceUrl: '' });
+        setNewHw({ provider: 'ibm', status: 'Online', qubits: 0, order: 0, name: '', description: '', serviceUrl: '', testCode: '', testOutput: '' });
         loadHardware();
     };
 
@@ -67,7 +69,9 @@ export default function HardwareManager() {
                 qubits: item.qubits, 
                 order: item.order, 
                 provider: item.provider,
-                serviceUrl: item.serviceUrl
+                serviceUrl: item.serviceUrl,
+                testCode: item.testCode,
+                testOutput: item.testOutput
             });
             setEditingId(null);
             loadHardware();
@@ -79,15 +83,17 @@ export default function HardwareManager() {
         try {
             const res = await axios.post('/api/admin/hardware/status', {
                 serviceUrl: hw.serviceUrl,
-                provider: hw.provider
+                provider: hw.provider,
+                testCode: hw.testCode,
+                testOutput: hw.testOutput
             });
             
-            if (res.data.success) {
-                alert(`✅ ${hw.name} is ONLINE.\nReachable and Authenticated at: ${hw.serviceUrl}`);
-            } else if (res.data.status === 'Unauthorized') {
+            if (res?.data?.success) {
+                alert(`✅ ${hw.name} is ONLINE.\nSuccessfully passed execution test at: ${hw.serviceUrl}`);
+            } else if (res?.data?.status === 'Unauthorized') {
                 alert(`⚠️ ${hw.name} is UNAUTHORIZED.\n${res.data.error}\n\nAction: Ensure your API_SECRET_KEY matches the one on the backend simulator.`);
             } else {
-                alert(`❌ ${hw.name} is OFFLINE.\nReason: ${res.data.error || 'No response from server'}`);
+                alert(`❌ ${hw.name} is OFFLINE.\nReason: ${res?.data?.error || 'No response from server'}`);
             }
         } catch (e: any) {
             alert(`❌ Error pinging ${hw.name}: ${e.message}`);
@@ -183,6 +189,31 @@ export default function HardwareManager() {
                                 value={newHw.serviceUrl || ''}
                                 onChange={e => setNewHw({ ...newHw, serviceUrl: e.target.value })}
                             />
+                            <p className="text-[10px] font-bold text-amber-600 bg-amber-50 p-2 border border-amber-100 rounded-lg">
+                                ⚠️ Note: The remote simulator must be explicitly configured to accept the gateway's global API Secret.
+                            </p>
+                        </div>
+
+                        <div className="space-y-1.5 md:col-span-2 border-t border-slate-100 pt-4 mt-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Health Check Python Script (Optional)</label>
+                            <textarea
+                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-xs text-green-400 font-mono h-24"
+                                placeholder="print('PONG')"
+                                value={newHw.testCode || ''}
+                                onChange={e => setNewHw({ ...newHw, testCode: e.target.value })}
+                            />
+                            <p className="text-[9px] text-slate-400 font-semibold">This tiny, minimal code script will be sent when checking the hardware status.</p>
+                        </div>
+
+                        <div className="space-y-1.5 md:col-span-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Expected Health Check Output (Optional)</label>
+                            <input
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-mono"
+                                placeholder="PONG"
+                                value={newHw.testOutput || ''}
+                                onChange={e => setNewHw({ ...newHw, testOutput: e.target.value })}
+                            />
+                            <p className="text-[9px] text-slate-400 font-semibold">The health check passes only if the runtime prints an exact match to this string.</p>
                         </div>
                     </div>
 
@@ -251,6 +282,24 @@ export default function HardwareManager() {
                                         className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
                                         value={hw.serviceUrl || ''}
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, serviceUrl: e.target.value } : h))}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] text-slate-400 uppercase font-bold">Health Check Code (Python)</label>
+                                    <textarea
+                                        className="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-green-400 h-16"
+                                        value={hw.testCode || ''}
+                                        placeholder="print('PONG')"
+                                        onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, testCode: e.target.value } : h))}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] text-slate-400 uppercase font-bold">Expected Output</label>
+                                    <input
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
+                                        value={hw.testOutput || ''}
+                                        placeholder="PONG"
+                                        onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, testOutput: e.target.value } : h))}
                                     />
                                 </div>
                                 <div className="flex gap-2 pt-1">

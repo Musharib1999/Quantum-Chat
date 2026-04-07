@@ -7,6 +7,8 @@ export interface IHardware extends Document {
     status: 'Online' | 'Offline' | 'Maintenance';
     description: string;
     serviceUrl?: string;
+    testCode?: string;
+    testOutput?: string;
     order: number;
     createdAt: Date;
     updatedAt: Date;
@@ -29,7 +31,10 @@ const HardwareSchema: Schema = new Schema({
     },
     description: { type: String, required: true },
     serviceUrl: { type: String, required: false },
+    testCode: { type: String, required: false },
+    testOutput: { type: String, required: false },
     order: { type: Number, required: true, default: 0 },
+
 }, {
     timestamps: true,
 });

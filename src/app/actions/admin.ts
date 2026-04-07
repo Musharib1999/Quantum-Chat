@@ -31,6 +31,8 @@ export type HardwareType = {
     status: 'Online' | 'Offline' | 'Maintenance';
     description: string;
     serviceUrl?: string;
+    testCode?: string;
+    testOutput?: string;
     order: number;
 };
 
@@ -137,6 +139,8 @@ export async function getHardwares() {
         status: r.status,
         description: r.description,
         serviceUrl: r.serviceUrl,
+        testCode: r.testCode,
+        testOutput: r.testOutput,
         order: r.order
     }));
 }

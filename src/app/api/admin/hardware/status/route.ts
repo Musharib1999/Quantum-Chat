@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { serviceUrl } = body;
+        const { serviceUrl, provider, testCode, testOutput } = body;
 
         if (!serviceUrl) {
             return NextResponse.json({ 
@@ -20,18 +20,31 @@ export async function POST(req: NextRequest) {
 
         // Implementation of a short-timeout "ping" using fetch
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 sec timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 sec timeout for actual code execution
 
         try {
             const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
+            const baseUrl = serviceUrl.replace(/\/+$/, '');
             
-            // We need to see if the server responds AND accepts our key
-            const response = await fetch(serviceUrl, {
-                method: 'GET',
-                headers: { 'X-API-Key': API_SECRET },
-                signal: controller.signal,
-                cache: 'no-store'
-            });
+            let response;
+            if (testCode && testCode.trim().length > 0) {
+                // Perform a robust dry-run execution check
+                response = await fetch(`${baseUrl}/execute`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': API_SECRET, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: testCode }),
+                    signal: controller.signal,
+                    cache: 'no-store'
+                });
+            } else {
+                // Fallback to basic ping if no test code is provided
+                response = await fetch(serviceUrl, {
+                    method: 'GET',
+                    headers: { 'X-API-Key': API_SECRET },
+                    signal: controller.signal,
+                    cache: 'no-store'
+                });
+            }
 
             clearTimeout(timeoutId);
 
@@ -44,22 +57,49 @@ export async function POST(req: NextRequest) {
                 });
             }
 
-            if (response.status < 500) {
-                return NextResponse.json({ success: true, status: 'Online' });
-            } else {
-                return NextResponse.json({ 
+            if (response.status >= 500) {
+                 return NextResponse.json({ 
                     success: false, 
                     status: 'Offline', 
                     error: `Server reported error: ${response.status}` 
                 });
             }
+
+            // If we ran a test code, validate the output
+            if (testCode && testCode.trim().length > 0) {
+                const result = await response.json();
+                if (!result.success && result.error) {
+                    return NextResponse.json({
+                        success: false,
+                        status: 'Offline',
+                        error: `Execution Failed: ${result.error}`
+                    });
+                }
+
+                // If admin provided expected output, strictly match it
+                if (testOutput && testOutput.trim().length > 0) {
+                    const actualOut = (result.output || '').trim();
+                    if (actualOut.includes(testOutput.trim())) {
+                        return NextResponse.json({ success: true, status: 'Online' });
+                    } else {
+                        return NextResponse.json({
+                            success: false,
+                            status: 'Offline',
+                            error: `Output Mismatch. Expected '${testOutput}' but got '${actualOut}'`
+                        });
+                    }
+                }
+            }
+
+            return NextResponse.json({ success: true, status: 'Online' });
+
         } catch (fetchError: any) {
             clearTimeout(timeoutId);
             const isTimeout = fetchError.name === 'AbortError';
             return NextResponse.json({ 
                 success: false, 
                 status: 'Offline', 
-                error: isTimeout ? 'Connection timed out after 5s' : 'Network unreachable'
+                error: isTimeout ? 'Connection timed out after 10s' : 'Network unreachable'
             });
         }
 
