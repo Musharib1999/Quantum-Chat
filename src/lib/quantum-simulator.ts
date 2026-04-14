@@ -4,6 +4,7 @@ const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL || "http://127.0.0.1:8
 const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL || "http://127.0.0.1:8002";
 const ORTOOLS_SERVICE_URL = process.env.ORTOOLS_SERVICE_URL || "http://127.0.0.1:8003";
 const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
+const DWAVE_API_KEY = process.env.DWAVE_API_KEY || API_SECRET;
 
 /**
  * Trims trailing slashes from a URL to prevent routing errors (e.g. //execute)
@@ -72,7 +73,7 @@ export async function executeDWaveAnnealer(code: string, overrideUrl?: string) {
         const response = await axios.post(url, {
             code: code
         }, {
-            headers: { 'X-API-Key': API_SECRET },
+            headers: { 'X-API-Key': DWAVE_API_KEY },
             signal: controller.signal
         });
         

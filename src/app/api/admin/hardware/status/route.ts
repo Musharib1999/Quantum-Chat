@@ -23,8 +23,18 @@ export async function POST(req: NextRequest) {
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 sec timeout for actual code execution
 
         try {
-            const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
-            const baseUrl = serviceUrl.replace(/\/+$/, '');
+            let baseUrl = serviceUrl.replace(/\/+$/, '');
+            
+            // Auto-prepend protocol if missing (common cause of "Network unreachable")
+            if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            // Authentication selection: Prefer provider-specific keys if configured
+            let API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
+            if (provider === 'dwave' && process.env.DWAVE_API_KEY) {
+                API_SECRET = process.env.DWAVE_API_KEY;
+            }
             
             let response;
             if (testCode && testCode.trim().length > 0) {

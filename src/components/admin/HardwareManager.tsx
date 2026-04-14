@@ -89,6 +89,11 @@ export default function HardwareManager() {
             });
             
             if (res?.data?.success) {
+                // Persistent status update: If the check passed, the node IS online.
+                // We update the DB so the dashboard label reflects this across sessions.
+                await updateHardware(hw.id, { ...hw, status: 'Online' });
+                await loadHardware(); // Refresh UI to show the new 'Online' badge
+                
                 alert(`✅ ${hw.name} is ONLINE.\nSuccessfully passed execution test at: ${hw.serviceUrl}`);
             } else if (res?.data?.status === 'Unauthorized') {
                 alert(`⚠️ ${hw.name} is UNAUTHORIZED.\n${res.data.error}\n\nAction: Ensure your API_SECRET_KEY matches the one on the backend simulator.`);
