@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL || "http://127.0.0.1:8001";
-const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL || "http://127.0.0.1:8002";
-const ORTOOLS_SERVICE_URL = process.env.ORTOOLS_SERVICE_URL || "http://127.0.0.1:8003";
-const API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
+const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL;
+const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL;
+const ORTOOLS_SERVICE_URL = process.env.ORTOOLS_SERVICE_URL;
+const API_SECRET = process.env.API_SECRET_KEY;
 const DWAVE_API_KEY = process.env.DWAVE_API_KEY || API_SECRET;
 
 /**

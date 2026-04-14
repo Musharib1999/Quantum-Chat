@@ -30,8 +30,11 @@ export async function POST(req: NextRequest) {
                 baseUrl = `https://${baseUrl}`;
             }
 
-            // Authentication selection: Prefer provider-specific keys if configured
-            let API_SECRET = process.env.API_SECRET_KEY || "dev_secret_key_123";
+            // Authentication selection: Prefer DWAVE_API_KEY or global API_SECRET_KEY
+            // We search for both to be resilient to different naming conventions on Railway/Vercel
+            let API_SECRET = process.env.DWAVE_API_KEY || process.env.API_SECRET_KEY || "dev_secret_key_123";
+            
+            // If provider is explicitly dwave, we strictly ensure we use the DWAVE_API_KEY if it exists
             if (provider === 'dwave' && process.env.DWAVE_API_KEY) {
                 API_SECRET = process.env.DWAVE_API_KEY;
             }
@@ -39,6 +42,7 @@ export async function POST(req: NextRequest) {
             let response;
             if (testCode && testCode.trim().length > 0) {
                 // Perform a robust dry-run execution check
+                console.log(`[Hardware Status] Running test execution at ${baseUrl}/execute`);
                 response = await fetch(`${baseUrl}/execute`, {
                     method: 'POST',
                     headers: { 'X-API-Key': API_SECRET, 'Content-Type': 'application/json' },
@@ -48,7 +52,8 @@ export async function POST(req: NextRequest) {
                 });
             } else {
                 // Fallback to basic ping if no test code is provided
-                response = await fetch(serviceUrl, {
+                console.log(`[Hardware Status] Pinging service at ${baseUrl}`);
+                response = await fetch(baseUrl, {
                     method: 'GET',
                     headers: { 'X-API-Key': API_SECRET },
                     signal: controller.signal,
@@ -60,19 +65,21 @@ export async function POST(req: NextRequest) {
 
             // Granular status interpretation
             if (response.status === 401) {
+                console.warn(`[Hardware Status] UNAUTHORIZED access to ${baseUrl}. Check API_SECRET_KEY.`);
                 return NextResponse.json({ 
                     success: false, 
                     status: 'Unauthorized', 
                     error: 'Authentication failed. Check your API_SECRET_KEY settings.' 
-                });
+                }, { status: 401 });
             }
 
             if (response.status >= 500) {
+                 console.error(`[Hardware Status] Backend error at ${baseUrl}: ${response.status}`);
                  return NextResponse.json({ 
                     success: false, 
                     status: 'Offline', 
                     error: `Server reported error: ${response.status}` 
-                });
+                }, { status: 503 });
             }
 
             // If we ran a test code, validate the output

@@ -1,5 +1,6 @@
 "use server";
 
+import { serializeData } from "@/lib/utils";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = "gemini-2.0-flash-lite";
@@ -52,8 +53,8 @@ interface IndustryPipelineDeps {
     Shot: any;
 }
 
-const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL || "http://127.0.0.1:8001";
-const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL || "http://127.0.0.1:8002";
+const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL;
+const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL;
 
 // --- Robustness Helpers ---
 
@@ -1288,7 +1289,7 @@ STRICT RULES:
             };
         }
 
-        return { 
+        return serializeData({ 
             text, 
             chartData: dynamicChartData || extractedPlotlyChart, 
             assignmentsTable: finalAssignmentsTable, 
@@ -1305,10 +1306,10 @@ STRICT RULES:
                 combinatorialSize: combinatorialSizeStr
             },
             outputTables: blueprint?.outputTables || []
-        };
+        });
     } catch (e: any) {
         console.error("Critical error in interpretQuantumResults:", e);
-        return { text: "Analysis failed: " + e.message, assignmentsTable: [], qubitCount: 0 };
+        return serializeData({ text: "Analysis failed: " + e.message, assignmentsTable: [], qubitCount: 0 });
     }
 }
 
@@ -1352,9 +1353,9 @@ export async function savePipelineExperiment(data: {
             outputTables: data.outputTables || [],
             timestamp: new Date()
         });
-        return { success: true };
+        return serializeData({ success: true });
     } catch (e: any) {
         console.error("Failed to save experiment history:", e);
-        return { success: false, error: e.message };
+        return serializeData({ success: false, error: e.message });
     }
 }

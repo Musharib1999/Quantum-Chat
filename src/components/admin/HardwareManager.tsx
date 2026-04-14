@@ -256,6 +256,20 @@ export default function HardwareManager() {
                                     value={hw.name}
                                     onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, name: e.target.value } : h))}
                                 />
+                                <div className="space-y-1">
+                                    <label className="text-[9px] text-slate-400 uppercase font-bold">Provider ecosystem</label>
+                                    <select
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                                        value={hw.provider}
+                                        onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, provider: e.target.value as any } : h))}
+                                    >
+                                        <option value="ibm">IBM Quantum</option>
+                                        <option value="ionq">IonQ</option>
+                                        <option value="rigetti">Rigetti</option>
+                                        <option value="dwave">D-Wave</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
                                 <div className="flex gap-2">
                                     <div className="flex-1 space-y-1">
                                         <label className="text-[9px] text-slate-400 uppercase font-bold">Qubits</label>
