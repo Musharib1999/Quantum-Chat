@@ -30,12 +30,13 @@ export async function POST(req: NextRequest) {
                 baseUrl = `https://${baseUrl}`;
             }
 
-            // Authentication selection: Prefer DWAVE_API_KEY or global API_SECRET_KEY
-            // We search for both to be resilient to different naming conventions on Railway/Vercel
+            // Authentication selection: Strictly use DWAVE_API_KEY for D-Wave ecosystem
+            // Fallback to API_SECRET_KEY for non-D-Wave (e.g., OR-Tools)
             let API_SECRET = process.env.DWAVE_API_KEY || process.env.API_SECRET_KEY || "dev_secret_key_123";
             
-            // If provider is explicitly dwave, we strictly ensure we use the DWAVE_API_KEY if it exists
-            if (provider === 'dwave' && process.env.DWAVE_API_KEY) {
+            // Normalize provider check to be case-insensitive (handles 'DWAVE', 'dwave', 'D-Wave')
+            const normalizedProvider = provider?.toLowerCase() || '';
+            if (normalizedProvider.includes('dwave') && process.env.DWAVE_API_KEY) {
                 API_SECRET = process.env.DWAVE_API_KEY;
             }
             

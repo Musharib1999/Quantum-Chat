@@ -4,7 +4,7 @@ const QISKIT_SERVICE_URL = process.env.QISKIT_SERVICE_URL;
 const DWAVE_SERVICE_URL = process.env.DWAVE_SERVICE_URL;
 const ORTOOLS_SERVICE_URL = process.env.ORTOOLS_SERVICE_URL;
 const API_SECRET = process.env.API_SECRET_KEY;
-const DWAVE_API_KEY = process.env.DWAVE_API_KEY || API_SECRET;
+const DWAVE_API_KEY = process.env.DWAVE_API_KEY || API_SECRET || "dev_secret_key_123";
 
 /**
  * Trims trailing slashes from a URL to prevent routing errors (e.g. //execute)
