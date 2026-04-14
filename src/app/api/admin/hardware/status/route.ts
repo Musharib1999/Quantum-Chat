@@ -32,13 +32,16 @@ export async function POST(req: NextRequest) {
 
             // Authentication selection: Strictly use DWAVE_API_KEY for D-Wave ecosystem
             // Fallback to API_SECRET_KEY for non-D-Wave (e.g., OR-Tools)
-            let API_SECRET = process.env.DWAVE_API_KEY || process.env.API_SECRET_KEY || "dev_secret_key_123";
+            // Sanitization: Always trim to prevent whitespace-related mismatches
+            let API_SECRET = (process.env.DWAVE_API_KEY || process.env.API_SECRET_KEY || "dev_secret_key_123").trim();
             
             // Normalize provider check to be case-insensitive (handles 'DWAVE', 'dwave', 'D-Wave')
             const normalizedProvider = provider?.toLowerCase() || '';
             if (normalizedProvider.includes('dwave') && process.env.DWAVE_API_KEY) {
-                API_SECRET = process.env.DWAVE_API_KEY;
+                API_SECRET = process.env.DWAVE_API_KEY.trim();
             }
+
+            console.log(`[Hardware Status] Using API Key with length: ${API_SECRET.length} for provider: ${provider}`);
             
             let response;
             if (testCode && testCode.trim().length > 0) {
