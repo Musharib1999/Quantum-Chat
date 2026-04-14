@@ -62,3 +62,8 @@ fix_avatar.py
 !eslint.config.mjs
 !postcss.config.mjs
 !*.d.ts
+
+# Repository Index
+REPOSITORIES.md
+scratch/
+
