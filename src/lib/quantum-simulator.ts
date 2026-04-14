@@ -18,7 +18,7 @@ export async function executeQuantumCircuit(circuitCode: string, overrideUrl?: s
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 115000); // 1.9m explicit timeout for complex circuits
     try {
-        const baseUrl = sanitizeUrl(overrideUrl || QISKIT_SERVICE_URL);
+        const baseUrl = sanitizeUrl(overrideUrl || QISKIT_SERVICE_URL || '');
         const url = `${baseUrl}/execute`;
         const startTime = Date.now();
 
@@ -64,7 +64,7 @@ export async function executeDWaveAnnealer(code: string, overrideUrl?: string) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 115000); // 1.9m timeout
     try {
-        const baseUrl = sanitizeUrl(overrideUrl || DWAVE_SERVICE_URL);
+        const baseUrl = sanitizeUrl(overrideUrl || DWAVE_SERVICE_URL || '');
         const url = `${baseUrl}/execute`;
         const startTime = Date.now();
 
@@ -109,7 +109,7 @@ export async function executeORTools(code: string, overrideUrl?: string) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 115000); // 1.9m timeout
     try {
-        const baseUrl = sanitizeUrl(overrideUrl || ORTOOLS_SERVICE_URL);
+        const baseUrl = sanitizeUrl(overrideUrl || ORTOOLS_SERVICE_URL || '');
         const url = `${baseUrl}/execute`;
         const startTime = Date.now();
 
