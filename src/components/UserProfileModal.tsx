@@ -78,14 +78,14 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             </div>
                             <div className="flex flex-col min-w-0">
                                 <span className="text-sm font-semibold text-foreground truncate">
-                                    {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.name || 'Quantum User'}
+                                    {user?.role === 'builder' ? 'Quantum Builder' : (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.name || 'Quantum User')}
                                 </span>
                                 <span className="text-[11px] text-muted-foreground truncate">{user.email}</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-green-500/5 border border-green-500/10 w-fit">
-                            <Zap size={12} className="text-green-500" />
-                            <span className="text-[11px] font-bold text-green-600 uppercase tracking-wider">{user.plan || 'PRO'} PLAN</span>
+                        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border w-fit ${user.role === 'builder' ? 'bg-[#3066bb]/5 border-[#3066bb]/10' : 'bg-green-500/5 border-green-500/10'}`}>
+                            <Zap size={12} className={user.role === 'builder' ? 'text-[#3066bb]' : 'text-green-500'} />
+                            <span className={`text-[11px] font-bold uppercase tracking-wider ${user.role === 'builder' ? 'text-[#3066bb]' : 'text-green-600'}`}>{user.role === 'builder' ? 'BUILDER' : (user.plan || 'PRO')} PLAN</span>
                         </div>
                     </div>
                 ) : (

@@ -20,7 +20,10 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
         }
 
         const hardware = blueprint.hardware || 'Universal';
-        const template = blueprint.codeTemplates?.find((t: any) => t.hardware === hardware)?.code;
+        const normalize = (s: string) => s.toLowerCase().replace(/[-_\s]/g, '');
+        const template = blueprint.codeTemplates?.find((t: any) => 
+            normalize(t.hardware) === normalize(hardware)
+        )?.code;
         
         if (!template) {
             throw new Error(`No code template found for hardware: ${hardware}`);
@@ -48,6 +51,17 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
             provider = 'dwave';
         } else if (hardware.toLowerCase().includes('google') || hardware.toLowerCase().includes('ortools')) {
             provider = 'ortools';
+        }
+
+        // For D-Wave: strip any pre-existing import lines that the executor will inject automatically.
+        // The executor's main.py prepends didom/neal/numpy imports using the absolute venv path.
+        // Duplicate imports confuse the subprocess and cause ModuleNotFoundError.
+        if (provider === 'dwave') {
+            const importBlacklist = ['import dimod', 'from dimod import', 'import neal', 'from neal import', 'import numpy', 'from numpy import'];
+            executableCode = executableCode
+                .split('\n')
+                .filter((line: string) => !importBlacklist.some(bad => line.trim().startsWith(bad)))
+                .join('\n');
         }
 
         let executionResult: any;

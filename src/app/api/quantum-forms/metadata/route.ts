@@ -13,23 +13,33 @@ export async function GET() {
         const allActiveForms = await QuantumForm.find({ 
             active: true,
             status: { $ne: 'pending_approval' } 
-        }, 'industry service problem hardware');
+        }, 'industry service problem hardware codeTemplates');
 
         // 2. Derive unique industries and services only from these active problem records
         const uniqueIndustries = [...new Set(allActiveForms.map(f => f.industry))].sort();
         const uniqueServices = [...new Set(allActiveForms.map(f => f.service))].sort();
 
         // 3. Build the problem mapping
-        const problemMapping = allActiveForms.reduce((acc: any, form) => {
-            const { industry, problem, service, hardware } = form;
+        const problemMapping = allActiveForms.reduce((acc: any, form: any) => {
+            const { industry, problem, service, hardware, codeTemplates } = form;
 
             if (!acc[industry]) acc[industry] = {};
             if (!acc[industry][problem]) acc[industry][problem] = {};
             if (!acc[industry][problem][service]) acc[industry][problem][service] = [];
 
-            if (hardware && !acc[industry][problem][service].includes(hardware)) {
-                acc[industry][problem][service].push(hardware);
+            // If hardware is 'Universal', expose the specific templates as options
+            if (hardware === 'Universal' && codeTemplates && codeTemplates.length > 0) {
+                codeTemplates.forEach((template: any) => {
+                    if (template.hardware && !acc[industry][problem][service].includes(template.hardware)) {
+                        acc[industry][problem][service].push(template.hardware);
+                    }
+                });
+            } else if (hardware && hardware !== 'Universal') {
+                if (!acc[industry][problem][service].includes(hardware)) {
+                    acc[industry][problem][service].push(hardware);
+                }
             }
+            
             return acc;
         }, {});
 

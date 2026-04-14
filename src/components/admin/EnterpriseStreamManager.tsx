@@ -260,77 +260,77 @@ export default function EnterpriseStreamManager() {
             )}
 
             {viewMode === 'visualizer' && (
-                <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex flex-col h-[600px]">
-                    <div className="bg-slate-950 p-4 border-b border-slate-800 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <div className="flex gap-1.5">
-                                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
-                                <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
-                                <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                <div className="bg-white/80 backdrop-blur-2xl rounded-2xl border border-slate-200 overflow-hidden shadow-xl flex flex-col h-[600px] animate-in fade-in duration-500">
+                    <div className="bg-slate-50/80 p-5 border-b border-slate-200 flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <div className="flex gap-1.5 opacity-60">
+                                <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
+                                <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+                                <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
                             </div>
-                            <span className="text-slate-400 text-xs font-mono font-bold tracking-widest pl-2 border-l border-slate-800">PIPELINE TELEMETRY</span>
+                            <span className="text-[#3066bb] text-xs font-bold tracking-[0.2em] pl-4 border-l border-slate-200 uppercase">Pipeline Telemetry</span>
                         </div>
                         <button 
                             onClick={() => setIsPolling(!isPolling)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-bold transition-colors ${isPolling ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${isPolling ? 'bg-white text-red-500 border-red-100 hover:bg-red-50' : 'bg-[#3066bb] text-white border-[#3066bb] hover:opacity-90'}`}
                         >
                             {isPolling ? <><Square size={12} fill="currentColor" /> STOP STREAM</> : <><Play size={12} fill="currentColor" /> LIVE MONITOR</>}
                         </button>
                     </div>
 
-                    <div className="flex-1 grid grid-cols-3 divide-x divide-slate-800 bg-[#0A0F1A]">
+                    <div className="flex-1 grid grid-cols-3 divide-x divide-slate-100 bg-white/40">
                         {/* INBOUND STREAM */}
-                        <div className="col-span-1 p-4 overflow-y-auto flex flex-col">
-                            <h4 className="text-[#3066bb] flex items-center gap-2 font-mono text-xs font-bold mb-4 tracking-wider"><Database size={14} /> INBOUND LOAD</h4>
-                            <div className="flex-1 space-y-3 font-mono text-[10px]">
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-slate-50/30">
+                            <h4 className="text-slate-900 flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Database size={14} className="text-[#3066bb]" /> Inbound Load</h4>
+                            <div className="flex-1 space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
-                                    <div key={i} className={`p-3 rounded border border-slate-800 ${i === 0 ? 'bg-slate-800/50 border-[#3066bb]/30' : 'bg-transparent opacity-50'}`}>
-                                        <div className="text-slate-500 mb-2 truncate">[{new Date(shot.timestamp).toISOString()}]</div>
-                                        <div className="text-green-400 whitespace-pre-wrap break-words">{JSON.stringify(shot.parameters || {}, null, 2)}</div>
+                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[#3066bb]/30 shadow-md ring-1 ring-[#3066bb]/5' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                        <div className="text-slate-400 mb-2 truncate font-semibold">[{new Date(shot.timestamp).toISOString()}]</div>
+                                        <div className="text-slate-700 whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.parameters || {}, null, 2)}</div>
                                     </div>
                                 ))}
-                                {liveShots.length === 0 && <div className="text-slate-700 animate-pulse">Awaiting WebSocket payloads...</div>}
+                                {liveShots.length === 0 && <div className="text-slate-300 font-medium italic animate-pulse">Awaiting WebSocket payloads...</div>}
                             </div>
                         </div>
 
                         {/* QUANTUM EMBEDDING CORE */}
-                        <div className="col-span-1 p-4 overflow-y-auto flex flex-col bg-slate-900/50">
-                            <h4 className="text-purple-400 flex items-center gap-2 font-mono text-xs font-bold mb-4 tracking-wider"><Workflow size={14} /> QUANTUM CORE</h4>
-                            <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white">
+                            <h4 className="text-slate-900 flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Workflow size={14} className="text-purple-500" /> Quantum Core</h4>
+                            <div className="flex-1 flex flex-col items-center justify-center space-y-8">
                                 {isPolling ? (
                                     <>
-                                        <div className="relative flex items-center justify-center w-32 h-32">
-                                            <div className="absolute inset-0 rounded-full border border-purple-500/30 animate-[spin_4s_linear_infinite]"></div>
-                                            <div className="absolute inset-2 rounded-full border border-b-transparent border-[#3066bb] animate-[spin_2s_linear_infinite_reverse]"></div>
-                                            <div className="absolute inset-4 rounded-full border border-t-transparent border-cyan-400 animate-[spin_3s_linear_infinite]"></div>
-                                            <div className="text-center font-mono text-[10px] text-slate-300 tracking-widest z-10">EMBEDDING<br/>PAYLOAD</div>
+                                        <div className="relative flex items-center justify-center w-40 h-40">
+                                            <div className="absolute inset-0 rounded-full border-2 border-slate-100 border-t-[#3066bb]/20 animate-[spin_6s_linear_infinite]"></div>
+                                            <div className="absolute inset-3 rounded-full border-2 border-slate-100 border-b-purple-500/40 animate-[spin_4s_linear_infinite_reverse]"></div>
+                                            <div className="absolute inset-6 rounded-full border-2 border-slate-100 border-l-[#3066bb] animate-[spin_3s_linear_infinite]"></div>
+                                            <div className="text-center font-bold text-[10px] text-slate-800 tracking-[0.2em] z-10 drop-shadow-sm uppercase">Embedding<br/>Payload</div>
                                         </div>
-                                        <div className="text-center space-y-1">
-                                            <div className="text-xs font-mono text-green-400 flex items-center gap-1.5"><CheckCircle size={12} /> Schema Verified</div>
-                                            <div className="text-xs font-mono text-slate-400 flex items-center gap-1.5"><Activity size={12} /> Queue Depth: 0</div>
-                                            <div className="text-[10px] font-mono text-slate-500 mt-2">Active Simulator: QISKIT 1.3.1</div>
+                                        <div className="text-center space-y-2">
+                                            <div className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100"><CheckCircle size={12} /> Schema Verified</div>
+                                            <div className="text-xs font-semibold text-slate-400 flex items-center justify-center gap-2"><Activity size={12} className="text-[#3066bb]" /> Queue Depth: 0</div>
+                                            <div className="text-[10px] font-bold text-slate-300 mt-4 tracking-widest uppercase">Active Simulator: QISKIT 1.3.1</div>
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="text-slate-700 font-mono text-[10px] animate-pulse">STREAM PAUSED...</div>
+                                    <div className="text-slate-200 font-bold text-[10px] tracking-widest animate-pulse">STREAM PAUSED...</div>
                                 )}
                             </div>
                         </div>
 
                         {/* OUTBOUND STREAM */}
-                        <div className="col-span-1 p-4 overflow-y-auto flex flex-col">
-                            <h4 className="text-cyan-400 flex items-center gap-2 font-mono text-xs font-bold mb-4 tracking-wider"><Activity size={14} /> WEBHOK OUT</h4>
-                            <div className="flex-1 space-y-3 font-mono text-[10px]">
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-slate-50/30">
+                            <h4 className="text-slate-900 flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Activity size={14} className="text-emerald-500" /> Webhook Out</h4>
+                            <div className="flex-1 space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
-                                    <div key={i} className={`p-3 rounded border border-slate-800 ${i === 0 ? 'bg-slate-800/50 border-cyan-500/30' : 'bg-transparent opacity-50'}`}>
-                                        <div className="text-slate-500 mb-2 truncate flex justify-between">
+                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                        <div className="text-slate-400 mb-2 truncate flex justify-between font-semibold">
                                             <span>Target: POST 200 OK</span>
-                                            <span className="text-cyan-600">{shot.hardware}</span>
+                                            <span className="text-[#3066bb]">{shot.hardware}</span>
                                         </div>
-                                        <div className="text-slate-300 whitespace-pre-wrap break-words">{JSON.stringify(shot.results || { status: 'processed' }, null, 2)}</div>
+                                        <div className="text-slate-600 whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.results || { status: 'processed' }, null, 2)}</div>
                                     </div>
                                 ))}
-                                {liveShots.length === 0 && <div className="text-slate-700 animate-pulse">No completed shots to push...</div>}
+                                {liveShots.length === 0 && <div className="text-slate-300 font-medium italic animate-pulse">No completed shots to push...</div>}
                             </div>
                         </div>
                     </div>

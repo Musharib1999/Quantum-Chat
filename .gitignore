@@ -43,6 +43,11 @@ next-env.d.ts
 # build logs
 build_log.txt
 1Check
+*.log
+pb_restart.log
+dev_server.log
+next.log
+blazar.log
 
 # helper scripts
 check_*.py

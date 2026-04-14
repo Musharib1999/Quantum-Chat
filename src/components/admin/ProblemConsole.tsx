@@ -66,7 +66,7 @@ export default function ProblemConsole() {
     const [jsonFields, setJsonFields] = useState('[]');
 
     // Tab 2: Compute State
-    const [codeTemplates, setCodeTemplates] = useState<{ hardware: string; code: string }[]>([]);
+    const [codeTemplates, setCodeTemplates] = useState<{ hardware: string; code: string; aiEnabled: boolean; llmModelId?: string }[]>([]);
     const [batchingEnabled, setBatchingEnabled] = useState(false);
     const [maxQubitsPerBatch, setMaxQubitsPerBatch] = useState(64);
     const [qubitFormula, setQubitFormula] = useState('');
@@ -97,6 +97,7 @@ export default function ProblemConsole() {
     const [existingForms, setExistingForms] = useState<IQuantumForm[]>([]);
     const [metadata, setMetadata] = useState<{ industries: any[], services: any[], problemMapping: any }>({ industries: [], services: [], problemMapping: {} });
     const [hardwareList, setHardwareList] = useState<any[]>([]);
+    const [llmModels, setLlmModels] = useState<any[]>([]);
 
     useEffect(() => {
         fetchInitialData();
@@ -104,14 +105,16 @@ export default function ProblemConsole() {
 
     const fetchInitialData = async () => {
         try {
-            const [formsRes, metaRes, hwRes] = await Promise.all([
+            const [formsRes, metaRes, hwRes, llmRes] = await Promise.all([
                 axios.get('/api/quantum-forms'),
                 axios.get('/api/quantum-forms/metadata'),
-                axios.get('/api/hardware')
+                axios.get('/api/hardware'),
+                axios.get('/api/admin/llm-settings')
             ]);
             setExistingForms(formsRes.data);
             setMetadata(metaRes.data);
             setHardwareList(hwRes.data);
+            setLlmModels(llmRes.data);
         } catch (error: any) {
             console.error("Failed to fetch admin data", error);
             setStatus("Error: " + error.message);
@@ -128,9 +131,12 @@ export default function ProblemConsole() {
         try {
             // Find the template for the current hardware, or fallback to Universal
             const template = codeTemplates.find(t => t.hardware === hardware) || codeTemplates[0];
+            
             const res = await axios.post('/api/admin/quantum-dry-run', {
-                code: template.code,
+                code: template.aiEnabled ? "" : template.code,
                 hardware: template.hardware,
+                aiEnabled: template.aiEnabled,
+                llmModelId: template.llmModelId,
                 executionEnvironment // Pass the specific environment toggle
             });
             setDryRunResult(res.data.rawResult);
@@ -175,6 +181,10 @@ export default function ProblemConsole() {
             if (editorMode === 'json') {
                 try {
                     const parsed = JSON.parse(jsonFields);
+                    // Clear both to start fresh from JSON source
+                    payload.fields = [];
+                    payload.sections = [];
+                    
                     if (Array.isArray(parsed)) {
                         payload.fields = parsed;
                     } else if (typeof parsed === 'object' && parsed !== null) {
@@ -184,6 +194,10 @@ export default function ProblemConsole() {
                 } catch (e: any) {
                     throw new Error("Invalid JSON: " + e.message);
                 }
+            } else {
+                // In visual mode, we only edit flat fields
+                payload.fields = fields;
+                payload.sections = []; // Reset sections if switching to flat mode
             }
 
             await axios.post('/api/quantum-forms', payload);
@@ -226,28 +240,36 @@ export default function ProblemConsole() {
         setProblem(form.problem || '');
         setHardware(form.hardware || 'Universal');
         setDescription(form.description || '');
-        setFields(form.fields || []);
-        setCodeTemplates(form.codeTemplates || []);
-        setBatchingEnabled(form.batchingEnabled || false);
-        setMaxQubitsPerBatch(form.maxQubitsPerBatch || 64);
-        setQubitFormula(form.qubitFormula || '');
-        setBatchKey(form.batchKey || '');
-        setOutputMapping(form.outputMapping || []);
         
-        if (form.outputTables && form.outputTables.length > 0) {
-            setOutputTables(form.outputTables);
-        } else if (form.outputMapping && form.outputMapping.length > 0) {
-            setOutputTables([{ name: 'Standard Results', mapping: form.outputMapping }]);
+        // 1. Handle Parameter Loading (Fields vs Sections)
+        const hasSections = form.sections && form.sections.length > 0;
+        const hasFields = form.fields && form.fields.length > 0;
+
+        if (hasSections) {
+            // Priority: Load sections into JSON mode to preserve structure
+            setFields([]); 
+            setJsonFields(JSON.stringify({ sections: form.sections }, null, 2));
+            setEditorMode('json');
         } else {
-            setOutputTables([]);
+            // Standard: Load flat fields
+            setFields(form.fields || []);
+            setJsonFields(JSON.stringify(form.fields || [], null, 2));
+            setEditorMode('visual');
         }
 
-        setChartConfig(form.chartConfig || []);
-        setInterpretationPrompt(form.interpretationPrompt || '');
-        setExecutionEnvironment(form.executionEnvironment || 'python-qiskit');
-        setJsonFields(JSON.stringify(form.fields || [], null, 2));
-        setEditorMode('visual');
-        setEditingId(form._id || null); // Set the ID of the form being edited
+        // 2. Handle Logic Templates
+        let templates = form.codeTemplates || [];
+        if (templates.length === 0 && (form as any).aiEnabled) {
+            templates = [{
+                hardware: 'Universal',
+                code: '',
+                aiEnabled: true,
+                llmModelId: (form as any).llmModelId
+            }];
+        }
+        setCodeTemplates(templates);
+        
+        setEditingId(form._id || null);
         setView('editor');
         setActiveTab('input');
     };
@@ -259,7 +281,6 @@ export default function ProblemConsole() {
         setProblem(''); setHardware('Universal');
         setDescription(''); setFields([]); setJsonFields('[]'); setCodeTemplates([]);
         setBatchingEnabled(false); setMaxQubitsPerBatch(64); setQubitFormula('');
-        setBatchKey(''); setOutputMapping([]); setOutputTables([]); setChartConfig([]);
         setInterpretationPrompt(''); setExecutionEnvironment('python-qiskit');
         setView('editor'); setActiveTab('input');
     };
@@ -289,11 +310,12 @@ export default function ProblemConsole() {
                         onChange={e => setHardware(e.target.value)} 
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold text-[#3066bb]"
                     >
-                        <option value="Universal">Universal (All hardware)</option>
+                        <option value="Universal">Universal (Multi-Solver Blueprint)</option>
                         {hardwareList.map(h => (
                             <option key={h.id} value={h.name}>{h.name}</option>
                         ))}
                     </select>
+                    <p className="text-[10px] text-slate-400 mt-1 italic">Use 'Universal' to map multiple solvers (D-Wave, Qiskit, etc.) in the Backend Logic tab.</p>
                 </div>
             </div>
 
@@ -361,6 +383,8 @@ export default function ProblemConsole() {
                 </div>
             </div>
 
+
+
             {batchingEnabled && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2">
                     <div className="space-y-1.5">
@@ -389,20 +413,85 @@ export default function ProblemConsole() {
                         >
                             {dryRunning ? 'Executing...' : 'Dry run (Test)'}
                         </button>
-                        <button onClick={() => setCodeTemplates([...codeTemplates, { hardware: 'Universal', code: '' }])} className="text-xs font-bold text-[#3066bb] hover:underline">Add hardware override</button>
+                        <button onClick={() => setCodeTemplates([...codeTemplates, { hardware: 'Universal', code: '', aiEnabled: false, llmModelId: '' }])} className="text-xs font-bold text-[#3066bb] hover:underline">Add hardware override</button>
                     </div>
                 </div>
                 <div className="space-y-4">
                     {codeTemplates.map((t, i) => (
-                        <div key={i} className="bg-slate-900 p-6 rounded-2xl space-y-4 relative group border border-slate-800">
+                        <div key={i} className="bg-white p-8 rounded-3xl space-y-6 relative group border border-slate-200 shadow-xl shadow-slate-200/50 transition-all hover:border-[#3066bb]/20">
                             <div className="flex items-center justify-between">
-                                <input value={t.hardware} onChange={e => { const up = [...codeTemplates]; up[i].hardware = e.target.value; setCodeTemplates(up); }} className="bg-transparent text-slate-400 font-bold text-[10px] uppercase outline-none" />
-                                <button onClick={() => setCodeTemplates(codeTemplates.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-500 text-xs font-bold">Remove</button>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Target Hardware</span>
+                                    <select 
+                                        value={t.hardware} 
+                                        onChange={e => { const up = [...codeTemplates]; up[i].hardware = e.target.value; setCodeTemplates(up); }} 
+                                        className="bg-transparent text-[#3066bb] font-bold text-xs uppercase outline-none cursor-pointer hover:text-slate-900 transition-colors"
+                                    >
+                                        <option value="Universal" className="bg-white text-slate-900">Universal Simulator</option>
+                                        {hardwareList.map(h => (
+                                            <option key={h.id} value={h.name} className="bg-white text-slate-900">{h.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 italic transition-all group-hover:bg-white group-hover:shadow-sm">
+                                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">AI Intelligence</span>
+                                        <button 
+                                            onClick={() => { const up = [...codeTemplates]; up[i].aiEnabled = !up[i].aiEnabled; setCodeTemplates(up); }} 
+                                            className={`w-9 h-5 rounded-full relative transition-all ${t.aiEnabled ? 'bg-[#3066bb]' : 'bg-slate-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${t.aiEnabled ? 'left-5' : 'left-1'}`} />
+                                        </button>
+                                    </div>
+                                    <button onClick={() => setCodeTemplates(codeTemplates.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-500 text-xs font-bold transition-colors p-2 hover:bg-red-50 rounded-lg">
+                                        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                </div>
                             </div>
-                            <textarea value={t.code} onChange={e => { const up = [...codeTemplates]; up[i].code = e.target.value; setCodeTemplates(up); }} className="w-full h-48 bg-transparent text-green-400 font-mono text-xs outline-none border-t border-slate-800 pt-4" placeholder="# write qiskit code here..." />
+                            
+                            {t.aiEnabled ? (
+                                <div className="bg-[#3066bb]/5 p-8 rounded-2xl space-y-6 border border-[#3066bb]/10 relative overflow-hidden group/ai">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#3066bb]/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/ai:bg-[#3066bb]/10 transition-all duration-500" />
+                                    <div className="flex items-center gap-5 relative z-10">
+                                        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#3066bb] shadow-md border border-[#3066bb]/5">
+                                            <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                        </div>
+                                        <div className="flex-1 space-y-1">
+                                            <div className="text-sm font-bold text-slate-900">Dynamic Intelligence Active</div>
+                                            <div className="text-[11px] text-slate-500 font-medium">Problem logic will be generated at runtime using advanced heuristic mapping for {t.hardware}.</div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 relative z-10">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Generator Model</label>
+                                        <select 
+                                            value={t.llmModelId}
+                                            onChange={e => { const up = [...codeTemplates]; up[i].llmModelId = e.target.value; setCodeTemplates(up); }}
+                                            className="w-full p-4 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:border-[#3066bb] shadow-sm transition-all focus:ring-4 focus:ring-[#3066bb]/5"
+                                        >
+                                            <option value="">System Default Model</option>
+                                            {llmModels.map(m => (
+                                                <option key={m._id} value={m._id} className="bg-white">{m.name} ({m.activeProvider})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hand-written template</label>
+                                        <span className="text-[9px] text-blue-400 font-medium italic">Supports template literals: {"{{parameters.key}}"}</span>
+                                    </div>
+                                    <textarea 
+                                        value={t.code} 
+                                        onChange={e => { const up = [...codeTemplates]; up[i].code = e.target.value; setCodeTemplates(up); }} 
+                                        placeholder="# write qiskit code here..." 
+                                        className="w-full h-80 p-6 bg-white border border-slate-200 rounded-xl text-[11px] font-mono text-slate-900 placeholder:text-slate-300 focus:border-[#3066bb] outline-none shadow-sm" 
+                                    />
+                                </div>
+                            )}
                         </div>
                     ))}
-                    {codeTemplates.length === 0 && <div className="text-center py-12 border border-dashed border-slate-200 rounded-2xl text-[10px] text-red-400 font-bold uppercase tracking-wider">Algorithm template required. LLM Generation is disabled for stability.</div>}
+                    {codeTemplates.length === 0 && <div className="text-center py-12 border border-dashed border-slate-200 rounded-2xl text-[10px] text-red-400 font-bold uppercase tracking-wider">Algorithm template or AI mapping required.</div>}
                 </div>
             </div>
         </div>
@@ -614,7 +703,11 @@ export default function ProblemConsole() {
                                     {form.active && <span className="text-[10px] text-green-600 font-bold uppercase">Active</span>}
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1">{form.problem}</h3>
-                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">{form.service} • {form.hardware}</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">
+                                    {form.service} • {form.hardware === 'Universal' && form.codeTemplates?.length 
+                                        ? `Universal (${form.codeTemplates.map(t => t.hardware).join(', ')})` 
+                                        : form.hardware}
+                                </div>
                                 <div className="flex flex-col gap-1 mb-4">
                                     <span className="text-[9px] font-mono text-slate-400">ID: {form._id?.substring(form._id.length - 8)}</span>
                                     <span className="text-[9px] text-slate-400 italic">Created: {form.createdAt ? new Date(form.createdAt).toLocaleString() : 'N/A'}</span>
@@ -653,17 +746,47 @@ export default function ProblemConsole() {
                 </div>
             ) : (
                 <div className="flex flex-col h-full animate-in fade-in duration-300">
-                    <div className="flex items-center justify-between pb-6 border-b border-slate-100 sticky top-0 bg-white z-20">
-                        <div className="flex items-center gap-6">
-                            <button onClick={() => setView('overview')} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all font-bold text-sm">Cancel</button>
-                            <div>
-                                <h1 className="text-lg font-bold text-slate-900">{problem || 'Untitled project'}</h1>
-                                <div className="text-[10px] font-bold text-[#3066bb] uppercase tracking-widest">{industry} • {service}</div>
+                    <div className="flex items-center justify-between px-10 py-8 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-xl z-30">
+                        <div className="flex items-center gap-8">
+                            <button 
+                                onClick={() => setView('overview')} 
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all duration-300 border border-slate-100 group"
+                                title="Return to Overview"
+                            >
+                                <svg viewBox="0 0 24 24" className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                            <div className="h-8 w-px bg-slate-100 mx-2" />
+                            <div className="flex flex-col gap-0.5">
+                                <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-none">{problem || 'Untitled Project'}</h1>
+                                {(industry || service) && (
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                        {industry && <span className="text-[10px] font-bold text-[#3066bb] tracking-widest uppercase">{industry}</span>}
+                                        {industry && service && <span className="w-1 h-1 rounded-full bg-slate-200" />}
+                                        {service && <span className="text-[10px] font-semibold text-slate-400 tracking-wide">{service}</span>}
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <div className="flex gap-4">
-                            <button onClick={handleSave} disabled={loading || !industry || !service || !problem} className="bg-[#3066bb] text-white px-8 py-2.5 rounded-xl font-bold text-xs hover:bg-[#255299] transition-all disabled:opacity-50">
-                                {loading ? 'Saving...' : 'Deploy blueprint'}
+                        <div className="flex gap-4 items-center">
+                            <button 
+                                onClick={handleSave} 
+                                disabled={loading || !industry || !service || !problem} 
+                                className="relative overflow-hidden group bg-[#3066bb] text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all hover:shadow-2xl hover:shadow-[#3066bb]/40 active:scale-[0.98] disabled:opacity-50 disabled:grayscale"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#3066bb] to-[#1e448a] opacity-100 group-hover:opacity-90 transition-opacity" />
+                                <div className="flex items-center gap-3 relative z-10">
+                                    {loading ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <span>Syncing Blueprint...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg viewBox="0 0 24 24" className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7" /></svg>
+                                            <span>Deploy blueprint</span>
+                                        </>
+                                    )}
+                                </div>
                             </button>
                         </div>
                     </div>

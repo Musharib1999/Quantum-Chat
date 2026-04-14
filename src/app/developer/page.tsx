@@ -5,6 +5,8 @@ import DevNavbar from '@/components/developer/DevNavbar';
 import CodeEditor from '@/components/developer/CodeEditor';
 import OutputPanel from '@/components/developer/OutputPanel';
 import { DEV_TEMPLATES } from '@/lib/developer/templates';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface Hardware {
     id: string;
@@ -15,10 +17,30 @@ interface Hardware {
 }
 
 export default function DeveloperConsole() {
+    const { user, isInitializing } = useAuth();
+    const router = useRouter();
     const [selectedHardware, setSelectedHardware] = useState<Hardware | null>(null);
     const [code, setCode] = useState(DEV_TEMPLATES.qiskit);
     const [output, setOutput] = useState<any>(null);
     const [isExecuting, setIsExecuting] = useState(false);
+
+    // Identity check - only admin and builder can access
+    useEffect(() => {
+        if (!isInitializing && (!user || (user.role !== 'admin' && user.role !== 'builder'))) {
+            router.push('/');
+        }
+    }, [user, isInitializing, router]);
+
+    if (isInitializing || !user || (user.role !== 'admin' && user.role !== 'builder')) {
+        return (
+            <div className="h-screen w-full flex items-center justify-center bg-white">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-[#3066bb] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-slate-400 font-medium animate-pulse">Authenticating Genesis Node...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Update code template when hardware changes
     const handleHardwareSelect = (hw: Hardware) => {

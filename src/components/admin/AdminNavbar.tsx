@@ -13,7 +13,7 @@ export default function AdminNavbar({ setIsMobileMenuOpen, setShowPasswordModal 
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     return (
-        <header className="bg-transparent border-b h-20 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-30 transition-all duration-300 border-slate-100">
+        <header className="bg-transparent border-b h-20 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-[100] transition-all duration-300 border-slate-100">
             <div className="flex items-center gap-4">
                 <button
                     className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"

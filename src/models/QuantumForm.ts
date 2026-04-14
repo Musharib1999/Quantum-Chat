@@ -17,7 +17,12 @@ export interface IQuantumForm extends Document {
     description: string;
     fields: IQuantumField[];
     sections?: { section_name: string; fields: IQuantumField[] }[];
-    codeTemplates?: { hardware: string; code: string }[];
+    codeTemplates?: { 
+        hardware: string; 
+        code: string;
+        aiEnabled: boolean;
+        llmModelId?: string;
+    }[];
     active: boolean;
     batchingEnabled?: boolean;
     maxQubitsPerBatch?: number;
@@ -46,6 +51,8 @@ export interface IQuantumForm extends Document {
         label: string;
     }[];
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
+    aiEnabled: boolean;
+    llmModelId?: string;
     category?: 'public' | 'enterprise';
     createdAt: Date;
     updatedAt: Date;
@@ -72,7 +79,7 @@ const QuantumFormSchema: Schema = new Schema({
     industry: { type: String, required: true },
     service: { type: String, required: true },
     problem: { type: String, required: true },
-    hardware: { type: String, required: true, default: "Universal" },
+    hardware: { type: String, default: "Universal" },
     description: { type: String },
     fields: { type: [QuantumFieldSchema], default: [] },
     sections: [{
@@ -81,7 +88,9 @@ const QuantumFormSchema: Schema = new Schema({
     }],
     codeTemplates: [{
         hardware: { type: String, required: true },
-        code: { type: String, required: true }
+        code: { type: String, required: true },
+        aiEnabled: { type: Boolean, default: false },
+        llmModelId: { type: String }
     }],
     active: { type: Boolean, default: true },
     batchingEnabled: { type: Boolean, default: false },
@@ -101,11 +110,13 @@ const QuantumFormSchema: Schema = new Schema({
         label: String
     }],
     executionEnvironment: { type: String, enum: ['python-qiskit', 'python-dwave'] },
+    aiEnabled: { type: Boolean, default: false },
+    llmModelId: { type: String },
     category: { type: String, enum: ['public', 'enterprise'], default: 'public' },
     createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Ensure unique mapping for Industry + Service + Problem + Hardware
-QuantumFormSchema.index({ industry: 1, service: 1, problem: 1, hardware: 1 }, { unique: true });
+// Ensure unique mapping for Industry + Service + Problem
+QuantumFormSchema.index({ industry: 1, service: 1, problem: 1 }, { unique: true });
 
 export default mongoose.models.QuantumForm || mongoose.model<IQuantumForm>('QuantumForm', QuantumFormSchema);

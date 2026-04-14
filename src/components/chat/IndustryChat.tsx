@@ -35,31 +35,65 @@ export default function IndustryChat({ contextConfig, placeholder, onAnalysisTri
 
 const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isReadOnly: boolean, onSubmit: (formData: any, qubits: number, batches: number) => void }) => {
     const blueprint = message.workflowData?.blueprint;
-    const [formData, setFormData] = useState<Record<string, any>>(message.workflowData?.formData || {});
-    const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
 
-    useEffect(() => {
-        if (!message.workflowData?.blueprint?.id) return;
-        const storageKey = `qg_form_draft_${message.workflowData.blueprint.id}`;
+    // Helper for robust persistence key
+    const getStorageKey = () => {
+        const bp = message.workflowData?.blueprint;
+        const cfg = message.workflowData?.config || {};
         
-        // 1. Initial Load from storage
-        const saved = sessionStorage.getItem(storageKey);
-        if (saved) {
-            try {
-                setFormData(JSON.parse(saved));
-            } catch (e) { console.error("Draft load failed:", e); }
-        } else if (isReadOnly && message.workflowData?.formData) {
-            // Fallback to message data if read-only and no draft
+        // 1. Try DB IDs (MongoDB uses _id)
+        if (bp?._id) return `qg_form_draft_${bp._id}`;
+        if (bp?.id) return `qg_form_draft_${bp.id}`;
+        
+        // 2. Failsafe composite key from configuration
+        if (cfg.industry && cfg.problem) {
+            const composite = `${cfg.industry}_${cfg.problem}_${cfg.hardware || 'universal'}`.replace(/\s+/g, '_').toLowerCase();
+            return `qg_form_draft_${composite}`;
+        }
+        return null;
+    };
+
+    // 1. Initial Load from storage (Lazy Initializer)
+    const [formData, setFormData] = useState<Record<string, any>>(() => {
+        if (typeof window !== 'undefined') {
+            const key = getStorageKey();
+            if (key) {
+                const saved = sessionStorage.getItem(key);
+                if (saved) {
+                    try {
+                        return JSON.parse(saved);
+                    } catch (e) {
+                        console.error("Draft load failed:", e);
+                    }
+                }
+            }
+        }
+        return message.workflowData?.formData || {};
+    });
+
+    const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    // 2. Mark as initialized on mount
+    useEffect(() => {
+        setIsInitialized(true);
+    }, []);
+
+    // 3. Fallback for read-only or external updates
+    useEffect(() => {
+        if (isReadOnly && message.workflowData?.formData) {
             setFormData(message.workflowData.formData);
         }
-    }, [message.workflowData?.blueprint?.id, isReadOnly]);
+    }, [isReadOnly, message.workflowData?.formData]);
 
-    // 2. Persist to storage on change
+    // 4. Persist to storage on change
     useEffect(() => {
-        if (isReadOnly || !message.workflowData?.blueprint?.id) return;
-        const storageKey = `qg_form_draft_${message.workflowData.blueprint.id}`;
-        sessionStorage.setItem(storageKey, JSON.stringify(formData));
-    }, [formData, isReadOnly, message.workflowData?.blueprint?.id]);
+        if (!isInitialized || isReadOnly) return;
+        const key = getStorageKey();
+        if (key) {
+            sessionStorage.setItem(key, JSON.stringify(formData));
+        }
+    }, [formData, isReadOnly, isInitialized]);
 
     const calculateComplexity = () => {
         if (!blueprint || !blueprint.qubitFormula) return { qubits: 0, batches: 1 };
@@ -90,67 +124,80 @@ const InChatForm = ({ message, isReadOnly, onSubmit }: { message: Message, isRea
 
     if (!blueprint) return null;
 
+    const renderField = (field: any) => (
+        <div key={field.key} className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground tracking-tight">{field.label}</label>
+            {field.type === 'select' || field.type === 'dropdown' ? (
+                <select 
+                    disabled={isReadOnly}
+                    value={formData[field.key] || ''}
+                    onChange={(e) => handleInput(field.key, e.target.value)}
+                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50"
+                >
+                    <option value="" disabled>Select...</option>
+                    {field.options?.map((opt: any) => (
+                        <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
+                            {typeof opt === 'string' ? opt : opt.label}
+                        </option>
+                    ))}
+                </select>
+            ) : field.type === 'multi-select' ? (
+                <div className="flex flex-wrap gap-2 pt-1">
+                    {field.options?.map((opt: any) => {
+                        const value = typeof opt === 'string' ? opt : opt.value;
+                        const label = typeof opt === 'string' ? opt : opt.label;
+                        const isSelected = (formData[field.key] || []).includes(value);
+                        
+                        return (
+                            <button
+                                key={value}
+                                disabled={isReadOnly}
+                                onClick={() => {
+                                    const current = formData[field.key] || [];
+                                    if (isSelected) {
+                                        handleInput(field.key, current.filter((v: any) => v !== value));
+                                    } else {
+                                        handleInput(field.key, [...current, value]);
+                                    }
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+                                    isSelected 
+                                    ? 'bg-[#3066bb] text-white border-[#3066bb] shadow-sm' 
+                                    : 'bg-secondary/40 text-muted-foreground border-border hover:bg-secondary/60'
+                                } disabled:opacity-50`}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
+            ) : (
+                <input 
+                    disabled={isReadOnly}
+                    type={field.type === 'number' ? 'number' : 'text'}
+                    value={formData[field.key] || ''}
+                    onChange={(e) => handleInput(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
+                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+            )}
+        </div>
+    );
+
     return (
         <div className={`bg-card border border-border rounded-2xl p-4 md:p-6 space-y-6 shadow-sm transition-opacity ${isReadOnly ? 'opacity-90' : 'opacity-100'}`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(blueprint.fields || []).map((field: any) => (
-                    <div key={field.key} className="space-y-1.5">
-                        <label className="text-sm font-medium text-muted-foreground tracking-tight">{field.label}</label>
-                        {field.type === 'select' || field.type === 'dropdown' ? (
-                            <select 
-                                disabled={isReadOnly}
-                                value={formData[field.key] || ''}
-                                onChange={(e) => handleInput(field.key, e.target.value)}
-                                className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50"
-                            >
-                                <option value="" disabled>Select...</option>
-                                {field.options?.map((opt: any) => (
-                                    <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
-                                        {typeof opt === 'string' ? opt : opt.label}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : field.type === 'multi-select' ? (
-                            <div className="flex flex-wrap gap-2 pt-1">
-                                {field.options?.map((opt: any) => {
-                                    const value = typeof opt === 'string' ? opt : opt.value;
-                                    const label = typeof opt === 'string' ? opt : opt.label;
-                                    const isSelected = (formData[field.key] || []).includes(value);
-                                    
-                                    return (
-                                        <button
-                                            key={value}
-                                            disabled={isReadOnly}
-                                            onClick={() => {
-                                                const current = formData[field.key] || [];
-                                                if (isSelected) {
-                                                    handleInput(field.key, current.filter((v: any) => v !== value));
-                                                } else {
-                                                    handleInput(field.key, [...current, value]);
-                                                }
-                                            }}
-                                            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
-                                                isSelected 
-                                                ? 'bg-[#3066bb] text-white border-[#3066bb] shadow-sm' 
-                                                : 'bg-secondary/40 text-muted-foreground border-border hover:bg-secondary/60'
-                                            } disabled:opacity-50`}
-                                        >
-                                            {label}
-                                        </button>
-                                    );
-                                })}
+                {blueprint.sections && blueprint.sections.length > 0 ? (
+                    blueprint.sections.map((section: any) => (
+                        <div key={section.section_name} className="col-span-full space-y-4 mb-4 last:mb-0">
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1 border-l-2 border-[#3066bb] pl-3 h-3 flex items-center">{section.section_name}</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {section.fields.map((field: any) => renderField(field))}
                             </div>
-                        ) : (
-                            <input 
-                                disabled={isReadOnly}
-                                type={field.type === 'number' ? 'number' : 'text'}
-                                value={formData[field.key] || ''}
-                                onChange={(e) => handleInput(field.key, field.type === 'number' ? parseFloat(e.target.value) : e.target.value)}
-                                className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                        )}
-                    </div>
-                ))}
+                        </div>
+                    ))
+                ) : (
+                    (blueprint.fields || []).map((field: any) => renderField(field))
+                )}
             </div>
             {!isReadOnly && (
                 <button 
@@ -386,8 +433,22 @@ const InChatPipeline = ({
                             config: contextConfig
                         }
                     }]);
-                } catch (e) {
+                } catch (e: any) {
                     console.error("Failed to fetch initial form:", e);
+                    if (e.response?.status === 404) {
+                        const botMsgId = Date.now();
+                        const canSetup = user?.role === 'admin' || user?.role === 'builder';
+                        
+                        setMessages([{
+                            id: botMsgId,
+                            text: canSetup 
+                                ? `⚠️ **Blueprint Missing**: No form configuration found for your current selection (**${contextConfig.problem}** on **${contextConfig.hardware}**).\n\nAs a **Quantum Builder**, you can initialize this problem mapping in the console.`
+                                : `⚠️ **Problem Unavailable**: This configuration is currently undergoing maintenance. Please select a different problem or check back later.`,
+                            sender: 'bot',
+                            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            workflowType: (canSetup) ? ('error_setup' as any) : undefined
+                        }]);
+                    }
                 }
             };
             fetchInitialForm();
@@ -1165,6 +1226,17 @@ const InChatPipeline = ({
                                                 isReadOnly={messages[messages.length-1].id !== msg.id}
                                                 onSubmit={(formData, qubits, batches) => handleFormTransition(msg, formData, qubits, batches)}
                                             />
+                                        </div>
+                                    )}
+
+                                    {msg.workflowType === ('error_setup' as any) && (
+                                        <div className="mt-4">
+                                            <button 
+                                                onClick={() => window.location.href = '/admin/dashboard?tab=forms'}
+                                                className="w-full py-3 bg-[#3066bb] text-white rounded-xl text-sm font-bold shadow-sm hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Edit3 size={16} /> GO TO PROBLEM CONSOLE
+                                            </button>
                                         </div>
                                     )}
 

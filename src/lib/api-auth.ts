@@ -3,16 +3,23 @@ import User from '@/models/User';
 import dbConnect from '@/lib/db';
 
 /**
- * Validates the API key from the Authorization header.
+ * Validates the API key from either the Authorization (Bearer) or X-API-Key header.
  * Returns the user object if valid, null otherwise.
  */
 export async function authenticateApiKey(req: NextRequest) {
+    let apiKey = '';
+    
+    // 1. Try Authorization: Bearer <key>
     const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        apiKey = authHeader.split(' ')[1];
+    } 
+    
+    // 2. Fallback to X-API-Key header (used by Telecom Showcase and simpler B2B scripts)
+    if (!apiKey) {
+        apiKey = req.headers.get('x-api-key') || '';
     }
 
-    const apiKey = authHeader.split(' ')[1];
     if (!apiKey) return null;
 
     await dbConnect();

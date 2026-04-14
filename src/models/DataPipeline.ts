@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IDataPipeline extends Document {
     enterpriseName: string;
+    userId?: string; // Explicit owner ID
     description?: string;
     problemId: string; // Refers to QuantumForm problem ID or ObjectID
     webhookUrl: string;
@@ -13,6 +14,7 @@ export interface IDataPipeline extends Document {
 
 const DataPipelineSchema: Schema = new Schema({
     enterpriseName: { type: String, required: true },
+    userId: { type: String }, // The user who owns this pipeline
     description: { type: String },
     problemId: { type: String, required: true }, // The B2B mapped blueprint
     webhookUrl: { type: String, required: true },

@@ -18,130 +18,200 @@ const PROVIDER_MODELS = {
     ]
 };
 
+interface ILLMEntry {
+    _id?: string;
+    name: string;
+    activeProvider: 'groq' | 'gemini';
+    activeModel: string;
+    description?: string;
+    isDefault: boolean;
+}
+
 export default function LLMSettingsManager() {
-    const [settings, setSettings] = useState({ activeProvider: 'gemini', activeModel: 'gemini-2.0-flash-lite' });
+    const [allModels, setAllModels] = useState<ILLMEntry[]>([]);
+    const [editingModel, setEditingModel] = useState<ILLMEntry | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [status, setStatus] = useState('');
 
     useEffect(() => {
-        fetchSettings();
+        fetchAllModels();
     }, []);
 
-    const fetchSettings = async () => {
+    const fetchAllModels = async () => {
         try {
             const res = await axios.get('/api/admin/llm-settings');
-            setSettings({
-                activeProvider: res.data.activeProvider,
-                activeModel: res.data.activeModel
-            });
+            setAllModels(res.data);
         } catch (error) {
-            console.error("Failed to fetch LLM settings", error);
+            console.error("Failed to fetch LLM models", error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleSave = async () => {
+        if (!editingModel?.name) return;
         setSaving(true);
-        setStatus('idle');
+        setStatus('');
         try {
-            await axios.post('/api/admin/llm-settings', settings);
-            setStatus('success');
-            setTimeout(() => setStatus('idle'), 3000);
-        } catch (error) {
-            setStatus('error');
+            await axios.post('/api/admin/llm-settings', editingModel);
+            setStatus('Model deployed successfully');
+            setEditingModel(null);
+            fetchAllModels();
+        } catch (error: any) {
+            setStatus('Error: ' + (error.response?.data?.error || error.message));
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center p-12">
-                <div className="text-slate-400 text-sm">Loading infrastructure settings...</div>
-            </div>
-        );
-    }
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("Are you sure you want to remove this LLM model? This may affect blueprints using it.")) return;
+        try {
+            await axios.delete(`/api/admin/llm-settings?id=${id}`);
+            fetchAllModels();
+        } catch (error: any) {
+            alert(error.response?.data?.error || "Failed to delete");
+        }
+    };
+
+    if (loading) return <div className="p-12 text-slate-400 text-sm">Loading intelligence stack...</div>;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 pb-20">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-900">Core intelligence configuration</h2>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-8">
-                {/* Provider Selection */}
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase mb-4 block tracking-wider">Active intelligence provider</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button
-                            onClick={() => setSettings({ ...settings, activeProvider: 'groq', activeModel: PROVIDER_MODELS.groq[0].id })}
-                            className={`p-6 rounded-2xl border transition-all flex flex-col items-center gap-3 ${settings.activeProvider === 'groq'
-                                ? 'border-[#3066bb] bg-[#3066bb]/5 text-[#3066bb]'
-                                : 'border-slate-100 bg-slate-50 text-slate-400 opacity-60 hover:opacity-100 hover:bg-slate-100'
-                                }`}
-                        >
-                            <span className="font-bold text-lg">Groq / Llama</span>
-                            <span className="text-[10px] uppercase tracking-widest font-semibold">Low latency execution</span>
-                        </button>
-
-                        <button
-                            onClick={() => setSettings({ ...settings, activeProvider: 'gemini', activeModel: PROVIDER_MODELS.gemini[0].id })}
-                            className={`p-6 rounded-2xl border transition-all flex flex-col items-center gap-3 ${settings.activeProvider === 'gemini'
-                                ? 'border-[#3066bb] bg-[#3066bb]/5 text-[#3066bb]'
-                                : 'border-slate-100 bg-slate-50 text-slate-400 opacity-60 hover:opacity-100 hover:bg-slate-100'
-                                }`}
-                        >
-                            <span className="font-bold text-lg">Google Gemini</span>
-                            <span className="text-[10px] uppercase tracking-widest font-semibold">Advanced reasoning engine</span>
-                        </button>
-                    </div>
+                    <h2 className="text-xl font-bold text-slate-900">Intelligence Fleet</h2>
+                    <p className="text-xs text-slate-500 mt-1">Manage global reasoning engines and local generation models.</p>
                 </div>
-
-                {/* Model Selection */}
-                <div className="pt-6 border-t border-slate-100">
-                    <label className="text-xs font-bold text-slate-500 uppercase mb-4 block tracking-wider">Specific model architecture</label>
-                    <select
-                        value={settings.activeModel}
-                        onChange={(e) => setSettings({ ...settings, activeModel: e.target.value })}
-                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium outline-none focus:ring-1 focus:ring-[#3066bb] transition-all cursor-pointer text-sm"
-                    >
-                        {PROVIDER_MODELS[settings.activeProvider as keyof typeof PROVIDER_MODELS].map(model => (
-                            <option key={model.id} value={model.id}>
-                                {model.name}
-                            </option>
-                        ))}
-                    </select>
-                    <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <span>Changing the model architecture will affect system accuracy and response speed across the entire platform.</span>
-                    </div>
-                </div>
-
-                {/* Status & Save */}
-                <div className="pt-6 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        {status === 'success' && (
-                            <div className="text-green-600 text-xs font-bold px-3 py-1 bg-green-50 rounded-full border border-green-100">
-                                Configuration deployed successfully
-                            </div>
-                        )}
-                        {status === 'error' && (
-                            <div className="text-red-500 text-xs font-bold px-3 py-1 bg-red-50 rounded-full border border-red-100">
-                                Error deploying configuration
-                            </div>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="bg-[#3066bb] hover:bg-[#255299] text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-sm disabled:opacity-50 text-sm"
-                    >
-                        {saving ? 'Deploying...' : 'Deploy core configuration'}
-                    </button>
-                </div>
+                <button 
+                    onClick={() => setEditingModel({ name: '', activeProvider: 'gemini', activeModel: 'gemini-2.0-flash-lite', isDefault: false })}
+                    className="bg-[#3066bb] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:scale-[1.02] transition-all"
+                >
+                    + Add New Model
+                </button>
             </div>
+
+            {status && (
+                <div className={`p-4 rounded-xl text-xs font-bold uppercase tracking-wider border ${status.includes('Error') ? 'bg-red-50 text-red-500 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
+                    {status}
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allModels.map((model) => (
+                    <div key={model._id} className={`bg-white border p-6 rounded-2xl flex flex-col transition-all hover:shadow-md ${model.isDefault ? 'border-[#3066bb] ring-1 ring-[#3066bb]/10' : 'border-slate-200 shadow-sm'}`}>
+                        <div className="flex items-center justify-between mb-4">
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${model.activeProvider === 'gemini' ? 'bg-blue-50 border-blue-100 text-blue-600' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
+                                {model.activeProvider}
+                            </span>
+                            {model.isDefault && <span className="text-[10px] text-green-600 font-bold uppercase">System Default</span>}
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-1">{model.name}</h3>
+                        <div className="text-[11px] font-mono text-slate-400 mb-4">{model.activeModel}</div>
+                        <p className="text-xs text-slate-500 mb-8 line-clamp-2 flex-1">{model.description || 'No description provided.'}</p>
+                        
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setEditingModel(model)}
+                                className="flex-1 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-100 transition-all"
+                            >
+                                Edit
+                            </button>
+                            {!model.isDefault && (
+                                <button 
+                                    onClick={() => handleDelete(model._id!)}
+                                    className="px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-400 hover:bg-red-500 hover:text-white transition-all"
+                                >
+                                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {editingModel && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-lg rounded-2xl border border-slate-200 shadow-xl p-8 animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+                        <h3 className="text-lg font-bold text-slate-900 mb-6">{editingModel._id ? 'Modify Intelligence' : 'Register New LLM'}</h3>
+                        
+                        <div className="space-y-6">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Display Name</label>
+                                <input 
+                                    value={editingModel.name} 
+                                    onChange={e => setEditingModel({...editingModel, name: e.target.value})}
+                                    placeholder="e.g. Generation Optimized" 
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" 
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Intelligence Provider</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {['gemini', 'groq'].map(p => (
+                                        <button 
+                                            key={p}
+                                            onClick={() => setEditingModel({...editingModel, activeProvider: p as any, activeModel: PROVIDER_MODELS[p as keyof typeof PROVIDER_MODELS][0].id})}
+                                            className={`py-3 rounded-xl border text-xs font-bold transition-all ${editingModel.activeProvider === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-500 border-slate-200'}`}
+                                        >
+                                            {p.toUpperCase()}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Selection Architecture</label>
+                                <select 
+                                    value={editingModel.activeModel}
+                                    onChange={e => setEditingModel({...editingModel, activeModel: e.target.value})}
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                                >
+                                    {PROVIDER_MODELS[editingModel.activeProvider].map(m => (
+                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Purpose Description</label>
+                                <textarea 
+                                    value={editingModel.description}
+                                    onChange={e => setEditingModel({...editingModel, description: e.target.value})}
+                                    placeholder="what is this model mostly used for?"
+                                    className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                                <div className="space-y-0.5">
+                                    <div className="text-xs font-bold text-[#3066bb]">System Default</div>
+                                    <div className="text-[10px] text-blue-400">Use this model as the primary global fallback.</div>
+                                </div>
+                                <button 
+                                    onClick={() => setEditingModel({...editingModel, isDefault: !editingModel.isDefault})}
+                                    className={`w-10 h-5 rounded-full relative transition-all ${editingModel.isDefault ? 'bg-[#3066bb]' : 'bg-slate-300'}`}
+                                >
+                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${editingModel.isDefault ? 'left-6' : 'left-1'}`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="mt-10 flex justify-end gap-3">
+                            <button onClick={() => setEditingModel(null)} className="text-xs font-bold text-slate-400 px-6">Cancel</button>
+                            <button 
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="bg-[#3066bb] text-white px-8 py-3 rounded-xl text-xs font-bold shadow-sm hover:bg-[#255299] transition-all disabled:opacity-50"
+                            >
+                                {saving ? 'Deploying...' : 'Save Configuration'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -17,24 +17,31 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50);
 
-        // 3. Fetch user's simulation experiments from the API source
-        const experiments = await Shot.find({ 
+        // 3. Fetch user's simulation experiments (API and Enterprise Streams)
+        const total = await Shot.countDocuments({ 
             userId: user._id, 
-            source: 'API' 
+            source: { $in: ['API', 'Enterprise-Stream'] } 
+        });
+
+        const shots = await Shot.find({ 
+            userId: user._id, 
+            source: { $in: ['API', 'Enterprise-Stream'] } 
         })
         .sort({ timestamp: -1 })
         .limit(limit);
 
         return NextResponse.json({
             success: true,
-            total: experiments.length,
-            experiments: experiments.map(exp => ({
-                id: exp._id,
-                timestamp: exp.timestamp,
-                provider: exp.service,
-                problem: exp.problem,
-                hardware: exp.hardware,
-                energy: exp.results?.energy || null,
+            total,
+            data: shots.map(shot => ({
+                id: shot._id,
+                timestamp: shot.timestamp,
+                provider: shot.service,
+                problem: shot.problem,
+                hardware: shot.hardware,
+                source: shot.source,
+                parameters: shot.parameters,
+                results: shot.results,
                 status: 'completed'
             }))
         });

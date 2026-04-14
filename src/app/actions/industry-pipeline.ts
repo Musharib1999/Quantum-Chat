@@ -11,22 +11,34 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 // In-process cache: avoids a DB round-trip on every pipeline call within the same Vercel instance
 let _llmSettingsCache: { provider: string; modelName: string } | null = null;
 
-async function getDynamicLLM() {
-    if (_llmSettingsCache) return _llmSettingsCache;
+async function getDynamicLLM(specificId?: string) {
+    // If a specific ID is requested, bypass cache and fetch it
+    if (!specificId && _llmSettingsCache) return _llmSettingsCache;
+    
     await dbConnect();
     let provider = 'gemini';
     let modelName = 'gemini-2.0-flash-lite';
     try {
-        const settings = await LLMSetting.findOne({ key: "global_llm_settings" }).lean();
+        const query = specificId ? { _id: specificId } : { isDefault: true };
+        const settings = await LLMSetting.findOne(query).lean();
         if (settings) {
             provider = settings.activeProvider;
             modelName = settings.activeModel;
+        } else if (!specificId) {
+            // Fallback to legacy key check if default flag not explicitly set yet
+            const legacy = await LLMSetting.findOne({ name: /System Default/i }).lean();
+            if (legacy) {
+                provider = legacy.activeProvider;
+                modelName = legacy.activeModel;
+            }
         }
     } catch (e) {
         console.error("Failed to fetch LLM settings, falling back to Gemini");
     }
-    _llmSettingsCache = { provider, modelName };
-    return _llmSettingsCache;
+    
+    const result = { provider, modelName };
+    if (!specificId) _llmSettingsCache = result;
+    return result;
 }
 import { getDynamicPrompt } from './prompt-utils';
 import { executeQuantumCircuit, executeDWaveAnnealer } from '@/lib/quantum-simulator';
@@ -578,17 +590,11 @@ export async function generateQuantumCode(config: {
 
     try {
         console.time(`generateCode_${problem}`);
-        console.time(`generateCode_${problem}_db`);
         await dbConnect();
         const mongoose = (await import('mongoose')).default;
         const QuantumForm = mongoose.models.QuantumForm || (await import('@/models/QuantumForm')).default;
 
-        const { provider, modelName } = await getDynamicLLM();
-        console.timeEnd(`generateCode_${problem}_db`);
-
-        console.log(`[Quantum Workflow Actions] generateQuantumCode | Ind: ${industry} | Svc: ${service} | Prob: ${problem} | HW: ${hardware}`);
-
-        // Resilient Lookup: Fallback to industry/problem if service and generic defaults
+        // 1. Resilient Blueprint Lookup
         const svcResSearch = (!service || service === 'Gate-Model Circuit' || service === 'undefined')
             ? {} : { service: new RegExp(`^${service}$`, 'i') };
 
@@ -600,7 +606,6 @@ export async function generateQuantumCode(config: {
             hardware: new RegExp(`^${hardware}$`, 'i')
         }).lean();
 
-        // Fallback to Universal for template retrieval
         if (!formDef && hardware !== 'Universal') {
             formDef = await QuantumForm.findOne({
                 industry: new RegExp(`^${industry}$`, 'i'),
@@ -610,51 +615,12 @@ export async function generateQuantumCode(config: {
             }).lean();
         }
         console.timeEnd(`generateCode_${problem}_mongooseForm`);
-
-        console.log(`[Quantum Workflow Actions] Form Found: ${!!formDef} | Templates: ${formDef?.codeTemplates?.length || 0}`);
-
-        let templateCode = "";
-        if (formDef && formDef.codeTemplates && formDef.codeTemplates.length > 0) {
-            const sanitizeStr = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            const hwSanitized = sanitizeStr(hardware);
-
-            const matched = formDef.codeTemplates.find((t: any) => {
-                const tSanitized = sanitizeStr(t.hardware);
-                return hwSanitized.includes(tSanitized) || tSanitized.includes(hwSanitized);
-            });
-            
-            // Fallback to Universal or first template if no specific HW match
-            templateCode = matched?.code || 
-                          formDef.codeTemplates.find((t: any) => sanitizeStr(t.hardware) === 'universal')?.code ||
-                          formDef.codeTemplates[0].code;
-
-            console.log(`[Quantum Workflow Actions] Template Match Search | HW: ${hwSanitized} | Result Found: ${!!templateCode}`);
-        }
-
-        let code = '';
-        let codePrompt = '';
-        let isTemplateAided = false;
-
-        if (templateCode) {
-            code = templateCode;
-            isTemplateAided = true;
-        } else {
-            console.warn(`[Quantum Workflow Actions] No template found for ${service}/${problem} on ${hardware}. Failing fast.`);
-            return {
-                code: "",
-                batchesTotal: 1,
-                error: `No specialized quantum template found for ${service} > ${problem} on ${hardware}. LLM generation is disabled for POC stability.`
-            };
-        }
-
-        // --- BATCHING METADATA ---
-        let batchesTotal = 1;
-        let startDim = 0;
-        let endDim = 0;
+        
+        // --- STEP 1.5: PARAMETER PREPARATION & ENRICHMENT ---
         const sanitizedFormData: Record<string, any> = { ...formData };
         let activeQubitCount = 0;
 
-        // --- DATA INJECTION FOR PORTFOLIO OPTIMIZATION ---
+        // A. Portfolio Data Injection (If needed)
         if (problem.toLowerCase().includes('portfolio optimization')) {
             try {
                 console.time(`generateCode_${problem}_portfolioDB`);
@@ -667,17 +633,12 @@ export async function generateQuantumCode(config: {
                 } else if (typeof sectorParam === 'string' && sectorParam) {
                     query = { sector: new RegExp(`^${sectorParam}$`, 'i') };
                 } else {
-                    query = { sector: 'Technology' }; // Default fallback
+                    query = { sector: 'Technology' };
                 }
 
-                // Increase limit to 100 for full universe coverage across all sectors
-                // OPTIMIZATION: Only fetch required fields to prevent memory/payload issues
                 const companies = await PortfolioCompany.find(query, 'ticker company nextYearReturn risk sector').limit(100).lean();
                 console.timeEnd(`generateCode_${problem}_portfolioDB`);
 
-                console.time(`generateCode_${problem}_portfolioFilter`);
-
-                // --- INTERLEAVING LOGIC: Ensure sector diversity across batches ---
                 const groups: Record<string, any[]> = {};
                 companies.forEach((c: any) => {
                     const s = c.sector || 'Unknown';
@@ -694,35 +655,36 @@ export async function generateQuantumCode(config: {
                     });
                 }
 
-                // --- SYNC FILTERING: Apply Risk Threshold in Backend for Batch Accuracy ---
                 const rawRisk = formData.fixed_risk_threshold || formData.risk_threshold;
                 const riskThreshold = rawRisk ? parseFloat(rawRisk) / 100 : 1.0;
                 const filteredCompanies = interleaved.filter((c: any) => (c.risk / 100) <= riskThreshold);
 
-                // Store separately — do NOT embed in sanitizedFormData to avoid 300MB RSC payload
                 const portfolioDataForPython = interleaved.map((c: any) => ({
                     ticker: c.ticker, company: c.company,
                     nextYearReturn: c.nextYearReturn, risk: c.risk, sector: c.sector
                 }));
-                sanitizedFormData._portfolioDataRef = '__PORTFOLIO_INJECTED__'; // placeholder only
-                (sanitizedFormData as any).__portfolioData = portfolioDataForPython; // kept separate
+                sanitizedFormData._portfolioDataRef = '__PORTFOLIO_INJECTED__';
+                (sanitizedFormData as any).__portfolioData = portfolioDataForPython;
                 activeQubitCount = filteredCompanies.length;
                 sanitizedFormData.companies_count = activeQubitCount;
                 sanitizedFormData.total_universe_size = interleaved.length;
                 sanitizedFormData.filtered_universe_size = activeQubitCount;
-                console.timeEnd(`generateCode_${problem}_portfolioFilter`);
-                console.log(`[Quantum Workflow Actions] Injected ${interleaved.length} companies. Interleaved by Sector. Filtered (Risk <= ${riskThreshold * 100}%): ${activeQubitCount}.`);
             } catch (e) {
                 console.error("Portfolio data injection failed:", e);
             }
         }
 
-        if (formDef?.batchingEnabled) {
+        // B. Batching Metadata Calculation & Injection
+        let batchesTotal = 1;
+        let startDim = 0;
+        let endDim = 0;
+
+        if (formDef?.batchingEnabled || config.batchIndex !== undefined) {
             try {
                 let totalQubits = 0;
                 if (activeQubitCount > 0) {
                     totalQubits = activeQubitCount;
-                } else if (formDef.qubitFormula) {
+                } else if (formDef?.qubitFormula) {
                     let formula = formDef.qubitFormula;
                     Object.keys(formData).forEach(key => {
                         const regex = new RegExp(`{{${key}}}`, 'g');
@@ -731,53 +693,145 @@ export async function generateQuantumCode(config: {
                     const sanitizedMath = formula.replace(/[^0-9+\-*/().\s]/g, '');
                     totalQubits = Math.ceil(eval(sanitizedMath));
                 }
-                const maxPerBatch = formDef.maxQubitsPerBatch || 20;
+
+                const maxPerBatch = formDef?.maxQubitsPerBatch || 20;
                 batchesTotal = Math.max(1, Math.ceil(totalQubits / maxPerBatch));
 
                 if (config.batchIndex) {
                     const b = config.batchIndex;
                     startDim = (b - 1) * maxPerBatch;
-                    endDim = Math.min(b * maxPerBatch - 1, totalQubits - 1);
+                    endDim = totalQubits > 0 ? Math.min(b * maxPerBatch - 1, totalQubits - 1) : 0;
 
-                    // Inject batch-specific keys
+                    // Standard Pipeline Parameters (Injection)
                     sanitizedFormData.batch_start_index = startDim;
                     sanitizedFormData.batch_end_index = endDim;
-                    sanitizedFormData.batch_size = endDim - startDim + 1;
+                    sanitizedFormData.batch_size = Math.max(1, endDim - startDim + 1);
                     sanitizedFormData.last_batch_state = config.lastBatchState || "None";
 
-                    if (formDef.batchKey) {
+                    if (formDef?.batchKey) {
                         sanitizedFormData[formDef.batchKey] = sanitizedFormData.batch_size;
                     }
+                } else {
+                    // Default values for single-batch or first-batch if index missing
+                    sanitizedFormData.batch_start_index = 0;
+                    sanitizedFormData.batch_end_index = totalQubits > 0 ? totalQubits - 1 : 0;
+                    sanitizedFormData.batch_size = Math.max(1, totalQubits);
+                    sanitizedFormData.last_batch_state = config.lastBatchState || "None";
                 }
             } catch (e) {
                 console.error("Batching calculation failed:", e);
+                // Fail-safe defaults
+                sanitizedFormData.batch_start_index = sanitizedFormData.batch_start_index || 0;
+                sanitizedFormData.batch_end_index = sanitizedFormData.batch_end_index || 0;
+                sanitizedFormData.batch_size = sanitizedFormData.batch_size || 1;
+                sanitizedFormData.last_batch_state = config.lastBatchState || "None";
+            }
+        } else {
+            // Non-batched problem failsafe
+            sanitizedFormData.batch_start_index = 0;
+            sanitizedFormData.batch_end_index = 0;
+            sanitizedFormData.batch_size = 1;
+            sanitizedFormData.last_batch_state = "None";
+        }
+
+        // 2. Intelligence Selection & Logic Branching
+        let matchedTemplate: any = null;
+        if (formDef && formDef.codeTemplates && formDef.codeTemplates.length > 0) {
+            console.log(`[Quantum Workflow] Matching hardware template for: ${hardware}`);
+            const sanitizeStr = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const hwSanitized = sanitizeStr(hardware);
+
+            matchedTemplate = formDef.codeTemplates.find((t: any) => {
+                const tSanitized = sanitizeStr(t.hardware);
+                return hwSanitized.includes(tSanitized) || tSanitized.includes(hwSanitized);
+            });
+            
+            if (!matchedTemplate) {
+                matchedTemplate = formDef.codeTemplates.find((t: any) => sanitizeStr(t.hardware) === 'universal') || formDef.codeTemplates[0];
             }
         }
 
+        // TIER 1: Granular AI Generation (Hardware-specific)
+        // Fallback: If hardware mapping doesn't have setting, check root for backward compatibility
+        const isAiActive = matchedTemplate?.aiEnabled ?? (matchedTemplate ? formDef?.aiEnabled : false);
+        const targetModelId = matchedTemplate?.llmModelId || formDef?.llmModelId;
+
+        if (isAiActive) {
+            const { provider, modelName } = await getDynamicLLM(targetModelId);
+            console.log(`[Quantum Workflow] Executing intelligence layer | Hardware: ${hardware} | Model: ${modelName}`);
+
+            const promptTemplate = await getDynamicPrompt('industry_workflow_quantum', {
+                industry, service, problem, hardware,
+                description: formDef?.description || 'General optimization problem',
+                params: JSON.stringify(formData),
+                lastBatchState: config.lastBatchState || 'None'
+            }, `Default prompt fallback for ${problem}`);
+
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
+            const groq = new Groq({ apiKey: GROQ_API_KEY! });
+
+            try {
+                const genRes = await (provider === 'groq'
+                    ? groq.chat.completions.create({ messages: [{ role: 'user', content: promptTemplate }], model: modelName })
+                    : genAI.getGenerativeModel({ model: modelName }).generateContent(promptTemplate));
+
+                let llmCode = provider === 'groq'
+                    ? (genRes as any).choices[0].message.content
+                    : (genRes as any).response.text();
+
+                llmCode = llmCode.replace(/```python|```/g, '').trim();
+                const finalCode = applyParametersToCode(llmCode, sanitizedFormData);
+                
+                console.timeEnd(`generateCode_${problem}`);
+                return { code: finalCode, batchesTotal };
+            } catch (llmError) {
+                console.error("[Quantum Workflow] Granular AI Generation failed, falling back to template code:", llmError);
+            }
+        }
+
+        // TIER 2: Blueprint-specific hand-written template
+        let code = "";
+        let isTemplateAided = false;
+
+        if (matchedTemplate && !isAiActive) {
+            console.log(`[Quantum Workflow] Using deterministic template for ${hardware}`);
+            code = applyParametersToCode(matchedTemplate.code, sanitizedFormData);
+            isTemplateAided = true;
+        }
+
         if (!isTemplateAided) {
-            return {
-                code: "",
-                batchesTotal,
-                error: "No pre-configured deterministic code template found for this problem and hardware. LLM code generation is currently disabled for POC."
-            };
+            console.log(`[Quantum Workflow] No blueprint logic found. Executing Tier 3: Global System Generation...`);
+            const promptTemplate = await getDynamicPrompt('industry_workflow_quantum', {
+                industry, service, problem, hardware,
+                description: formDef?.description || 'General optimization problem',
+                params: JSON.stringify(sanitizedFormData),
+                lastBatchState: config.lastBatchState || 'None'
+            }, `Default prompt fallback for ${problem}`);
 
-            // LLM Code Generation has been disabled explicitly by the user for POC.
-            // All code must flow perfectly deterministically through the MongoDB setup.
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
+            const groq = new Groq({ apiKey: GROQ_API_KEY! });
 
-            // --- POST-PROCESS: Strip Hallucinations & Clean Code ---
-            code = code.replace(/```python\s?([\s\S]*?)```/g, '$1');
-            code = code.replace(/```\s?([\s\S]*?)```/g, '$1');
+            try {
+                const genRes = await (provider === 'groq'
+                    ? groq.chat.completions.create({ messages: [{ role: 'user', content: promptTemplate }], model: modelName })
+                    : genAI.getGenerativeModel({ model: modelName }).generateContent(promptTemplate));
 
-            if (code.includes('{{templateCode}}') || code.includes('"explanation":') || code.includes('"code":')) {
-                const lines = code.split('\n');
-                const cleanLines = [];
-                for (const line of lines) {
-                    if (line.trim().startsWith('{') || line.includes('{{templateCode}}') || line.includes('"explanation":')) {
-                        break;
-                    }
-                    cleanLines.push(line);
-                }
-                code = cleanLines.join('\n').trim();
+                let llmCode = provider === 'groq'
+                    ? (genRes as any).choices[0].message.content
+                    : (genRes as any).response.text();
+
+                llmCode = llmCode.replace(/```python|```/g, '').trim();
+                code = applyParametersToCode(llmCode, sanitizedFormData);
+                
+                console.timeEnd(`generateCode_${problem}`);
+                return { code, batchesTotal };
+            } catch (llmError: any) {
+                console.error("[Quantum Workflow] Tier 3 Generation failed:", llmError);
+                return {
+                    code: "",
+                    batchesTotal: 1,
+                    error: `Critical Error: No blueprint template found and global AI fallback failed. ${llmError.message}`
+                };
             }
         }
 

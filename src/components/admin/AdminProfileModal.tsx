@@ -56,7 +56,7 @@ export default function AdminProfileModal({ isOpen, onClose, onShowPassword }: A
                         </div>
                         <div className="flex flex-col min-w-0">
                             <span className="text-sm font-semibold text-slate-900 truncate">
-                                Administrator
+                                {user?.role === 'builder' ? 'Quantum Builder' : 'Administrator'}
                             </span>
                             <span className="text-[11px] text-slate-500 truncate">{user?.email || 'admin@quantumguru.com'}</span>
                         </div>

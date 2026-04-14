@@ -13,12 +13,9 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized: Enterprise API access required' }, { status: 401 });
         }
 
-        // We link via company name, or fallback defensively to their email if company is undefined
+        // 2. Fetch all active pipelines for this enterprise user (Demo Mode)
         const pipelines = await DataPipeline.find({ 
-            $or: [
-                { enterpriseName: user.company ? new RegExp(`^${user.company}$`, 'i') : { $exists: false } },
-                { enterpriseName: user.email ? new RegExp(`^${user.email}$`, 'i') : { $exists: false } }
-            ]
+            status: 'active'
         }).sort({ createdAt: -1 });
 
         return NextResponse.json({ success: true, pipelines });
@@ -41,10 +38,11 @@ export async function PUT(req: NextRequest) {
 
         if (!pipelineId) return NextResponse.json({ error: 'Missing pipelineId' }, { status: 400 });
 
-        // Ensure this pipeline actually belongs to the user's company or email mapping
+        // Ensure this pipeline actually belongs to the user
         const pipeline = await DataPipeline.findOne({ 
             _id: pipelineId,
             $or: [
+                { userId: user._id.toString() },
                 { enterpriseName: user.company ? new RegExp(`^${user.company}$`, 'i') : { $exists: false } },
                 { enterpriseName: user.email ? new RegExp(`^${user.email}$`, 'i') : { $exists: false } }
             ]

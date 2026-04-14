@@ -19,6 +19,14 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
     const [editingPipeline, setEditingPipeline] = useState<string | null>(null);
     const [tempWebhook, setTempWebhook] = useState('');
 
+    const [metrics, setMetrics] = useState({
+        totalRequests: 0,
+        avgExecutionTime: 0,
+        requestQueue: 0,
+        successRate: 100,
+        monthlyLimit: 10000
+    });
+
     useEffect(() => {
         fetchPipelines();
         return () => stopPolling();
@@ -68,10 +76,26 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
         }
     };
 
+    const fetchMetrics = async () => {
+        try {
+            const res = await fetch('/api/v1/enterprise/metrics', { headers: getAuthHeaders() });
+            const data = await res.json();
+            if (data.success) {
+                setMetrics(data.metrics);
+            }
+        } catch (e) {
+            console.error("Failed to fetch metrics:", e);
+        }
+    };
+
     const startPolling = () => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         fetchLatestShots();
-        pollIntervalRef.current = setInterval(fetchLatestShots, 60000); 
+        fetchMetrics();
+        pollIntervalRef.current = setInterval(() => {
+            fetchLatestShots();
+            fetchMetrics();
+        }, 15000); // 15s polling for live feel
     };
 
     const stopPolling = () => {
@@ -121,6 +145,21 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
+            <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #e2e8f0;
+                    border-radius: 10px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #cbd5e1;
+                }
+            `}</style>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900">
@@ -132,36 +171,36 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                 </div>
             </div>
 
-            {/* DATAPOINTS TAB (Frontend Placeholder) */}
+            {/* DATAPOINTS TAB */}
             {viewMode === 'datapoints' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4">Total API Shots</h5>
+                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4 uppercase">Executed Requests</h5>
                     <div>
-                        <div className="text-3xl font-bold text-slate-900">8,452</div>
-                        <div className="text-xs font-semibold text-[#3066bb] mt-2">10,000 monthly limit</div>
+                        <div className="text-3xl font-bold text-slate-900">{metrics.totalRequests.toLocaleString()}</div>
+                        <div className="text-xs font-semibold text-[#3066bb] mt-2">{metrics.monthlyLimit.toLocaleString()} monthly limit</div>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4">Active Backlog</h5>
+                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4 uppercase">Request Queue</h5>
                     <div>
-                        <div className="text-3xl font-bold text-slate-900">12</div>
-                        <div className="text-xs font-semibold text-orange-500 mt-2">Payloads in FIFO queue</div>
+                        <div className="text-3xl font-bold text-slate-900">{metrics.requestQueue}</div>
+                        <div className="text-xs font-semibold text-orange-500 mt-2">Active backlog</div>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4">Avg Processing Time</h5>
+                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4 uppercase">Average Execution</h5>
                     <div>
-                        <div className="text-3xl font-bold text-slate-900">24.5<span className="text-lg text-slate-400 ml-1">ms</span></div>
-                        <div className="text-xs font-semibold text-green-500 mt-2">Standard Simulator speed</div>
+                        <div className="text-3xl font-bold text-slate-900">{metrics.avgExecutionTime}<span className="text-lg text-slate-400 ml-1">ms</span></div>
+                        <div className="text-xs font-semibold text-green-500 mt-2">Latency per solve</div>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[#3066bb]/5 rounded-bl-full border-b border-l border-[#3066bb]/10"></div>
-                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4 relative z-10">Webhook Success</h5>
+                    <h5 className="text-xs font-bold text-slate-500 tracking-widest mb-4 relative z-10 uppercase">Success Rate</h5>
                     <div className="relative z-10">
-                        <div className="text-3xl font-bold text-slate-900">99.8<span className="text-lg text-slate-400 ml-1">%</span></div>
-                        <div className="text-xs font-semibold text-[#3066bb] mt-2">Delivery strictly 200 OK</div>
+                        <div className="text-3xl font-bold text-slate-900">{metrics.successRate}<span className="text-lg text-slate-400 ml-1">%</span></div>
+                        <div className="text-xs font-semibold text-[#3066bb] mt-2">Reliability threshold</div>
                     </div>
                 </div>
             </div>
@@ -263,12 +302,12 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
 
                     <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
                         {/* INBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white">
+                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white">
                             <h4 className="text-slate-900 flex flex-col font-sans text-xs font-bold mb-6 tracking-wider gap-1">
                                 <span>Inbound Packets</span>
                                 <span className="text-[10px] text-slate-500 font-semibold">POST /v1/stream</span>
                             </h4>
-                            <div className="flex-1 space-y-4 font-sans text-[11px]">
+                            <div className="flex-1 space-y-4 font-sans text-[11px] overflow-y-auto pr-2 custom-scrollbar">
                                 {liveShots.map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border ${i === 0 ? 'bg-blue-50/50 border-[#3066bb]/30 shadow-sm' : 'bg-white border-slate-200'}`}>
                                         <div className="text-slate-600 mb-3 font-semibold">
@@ -322,12 +361,12 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                         </div>
 
                         {/* OUTBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white">
+                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white">
                             <h4 className="text-slate-900 flex flex-col font-mono text-xs font-bold mb-6 tracking-wider gap-1">
                                 <span>WEBHOOK OUT</span>
                                 <span className="text-[10px] text-slate-500 font-semibold">PUSH DELIVERY</span>
                             </h4>
-                            <div className="flex-1 space-y-4 font-mono text-[11px]">
+                            <div className="flex-1 space-y-4 font-mono text-[11px] overflow-y-auto pr-2 custom-scrollbar">
                                 {liveShots.map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border ${i === 0 ? 'bg-blue-50/50 border-[#3066bb]/30 shadow-sm' : 'bg-white border-slate-200'}`}>
                                         <div className="text-slate-600 font-bold mb-3 flex items-center justify-between">

@@ -18,24 +18,32 @@ export async function POST(req: Request) {
                         hardware?.toLowerCase().includes('annealer') ||
                         (code && (code.includes('import dimod') || code.includes('dwave.system') || code.includes('import neal') || code.includes('LeapHybridSampler')));
         
-        // --- PLACEHOLDER REPLACEMENT ---
-        // For dry runs, we need to replace {{key}} with mock values so the code doesn't crash
+        // --- 1. PLACEHOLDER REPLACEMENT (Template Style) ---
+        // Replace {{key}} with mock values for legacy/template compatibility
         let processedCode = code;
         const placeholderRegex = /\{\{([^}]+)\}\}/g;
         processedCode = processedCode.replace(placeholderRegex, (_match: string, key: string) => {
-            // Check if user provided a mock value, otherwise use a sensible default
             if (mockParams && mockParams[key] !== undefined) return String(mockParams[key]);
-            
             const lowKey = key.toLowerCase();
-            // Sensible defaults based on common keys
             if (lowKey.includes('penalty') || lowKey.includes('factor')) return "20";
             if (lowKey.includes('energies')) return "-5.2, -8.1, -2.4, -6.5";
             if (lowKey.includes('count') || lowKey.includes('iterations') || lowKey.includes('n_')) return "10";
             if (lowKey.includes('assets') || lowKey.includes('tickers')) return "AAPL, MSFT, GOOGL";
             if (lowKey.includes('risk') || lowKey.includes('alpha')) return "0.5";
-            
-            return "1"; // Generic fallback (integer for robustness)
+            return "1";
         });
+
+        // --- 2. INJECTION & WRAPPING (Python Object Style) ---
+        // Mirror production pipeline: Inject a 'parameters' DotDict for Python-style access (e.g., parameters.key)
+        const paramsJson = JSON.stringify(mockParams || {});
+        const pythonInjections = `
+class DotDict(dict):
+    def __getattr__(self, name): return self.get(name)
+    def __setattr__(self, name, value): self[name] = value
+
+parameters = DotDict(${paramsJson})
+`;
+        processedCode = pythonInjections + "\n" + processedCode;
 
         // --- HARDWARE ROUTING ---
         let serviceUrl: string | undefined = undefined;
