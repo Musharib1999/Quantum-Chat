@@ -36,7 +36,7 @@ interface IQuantumForm {
     description: string;
     fields: IField[];
     sections?: { section_name: string; fields: IField[] }[];
-    codeTemplates?: { hardware: string; code: string }[];
+    codeTemplates?: { hardware: string; code: string; aiEnabled: boolean; llmModelId?: string }[];
     active: boolean;
     batchingEnabled?: boolean;
     maxQubitsPerBatch?: number;

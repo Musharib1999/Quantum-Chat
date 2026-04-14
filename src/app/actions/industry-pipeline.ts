@@ -755,9 +755,9 @@ export async function generateQuantumCode(config: {
         // Fallback: If hardware mapping doesn't have setting, check root for backward compatibility
         const isAiActive = matchedTemplate?.aiEnabled ?? (matchedTemplate ? formDef?.aiEnabled : false);
         const targetModelId = matchedTemplate?.llmModelId || formDef?.llmModelId;
+        const { provider, modelName } = await getDynamicLLM(targetModelId);
 
         if (isAiActive) {
-            const { provider, modelName } = await getDynamicLLM(targetModelId);
             console.log(`[Quantum Workflow] Executing intelligence layer | Hardware: ${hardware} | Model: ${modelName}`);
 
             const promptTemplate = await getDynamicPrompt('industry_workflow_quantum', {
