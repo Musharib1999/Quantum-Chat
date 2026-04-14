@@ -22,7 +22,7 @@ export async function executeQuantumCircuit(circuitCode: string, overrideUrl?: s
         const url = `${baseUrl}/execute`;
         const startTime = Date.now();
 
-        console.log(`[Simulator] Calling Qiskit: ${url} with secret length: ${API_SECRET.length}`);
+        console.log(`[Simulator] Calling Qiskit: ${url} with secret length: ${API_SECRET?.length || 0}`);
 
         const response = await axios.post(url, {
             code: circuitCode
