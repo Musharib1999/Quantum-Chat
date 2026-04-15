@@ -127,11 +127,13 @@ export async function getChatLogs() {
     }));
 }
 
+import { serializeData } from '@/lib/utils';
+
 // --- Hardware Actions ---
 export async function getHardwares() {
     await dbConnect();
     const hws = await Hardware.find({}).sort({ order: 1 }).lean();
-    return hws.map((r: any) => ({
+    return serializeData(hws.map((r: any) => ({
         id: r._id.toString(),
         name: r.name,
         provider: r.provider,
@@ -142,7 +144,7 @@ export async function getHardwares() {
         testCode: r.testCode,
         testOutput: r.testOutput,
         order: r.order
-    }));
+    })));
 }
 
 export async function addHardware(data: any) {
