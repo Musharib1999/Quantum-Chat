@@ -15,8 +15,8 @@ const SidebarLink = ({ label, active, onClick, isExperimental }: SidebarLinkProp
         <button
             onClick={onClick}
             className={`w-full flex items-center px-4 py-2.5 rounded-lg transition-all border ${active
-                ? 'bg-[rgb(27,176,206)]/10 text-[rgb(27,176,206)] border-[rgb(27,176,206)]/50'
-                : 'text-[#0F172A] hover:bg-[rgb(27,176,206)]/10 hover:text-[#0F172A] border-transparent'
+                ? 'bg-[rgb(48,102,187)]/10 text-[#0F172A] border-[rgb(27,176,206)]/50'
+                : 'text-[#0F172A] hover:bg-[rgb(48,102,187)]/10 hover:text-[#0F172A] border-transparent'
                 } ${isExperimental ? 'opacity-80' : ''}`}
         >
             <span className={`font-medium text-sm flex items-center gap-2`}>
@@ -229,7 +229,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                 <div className="p-4 border-t border-[rgb(27,176,206)]/20 bg-white/50 backdrop-blur-sm">
                     <button
                         onClick={() => window.location.href = '/developer'}
-                        className="w-full flex items-center px-4 py-2 rounded-lg transition-all border text-[#0F172A] hover:bg-[rgb(27,176,206)]/5 hover:text-[rgb(27,176,206)] border-transparent hover:border-[rgb(27,176,206)]/30"
+                        className="w-full flex items-center px-4 py-2 rounded-lg transition-all border text-[#0F172A] hover:bg-[rgb(48,102,187)]/5 hover:text-[#0F172A] border-transparent hover:border-[rgb(27,176,206)]/30"
                     >
                         <span className="font-bold text-sm">Developer Console</span>
                     </button>

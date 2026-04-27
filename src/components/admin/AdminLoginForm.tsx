@@ -49,7 +49,7 @@ export default function AdminLoginForm() {
             {/* Background glow effects */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[rgb(27,176,206)]/50/10 rounded-full blur-[120px] animate-pulse delay-1000" />
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[rgb(48,102,187)]/50/10 rounded-full blur-[120px] animate-pulse delay-1000" />
             </div>
 
             <div className="relative z-10 w-full max-w-md p-8">
@@ -116,7 +116,7 @@ export default function AdminLoginForm() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-[rgb(27,176,206)] text-white hover:bg-[#25529a] py-3.5 mt-2 rounded-xl font-semibold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group disabled:opacity-50 shadow-sm"
+                            className="w-full bg-[rgb(48,102,187)] text-white hover:bg-[#25529a] py-3.5 mt-2 rounded-xl font-semibold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group disabled:opacity-50 shadow-sm"
                         >
                             {loading ? (
                                 <span className="flex items-center gap-2">

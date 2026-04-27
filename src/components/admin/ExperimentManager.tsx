@@ -69,7 +69,7 @@ export default function ExperimentManager() {
             <div className="bg-white rounded-2xl border border-[rgb(27,176,206)]/30 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-[#0F172A]">
-                        <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
+                        <thead className="bg-[rgb(48,102,187)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
                             <tr>
                                 <th className="px-6 py-4">Shot (Problem)</th>
                                 <th className="px-6 py-4">User</th>
@@ -93,18 +93,18 @@ export default function ExperimentManager() {
                                 </tr>
                             ) : (
                                 filtered.map((exp) => (
-                                    <tr key={exp._id} className="hover:bg-[rgb(27,176,206)]/5 transition-colors group">
+                                    <tr key={exp._id} className="hover:bg-[rgb(48,102,187)]/5 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="font-semibold text-[#0F172A] line-clamp-1">{exp.problem || "Untitled"}</div>
                                             <div className="text-[10px] text-[#0F172A] mt-0.5 flex items-center gap-1.5">
                                                 <span>{exp.industry} • {exp.service}</span>
-                                                <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold ${exp.source === 'API' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-[rgb(27,176,206)]/5 text-[rgb(27,176,206)] border border-[rgb(27,176,206)]/20'}`}>
+                                                <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold ${exp.source === 'API' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-[rgb(48,102,187)]/5 text-[#0F172A] border border-[rgb(27,176,206)]/20'}`}>
                                                     {exp.source || 'Web'}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-[10px] font-mono bg-[rgb(27,176,206)]/5 px-1.5 py-0.5 rounded border border-[rgb(27,176,206)]/30 text-[#0F172A]">
+                                            <span className="text-[10px] font-mono bg-[rgb(48,102,187)]/5 px-1.5 py-0.5 rounded border border-[rgb(27,176,206)]/30 text-[#0F172A]">
                                                 {exp.userId || "Guest"}
                                             </span>
                                         </td>
@@ -121,7 +121,7 @@ export default function ExperimentManager() {
                                         <td className="px-6 py-4 text-right">
                                             <button
                                                 onClick={() => setSelectedExp(exp)}
-                                                className="text-[rgb(27,176,206)] hover:underline font-semibold text-xs transition-colors"
+                                                className="text-[#0F172A] hover:underline font-semibold text-xs transition-colors"
                                             >
                                                 View details
                                             </button>

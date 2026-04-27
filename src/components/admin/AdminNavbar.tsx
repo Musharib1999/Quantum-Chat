@@ -16,7 +16,7 @@ export default function AdminNavbar({ setIsMobileMenuOpen, setShowPasswordModal 
         <header className="bg-transparent border-b h-20 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-[100] transition-all duration-300 border-[rgb(27,176,206)]/20">
             <div className="flex items-center gap-4">
                 <button
-                    className="md:hidden p-2 text-[#0F172A] hover:bg-[rgb(27,176,206)]/10 rounded-lg transition-colors"
+                    className="md:hidden p-2 text-[#0F172A] hover:bg-[rgb(48,102,187)]/10 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(true)}
                 >
                     <Menu size={24} />
@@ -27,9 +27,9 @@ export default function AdminNavbar({ setIsMobileMenuOpen, setShowPasswordModal 
                 {/* Profile Toggle */}
                 <button 
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center gap-2.5 pl-2.5 pr-2 py-1.5 hover:bg-[rgb(27,176,206)]/5 rounded-xl border border-transparent hover:border-[rgb(27,176,206)]/20 transition-all group"
+                    className="flex items-center gap-2.5 pl-2.5 pr-2 py-1.5 hover:bg-[rgb(48,102,187)]/5 rounded-xl border border-transparent hover:border-[rgb(27,176,206)]/20 transition-all group"
                 >
-                    <div className="w-8 h-8 rounded-lg bg-[rgb(27,176,206)]/10 border border-[rgb(27,176,206)]/20 flex items-center justify-center text-[rgb(27,176,206)] font-bold text-xs shadow-sm transition-transform group-hover:scale-105">
+                    <div className="w-8 h-8 rounded-lg bg-[rgb(48,102,187)]/10 border border-[rgb(27,176,206)]/20 flex items-center justify-center text-[#0F172A] font-bold text-xs shadow-sm transition-transform group-hover:scale-105">
                         A
                     </div>
                     <ChevronDown size={14} className={`text-[#0F172A] transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />

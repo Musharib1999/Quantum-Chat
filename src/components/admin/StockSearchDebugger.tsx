@@ -73,7 +73,7 @@ export default function StockSearchDebugger() {
                     <h2 className="text-xl font-semibold text-[#0F172A]">Stock flow debugger</h2>
                     <p className="text-sm text-[#0F172A]">Trace autonomous logic: Ticker extraction → YFinance data → Prompt enrichment → Final summary.</p>
                 </div>
-                <div className="flex bg-[rgb(27,176,206)]/10 p-1 rounded-xl border border-[rgb(27,176,206)]/30">
+                <div className="flex bg-[rgb(48,102,187)]/10 p-1 rounded-xl border border-[rgb(27,176,206)]/30">
                     <button
                         onClick={() => setActiveView('trace')}
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeView === 'trace' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#0F172A]'}`}
@@ -97,7 +97,7 @@ export default function StockSearchDebugger() {
                             <input
                                 type="text"
                                 placeholder="e.g. What is the current price of NVDA?"
-                                className="w-full p-4 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
+                                className="w-full p-4 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleRunDebug()}
@@ -106,7 +106,7 @@ export default function StockSearchDebugger() {
                         <button
                             onClick={handleRunDebug}
                             disabled={loading || !prompt.trim()}
-                            className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-8 py-4 rounded-xl text-sm font-bold transition-all shadow-sm disabled:opacity-50"
+                            className="bg-[rgb(48,102,187)] hover:bg-[#255299] text-white px-8 py-4 rounded-xl text-sm font-bold transition-all shadow-sm disabled:opacity-50"
                         >
                             {loading ? 'Executing...' : 'Run trace'}
                         </button>
@@ -114,13 +114,13 @@ export default function StockSearchDebugger() {
                 </div>
             ) : (
                 <div className="bg-white rounded-2xl border border-[rgb(27,176,206)]/30 overflow-hidden shadow-sm">
-                    <div className="p-4 bg-[rgb(27,176,206)]/5 border-b border-[rgb(27,176,206)]/30 flex justify-between items-center">
+                    <div className="p-4 bg-[rgb(48,102,187)]/5 border-b border-[rgb(27,176,206)]/30 flex justify-between items-center">
                         <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#0F172A]">Historical market interactions</h4>
-                        <button onClick={fetchHistory} className="text-xs font-semibold text-[rgb(27,176,206)] hover:underline">Refresh</button>
+                        <button onClick={fetchHistory} className="text-xs font-semibold text-[#0F172A] hover:underline">Refresh</button>
                     </div>
                     <div className="max-h-[500px] overflow-y-auto">
                         <table className="w-full text-left text-xs text-[#0F172A]">
-                            <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] uppercase font-bold sticky top-0">
+                            <thead className="bg-[rgb(48,102,187)]/5 text-[#0F172A] uppercase font-bold sticky top-0">
                                 <tr>
                                     <th className="p-4">Time</th>
                                     <th className="p-4">Ticker</th>
@@ -130,14 +130,14 @@ export default function StockSearchDebugger() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {history.map((log) => (
-                                    <tr key={log._id} className="hover:bg-[rgb(27,176,206)]/5 transition-colors">
+                                    <tr key={log._id} className="hover:bg-[rgb(48,102,187)]/5 transition-colors">
                                         <td className="p-4 text-[#0F172A] whitespace-nowrap">{new Date(log.timestamp).toLocaleTimeString()}</td>
-                                        <td className="p-4 font-mono font-bold text-[rgb(27,176,206)]">{log.ticker || 'N/A'}</td>
+                                        <td className="p-4 font-mono font-bold text-[#0F172A]">{log.ticker || 'N/A'}</td>
                                         <td className="p-4 truncate max-w-[300px]">{log.userQuery}</td>
                                         <td className="p-4 text-right">
                                             <button
                                                 onClick={() => viewLogDetails(log)}
-                                                className="text-[rgb(27,176,206)] hover:underline font-bold text-[10px] uppercase"
+                                                className="text-[#0F172A] hover:underline font-bold text-[10px] uppercase"
                                             >
                                                 Inspect trace
                                             </button>
@@ -169,13 +169,13 @@ export default function StockSearchDebugger() {
                             {result.steps?.map((step: any, idx: number) => (
                                 <div key={idx} className="bg-white border border-[rgb(27,176,206)]/30 p-4 rounded-xl flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-2 h-2 rounded-full ${step.status === 'completed' ? 'bg-green-500' : step.status === 'failed' ? 'bg-red-500' : 'bg-[rgb(27,176,206)] animate-pulse'}`} />
+                                        <div className={`w-2 h-2 rounded-full ${step.status === 'completed' ? 'bg-green-500' : step.status === 'failed' ? 'bg-red-500' : 'bg-[rgb(48,102,187)] animate-pulse'}`} />
                                         <div>
                                             <p className="text-xs font-bold text-[#0F172A]">{step.name}</p>
                                             <p className="text-[9px] text-[#0F172A] uppercase font-bold">{step.status}</p>
                                         </div>
                                     </div>
-                                    <div className="text-[10px] font-mono bg-[rgb(27,176,206)]/5 px-2 py-0.5 rounded border border-[rgb(27,176,206)]/30 text-[#0F172A]">
+                                    <div className="text-[10px] font-mono bg-[rgb(48,102,187)]/5 px-2 py-0.5 rounded border border-[rgb(27,176,206)]/30 text-[#0F172A]">
                                         {typeof step.result === 'string' ? step.result : 'Object'}
                                     </div>
                                 </div>
@@ -196,7 +196,7 @@ export default function StockSearchDebugger() {
                         <h4 className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest px-1">Logic & reasoning</h4>
 
                         <div className="bg-white border border-[rgb(27,176,206)]/30 rounded-2xl overflow-hidden">
-                            <div className="p-4 bg-[rgb(27,176,206)]/5 border-b border-[rgb(27,176,206)]/30 text-[10px] font-bold uppercase text-[#0F172A] tracking-widest">
+                            <div className="p-4 bg-[rgb(48,102,187)]/5 border-b border-[rgb(27,176,206)]/30 text-[10px] font-bold uppercase text-[#0F172A] tracking-widest">
                                 Enriched system prompt
                             </div>
                             <div className="p-4 bg-white max-h-[250px] overflow-y-auto">
@@ -206,8 +206,8 @@ export default function StockSearchDebugger() {
                             </div>
                         </div>
 
-                        <div className="bg-[rgb(27,176,206)] border border-[rgb(27,176,206)] rounded-2xl overflow-hidden shadow-sm">
-                            <div className="p-4 bg-[rgb(27,176,206)] text-[10px] font-bold uppercase text-white tracking-widest opacity-80">
+                        <div className="bg-[rgb(48,102,187)] border border-[rgb(27,176,206)] rounded-2xl overflow-hidden shadow-sm">
+                            <div className="p-4 bg-[rgb(48,102,187)] text-[10px] font-bold uppercase text-white tracking-widest opacity-80">
                                 Final summarization
                             </div>
                             <div className="p-6 text-white text-sm leading-relaxed whitespace-pre-wrap">

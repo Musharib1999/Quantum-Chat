@@ -112,7 +112,7 @@ export default function MarketPromptManager() {
                         <input
                             type="text"
                             placeholder="e.g. Top Movers"
-                            className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-sm text-[#0F172A]"
+                            className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-sm text-[#0F172A]"
                             value={label}
                             onChange={(e) => setLabel(e.target.value)}
                         />
@@ -123,7 +123,7 @@ export default function MarketPromptManager() {
                     <input
                         type="text"
                         placeholder="e.g. Show me today's top moving stocks and market sentiment"
-                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-sm text-[#0F172A]"
+                        className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-sm text-[#0F172A]"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
@@ -132,7 +132,7 @@ export default function MarketPromptManager() {
                     <button
                         type="submit"
                         disabled={isSubmitting || !label.trim() || !query.trim()}
-                        className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+                        className="bg-[rgb(48,102,187)] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
                     >
                         {isSubmitting ? 'Saving...' : editingId ? 'Update prompt' : 'Add prompt'}
                     </button>
@@ -151,7 +151,7 @@ export default function MarketPromptManager() {
             {/* List */}
             <div className="border border-[rgb(27,176,206)]/30 rounded-xl overflow-hidden bg-white shadow-sm">
                 <table className="w-full text-left text-sm text-[#0F172A]">
-                    <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
+                    <thead className="bg-[rgb(48,102,187)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
                         <tr>
                             <th className="px-5 py-4 w-1/4">Label</th>
                             <th className="px-5 py-4">Query</th>
@@ -174,7 +174,7 @@ export default function MarketPromptManager() {
                             </tr>
                         ) : (
                             prompts.map(prompt => (
-                                <tr key={prompt._id} className={`group transition-colors ${prompt.isActive ? 'hover:bg-[rgb(27,176,206)]/5' : 'bg-[rgb(27,176,206)]/5/30 opacity-70'}`}>
+                                <tr key={prompt._id} className={`group transition-colors ${prompt.isActive ? 'hover:bg-[rgb(48,102,187)]/5' : 'bg-[rgb(48,102,187)]/5/30 opacity-70'}`}>
                                     <td className="px-5 py-4 font-semibold text-[#0F172A]">
                                         {prompt.label}
                                     </td>
@@ -184,7 +184,7 @@ export default function MarketPromptManager() {
                                     <td className="px-5 py-4">
                                         <button 
                                             onClick={() => handleToggleActive(prompt)}
-                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${prompt.isActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[rgb(27,176,206)]/10 text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
+                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${prompt.isActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[rgb(48,102,187)]/10 text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
                                         >
                                             {prompt.isActive ? 'Active' : 'Hidden'}
                                         </button>

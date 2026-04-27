@@ -148,16 +148,16 @@ export default function EnterpriseStreamManager() {
                     <h2 className="text-xl font-semibold text-[#0F172A]">Enterprise Pipeline Hub</h2>
                     <p className="text-sm text-[#0F172A]">Manage B2B integrations and visualize high-frequency streaming traffic.</p>
                 </div>
-                <div className="flex items-center gap-2 bg-[rgb(27,176,206)]/10 p-1 rounded-xl border border-[rgb(27,176,206)]/30">
+                <div className="flex items-center gap-2 bg-[rgb(48,102,187)]/10 p-1 rounded-xl border border-[rgb(27,176,206)]/30">
                     <button 
                         onClick={() => setViewMode('manager')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'manager' ? 'bg-white text-[rgb(27,176,206)] shadow-sm' : 'text-[#0F172A] hover:text-[#0F172A]'}`}
+                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'manager' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#0F172A] hover:text-[#0F172A]'}`}
                     >
                         Pipelines
                     </button>
                     <button 
                         onClick={() => setViewMode('visualizer')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 ${viewMode === 'visualizer' ? 'bg-[rgb(27,176,206)] text-white shadow-sm' : 'text-[#0F172A] hover:text-[#0F172A]'}`}
+                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 ${viewMode === 'visualizer' ? 'bg-[rgb(48,102,187)] text-white shadow-sm' : 'text-[#0F172A] hover:text-[#0F172A]'}`}
                     >
                         <Activity size={16} /> Live Visualizer
                     </button>
@@ -170,14 +170,14 @@ export default function EnterpriseStreamManager() {
                         <h3 className="font-semibold text-[#0F172A]">Active B2B Pipelines</h3>
                         <button 
                             onClick={() => setShowForm(!showForm)}
-                            className="bg-[rgb(27,176,206)]/10 text-[rgb(27,176,206)] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[rgb(27,176,206)]/20 transition-colors"
+                            className="bg-[rgb(48,102,187)]/10 text-[#0F172A] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[rgb(48,102,187)]/20 transition-colors"
                         >
                             {showForm ? 'Close Editor' : '+ New Pipeline'}
                         </button>
                     </div>
 
                     {showForm && (
-                        <form onSubmit={handleCreatePipeline} className="mb-8 p-6 bg-[rgb(27,176,206)]/5 rounded-xl border border-[rgb(27,176,206)]/30 grid grid-cols-2 gap-4">
+                        <form onSubmit={handleCreatePipeline} className="mb-8 p-6 bg-[rgb(48,102,187)]/5 rounded-xl border border-[rgb(27,176,206)]/30 grid grid-cols-2 gap-4">
                             <div className="col-span-1">
                                 <label className="block text-xs font-bold text-[#0F172A] mb-1">Enterprise Account</label>
                                 <select 
@@ -203,14 +203,14 @@ export default function EnterpriseStreamManager() {
                                 <input required type="url" value={formData.webhookUrl} onChange={e => setFormData({...formData, webhookUrl: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono" placeholder="https://api.acme.com/quantum/receive" />
                             </div>
                             <div className="col-span-2 flex justify-end">
-                                <button type="submit" className="bg-[rgb(27,176,206)] text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm hover:opacity-90">Save Pipeline</button>
+                                <button type="submit" className="bg-[rgb(48,102,187)] text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm hover:opacity-90">Save Pipeline</button>
                             </div>
                         </form>
                     )}
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-[#0F172A]">
-                            <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
+                            <thead className="bg-[rgb(48,102,187)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
                                 <tr>
                                     <th className="px-6 py-4">Enterprise</th>
                                     <th className="px-6 py-4">Status</th>
@@ -225,7 +225,7 @@ export default function EnterpriseStreamManager() {
                                 ) : pipelines.length === 0 ? (
                                     <tr><td colSpan={4} className="px-6 py-12 text-center text-[#0F172A]">No data pipelines configured.</td></tr>
                                 ) : pipelines.map(p => (
-                                    <tr key={p._id} className="hover:bg-[rgb(27,176,206)]/5">
+                                    <tr key={p._id} className="hover:bg-[rgb(48,102,187)]/5">
                                         <td className="px-6 py-4 font-bold text-[#0F172A]">{p.enterpriseName}</td>
                                         <td className="px-6 py-4">
                                             <button 
@@ -238,12 +238,12 @@ export default function EnterpriseStreamManager() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 group">
-                                                <span className="text-[10px] font-mono bg-[rgb(27,176,206)]/5 text-[#0F172A] px-2 py-1 rounded border border-[rgb(27,176,206)]/30">
+                                                <span className="text-[10px] font-mono bg-[rgb(48,102,187)]/5 text-[#0F172A] px-2 py-1 rounded border border-[rgb(27,176,206)]/30">
                                                     {p._id}
                                                 </span>
                                                 <button 
                                                     onClick={() => { navigator.clipboard.writeText(p._id); alert("Pipeline ID copied!"); }}
-                                                    className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-[rgb(27,176,206)] underline transition-opacity"
+                                                    className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-[#0F172A] underline transition-opacity"
                                                 >
                                                     COPY
                                                 </button>
@@ -261,18 +261,18 @@ export default function EnterpriseStreamManager() {
 
             {viewMode === 'visualizer' && (
                 <div className="bg-white/80 backdrop-blur-2xl rounded-2xl border border-[rgb(27,176,206)]/30 overflow-hidden shadow-xl flex flex-col h-[600px] animate-in fade-in duration-500">
-                    <div className="bg-[rgb(27,176,206)]/5/80 p-5 border-b border-[rgb(27,176,206)]/30 flex justify-between items-center">
+                    <div className="bg-[rgb(48,102,187)]/5/80 p-5 border-b border-[rgb(27,176,206)]/30 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <div className="flex gap-1.5 opacity-60">
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
                             </div>
-                            <span className="text-[rgb(27,176,206)] text-xs font-bold tracking-[0.2em] pl-4 border-l border-[rgb(27,176,206)]/30 uppercase">Pipeline Telemetry</span>
+                            <span className="text-[#0F172A] text-xs font-bold tracking-[0.2em] pl-4 border-l border-[rgb(27,176,206)]/30 uppercase">Pipeline Telemetry</span>
                         </div>
                         <button 
                             onClick={() => setIsPolling(!isPolling)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${isPolling ? 'bg-white text-red-500 border-red-100 hover:bg-red-50' : 'bg-[rgb(27,176,206)] text-white border-[rgb(27,176,206)] hover:opacity-90'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${isPolling ? 'bg-white text-red-500 border-red-100 hover:bg-red-50' : 'bg-[rgb(48,102,187)] text-white border-[rgb(27,176,206)] hover:opacity-90'}`}
                         >
                             {isPolling ? <><Square size={12} fill="currentColor" /> STOP STREAM</> : <><Play size={12} fill="currentColor" /> LIVE MONITOR</>}
                         </button>
@@ -280,11 +280,11 @@ export default function EnterpriseStreamManager() {
 
                     <div className="flex-1 grid grid-cols-3 divide-x divide-slate-100 bg-white/40">
                         {/* INBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[rgb(27,176,206)]/5/30">
-                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Database size={14} className="text-[rgb(27,176,206)]" /> Inbound Load</h4>
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[rgb(48,102,187)]/5/30">
+                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Database size={14} className="text-[#0F172A]" /> Inbound Load</h4>
                             <div className="flex-1 space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
-                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[rgb(27,176,206)]/30 shadow-md ring-1 ring-[rgb(27,176,206)]/5' : 'bg-[rgb(27,176,206)]/5 border-[rgb(27,176,206)]/20 opacity-60'}`}>
+                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[rgb(27,176,206)]/30 shadow-md ring-1 ring-[rgb(27,176,206)]/5' : 'bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/20 opacity-60'}`}>
                                         <div className="text-[#0F172A] mb-2 truncate font-semibold">[{new Date(shot.timestamp).toISOString()}]</div>
                                         <div className="text-[#0F172A] whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.parameters || {}, null, 2)}</div>
                                     </div>
@@ -307,7 +307,7 @@ export default function EnterpriseStreamManager() {
                                         </div>
                                         <div className="text-center space-y-2">
                                             <div className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100"><CheckCircle size={12} /> Schema Verified</div>
-                                            <div className="text-xs font-semibold text-[#0F172A] flex items-center justify-center gap-2"><Activity size={12} className="text-[rgb(27,176,206)]" /> Queue Depth: 0</div>
+                                            <div className="text-xs font-semibold text-[#0F172A] flex items-center justify-center gap-2"><Activity size={12} className="text-[#0F172A]" /> Queue Depth: 0</div>
                                             <div className="text-[10px] font-bold text-slate-300 mt-4 tracking-widest uppercase">Active Simulator: QISKIT 1.3.1</div>
                                         </div>
                                     </>
@@ -318,14 +318,14 @@ export default function EnterpriseStreamManager() {
                         </div>
 
                         {/* OUTBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[rgb(27,176,206)]/5/30">
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[rgb(48,102,187)]/5/30">
                             <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Activity size={14} className="text-emerald-500" /> Webhook Out</h4>
                             <div className="flex-1 space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
-                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-[rgb(27,176,206)]/5 border-[rgb(27,176,206)]/20 opacity-60'}`}>
+                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/20 opacity-60'}`}>
                                         <div className="text-[#0F172A] mb-2 truncate flex justify-between font-semibold">
                                             <span>Target: POST 200 OK</span>
-                                            <span className="text-[rgb(27,176,206)]">{shot.hardware}</span>
+                                            <span className="text-[#0F172A]">{shot.hardware}</span>
                                         </div>
                                         <div className="text-[#0F172A] whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.results || { status: 'processed' }, null, 2)}</div>
                                     </div>

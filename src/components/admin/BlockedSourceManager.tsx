@@ -91,12 +91,12 @@ export default function BlockedSourceManager() {
                     placeholder="Enter portal name (e.g. Google News, Reuters)"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(27,176,206)]/30 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 text-[#0F172A]"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(27,176,206)]/30 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(48,102,187)]/5 text-[#0F172A]"
                 />
                 <button
                     type="submit"
                     disabled={isSubmitting || !name.trim()}
-                    className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                    className="bg-[rgb(48,102,187)] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                 >
                     {isSubmitting ? 'Saving...' : editingId ? 'Update portal' : 'Block portal'}
                 </button>
@@ -114,7 +114,7 @@ export default function BlockedSourceManager() {
             {/* List */}
             <div className="rounded-xl border border-[rgb(27,176,206)]/30 overflow-hidden bg-white shadow-sm">
                 <table className="w-full text-left text-sm text-[#0F172A]">
-                    <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30">
+                    <thead className="bg-[rgb(48,102,187)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30">
                         <tr>
                             <th className="px-5 py-4 font-semibold">Portal name</th>
                             <th className="px-5 py-4 font-semibold">Added at</th>
@@ -136,7 +136,7 @@ export default function BlockedSourceManager() {
                             </tr>
                         ) : (
                             sources.map((source) => (
-                                <tr key={source._id} className="group transition-colors hover:bg-[rgb(27,176,206)]/5">
+                                <tr key={source._id} className="group transition-colors hover:bg-[rgb(48,102,187)]/5">
                                     <td className="px-5 py-4 font-semibold text-[#0F172A]">
                                         {source.name}
                                     </td>

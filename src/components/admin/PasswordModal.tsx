@@ -89,7 +89,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
+                            className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={currentPassword}
                             onChange={e => setCurrentPassword(e.target.value)}
                         />
@@ -99,7 +99,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
+                            className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={newAdminPassword}
                             onChange={e => setNewAdminPassword(e.target.value)}
                         />
@@ -109,7 +109,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
+                            className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                         />
@@ -118,7 +118,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                     <button
                         type="submit"
                         disabled={passwordLoading || passwordSuccess}
-                        className="w-full mt-2 bg-[rgb(27,176,206)] hover:bg-[#255299] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all font-sans shadow-sm shadow-[rgb(27,176,206)]/20"
+                        className="w-full mt-2 bg-[rgb(48,102,187)] hover:bg-[#255299] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all font-sans shadow-sm shadow-[rgb(27,176,206)]/20"
                     >
                         {passwordLoading ? <Loader2 className="animate-spin w-5 h-5" /> : "Update Password"}
                     </button>

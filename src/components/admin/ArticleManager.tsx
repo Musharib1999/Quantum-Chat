@@ -104,12 +104,12 @@ export default function ArticleManager() {
                         placeholder="Article title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 text-[#0F172A]"
+                        className="border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(48,102,187)]/5 text-[#0F172A]"
                     />
                     <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 text-[#0F172A]"
+                        className="border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(48,102,187)]/5 text-[#0F172A]"
                     >
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -120,28 +120,28 @@ export default function ArticleManager() {
                         placeholder="Author"
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
-                        className="w-full border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 text-[#0F172A]"
+                        className="w-full border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(48,102,187)]/5 text-[#0F172A]"
                     />
                     <textarea
                         placeholder="Short description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={2}
-                        className="w-full border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] resize-none bg-[rgb(27,176,206)]/5 text-[#0F172A]"
+                        className="w-full border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] resize-none bg-[rgb(48,102,187)]/5 text-[#0F172A]"
                     />
                     <textarea
                         placeholder="Full article content (markdown supported)"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         rows={6}
-                        className="w-full border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] resize-none bg-[rgb(27,176,206)]/5 text-[#0F172A]"
+                        className="w-full border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] resize-none bg-[rgb(48,102,187)]/5 text-[#0F172A]"
                     />
                 </div>
                 <div className="flex gap-2 pt-2">
                     <button
                         type="submit"
                         disabled={isSubmitting || !title || !content}
-                        className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+                        className="bg-[rgb(48,102,187)] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
                     >
                         {isSubmitting ? 'Saving...' : editingId ? 'Update article' : 'Add article'}
                     </button>
@@ -166,13 +166,13 @@ export default function ArticleManager() {
                 ) : (
                     <div className="divide-y divide-slate-100">
                         {articles.map((article) => (
-                            <div key={article._id} className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-[rgb(27,176,206)]/5 transition-colors group">
+                            <div key={article._id} className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-[rgb(48,102,187)]/5 transition-colors group">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-1.5">
                                         <h4 className="font-semibold text-[#0F172A] truncate">
                                             {article.title}
                                         </h4>
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[rgb(27,176,206)]/10 text-[#0F172A]">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[rgb(48,102,187)]/10 text-[#0F172A]">
                                             {article.category}
                                         </span>
                                     </div>
