@@ -392,12 +392,28 @@ export async function executeIndustryWorkflow(
                         continue;
                     }
 
-                    console.log(`[Quantum Workflow] VALIDATED | Proceeding to execution.`);
-
                     // --- STEP 5: EXECUTION ---
+                    const mongooseDb = (await import('mongoose')).default;
+                    const HardwareRegistry = mongooseDb.models.Hardware || (await import('@/models/Hardware')).default;
+                    const hwRecord = await HardwareRegistry.findOne({ 
+                        $and: [
+                            { 
+                                $or: [
+                                    { name: hardware }, 
+                                    { name: new RegExp(`^${hardware}$`, 'i') },
+                                    { name: 'Universal' }
+                                ] 
+                            },
+                            { provider: isDWave ? 'dwave' : { $ne: 'dwave' } }
+                        ]
+                    }).sort({ name: -1 }).lean();
+
+                    const serviceUrl = hwRecord?.serviceUrl;
+                    console.log(`[Quantum Workflow] Executing on: ${serviceUrl || 'Fallback ENV URL'}`);
+
                     finalExecutionResult = isDWave
-                        ? await executeDWaveAnnealer(generatedCode)
-                        : await executeQuantumCircuit(generatedCode);
+                        ? await executeDWaveAnnealer(generatedCode, serviceUrl)
+                        : await executeQuantumCircuit(generatedCode, serviceUrl);
 
                     // If python execution failed but output contains Traceback, treat as error
                     const rawSimulatorOutput = finalExecutionResult.output || "";
