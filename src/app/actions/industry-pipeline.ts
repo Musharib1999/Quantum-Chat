@@ -395,21 +395,34 @@ export async function executeIndustryWorkflow(
                     // --- STEP 5: EXECUTION ---
                     const mongooseDb = (await import('mongoose')).default;
                     const HardwareRegistry = mongooseDb.models.Hardware || (await import('@/models/Hardware')).default;
-                    const hwRecord = await HardwareRegistry.findOne({ 
+                    
+                    // 1. Try exact/regex match first
+                    let hwRecord = await HardwareRegistry.findOne({ 
                         $and: [
-                            { 
-                                $or: [
-                                    { name: hardware }, 
-                                    { name: new RegExp(`^${hardware}$`, 'i') },
-                                    { name: 'Universal' }
-                                ] 
-                            },
+                            { $or: [{ name: hardware }, { name: new RegExp(`^${hardware}$`, 'i') }] },
                             { provider: isDWave ? 'dwave' : { $ne: 'dwave' } }
                         ]
-                    }).sort({ name: -1 }).lean();
+                    }).lean();
 
-                    const serviceUrl = hwRecord?.serviceUrl;
-                    console.log(`[Quantum Workflow] Executing on: ${serviceUrl || 'Fallback ENV URL'}`);
+                    // 2. Fallback to ANY matching provider
+                    if (!hwRecord) {
+                        hwRecord = await HardwareRegistry.findOne({ provider: isDWave ? 'dwave' : { $ne: 'dwave' } }).sort({ order: 1 }).lean();
+                    }
+                    
+                    // 3. Absolute Fallback to 'Universal'
+                    if (!hwRecord) {
+                        hwRecord = await HardwareRegistry.findOne({ name: 'Universal' }).lean();
+                    }
+
+                    let serviceUrl = hwRecord?.serviceUrl;
+                    
+                    // 4. Hardcoded Fallbacks for Vercel Environment (if ENV is missing locally)
+                    if (!serviceUrl) {
+                       if (isDWave) serviceUrl = DWAVE_SERVICE_URL || "https://quantumdwave-production.up.railway.app";
+                       else serviceUrl = QISKIT_SERVICE_URL || "https://qiskit-service-production.up.railway.app";
+                    }
+
+                    console.log(`[Quantum Workflow] Executing on: ${serviceUrl} for target: ${hardware}`);
 
                     finalExecutionResult = isDWave
                         ? await executeDWaveAnnealer(generatedCode, serviceUrl)

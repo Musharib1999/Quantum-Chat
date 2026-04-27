@@ -65,6 +65,10 @@ export async function executeDWaveAnnealer(code: string, overrideUrl?: string) {
     const timeoutId = setTimeout(() => controller.abort(), 115000); // 1.9m timeout
     try {
         const baseUrl = sanitizeUrl(overrideUrl || DWAVE_SERVICE_URL || '');
+        if (!baseUrl) {
+            throw new Error(`CONFIGURATION ERROR: D-Wave Simulator URL is missing. No hardware mapped and DWAVE_SERVICE_URL is empty.`);
+        }
+        
         const url = `${baseUrl}/execute`;
         const startTime = Date.now();
 
