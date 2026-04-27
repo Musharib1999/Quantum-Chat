@@ -9,7 +9,13 @@ const DWAVE_API_KEY = process.env.DWAVE_API_KEY || API_SECRET || "dev_secret_key
 /**
  * Trims trailing slashes from a URL to prevent routing errors (e.g. //execute)
  */
-const sanitizeUrl = (url: string) => url.replace(/\/+$/, '');
+const sanitizeUrl = (url: string) => {
+    let cleanUrl = url.replace(/\/+$/, '');
+    if (cleanUrl && !cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        cleanUrl = 'https://' + cleanUrl;
+    }
+    return cleanUrl;
+};
 
 /**
  * Executes Qiskit/Python code on the external simulator service.

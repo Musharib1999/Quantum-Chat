@@ -14,6 +14,7 @@ interface CentralWizardProps {
 export default function CentralWizard({ step, metadata, config, onSelect }: CentralWizardProps) {
     const [hardwareOptions, setHardwareOptions] = useState<any[]>([]);
     const [loadingHw, setLoadingHw] = useState(false);
+    const [selectedHardware, setSelectedHardware] = useState<string[]>([]);
 
     useEffect(() => {
         if (step === 'hardware') {
@@ -170,55 +171,67 @@ export default function CentralWizard({ step, metadata, config, onSelect }: Cent
                                         ? (metadata.problemMapping[config.industry]?.[config.problem]?.[config.service] || [])
                                         : [];
 
-                                    // If no specific hardware is restricted, show all online hardware
-                                    if (mappedHws.length === 0) {
-                                        return hardwareOptions.map((hw) => (
-                                            <button
-                                                key={hw.id}
-                                                onClick={() => onSelect('hardware', hw.name)}
-                                                className="p-6 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
-                                            >
-                                                <div className="w-full flex justify-between items-center mb-1">
-                                                    <span className="text-xl font-light tracking-tight">{hw.name}</span>
-                                                <div className="text-sm font-medium text-green-500">Online</div>
-                                                </div>
-                                                <span className="text-sm text-muted-foreground font-mono">{hw.qubits} Qubits</span>
-                                                <p className="text-sm text-foreground/80 mt-1 leading-relaxed">{hw.description}</p>
-                                            </button>
-                                        ));
+                                    let displayHws = hardwareOptions;
+                                    if (mappedHws.length > 0) {
+                                        displayHws = hardwareOptions.filter(h => {
+                                            const nameNorm = h.name.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                            const providerNorm = h.provider.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                            return mappedHws.some((m: string) => {
+                                                const mNorm = m.toLowerCase().replace(/-/g, '').replace(/ /g, '');
+                                                return nameNorm.includes(mNorm) ||
+                                                    mNorm.includes(providerNorm) ||
+                                                    (mNorm === 'simulator' && nameNorm.includes('simulator'));
+                                            });
+                                        });
                                     }
 
-                                    const filtered = hardwareOptions.filter(h => {
-                                        const nameNorm = h.name.toLowerCase().replace(/-/g, '').replace(/ /g, '');
-                                        const providerNorm = h.provider.toLowerCase().replace(/-/g, '').replace(/ /g, '');
-                                        return mappedHws.some((m: string) => {
-                                            const mNorm = m.toLowerCase().replace(/-/g, '').replace(/ /g, '');
-                                            return nameNorm.includes(mNorm) ||
-                                                mNorm.includes(providerNorm) ||
-                                                (mNorm === 'simulator' && nameNorm.includes('simulator'));
-                                        });
-                                    });
-
-                                    if (filtered.length === 0) return (
+                                    if (displayHws.length === 0) return (
                                         <div className="p-8 border border-border border-dashed rounded-xl w-full text-muted-foreground">
                                             No quantum simulators available for this problem.
                                         </div>
                                     );
 
-                                    return filtered.map((hw) => (
-                                        <button
-                                            key={hw.id}
-                                            onClick={() => onSelect('hardware', hw.name)}
-                                            className="p-6 bg-card border border-border rounded-xl hover:border-ring hover:bg-card transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1"
-                                        >
-                                            <div className="w-full flex justify-between items-center mb-1">
-                                                <span className="text-xl font-light tracking-tight">{hw.name}</span>
-                                                <div className="text-sm font-semibold text-green-500">Online</div>
+                                    return (
+                                        <div className="flex flex-col items-center w-full space-y-8">
+                                            <div className="flex flex-wrap justify-center gap-4 w-full">
+                                                {displayHws.map((hw) => {
+                                                    const isSelected = selectedHardware.includes(hw.name);
+                                                    return (
+                                                        <button
+                                                            key={hw.id}
+                                                            onClick={() => {
+                                                                setSelectedHardware(prev => 
+                                                                    prev.includes(hw.name) ? prev.filter(n => n !== hw.name) : [...prev, hw.name]
+                                                                );
+                                                            }}
+                                                            className={`p-6 border rounded-xl transition-all group flex flex-col items-start gap-2 text-left shadow-sm hover:shadow-md max-w-sm w-full md:w-auto flex-1 ${isSelected ? 'border-foreground bg-foreground/5 shadow-md ring-1 ring-foreground/20' : 'border-border hover:border-ring hover:bg-card'}`}
+                                                        >
+                                                            <div className="w-full flex justify-between items-center mb-1">
+                                                                <span className="text-xl font-light tracking-tight">{hw.name}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="text-[10px] font-semibold text-green-500 border border-green-500/20 bg-green-500/10 px-2 py-0.5 rounded-full">Online</div>
+                                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-foreground border-foreground text-background' : 'border-muted-foreground'}`}>
+                                                                        {isSelected && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3 h-3"><polyline points="20 6 9 17 4 12" /></svg>}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-sm text-muted-foreground font-mono">{hw.qubits} Qubits</span>
+                                                            <p className="text-sm text-foreground/80 mt-1 leading-relaxed">{hw.description}</p>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
-                                            <span className="text-sm text-muted-foreground font-mono">{hw.qubits} Qubits</span>
-                                            <p className="text-sm text-foreground/80 mt-1 leading-relaxed">{hw.description}</p>
-                                        </button>
-                                    ));
+                                            <div className="w-full max-w-sm pt-4 border-t border-border/50">
+                                                <button 
+                                                    disabled={selectedHardware.length === 0}
+                                                    onClick={() => onSelect('hardware', selectedHardware.join(','))}
+                                                    className={`w-full py-4 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${selectedHardware.length > 0 ? 'bg-foreground text-background shadow-lg hover:opacity-90 active:scale-[0.98]' : 'bg-secondary text-muted-foreground cursor-not-allowed opacity-50'}`}
+                                                >
+                                                    {selectedHardware.length > 1 ? `Run Comparative Analysis (${selectedHardware.length})` : 'Start Quantum Pipeline'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
                                 })()}
                             </div>
                         )}

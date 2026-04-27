@@ -679,16 +679,7 @@ const InChatPipeline = ({
         setWorkflow({ kind: 'step1_loading', formData: fd } as any);
         startTimer();
         try {
-            const result = await generateQuantumCode({
-                problem: bp?.name || contextConfig.problem,
-                industry: bp?.industry || contextConfig.industry,
-                service: bp?.service || contextConfig.service,
-                hardware: bp?.hardware || contextConfig.hardware,
-                formData: fd,
-                batchIndex: 1, // Start with first batch
-            });
-
-            // Check if user has enough sim minutes left
+            const hwArray = (contextConfig.hardware || 'Universal').split(',');
             const limit = user?.simMinutesLimit ?? 5;
             const used = user?.simMinutesUsed ?? 0;
             const guestUsed = !user ? parseFloat(sessionStorage.getItem('qg_session_sim_minutes_used') || '0') : 0;
@@ -701,16 +692,43 @@ const InChatPipeline = ({
                 return;
             }
 
+            const results = await Promise.all(hwArray.map(async (hw: string) => {
+                try {
+                    const res = await generateQuantumCode({
+                        problem: bp?.name || contextConfig.problem,
+                        industry: bp?.industry || contextConfig.industry,
+                        service: bp?.service || contextConfig.service,
+                        hardware: hw.trim(),
+                        formData: fd,
+                        batchIndex: 1,
+                    });
+                    return { hw: hw.trim(), ...res };
+                } catch (e: any) {
+                    return { hw: hw.trim(), code: `Error: ${e.message}`, batchesTotal: 1 };
+                }
+            }));
+
+            let combinedCode = "";
+            let maxBatches = 1;
+            let aggTokensStep1 = 0;
+
+            results.forEach(res => {
+                combinedCode += `### HW: ${res.hw}\n\`\`\`python\n${res.code || res.error || 'No code'}\n\`\`\`\n\n`;
+                if ((res.batchesTotal || 1) > maxBatches) maxBatches = res.batchesTotal;
+                if ((res as any).tokensUsed) aggTokensStep1 += (res as any).tokensUsed;
+            });
+
             stopTimer();
             setWorkflow({
                 kind: 'step1_done',
-                code: result.code || result.error || 'No code generated.',
-                batchesTotal: result.batchesTotal || 1,
-                formData: fd
+                code: combinedCode.trim(),
+                batchesTotal: maxBatches,
+                formData: fd,
+                aggTokens: aggTokensStep1
             } as any);
         } catch (e: any) {
             stopTimer();
-            setWorkflow({ kind: 'step1_done', code: `Error: ${e.message}`, batchesTotal: 1 });
+            setWorkflow({ kind: 'step1_done', code: `Error: ${e.message}`, batchesTotal: 1 } as any);
         }
     };
 
@@ -718,93 +736,96 @@ const InChatPipeline = ({
         const bp = overriddenBlueprint || blueprint;
         const fd = overriddenFormData || (workflow as any).formData || contextConfig.formData || {};
         const totalBatches = (workflow as any).batchesTotal || 1;
-        let combinedOutput = "";
-        let currentBatchCode = initialCode;
-        let lastBatchState = "None";
-        let totalExecTimeMs = 0;
+        const hwArray = (contextConfig.hardware || 'Universal').split(',');
+        
+        // Parse the combined code block back out to hardware specific code blocks if possible. 
+        // The initialCode contains: ### HW: XXX\n```python\n...\n```
+        const hwCodeMap: Record<string, string> = {};
+        hwArray.forEach((hw: string) => {
+            const hwTarget = hw.trim();
+            const regex = new RegExp(`### HW: ${hwTarget}\\n\`\`\`python\\n((?:.|\\n)*?)\\n\`\`\``);
+            const match = initialCode.match(regex);
+            hwCodeMap[hwTarget] = match ? match[1] : initialCode;
+        });
 
-        // Final check before starting long run
-        const limit = user?.simMinutesLimit ?? 5;
-        const used = user?.simMinutesUsed ?? 0;
-        const guestUsed = !user ? parseFloat(sessionStorage.getItem('qg_session_sim_minutes_used') || '0') : 0;
-        if ((user ? used : guestUsed) >= limit) {
-            addBotMessage('⚠️ **Simulation Blocked**: Simulation minute limit reached.');
-            return;
-        }
+        let lastBatchStates: Record<string, string> = {};
+        hwArray.forEach((hw: string) => lastBatchStates[hw.trim()] = "None");
+        
+        let combinedOutputFinal = "";
+        let globalExecTimeMs = 0;
+        let aggTokensStep2 = (workflow as any).aggTokens || 0;
 
-        setWorkflow({ kind: 'step2_loading', code: initialCode, currentBatch: 1, totalBatches });
+        setWorkflow({ kind: 'step2_loading', code: initialCode, currentBatch: 1, totalBatches } as any);
         startTimer();
 
         try {
             for (let b = 1; b <= totalBatches; b++) {
-                console.log(`[IndustryChat] Starting Batch ${b}/${totalBatches}`);
+                console.log(`[IndustryChat] Starting Parallel Batch ${b}/${totalBatches}`);
                 setWorkflow(prev => ({ ...prev, kind: 'step2_loading', currentBatch: b } as any));
 
-                // Safety Fuse: If a single batch takes > 90s, force fail
-                const batchTimeout = setTimeout(() => {
-                    console.error(`[IndustryChat] Safety Fuse Tripped at Batch ${b}`);
-                    // We can't easily "cancel" the async call, but we can stop the loop
-                }, 90000);
+                const batchResults = await Promise.all(hwArray.map(async (hwRaw: string) => {
+                    const hw = hwRaw.trim();
+                    try {
+                        let currentBatchCode = hwCodeMap[hw];
+                        if (b > 1) {
+                            const genRes = await generateQuantumCode({
+                                problem: bp?.name || contextConfig.problem,
+                                industry: bp?.industry || contextConfig.industry,
+                                service: bp?.service || contextConfig.service,
+                                hardware: hw,
+                                formData: fd,
+                                batchIndex: b,
+                                lastBatchState: lastBatchStates[hw]
+                            });
+                            currentBatchCode = genRes.code;
+                            if ((genRes as any).tokensUsed) aggTokensStep2 += (genRes as any).tokensUsed;
+                        }
 
-                try {
-                    // 1. Generate code for current batch if not the first one (first was done in Step 1)
-                    if (b > 1) {
-                        console.log(`[IndustryChat] Generating code for batch ${b}...`);
-                        const genRes = await generateQuantumCode({
-                            problem: bp?.name || contextConfig.problem,
-                            industry: bp?.industry || contextConfig.industry,
-                            service: bp?.service || contextConfig.service,
-                            hardware: bp?.hardware || contextConfig.hardware,
-                            formData: fd,
-                            batchIndex: b,
-                            lastBatchState
+                        const simRes = await runQuantumSimulator({
+                            code: currentBatchCode,
+                            hardware: hw
                         });
-                        currentBatchCode = genRes.code;
+
+                        if (simRes.error) throw new Error(simRes.error);
+
+                        let newState = "None";
+                        if (b < totalBatches) {
+                            const stateRes = await extractBatchState({ output: simRes.output });
+                            newState = stateRes.state;
+                        }
+
+                        return { hw, output: simRes.output, execTime: simRes.executionTimeMs || 0, newState };
+                    } catch (e: any) {
+                        return { hw, output: `Error: ${e.message}`, execTime: 0, newState: "None" };
                     }
+                }));
 
-                    // 2. Run Simulator
-                    console.log(`[IndustryChat] Calling Simulator for batch ${b}...`);
-                    const simRes = await runQuantumSimulator({
-                        code: currentBatchCode,
-                        hardware: contextConfig.hardware
-                    });
+                // Assemble batch results
+                let batchLog = `--- BATCH ${b} ---\n`;
+                let maxExecTimeInBatch = 0;
 
-                    clearTimeout(batchTimeout);
+                batchResults.forEach(res => {
+                    batchLog += `### [${res.hw}]\n${res.output}\n\n`;
+                    lastBatchStates[res.hw] = res.newState;
+                    if (res.execTime > maxExecTimeInBatch) maxExecTimeInBatch = res.execTime;
+                });
 
-                    if (simRes.error) {
-                        console.error(`[IndustryChat] Simulator error in batch ${b}:`, simRes.error);
-                        throw new Error(`Batch ${b} Failed: ${simRes.error}`);
-                    }
-
-                    console.log(`[IndustryChat] Batch ${b} completed successfuilly.`);
-                    combinedOutput += `\n\n--- BATCH ${b} ---\n${simRes.output}`;
-                    if (simRes.executionTimeMs) totalExecTimeMs += simRes.executionTimeMs;
-
-                    // 3. Extract state for next batch if needed
-                    if (b < totalBatches) {
-                        console.log(`[IndustryChat] Extracting state from batch ${b}...`);
-                        const stateRes = await extractBatchState({ output: simRes.output });
-                        lastBatchState = stateRes.state;
-                    }
-                } catch (err) {
-                    clearTimeout(batchTimeout);
-                    throw err;
-                }
+                combinedOutputFinal += `${batchLog}\n`;
+                globalExecTimeMs += maxExecTimeInBatch; // Add slowest thread time
             }
 
             stopTimer();
-            setWorkflow(prev => ({
-                ...prev,
+            setWorkflow({
                 kind: 'step2_done',
                 code: initialCode,
-                simOutput: combinedOutput.trim(),
+                simOutput: combinedOutputFinal.trim(),
                 totalBatches,
-                totalExecTimeMs,
-                formData: fd
-            } as any));
+                totalExecTimeMs: globalExecTimeMs,
+                aggTokens: aggTokensStep2
+            } as any);
         } catch (e: any) {
             stopTimer();
-            setWorkflow({ kind: 'step2_done', code: initialCode, simOutput: `Error: ${e.message}`, totalBatches, totalExecTimeMs: 0 });
+            setWorkflow({ kind: 'step2_done', code: initialCode, simOutput: `Error executing simulator: ${e.message}`, totalBatches, totalExecTimeMs: 0 } as any);
         }
     };
 
@@ -817,6 +838,7 @@ const InChatPipeline = ({
     ) => {
         const bp = overriddenBlueprint || blueprint;
         const fd = overriddenFormData || (workflow as any).formData || contextConfig.formData || {};
+        const aggTokens = (workflow as any).aggTokens || 0;
         
         setWorkflow({ kind: 'step3_loading', code: initialCode, simOutput, totalExecTimeMs: totalExecutionTimeMs } as any);
         startTimer();
@@ -825,19 +847,16 @@ const InChatPipeline = ({
                 problem: bp?.name || contextConfig.problem,
                 industry: bp?.industry || contextConfig.industry,
                 service: bp?.service || contextConfig.service,
-                hardware: bp?.hardware || contextConfig.hardware,
+                hardware: contextConfig.hardware || 'Universal', // Use raw string directly for comma-splitting in backend
                 formData: fd,
                 rawOutput: simOutput,
+                aggTokens,
+                totalExecTimeMs: totalExecutionTimeMs,
+                userEmail: user?.email
             });
             stopTimer();
             setWorkflow({ kind: 'step3_done', code: initialCode, simOutput, analysis: result.text, chartData: result.chartData, totalExecTimeMs: totalExecutionTimeMs });
             onPipelineComplete?.();
-
-            // Sim minutes update
-            const simSeconds = totalExecutionTimeMs / 1000;
-            let simMinutesDelta = Math.ceil((simSeconds / 60) * 2) / 2;
-            if (simMinutesDelta < 0.5 && simMinutesDelta > 0) simMinutesDelta = 0.5;
-            window.dispatchEvent(new CustomEvent('qg:simminutes-update', { detail: { delta: simMinutesDelta } }));
 
             // Add results to chat
             let tableHtml = "";

@@ -314,7 +314,7 @@ export async function executeIndustryWorkflow(
                 last_batch_state: lastBatchState
             };
 
-            const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing') || (templateCode && templateCode.includes('import dimod'));
+            const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('dwave') || hardware?.toLowerCase().includes('annealing') || (templateCode && templateCode.includes('import dimod'));
             let generatedCode = "";
             let explanation = "";
             let attempts = 0;
@@ -616,7 +616,7 @@ export async function generateQuantumCode(config: {
     lastBatchState?: string;
 }): Promise<{ code: string; batchesTotal: number; error?: string }> {
     const { problem, industry, service, hardware, formData } = config;
-    const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('annealing');
+    const isDWave = hardware?.toLowerCase().includes('d-wave') || hardware?.toLowerCase().includes('dwave') || hardware?.toLowerCase().includes('annealing');
 
     try {
         console.time(`generateCode_${problem}`);
@@ -945,6 +945,7 @@ export async function runQuantumSimulator(config: {
         const Hardware = mongoose.models.Hardware || (await import('@/models/Hardware')).default;
         
         const isDWave = hardware?.toLowerCase().includes('d-wave') || 
+                        hardware?.toLowerCase().includes('dwave') || 
                         hardware?.toLowerCase().includes('annealing') || 
                         (code && (code.includes('import dimod') || code.includes('dwave.system') || code.includes('import neal') || code.includes('LeapHybridSampler')));
         
@@ -1000,6 +1001,7 @@ function getQuantumStateSpaceName(n: number) {
 
 export async function interpretQuantumResults(config: {
     problem: string; industry: string; hardware: string; rawOutput: string; formData: any; service?: string;
+    aggTokens?: number; totalExecTimeMs?: number; userEmail?: string;
 }): Promise<{ 
     text: string; 
     chartData?: any; 
@@ -1243,7 +1245,18 @@ ${readableAssignments.length > 0 ? readableAssignments.join('\n') : 'No assignme
 Total Energy: ${totalEnergy.toFixed(2)}
 `;
 
-        const prompt = `Analyze this quantum optimization result for ${problem} in ${industry}.
+        const hwArray = hardware.split(',').map(h => h.trim());
+        const isComparative = hwArray.length > 1;
+
+        const prompt = isComparative ? `You are given outputs from ${hwArray.length} distinct platforms analyzing the same problem: ${problem} in ${industry}.
+RESULTS DATA:
+${rawOutput}
+Present a comparative analysis: Who was faster, who found the lower energy state, and what is your overall recommendation?
+STRICT RULES:
+- Write 2-3 short, data-driven paragraphs.
+- Be professional and highlight latency and energy efficiency differences.
+- Do NOT regurgitate the raw code, only analyze the outputs and metrics.`
+        : `Analyze this quantum optimization result for ${problem} in ${industry}.
 RESULTS DATA:
 ${cleanedInput}
 STRICT RULES:
@@ -1254,13 +1267,16 @@ STRICT RULES:
 
         let text = finalSummary || '';
 
-        // Only call LLM if finalSummary is empty or we want extra polish
-        if (!text || text.length < 50) {
+        // Only call LLM if finalSummary is empty or comparative analysis is requested
+        if (!text || text.length < 50 || isComparative) {
             try {
                 // Lazy-load Groq to avoid unnecessary imports
                 const { default: Groq } = await import('groq-sdk');
                 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-
+                const { GoogleGenerativeAI } = await import('@google/generative-ai');
+                const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+                
+                let tokensUsed = 0;
                 if (provider === 'groq' && GROQ_API_KEY) {
                     const groq = new Groq({ apiKey: GROQ_API_KEY });
                     const completion = await groq.chat.completions.create({
@@ -1268,10 +1284,44 @@ STRICT RULES:
                         model: modelName,
                     });
                     text = completion.choices[0]?.message?.content || text || 'Analysis complete.';
+                    tokensUsed = completion.usage?.total_tokens || 0;
+                } else if (GEMINI_API_KEY) {
+                    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                    const completion = await genAI.getGenerativeModel({ model: modelName }).generateContent([{ text: 'You are a Quantum Analysis expert.\n' + prompt }]);
+                    text = completion.response.text() || text || 'Analysis complete.';
+                    tokensUsed = completion.response.usageMetadata?.totalTokenCount || 0;
+                }
+                
+                // Safely accumulate this final prompt's tokens
+                if (config.aggTokens !== undefined) {
+                    config.aggTokens += tokensUsed;
                 }
             } catch (e) {
                 console.warn("LLM call failed, using default summary:", e);
-                text = text || "Quantum simulation complete.";
+                if (isComparative) text = "Comparative analysis failed to generate. Please review the raw outputs above.";
+                else text = text || "Quantum simulation complete.";
+            }
+        }
+
+        // Final Server-Side Ledger Updates (Single Transaction)
+        if (config.userEmail && config.totalExecTimeMs) {
+            const simSeconds = config.totalExecTimeMs / 1000;
+            let simMinutesDelta = Math.ceil((simSeconds / 60) * 2) / 2;
+            if (simMinutesDelta < 0.5 && simMinutesDelta > 0) simMinutesDelta = 0.5;
+            
+            try {
+                const User = mongoose.models.User || (await import('@/models/User')).default;
+                await User.findOneAndUpdate(
+                    { email: config.userEmail },
+                    { 
+                        $inc: { 
+                            simMinutesUsed: simMinutesDelta,
+                            tokenUsage: config.aggTokens || 0 
+                        } 
+                    }
+                );
+            } catch (dbErr) {
+                console.error("Failed to update user unified ledger:", dbErr);
             }
         }
 
