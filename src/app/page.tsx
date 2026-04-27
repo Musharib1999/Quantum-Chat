@@ -148,7 +148,7 @@ export default function LandingPage() {
             href={isAuthenticated ? "/builder/dashboard" : "/login?redirect=/builder/dashboard"}
             icon={<Atom size={32} />}
             title="Quantum Solver Studio"
-            description="Build, test, and run quantum and hybrid optimization solutions from a single interface. Integrates leading frameworks with built-in simulators for rapid experimentation"
+            description="Write, test and run quantum and hybrid optimization solutions from a single interface. Integrates leading frameworks with built-in simulators for rapid experimentation"
             actionText="Launch Studio"
             isDarkMode={false}
             accentColor="rose"
