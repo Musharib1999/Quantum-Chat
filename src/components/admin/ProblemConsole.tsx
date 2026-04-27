@@ -131,13 +131,14 @@ export default function ProblemConsole() {
         try {
             // Find the template for the current hardware, or fallback to Universal
             const template = codeTemplates.find(t => t.hardware === hardware) || codeTemplates[0];
+            const inferredEnv = template.hardware.toLowerCase().includes('dwave') ? 'python-dwave' : 'python-qiskit';
             
             const res = await axios.post('/api/admin/quantum-dry-run', {
                 code: template.aiEnabled ? "" : template.code,
                 hardware: template.hardware,
                 aiEnabled: template.aiEnabled,
                 llmModelId: template.llmModelId,
-                executionEnvironment // Pass the specific environment toggle
+                executionEnvironment: inferredEnv
             });
             setDryRunResult(res.data.rawResult);
             setSuggestions(res.data.suggestions || []);
@@ -171,7 +172,8 @@ export default function ProblemConsole() {
                 outputTables,
                 chartConfig,
                 interpretationPrompt,
-                executionEnvironment
+                // Automatically infer global environment from the first template for legacy DB support
+                executionEnvironment: (codeTemplates[0]?.hardware?.toLowerCase().includes('dwave')) ? 'python-dwave' : 'python-qiskit'
             };
 
             if (editingId) {
@@ -289,22 +291,22 @@ export default function ProblemConsole() {
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Industry</label>
+                    <label className="text-[10px] font-bold text-slate-500">Industry</label>
                     <input list="industries" value={industry} onChange={e => setIndustry(e.target.value)} placeholder="e.g. Finance" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900" />
                     <datalist id="industries">{metadata.industries.map(i => <option key={i.id} value={i.label} />)}</datalist>
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Service</label>
+                    <label className="text-[10px] font-bold text-slate-500">Service</label>
                     <input list="services" value={service} onChange={e => setService(e.target.value)} placeholder="e.g. Optimization" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900" />
                     <datalist id="services">{metadata.services.map(s => <option key={s.id} value={s.label} />)}</datalist>
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Problem</label>
+                    <label className="text-[10px] font-bold text-slate-500">Problem</label>
                     <input list="problems" value={problem} onChange={e => setProblem(e.target.value)} placeholder="e.g. Portfolio" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900" />
                     <datalist id="problems">{(metadata.problemMapping[industry]?.[service] || []).map((p: string) => <option key={p} value={p} />)}</datalist>
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Hardware</label>
+                    <label className="text-[10px] font-bold text-slate-500">Hardware</label>
                     <select 
                         value={hardware} 
                         onChange={e => setHardware(e.target.value)} 
@@ -320,7 +322,7 @@ export default function ProblemConsole() {
             </div>
 
             <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Description</label>
+                <label className="text-[10px] font-bold text-slate-500">Description</label>
                 <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="problem description..." className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 h-20" />
             </div>
 
@@ -341,7 +343,7 @@ export default function ProblemConsole() {
                                     <div className="text-sm font-semibold text-slate-900">{f.label}</div>
                                     <div className="flex gap-2 mt-1">
                                         <span className="text-[10px] font-mono text-slate-400">{f.key}</span>
-                                        <span className="text-[10px] font-bold text-[#3066bb] uppercase">{f.type}</span>
+                                        <span className="text-[10px] font-bold text-[#3066bb]">{f.type}</span>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
@@ -361,46 +363,8 @@ export default function ProblemConsole() {
 
     const renderComputeTab = () => (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
-                <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase text-slate-500">Execution environment</h3>
-                    <div className="flex gap-2">
-                        {['python-qiskit', 'python-dwave'].map(env => (
-                            <button key={env} onClick={() => setExecutionEnvironment(env as any)} className={`flex-1 py-3 rounded-xl border text-xs font-bold transition-all ${executionEnvironment === env ? 'bg-[#3066bb] text-white border-[#3066bb]' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
-                                {env.replace('python-', '').toUpperCase()}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase text-slate-500">Batching logic</h3>
-                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span className="text-xs font-bold text-slate-900">Enable batching</span>
-                        <button onClick={() => setBatchingEnabled(!batchingEnabled)} className={`w-10 h-5 rounded-full relative transition-all ${batchingEnabled ? 'bg-[#3066bb]' : 'bg-slate-300'}`}>
-                            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${batchingEnabled ? 'left-6' : 'left-1'}`} />
-                        </button>
-                    </div>
-                </div>
-            </div>
+            {/* Stage 2 Sections Removed: Execution Environment and Batching Logic are now inferred or hidden to simplify the flow */}
 
-
-
-            {batchingEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2">
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Qubit formula</label>
-                        <input value={qubitFormula} onChange={e => setQubitFormula(e.target.value)} placeholder="{{params.n}} * 2" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Max per batch</label>
-                        <input type="number" value={maxQubitsPerBatch} onChange={e => setMaxQubitsPerBatch(parseInt(e.target.value))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Batch key</label>
-                        <input value={batchKey} onChange={e => setBatchKey(e.target.value)} placeholder="e.g. assets" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
-                    </div>
-                </div>
-            )}
 
             <div className="space-y-4 pt-4">
                 <div className="flex items-center justify-between">
@@ -421,11 +385,11 @@ export default function ProblemConsole() {
                         <div key={i} className="bg-white p-8 rounded-3xl space-y-6 relative group border border-slate-200 shadow-xl shadow-slate-200/50 transition-all hover:border-[#3066bb]/20">
                             <div className="flex items-center justify-between">
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Target Hardware</span>
+                                    <span className="text-[9px] font-bold text-slate-400">Target Hardware</span>
                                     <select 
                                         value={t.hardware} 
                                         onChange={e => { const up = [...codeTemplates]; up[i].hardware = e.target.value; setCodeTemplates(up); }} 
-                                        className="bg-transparent text-[#3066bb] font-bold text-xs uppercase outline-none cursor-pointer hover:text-slate-900 transition-colors"
+                                        className="bg-transparent text-[#3066bb] font-bold text-xs outline-none cursor-pointer hover:text-slate-900 transition-colors"
                                     >
                                         <option value="Universal" className="bg-white text-slate-900">Universal Simulator</option>
                                         {hardwareList.map(h => (
@@ -435,7 +399,7 @@ export default function ProblemConsole() {
                                 </div>
                                 <div className="flex items-center gap-6">
                                     <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 italic transition-all group-hover:bg-white group-hover:shadow-sm">
-                                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">AI Intelligence</span>
+                                        <span className="text-[9px] text-slate-400 font-bold">AI Intelligence</span>
                                         <button 
                                             onClick={() => { const up = [...codeTemplates]; up[i].aiEnabled = !up[i].aiEnabled; setCodeTemplates(up); }} 
                                             className={`w-9 h-5 rounded-full relative transition-all ${t.aiEnabled ? 'bg-[#3066bb]' : 'bg-slate-300'}`}
@@ -462,7 +426,7 @@ export default function ProblemConsole() {
                                         </div>
                                     </div>
                                     <div className="space-y-2 relative z-10">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Generator Model</label>
+                                        <label className="text-[10px] font-bold text-slate-400 ml-1">Generator Model</label>
                                         <select 
                                             value={t.llmModelId}
                                             onChange={e => { const up = [...codeTemplates]; up[i].llmModelId = e.target.value; setCodeTemplates(up); }}
@@ -478,7 +442,7 @@ export default function ProblemConsole() {
                             ) : (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hand-written template</label>
+                                        <label className="text-[10px] font-bold text-slate-400">Hand-written template</label>
                                         <span className="text-[9px] text-blue-400 font-medium italic">Supports template literals: {"{{parameters.key}}"}</span>
                                     </div>
                                     <textarea 
@@ -491,7 +455,7 @@ export default function ProblemConsole() {
                             )}
                         </div>
                     ))}
-                    {codeTemplates.length === 0 && <div className="text-center py-12 border border-dashed border-slate-200 rounded-2xl text-[10px] text-red-400 font-bold uppercase tracking-wider">Algorithm template or AI mapping required.</div>}
+                    {codeTemplates.length === 0 && <div className="text-center py-12 border border-dashed border-slate-200 rounded-2xl text-[10px] text-red-400 font-bold">Algorithm template or AI mapping required.</div>}
                 </div>
             </div>
         </div>
@@ -505,7 +469,7 @@ export default function ProblemConsole() {
                     {suggestions.length > 0 && (
                         <div className="flex items-start gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100 animate-in slide-in-from-top-2">
                             <div className="pt-1">
-                                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mb-1">Dry Run Suggestions:</span>
+                                <span className="text-[10px] font-bold text-blue-600 block mb-1">Dry Run Suggestions:</span>
                                 <p className="text-[9px] text-blue-400 font-medium">Click to add as table column</p>
                             </div>
                             <div className="flex flex-wrap gap-2 flex-1">
@@ -550,11 +514,11 @@ export default function ProblemConsole() {
                 <div key={tableIdx} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                     <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                         <input value={table.name} onChange={e => { const up = [...outputTables]; up[tableIdx].name = e.target.value; setOutputTables(up); }} className="bg-transparent text-sm font-bold text-slate-900 outline-none" placeholder="Table name" />
-                        <button onClick={() => setOutputTables(outputTables.filter((_, idx) => idx !== tableIdx))} className="text-red-400 hover:text-red-600 text-[10px] font-bold uppercase">Remove</button>
+                        <button onClick={() => setOutputTables(outputTables.filter((_, idx) => idx !== tableIdx))} className="text-red-400 hover:text-red-600 text-[10px] font-bold">Remove</button>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100 font-semibold uppercase tracking-widest text-[10px]">
+                            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100 font-semibold text-[10px]">
                                 <tr>
                                     <th className="p-4">Key pointer</th>
                                     <th className="p-4">Label</th>
@@ -593,7 +557,7 @@ export default function ProblemConsole() {
                     {suggestions.length > 0 && (
                         <div className="flex items-start gap-4 bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 animate-in slide-in-from-top-2">
                              <div className="pt-1">
-                                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">Apply to Chart:</span>
+                                <span className="text-[10px] font-bold text-emerald-600 block mb-1">Apply to Chart:</span>
                                 <p className="text-[9px] text-emerald-400 font-medium">Click to set as axis key</p>
                             </div>
                             <div className="flex flex-wrap gap-2 flex-1">
@@ -634,19 +598,19 @@ export default function ProblemConsole() {
                             <button onClick={() => setChartConfig(chartConfig.filter((_, idx) => idx !== i))} className="absolute top-4 right-4 text-red-400 text-[10px] font-bold">Remove</button>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] text-slate-400 font-bold uppercase">Chart type</label>
+                                    <label className="text-[10px] text-slate-400 font-bold">Chart type</label>
                                     <select value={c.type} onChange={e => { const up = [...chartConfig]; up[i].type = e.target.value as any; setChartConfig(up); }} className="w-full p-2 bg-slate-50 border border-slate-100 rounded text-xs">
                                         {['bar', 'line', 'pie', 'scatter'].map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] text-slate-400 font-bold uppercase">Label</label>
+                                    <label className="text-[10px] text-slate-400 font-bold">Label</label>
                                     <input value={c.label} onChange={e => { const up = [...chartConfig]; up[i].label = e.target.value; setChartConfig(up); }} className="w-full p-2 bg-slate-50 border border-slate-100 rounded text-xs" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] text-slate-400 font-bold uppercase">X data</label>
+                                    <label className="text-[10px] text-slate-400 font-bold">X data</label>
                                     <input 
                                         value={c.xKey} 
                                         onChange={e => { const up = [...chartConfig]; up[i].xKey = e.target.value; setChartConfig(up); }} 
@@ -654,7 +618,7 @@ export default function ProblemConsole() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] text-slate-400 font-bold uppercase">Y data</label>
+                                    <label className="text-[10px] text-slate-400 font-bold">Y data</label>
                                     <input 
                                         value={c.yKey} 
                                         onChange={e => { const up = [...chartConfig]; up[i].yKey = e.target.value; setChartConfig(up); }} 
@@ -699,11 +663,11 @@ export default function ProblemConsole() {
                         {existingForms.map((form) => (
                             <div key={form._id} className="bg-white border border-slate-200 p-6 rounded-2xl hover:border-[#3066bb] hover:shadow-md transition-all flex flex-col min-h-[220px]">
                                 <div className="flex items-center justify-between mb-4">
-                                    <span className="text-[10px] font-bold text-[#3066bb] uppercase bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{form.industry}</span>
-                                    {form.active && <span className="text-[10px] text-green-600 font-bold uppercase">Active</span>}
+                                    <span className="text-[10px] font-bold text-[#3066bb] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{form.industry}</span>
+                                    {form.active && <span className="text-[10px] text-green-600 font-bold">Active</span>}
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1">{form.problem}</h3>
-                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">
+                                <div className="text-[10px] text-slate-400 font-bold mb-2">
                                     {form.service} • {form.hardware === 'Universal' && form.codeTemplates?.length 
                                         ? `Universal (${form.codeTemplates.map(t => t.hardware).join(', ')})` 
                                         : form.hardware}
@@ -718,13 +682,13 @@ export default function ProblemConsole() {
                                 <div className="grid grid-cols-3 gap-2 mt-auto">
                                     <button 
                                         onClick={() => editForm(form)} 
-                                        className="py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[9px] font-bold text-slate-600 hover:bg-[#3066bb] hover:text-white hover:border-[#3066bb] transition-all uppercase tracking-tight"
+                                        className="py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[9px] font-bold text-slate-600 hover:bg-[#3066bb] hover:text-white hover:border-[#3066bb] transition-all tracking-tight"
                                     >
                                         Edit
                                     </button>
                                     <button 
                                         onClick={() => handleToggleActive(form)} 
-                                        className={`py-2.5 rounded-xl border transition-all uppercase text-[9px] font-bold tracking-tight ${
+                                        className={`py-2.5 rounded-xl border transition-all text-[9px] font-bold tracking-tight ${
                                             form.active 
                                                 ? 'bg-amber-50 border-amber-100 text-amber-600 hover:bg-amber-600 hover:text-white hover:border-amber-600' 
                                                 : 'bg-green-50 border-green-100 text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600'
@@ -734,7 +698,7 @@ export default function ProblemConsole() {
                                     </button>
                                     <button 
                                         onClick={() => handleDelete(form)} 
-                                        className="py-2.5 rounded-xl border border-red-50 bg-red-50 text-[9px] font-bold text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all uppercase tracking-tight"
+                                        className="py-2.5 rounded-xl border border-red-50 bg-red-50 text-[9px] font-bold text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all tracking-tight"
                                     >
                                         Delete
                                     </button>
@@ -760,9 +724,9 @@ export default function ProblemConsole() {
                                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-none">{problem || 'Untitled Project'}</h1>
                                 {(industry || service) && (
                                     <div className="flex items-center gap-2 mt-1.5">
-                                        {industry && <span className="text-[10px] font-bold text-[#3066bb] tracking-widest uppercase">{industry}</span>}
+                                        {industry && <span className="text-[10px] font-bold text-[#3066bb] tracking-tight">{industry}</span>}
                                         {industry && service && <span className="w-1 h-1 rounded-full bg-slate-200" />}
-                                        {service && <span className="text-[10px] font-semibold text-slate-400 tracking-wide">{service}</span>}
+                                        {service && <span className="text-[10px] font-semibold text-slate-400">{service}</span>}
                                     </div>
                                 )}
                             </div>
@@ -792,7 +756,7 @@ export default function ProblemConsole() {
                     </div>
 
                     {status && (
-                        <div className={`mt-4 p-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${status.includes('Error') ? 'bg-red-50 text-red-500 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
+                        <div className={`mt-4 p-3 rounded-xl text-[10px] font-bold border ${status.includes('Error') ? 'bg-red-50 text-red-500 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
                             {status}
                         </div>
                     )}
@@ -825,15 +789,15 @@ export default function ProblemConsole() {
                         <h3 className="text-lg font-bold text-slate-900 mb-6">Parameter configuration</h3>
                         <div className="space-y-4">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">Input label</label>
+                                <label className="text-[10px] font-bold text-slate-500">Input label</label>
                                 <input value={editingField?.label} onChange={e => setEditingField(prev => prev ? ({ ...prev, label: e.target.value }) : null)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="e.g. Iterations" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">Variable key</label>
+                                <label className="text-[10px] font-bold text-slate-500">Variable key</label>
                                 <input value={editingField?.key} onChange={e => setEditingField(prev => prev ? ({ ...prev, key: e.target.value }) : null)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-[#3066bb]" placeholder="e.g. iter_count" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">Type</label>
+                                <label className="text-[10px] font-bold text-slate-500">Type</label>
                                 <select value={editingField?.type} onChange={e => setEditingField(prev => prev ? ({ ...prev, type: e.target.value as any }) : null)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm">
                                     {['text', 'number', 'select', 'multi-select', 'range', 'textarea', 'dropdown'].map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
