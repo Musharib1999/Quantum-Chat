@@ -127,7 +127,7 @@ export default function LandingPage() {
             description="A 400M-parameter architecture optimized via large-scale domain-adaptive fine-tuning on 100M curated quantum-computing tokens"
             actionText="Chat Now"
             isDarkMode={false}
-            accentColor="assistant"
+            accentColor="electric"
             status="unlocked"
           />
 
@@ -139,7 +139,7 @@ export default function LandingPage() {
             description="Current market analysis of your quantum asset"
             actionText="Launch"
             isDarkMode={false}
-            accentColor="emerald"
+            accentColor="amber"
             status="unlocked"
           />
 
@@ -151,7 +151,7 @@ export default function LandingPage() {
             description="Write, test and run quantum and hybrid optimization solutions from a single interface. Integrates leading frameworks with built-in simulators for rapid experimentation"
             actionText="Launch Studio"
             isDarkMode={false}
-            accentColor="rose"
+            accentColor="violet"
             status="locked"
             badgeText="Authorized Access Only"
           />
@@ -222,7 +222,7 @@ interface FeatureCardProps {
   description: string;
   actionText: string;
   isDarkMode: boolean;
-  accentColor: 'indigo' | 'emerald' | 'rose' | 'assistant';
+  accentColor: 'indigo' | 'emerald' | 'rose' | 'assistant' | 'electric' | 'amber' | 'violet';
   status?: 'locked' | 'unlocked';
   badgeText?: string;
 }
@@ -234,6 +234,21 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
       light: 'bg-[rgb(48,102,187)]/10 text-[rgb(48,102,187)] group-hover:bg-[rgb(48,102,187)] group-hover:text-white',
       dark: 'bg-[rgb(48,102,187)]/20 text-[rgb(48,102,187)] group-hover:bg-[rgb(48,102,187)] group-hover:text-white',
       border: 'group-hover:border-[rgb(48,102,187)]/50'
+    },
+    electric: {
+      light: 'bg-[rgb(27,176,206)]/10 text-[rgb(27,176,206)] group-hover:bg-[rgb(27,176,206)] group-hover:text-white',
+      dark: 'bg-[rgb(27,176,206)]/20 text-[rgb(27,176,206)] group-hover:bg-[rgb(27,176,206)] group-hover:text-white',
+      border: 'group-hover:border-[rgb(27,176,206)]/50'
+    },
+    amber: {
+      light: 'bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white',
+      dark: 'bg-amber-500/10 text-amber-400 group-hover:bg-amber-500 group-hover:text-white',
+      border: 'group-hover:border-amber-500/50'
+    },
+    violet: {
+      light: 'bg-violet-50 text-violet-600 group-hover:bg-violet-600 group-hover:text-white',
+      dark: 'bg-violet-500/10 text-violet-400 group-hover:bg-violet-500 group-hover:text-white',
+      border: 'group-hover:border-violet-500/50'
     },
     emerald: {
       light: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white',
@@ -263,7 +278,11 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
 
       {/* Glow Effect on Hover */}
       <div className={`absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 
-        \${(accentColor === 'indigo' || accentColor === 'assistant') ? 'bg-[rgb(48,102,187)]' : accentColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-500'}`}
+        ${(accentColor === 'indigo' || accentColor === 'assistant') ? 'bg-[rgb(48,102,187)]' : 
+          accentColor === 'electric' ? 'bg-[rgb(27,176,206)]' :
+          accentColor === 'amber' ? 'bg-amber-500' :
+          accentColor === 'violet' ? 'bg-violet-500' :
+          accentColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-500'}`}
       />
 
       {/* Lock/Unlock Status Badge */}
