@@ -68,7 +68,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                     <X size={20} />
                 </button>
 
-                <h3 className="text-xl font-bold mb-6 text-slate-900">
+                <h3 className="text-xl font-bold mb-6 text-[#0F172A]">
                     Security Settings
                 </h3>
 
@@ -85,31 +85,31 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                     )}
 
                     <div>
-                        <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Current password</label>
+                        <label className="text-xs font-semibold text-[#0F172A] mb-1.5 block">Current password</label>
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
+                            className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={currentPassword}
                             onChange={e => setCurrentPassword(e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-slate-500 mb-1.5 block">New password</label>
+                        <label className="text-xs font-semibold text-[#0F172A] mb-1.5 block">New password</label>
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
+                            className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={newAdminPassword}
                             onChange={e => setNewAdminPassword(e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Confirm new password</label>
+                        <label className="text-xs font-semibold text-[#0F172A] mb-1.5 block">Confirm new password</label>
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
+                            className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                         />
@@ -118,7 +118,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                     <button
                         type="submit"
                         disabled={passwordLoading || passwordSuccess}
-                        className="w-full mt-2 bg-[#3066bb] hover:bg-[#255299] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all font-sans shadow-sm shadow-[#3066bb]/20"
+                        className="w-full mt-2 bg-[rgb(27,176,206)] hover:bg-[#255299] text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all font-sans shadow-sm shadow-[rgb(27,176,206)]/20"
                     >
                         {passwordLoading ? <Loader2 className="animate-spin w-5 h-5" /> : "Update Password"}
                     </button>

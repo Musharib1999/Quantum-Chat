@@ -75,18 +75,18 @@ export default function LLMSettingsManager() {
         }
     };
 
-    if (loading) return <div className="p-12 text-slate-400 text-sm">Loading intelligence stack...</div>;
+    if (loading) return <div className="p-12 text-[#0F172A] text-sm">Loading intelligence stack...</div>;
 
     return (
         <div className="space-y-8 pb-20">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-900">Intelligence Fleet</h2>
-                    <p className="text-xs text-slate-500 mt-1">Manage global reasoning engines and local generation models.</p>
+                    <h2 className="text-xl font-bold text-[#0F172A]">Intelligence Fleet</h2>
+                    <p className="text-xs text-[#0F172A] mt-1">Manage global reasoning engines and local generation models.</p>
                 </div>
                 <button 
                     onClick={() => setEditingModel({ name: '', activeProvider: 'gemini', activeModel: 'gemini-2.0-flash-lite', isDefault: false })}
-                    className="bg-[#3066bb] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:scale-[1.02] transition-all"
+                    className="bg-[rgb(27,176,206)] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:scale-[1.02] transition-all"
                 >
                     + Add New Model
                 </button>
@@ -100,21 +100,21 @@ export default function LLMSettingsManager() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {allModels.map((model) => (
-                    <div key={model._id} className={`bg-white border p-6 rounded-2xl flex flex-col transition-all hover:shadow-md ${model.isDefault ? 'border-[#3066bb] ring-1 ring-[#3066bb]/10' : 'border-[#3066bb]/30 shadow-sm'}`}>
+                    <div key={model._id} className={`bg-white border p-6 rounded-2xl flex flex-col transition-all hover:shadow-md ${model.isDefault ? 'border-[rgb(27,176,206)] ring-1 ring-[rgb(27,176,206)]/10' : 'border-[rgb(27,176,206)]/30 shadow-sm'}`}>
                         <div className="flex items-center justify-between mb-4">
-                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${model.activeProvider === 'gemini' ? 'bg-[#3066bb]/5 border-[#3066bb]/20 text-[#3066bb]' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${model.activeProvider === 'gemini' ? 'bg-[rgb(27,176,206)]/5 border-[rgb(27,176,206)]/20 text-[rgb(27,176,206)]' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
                                 {model.activeProvider}
                             </span>
                             {model.isDefault && <span className="text-[10px] text-green-600 font-bold uppercase">System Default</span>}
                         </div>
-                        <h3 className="text-lg font-bold text-slate-900 mb-1">{model.name}</h3>
-                        <div className="text-[11px] font-mono text-slate-400 mb-4">{model.activeModel}</div>
-                        <p className="text-xs text-slate-500 mb-8 line-clamp-2 flex-1">{model.description || 'No description provided.'}</p>
+                        <h3 className="text-lg font-bold text-[#0F172A] mb-1">{model.name}</h3>
+                        <div className="text-[11px] font-mono text-[#0F172A] mb-4">{model.activeModel}</div>
+                        <p className="text-xs text-[#0F172A] mb-8 line-clamp-2 flex-1">{model.description || 'No description provided.'}</p>
                         
                         <div className="flex gap-2">
                             <button 
                                 onClick={() => setEditingModel(model)}
-                                className="flex-1 py-2.5 rounded-xl bg-[#3066bb]/5 border border-[#3066bb]/20 text-[10px] font-bold uppercase tracking-wider hover:bg-[#3066bb]/10 transition-all"
+                                className="flex-1 py-2.5 rounded-xl bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/20 text-[10px] font-bold uppercase tracking-wider hover:bg-[rgb(27,176,206)]/10 transition-all"
                             >
                                 Edit
                             </button>
@@ -133,28 +133,28 @@ export default function LLMSettingsManager() {
 
             {editingModel && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-lg rounded-2xl border border-[#3066bb]/30 shadow-xl p-8 animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6">{editingModel._id ? 'Modify Intelligence' : 'Register New LLM'}</h3>
+                    <div className="bg-white w-full max-w-lg rounded-2xl border border-[rgb(27,176,206)]/30 shadow-xl p-8 animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+                        <h3 className="text-lg font-bold text-[#0F172A] mb-6">{editingModel._id ? 'Modify Intelligence' : 'Register New LLM'}</h3>
                         
                         <div className="space-y-6">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Display Name</label>
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Display Name</label>
                                 <input 
                                     value={editingModel.name} 
                                     onChange={e => setEditingModel({...editingModel, name: e.target.value})}
                                     placeholder="e.g. Generation Optimized" 
-                                    className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl text-sm" 
+                                    className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-sm" 
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Intelligence Provider</label>
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Intelligence Provider</label>
                                 <div className="grid grid-cols-2 gap-3">
                                     {['gemini', 'groq'].map(p => (
                                         <button 
                                             key={p}
                                             onClick={() => setEditingModel({...editingModel, activeProvider: p as any, activeModel: PROVIDER_MODELS[p as keyof typeof PROVIDER_MODELS][0].id})}
-                                            className={`py-3 rounded-xl border text-xs font-bold transition-all ${editingModel.activeProvider === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-[#3066bb]/5 text-slate-500 border-[#3066bb]/30'}`}
+                                            className={`py-3 rounded-xl border text-xs font-bold transition-all ${editingModel.activeProvider === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-[rgb(27,176,206)]/5 text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
                                         >
                                             {p.toUpperCase()}
                                         </button>
@@ -163,11 +163,11 @@ export default function LLMSettingsManager() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Selection Architecture</label>
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Selection Architecture</label>
                                 <select 
                                     value={editingModel.activeModel}
                                     onChange={e => setEditingModel({...editingModel, activeModel: e.target.value})}
-                                    className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl text-sm outline-none"
+                                    className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-sm outline-none"
                                 >
                                     {PROVIDER_MODELS[editingModel.activeProvider].map(m => (
                                         <option key={m.id} value={m.id}>{m.name}</option>
@@ -176,23 +176,23 @@ export default function LLMSettingsManager() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Purpose Description</label>
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Purpose Description</label>
                                 <textarea 
                                     value={editingModel.description}
                                     onChange={e => setEditingModel({...editingModel, description: e.target.value})}
                                     placeholder="what is this model mostly used for?"
-                                    className="w-full h-24 p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl text-sm"
+                                    className="w-full h-24 p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-sm"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-[#3066bb]/5/50 border border-[#3066bb]/20 rounded-xl">
+                            <div className="flex items-center justify-between p-4 bg-[rgb(27,176,206)]/5/50 border border-[rgb(27,176,206)]/20 rounded-xl">
                                 <div className="space-y-0.5">
-                                    <div className="text-xs font-bold text-[#3066bb]">System Default</div>
+                                    <div className="text-xs font-bold text-[rgb(27,176,206)]">System Default</div>
                                     <div className="text-[10px] text-blue-400">Use this model as the primary global fallback.</div>
                                 </div>
                                 <button 
                                     onClick={() => setEditingModel({...editingModel, isDefault: !editingModel.isDefault})}
-                                    className={`w-10 h-5 rounded-full relative transition-all ${editingModel.isDefault ? 'bg-[#3066bb]' : 'bg-slate-300'}`}
+                                    className={`w-10 h-5 rounded-full relative transition-all ${editingModel.isDefault ? 'bg-[rgb(27,176,206)]' : 'bg-slate-300'}`}
                                 >
                                     <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${editingModel.isDefault ? 'left-6' : 'left-1'}`} />
                                 </button>
@@ -200,11 +200,11 @@ export default function LLMSettingsManager() {
                         </div>
 
                         <div className="mt-10 flex justify-end gap-3">
-                            <button onClick={() => setEditingModel(null)} className="text-xs font-bold text-slate-400 px-6">Cancel</button>
+                            <button onClick={() => setEditingModel(null)} className="text-xs font-bold text-[#0F172A] px-6">Cancel</button>
                             <button 
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="bg-[#3066bb] text-white px-8 py-3 rounded-xl text-xs font-bold shadow-sm hover:bg-[#255299] transition-all disabled:opacity-50"
+                                className="bg-[rgb(27,176,206)] text-white px-8 py-3 rounded-xl text-xs font-bold shadow-sm hover:bg-[#255299] transition-all disabled:opacity-50"
                             >
                                 {saving ? 'Deploying...' : 'Save Configuration'}
                             </button>

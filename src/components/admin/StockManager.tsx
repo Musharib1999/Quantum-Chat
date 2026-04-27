@@ -78,32 +78,32 @@ export default function StockManager() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-900">Stock watchlist</h2>
+                <h2 className="text-xl font-semibold text-[#0F172A]">Stock watchlist</h2>
             </div>
 
             {/* Add/Edit Form */}
-            <form onSubmit={handleSave} className="p-4 rounded-lg border space-y-4 bg-white border-[#3066bb]/30">
+            <form onSubmit={handleSave} className="p-4 rounded-lg border space-y-4 bg-white border-[rgb(27,176,206)]/30">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                         type="text"
                         placeholder="Stock name (e.g. IonQ Inc.)"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] bg-[#3066bb]/5 border-[#3066bb]/30 text-slate-900"
+                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 border-[rgb(27,176,206)]/30 text-[#0F172A]"
                     />
                     <input
                         type="text"
                         placeholder="Analysis url"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] bg-[#3066bb]/5 border-[#3066bb]/30 text-slate-900"
+                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 border-[rgb(27,176,206)]/30 text-[#0F172A]"
                     />
                 </div>
                 <div className="flex gap-2">
                     <button
                         type="submit"
                         disabled={isSubmitting || !name || !url}
-                        className="bg-[#3066bb] hover:bg-[#255299] text-white px-6 py-2 rounded text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-6 py-2 rounded text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                         {isSubmitting ? 'Saving...' : editingId ? 'Update stock' : 'Add stock'}
                     </button>
@@ -111,7 +111,7 @@ export default function StockManager() {
                         <button
                             type="button"
                             onClick={resetForm}
-                            className="px-6 py-2 text-slate-500 hover:text-slate-900 text-sm font-semibold transition-all"
+                            className="px-6 py-2 text-[#0F172A] hover:text-[#0F172A] text-sm font-semibold transition-all"
                         >
                             Cancel
                         </button>
@@ -121,11 +121,11 @@ export default function StockManager() {
 
             {/* List */}
             {loading ? (
-                <div className="flex justify-center p-8 text-slate-400 text-sm">Loading stocks...</div>
+                <div className="flex justify-center p-8 text-[#0F172A] text-sm">Loading stocks...</div>
             ) : (
-                <div className="rounded-lg border overflow-hidden bg-white border-[#3066bb]/30">
-                    <table className="w-full text-left text-sm text-slate-600">
-                        <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30">
+                <div className="rounded-lg border overflow-hidden bg-white border-[rgb(27,176,206)]/30">
+                    <table className="w-full text-left text-sm text-[#0F172A]">
+                        <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30">
                             <tr>
                                 <th className="px-4 py-3 font-semibold">Name</th>
                                 <th className="px-4 py-3 font-semibold">Link</th>
@@ -134,10 +134,10 @@ export default function StockManager() {
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                             {stocks.map((stock) => (
-                                <tr key={stock._id} className="transition-colors hover:bg-[#3066bb]/5">
-                                    <td className="px-4 py-3 text-slate-900 font-medium">{stock.name}</td>
+                                <tr key={stock._id} className="transition-colors hover:bg-[rgb(27,176,206)]/5">
+                                    <td className="px-4 py-3 text-[#0F172A] font-medium">{stock.name}</td>
                                     <td className="px-4 py-3">
-                                        <a href={stock.url} target="_blank" rel="noopener noreferrer" className="text-[#3066bb] hover:underline">
+                                        <a href={stock.url} target="_blank" rel="noopener noreferrer" className="text-[rgb(27,176,206)] hover:underline">
                                             View analyst report
                                         </a>
                                     </td>
@@ -145,7 +145,7 @@ export default function StockManager() {
                                         <div className="flex justify-end gap-3">
                                             <button
                                                 onClick={() => handleEdit(stock)}
-                                                className="text-slate-600 hover:text-slate-900 font-semibold text-xs"
+                                                className="text-[#0F172A] hover:text-[#0F172A] font-semibold text-xs"
                                             >
                                                 Edit
                                             </button>
@@ -161,7 +161,7 @@ export default function StockManager() {
                             ))}
                             {stocks.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="px-4 py-8 text-center text-slate-500">No stocks added yet.</td>
+                                    <td colSpan={3} className="px-4 py-8 text-center text-[#0F172A]">No stocks added yet.</td>
                                 </tr>
                             )}
                         </tbody>

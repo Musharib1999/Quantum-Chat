@@ -101,29 +101,29 @@ export default function MarketPromptManager() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-900">Market quick prompts</h2>
+                <h2 className="text-xl font-semibold text-[#0F172A]">Market quick prompts</h2>
             </div>
 
             {/* Add/Edit Form */}
-            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-[#3066bb]/30 bg-white space-y-4 shadow-sm">
+            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-[rgb(27,176,206)]/30 bg-white space-y-4 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500">Chip label</label>
+                        <label className="text-xs font-semibold text-[#0F172A]">Chip label</label>
                         <input
                             type="text"
                             placeholder="e.g. Top Movers"
-                            className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
+                            className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-sm text-[#0F172A]"
                             value={label}
                             onChange={(e) => setLabel(e.target.value)}
                         />
                     </div>
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500">Underlying query (triggers in chat)</label>
+                    <label className="text-xs font-semibold text-[#0F172A]">Underlying query (triggers in chat)</label>
                     <input
                         type="text"
                         placeholder="e.g. Show me today's top moving stocks and market sentiment"
-                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
+                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-sm text-[#0F172A]"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
@@ -132,7 +132,7 @@ export default function MarketPromptManager() {
                     <button
                         type="submit"
                         disabled={isSubmitting || !label.trim() || !query.trim()}
-                        className="bg-[#3066bb] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+                        className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
                     >
                         {isSubmitting ? 'Saving...' : editingId ? 'Update prompt' : 'Add prompt'}
                     </button>
@@ -140,7 +140,7 @@ export default function MarketPromptManager() {
                         <button
                             type="button"
                             onClick={resetForm}
-                            className="px-6 py-2.5 text-slate-500 hover:text-slate-900 text-sm font-semibold"
+                            className="px-6 py-2.5 text-[#0F172A] hover:text-[#0F172A] text-sm font-semibold"
                         >
                             Cancel
                         </button>
@@ -149,9 +149,9 @@ export default function MarketPromptManager() {
             </form>
 
             {/* List */}
-            <div className="border border-[#3066bb]/30 rounded-xl overflow-hidden bg-white shadow-sm">
-                <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30 font-semibold">
+            <div className="border border-[rgb(27,176,206)]/30 rounded-xl overflow-hidden bg-white shadow-sm">
+                <table className="w-full text-left text-sm text-[#0F172A]">
+                    <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
                         <tr>
                             <th className="px-5 py-4 w-1/4">Label</th>
                             <th className="px-5 py-4">Query</th>
@@ -162,29 +162,29 @@ export default function MarketPromptManager() {
                     <tbody className="divide-y divide-slate-100">
                         {loading ? (
                             <tr>
-                                <td colSpan={4} className="px-5 py-12 text-center text-slate-400">
+                                <td colSpan={4} className="px-5 py-12 text-center text-[#0F172A]">
                                     Loading prompts...
                                 </td>
                             </tr>
                         ) : prompts.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="px-5 py-12 text-center text-slate-500">
+                                <td colSpan={4} className="px-5 py-12 text-center text-[#0F172A]">
                                     No prompt chips defined yet.
                                 </td>
                             </tr>
                         ) : (
                             prompts.map(prompt => (
-                                <tr key={prompt._id} className={`group transition-colors ${prompt.isActive ? 'hover:bg-[#3066bb]/5' : 'bg-[#3066bb]/5/30 opacity-70'}`}>
-                                    <td className="px-5 py-4 font-semibold text-slate-900">
+                                <tr key={prompt._id} className={`group transition-colors ${prompt.isActive ? 'hover:bg-[rgb(27,176,206)]/5' : 'bg-[rgb(27,176,206)]/5/30 opacity-70'}`}>
+                                    <td className="px-5 py-4 font-semibold text-[#0F172A]">
                                         {prompt.label}
                                     </td>
-                                    <td className="px-5 py-4 text-xs text-slate-500 break-words">
+                                    <td className="px-5 py-4 text-xs text-[#0F172A] break-words">
                                         {prompt.query}
                                     </td>
                                     <td className="px-5 py-4">
                                         <button 
                                             onClick={() => handleToggleActive(prompt)}
-                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${prompt.isActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[#3066bb]/10 text-slate-500 border-[#3066bb]/30'}`}
+                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${prompt.isActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[rgb(27,176,206)]/10 text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
                                         >
                                             {prompt.isActive ? 'Active' : 'Hidden'}
                                         </button>
@@ -193,7 +193,7 @@ export default function MarketPromptManager() {
                                         <div className="flex justify-end gap-3">
                                             <button
                                                 onClick={() => handleEdit(prompt)}
-                                                className="text-slate-600 hover:text-slate-900 font-semibold text-xs transition-colors"
+                                                className="text-[#0F172A] hover:text-[#0F172A] font-semibold text-xs transition-colors"
                                             >
                                                 Edit
                                             </button>

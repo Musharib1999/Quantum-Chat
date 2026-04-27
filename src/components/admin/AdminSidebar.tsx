@@ -15,8 +15,8 @@ const SidebarLink = ({ label, active, onClick, isExperimental }: SidebarLinkProp
         <button
             onClick={onClick}
             className={`w-full flex items-center px-4 py-2.5 rounded-lg transition-all border ${active
-                ? 'bg-[#3066bb]/10 text-[#3066bb] border-[#3066bb]/50'
-                : 'text-slate-600 hover:bg-[#3066bb]/10 hover:text-slate-900 border-transparent'
+                ? 'bg-[rgb(27,176,206)]/10 text-[rgb(27,176,206)] border-[rgb(27,176,206)]/50'
+                : 'text-[#0F172A] hover:bg-[rgb(27,176,206)]/10 hover:text-[#0F172A] border-transparent'
                 } ${isExperimental ? 'opacity-80' : ''}`}
         >
             <span className={`font-medium text-sm flex items-center gap-2`}>
@@ -68,14 +68,14 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                 fixed inset-y-0 left-0 z-50 w-64 border-r flex flex-col transition-all duration-300 ease-in-out backdrop-blur-md
                 md:relative md:translate-x-0
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-                border-[#3066bb]/30 bg-white/70
+                border-[rgb(27,176,206)]/30 bg-white/70
             `}>
-                <div className="p-6 border-b flex items-center justify-between border-[#3066bb]/30 h-20">
+                <div className="p-6 border-b flex items-center justify-between border-[rgb(27,176,206)]/30 h-20">
                     <a href="https://www.quantumcomputers.guru/" target="_self" className="flex items-center hover:opacity-90 transition-opacity">
                         <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain" />
                     </a>
                     <button className="md:hidden p-2 hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                        <X size={20} className="text-slate-900" />
+                        <X size={20} className="text-[#0F172A]" />
                     </button>
                 </div>
 
@@ -83,7 +83,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                     {role === 'builder' ? (
                         <>
                             <div className="px-4 py-2 mb-2">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Builder Hub</span>
+                                <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Builder Hub</span>
                             </div>
                             <SidebarLink
                                 label="Industry Pipeline"
@@ -105,7 +105,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                                 active={false}
                                 onClick={() => window.location.href = '/'}
                             />
-                            <div className="pt-4 mt-4 border-t border-[#3066bb]/20">
+                            <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20">
                                 <SidebarLink
                                     label="Problem Console"
                                     active={activeTab === 'forms'}
@@ -176,9 +176,9 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                     )}
 
                     {showFuture && role !== 'builder' && (
-                        <div className="pt-4 mt-4 border-t border-[#3066bb]/20 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="px-4 mb-2">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Future Scope</span>
+                                <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Future Scope</span>
                             </div>
                             <SidebarLink
                                 label="Market Prompts"
@@ -226,10 +226,10 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                     )}
                 </nav>
 
-                <div className="p-4 border-t border-[#3066bb]/20 bg-white/50 backdrop-blur-sm">
+                <div className="p-4 border-t border-[rgb(27,176,206)]/20 bg-white/50 backdrop-blur-sm">
                     <button
                         onClick={() => window.location.href = '/developer'}
-                        className="w-full flex items-center px-4 py-2 rounded-lg transition-all border text-slate-600 hover:bg-[#3066bb]/5 hover:text-[#3066bb] border-transparent hover:border-[#3066bb]/30"
+                        className="w-full flex items-center px-4 py-2 rounded-lg transition-all border text-[#0F172A] hover:bg-[rgb(27,176,206)]/5 hover:text-[rgb(27,176,206)] border-transparent hover:border-[rgb(27,176,206)]/30"
                     >
                         <span className="font-bold text-sm">Developer Console</span>
                     </button>

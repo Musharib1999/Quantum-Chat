@@ -188,10 +188,10 @@ export default function UserManager() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h2 className="text-xl font-semibold text-slate-900">User accounts</h2>
+                <h2 className="text-xl font-semibold text-[#0F172A]">User accounts</h2>
                 <button
                     onClick={() => { resetForm(); setShowAddModal(true); }}
-                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+                    className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
                 >
                     Add new user
                 </button>
@@ -204,15 +204,15 @@ export default function UserManager() {
                     placeholder="Search users by email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-5 py-3 bg-white border border-[#3066bb]/30 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none transition-all placeholder:text-slate-400 text-sm text-slate-900"
+                    className="w-full px-5 py-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none transition-all placeholder:text-[#0F172A] text-sm text-[#0F172A]"
                 />
             </div>
 
             {/* Users Table */}
-            <div className="bg-white rounded-2xl border border-[#3066bb]/30 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-2xl border border-[rgb(27,176,206)]/30 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-600">
-                        <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30 font-semibold">
+                    <table className="w-full text-left text-sm text-[#0F172A]">
+                        <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
                             <tr>
                                 <th className="px-5 py-4">User</th>
                                 <th className="px-5 py-4">Status</th>
@@ -224,53 +224,53 @@ export default function UserManager() {
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-5 py-12 text-center text-slate-400">
+                                    <td colSpan={5} className="px-5 py-12 text-center text-[#0F172A]">
                                         Loading users...
                                     </td>
                                 </tr>
                             ) : filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-5 py-12 text-center text-slate-500">
+                                    <td colSpan={5} className="px-5 py-12 text-center text-[#0F172A]">
                                         No users found.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredUsers.map(user => (
-                                    <tr key={user._id} className="hover:bg-[#3066bb]/5 transition-colors group">
+                                    <tr key={user._id} className="hover:bg-[rgb(27,176,206)]/5 transition-colors group">
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col">
-                                                <span className="font-semibold text-slate-900">{user.email}</span>
+                                                <span className="font-semibold text-[#0F172A]">{user.email}</span>
                                                 {(user.firstName || user.lastName) && (
-                                                    <span className="text-xs text-slate-400">{user.firstName} {user.lastName}</span>
+                                                    <span className="text-xs text-[#0F172A]">{user.firstName} {user.lastName}</span>
                                                 )}
-                                                <span className="text-[10px] text-slate-400">{user.role} • {user.plan}</span>
+                                                <span className="text-[10px] text-[#0F172A]">{user.role} • {user.plan}</span>
                                             </div>
                                         </td>
                                         <td className="px-5 py-4">
                                             {user.role === 'admin' ? (
-                                                <span className="px-2 py-0.5 bg-[#3066bb]/5 text-[#3066bb] rounded text-[10px] font-bold border border-[#3066bb]/20">Admin</span>
+                                                <span className="px-2 py-0.5 bg-[rgb(27,176,206)]/5 text-[rgb(27,176,206)] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/20">Admin</span>
                                             ) : user.role === 'enterprise' ? (
                                                 <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold border border-purple-100">Enterprise</span>
                                             ) : user.role === 'builder' ? (
-                                                <span className="px-2 py-0.5 bg-[#3066bb]/5 text-[#3066bb] rounded text-[10px] font-bold border border-[#3066bb]/20">Builder</span>
+                                                <span className="px-2 py-0.5 bg-[rgb(27,176,206)]/5 text-[rgb(27,176,206)] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/20">Builder</span>
                                             ) : user.isApproved ? (
                                                 <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded text-[10px] font-bold border border-green-100">Active</span>
                                             ) : (
-                                                <span className="px-2 py-0.5 bg-[#3066bb]/10 text-slate-500 rounded text-[10px] font-bold border border-[#3066bb]/30">Pending</span>
+                                                <span className="px-2 py-0.5 bg-[rgb(27,176,206)]/10 text-[#0F172A] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/30">Pending</span>
                                             )}
                                         </td>
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                                                    <span className={((user.tokensUsed || 0) >= (user.tokenLimit || 100000)) ? "text-red-500 font-bold" : "text-slate-900 font-semibold"}>
+                                                <div className="flex items-center gap-1.5 text-[10px] text-[#0F172A]">
+                                                    <span className={((user.tokensUsed || 0) >= (user.tokenLimit || 100000)) ? "text-red-500 font-bold" : "text-[#0F172A] font-semibold"}>
                                                         {(user.tokensUsed || 0).toLocaleString()}
                                                     </span>
                                                     <span>/</span>
                                                     <span>{(user.tokenLimit || 100000).toLocaleString()}</span>
                                                 </div>
-                                                <div className="w-24 h-1 rounded-full bg-[#3066bb]/10 overflow-hidden">
+                                                <div className="w-24 h-1 rounded-full bg-[rgb(27,176,206)]/10 overflow-hidden">
                                                     <div
-                                                        className={`h-full ${((user.tokensUsed || 0) >= (user.tokenLimit || 100000)) ? 'bg-red-500' : 'bg-[#3066bb]'}`}
+                                                        className={`h-full ${((user.tokensUsed || 0) >= (user.tokenLimit || 100000)) ? 'bg-red-500' : 'bg-[rgb(27,176,206)]'}`}
                                                         style={{ width: `${Math.min(((user.tokensUsed || 0) / (user.tokenLimit || 100000)) * 100, 100)}%` }}
                                                     />
                                                 </div>
@@ -278,16 +278,16 @@ export default function UserManager() {
                                         </td>
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                                                    <span className={((user.simMinutesUsed || 0) >= (user.simMinutesLimit || 5)) ? "text-red-500 font-bold" : "text-slate-900 font-semibold"}>
+                                                <div className="flex items-center gap-1.5 text-[10px] text-[#0F172A]">
+                                                    <span className={((user.simMinutesUsed || 0) >= (user.simMinutesLimit || 5)) ? "text-red-500 font-bold" : "text-[#0F172A] font-semibold"}>
                                                         {(user.simMinutesUsed || 0).toFixed(1)}
                                                     </span>
                                                     <span>/</span>
                                                     <span>{(user.simMinutesLimit || 5).toFixed(0)}</span>
                                                 </div>
-                                                <div className="w-24 h-1 rounded-full bg-[#3066bb]/10 overflow-hidden">
+                                                <div className="w-24 h-1 rounded-full bg-[rgb(27,176,206)]/10 overflow-hidden">
                                                     <div
-                                                        className={`h-full ${((user.simMinutesUsed || 0) >= (user.simMinutesLimit || 5)) ? 'bg-red-500' : 'bg-[#3066bb]'}`}
+                                                        className={`h-full ${((user.simMinutesUsed || 0) >= (user.simMinutesLimit || 5)) ? 'bg-red-500' : 'bg-[rgb(27,176,206)]'}`}
                                                         style={{ width: `${Math.min(((user.simMinutesUsed || 0) / (user.simMinutesLimit || 5)) * 100, 100)}%` }}
                                                     />
                                                 </div>
@@ -298,7 +298,7 @@ export default function UserManager() {
                                                 {user.role !== 'admin' && (
                                                     <button
                                                         onClick={() => handleToggleApproval(user)}
-                                                        className={`text-xs font-semibold ${user.isApproved ? 'text-slate-400 hover:text-red-500' : 'text-[#3066bb] hover:underline'}`}
+                                                        className={`text-xs font-semibold ${user.isApproved ? 'text-[#0F172A] hover:text-red-500' : 'text-[rgb(27,176,206)] hover:underline'}`}
                                                     >
                                                         {user.isApproved ? "Revoke" : "Approve"}
                                                     </button>
@@ -320,7 +320,7 @@ export default function UserManager() {
                                                         setPassword("");
                                                         setShowEditModal(true);
                                                     }}
-                                                    className="text-slate-600 hover:text-slate-900 font-semibold text-xs"
+                                                    className="text-[#0F172A] hover:text-[#0F172A] font-semibold text-xs"
                                                 >
                                                     Edit
                                                 </button>
@@ -343,26 +343,26 @@ export default function UserManager() {
             {/* ADD USER MODAL */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-md rounded-2xl border border-[#3066bb]/30 shadow-xl p-6 relative animate-in zoom-in-95 duration-200">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6">New user account</h3>
+                    <div className="bg-white w-full max-w-md rounded-2xl border border-[rgb(27,176,206)]/30 shadow-xl p-6 relative animate-in zoom-in-95 duration-200">
+                        <h3 className="text-lg font-bold text-[#0F172A] mb-6">New user account</h3>
                         
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">First name</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">First name</label>
                                     <input
                                         type="text"
-                                        className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-2.5 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                         placeholder="Jane"
                                         value={firstName}
                                         onChange={e => setFirstName(e.target.value)}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Last name</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Last name</label>
                                     <input
                                         type="text"
-                                        className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-2.5 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                         placeholder="Doe"
                                         value={lastName}
                                         onChange={e => setLastName(e.target.value)}
@@ -371,10 +371,10 @@ export default function UserManager() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">Email address</label>
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase">Email address</label>
                                 <input
                                     type="email"
-                                    className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                    className="w-full p-2.5 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                     placeholder="user@example.com"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
@@ -382,10 +382,10 @@ export default function UserManager() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">Initial password</label>
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase">Initial password</label>
                                 <input
                                     type="text"
-                                    className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
+                                    className="w-full p-2.5 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-mono"
                                     placeholder="Enter secure password"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
@@ -393,9 +393,9 @@ export default function UserManager() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">Plan tier</label>
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase">Plan tier</label>
                                 <select
-                                    className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                    className="w-full p-2.5 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                     value={plan}
                                     onChange={e => setPlan(e.target.value as any)}
                                 >
@@ -406,9 +406,9 @@ export default function UserManager() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">System Role</label>
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase">System Role</label>
                                 <select
-                                    className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold"
+                                    className="w-full p-2.5 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-semibold"
                                     value={role}
                                     onChange={e => setRole(e.target.value as any)}
                                 >
@@ -424,10 +424,10 @@ export default function UserManager() {
                             )}
 
                             <div className="pt-4 flex justify-end gap-3">
-                                <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors">
+                                <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-sm font-semibold text-[#0F172A] hover:text-[#0F172A] transition-colors">
                                     Cancel
                                 </button>
-                                <button onClick={handleAddUser} disabled={actionLoading} className="px-6 py-2 bg-[#3066bb] hover:bg-[#255299] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-50">
+                                <button onClick={handleAddUser} disabled={actionLoading} className="px-6 py-2 bg-[rgb(27,176,206)] hover:bg-[#255299] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-50">
                                     {actionLoading ? 'Creating...' : 'Create account'}
                                 </button>
                             </div>
@@ -439,25 +439,25 @@ export default function UserManager() {
             {/* EDIT USER MODAL */}
             {showEditModal && selectedUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
-                    <div className="bg-white w-full max-w-xl rounded-2xl border border-[#3066bb]/30 shadow-xl p-8 relative animate-in zoom-in-95 duration-200 my-8">
-                        <h3 className="text-xl font-bold text-slate-900 mb-8">Edit user account</h3>
+                    <div className="bg-white w-full max-w-xl rounded-2xl border border-[rgb(27,176,206)]/30 shadow-xl p-8 relative animate-in zoom-in-95 duration-200 my-8">
+                        <h3 className="text-xl font-bold text-[#0F172A] mb-8">Edit user account</h3>
                         
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">First name</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">First name</label>
                                     <input
                                         type="text"
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                         value={firstName}
                                         onChange={e => setFirstName(e.target.value)}
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Last name</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Last name</label>
                                     <input
                                         type="text"
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                         value={lastName}
                                         onChange={e => setLastName(e.target.value)}
                                     />
@@ -466,19 +466,19 @@ export default function UserManager() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Email address</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Email address</label>
                                     <input
                                         type="email"
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Phone number</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Phone number</label>
                                     <input
                                         type="tel"
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                         value={phone}
                                         onChange={e => setPhone(e.target.value)}
                                     />
@@ -487,9 +487,9 @@ export default function UserManager() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Plan tier</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Plan tier</label>
                                     <select
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm"
                                         value={plan}
                                         onChange={e => setPlan(e.target.value as any)}
                                     >
@@ -499,9 +499,9 @@ export default function UserManager() {
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">System Role</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">System Role</label>
                                     <select
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-semibold"
                                         value={role}
                                         onChange={e => setRole(e.target.value as any)}
                                     >
@@ -515,19 +515,19 @@ export default function UserManager() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Token limit</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Token limit</label>
                                     <input
                                         type="number"
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-mono"
                                         value={tokenLimit}
                                         onChange={e => setTokenLimit(Number(e.target.value))}
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Sim minutes limit</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Sim minutes limit</label>
                                     <input
                                         type="number"
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-mono"
                                         value={simMinutesLimit}
                                         onChange={e => setSimMinutesLimit(Number(e.target.value))}
                                     />
@@ -536,22 +536,22 @@ export default function UserManager() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Sim minutes used</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Sim minutes used</label>
                                     <input
                                         type="number"
                                         step="0.5"
-                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
+                                        className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-mono"
                                         value={simMinutesUsed}
                                         onChange={e => setSimMinutesUsed(Number(e.target.value))}
                                     />
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-[#3066bb]/20 space-y-4">
+                            <div className="pt-4 border-t border-[rgb(27,176,206)]/20 space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">API Access & Key</label>
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">API Access & Key</label>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] text-slate-400 font-semibold">{apiEnabled ? 'ENABLED' : 'DISABLED'}</span>
+                                        <span className="text-[10px] text-[#0F172A] font-semibold">{apiEnabled ? 'ENABLED' : 'DISABLED'}</span>
                                         <button 
                                             onClick={() => setApiEnabled(!apiEnabled)}
                                             className={`w-8 h-4 rounded-full transition-colors relative ${apiEnabled ? 'bg-green-500' : 'bg-slate-300'}`}
@@ -563,26 +563,26 @@ export default function UserManager() {
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
-                                        className="flex-1 p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-xs font-mono placeholder:text-slate-300"
+                                        className="flex-1 p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-xs font-mono placeholder:text-slate-300"
                                         placeholder="No API Key generated"
                                         value={apiKey}
                                         readOnly
                                     />
                                     <button 
                                         onClick={generateNewApiKey}
-                                        className="px-4 bg-[#3066bb]/10 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-bold transition-colors"
+                                        className="px-4 bg-[rgb(27,176,206)]/10 hover:bg-slate-200 text-[#0F172A] rounded-xl text-[10px] font-bold transition-colors"
                                     >
                                         GENERATE
                                     </button>
                                 </div>
-                                <p className="text-[10px] text-slate-400">API Key allows users to bypass the dashboard and run simulations programmatically.</p>
+                                <p className="text-[10px] text-[#0F172A]">API Key allows users to bypass the dashboard and run simulations programmatically.</p>
                             </div>
 
-                            <div className="pt-4 border-t border-[#3066bb]/20">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">New password (optional)</label>
+                            <div className="pt-4 border-t border-[rgb(27,176,206)]/20">
+                                <label className="text-[10px] font-bold text-[#0F172A] uppercase">New password (optional)</label>
                                 <input
                                     type="text"
-                                    className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono placeholder:text-slate-300"
+                                    className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-mono placeholder:text-slate-300"
                                     placeholder="Leave blank to keep current"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
@@ -592,14 +592,14 @@ export default function UserManager() {
                             <div className="pt-6 flex justify-end gap-3">
                                 <button
                                     onClick={() => { setShowEditModal(false); setSelectedUser(null); }}
-                                    className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+                                    className="px-4 py-2 text-sm font-semibold text-[#0F172A] hover:text-[#0F172A] transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleEditUser}
                                     disabled={actionLoading}
-                                    className="px-8 py-2.5 bg-[#3066bb] hover:bg-[#255299] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-50"
+                                    className="px-8 py-2.5 bg-[rgb(27,176,206)] hover:bg-[#255299] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-50"
                                 >
                                     {actionLoading ? 'Saving...' : 'Save changes'}
                                 </button>

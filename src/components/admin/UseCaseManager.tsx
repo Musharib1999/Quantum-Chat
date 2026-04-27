@@ -89,23 +89,23 @@ export default function UseCaseManager() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-900">Quantum use cases</h2>
+                <h2 className="text-xl font-semibold text-[#0F172A]">Quantum use cases</h2>
             </div>
 
             {/* Add/Edit Form */}
-            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-[#3066bb]/30 bg-white space-y-4 shadow-sm">
+            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-[rgb(27,176,206)]/30 bg-white space-y-4 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                         type="text"
                         placeholder="Use case title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-[#3066bb]/5 text-slate-900"
+                        className="border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 text-[#0F172A]"
                     />
                     <select
                         value={industry}
                         onChange={(e) => setIndustry(e.target.value)}
-                        className="border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-[#3066bb]/5 text-slate-900"
+                        className="border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 text-[#0F172A]"
                     >
                         {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                     </select>
@@ -116,21 +116,21 @@ export default function UseCaseManager() {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={3}
-                        className="w-full border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] resize-none bg-[#3066bb]/5 text-slate-900"
+                        className="w-full border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] resize-none bg-[rgb(27,176,206)]/5 text-[#0F172A]"
                     />
                     <input
                         type="text"
                         placeholder="Source or reference url (optional)"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        className="w-full border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-[#3066bb]/5 text-slate-900"
+                        className="w-full border border-[rgb(27,176,206)]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 text-[#0F172A]"
                     />
                 </div>
                 <div className="flex gap-2 pt-2">
                     <button
                         type="submit"
                         disabled={isSubmitting || !title || !description}
-                        className="bg-[#3066bb] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 shadow-sm"
+                        className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 shadow-sm"
                     >
                         {isSubmitting ? 'Saving...' : editingId ? 'Update use case' : 'Add use case'}
                     </button>
@@ -138,7 +138,7 @@ export default function UseCaseManager() {
                         <button
                             type="button"
                             onClick={resetForm}
-                            className="px-6 py-2.5 text-slate-500 hover:text-slate-900 text-sm font-semibold transition-all"
+                            className="px-6 py-2.5 text-[#0F172A] hover:text-[#0F172A] text-sm font-semibold transition-all"
                         >
                             Cancel
                         </button>
@@ -147,29 +147,29 @@ export default function UseCaseManager() {
             </form>
 
             {/* Use Case List */}
-            <div className="border border-[#3066bb]/30 rounded-xl overflow-hidden bg-white shadow-sm">
+            <div className="border border-[rgb(27,176,206)]/30 rounded-xl overflow-hidden bg-white shadow-sm">
                 {loading ? (
-                    <div className="p-12 text-center text-sm text-slate-400">Loading use cases...</div>
+                    <div className="p-12 text-center text-sm text-[#0F172A]">Loading use cases...</div>
                 ) : useCases.length === 0 ? (
-                    <div className="p-12 text-center text-sm text-slate-500">No use cases found. add one above.</div>
+                    <div className="p-12 text-center text-sm text-[#0F172A]">No use cases found. add one above.</div>
                 ) : (
                     <div className="divide-y divide-slate-100">
                         {useCases.map((useCase) => (
-                            <div key={useCase._id} className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-[#3066bb]/5 transition-colors group">
+                            <div key={useCase._id} className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-[rgb(27,176,206)]/5 transition-colors group">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-1.5">
-                                        <h4 className="font-semibold text-slate-900">
+                                        <h4 className="font-semibold text-[#0F172A]">
                                             {useCase.title}
                                         </h4>
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#3066bb]/5 text-[#3066bb]">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[rgb(27,176,206)]/5 text-[rgb(27,176,206)]">
                                             {useCase.industry}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-slate-500 leading-relaxed">
+                                    <p className="text-sm text-[#0F172A] leading-relaxed">
                                         {useCase.description}
                                     </p>
                                     {useCase.url && (
-                                        <a href={useCase.url} target="_blank" rel="noopener noreferrer" className="inline-block mt-2.5 text-xs text-[#3066bb] hover:underline">
+                                        <a href={useCase.url} target="_blank" rel="noopener noreferrer" className="inline-block mt-2.5 text-xs text-[rgb(27,176,206)] hover:underline">
                                             View source
                                         </a>
                                     )}
@@ -177,7 +177,7 @@ export default function UseCaseManager() {
                                 <div className="flex items-center gap-3 shrink-0">
                                     <button
                                         onClick={() => handleEdit(useCase)}
-                                        className="text-slate-600 hover:text-slate-900 font-semibold text-xs transition-colors"
+                                        className="text-[#0F172A] hover:text-[#0F172A] font-semibold text-xs transition-colors"
                                     >
                                         Edit
                                     </button>

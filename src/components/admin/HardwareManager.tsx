@@ -108,7 +108,7 @@ export default function HardwareManager() {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center p-12 text-slate-400 text-sm">
+        <div className="flex items-center justify-center p-12 text-[#0F172A] text-sm">
             Loading quantum infrastructure...
         </div>
     );
@@ -116,23 +116,23 @@ export default function HardwareManager() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-slate-900">Quantum hardware registry</h2>
+                <h2 className="text-xl font-semibold text-[#0F172A]">Quantum hardware registry</h2>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
-                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+                    className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
                 >
                     {isAdding ? 'Cancel' : 'Add simulator'}
                 </button>
             </div>
 
             {isAdding && (
-                <div className="bg-white p-6 rounded-2xl border border-[#3066bb]/30 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold text-slate-900">New hardware node</h3>
+                <div className="bg-white p-6 rounded-2xl border border-[rgb(27,176,206)]/30 shadow-sm space-y-4">
+                    <h3 className="text-sm font-bold text-[#0F172A]">New hardware node</h3>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Node name</label>
+                            <label className="text-[10px] font-bold text-[#0F172A] uppercase">Node name</label>
                             <input
-                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 placeholder="e.g. IBM Brisbane"
                                 value={newHw.name || ''}
                                 onChange={e => setNewHw({ ...newHw, name: e.target.value })}
@@ -140,9 +140,9 @@ export default function HardwareManager() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Provider ecosystem</label>
+                            <label className="text-[10px] font-bold text-[#0F172A] uppercase">Provider ecosystem</label>
                             <select
-                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 value={newHw.provider}
                                 onChange={e => setNewHw({ ...newHw, provider: e.target.value as any })}
                             >
@@ -155,10 +155,10 @@ export default function HardwareManager() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Qubit count</label>
+                            <label className="text-[10px] font-bold text-[#0F172A] uppercase">Qubit count</label>
                             <input
                                 type="number"
-                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 placeholder="0"
                                 value={newHw.qubits}
                                 onChange={e => setNewHw({ ...newHw, qubits: parseInt(e.target.value) || 0 })}
@@ -166,10 +166,10 @@ export default function HardwareManager() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Display priority</label>
+                            <label className="text-[10px] font-bold text-[#0F172A] uppercase">Display priority</label>
                             <input
                                 type="number"
-                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 placeholder="0"
                                 value={newHw.order}
                                 onChange={e => setNewHw({ ...newHw, order: parseInt(e.target.value) || 0 })}
@@ -177,9 +177,9 @@ export default function HardwareManager() {
                         </div>
 
                         <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Technical description</label>
+                            <label className="text-[10px] font-bold text-[#0F172A] uppercase">Technical description</label>
                             <textarea
-                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 h-24"
+                                className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] h-24"
                                 placeholder="Briefly describe the backend architecture..."
                                 value={newHw.description || ''}
                                 onChange={e => setNewHw({ ...newHw, description: e.target.value })}
@@ -187,9 +187,9 @@ export default function HardwareManager() {
                         </div>
 
                         <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Service URL (For Backend Routing)</label>
+                            <label className="text-[10px] font-bold text-[#0F172A] uppercase">Service URL (For Backend Routing)</label>
                             <input
-                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-mono"
+                                className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] font-mono"
                                 placeholder="https://your-service-url.com"
                                 value={newHw.serviceUrl || ''}
                                 onChange={e => setNewHw({ ...newHw, serviceUrl: e.target.value })}
@@ -199,26 +199,26 @@ export default function HardwareManager() {
                             </p>
                         </div>
 
-                        <div className="space-y-1.5 md:col-span-2 border-t border-[#3066bb]/20 pt-4 mt-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Health Check Python Script (Optional)</label>
+                        <div className="space-y-1.5 md:col-span-2 border-t border-[rgb(27,176,206)]/20 pt-4 mt-2">
+                            <label className="text-[10px] font-bold text-[#0F172A] uppercase">Health Check Python Script (Optional)</label>
                             <textarea
-                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-xs text-green-400 font-mono h-24"
+                                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-xs text-green-400 font-mono h-24"
                                 placeholder="print('PONG')"
                                 value={newHw.testCode || ''}
                                 onChange={e => setNewHw({ ...newHw, testCode: e.target.value })}
                             />
-                            <p className="text-[9px] text-slate-400 font-semibold">This tiny, minimal code script will be sent when checking the hardware status.</p>
+                            <p className="text-[9px] text-[#0F172A] font-semibold">This tiny, minimal code script will be sent when checking the hardware status.</p>
                         </div>
 
                         <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Expected Health Check Output (Optional)</label>
+                            <label className="text-[10px] font-bold text-[#0F172A] uppercase">Expected Health Check Output (Optional)</label>
                             <input
-                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-mono"
+                                className="w-full p-3 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] font-mono"
                                 placeholder="PONG"
                                 value={newHw.testOutput || ''}
                                 onChange={e => setNewHw({ ...newHw, testOutput: e.target.value })}
                             />
-                            <p className="text-[9px] text-slate-400 font-semibold">The health check passes only if the runtime prints an exact match to this string.</p>
+                            <p className="text-[9px] text-[#0F172A] font-semibold">The health check passes only if the runtime prints an exact match to this string.</p>
                         </div>
                     </div>
 
@@ -226,7 +226,7 @@ export default function HardwareManager() {
                         <button
                             onClick={handleAdd}
                             disabled={!newHw.name || !newHw.description}
-                            className="bg-[#3066bb] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-50"
+                            className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-50"
                         >
                             Save hardware node
                         </button>
@@ -236,14 +236,14 @@ export default function HardwareManager() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {hardwares.map(hw => (
-                    <div key={hw.id} className={`p-6 bg-white rounded-2xl border transition-all ${hw.status === 'Online' ? 'border-[#3066bb]/30' : 'border-[#3066bb]/20 opacity-70'} flex flex-col gap-4 shadow-sm hover:shadow-md group`}>
+                    <div key={hw.id} className={`p-6 bg-white rounded-2xl border transition-all ${hw.status === 'Online' ? 'border-[rgb(27,176,206)]/30' : 'border-[rgb(27,176,206)]/20 opacity-70'} flex flex-col gap-4 shadow-sm hover:shadow-md group`}>
                         <div className="flex justify-between items-start">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            <div className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">
                                 {hw.provider}
                             </div>
                             <button
                                 onClick={() => handleToggleStatus(hw.id)}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${hw.status === 'Online' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[#3066bb]/10 text-slate-500 border-[#3066bb]/30'}`}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${hw.status === 'Online' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[rgb(27,176,206)]/10 text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
                             >
                                 {hw.status}
                             </button>
@@ -252,14 +252,14 @@ export default function HardwareManager() {
                         {editingId === hw.id ? (
                             <div className="space-y-3 flex-1">
                                 <input
-                                    className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-sm font-semibold text-slate-900"
+                                    className="w-full p-2 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-sm font-semibold text-[#0F172A]"
                                     value={hw.name}
                                     onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, name: e.target.value } : h))}
                                 />
                                 <div className="space-y-1">
-                                    <label className="text-[9px] text-slate-400 uppercase font-bold">Provider ecosystem</label>
+                                    <label className="text-[9px] text-[#0F172A] uppercase font-bold">Provider ecosystem</label>
                                     <select
-                                        className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs"
+                                        className="w-full p-2 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
                                         value={hw.provider}
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, provider: e.target.value as any } : h))}
                                     >
@@ -272,39 +272,39 @@ export default function HardwareManager() {
                                 </div>
                                 <div className="flex gap-2">
                                     <div className="flex-1 space-y-1">
-                                        <label className="text-[9px] text-slate-400 uppercase font-bold">Qubits</label>
+                                        <label className="text-[9px] text-[#0F172A] uppercase font-bold">Qubits</label>
                                         <input
                                             type="number"
-                                            className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs"
+                                            className="w-full p-2 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
                                             value={hw.qubits}
                                             onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, qubits: parseInt(e.target.value) || 0 } : h))}
                                         />
                                     </div>
                                     <div className="flex-1 space-y-1">
-                                        <label className="text-[9px] text-slate-400 uppercase font-bold">Order</label>
+                                        <label className="text-[9px] text-[#0F172A] uppercase font-bold">Order</label>
                                         <input
                                             type="number"
-                                            className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs"
+                                            className="w-full p-2 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
                                             value={hw.order}
                                             onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, order: parseInt(e.target.value) || 0 } : h))}
                                         />
                                     </div>
                                 </div>
                                 <textarea
-                                    className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs h-20"
+                                    className="w-full p-2 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs h-20"
                                     value={hw.description}
                                     onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, description: e.target.value } : h))}
                                 />
                                 <div className="space-y-1">
-                                    <label className="text-[9px] text-slate-400 uppercase font-bold">Service URL</label>
+                                    <label className="text-[9px] text-[#0F172A] uppercase font-bold">Service URL</label>
                                     <input
-                                        className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs font-mono"
+                                        className="w-full p-2 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs font-mono"
                                         value={hw.serviceUrl || ''}
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, serviceUrl: e.target.value } : h))}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[9px] text-slate-400 uppercase font-bold">Health Check Code (Python)</label>
+                                    <label className="text-[9px] text-[#0F172A] uppercase font-bold">Health Check Code (Python)</label>
                                     <textarea
                                         className="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-green-400 h-16"
                                         value={hw.testCode || ''}
@@ -313,24 +313,24 @@ export default function HardwareManager() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[9px] text-slate-400 uppercase font-bold">Expected Output</label>
+                                    <label className="text-[9px] text-[#0F172A] uppercase font-bold">Expected Output</label>
                                     <input
-                                        className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs font-mono"
+                                        className="w-full p-2 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs font-mono"
                                         value={hw.testOutput || ''}
                                         placeholder="PONG"
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, testOutput: e.target.value } : h))}
                                     />
                                 </div>
                                 <div className="flex gap-2 pt-1">
-                                    <button onClick={() => handleSaveEdit(hw.id)} className="flex-1 bg-[#3066bb] text-white p-2 rounded-lg text-xs font-bold">Save</button>
-                                    <button onClick={() => { setEditingId(null); loadHardware(); }} className="flex-1 bg-[#3066bb]/10 text-slate-500 p-2 rounded-lg text-xs font-bold">Cancel</button>
+                                    <button onClick={() => handleSaveEdit(hw.id)} className="flex-1 bg-[rgb(27,176,206)] text-white p-2 rounded-lg text-xs font-bold">Save</button>
+                                    <button onClick={() => { setEditingId(null); loadHardware(); }} className="flex-1 bg-[rgb(27,176,206)]/10 text-[#0F172A] p-2 rounded-lg text-xs font-bold">Cancel</button>
                                 </div>
                             </div>
                         ) : (
                             <div className="flex-1">
-                                <h4 className="font-bold text-slate-900 text-base">{hw.name}</h4>
-                                <p className="text-[10px] text-slate-400 font-medium mt-0.5 mb-2">{hw.qubits} Qubits • Priority {hw.order}</p>
-                                <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">{hw.description}</p>
+                                <h4 className="font-bold text-[#0F172A] text-base">{hw.name}</h4>
+                                <p className="text-[10px] text-[#0F172A] font-medium mt-0.5 mb-2">{hw.qubits} Qubits • Priority {hw.order}</p>
+                                <p className="text-sm text-[#0F172A] leading-relaxed line-clamp-3">{hw.description}</p>
                             </div>
                         )}
 
@@ -338,14 +338,14 @@ export default function HardwareManager() {
                             <div className="flex items-center gap-3 pt-2">
                                 <button
                                     onClick={() => setEditingId(hw.id)}
-                                    className="text-slate-600 hover:text-slate-900 font-semibold text-xs"
+                                    className="text-[#0F172A] hover:text-[#0F172A] font-semibold text-xs"
                                 >
                                     Edit
                                 </button>
                                 <button
                                     onClick={() => handleCheckStatus(hw)}
                                     disabled={checkingIds.includes(hw.id)}
-                                    className="text-[#3066bb] hover:underline font-semibold text-xs disabled:opacity-50"
+                                    className="text-[rgb(27,176,206)] hover:underline font-semibold text-xs disabled:opacity-50"
                                 >
                                     {checkingIds.includes(hw.id) ? 'Checking...' : 'Check Status'}
                                 </button>
@@ -362,11 +362,11 @@ export default function HardwareManager() {
             </div>
 
             {hardwares.length === 0 && !loading && !isAdding && (
-                <div className="p-12 text-center border border-[#3066bb]/30 rounded-2xl bg-white border-dashed">
-                    <p className="text-slate-500 text-sm mb-6">No quantum simulators have been configured yet.</p>
+                <div className="p-12 text-center border border-[rgb(27,176,206)]/30 rounded-2xl bg-white border-dashed">
+                    <p className="text-[#0F172A] text-sm mb-6">No quantum simulators have been configured yet.</p>
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="bg-[#3066bb] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-sm"
+                        className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-sm"
                     >
                         Configure first simulator
                     </button>

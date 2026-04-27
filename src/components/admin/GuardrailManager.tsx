@@ -46,21 +46,21 @@ export default function GuardrailManager() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            <div className="bg-white p-6 rounded-2xl border border-[#3066bb]/30 mb-8 shadow-sm">
-                <h3 className="font-semibold text-slate-900 text-lg mb-2">Safety & compliance</h3>
-                <p className="text-slate-500 text-sm">Define strict boundaries for the ai. These rules override all other knowledge retrieval.</p>
+            <div className="bg-white p-6 rounded-2xl border border-[rgb(27,176,206)]/30 mb-8 shadow-sm">
+                <h3 className="font-semibold text-[#0F172A] text-lg mb-2">Safety & compliance</h3>
+                <p className="text-[#0F172A] text-sm">Define strict boundaries for the ai. These rules override all other knowledge retrieval.</p>
             </div>
 
             <div className="flex gap-4 mb-6">
                 <input
-                    className="flex-1 p-4 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl shadow-sm outline-none focus:ring-1 focus:ring-[#3066bb] text-slate-900 placeholder:text-slate-400 text-sm"
+                    className="flex-1 p-4 bg-[rgb(27,176,206)]/5 border border-[rgb(27,176,206)]/30 rounded-xl shadow-sm outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-[#0F172A] placeholder:text-[#0F172A] text-sm"
                     placeholder="Enter a new guardrail rule (e.g., 'Do not discuss politics')"
                     value={newRule}
                     onChange={e => setNewRule(e.target.value)}
                 />
                 <button
                     onClick={handleAddRule}
-                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-6 rounded-xl font-semibold transition-all shadow-sm text-sm"
+                    className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-6 rounded-xl font-semibold transition-all shadow-sm text-sm"
                 >
                     Add rule
                 </button>
@@ -68,28 +68,28 @@ export default function GuardrailManager() {
 
             <div className="grid gap-4">
                 {guardrails.map(g => (
-                    <div key={g.id} className={`p-4 rounded-xl border flex items-center justify-between transition-all ${g.active ? 'bg-white border-[#3066bb]/30 shadow-sm' : 'bg-[#3066bb]/5 border-[#3066bb]/20 opacity-60'}`}>
+                    <div key={g.id} className={`p-4 rounded-xl border flex items-center justify-between transition-all ${g.active ? 'bg-white border-[rgb(27,176,206)]/30 shadow-sm' : 'bg-[rgb(27,176,206)]/5 border-[rgb(27,176,206)]/20 opacity-60'}`}>
                         <div className="flex items-center gap-4 flex-1">
                             <div className="flex-1">
                                 {editingRuleId === g.id ? (
                                     <div className="flex gap-2">
                                         <input
-                                            className="flex-1 p-2 bg-white border border-[#3066bb]/30 rounded-lg text-slate-900 text-sm"
+                                            className="flex-1 p-2 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-[#0F172A] text-sm"
                                             value={editingRuleText}
                                             onChange={e => setEditingRuleText(e.target.value)}
                                             autoFocus
                                         />
-                                        <button onClick={() => handleUpdateRule(g.id)} className="px-3 py-1 text-[#3066bb] hover:bg-[#3066bb]/10 rounded-lg text-xs font-semibold">
+                                        <button onClick={() => handleUpdateRule(g.id)} className="px-3 py-1 text-[rgb(27,176,206)] hover:bg-[rgb(27,176,206)]/10 rounded-lg text-xs font-semibold">
                                             Save
                                         </button>
-                                        <button onClick={() => setEditingRuleId(null)} className="px-3 py-1 text-slate-400 hover:bg-[#3066bb]/10 rounded-lg text-xs font-semibold">
+                                        <button onClick={() => setEditingRuleId(null)} className="px-3 py-1 text-[#0F172A] hover:bg-[rgb(27,176,206)]/10 rounded-lg text-xs font-semibold">
                                             Cancel
                                         </button>
                                     </div>
                                 ) : (
-                                    <p className={`font-medium text-sm ${g.active ? 'text-slate-900' : 'text-slate-400 line-through'}`}>{g.rule}</p>
+                                    <p className={`font-medium text-sm ${g.active ? 'text-[#0F172A]' : 'text-[#0F172A] line-through'}`}>{g.rule}</p>
                                 )}
-                                <span className="text-[10px] text-slate-400 font-medium tracking-wider">{g.type?.replace('_', ' ') || 'general'}</span>
+                                <span className="text-[10px] text-[#0F172A] font-medium tracking-wider">{g.type?.replace('_', ' ') || 'general'}</span>
                             </div>
                         </div>
 
@@ -100,7 +100,7 @@ export default function GuardrailManager() {
                                         setEditingRuleId(g.id);
                                         setEditingRuleText(g.rule);
                                     }}
-                                    className="px-3 py-1.5 text-slate-600 hover:bg-[#3066bb]/10 rounded-lg transition-colors font-semibold text-xs"
+                                    className="px-3 py-1.5 text-[#0F172A] hover:bg-[rgb(27,176,206)]/10 rounded-lg transition-colors font-semibold text-xs"
                                 >
                                     Edit
                                 </button>
@@ -115,7 +115,7 @@ export default function GuardrailManager() {
                                 onClick={() => handleToggleGuardrail(g.id)}
                                 className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${g.active
                                     ? 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
-                                    : 'bg-[#3066bb]/10 text-slate-500 hover:bg-slate-200 border border-transparent'
+                                    : 'bg-[rgb(27,176,206)]/10 text-[#0F172A] hover:bg-slate-200 border border-transparent'
                                     }`}
                             >
                                 {g.active ? 'Active' : 'Disabled'}

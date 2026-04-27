@@ -145,19 +145,19 @@ export default function EnterpriseStreamManager() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-900">Enterprise Pipeline Hub</h2>
-                    <p className="text-sm text-slate-500">Manage B2B integrations and visualize high-frequency streaming traffic.</p>
+                    <h2 className="text-xl font-semibold text-[#0F172A]">Enterprise Pipeline Hub</h2>
+                    <p className="text-sm text-[#0F172A]">Manage B2B integrations and visualize high-frequency streaming traffic.</p>
                 </div>
-                <div className="flex items-center gap-2 bg-[#3066bb]/10 p-1 rounded-xl border border-[#3066bb]/30">
+                <div className="flex items-center gap-2 bg-[rgb(27,176,206)]/10 p-1 rounded-xl border border-[rgb(27,176,206)]/30">
                     <button 
                         onClick={() => setViewMode('manager')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'manager' ? 'bg-white text-[#3066bb] shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'manager' ? 'bg-white text-[rgb(27,176,206)] shadow-sm' : 'text-[#0F172A] hover:text-[#0F172A]'}`}
                     >
                         Pipelines
                     </button>
                     <button 
                         onClick={() => setViewMode('visualizer')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 ${viewMode === 'visualizer' ? 'bg-[#3066bb] text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 ${viewMode === 'visualizer' ? 'bg-[rgb(27,176,206)] text-white shadow-sm' : 'text-[#0F172A] hover:text-[#0F172A]'}`}
                     >
                         <Activity size={16} /> Live Visualizer
                     </button>
@@ -165,21 +165,21 @@ export default function EnterpriseStreamManager() {
             </div>
 
             {viewMode === 'manager' && (
-                <div className="bg-white rounded-2xl border border-[#3066bb]/30 overflow-hidden shadow-sm p-6">
+                <div className="bg-white rounded-2xl border border-[rgb(27,176,206)]/30 overflow-hidden shadow-sm p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-semibold text-slate-900">Active B2B Pipelines</h3>
+                        <h3 className="font-semibold text-[#0F172A]">Active B2B Pipelines</h3>
                         <button 
                             onClick={() => setShowForm(!showForm)}
-                            className="bg-[#3066bb]/10 text-[#3066bb] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#3066bb]/20 transition-colors"
+                            className="bg-[rgb(27,176,206)]/10 text-[rgb(27,176,206)] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[rgb(27,176,206)]/20 transition-colors"
                         >
                             {showForm ? 'Close Editor' : '+ New Pipeline'}
                         </button>
                     </div>
 
                     {showForm && (
-                        <form onSubmit={handleCreatePipeline} className="mb-8 p-6 bg-[#3066bb]/5 rounded-xl border border-[#3066bb]/30 grid grid-cols-2 gap-4">
+                        <form onSubmit={handleCreatePipeline} className="mb-8 p-6 bg-[rgb(27,176,206)]/5 rounded-xl border border-[rgb(27,176,206)]/30 grid grid-cols-2 gap-4">
                             <div className="col-span-1">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Enterprise Account</label>
+                                <label className="block text-xs font-bold text-[#0F172A] mb-1">Enterprise Account</label>
                                 <select 
                                     required 
                                     value={formData.enterpriseName} 
@@ -195,22 +195,22 @@ export default function EnterpriseStreamManager() {
                                 </select>
                             </div>
                             <div className="col-span-1">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Problem Blueprint ID</label>
+                                <label className="block text-xs font-bold text-[#0F172A] mb-1">Problem Blueprint ID</label>
                                 <input required value={formData.problemId} onChange={e => setFormData({...formData, problemId: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono" placeholder="MongoDB ObjectId" />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Outbound Webhook URL</label>
+                                <label className="block text-xs font-bold text-[#0F172A] mb-1">Outbound Webhook URL</label>
                                 <input required type="url" value={formData.webhookUrl} onChange={e => setFormData({...formData, webhookUrl: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono" placeholder="https://api.acme.com/quantum/receive" />
                             </div>
                             <div className="col-span-2 flex justify-end">
-                                <button type="submit" className="bg-[#3066bb] text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm hover:opacity-90">Save Pipeline</button>
+                                <button type="submit" className="bg-[rgb(27,176,206)] text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm hover:opacity-90">Save Pipeline</button>
                             </div>
                         </form>
                     )}
 
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-slate-600">
-                            <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30 font-semibold">
+                        <table className="w-full text-left text-sm text-[#0F172A]">
+                            <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30 font-semibold">
                                 <tr>
                                     <th className="px-6 py-4">Enterprise</th>
                                     <th className="px-6 py-4">Status</th>
@@ -221,16 +221,16 @@ export default function EnterpriseStreamManager() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {loading ? (
-                                    <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400">Loading pipelines...</td></tr>
+                                    <tr><td colSpan={4} className="px-6 py-12 text-center text-[#0F172A]">Loading pipelines...</td></tr>
                                 ) : pipelines.length === 0 ? (
-                                    <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-500">No data pipelines configured.</td></tr>
+                                    <tr><td colSpan={4} className="px-6 py-12 text-center text-[#0F172A]">No data pipelines configured.</td></tr>
                                 ) : pipelines.map(p => (
-                                    <tr key={p._id} className="hover:bg-[#3066bb]/5">
-                                        <td className="px-6 py-4 font-bold text-slate-900">{p.enterpriseName}</td>
+                                    <tr key={p._id} className="hover:bg-[rgb(27,176,206)]/5">
+                                        <td className="px-6 py-4 font-bold text-[#0F172A]">{p.enterpriseName}</td>
                                         <td className="px-6 py-4">
                                             <button 
                                                 onClick={() => handleToggleStatus(p._id, p.status)}
-                                                className={`px-3 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 ${p.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+                                                className={`px-3 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 ${p.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-slate-200 text-[#0F172A] hover:bg-slate-300'}`}
                                             >
                                                 {p.status === 'active' ? <CheckCircle size={10} /> : <XCircle size={10} />}
                                                 {p.status}
@@ -238,19 +238,19 @@ export default function EnterpriseStreamManager() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 group">
-                                                <span className="text-[10px] font-mono bg-[#3066bb]/5 text-slate-500 px-2 py-1 rounded border border-[#3066bb]/30">
+                                                <span className="text-[10px] font-mono bg-[rgb(27,176,206)]/5 text-[#0F172A] px-2 py-1 rounded border border-[rgb(27,176,206)]/30">
                                                     {p._id}
                                                 </span>
                                                 <button 
                                                     onClick={() => { navigator.clipboard.writeText(p._id); alert("Pipeline ID copied!"); }}
-                                                    className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-[#3066bb] underline transition-opacity"
+                                                    className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-[rgb(27,176,206)] underline transition-opacity"
                                                 >
                                                     COPY
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 font-mono text-[10px] text-slate-500">{p.problemId}</td>
-                                        <td className="px-6 py-4 text-xs font-mono text-slate-500 truncate max-w-[200px]">{p.webhookUrl}</td>
+                                        <td className="px-6 py-4 font-mono text-[10px] text-[#0F172A]">{p.problemId}</td>
+                                        <td className="px-6 py-4 text-xs font-mono text-[#0F172A] truncate max-w-[200px]">{p.webhookUrl}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -260,19 +260,19 @@ export default function EnterpriseStreamManager() {
             )}
 
             {viewMode === 'visualizer' && (
-                <div className="bg-white/80 backdrop-blur-2xl rounded-2xl border border-[#3066bb]/30 overflow-hidden shadow-xl flex flex-col h-[600px] animate-in fade-in duration-500">
-                    <div className="bg-[#3066bb]/5/80 p-5 border-b border-[#3066bb]/30 flex justify-between items-center">
+                <div className="bg-white/80 backdrop-blur-2xl rounded-2xl border border-[rgb(27,176,206)]/30 overflow-hidden shadow-xl flex flex-col h-[600px] animate-in fade-in duration-500">
+                    <div className="bg-[rgb(27,176,206)]/5/80 p-5 border-b border-[rgb(27,176,206)]/30 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <div className="flex gap-1.5 opacity-60">
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
                             </div>
-                            <span className="text-[#3066bb] text-xs font-bold tracking-[0.2em] pl-4 border-l border-[#3066bb]/30 uppercase">Pipeline Telemetry</span>
+                            <span className="text-[rgb(27,176,206)] text-xs font-bold tracking-[0.2em] pl-4 border-l border-[rgb(27,176,206)]/30 uppercase">Pipeline Telemetry</span>
                         </div>
                         <button 
                             onClick={() => setIsPolling(!isPolling)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${isPolling ? 'bg-white text-red-500 border-red-100 hover:bg-red-50' : 'bg-[#3066bb] text-white border-[#3066bb] hover:opacity-90'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${isPolling ? 'bg-white text-red-500 border-red-100 hover:bg-red-50' : 'bg-[rgb(27,176,206)] text-white border-[rgb(27,176,206)] hover:opacity-90'}`}
                         >
                             {isPolling ? <><Square size={12} fill="currentColor" /> STOP STREAM</> : <><Play size={12} fill="currentColor" /> LIVE MONITOR</>}
                         </button>
@@ -280,13 +280,13 @@ export default function EnterpriseStreamManager() {
 
                     <div className="flex-1 grid grid-cols-3 divide-x divide-slate-100 bg-white/40">
                         {/* INBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[#3066bb]/5/30">
-                            <h4 className="text-slate-900 flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Database size={14} className="text-[#3066bb]" /> Inbound Load</h4>
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[rgb(27,176,206)]/5/30">
+                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Database size={14} className="text-[rgb(27,176,206)]" /> Inbound Load</h4>
                             <div className="flex-1 space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
-                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[#3066bb]/30 shadow-md ring-1 ring-[#3066bb]/5' : 'bg-[#3066bb]/5 border-[#3066bb]/20 opacity-60'}`}>
-                                        <div className="text-slate-400 mb-2 truncate font-semibold">[{new Date(shot.timestamp).toISOString()}]</div>
-                                        <div className="text-slate-700 whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.parameters || {}, null, 2)}</div>
+                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[rgb(27,176,206)]/30 shadow-md ring-1 ring-[rgb(27,176,206)]/5' : 'bg-[rgb(27,176,206)]/5 border-[rgb(27,176,206)]/20 opacity-60'}`}>
+                                        <div className="text-[#0F172A] mb-2 truncate font-semibold">[{new Date(shot.timestamp).toISOString()}]</div>
+                                        <div className="text-[#0F172A] whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.parameters || {}, null, 2)}</div>
                                     </div>
                                 ))}
                                 {liveShots.length === 0 && <div className="text-slate-300 font-medium italic animate-pulse">Awaiting WebSocket payloads...</div>}
@@ -295,19 +295,19 @@ export default function EnterpriseStreamManager() {
 
                         {/* QUANTUM EMBEDDING CORE */}
                         <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white">
-                            <h4 className="text-slate-900 flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Workflow size={14} className="text-purple-500" /> Quantum Core</h4>
+                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Workflow size={14} className="text-purple-500" /> Quantum Core</h4>
                             <div className="flex-1 flex flex-col items-center justify-center space-y-8">
                                 {isPolling ? (
                                     <>
                                         <div className="relative flex items-center justify-center w-40 h-40">
-                                            <div className="absolute inset-0 rounded-full border-2 border-[#3066bb]/20 border-t-[#3066bb]/20 animate-[spin_6s_linear_infinite]"></div>
-                                            <div className="absolute inset-3 rounded-full border-2 border-[#3066bb]/20 border-b-purple-500/40 animate-[spin_4s_linear_infinite_reverse]"></div>
-                                            <div className="absolute inset-6 rounded-full border-2 border-[#3066bb]/20 border-l-[#3066bb] animate-[spin_3s_linear_infinite]"></div>
-                                            <div className="text-center font-bold text-[10px] text-slate-800 tracking-[0.2em] z-10 drop-shadow-sm uppercase">Embedding<br/>Payload</div>
+                                            <div className="absolute inset-0 rounded-full border-2 border-[rgb(27,176,206)]/20 border-t-[rgb(27,176,206)]/20 animate-[spin_6s_linear_infinite]"></div>
+                                            <div className="absolute inset-3 rounded-full border-2 border-[rgb(27,176,206)]/20 border-b-purple-500/40 animate-[spin_4s_linear_infinite_reverse]"></div>
+                                            <div className="absolute inset-6 rounded-full border-2 border-[rgb(27,176,206)]/20 border-l-[rgb(27,176,206)] animate-[spin_3s_linear_infinite]"></div>
+                                            <div className="text-center font-bold text-[10px] text-[#0F172A] tracking-[0.2em] z-10 drop-shadow-sm uppercase">Embedding<br/>Payload</div>
                                         </div>
                                         <div className="text-center space-y-2">
                                             <div className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100"><CheckCircle size={12} /> Schema Verified</div>
-                                            <div className="text-xs font-semibold text-slate-400 flex items-center justify-center gap-2"><Activity size={12} className="text-[#3066bb]" /> Queue Depth: 0</div>
+                                            <div className="text-xs font-semibold text-[#0F172A] flex items-center justify-center gap-2"><Activity size={12} className="text-[rgb(27,176,206)]" /> Queue Depth: 0</div>
                                             <div className="text-[10px] font-bold text-slate-300 mt-4 tracking-widest uppercase">Active Simulator: QISKIT 1.3.1</div>
                                         </div>
                                     </>
@@ -318,16 +318,16 @@ export default function EnterpriseStreamManager() {
                         </div>
 
                         {/* OUTBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[#3066bb]/5/30">
-                            <h4 className="text-slate-900 flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Activity size={14} className="text-emerald-500" /> Webhook Out</h4>
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[rgb(27,176,206)]/5/30">
+                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Activity size={14} className="text-emerald-500" /> Webhook Out</h4>
                             <div className="flex-1 space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
-                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-[#3066bb]/5 border-[#3066bb]/20 opacity-60'}`}>
-                                        <div className="text-slate-400 mb-2 truncate flex justify-between font-semibold">
+                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-[rgb(27,176,206)]/5 border-[rgb(27,176,206)]/20 opacity-60'}`}>
+                                        <div className="text-[#0F172A] mb-2 truncate flex justify-between font-semibold">
                                             <span>Target: POST 200 OK</span>
-                                            <span className="text-[#3066bb]">{shot.hardware}</span>
+                                            <span className="text-[rgb(27,176,206)]">{shot.hardware}</span>
                                         </div>
-                                        <div className="text-slate-600 whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.results || { status: 'processed' }, null, 2)}</div>
+                                        <div className="text-[#0F172A] whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.results || { status: 'processed' }, null, 2)}</div>
                                     </div>
                                 ))}
                                 {liveShots.length === 0 && <div className="text-slate-300 font-medium italic animate-pulse">No completed shots to push...</div>}

@@ -77,26 +77,26 @@ export default function BlockedSourceManager() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-900">News portal blocklist</h2>
-                    <p className="text-sm mt-1 text-slate-500">
+                    <h2 className="text-xl font-semibold text-[#0F172A]">News portal blocklist</h2>
+                    <p className="text-sm mt-1 text-[#0F172A]">
                         Blocked portals will have their news stored in the database but hidden from the frontend.
                     </p>
                 </div>
             </div>
 
             {/* Add/Edit Form */}
-            <form onSubmit={handleSave} className="p-4 rounded-xl border border-[#3066bb]/30 flex gap-3 bg-white shadow-sm">
+            <form onSubmit={handleSave} className="p-4 rounded-xl border border-[rgb(27,176,206)]/30 flex gap-3 bg-white shadow-sm">
                 <input
                     type="text"
                     placeholder="Enter portal name (e.g. Google News, Reuters)"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-[#3066bb]/30 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-[#3066bb]/5 text-slate-900"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(27,176,206)]/30 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] bg-[rgb(27,176,206)]/5 text-[#0F172A]"
                 />
                 <button
                     type="submit"
                     disabled={isSubmitting || !name.trim()}
-                    className="bg-[#3066bb] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                    className="bg-[rgb(27,176,206)] hover:bg-[#255299] text-white px-6 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                 >
                     {isSubmitting ? 'Saving...' : editingId ? 'Update portal' : 'Block portal'}
                 </button>
@@ -104,7 +104,7 @@ export default function BlockedSourceManager() {
                     <button
                         type="button"
                         onClick={resetForm}
-                        className="px-4 py-2.5 text-slate-500 hover:text-slate-900 text-sm font-semibold"
+                        className="px-4 py-2.5 text-[#0F172A] hover:text-[#0F172A] text-sm font-semibold"
                     >
                         Cancel
                     </button>
@@ -112,9 +112,9 @@ export default function BlockedSourceManager() {
             </form>
 
             {/* List */}
-            <div className="rounded-xl border border-[#3066bb]/30 overflow-hidden bg-white shadow-sm">
-                <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30">
+            <div className="rounded-xl border border-[rgb(27,176,206)]/30 overflow-hidden bg-white shadow-sm">
+                <table className="w-full text-left text-sm text-[#0F172A]">
+                    <thead className="bg-[rgb(27,176,206)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30">
                         <tr>
                             <th className="px-5 py-4 font-semibold">Portal name</th>
                             <th className="px-5 py-4 font-semibold">Added at</th>
@@ -124,30 +124,30 @@ export default function BlockedSourceManager() {
                     <tbody className="divide-y divide-slate-100">
                         {loading ? (
                             <tr>
-                                <td colSpan={3} className="px-5 py-12 text-center text-slate-400">
+                                <td colSpan={3} className="px-5 py-12 text-center text-[#0F172A]">
                                     Loading blocklist...
                                 </td>
                             </tr>
                         ) : sources.length === 0 ? (
                             <tr>
-                                <td colSpan={3} className="px-5 py-12 text-center text-slate-500">
+                                <td colSpan={3} className="px-5 py-12 text-center text-[#0F172A]">
                                     No portals blocked yet.
                                 </td>
                             </tr>
                         ) : (
                             sources.map((source) => (
-                                <tr key={source._id} className="group transition-colors hover:bg-[#3066bb]/5">
-                                    <td className="px-5 py-4 font-semibold text-slate-800">
+                                <tr key={source._id} className="group transition-colors hover:bg-[rgb(27,176,206)]/5">
+                                    <td className="px-5 py-4 font-semibold text-[#0F172A]">
                                         {source.name}
                                     </td>
-                                    <td className="px-5 py-4 text-xs text-slate-500">
+                                    <td className="px-5 py-4 text-xs text-[#0F172A]">
                                         {new Date(source.createdAt).toLocaleString()}
                                     </td>
                                     <td className="px-5 py-4 text-right">
                                         <div className="flex justify-end gap-3">
                                             <button
                                                 onClick={() => handleEdit(source)}
-                                                className="text-slate-600 hover:text-slate-900 font-semibold text-xs"
+                                                className="text-[#0F172A] hover:text-[#0F172A] font-semibold text-xs"
                                             >
                                                 Edit
                                             </button>
