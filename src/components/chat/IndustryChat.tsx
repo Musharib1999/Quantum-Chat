@@ -287,23 +287,48 @@ const InChatPipeline = ({
     onRunStep2: (code: string) => void,
     onRunStep3: (code: string, output: string, time: number) => void
 }) => {
-    // Only show interactive buttons for the CURRENT active pipeline
     const isCurrent = workflow.kind !== 'idle' && workflow.kind !== 'step3_done';
     
+    // Dynamic Hardware Labeling
+    const hw = message.workflowData?.config?.hardware || 'Quantum Hardware';
+    const hwList = hw.split(',').map((h: string) => h.trim());
+    const hwDisplay = hwList.length > 2 
+        ? `${hwList.length} Hardware Platforms` 
+        : hwList.length === 2 
+            ? `${hwList[0]} & ${hwList[1]}` 
+            : hw;
+
     const steps = [
-        { num: 1, label: 'Generate Quantum Code', desc: 'Transforming problem into optimized quantum circuits' },
-        { num: 2, label: 'Execute Quantum Job', desc: 'Running on selected quantum simulator or hardware' },
+        { num: 1, label: `Generate code for ${hwDisplay}`, desc: 'Transforming problem into optimized quantum circuits' },
+        { num: 2, label: `Execute job on ${hwDisplay}`, desc: 'Running on selected quantum simulator or hardware' },
         { num: 3, label: 'Interpret Results', desc: 'Analyzing measurement outputs and explaining outcomes' }
     ];
 
+    // AUTO-ADVANCE LOGIC: If a step finishes and it's the current pipeline, trigger the next step immediately
+    React.useEffect(() => {
+        if (!isCurrent) return;
+
+        if (workflow.kind === 'step1_done' && workflow.code) {
+            onRunStep2(workflow.code);
+        }
+        if (workflow.kind === 'step2_done' && workflow.simOutput) {
+            onRunStep3(workflow.code, workflow.simOutput, workflow.totalExecTimeMs);
+        }
+    }, [workflow.kind, isCurrent]);
+
     return (
-        <div className="bg-card border border-border rounded-2xl p-4 md:p-6 space-y-5 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-4 md:p-6 space-y-5 shadow-sm animate-in fade-in zoom-in-95 duration-500">
             <div className="flex items-center justify-between pb-3 border-b border-border/50">
                 <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${isCurrent ? 'bg-primary animate-pulse' : 'bg-muted'}`} />
-                    <span className="text-sm font-semibold text-foreground">Simulation Pipeline</span>
+                    <div className={`w-2.5 h-2.5 rounded-full ${isCurrent ? 'bg-[#3066bb] animate-pulse shadow-[0_0_10px_rgba(48,102,187,0.5)]' : 'bg-muted'}`} />
+                    <span className="text-sm font-bold text-foreground tracking-tight">Quantum Execution Pipeline</span>
                 </div>
-                {isCurrent && <span className="text-xs font-mono text-muted-foreground">{elapsedSeconds}s</span>}
+                {isCurrent && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-[#3066bb] bg-[#3066bb]/5 px-2 py-0.5 rounded border border-[#3066bb]/10 uppercase tracking-widest">Live</span>
+                        <span className="text-xs font-mono text-muted-foreground">{elapsedSeconds}s</span>
+                    </div>
+                )}
             </div>
             <div className="space-y-5">
                 {steps.map(step => {
@@ -316,70 +341,42 @@ const InChatPipeline = ({
                         (step.num === 2 && workflow.kind === 'step2_loading') ||
                         (step.num === 3 && workflow.kind === 'step3_loading')
                     );
-                    const isVerifying = isCurrent && (
-                        (step.num === 1 && workflow.kind === 'step1_done') ||
-                        (step.num === 2 && workflow.kind === 'step2_done')
-                    );
-                    const isPending = !isDone && !isActive && !isVerifying;
+                    const isPending = !isDone && !isActive;
 
                     const stepOutput = step.num === 1 ? workflow.code : step.num === 2 ? workflow.simOutput : null;
                     
                     return (
-                        <div key={step.num} className={`transition-all duration-300 ${isPending ? 'opacity-30' : 'opacity-100'}`}>
+                        <div key={step.num} className={`transition-all duration-300 ${isPending ? 'opacity-30 grayscale-[0.5]' : 'opacity-100'}`}>
                             <div className="flex items-start gap-4">
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border shrink-0 transition-all ${isDone ? 'bg-[#3066bb] border-[#3066bb] text-white' : isActive ? 'border-primary text-primary animate-pulse' : 'border-border text-muted-foreground'}`}>
+                                <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-black border-2 shrink-0 transition-all duration-500 ${isDone ? 'bg-[#3066bb] border-[#3066bb] text-white rotate-[360deg]' : isActive ? 'border-[#3066bb] text-[#3066bb] animate-pulse shadow-lg shadow-[#3066bb]/20' : 'border-border text-muted-foreground bg-secondary/30'}`}>
                                     {isDone ? '✓' : step.num}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-medium text-foreground leading-snug">{step.label}</div>
-                                    <div className="text-xs text-muted-foreground mt-0.5">{step.desc}</div>
+                                <div className="flex-1 min-w-0 py-0.5">
+                                    <div className={`text-sm font-bold leading-tight transition-colors ${isActive ? 'text-[#3066bb]' : 'text-foreground'}`}>{step.label}</div>
+                                    <div className="text-[11px] text-muted-foreground mt-1 font-medium leading-relaxed">{step.desc}</div>
                                 </div>
                                 {isActive && (
                                     <div className="flex items-center gap-2">
                                         {step.num === 2 && (
                                             <span 
-                                                className="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full border border-primary/20 shadow-sm"
+                                                className="text-[9px] font-black text-white px-2.5 py-1 rounded-lg border border-[#3066bb]/20 shadow-sm uppercase tracking-tighter"
                                                 style={{ backgroundColor: '#3066bb' }}
                                             >
                                                 Batch {(workflow as any).currentBatch || 1}/{(workflow as any).totalBatches || 1}
                                             </span>
                                         )}
-                                        <Loader2 size={14} className="animate-spin text-primary shrink-0 mt-0.5" />
+                                        <Loader2 size={16} className="animate-spin text-[#3066bb] shrink-0" />
                                     </div>
                                 )}
-                                {isDone && stepOutput && !isVerifying && (
+                                {isDone && stepOutput && (
                                     <button 
                                         onClick={() => onViewContent(step.label, stepOutput)}
-                                        className="bg-[#3066bb] text-white px-3 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 hover:opacity-90 transition-all shadow-sm"
+                                        className="bg-secondary/80 hover:bg-secondary text-foreground px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all border border-border shadow-sm active:scale-95"
                                     >
-                                        <Eye size={12} /> View
+                                        <Eye size={12} className="text-[#3066bb]" /> View
                                     </button>
                                 )}
                             </div>
-
-                            {/* Verification Block */}
-                            {isVerifying && (
-                                <div className="mt-3 ml-10 p-3 bg-secondary/50 border border-border rounded-xl space-y-2.5 animate-in slide-in-from-top-2 duration-300">
-                                    <div className="text-xs text-muted-foreground font-medium">Review output before final analysis:</div>
-                                    <div className="flex items-center gap-2">
-                                        <button 
-                                            onClick={() => onViewContent(step.label, stepOutput!)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] bg-[#3066bb] text-white hover:opacity-90 transition-all shadow-sm font-semibold"
-                                        >
-                                            <Eye size={12} /> View Output
-                                        </button>
-                                        <button 
-                                            onClick={() => {
-                                                if (step.num === 1) onRunStep2(workflow.code);
-                                                if (step.num === 2) onRunStep3(workflow.code, workflow.simOutput, workflow.totalExecTimeMs);
-                                            }}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] bg-[#3066bb] text-white hover:opacity-90 transition-all font-semibold"
-                                        >
-                                            Continue <ChevronRight size={12} />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     );
                 })}
