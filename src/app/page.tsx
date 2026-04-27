@@ -104,7 +104,7 @@ export default function LandingPage() {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-8">
 
           {/* Card 1: Quantum Industry */}
           <FeatureCard
@@ -141,6 +141,19 @@ export default function LandingPage() {
             isDarkMode={false}
             accentColor="emerald"
             status="unlocked"
+          />
+
+          {/* Card 4: Quantum Solver Studio */}
+          <FeatureCard
+            href={isAuthenticated ? "/builder/dashboard" : "/login?redirect=/builder/dashboard"}
+            icon={<Atom size={32} />}
+            title="Quantum Solver Studio"
+            description="Build, test, and run quantum and hybrid optimization solutions from a single interface. Integrates leading frameworks with built-in simulators for rapid experimentation"
+            actionText="Launch Studio"
+            isDarkMode={false}
+            accentColor="rose"
+            status="locked"
+            badgeText="Authorized Access Only"
           />
 
         </div>
