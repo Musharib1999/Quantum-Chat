@@ -51,7 +51,7 @@ export default function LandingPage() {
               href="/api-docs" 
               className="text-sm font-semibold text-slate-500 hover:text-[#3066bb] transition-colors"
             >
-              API Docs
+              API Documentation
             </Link>
 
             {/* Actions */}
@@ -129,6 +129,7 @@ export default function LandingPage() {
             isDarkMode={false}
             accentColor="electric"
             status="unlocked"
+            badgeText="Try now"
           />
 
           {/* Card 3: Market Intelligence */}
@@ -141,6 +142,7 @@ export default function LandingPage() {
             isDarkMode={false}
             accentColor="amber"
             status="unlocked"
+            badgeText="Try now"
           />
 
           {/* Card 4: Quantum Solver Studio */}
@@ -153,7 +155,7 @@ export default function LandingPage() {
             isDarkMode={false}
             accentColor="violet"
             status="locked"
-            badgeText="Authorized Access Only"
+            badgeText="Unlock with free account"
           />
 
         </div>
