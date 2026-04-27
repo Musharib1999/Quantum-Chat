@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { getExperiments } from '@/app/actions/experiment';
 import ExperimentDetailsModal from '../ExperimentDetailsModal';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ExperimentManager() {
+    const { user } = useAuth();
     const [experiments, setExperiments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -12,15 +14,19 @@ export default function ExperimentManager() {
     const [selectedExp, setSelectedExp] = useState<any | null>(null);
 
     const loadExperiments = async () => {
+        if (!user) return;
         setLoading(true);
-        const exps = await getExperiments(undefined, true);
+        const isAdmin = user.role === 'admin';
+        const exps = await getExperiments(user.email || undefined, isAdmin);
         if (exps) setExperiments(exps);
         setLoading(false);
     };
 
     useEffect(() => {
-        loadExperiments();
-    }, []);
+        if (user) {
+            loadExperiments();
+        }
+    }, [user]);
 
     const filtered = experiments.filter(exp => {
         const matchesSearch = (exp.problem && exp.problem.toLowerCase().includes(search.toLowerCase())) ||
@@ -36,8 +42,14 @@ export default function ExperimentManager() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-[#0F172A]">Shot Log Viewer</h2>
-                    <p className="text-sm text-[#0F172A]">Global logs of all quantum simulations across the platform.</p>
+                    <h2 className="text-xl font-semibold text-[#0F172A]">
+                        {user?.role === 'admin' ? 'Shot Log Viewer' : 'Personal Lab Logs'}
+                    </h2>
+                    <p className="text-sm text-[#0F172A]">
+                        {user?.role === 'admin' 
+                            ? 'Global logs of all quantum simulations across the platform.' 
+                            : 'Detailed logs of your quantum simulations and experiment runs.'}
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">

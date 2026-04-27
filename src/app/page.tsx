@@ -103,31 +103,15 @@ export default function LandingPage() {
 
         </div>
 
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
 
-          {/* Card 1: Quantum Guru LLM - Featured Large */}
-          <div className="lg:col-span-2 lg:row-span-2 h-full">
-            <FeatureCard
-              href="/quantum-assistant"
-              icon={<Bot size={40} />}
-              title="Quantum Guru LLM"
-              description="A frontier AI model fine-tuned on 240 million high-fidelity quantum computing data points, designed to generate quantum algorithms, analyze quantum information and solve complex scientific queries"
-              actionText="Chat Now"
-              isDarkMode={false}
-              accentColor="electric"
-              status="unlocked"
-              badgeText="Try now"
-              className="h-full py-12"
-            />
-          </div>
-
-          {/* Card 2: Quantum Industry - Small Side */}
+          {/* Card 1: Quantum Industry */}
           <FeatureCard
             href={isAuthenticated ? "/industry" : "/login?redirect=/industry"}
             icon={<Cpu size={32} />}
             title="Quantum Industry"
-            description="Industry specific guided problem solving wizards based on hardware and use cases"
+            description="Industry specific guided problem solving wizards based on hardware, use case and service selection"
             actionText="Launch"
             isDarkMode={false}
             accentColor="indigo"
@@ -135,34 +119,44 @@ export default function LandingPage() {
             badgeText="Unlock with free account"
           />
 
-          {/* Card 3: Quantum Solver Studio - Small Side */}
+          {/* Card 2: Quantum Assistant */}
+          <FeatureCard
+            href="/quantum-assistant"
+            icon={<Bot size={32} />}
+            title="Quantum Guru LLM"
+            description="A frontier AI model fine-tuned on 240 million high-fidelity quantum computing data points, designed to generate quantum algorithms, analyze quantum information and solve complex scientific queries"
+            actionText="Chat Now"
+            isDarkMode={false}
+            accentColor="electric"
+            status="unlocked"
+            badgeText="Try now"
+          />
+
+          {/* Card 3: Market Intelligence */}
+          <FeatureCard
+            href="/market"
+            icon={<TrendingUp size={32} />}
+            title="Quantum Stocks and Market Intelligence"
+            description="Current market analysis of your quantum asset"
+            actionText="Launch"
+            isDarkMode={false}
+            accentColor="amber"
+            status="unlocked"
+            badgeText="Try now"
+          />
+
+          {/* Card 4: Quantum Solver Studio */}
           <FeatureCard
             href={isAuthenticated ? "/builder/dashboard" : "/login?redirect=/builder/dashboard"}
             icon={<Atom size={32} />}
             title="Quantum Solver Studio"
-            description="Write, test and run quantum optimization solutions from a single interface"
+            description="Write, test and run quantum and hybrid optimization solutions from a single interface. Integrates leading frameworks with built-in simulators for rapid experimentation"
             actionText="Launch Studio"
             isDarkMode={false}
             accentColor="violet"
             status="locked"
             badgeText="Unlock with free account"
           />
-
-          {/* Card 4: Market Intelligence - Wide Bottom Banner */}
-          <div className="lg:col-span-3">
-            <FeatureCard
-              href="/market"
-              icon={<TrendingUp size={32} />}
-              title="Quantum Stocks and Market Intelligence"
-              description="Real-time market analysis and sentiment tracking for your quantum assets and investments"
-              actionText="Analyze Market"
-              isDarkMode={false}
-              accentColor="amber"
-              status="unlocked"
-              badgeText="Try now"
-              className="flex-row items-center gap-8 py-10"
-            />
-          </div>
 
         </div>
       </main>

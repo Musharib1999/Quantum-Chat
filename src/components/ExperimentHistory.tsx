@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { History, ChevronRight, Beaker, Code2, BarChart2 } from 'lucide-react';
 import { getExperiments } from '@/app/actions/experiment';
+import { useAuth } from '@/context/AuthContext';
 
 interface ExperimentHistoryProps {
     onSelectExperiment: (experiment: any) => void;
@@ -10,6 +11,7 @@ interface ExperimentHistoryProps {
 }
 
 export default function ExperimentHistory({ onSelectExperiment, currentExperimentId }: ExperimentHistoryProps) {
+    const { user } = useAuth();
     const [experiments, setExperiments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isOpen, setIsOpen] = useState(false);
@@ -17,15 +19,19 @@ export default function ExperimentHistory({ onSelectExperiment, currentExperimen
     const [viewingCode, setViewingCode] = useState<{ code: string, problem: string } | null>(null);
 
     useEffect(() => {
+        if (!user) return;
+        
         fetchExperiments();
         // Poll for updates every 10 seconds to keep history fresh
         const interval = setInterval(fetchExperiments, 10000);
         return () => clearInterval(interval);
-    }, []);
+    }, [user]);
 
     const fetchExperiments = async () => {
+        if (!user) return;
         try {
-            const data = await getExperiments();
+            const isAdmin = user.role === 'admin';
+            const data = await getExperiments(user.email || undefined, isAdmin);
             setExperiments(data);
         } catch (error) {
             console.error("Failed to load experiments", error);
