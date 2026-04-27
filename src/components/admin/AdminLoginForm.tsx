@@ -25,7 +25,14 @@ export default function AdminLoginForm() {
             });
 
             if (res.ok) {
-                router.push("/admin/dashboard");
+                const data = await res.json();
+                const userRole = data.user?.role || 'admin';
+                
+                if (userRole === 'builder') {
+                    router.push("/admin/dashboard?tab=forms"); // Land directly on Industry Pipeline
+                } else {
+                    router.push("/admin/dashboard"); // Land on main dashboard
+                }
             } else {
                 const data = await res.json();
                 setError(data.error || "Invalid credentials");
@@ -53,30 +60,30 @@ export default function AdminLoginForm() {
             </div>
 
             <div className="relative z-10 w-full max-w-md p-8">
-                <div className="bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 space-y-6 animate-in zoom-in-95 fade-in duration-700">
+                <div className="bg-white backdrop-blur-xl border border-[rgb(27,176,206)]/30 shadow-2xl rounded-3xl p-8 space-y-6 animate-in zoom-in-95 fade-in duration-700">
 
                     {/* Header */}
                     <div className="text-center space-y-2">
-                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white border border-white/10 mb-2 shadow-inner overflow-hidden p-3">
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white border border-[rgb(27,176,206)]/30 mb-2 shadow-inner overflow-hidden p-3">
                             <img src="/qg-icon.png" alt="Quantum Guru" className="w-full h-full object-contain" />
                         </div>
                         <h1 className="text-2xl font-bold tracking-tight">Quantum Guru</h1>
-                        <p className="text-sm text-muted-foreground uppercase tracking-widest font-medium">Administration Portal</p>
+                        <p className="text-sm text-[#0F172A] uppercase tracking-widest font-medium">Administration Portal</p>
                     </div>
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">Username</label>
+                            <label className="text-xs font-semibold text-[#0F172A] tracking-widest pl-1">Username</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <User size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                    <User size={16} className="text-[#0F172A] group-focus-within:text-primary transition-colors" />
                                 </div>
                                 <input
                                     type="text"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all font-montserrat"
+                                    className="w-full bg-white border border-[rgb(27,176,206)]/20 rounded-xl py-3 pl-11 pr-4 text-sm font-medium text-[#0F172A] placeholder:text-[#0F172A]/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-white transition-all font-montserrat"
                                     placeholder=""
                                     required
                                 />
@@ -84,23 +91,23 @@ export default function AdminLoginForm() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">Password</label>
+                            <label className="text-xs font-semibold text-[#0F172A] tracking-widest pl-1">Password</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <Lock size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                    <Lock size={16} className="text-[#0F172A] group-focus-within:text-primary transition-colors" />
                                 </div>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all font-montserrat"
+                                    className="w-full bg-white border border-[rgb(27,176,206)]/20 rounded-xl py-3 pl-11 pr-12 text-sm font-medium text-[#0F172A] placeholder:text-[#0F172A]/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-white transition-all font-montserrat"
                                     placeholder=""
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#0F172A] hover:text-[#0F172A] transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
@@ -130,8 +137,8 @@ export default function AdminLoginForm() {
                         </button>
                     </form>
                     {/* Footer */}
-                    <footer className="text-center pt-2 border-t border-white/5">
-                        <p className="text-[10px] text-muted-foreground font-mono tracking-wider">SECURE SYSTEM ACCESS • AUTHORIZED ONLY</p>
+                    <footer className="text-center pt-2 border-t border-[rgb(27,176,206)]/20">
+                        <p className="text-[10px] text-[#0F172A] font-mono tracking-wider">SECURE SYSTEM ACCESS • AUTHORIZED ONLY</p>
                     </footer>
                 </div>
             </div>
