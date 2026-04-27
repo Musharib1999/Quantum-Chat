@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout, Key, Copy, Check, Shield, Activity } from 'lucide-react';
+import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout, Key, Copy, Check, Shield, Activity, Cpu } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import UserPasswordModal from './UserPasswordModal';
