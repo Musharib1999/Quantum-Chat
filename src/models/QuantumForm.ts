@@ -56,6 +56,7 @@ export interface IQuantumForm extends Document {
     category?: 'public' | 'enterprise';
     createdAt: Date;
     updatedAt: Date;
+    createdBy?: string; // User ID
 }
 
 const OutputMappingSchema = new Schema({
@@ -113,6 +114,7 @@ const QuantumFormSchema: Schema = new Schema({
     aiEnabled: { type: Boolean, default: false },
     llmModelId: { type: String },
     category: { type: String, enum: ['public', 'enterprise'], default: 'public' },
+    createdBy: { type: String, index: true },
     createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 

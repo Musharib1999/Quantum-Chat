@@ -13,10 +13,16 @@ export async function GET(req: Request) {
         const service = searchParams.get('service');
         const problem = searchParams.get('problem');
         const hardware = searchParams.get('hardware');
+        const userEmail = searchParams.get('userEmail');
+        const userRole = searchParams.get('userRole');
 
-        // If no params, return all for Admin Overview
+        // If no params, return all for Admin/Builder Overview
         if (!industry && !service && !problem) {
-            const allForms = await QuantumForm.find({}).sort({ createdAt: -1 });
+            let query: any = {};
+            if (userRole === 'builder' && userEmail) {
+                query.createdBy = userEmail;
+            }
+            const allForms = await QuantumForm.find(query).sort({ createdAt: -1 });
             return NextResponse.json(allForms);
         }
 
@@ -69,7 +75,7 @@ export async function POST(req: Request) {
 
         const updatedForm = await QuantumForm.findOneAndUpdate(
             filter,
-            body,
+            { ...body, updatedAt: new Date() },
             { upsert: true, new: true, runValidators: true }
         );
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
 
 interface IField {
     label: string;
@@ -61,6 +62,7 @@ interface IQuantumForm {
 }
 
 export default function ProblemConsole() {
+    const { user } = useAuth();
     // Current Selection
     const [industry, setIndustry] = useState('');
     const [service, setService] = useState('');
@@ -124,7 +126,7 @@ export default function ProblemConsole() {
     const fetchInitialData = async () => {
         try {
             const [formsRes, metaRes, hwRes, llmRes] = await Promise.all([
-                axios.get('/api/quantum-forms'),
+                axios.get(`/api/quantum-forms?userEmail=${user?.email || ''}&userRole=${user?.role || ''}`),
                 axios.get('/api/quantum-forms/metadata'),
                 axios.get('/api/hardware'),
                 axios.get('/api/admin/llm-settings')
@@ -192,7 +194,8 @@ export default function ProblemConsole() {
                 qubitFormula: codeTemplates[0]?.qubitFormula || qubitFormula,
                 batchKey: codeTemplates[0]?.batchKey || batchKey,
                 // Automatically infer global environment from the first template for legacy DB support
-                executionEnvironment: (codeTemplates[0]?.hardware?.toLowerCase().includes('dwave')) ? 'python-dwave' : 'python-qiskit'
+                executionEnvironment: (codeTemplates[0]?.hardware?.toLowerCase().includes('dwave')) ? 'python-dwave' : 'python-qiskit',
+                createdBy: user?.email || 'admin'
             };
 
             if (editingId) {

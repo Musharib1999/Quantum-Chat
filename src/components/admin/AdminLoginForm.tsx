@@ -136,10 +136,6 @@ export default function AdminLoginForm() {
                             )}
                         </button>
                     </form>
-                    {/* Footer */}
-                    <footer className="text-center pt-2 border-t border-[rgb(27,176,206)]/20">
-                        <p className="text-[10px] text-[#0F172A] font-mono tracking-wider">SECURE SYSTEM ACCESS • AUTHORIZED ONLY</p>
-                    </footer>
                 </div>
             </div>
         </div>
