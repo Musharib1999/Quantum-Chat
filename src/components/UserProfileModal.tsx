@@ -118,6 +118,23 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     </button>
                 )}
 
+                {/* Builder Dashboard Button */}
+                {isAuthenticated && user?.role === 'builder' && (
+                    <button
+                        onClick={() => {
+                            router.push('/admin/dashboard?tab=forms');
+                            onClose();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 mt-2 rounded-xl bg-[#3066bb] text-white hover:bg-[#3066bb]/90 transition-all group shadow-md"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <Cpu size={16} className="text-white" />
+                            <span className="text-sm font-semibold tracking-wider">BUILDER CONSOLE</span>
+                        </div>
+                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-white/70" />
+                    </button>
+                )}
+
                 {/* Enterprise Dashboard Button */}
                 {isAuthenticated && user?.role === 'enterprise' && (
                     <button

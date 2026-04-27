@@ -80,7 +80,40 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1 mt-4 overflow-y-auto custom-scrollbar">
-                    {role !== 'builder' && (
+                    {role === 'builder' ? (
+                        <>
+                            <div className="px-4 py-2 mb-2">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Builder Hub</span>
+                            </div>
+                            <SidebarLink
+                                label="Industry Pipeline"
+                                active={false}
+                                onClick={() => window.location.href = '/industry'}
+                            />
+                            <SidebarLink
+                                label="Market Intelligence"
+                                active={false}
+                                onClick={() => window.location.href = '/market'}
+                            />
+                            <SidebarLink
+                                label="Quantum Info Analysis"
+                                active={false}
+                                onClick={() => window.location.href = '/article-learn'}
+                            />
+                            <SidebarLink
+                                label="Quantum Guru LLM"
+                                active={false}
+                                onClick={() => window.location.href = '/'}
+                            />
+                            <div className="pt-4 mt-4 border-t border-slate-100">
+                                <SidebarLink
+                                    label="Problem Console"
+                                    active={activeTab === 'forms'}
+                                    onClick={() => handleNav('forms')}
+                                />
+                            </div>
+                        </>
+                    ) : (
                         <>
                             <SidebarLink
                                 label="Knowledge Base"
@@ -102,17 +135,13 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                                 active={activeTab === 'stocks'}
                                 onClick={() => handleNav('stocks')}
                             />
-                        </>
-                    )}
-                    
-                    <SidebarLink
-                        label="Problem Console"
-                        active={activeTab === 'forms'}
-                        onClick={() => handleNav('forms')}
-                    />
+                            
+                            <SidebarLink
+                                label="Problem Console"
+                                active={activeTab === 'forms'}
+                                onClick={() => handleNav('forms')}
+                            />
 
-                    {role !== 'builder' && (
-                        <>
                             <SidebarLink
                                 label="Hardware"
                                 active={activeTab === 'hardware'}
