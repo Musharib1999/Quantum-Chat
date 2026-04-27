@@ -326,17 +326,17 @@ export default function ProblemConsole() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-[#0F172A]">Industry</label>
-                    <input list="industries" value={industry} onChange={e => setIndustry(e.target.value)} placeholder="e.g. Finance" className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]" />
+                    <input list="industries" value={industry} onChange={e => setIndustry(e.target.value)} placeholder="e.g. Finance" className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]" />
                     <datalist id="industries">{metadata.industries.map(i => <option key={i.id} value={i.label} />)}</datalist>
                 </div>
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-[#0F172A]">Service</label>
-                    <input list="services" value={service} onChange={e => setService(e.target.value)} placeholder="e.g. Optimization" className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]" />
+                    <input list="services" value={service} onChange={e => setService(e.target.value)} placeholder="e.g. Optimization" className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]" />
                     <datalist id="services">{metadata.services.map(s => <option key={s.id} value={s.label} />)}</datalist>
                 </div>
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-[#0F172A]">Problem</label>
-                    <input list="problems" value={problem} onChange={e => setProblem(e.target.value)} placeholder="e.g. Portfolio" className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]" />
+                    <input list="problems" value={problem} onChange={e => setProblem(e.target.value)} placeholder="e.g. Portfolio" className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]" />
                     <datalist id="problems">{(metadata.problemMapping[industry]?.[service] || []).map((p: string) => <option key={p} value={p} />)}</datalist>
                 </div>
                 <div className="space-y-1.5">
@@ -344,7 +344,7 @@ export default function ProblemConsole() {
                     <select 
                         value={hardware} 
                         onChange={e => setHardware(e.target.value)} 
-                        className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-semibold text-[#0F172A]"
+                        className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-semibold text-[#0F172A]"
                     >
                         <option value="Universal">Universal (Multi-Solver Blueprint)</option>
                         {hardwareList.map(h => (
@@ -357,13 +357,13 @@ export default function ProblemConsole() {
 
             <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-[#0F172A]">Description</label>
-                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="problem description..." className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] h-20" />
+                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="problem description..." className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] h-20" />
             </div>
 
             <div className="pt-6 border-t border-[rgb(27,176,206)]/20">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-[#0F172A]">Parameter builder</h3>
-                    <div className="flex bg-[rgb(48,102,187)]/10 rounded-lg p-1">
+                    <div className="flex bg-white rounded-lg p-1">
                         <button onClick={() => setEditorMode('visual')} className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${editorMode === 'visual' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#0F172A]'}`}>Visual</button>
                         <button onClick={() => setEditorMode('json')} className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${editorMode === 'json' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#0F172A]'}`}>JSON</button>
                     </div>
@@ -389,7 +389,7 @@ export default function ProblemConsole() {
                         <button onClick={() => { setEditingField({ label: '', key: '', type: 'text' }); setEditingFieldIndex(null); setIsEditModalOpen(true); }} className="w-full py-4 border-2 border-dashed border-[rgb(27,176,206)]/30 rounded-2xl text-[#0F172A] hover:text-[#0F172A] hover:border-[rgb(27,176,206)]/50 text-xs font-bold transition-all">+ Add parameter</button>
                     </div>
                 ) : (
-                    <textarea value={jsonFields} onChange={e => setJsonFields(e.target.value)} className="w-full h-80 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl p-4 font-mono text-xs outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]" />
+                    <textarea value={jsonFields} onChange={e => setJsonFields(e.target.value)} className="w-full h-80 bg-white border border-[rgb(27,176,206)]/30 rounded-xl p-4 font-mono text-xs outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]" />
                 )}
             </div>
         </div>
@@ -407,7 +407,7 @@ export default function ProblemConsole() {
                         <button 
                             onClick={handleDryRun} 
                             disabled={dryRunning || codeTemplates.length === 0}
-                            className="bg-[rgb(48,102,187)]/10 text-[#0F172A] border border-[rgb(27,176,206)]/30 px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-[rgb(48,102,187)] hover:text-white transition-all disabled:opacity-50"
+                            className="bg-white text-[#0F172A] border border-[rgb(27,176,206)]/30 px-4 py-1.5 rounded-lg text-[10px] font-bold hover:bg-[rgb(48,102,187)] hover:text-white transition-all disabled:opacity-50"
                         >
                             {dryRunning ? 'Executing...' : 'Dry run (Test)'}
                         </button>
@@ -432,7 +432,7 @@ export default function ProblemConsole() {
                                     </select>
                                 </div>
                                 <div className="flex items-center gap-6">
-                                    <div className="flex items-center gap-3 px-4 py-2 bg-[rgb(48,102,187)]/5 rounded-xl border border-[rgb(27,176,206)]/20 transition-all group-hover:bg-white group-hover:shadow-sm">
+                                    <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-[rgb(27,176,206)]/20 transition-all group-hover:bg-white group-hover:shadow-sm">
                                         <span className="text-[9px] text-[#0F172A] font-bold">AI Generation</span>
                                         <button 
                                             onClick={() => { const up = [...codeTemplates]; up[i].aiEnabled = !up[i].aiEnabled; setCodeTemplates(up); }} 
@@ -441,15 +441,15 @@ export default function ProblemConsole() {
                                             <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${t.aiEnabled ? 'left-5' : 'left-1'}`} />
                                         </button>
                                     </div>
-                                    <button onClick={() => setCodeTemplates(codeTemplates.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-500 text-xs font-bold transition-colors p-2 hover:bg-[rgb(48,102,187)]/5 rounded-lg">
+                                    <button onClick={() => setCodeTemplates(codeTemplates.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-500 text-xs font-bold transition-colors p-2 hover:bg-white rounded-lg">
                                         <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 </div>
                             </div>
                             
                             {t.aiEnabled ? (
-                                <div className="bg-[rgb(48,102,187)]/5 p-8 rounded-2xl space-y-6 border border-[rgb(27,176,206)]/10 relative overflow-hidden group/ai">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[rgb(48,102,187)]/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/ai:bg-[rgb(48,102,187)]/10 transition-all duration-500" />
+                                <div className="bg-white p-8 rounded-2xl space-y-6 border border-[rgb(27,176,206)]/10 relative overflow-hidden group/ai">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -mr-16 -mt-16 blur-2xl group-hover/ai:bg-white transition-all duration-500" />
                                     <div className="flex items-center gap-5 relative z-10">
                                         <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#0F172A] shadow-md border border-[rgb(27,176,206)]/5">
                                             <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -517,7 +517,7 @@ export default function ProblemConsole() {
                                                 value={t.qubitFormula || ''} 
                                                 onChange={e => { const up = [...codeTemplates]; up[i].qubitFormula = e.target.value; setCodeTemplates(up); }} 
                                                 placeholder="{{params.n}} * 2" 
-                                                className="w-full p-2.5 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-[11px] font-mono outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]" 
+                                                className="w-full p-2.5 bg-white border border-[rgb(27,176,206)]/30 rounded-xl text-[11px] font-mono outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]" 
                                             />
                                         </div>
                                         <div className="space-y-1.5">
@@ -526,7 +526,7 @@ export default function ProblemConsole() {
                                                 type="number" 
                                                 value={t.maxQubitsPerBatch || 64} 
                                                 onChange={e => { const up = [...codeTemplates]; up[i].maxQubitsPerBatch = parseInt(e.target.value); setCodeTemplates(up); }} 
-                                                className="w-full p-2.5 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-[11px] outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]" 
+                                                className="w-full p-2.5 bg-white border border-[rgb(27,176,206)]/30 rounded-xl text-[11px] outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]" 
                                             />
                                         </div>
                                         <div className="space-y-1.5">
@@ -535,7 +535,7 @@ export default function ProblemConsole() {
                                                 value={t.batchKey || ''} 
                                                 onChange={e => { const up = [...codeTemplates]; up[i].batchKey = e.target.value; setCodeTemplates(up); }} 
                                                 placeholder="e.g. assets" 
-                                                className="w-full p-2.5 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-[11px] outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]" 
+                                                className="w-full p-2.5 bg-white border border-[rgb(27,176,206)]/30 rounded-xl text-[11px] outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]" 
                                             />
                                         </div>
                                     </div>
@@ -555,7 +555,7 @@ export default function ProblemConsole() {
                 <h3 className="text-sm font-bold text-[#0F172A]">Result tables</h3>
                 <div className="flex items-center gap-4">
                     {suggestions.length > 0 && (
-                        <div className="flex items-start gap-4 bg-[rgb(48,102,187)]/5/50 p-4 rounded-2xl border border-[rgb(27,176,206)]/20 animate-in slide-in-from-top-2">
+                        <div className="flex items-start gap-4 bg-white/50 p-4 rounded-2xl border border-[rgb(27,176,206)]/20 animate-in slide-in-from-top-2">
                             <div className="pt-1">
                                 <span className="text-[10px] font-bold text-[#0F172A] block mb-1">Dry Run Suggestions:</span>
                                 <p className="text-[9px] text-[#0F172A]/70 font-medium">Click to add as table column</p>
@@ -600,13 +600,13 @@ export default function ProblemConsole() {
 
             {outputTables.map((table, tableIdx) => (
                 <div key={tableIdx} className="bg-white border border-[rgb(27,176,206)]/30 rounded-2xl overflow-hidden shadow-sm">
-                    <div className="p-4 bg-[rgb(48,102,187)]/5 border-b border-[rgb(27,176,206)]/30 flex items-center justify-between">
+                    <div className="p-4 bg-white border-b border-[rgb(27,176,206)]/30 flex items-center justify-between">
                         <input value={table.name} onChange={e => { const up = [...outputTables]; up[tableIdx].name = e.target.value; setOutputTables(up); }} className="bg-transparent text-sm font-bold text-[#0F172A] outline-none" placeholder="Table name" />
                         <button onClick={() => setOutputTables(outputTables.filter((_, idx) => idx !== tableIdx))} className="text-red-400 hover:text-[#0F172A] text-[10px] font-bold">Remove</button>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-[rgb(48,102,187)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/20 font-semibold text-[10px]">
+                            <thead className="bg-white text-[#0F172A] border-b border-[rgb(27,176,206)]/20 font-semibold text-[10px]">
                                 <tr>
                                     <th className="p-4">Key pointer</th>
                                     <th className="p-4">Label</th>
@@ -643,7 +643,7 @@ export default function ProblemConsole() {
             <div className="pt-8 border-t border-[rgb(27,176,206)]/20 space-y-4">
                 <div className="flex items-center gap-4">
                     {suggestions.length > 0 && (
-                        <div className="flex items-start gap-4 bg-[rgb(48,102,187)]/10/50 p-4 rounded-2xl border border-[rgb(27,176,206)]/30 animate-in slide-in-from-top-2">
+                        <div className="flex items-start gap-4 bg-white/50 p-4 rounded-2xl border border-[rgb(27,176,206)]/30 animate-in slide-in-from-top-2">
                              <div className="pt-1">
                                 <span className="text-[10px] font-bold text-[#0F172A] block mb-1">Apply to Chart:</span>
                                 <p className="text-[9px] text-emerald-400 font-medium">Click to set as axis key</p>
@@ -687,13 +687,13 @@ export default function ProblemConsole() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] text-[#0F172A] font-bold">Chart type</label>
-                                    <select value={c.type} onChange={e => { const up = [...chartConfig]; up[i].type = e.target.value as any; setChartConfig(up); }} className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/20 rounded text-xs">
+                                    <select value={c.type} onChange={e => { const up = [...chartConfig]; up[i].type = e.target.value as any; setChartConfig(up); }} className="w-full p-2 bg-white border border-[rgb(27,176,206)]/20 rounded text-xs">
                                         {['bar', 'line', 'pie', 'scatter'].map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] text-[#0F172A] font-bold">Label</label>
-                                    <input value={c.label} onChange={e => { const up = [...chartConfig]; up[i].label = e.target.value; setChartConfig(up); }} className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/20 rounded text-xs" />
+                                    <input value={c.label} onChange={e => { const up = [...chartConfig]; up[i].label = e.target.value; setChartConfig(up); }} className="w-full p-2 bg-white border border-[rgb(27,176,206)]/20 rounded text-xs" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -702,7 +702,7 @@ export default function ProblemConsole() {
                                     <input 
                                         value={c.xKey} 
                                         onChange={e => { const up = [...chartConfig]; up[i].xKey = e.target.value; setChartConfig(up); }} 
-                                        className={`w-full p-2 bg-[rgb(48,102,187)]/5 border rounded text-xs font-mono transition-all ${c.xKey ? 'border-emerald-200 text-[#0F172A]' : 'border-[rgb(27,176,206)]/20'}`} 
+                                        className={`w-full p-2 bg-white border rounded text-xs font-mono transition-all ${c.xKey ? 'border-emerald-200 text-[#0F172A]' : 'border-[rgb(27,176,206)]/20'}`} 
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -710,7 +710,7 @@ export default function ProblemConsole() {
                                     <input 
                                         value={c.yKey} 
                                         onChange={e => { const up = [...chartConfig]; up[i].yKey = e.target.value; setChartConfig(up); }} 
-                                        className={`w-full p-2 bg-[rgb(48,102,187)]/5 border rounded text-xs font-mono transition-all ${c.yKey ? 'border-emerald-200 text-[#0F172A]' : 'border-[rgb(27,176,206)]/20'}`} 
+                                        className={`w-full p-2 bg-white border rounded text-xs font-mono transition-all ${c.yKey ? 'border-emerald-200 text-[#0F172A]' : 'border-[rgb(27,176,206)]/20'}`} 
                                     />
                                 </div>
                             </div>
@@ -723,7 +723,7 @@ export default function ProblemConsole() {
 
     const renderAITab = () => (
         <div className="space-y-6">
-            <div className="p-4 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-2xl space-y-1">
+            <div className="p-4 bg-white border border-[rgb(27,176,206)]/30 rounded-2xl space-y-1">
                 <h3 className="text-sm font-bold text-[#0F172A]">Interpretation logic</h3>
                 <p className="text-xs text-[#0F172A]">How should the AI explain these results to the user?</p>
             </div>
@@ -751,7 +751,7 @@ export default function ProblemConsole() {
                         {existingForms.map((form) => (
                             <div key={form._id} className="bg-white border border-[rgb(27,176,206)]/30 p-6 rounded-2xl hover:border-[rgb(27,176,206)] hover:shadow-md transition-all flex flex-col min-h-[220px]">
                                 <div className="flex items-center justify-between mb-4">
-                                    <span className="text-[10px] font-bold text-[#0F172A] bg-[rgb(48,102,187)]/5 px-2 py-0.5 rounded-md border border-[rgb(27,176,206)]/20">{form.industry}</span>
+                                    <span className="text-[10px] font-bold text-[#0F172A] bg-white px-2 py-0.5 rounded-md border border-[rgb(27,176,206)]/20">{form.industry}</span>
                                     {form.active && <span className="text-[10px] text-green-600 font-bold">Active</span>}
                                 </div>
                                 <h3 className="text-lg font-bold text-[#0F172A] mb-2 line-clamp-1">{form.problem}</h3>
@@ -770,7 +770,7 @@ export default function ProblemConsole() {
                                 <div className="grid grid-cols-3 gap-2 mt-auto">
                                     <button 
                                         onClick={() => editForm(form)} 
-                                        className="py-2.5 rounded-xl border border-[rgb(27,176,206)]/20 bg-[rgb(48,102,187)]/5 text-[9px] font-bold text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-[rgb(27,176,206)] transition-all tracking-tight"
+                                        className="py-2.5 rounded-xl border border-[rgb(27,176,206)]/20 bg-white text-[9px] font-bold text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-[rgb(27,176,206)] transition-all tracking-tight"
                                     >
                                         Edit
                                     </button>
@@ -778,7 +778,7 @@ export default function ProblemConsole() {
                                         onClick={() => handleToggleActive(form)} 
                                         className={`py-2.5 rounded-xl border transition-all text-[9px] font-bold tracking-tight ${
                                             form.active 
-                                                ? 'bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/20 text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-amber-600' 
+                                                ? 'bg-white border-[rgb(27,176,206)]/20 text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-amber-600' 
                                                 : 'bg-green-50 border-green-100 text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600'
                                         }`}
                                     >
@@ -786,7 +786,7 @@ export default function ProblemConsole() {
                                     </button>
                                     <button 
                                         onClick={() => handleDelete(form)} 
-                                        className="py-2.5 rounded-xl border border-[rgb(27,176,206)]/20 bg-[rgb(48,102,187)]/5 text-[9px] font-bold text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-red-600 transition-all tracking-tight"
+                                        className="py-2.5 rounded-xl border border-[rgb(27,176,206)]/20 bg-white text-[9px] font-bold text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-red-600 transition-all tracking-tight"
                                     >
                                         Delete
                                     </button>
@@ -802,12 +802,12 @@ export default function ProblemConsole() {
                         <div className="flex items-center gap-8">
                             <button 
                                 onClick={() => setView('overview')} 
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[rgb(48,102,187)]/5 text-[#0F172A] hover:bg-[rgb(48,102,187)]/10 hover:text-[#0F172A] transition-all duration-300 border border-[rgb(27,176,206)]/20 group"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white text-[#0F172A] hover:bg-white hover:text-[#0F172A] transition-all duration-300 border border-[rgb(27,176,206)]/20 group"
                                 title="Return to Overview"
                             >
                                 <svg viewBox="0 0 24 24" className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 19l-7-7 7-7" /></svg>
                             </button>
-                            <div className="h-8 w-px bg-[rgb(48,102,187)]/10 mx-2" />
+                            <div className="h-8 w-px bg-white mx-2" />
                             <div className="flex flex-col gap-0.5">
                                 <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight leading-none">{problem || 'Untitled Project'}</h1>
                                 {(industry || service) && (
@@ -844,12 +844,12 @@ export default function ProblemConsole() {
                     </div>
 
                     {status && (
-                        <div className={`mt-4 p-3 rounded-xl text-[10px] font-bold border ${status.includes('Error') ? 'bg-[rgb(48,102,187)]/5 text-red-500 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
+                        <div className={`mt-4 p-3 rounded-xl text-[10px] font-bold border ${status.includes('Error') ? 'bg-white text-red-500 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
                             {status}
                         </div>
                     )}
 
-                    <div className="flex gap-2 mt-6 mb-8 bg-[rgb(48,102,187)]/5 p-1 rounded-xl w-fit border border-[rgb(27,176,206)]/20">
+                    <div className="flex gap-2 mt-6 mb-8 bg-white p-1 rounded-xl w-fit border border-[rgb(27,176,206)]/20">
                         {[
                             { id: 'input', label: '1. Input structure' },
                             { id: 'compute', label: '2. Backend logic' },
@@ -878,15 +878,15 @@ export default function ProblemConsole() {
                         <div className="space-y-4">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-[#0F172A]">Input label</label>
-                                <input value={editingField?.label} onChange={e => setEditingField(prev => prev ? ({ ...prev, label: e.target.value }) : null)} className="w-full p-2.5 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-sm" placeholder="e.g. Iterations" />
+                                <input value={editingField?.label} onChange={e => setEditingField(prev => prev ? ({ ...prev, label: e.target.value }) : null)} className="w-full p-2.5 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-sm" placeholder="e.g. Iterations" />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-[#0F172A]">Variable key</label>
-                                <input value={editingField?.key} onChange={e => setEditingField(prev => prev ? ({ ...prev, key: e.target.value }) : null)} className="w-full p-2.5 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs font-mono text-[#0F172A]" placeholder="e.g. iter_count" />
+                                <input value={editingField?.key} onChange={e => setEditingField(prev => prev ? ({ ...prev, key: e.target.value }) : null)} className="w-full p-2.5 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-xs font-mono text-[#0F172A]" placeholder="e.g. iter_count" />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-[#0F172A]">Type</label>
-                                <select value={editingField?.type} onChange={e => setEditingField(prev => prev ? ({ ...prev, type: e.target.value as any }) : null)} className="w-full p-2.5 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-sm">
+                                <select value={editingField?.type} onChange={e => setEditingField(prev => prev ? ({ ...prev, type: e.target.value as any }) : null)} className="w-full p-2.5 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-sm">
                                     {['text', 'number', 'select', 'multi-select', 'range', 'textarea', 'dropdown'].map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>

@@ -53,7 +53,7 @@ export default function GuardrailManager() {
 
             <div className="flex gap-4 mb-6">
                 <input
-                    className="flex-1 p-4 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl shadow-sm outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-[#0F172A] placeholder:text-[#0F172A] text-sm"
+                    className="flex-1 p-4 bg-white border border-[rgb(27,176,206)]/30 rounded-xl shadow-sm outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-[#0F172A] placeholder:text-[#0F172A] text-sm"
                     placeholder="Enter a new guardrail rule (e.g., 'Do not discuss politics')"
                     value={newRule}
                     onChange={e => setNewRule(e.target.value)}
@@ -68,7 +68,7 @@ export default function GuardrailManager() {
 
             <div className="grid gap-4">
                 {guardrails.map(g => (
-                    <div key={g.id} className={`p-4 rounded-xl border flex items-center justify-between transition-all ${g.active ? 'bg-white border-[rgb(27,176,206)]/30 shadow-sm' : 'bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/20 opacity-60'}`}>
+                    <div key={g.id} className={`p-4 rounded-xl border flex items-center justify-between transition-all ${g.active ? 'bg-white border-[rgb(27,176,206)]/30 shadow-sm' : 'bg-white border-[rgb(27,176,206)]/20 opacity-60'}`}>
                         <div className="flex items-center gap-4 flex-1">
                             <div className="flex-1">
                                 {editingRuleId === g.id ? (
@@ -79,10 +79,10 @@ export default function GuardrailManager() {
                                             onChange={e => setEditingRuleText(e.target.value)}
                                             autoFocus
                                         />
-                                        <button onClick={() => handleUpdateRule(g.id)} className="px-3 py-1 text-[#0F172A] hover:bg-[rgb(48,102,187)]/10 rounded-lg text-xs font-semibold">
+                                        <button onClick={() => handleUpdateRule(g.id)} className="px-3 py-1 text-[#0F172A] hover:bg-white rounded-lg text-xs font-semibold">
                                             Save
                                         </button>
-                                        <button onClick={() => setEditingRuleId(null)} className="px-3 py-1 text-[#0F172A] hover:bg-[rgb(48,102,187)]/10 rounded-lg text-xs font-semibold">
+                                        <button onClick={() => setEditingRuleId(null)} className="px-3 py-1 text-[#0F172A] hover:bg-white rounded-lg text-xs font-semibold">
                                             Cancel
                                         </button>
                                     </div>
@@ -100,7 +100,7 @@ export default function GuardrailManager() {
                                         setEditingRuleId(g.id);
                                         setEditingRuleText(g.rule);
                                     }}
-                                    className="px-3 py-1.5 text-[#0F172A] hover:bg-[rgb(48,102,187)]/10 rounded-lg transition-colors font-semibold text-xs"
+                                    className="px-3 py-1.5 text-[#0F172A] hover:bg-white rounded-lg transition-colors font-semibold text-xs"
                                 >
                                     Edit
                                 </button>
@@ -115,7 +115,7 @@ export default function GuardrailManager() {
                                 onClick={() => handleToggleGuardrail(g.id)}
                                 className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${g.active
                                     ? 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
-                                    : 'bg-[rgb(48,102,187)]/10 text-[#0F172A] hover:bg-slate-200 border border-transparent'
+                                    : 'bg-white text-[#0F172A] hover:bg-slate-200 border border-transparent'
                                     }`}
                             >
                                 {g.active ? 'Active' : 'Disabled'}

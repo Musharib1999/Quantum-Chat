@@ -132,7 +132,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-[#0F172A] uppercase">Node name</label>
                             <input
-                                className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
+                                className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 placeholder="e.g. IBM Brisbane"
                                 value={newHw.name || ''}
                                 onChange={e => setNewHw({ ...newHw, name: e.target.value })}
@@ -142,7 +142,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-[#0F172A] uppercase">Provider ecosystem</label>
                             <select
-                                className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
+                                className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 value={newHw.provider}
                                 onChange={e => setNewHw({ ...newHw, provider: e.target.value as any })}
                             >
@@ -158,7 +158,7 @@ export default function HardwareManager() {
                             <label className="text-[10px] font-bold text-[#0F172A] uppercase">Qubit count</label>
                             <input
                                 type="number"
-                                className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
+                                className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 placeholder="0"
                                 value={newHw.qubits}
                                 onChange={e => setNewHw({ ...newHw, qubits: parseInt(e.target.value) || 0 })}
@@ -169,7 +169,7 @@ export default function HardwareManager() {
                             <label className="text-[10px] font-bold text-[#0F172A] uppercase">Display priority</label>
                             <input
                                 type="number"
-                                className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
+                                className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A]"
                                 placeholder="0"
                                 value={newHw.order}
                                 onChange={e => setNewHw({ ...newHw, order: parseInt(e.target.value) || 0 })}
@@ -179,7 +179,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5 md:col-span-2">
                             <label className="text-[10px] font-bold text-[#0F172A] uppercase">Technical description</label>
                             <textarea
-                                className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] h-24"
+                                className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] h-24"
                                 placeholder="Briefly describe the backend architecture..."
                                 value={newHw.description || ''}
                                 onChange={e => setNewHw({ ...newHw, description: e.target.value })}
@@ -189,7 +189,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5 md:col-span-2">
                             <label className="text-[10px] font-bold text-[#0F172A] uppercase">Service URL (For Backend Routing)</label>
                             <input
-                                className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] font-mono"
+                                className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] font-mono"
                                 placeholder="https://your-service-url.com"
                                 value={newHw.serviceUrl || ''}
                                 onChange={e => setNewHw({ ...newHw, serviceUrl: e.target.value })}
@@ -213,7 +213,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5 md:col-span-2">
                             <label className="text-[10px] font-bold text-[#0F172A] uppercase">Expected Health Check Output (Optional)</label>
                             <input
-                                className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] font-mono"
+                                className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] font-mono"
                                 placeholder="PONG"
                                 value={newHw.testOutput || ''}
                                 onChange={e => setNewHw({ ...newHw, testOutput: e.target.value })}
@@ -243,7 +243,7 @@ export default function HardwareManager() {
                             </div>
                             <button
                                 onClick={() => handleToggleStatus(hw.id)}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${hw.status === 'Online' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[rgb(48,102,187)]/10 text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${hw.status === 'Online' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-white text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
                             >
                                 {hw.status}
                             </button>
@@ -252,14 +252,14 @@ export default function HardwareManager() {
                         {editingId === hw.id ? (
                             <div className="space-y-3 flex-1">
                                 <input
-                                    className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-sm font-semibold text-[#0F172A]"
+                                    className="w-full p-2 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-sm font-semibold text-[#0F172A]"
                                     value={hw.name}
                                     onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, name: e.target.value } : h))}
                                 />
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-[#0F172A] uppercase font-bold">Provider ecosystem</label>
                                     <select
-                                        className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
+                                        className="w-full p-2 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
                                         value={hw.provider}
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, provider: e.target.value as any } : h))}
                                     >
@@ -275,7 +275,7 @@ export default function HardwareManager() {
                                         <label className="text-[9px] text-[#0F172A] uppercase font-bold">Qubits</label>
                                         <input
                                             type="number"
-                                            className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
+                                            className="w-full p-2 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
                                             value={hw.qubits}
                                             onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, qubits: parseInt(e.target.value) || 0 } : h))}
                                         />
@@ -284,21 +284,21 @@ export default function HardwareManager() {
                                         <label className="text-[9px] text-[#0F172A] uppercase font-bold">Order</label>
                                         <input
                                             type="number"
-                                            className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
+                                            className="w-full p-2 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-xs"
                                             value={hw.order}
                                             onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, order: parseInt(e.target.value) || 0 } : h))}
                                         />
                                     </div>
                                 </div>
                                 <textarea
-                                    className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs h-20"
+                                    className="w-full p-2 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-xs h-20"
                                     value={hw.description}
                                     onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, description: e.target.value } : h))}
                                 />
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-[#0F172A] uppercase font-bold">Service URL</label>
                                     <input
-                                        className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs font-mono"
+                                        className="w-full p-2 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-xs font-mono"
                                         value={hw.serviceUrl || ''}
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, serviceUrl: e.target.value } : h))}
                                     />
@@ -315,7 +315,7 @@ export default function HardwareManager() {
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-[#0F172A] uppercase font-bold">Expected Output</label>
                                     <input
-                                        className="w-full p-2 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-lg text-xs font-mono"
+                                        className="w-full p-2 bg-white border border-[rgb(27,176,206)]/30 rounded-lg text-xs font-mono"
                                         value={hw.testOutput || ''}
                                         placeholder="PONG"
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, testOutput: e.target.value } : h))}
@@ -323,7 +323,7 @@ export default function HardwareManager() {
                                 </div>
                                 <div className="flex gap-2 pt-1">
                                     <button onClick={() => handleSaveEdit(hw.id)} className="flex-1 bg-[rgb(48,102,187)] text-white p-2 rounded-lg text-xs font-bold">Save</button>
-                                    <button onClick={() => { setEditingId(null); loadHardware(); }} className="flex-1 bg-[rgb(48,102,187)]/10 text-[#0F172A] p-2 rounded-lg text-xs font-bold">Cancel</button>
+                                    <button onClick={() => { setEditingId(null); loadHardware(); }} className="flex-1 bg-white text-[#0F172A] p-2 rounded-lg text-xs font-bold">Cancel</button>
                                 </div>
                             </div>
                         ) : (

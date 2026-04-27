@@ -84,14 +84,14 @@ export default function KnowledgeBaseManager() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
-                        className="p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-[#0F172A] placeholder:text-[#0F172A] transition-all font-normal text-sm"
+                        className="p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-[#0F172A] placeholder:text-[#0F172A] transition-all font-normal text-sm"
                         placeholder="User question"
                         value={q}
                         onChange={e => setQ(e.target.value)}
                     />
                     <div className="flex gap-2">
                         <select
-                            className="p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none text-[#0F172A] cursor-pointer text-sm"
+                            className="p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none text-[#0F172A] cursor-pointer text-sm"
                             value={type}
                             onChange={(e) => setType(e.target.value as 'text' | 'url' | 'form')}
                         >
@@ -100,7 +100,7 @@ export default function KnowledgeBaseManager() {
                             <option value="form">Smart form</option>
                         </select>
                         <input
-                            className="flex-1 p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-[#0F172A] placeholder:text-[#0F172A] transition-all font-normal text-sm"
+                            className="flex-1 p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-[#0F172A] placeholder:text-[#0F172A] transition-all font-normal text-sm"
                             placeholder={type === 'text' ? "Assistant answer..." : type === 'url' ? "https://example.com/info-page" : "Help text for the form..."}
                             value={a}
                             onChange={e => setA(e.target.value)}
@@ -112,7 +112,7 @@ export default function KnowledgeBaseManager() {
                     <div className="mt-4">
                         <label className="text-xs font-medium text-[#0F172A] mb-2 block">Form settings (JSON configuration)</label>
                         <textarea
-                            className="w-full p-4 border border-[rgb(27,176,206)]/30 rounded-xl font-mono text-xs bg-[rgb(48,102,187)]/5 text-[#0F172A] h-40 outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]"
+                            className="w-full p-4 border border-[rgb(27,176,206)]/30 rounded-xl font-mono text-xs bg-white text-[#0F172A] h-40 outline-none focus:ring-1 focus:ring-[rgb(27,176,206)]"
                             value={formConfig}
                             onChange={e => setFormConfig(e.target.value)}
                         />
@@ -144,14 +144,14 @@ export default function KnowledgeBaseManager() {
                             <p className="font-semibold text-[#0F172A] text-base">
                                 <span className="text-[#0F172A] font-normal text-sm mr-2">q:</span> {qa.question}
                             </p>
-                            <div className="text-[#0F172A] leading-relaxed bg-[rgb(48,102,187)]/5 p-3 rounded-lg border border-[rgb(27,176,206)]/20 text-sm">
+                            <div className="text-[#0F172A] leading-relaxed bg-white p-3 rounded-lg border border-[rgb(27,176,206)]/20 text-sm">
                                 <span className="text-[#0F172A] font-bold text-xs mr-2">ai response:</span> {qa.answer}
                             </div>
                         </div>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handleEdit(qa)}
-                                className="px-3 py-1.5 text-[#0F172A] hover:bg-[rgb(48,102,187)]/10 rounded-lg transition-colors font-semibold text-xs"
+                                className="px-3 py-1.5 text-[#0F172A] hover:bg-white rounded-lg transition-colors font-semibold text-xs"
                             >
                                 Edit
                             </button>

@@ -51,7 +51,7 @@ export default function AdminProfileModal({ isOpen, onClose, onShowPassword }: A
             <div className="p-5 border-b border-[rgb(27,176,206)]/20">
                 <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[rgb(48,102,187)]/10 border border-[rgb(27,176,206)]/20 flex items-center justify-center text-[#0F172A] font-bold">
+                        <div className="w-10 h-10 rounded-xl bg-white border border-[rgb(27,176,206)]/20 flex items-center justify-center text-[#0F172A] font-bold">
                             {user?.firstName ? user.firstName[0].toUpperCase() : 'A'}
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -71,7 +71,7 @@ export default function AdminProfileModal({ isOpen, onClose, onShowPassword }: A
             <div className="p-2 space-y-1">
                 <button
                     onClick={handlePasswordReset}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium text-[#0F172A] hover:text-[#0F172A] hover:bg-[rgb(48,102,187)]/5 transition-all"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium text-[#0F172A] hover:text-[#0F172A] hover:bg-white transition-all"
                 >
                     <Lock size={16} />
                     <span>Security Settings</span>

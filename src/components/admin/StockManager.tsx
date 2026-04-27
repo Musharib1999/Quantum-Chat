@@ -89,14 +89,14 @@ export default function StockManager() {
                         placeholder="Stock name (e.g. IonQ Inc.)"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[rgb(27,176,206)] bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/30 text-[#0F172A]"
+                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[rgb(27,176,206)] bg-white border-[rgb(27,176,206)]/30 text-[#0F172A]"
                     />
                     <input
                         type="text"
                         placeholder="Analysis url"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[rgb(27,176,206)] bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/30 text-[#0F172A]"
+                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[rgb(27,176,206)] bg-white border-[rgb(27,176,206)]/30 text-[#0F172A]"
                     />
                 </div>
                 <div className="flex gap-2">
@@ -125,7 +125,7 @@ export default function StockManager() {
             ) : (
                 <div className="rounded-lg border overflow-hidden bg-white border-[rgb(27,176,206)]/30">
                     <table className="w-full text-left text-sm text-[#0F172A]">
-                        <thead className="bg-[rgb(48,102,187)]/5 text-[#0F172A] border-b border-[rgb(27,176,206)]/30">
+                        <thead className="bg-white text-[#0F172A] border-b border-[rgb(27,176,206)]/30">
                             <tr>
                                 <th className="px-4 py-3 font-semibold">Name</th>
                                 <th className="px-4 py-3 font-semibold">Link</th>
@@ -134,7 +134,7 @@ export default function StockManager() {
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                             {stocks.map((stock) => (
-                                <tr key={stock._id} className="transition-colors hover:bg-[rgb(48,102,187)]/5">
+                                <tr key={stock._id} className="transition-colors hover:bg-white">
                                     <td className="px-4 py-3 text-[#0F172A] font-medium">{stock.name}</td>
                                     <td className="px-4 py-3">
                                         <a href={stock.url} target="_blank" rel="noopener noreferrer" className="text-[#0F172A] hover:underline">

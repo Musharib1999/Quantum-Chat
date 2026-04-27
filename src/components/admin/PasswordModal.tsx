@@ -89,7 +89,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
+                            className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={currentPassword}
                             onChange={e => setCurrentPassword(e.target.value)}
                         />
@@ -99,7 +99,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
+                            className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={newAdminPassword}
                             onChange={e => setNewAdminPassword(e.target.value)}
                         />
@@ -109,7 +109,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
+                            className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] font-mono text-sm"
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                         />

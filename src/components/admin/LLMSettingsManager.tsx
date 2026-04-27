@@ -102,7 +102,7 @@ export default function LLMSettingsManager() {
                 {allModels.map((model) => (
                     <div key={model._id} className={`bg-white border p-6 rounded-2xl flex flex-col transition-all hover:shadow-md ${model.isDefault ? 'border-[rgb(27,176,206)] ring-1 ring-[rgb(27,176,206)]/10' : 'border-[rgb(27,176,206)]/30 shadow-sm'}`}>
                         <div className="flex items-center justify-between mb-4">
-                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${model.activeProvider === 'gemini' ? 'bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/20 text-[#0F172A]' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${model.activeProvider === 'gemini' ? 'bg-white border-[rgb(27,176,206)]/20 text-[#0F172A]' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
                                 {model.activeProvider}
                             </span>
                             {model.isDefault && <span className="text-[10px] text-green-600 font-bold uppercase">System Default</span>}
@@ -114,7 +114,7 @@ export default function LLMSettingsManager() {
                         <div className="flex gap-2">
                             <button 
                                 onClick={() => setEditingModel(model)}
-                                className="flex-1 py-2.5 rounded-xl bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/20 text-[10px] font-bold uppercase tracking-wider hover:bg-[rgb(48,102,187)]/10 transition-all"
+                                className="flex-1 py-2.5 rounded-xl bg-white border border-[rgb(27,176,206)]/20 text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-all"
                             >
                                 Edit
                             </button>
@@ -143,7 +143,7 @@ export default function LLMSettingsManager() {
                                     value={editingModel.name} 
                                     onChange={e => setEditingModel({...editingModel, name: e.target.value})}
                                     placeholder="e.g. Generation Optimized" 
-                                    className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-sm" 
+                                    className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl text-sm" 
                                 />
                             </div>
 
@@ -154,7 +154,7 @@ export default function LLMSettingsManager() {
                                         <button 
                                             key={p}
                                             onClick={() => setEditingModel({...editingModel, activeProvider: p as any, activeModel: PROVIDER_MODELS[p as keyof typeof PROVIDER_MODELS][0].id})}
-                                            className={`py-3 rounded-xl border text-xs font-bold transition-all ${editingModel.activeProvider === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-[rgb(48,102,187)]/5 text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
+                                            className={`py-3 rounded-xl border text-xs font-bold transition-all ${editingModel.activeProvider === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-[#0F172A] border-[rgb(27,176,206)]/30'}`}
                                         >
                                             {p.toUpperCase()}
                                         </button>
@@ -167,7 +167,7 @@ export default function LLMSettingsManager() {
                                 <select 
                                     value={editingModel.activeModel}
                                     onChange={e => setEditingModel({...editingModel, activeModel: e.target.value})}
-                                    className="w-full p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-sm outline-none"
+                                    className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl text-sm outline-none"
                                 >
                                     {PROVIDER_MODELS[editingModel.activeProvider].map(m => (
                                         <option key={m.id} value={m.id}>{m.name}</option>
@@ -181,11 +181,11 @@ export default function LLMSettingsManager() {
                                     value={editingModel.description}
                                     onChange={e => setEditingModel({...editingModel, description: e.target.value})}
                                     placeholder="what is this model mostly used for?"
-                                    className="w-full h-24 p-3 bg-[rgb(48,102,187)]/5 border border-[rgb(27,176,206)]/30 rounded-xl text-sm"
+                                    className="w-full h-24 p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl text-sm"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-[rgb(48,102,187)]/5/50 border border-[rgb(27,176,206)]/20 rounded-xl">
+                            <div className="flex items-center justify-between p-4 bg-white/50 border border-[rgb(27,176,206)]/20 rounded-xl">
                                 <div className="space-y-0.5">
                                     <div className="text-xs font-bold text-[#0F172A]">System Default</div>
                                     <div className="text-[10px] text-[#0F172A]">Use this model as the primary global fallback.</div>

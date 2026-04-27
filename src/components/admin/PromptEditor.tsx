@@ -120,7 +120,7 @@ export default function PromptEditor() {
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <select
-                        className="text-sm rounded-lg border block w-full sm:w-64 p-2.5 outline-none bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/30 text-[#0F172A] focus:border-[rgb(27,176,206)]"
+                        className="text-sm rounded-lg border block w-full sm:w-64 p-2.5 outline-none bg-white border-[rgb(27,176,206)]/30 text-[#0F172A] focus:border-[rgb(27,176,206)]"
                         value={selectedCategory}
                         onChange={handleCategoryChange}
                     >
@@ -133,7 +133,7 @@ export default function PromptEditor() {
 
             <div className="flex flex-col md:flex-row h-full md:h-[600px] divide-y md:divide-y-0 md:divide-x divide-slate-100">
                 {/* Left Panel: Editor */}
-                <div className="flex-1 flex flex-col p-6 relative bg-[rgb(48,102,187)]/5/50">
+                <div className="flex-1 flex flex-col p-6 relative bg-white/50">
                     <div className="flex justify-between items-center mb-3">
                         <label className="text-sm font-medium text-[#0F172A]">Prompt Template</label>
                         {statusMessage && (
@@ -156,7 +156,7 @@ export default function PromptEditor() {
                             onClick={handleSave}
                             disabled={isSaving || currentTemplate === activePrompt?.template}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded text-sm font-medium transition-all ${currentTemplate === activePrompt?.template
-                                    ? 'bg-[rgb(48,102,187)]/10 text-[#0F172A] cursor-not-allowed'
+                                    ? 'bg-white text-[#0F172A] cursor-not-allowed'
                                     : 'bg-[rgb(48,102,187)] hover:bg-[#255299] text-white shadow-sm'
                                 }`}
                         >
@@ -178,7 +178,7 @@ export default function PromptEditor() {
 
                     <div className="space-y-3 overflow-y-auto scrollbar-thin pr-2 scrollbar-thumb-slate-300">
                         {activePrompt?.availableTags.map(tag => (
-                            <div key={tag} className="flex flex-col gap-1 p-3 border rounded bg-[rgb(48,102,187)]/5 border-[rgb(27,176,206)]/20">
+                            <div key={tag} className="flex flex-col gap-1 p-3 border rounded bg-white border-[rgb(27,176,206)]/20">
                                 <code className="text-[#0F172A] text-xs font-bold">{tag}</code>
                             </div>
                         ))}
