@@ -120,8 +120,10 @@ export default function ProblemConsole() {
     const [llmModels, setLlmModels] = useState<any[]>([]);
 
     useEffect(() => {
-        fetchInitialData();
-    }, []);
+        if (user) {
+            fetchInitialData();
+        }
+    }, [user?.email, user?.role]);
 
     const fetchInitialData = async () => {
         try {
