@@ -103,15 +103,31 @@ export default function LandingPage() {
 
         </div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
 
-          {/* Card 1: Quantum Industry */}
+          {/* Card 1: Quantum Guru LLM - Featured Large */}
+          <div className="lg:col-span-2 lg:row-span-2 h-full">
+            <FeatureCard
+              href="/quantum-assistant"
+              icon={<Bot size={40} />}
+              title="Quantum Guru LLM"
+              description="A frontier AI model fine-tuned on 240 million high-fidelity quantum computing data points, designed to generate quantum algorithms, analyze quantum information and solve complex scientific queries"
+              actionText="Chat Now"
+              isDarkMode={false}
+              accentColor="electric"
+              status="unlocked"
+              badgeText="Try now"
+              className="h-full py-12"
+            />
+          </div>
+
+          {/* Card 2: Quantum Industry - Small Side */}
           <FeatureCard
             href={isAuthenticated ? "/industry" : "/login?redirect=/industry"}
             icon={<Cpu size={32} />}
             title="Quantum Industry"
-            description="Industry specific guided problem solving wizards based on hardware, use case and service selection"
+            description="Industry specific guided problem solving wizards based on hardware and use cases"
             actionText="Launch"
             isDarkMode={false}
             accentColor="indigo"
@@ -119,44 +135,34 @@ export default function LandingPage() {
             badgeText="Unlock with free account"
           />
 
-          {/* Card 2: Quantum Assistant */}
-          <FeatureCard
-            href="/quantum-assistant"
-            icon={<Bot size={32} />}
-            title="Quantum Guru LLM"
-            description="A frontier AI model fine-tuned on 240 million high-fidelity quantum computing data points, designed to generate quantum algorithms, analyze quantum information and solve complex scientific queries"
-            actionText="Chat Now"
-            isDarkMode={false}
-            accentColor="electric"
-            status="unlocked"
-            badgeText="Try now"
-          />
-
-          {/* Card 3: Market Intelligence */}
-          <FeatureCard
-            href="/market"
-            icon={<TrendingUp size={32} />}
-            title="Quantum Stocks and Market Intelligence"
-            description="Current market analysis of your quantum asset"
-            actionText="Launch"
-            isDarkMode={false}
-            accentColor="amber"
-            status="unlocked"
-            badgeText="Try now"
-          />
-
-          {/* Card 4: Quantum Solver Studio */}
+          {/* Card 3: Quantum Solver Studio - Small Side */}
           <FeatureCard
             href={isAuthenticated ? "/builder/dashboard" : "/login?redirect=/builder/dashboard"}
             icon={<Atom size={32} />}
             title="Quantum Solver Studio"
-            description="Write, test and run quantum and hybrid optimization solutions from a single interface. Integrates leading frameworks with built-in simulators for rapid experimentation"
+            description="Write, test and run quantum optimization solutions from a single interface"
             actionText="Launch Studio"
             isDarkMode={false}
             accentColor="violet"
             status="locked"
             badgeText="Unlock with free account"
           />
+
+          {/* Card 4: Market Intelligence - Wide Bottom Banner */}
+          <div className="lg:col-span-3">
+            <FeatureCard
+              href="/market"
+              icon={<TrendingUp size={32} />}
+              title="Quantum Stocks and Market Intelligence"
+              description="Real-time market analysis and sentiment tracking for your quantum assets and investments"
+              actionText="Analyze Market"
+              isDarkMode={false}
+              accentColor="amber"
+              status="unlocked"
+              badgeText="Try now"
+              className="flex-row items-center gap-8 py-10"
+            />
+          </div>
 
         </div>
       </main>
@@ -227,9 +233,10 @@ interface FeatureCardProps {
   accentColor: 'indigo' | 'emerald' | 'rose' | 'assistant' | 'electric' | 'amber' | 'violet';
   status?: 'locked' | 'unlocked';
   badgeText?: string;
+  className?: string;
 }
 
-const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, accentColor, status = 'unlocked', badgeText }: FeatureCardProps) => {
+const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, accentColor, status = 'unlocked', badgeText, className = '' }: FeatureCardProps) => {
   // Map color names to Tailwind classes
   const colorMap = {
     indigo: {
@@ -276,7 +283,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
     <Link
       href={href}
       onClick={(e) => href === '#' && e.preventDefault()}
-      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-300 ${href === '#' ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1 active:scale-[0.99]'} overflow-hidden flex flex-col justify-between h-full min-h-[220px] md:min-h-0 bg-white border-slate-100 ${href !== '#' ? 'hover:border-slate-200' : ''}`}>
+      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-300 ${href === '#' ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1 active:scale-[0.99]'} overflow-hidden flex flex-col justify-between bg-white border-slate-100 ${href !== '#' ? 'hover:border-slate-200' : ''} ${className}`}>
 
       {/* Glow Effect on Hover */}
       <div className={`absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 
