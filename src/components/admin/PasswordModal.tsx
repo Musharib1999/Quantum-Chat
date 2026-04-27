@@ -89,7 +89,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
+                            className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
                             value={currentPassword}
                             onChange={e => setCurrentPassword(e.target.value)}
                         />
@@ -99,7 +99,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
+                            className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
                             value={newAdminPassword}
                             onChange={e => setNewAdminPassword(e.target.value)}
                         />
@@ -109,7 +109,7 @@ export default function PasswordModal({ setShowPasswordModal }: PasswordModalPro
                         <input
                             type="password"
                             required
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
+                            className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] font-mono text-sm"
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                         />

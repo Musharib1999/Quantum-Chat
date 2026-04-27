@@ -45,10 +45,10 @@ export default function AdminProfileModal({ isOpen, onClose, onShowPassword }: A
         <div
             ref={cardRef}
             style={{ position: 'fixed', top: '64px', right: '16px', zIndex: 201, width: '260px' }}
-            className="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
+            className="bg-white/95 backdrop-blur-xl border border-[#3066bb]/30 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
         >
             {/* Admin Info Header */}
-            <div className="p-5 border-b border-slate-100">
+            <div className="p-5 border-b border-[#3066bb]/20">
                 <div className="space-y-3">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[#3066bb]/10 border border-[#3066bb]/20 flex items-center justify-center text-[#3066bb] font-bold">

@@ -73,7 +73,7 @@ export default function StockSearchDebugger() {
                     <h2 className="text-xl font-semibold text-slate-900">Stock flow debugger</h2>
                     <p className="text-sm text-slate-500">Trace autonomous logic: Ticker extraction → YFinance data → Prompt enrichment → Final summary.</p>
                 </div>
-                <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <div className="flex bg-[#3066bb]/10 p-1 rounded-xl border border-[#3066bb]/30">
                     <button
                         onClick={() => setActiveView('trace')}
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeView === 'trace' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
@@ -90,14 +90,14 @@ export default function StockSearchDebugger() {
             </div>
 
             {activeView === 'trace' ? (
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-6 rounded-2xl border border-[#3066bb]/30 shadow-sm">
                     <div className="flex gap-4 items-end">
                         <div className="flex-1 space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Input prompt</label>
                             <input
                                 type="text"
                                 placeholder="e.g. What is the current price of NVDA?"
-                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-4 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleRunDebug()}
@@ -113,14 +113,14 @@ export default function StockSearchDebugger() {
                     </div>
                 </div>
             ) : (
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <div className="bg-white rounded-2xl border border-[#3066bb]/30 overflow-hidden shadow-sm">
+                    <div className="p-4 bg-[#3066bb]/5 border-b border-[#3066bb]/30 flex justify-between items-center">
                         <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Historical market interactions</h4>
                         <button onClick={fetchHistory} className="text-xs font-semibold text-[#3066bb] hover:underline">Refresh</button>
                     </div>
                     <div className="max-h-[500px] overflow-y-auto">
                         <table className="w-full text-left text-xs text-slate-600">
-                            <thead className="bg-slate-50 text-slate-500 uppercase font-bold sticky top-0">
+                            <thead className="bg-[#3066bb]/5 text-slate-500 uppercase font-bold sticky top-0">
                                 <tr>
                                     <th className="p-4">Time</th>
                                     <th className="p-4">Ticker</th>
@@ -130,7 +130,7 @@ export default function StockSearchDebugger() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {history.map((log) => (
-                                    <tr key={log._id} className="hover:bg-slate-50 transition-colors">
+                                    <tr key={log._id} className="hover:bg-[#3066bb]/5 transition-colors">
                                         <td className="p-4 text-slate-400 whitespace-nowrap">{new Date(log.timestamp).toLocaleTimeString()}</td>
                                         <td className="p-4 font-mono font-bold text-[#3066bb]">{log.ticker || 'N/A'}</td>
                                         <td className="p-4 truncate max-w-[300px]">{log.userQuery}</td>
@@ -167,7 +167,7 @@ export default function StockSearchDebugger() {
                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Pipeline execution</h4>
                         <div className="space-y-2">
                             {result.steps?.map((step: any, idx: number) => (
-                                <div key={idx} className="bg-white border border-slate-200 p-4 rounded-xl flex items-center justify-between">
+                                <div key={idx} className="bg-white border border-[#3066bb]/30 p-4 rounded-xl flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-2 h-2 rounded-full ${step.status === 'completed' ? 'bg-green-500' : step.status === 'failed' ? 'bg-red-500' : 'bg-[#3066bb] animate-pulse'}`} />
                                         <div>
@@ -175,7 +175,7 @@ export default function StockSearchDebugger() {
                                             <p className="text-[9px] text-slate-400 uppercase font-bold">{step.status}</p>
                                         </div>
                                     </div>
-                                    <div className="text-[10px] font-mono bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-slate-600">
+                                    <div className="text-[10px] font-mono bg-[#3066bb]/5 px-2 py-0.5 rounded border border-[#3066bb]/30 text-slate-600">
                                         {typeof step.result === 'string' ? step.result : 'Object'}
                                     </div>
                                 </div>
@@ -183,7 +183,7 @@ export default function StockSearchDebugger() {
                         </div>
 
                         {result.rawMarketData && (
-                            <div className="bg-white border border-slate-200 p-6 rounded-2xl space-y-3">
+                            <div className="bg-white border border-[#3066bb]/30 p-6 rounded-2xl space-y-3">
                                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Market data raw output</h4>
                                 <pre className="text-[10px] font-mono bg-slate-900 p-4 rounded-xl overflow-x-auto text-green-400">
                                     {JSON.stringify(result.rawMarketData, null, 2)}
@@ -195,8 +195,8 @@ export default function StockSearchDebugger() {
                     <div className="space-y-4">
                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Logic & reasoning</h4>
 
-                        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                            <div className="p-4 bg-slate-50 border-b border-slate-200 text-[10px] font-bold uppercase text-slate-400 tracking-widest">
+                        <div className="bg-white border border-[#3066bb]/30 rounded-2xl overflow-hidden">
+                            <div className="p-4 bg-[#3066bb]/5 border-b border-[#3066bb]/30 text-[10px] font-bold uppercase text-slate-400 tracking-widest">
                                 Enriched system prompt
                             </div>
                             <div className="p-4 bg-white max-h-[250px] overflow-y-auto">

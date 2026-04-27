@@ -126,13 +126,13 @@ export default function HardwareManager() {
             </div>
 
             {isAdding && (
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div className="bg-white p-6 rounded-2xl border border-[#3066bb]/30 shadow-sm space-y-4">
                     <h3 className="text-sm font-bold text-slate-900">New hardware node</h3>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Node name</label>
                             <input
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
                                 placeholder="e.g. IBM Brisbane"
                                 value={newHw.name || ''}
                                 onChange={e => setNewHw({ ...newHw, name: e.target.value })}
@@ -142,7 +142,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Provider ecosystem</label>
                             <select
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
                                 value={newHw.provider}
                                 onChange={e => setNewHw({ ...newHw, provider: e.target.value as any })}
                             >
@@ -158,7 +158,7 @@ export default function HardwareManager() {
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Qubit count</label>
                             <input
                                 type="number"
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
                                 placeholder="0"
                                 value={newHw.qubits}
                                 onChange={e => setNewHw({ ...newHw, qubits: parseInt(e.target.value) || 0 })}
@@ -169,7 +169,7 @@ export default function HardwareManager() {
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Display priority</label>
                             <input
                                 type="number"
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
+                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900"
                                 placeholder="0"
                                 value={newHw.order}
                                 onChange={e => setNewHw({ ...newHw, order: parseInt(e.target.value) || 0 })}
@@ -179,7 +179,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5 md:col-span-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Technical description</label>
                             <textarea
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 h-24"
+                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 h-24"
                                 placeholder="Briefly describe the backend architecture..."
                                 value={newHw.description || ''}
                                 onChange={e => setNewHw({ ...newHw, description: e.target.value })}
@@ -189,7 +189,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5 md:col-span-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Service URL (For Backend Routing)</label>
                             <input
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-mono"
+                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-mono"
                                 placeholder="https://your-service-url.com"
                                 value={newHw.serviceUrl || ''}
                                 onChange={e => setNewHw({ ...newHw, serviceUrl: e.target.value })}
@@ -199,7 +199,7 @@ export default function HardwareManager() {
                             </p>
                         </div>
 
-                        <div className="space-y-1.5 md:col-span-2 border-t border-slate-100 pt-4 mt-2">
+                        <div className="space-y-1.5 md:col-span-2 border-t border-[#3066bb]/20 pt-4 mt-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Health Check Python Script (Optional)</label>
                             <textarea
                                 className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-xs text-green-400 font-mono h-24"
@@ -213,7 +213,7 @@ export default function HardwareManager() {
                         <div className="space-y-1.5 md:col-span-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Expected Health Check Output (Optional)</label>
                             <input
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-mono"
+                                className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm text-slate-900 font-mono"
                                 placeholder="PONG"
                                 value={newHw.testOutput || ''}
                                 onChange={e => setNewHw({ ...newHw, testOutput: e.target.value })}
@@ -236,14 +236,14 @@ export default function HardwareManager() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {hardwares.map(hw => (
-                    <div key={hw.id} className={`p-6 bg-white rounded-2xl border transition-all ${hw.status === 'Online' ? 'border-slate-200' : 'border-slate-100 opacity-70'} flex flex-col gap-4 shadow-sm hover:shadow-md group`}>
+                    <div key={hw.id} className={`p-6 bg-white rounded-2xl border transition-all ${hw.status === 'Online' ? 'border-[#3066bb]/30' : 'border-[#3066bb]/20 opacity-70'} flex flex-col gap-4 shadow-sm hover:shadow-md group`}>
                         <div className="flex justify-between items-start">
                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                 {hw.provider}
                             </div>
                             <button
                                 onClick={() => handleToggleStatus(hw.id)}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${hw.status === 'Online' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${hw.status === 'Online' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[#3066bb]/10 text-slate-500 border-[#3066bb]/30'}`}
                             >
                                 {hw.status}
                             </button>
@@ -252,14 +252,14 @@ export default function HardwareManager() {
                         {editingId === hw.id ? (
                             <div className="space-y-3 flex-1">
                                 <input
-                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900"
+                                    className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-sm font-semibold text-slate-900"
                                     value={hw.name}
                                     onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, name: e.target.value } : h))}
                                 />
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-slate-400 uppercase font-bold">Provider ecosystem</label>
                                     <select
-                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                                        className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs"
                                         value={hw.provider}
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, provider: e.target.value as any } : h))}
                                     >
@@ -275,7 +275,7 @@ export default function HardwareManager() {
                                         <label className="text-[9px] text-slate-400 uppercase font-bold">Qubits</label>
                                         <input
                                             type="number"
-                                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                                            className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs"
                                             value={hw.qubits}
                                             onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, qubits: parseInt(e.target.value) || 0 } : h))}
                                         />
@@ -284,21 +284,21 @@ export default function HardwareManager() {
                                         <label className="text-[9px] text-slate-400 uppercase font-bold">Order</label>
                                         <input
                                             type="number"
-                                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                                            className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs"
                                             value={hw.order}
                                             onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, order: parseInt(e.target.value) || 0 } : h))}
                                         />
                                     </div>
                                 </div>
                                 <textarea
-                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs h-20"
+                                    className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs h-20"
                                     value={hw.description}
                                     onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, description: e.target.value } : h))}
                                 />
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-slate-400 uppercase font-bold">Service URL</label>
                                     <input
-                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
+                                        className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs font-mono"
                                         value={hw.serviceUrl || ''}
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, serviceUrl: e.target.value } : h))}
                                     />
@@ -315,7 +315,7 @@ export default function HardwareManager() {
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-slate-400 uppercase font-bold">Expected Output</label>
                                     <input
-                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
+                                        className="w-full p-2 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg text-xs font-mono"
                                         value={hw.testOutput || ''}
                                         placeholder="PONG"
                                         onChange={e => setHardwares(hardwares.map(h => h.id === hw.id ? { ...h, testOutput: e.target.value } : h))}
@@ -323,7 +323,7 @@ export default function HardwareManager() {
                                 </div>
                                 <div className="flex gap-2 pt-1">
                                     <button onClick={() => handleSaveEdit(hw.id)} className="flex-1 bg-[#3066bb] text-white p-2 rounded-lg text-xs font-bold">Save</button>
-                                    <button onClick={() => { setEditingId(null); loadHardware(); }} className="flex-1 bg-slate-100 text-slate-500 p-2 rounded-lg text-xs font-bold">Cancel</button>
+                                    <button onClick={() => { setEditingId(null); loadHardware(); }} className="flex-1 bg-[#3066bb]/10 text-slate-500 p-2 rounded-lg text-xs font-bold">Cancel</button>
                                 </div>
                             </div>
                         ) : (
@@ -362,7 +362,7 @@ export default function HardwareManager() {
             </div>
 
             {hardwares.length === 0 && !loading && !isAdding && (
-                <div className="p-12 text-center border border-slate-200 rounded-2xl bg-white border-dashed">
+                <div className="p-12 text-center border border-[#3066bb]/30 rounded-2xl bg-white border-dashed">
                     <p className="text-slate-500 text-sm mb-6">No quantum simulators have been configured yet.</p>
                     <button
                         onClick={() => setIsAdding(true)}

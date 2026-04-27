@@ -97,19 +97,19 @@ export default function ArticleManager() {
             </div>
 
             {/* Add/Edit Form */}
-            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-slate-200 bg-white space-y-4 shadow-sm">
+            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-[#3066bb]/30 bg-white space-y-4 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                         type="text"
                         placeholder="Article title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-slate-50 text-slate-900"
+                        className="border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-[#3066bb]/5 text-slate-900"
                     />
                     <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-slate-50 text-slate-900"
+                        className="border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-[#3066bb]/5 text-slate-900"
                     >
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -120,21 +120,21 @@ export default function ArticleManager() {
                         placeholder="Author"
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-slate-50 text-slate-900"
+                        className="w-full border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-[#3066bb]/5 text-slate-900"
                     />
                     <textarea
                         placeholder="Short description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={2}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] resize-none bg-slate-50 text-slate-900"
+                        className="w-full border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] resize-none bg-[#3066bb]/5 text-slate-900"
                     />
                     <textarea
                         placeholder="Full article content (markdown supported)"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         rows={6}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] resize-none bg-slate-50 text-slate-900"
+                        className="w-full border border-[#3066bb]/30 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#3066bb] resize-none bg-[#3066bb]/5 text-slate-900"
                     />
                 </div>
                 <div className="flex gap-2 pt-2">
@@ -158,7 +158,7 @@ export default function ArticleManager() {
             </form>
 
             {/* Article List */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+            <div className="border border-[#3066bb]/30 rounded-xl overflow-hidden bg-white shadow-sm">
                 {loading ? (
                     <div className="p-12 text-center text-sm text-slate-400">Loading articles...</div>
                 ) : articles.length === 0 ? (
@@ -166,13 +166,13 @@ export default function ArticleManager() {
                 ) : (
                     <div className="divide-y divide-slate-100">
                         {articles.map((article) => (
-                            <div key={article._id} className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-slate-50 transition-colors group">
+                            <div key={article._id} className="p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-[#3066bb]/5 transition-colors group">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-1.5">
                                         <h4 className="font-semibold text-slate-900 truncate">
                                             {article.title}
                                         </h4>
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#3066bb]/10 text-slate-600">
                                             {article.category}
                                         </span>
                                     </div>

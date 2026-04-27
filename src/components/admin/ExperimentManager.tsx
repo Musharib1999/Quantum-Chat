@@ -44,7 +44,7 @@ export default function ExperimentManager() {
                     <select 
                         value={sourceFilter}
                         onChange={(e) => setSourceFilter(e.target.value as any)}
-                        className="px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-xs font-semibold text-slate-600"
+                        className="px-3 py-2 bg-white border border-[#3066bb]/30 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-xs font-semibold text-slate-600"
                     >
                         <option value="All">All Sources</option>
                         <option value="Web">Web Dashboard</option>
@@ -55,7 +55,7 @@ export default function ExperimentManager() {
                         placeholder="Search problems, users..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="flex-1 md:w-64 px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
+                        className="flex-1 md:w-64 px-4 py-2 bg-white border border-[#3066bb]/30 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
                     />
                     <button
                         onClick={loadExperiments}
@@ -66,10 +66,10 @@ export default function ExperimentManager() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#3066bb]/30 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-600">
-                        <thead className="bg-slate-50 text-slate-900 border-b border-slate-200 font-semibold">
+                        <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30 font-semibold">
                             <tr>
                                 <th className="px-6 py-4">Shot (Problem)</th>
                                 <th className="px-6 py-4">User</th>
@@ -93,18 +93,18 @@ export default function ExperimentManager() {
                                 </tr>
                             ) : (
                                 filtered.map((exp) => (
-                                    <tr key={exp._id} className="hover:bg-slate-50 transition-colors group">
+                                    <tr key={exp._id} className="hover:bg-[#3066bb]/5 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="font-semibold text-slate-900 line-clamp-1">{exp.problem || "Untitled"}</div>
                                             <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5">
                                                 <span>{exp.industry} • {exp.service}</span>
-                                                <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold ${exp.source === 'API' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                                                <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold ${exp.source === 'API' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-[#3066bb]/5 text-[#3066bb] border border-[#3066bb]/20'}`}>
                                                     {exp.source || 'Web'}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-[10px] font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 text-slate-500">
+                                            <span className="text-[10px] font-mono bg-[#3066bb]/5 px-1.5 py-0.5 rounded border border-[#3066bb]/30 text-slate-500">
                                                 {exp.userId || "Guest"}
                                             </span>
                                         </td>

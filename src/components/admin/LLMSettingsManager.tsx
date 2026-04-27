@@ -100,9 +100,9 @@ export default function LLMSettingsManager() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {allModels.map((model) => (
-                    <div key={model._id} className={`bg-white border p-6 rounded-2xl flex flex-col transition-all hover:shadow-md ${model.isDefault ? 'border-[#3066bb] ring-1 ring-[#3066bb]/10' : 'border-slate-200 shadow-sm'}`}>
+                    <div key={model._id} className={`bg-white border p-6 rounded-2xl flex flex-col transition-all hover:shadow-md ${model.isDefault ? 'border-[#3066bb] ring-1 ring-[#3066bb]/10' : 'border-[#3066bb]/30 shadow-sm'}`}>
                         <div className="flex items-center justify-between mb-4">
-                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${model.activeProvider === 'gemini' ? 'bg-blue-50 border-blue-100 text-blue-600' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${model.activeProvider === 'gemini' ? 'bg-[#3066bb]/5 border-[#3066bb]/20 text-[#3066bb]' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
                                 {model.activeProvider}
                             </span>
                             {model.isDefault && <span className="text-[10px] text-green-600 font-bold uppercase">System Default</span>}
@@ -114,7 +114,7 @@ export default function LLMSettingsManager() {
                         <div className="flex gap-2">
                             <button 
                                 onClick={() => setEditingModel(model)}
-                                className="flex-1 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-100 transition-all"
+                                className="flex-1 py-2.5 rounded-xl bg-[#3066bb]/5 border border-[#3066bb]/20 text-[10px] font-bold uppercase tracking-wider hover:bg-[#3066bb]/10 transition-all"
                             >
                                 Edit
                             </button>
@@ -133,7 +133,7 @@ export default function LLMSettingsManager() {
 
             {editingModel && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-lg rounded-2xl border border-slate-200 shadow-xl p-8 animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+                    <div className="bg-white w-full max-w-lg rounded-2xl border border-[#3066bb]/30 shadow-xl p-8 animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
                         <h3 className="text-lg font-bold text-slate-900 mb-6">{editingModel._id ? 'Modify Intelligence' : 'Register New LLM'}</h3>
                         
                         <div className="space-y-6">
@@ -143,7 +143,7 @@ export default function LLMSettingsManager() {
                                     value={editingModel.name} 
                                     onChange={e => setEditingModel({...editingModel, name: e.target.value})}
                                     placeholder="e.g. Generation Optimized" 
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" 
+                                    className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl text-sm" 
                                 />
                             </div>
 
@@ -154,7 +154,7 @@ export default function LLMSettingsManager() {
                                         <button 
                                             key={p}
                                             onClick={() => setEditingModel({...editingModel, activeProvider: p as any, activeModel: PROVIDER_MODELS[p as keyof typeof PROVIDER_MODELS][0].id})}
-                                            className={`py-3 rounded-xl border text-xs font-bold transition-all ${editingModel.activeProvider === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-500 border-slate-200'}`}
+                                            className={`py-3 rounded-xl border text-xs font-bold transition-all ${editingModel.activeProvider === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-[#3066bb]/5 text-slate-500 border-[#3066bb]/30'}`}
                                         >
                                             {p.toUpperCase()}
                                         </button>
@@ -167,7 +167,7 @@ export default function LLMSettingsManager() {
                                 <select 
                                     value={editingModel.activeModel}
                                     onChange={e => setEditingModel({...editingModel, activeModel: e.target.value})}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                                    className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl text-sm outline-none"
                                 >
                                     {PROVIDER_MODELS[editingModel.activeProvider].map(m => (
                                         <option key={m.id} value={m.id}>{m.name}</option>
@@ -181,11 +181,11 @@ export default function LLMSettingsManager() {
                                     value={editingModel.description}
                                     onChange={e => setEditingModel({...editingModel, description: e.target.value})}
                                     placeholder="what is this model mostly used for?"
-                                    className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                                    className="w-full h-24 p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl text-sm"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                            <div className="flex items-center justify-between p-4 bg-[#3066bb]/5/50 border border-[#3066bb]/20 rounded-xl">
                                 <div className="space-y-0.5">
                                     <div className="text-xs font-bold text-[#3066bb]">System Default</div>
                                     <div className="text-[10px] text-blue-400">Use this model as the primary global fallback.</div>

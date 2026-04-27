@@ -105,14 +105,14 @@ export default function MarketPromptManager() {
             </div>
 
             {/* Add/Edit Form */}
-            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-slate-200 bg-white space-y-4 shadow-sm">
+            <form onSubmit={handleSave} className="p-6 rounded-2xl border border-[#3066bb]/30 bg-white space-y-4 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-500">Chip label</label>
                         <input
                             type="text"
                             placeholder="e.g. Top Movers"
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
+                            className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
                             value={label}
                             onChange={(e) => setLabel(e.target.value)}
                         />
@@ -123,7 +123,7 @@ export default function MarketPromptManager() {
                     <input
                         type="text"
                         placeholder="e.g. Show me today's top moving stocks and market sentiment"
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
+                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none text-sm text-slate-900"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
@@ -149,9 +149,9 @@ export default function MarketPromptManager() {
             </form>
 
             {/* List */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+            <div className="border border-[#3066bb]/30 rounded-xl overflow-hidden bg-white shadow-sm">
                 <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-slate-50 text-slate-900 border-b border-slate-200 font-semibold">
+                    <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30 font-semibold">
                         <tr>
                             <th className="px-5 py-4 w-1/4">Label</th>
                             <th className="px-5 py-4">Query</th>
@@ -174,7 +174,7 @@ export default function MarketPromptManager() {
                             </tr>
                         ) : (
                             prompts.map(prompt => (
-                                <tr key={prompt._id} className={`group transition-colors ${prompt.isActive ? 'hover:bg-slate-50' : 'bg-slate-50/30 opacity-70'}`}>
+                                <tr key={prompt._id} className={`group transition-colors ${prompt.isActive ? 'hover:bg-[#3066bb]/5' : 'bg-[#3066bb]/5/30 opacity-70'}`}>
                                     <td className="px-5 py-4 font-semibold text-slate-900">
                                         {prompt.label}
                                     </td>
@@ -184,7 +184,7 @@ export default function MarketPromptManager() {
                                     <td className="px-5 py-4">
                                         <button 
                                             onClick={() => handleToggleActive(prompt)}
-                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${prompt.isActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}
+                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${prompt.isActive ? 'bg-green-50 text-green-600 border-green-200' : 'bg-[#3066bb]/10 text-slate-500 border-[#3066bb]/30'}`}
                                         >
                                             {prompt.isActive ? 'Active' : 'Hidden'}
                                         </button>

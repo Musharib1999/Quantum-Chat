@@ -85,13 +85,13 @@ export default function BlockedSourceManager() {
             </div>
 
             {/* Add/Edit Form */}
-            <form onSubmit={handleSave} className="p-4 rounded-xl border border-slate-200 flex gap-3 bg-white shadow-sm">
+            <form onSubmit={handleSave} className="p-4 rounded-xl border border-[#3066bb]/30 flex gap-3 bg-white shadow-sm">
                 <input
                     type="text"
                     placeholder="Enter portal name (e.g. Google News, Reuters)"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-slate-50 text-slate-900"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-[#3066bb]/30 text-sm transition-all focus:outline-none focus:ring-1 focus:ring-[#3066bb] bg-[#3066bb]/5 text-slate-900"
                 />
                 <button
                     type="submit"
@@ -112,9 +112,9 @@ export default function BlockedSourceManager() {
             </form>
 
             {/* List */}
-            <div className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+            <div className="rounded-xl border border-[#3066bb]/30 overflow-hidden bg-white shadow-sm">
                 <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-slate-50 text-slate-900 border-b border-slate-200">
+                    <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30">
                         <tr>
                             <th className="px-5 py-4 font-semibold">Portal name</th>
                             <th className="px-5 py-4 font-semibold">Added at</th>
@@ -136,7 +136,7 @@ export default function BlockedSourceManager() {
                             </tr>
                         ) : (
                             sources.map((source) => (
-                                <tr key={source._id} className="group transition-colors hover:bg-slate-50">
+                                <tr key={source._id} className="group transition-colors hover:bg-[#3066bb]/5">
                                     <td className="px-5 py-4 font-semibold text-slate-800">
                                         {source.name}
                                     </td>

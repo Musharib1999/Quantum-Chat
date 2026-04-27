@@ -54,7 +54,7 @@ export default function ChatLogViewer() {
                                         </div>
                                     </td>
                                     <td className="p-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${log.source === 'gemini' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${log.source === 'gemini' ? 'bg-[#3066bb]/50/10 text-blue-400 border-blue-500/20' :
                                             log.source.includes('kb') ? 'bg-green-500/10 text-green-400 border-green-500/20' :
                                                 'bg-zinc-800 text-zinc-500 border-zinc-700'
                                             }`}>

@@ -82,21 +82,21 @@ export default function StockManager() {
             </div>
 
             {/* Add/Edit Form */}
-            <form onSubmit={handleSave} className="p-4 rounded-lg border space-y-4 bg-white border-slate-200">
+            <form onSubmit={handleSave} className="p-4 rounded-lg border space-y-4 bg-white border-[#3066bb]/30">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                         type="text"
                         placeholder="Stock name (e.g. IonQ Inc.)"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] bg-slate-50 border-slate-200 text-slate-900"
+                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] bg-[#3066bb]/5 border-[#3066bb]/30 text-slate-900"
                     />
                     <input
                         type="text"
                         placeholder="Analysis url"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] bg-slate-50 border-slate-200 text-slate-900"
+                        className="border rounded px-3 py-2 text-sm focus:outline-none focus:border-[#3066bb] bg-[#3066bb]/5 border-[#3066bb]/30 text-slate-900"
                     />
                 </div>
                 <div className="flex gap-2">
@@ -123,9 +123,9 @@ export default function StockManager() {
             {loading ? (
                 <div className="flex justify-center p-8 text-slate-400 text-sm">Loading stocks...</div>
             ) : (
-                <div className="rounded-lg border overflow-hidden bg-white border-slate-200">
+                <div className="rounded-lg border overflow-hidden bg-white border-[#3066bb]/30">
                     <table className="w-full text-left text-sm text-slate-600">
-                        <thead className="bg-slate-50 text-slate-900 border-b border-slate-200">
+                        <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30">
                             <tr>
                                 <th className="px-4 py-3 font-semibold">Name</th>
                                 <th className="px-4 py-3 font-semibold">Link</th>
@@ -134,7 +134,7 @@ export default function StockManager() {
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                             {stocks.map((stock) => (
-                                <tr key={stock._id} className="transition-colors hover:bg-slate-50">
+                                <tr key={stock._id} className="transition-colors hover:bg-[#3066bb]/5">
                                     <td className="px-4 py-3 text-slate-900 font-medium">{stock.name}</td>
                                     <td className="px-4 py-3">
                                         <a href={stock.url} target="_blank" rel="noopener noreferrer" className="text-[#3066bb] hover:underline">

@@ -204,15 +204,15 @@ export default function UserManager() {
                     placeholder="Search users by email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none transition-all placeholder:text-slate-400 text-sm text-slate-900"
+                    className="w-full px-5 py-3 bg-white border border-[#3066bb]/30 rounded-xl focus:ring-1 focus:ring-[#3066bb] outline-none transition-all placeholder:text-slate-400 text-sm text-slate-900"
                 />
             </div>
 
             {/* Users Table */}
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#3066bb]/30 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-600">
-                        <thead className="bg-slate-50 text-slate-900 border-b border-slate-200 font-semibold">
+                        <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30 font-semibold">
                             <tr>
                                 <th className="px-5 py-4">User</th>
                                 <th className="px-5 py-4">Status</th>
@@ -236,7 +236,7 @@ export default function UserManager() {
                                 </tr>
                             ) : (
                                 filteredUsers.map(user => (
-                                    <tr key={user._id} className="hover:bg-slate-50 transition-colors group">
+                                    <tr key={user._id} className="hover:bg-[#3066bb]/5 transition-colors group">
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold text-slate-900">{user.email}</span>
@@ -248,15 +248,15 @@ export default function UserManager() {
                                         </td>
                                         <td className="px-5 py-4">
                                             {user.role === 'admin' ? (
-                                                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-bold border border-blue-100">Admin</span>
+                                                <span className="px-2 py-0.5 bg-[#3066bb]/5 text-[#3066bb] rounded text-[10px] font-bold border border-[#3066bb]/20">Admin</span>
                                             ) : user.role === 'enterprise' ? (
                                                 <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold border border-purple-100">Enterprise</span>
                                             ) : user.role === 'builder' ? (
-                                                <span className="px-2 py-0.5 bg-blue-50 text-[#3066bb] rounded text-[10px] font-bold border border-blue-100">Builder</span>
+                                                <span className="px-2 py-0.5 bg-[#3066bb]/5 text-[#3066bb] rounded text-[10px] font-bold border border-[#3066bb]/20">Builder</span>
                                             ) : user.isApproved ? (
                                                 <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded text-[10px] font-bold border border-green-100">Active</span>
                                             ) : (
-                                                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold border border-slate-200">Pending</span>
+                                                <span className="px-2 py-0.5 bg-[#3066bb]/10 text-slate-500 rounded text-[10px] font-bold border border-[#3066bb]/30">Pending</span>
                                             )}
                                         </td>
                                         <td className="px-5 py-4">
@@ -268,7 +268,7 @@ export default function UserManager() {
                                                     <span>/</span>
                                                     <span>{(user.tokenLimit || 100000).toLocaleString()}</span>
                                                 </div>
-                                                <div className="w-24 h-1 rounded-full bg-slate-100 overflow-hidden">
+                                                <div className="w-24 h-1 rounded-full bg-[#3066bb]/10 overflow-hidden">
                                                     <div
                                                         className={`h-full ${((user.tokensUsed || 0) >= (user.tokenLimit || 100000)) ? 'bg-red-500' : 'bg-[#3066bb]'}`}
                                                         style={{ width: `${Math.min(((user.tokensUsed || 0) / (user.tokenLimit || 100000)) * 100, 100)}%` }}
@@ -285,7 +285,7 @@ export default function UserManager() {
                                                     <span>/</span>
                                                     <span>{(user.simMinutesLimit || 5).toFixed(0)}</span>
                                                 </div>
-                                                <div className="w-24 h-1 rounded-full bg-slate-100 overflow-hidden">
+                                                <div className="w-24 h-1 rounded-full bg-[#3066bb]/10 overflow-hidden">
                                                     <div
                                                         className={`h-full ${((user.simMinutesUsed || 0) >= (user.simMinutesLimit || 5)) ? 'bg-red-500' : 'bg-[#3066bb]'}`}
                                                         style={{ width: `${Math.min(((user.simMinutesUsed || 0) / (user.simMinutesLimit || 5)) * 100, 100)}%` }}
@@ -343,7 +343,7 @@ export default function UserManager() {
             {/* ADD USER MODAL */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl p-6 relative animate-in zoom-in-95 duration-200">
+                    <div className="bg-white w-full max-w-md rounded-2xl border border-[#3066bb]/30 shadow-xl p-6 relative animate-in zoom-in-95 duration-200">
                         <h3 className="text-lg font-bold text-slate-900 mb-6">New user account</h3>
                         
                         <div className="space-y-4">
@@ -352,7 +352,7 @@ export default function UserManager() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">First name</label>
                                     <input
                                         type="text"
-                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                         placeholder="Jane"
                                         value={firstName}
                                         onChange={e => setFirstName(e.target.value)}
@@ -362,7 +362,7 @@ export default function UserManager() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Last name</label>
                                     <input
                                         type="text"
-                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                         placeholder="Doe"
                                         value={lastName}
                                         onChange={e => setLastName(e.target.value)}
@@ -374,7 +374,7 @@ export default function UserManager() {
                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Email address</label>
                                 <input
                                     type="email"
-                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                    className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                     placeholder="user@example.com"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
@@ -385,7 +385,7 @@ export default function UserManager() {
                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Initial password</label>
                                 <input
                                     type="text"
-                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
+                                    className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
                                     placeholder="Enter secure password"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
@@ -395,7 +395,7 @@ export default function UserManager() {
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Plan tier</label>
                                 <select
-                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                    className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                     value={plan}
                                     onChange={e => setPlan(e.target.value as any)}
                                 >
@@ -408,7 +408,7 @@ export default function UserManager() {
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase">System Role</label>
                                 <select
-                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold"
+                                    className="w-full p-2.5 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-lg outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold"
                                     value={role}
                                     onChange={e => setRole(e.target.value as any)}
                                 >
@@ -439,7 +439,7 @@ export default function UserManager() {
             {/* EDIT USER MODAL */}
             {showEditModal && selectedUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
-                    <div className="bg-white w-full max-w-xl rounded-2xl border border-slate-200 shadow-xl p-8 relative animate-in zoom-in-95 duration-200 my-8">
+                    <div className="bg-white w-full max-w-xl rounded-2xl border border-[#3066bb]/30 shadow-xl p-8 relative animate-in zoom-in-95 duration-200 my-8">
                         <h3 className="text-xl font-bold text-slate-900 mb-8">Edit user account</h3>
                         
                         <div className="space-y-6">
@@ -448,7 +448,7 @@ export default function UserManager() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">First name</label>
                                     <input
                                         type="text"
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                         value={firstName}
                                         onChange={e => setFirstName(e.target.value)}
                                     />
@@ -457,7 +457,7 @@ export default function UserManager() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Last name</label>
                                     <input
                                         type="text"
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                         value={lastName}
                                         onChange={e => setLastName(e.target.value)}
                                     />
@@ -469,7 +469,7 @@ export default function UserManager() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Email address</label>
                                     <input
                                         type="email"
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
                                     />
@@ -478,7 +478,7 @@ export default function UserManager() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Phone number</label>
                                     <input
                                         type="tel"
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                         value={phone}
                                         onChange={e => setPhone(e.target.value)}
                                     />
@@ -489,7 +489,7 @@ export default function UserManager() {
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Plan tier</label>
                                     <select
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm"
                                         value={plan}
                                         onChange={e => setPlan(e.target.value as any)}
                                     >
@@ -501,7 +501,7 @@ export default function UserManager() {
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">System Role</label>
                                     <select
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-semibold"
                                         value={role}
                                         onChange={e => setRole(e.target.value as any)}
                                     >
@@ -518,7 +518,7 @@ export default function UserManager() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Token limit</label>
                                     <input
                                         type="number"
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
                                         value={tokenLimit}
                                         onChange={e => setTokenLimit(Number(e.target.value))}
                                     />
@@ -527,7 +527,7 @@ export default function UserManager() {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">Sim minutes limit</label>
                                     <input
                                         type="number"
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
                                         value={simMinutesLimit}
                                         onChange={e => setSimMinutesLimit(Number(e.target.value))}
                                     />
@@ -540,14 +540,14 @@ export default function UserManager() {
                                     <input
                                         type="number"
                                         step="0.5"
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
+                                        className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono"
                                         value={simMinutesUsed}
                                         onChange={e => setSimMinutesUsed(Number(e.target.value))}
                                     />
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-100 space-y-4">
+                            <div className="pt-4 border-t border-[#3066bb]/20 space-y-4">
                                 <div className="flex justify-between items-center">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase">API Access & Key</label>
                                     <div className="flex items-center gap-2">
@@ -563,14 +563,14 @@ export default function UserManager() {
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
-                                        className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-xs font-mono placeholder:text-slate-300"
+                                        className="flex-1 p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-xs font-mono placeholder:text-slate-300"
                                         placeholder="No API Key generated"
                                         value={apiKey}
                                         readOnly
                                     />
                                     <button 
                                         onClick={generateNewApiKey}
-                                        className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-bold transition-colors"
+                                        className="px-4 bg-[#3066bb]/10 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-bold transition-colors"
                                     >
                                         GENERATE
                                     </button>
@@ -578,11 +578,11 @@ export default function UserManager() {
                                 <p className="text-[10px] text-slate-400">API Key allows users to bypass the dashboard and run simulations programmatically.</p>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-100">
+                            <div className="pt-4 border-t border-[#3066bb]/20">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase">New password (optional)</label>
                                 <input
                                     type="text"
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono placeholder:text-slate-300"
+                                    className="w-full p-3 bg-[#3066bb]/5 border border-[#3066bb]/30 rounded-xl outline-none focus:ring-1 focus:ring-[#3066bb] text-sm font-mono placeholder:text-slate-300"
                                     placeholder="Leave blank to keep current"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}

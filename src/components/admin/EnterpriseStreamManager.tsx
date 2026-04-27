@@ -148,7 +148,7 @@ export default function EnterpriseStreamManager() {
                     <h2 className="text-xl font-semibold text-slate-900">Enterprise Pipeline Hub</h2>
                     <p className="text-sm text-slate-500">Manage B2B integrations and visualize high-frequency streaming traffic.</p>
                 </div>
-                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-2 bg-[#3066bb]/10 p-1 rounded-xl border border-[#3066bb]/30">
                     <button 
                         onClick={() => setViewMode('manager')}
                         className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'manager' ? 'bg-white text-[#3066bb] shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
@@ -165,7 +165,7 @@ export default function EnterpriseStreamManager() {
             </div>
 
             {viewMode === 'manager' && (
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm p-6">
+                <div className="bg-white rounded-2xl border border-[#3066bb]/30 overflow-hidden shadow-sm p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="font-semibold text-slate-900">Active B2B Pipelines</h3>
                         <button 
@@ -177,7 +177,7 @@ export default function EnterpriseStreamManager() {
                     </div>
 
                     {showForm && (
-                        <form onSubmit={handleCreatePipeline} className="mb-8 p-6 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-4">
+                        <form onSubmit={handleCreatePipeline} className="mb-8 p-6 bg-[#3066bb]/5 rounded-xl border border-[#3066bb]/30 grid grid-cols-2 gap-4">
                             <div className="col-span-1">
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Enterprise Account</label>
                                 <select 
@@ -210,7 +210,7 @@ export default function EnterpriseStreamManager() {
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-slate-600">
-                            <thead className="bg-slate-50 text-slate-900 border-b border-slate-200 font-semibold">
+                            <thead className="bg-[#3066bb]/5 text-slate-900 border-b border-[#3066bb]/30 font-semibold">
                                 <tr>
                                     <th className="px-6 py-4">Enterprise</th>
                                     <th className="px-6 py-4">Status</th>
@@ -225,7 +225,7 @@ export default function EnterpriseStreamManager() {
                                 ) : pipelines.length === 0 ? (
                                     <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-500">No data pipelines configured.</td></tr>
                                 ) : pipelines.map(p => (
-                                    <tr key={p._id} className="hover:bg-slate-50">
+                                    <tr key={p._id} className="hover:bg-[#3066bb]/5">
                                         <td className="px-6 py-4 font-bold text-slate-900">{p.enterpriseName}</td>
                                         <td className="px-6 py-4">
                                             <button 
@@ -238,7 +238,7 @@ export default function EnterpriseStreamManager() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 group">
-                                                <span className="text-[10px] font-mono bg-slate-50 text-slate-500 px-2 py-1 rounded border border-slate-200">
+                                                <span className="text-[10px] font-mono bg-[#3066bb]/5 text-slate-500 px-2 py-1 rounded border border-[#3066bb]/30">
                                                     {p._id}
                                                 </span>
                                                 <button 
@@ -260,15 +260,15 @@ export default function EnterpriseStreamManager() {
             )}
 
             {viewMode === 'visualizer' && (
-                <div className="bg-white/80 backdrop-blur-2xl rounded-2xl border border-slate-200 overflow-hidden shadow-xl flex flex-col h-[600px] animate-in fade-in duration-500">
-                    <div className="bg-slate-50/80 p-5 border-b border-slate-200 flex justify-between items-center">
+                <div className="bg-white/80 backdrop-blur-2xl rounded-2xl border border-[#3066bb]/30 overflow-hidden shadow-xl flex flex-col h-[600px] animate-in fade-in duration-500">
+                    <div className="bg-[#3066bb]/5/80 p-5 border-b border-[#3066bb]/30 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <div className="flex gap-1.5 opacity-60">
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
                                 <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
                             </div>
-                            <span className="text-[#3066bb] text-xs font-bold tracking-[0.2em] pl-4 border-l border-slate-200 uppercase">Pipeline Telemetry</span>
+                            <span className="text-[#3066bb] text-xs font-bold tracking-[0.2em] pl-4 border-l border-[#3066bb]/30 uppercase">Pipeline Telemetry</span>
                         </div>
                         <button 
                             onClick={() => setIsPolling(!isPolling)}
@@ -280,11 +280,11 @@ export default function EnterpriseStreamManager() {
 
                     <div className="flex-1 grid grid-cols-3 divide-x divide-slate-100 bg-white/40">
                         {/* INBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-slate-50/30">
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[#3066bb]/5/30">
                             <h4 className="text-slate-900 flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Database size={14} className="text-[#3066bb]" /> Inbound Load</h4>
                             <div className="flex-1 space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
-                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[#3066bb]/30 shadow-md ring-1 ring-[#3066bb]/5' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[#3066bb]/30 shadow-md ring-1 ring-[#3066bb]/5' : 'bg-[#3066bb]/5 border-[#3066bb]/20 opacity-60'}`}>
                                         <div className="text-slate-400 mb-2 truncate font-semibold">[{new Date(shot.timestamp).toISOString()}]</div>
                                         <div className="text-slate-700 whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.parameters || {}, null, 2)}</div>
                                     </div>
@@ -300,9 +300,9 @@ export default function EnterpriseStreamManager() {
                                 {isPolling ? (
                                     <>
                                         <div className="relative flex items-center justify-center w-40 h-40">
-                                            <div className="absolute inset-0 rounded-full border-2 border-slate-100 border-t-[#3066bb]/20 animate-[spin_6s_linear_infinite]"></div>
-                                            <div className="absolute inset-3 rounded-full border-2 border-slate-100 border-b-purple-500/40 animate-[spin_4s_linear_infinite_reverse]"></div>
-                                            <div className="absolute inset-6 rounded-full border-2 border-slate-100 border-l-[#3066bb] animate-[spin_3s_linear_infinite]"></div>
+                                            <div className="absolute inset-0 rounded-full border-2 border-[#3066bb]/20 border-t-[#3066bb]/20 animate-[spin_6s_linear_infinite]"></div>
+                                            <div className="absolute inset-3 rounded-full border-2 border-[#3066bb]/20 border-b-purple-500/40 animate-[spin_4s_linear_infinite_reverse]"></div>
+                                            <div className="absolute inset-6 rounded-full border-2 border-[#3066bb]/20 border-l-[#3066bb] animate-[spin_3s_linear_infinite]"></div>
                                             <div className="text-center font-bold text-[10px] text-slate-800 tracking-[0.2em] z-10 drop-shadow-sm uppercase">Embedding<br/>Payload</div>
                                         </div>
                                         <div className="text-center space-y-2">
@@ -318,11 +318,11 @@ export default function EnterpriseStreamManager() {
                         </div>
 
                         {/* OUTBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-slate-50/30">
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-[#3066bb]/5/30">
                             <h4 className="text-slate-900 flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Activity size={14} className="text-emerald-500" /> Webhook Out</h4>
                             <div className="flex-1 space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
-                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                    <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-[#3066bb]/5 border-[#3066bb]/20 opacity-60'}`}>
                                         <div className="text-slate-400 mb-2 truncate flex justify-between font-semibold">
                                             <span>Target: POST 200 OK</span>
                                             <span className="text-[#3066bb]">{shot.hardware}</span>
