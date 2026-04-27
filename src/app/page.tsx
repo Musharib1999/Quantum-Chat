@@ -274,7 +274,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
     <Link
       href={href}
       onClick={(e) => href === '#' && e.preventDefault()}
-      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-300 \${href === '#' ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1 active:scale-[0.99]'} overflow-hidden flex flex-col justify-between h-full min-h-[220px] md:min-h-0 bg-white border-slate-100 \${href !== '#' ? 'hover:border-slate-200' : ''}`}>
+      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-300 ${href === '#' ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-2xl hover:-translate-y-1 active:scale-[0.99]'} overflow-hidden flex flex-col justify-between h-full min-h-[220px] md:min-h-0 bg-white border-slate-100 ${href !== '#' ? 'hover:border-slate-200' : ''}`}>
 
       {/* Glow Effect on Hover */}
       <div className={`absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 
@@ -292,7 +292,7 @@ const FeatureCard = ({ href, icon, title, description, actionText, isDarkMode, a
       </div>
 
       <div>
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 \${colors.light}`}>
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 ${colors.light}`}>
           {icon}
         </div>
 
