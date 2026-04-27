@@ -122,7 +122,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 {isAuthenticated && user?.role === 'builder' && (
                     <button
                         onClick={() => {
-                            router.push('/admin/dashboard?tab=forms');
+                            router.push('/builder/dashboard');
                             onClose();
                         }}
                         className="w-full flex items-center justify-between px-4 py-3 mt-2 rounded-xl bg-[#3066bb] text-white hover:bg-[#3066bb]/90 transition-all group shadow-md"

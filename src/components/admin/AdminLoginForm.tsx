@@ -29,9 +29,9 @@ export default function AdminLoginForm() {
                 const userRole = data.user?.role || 'admin';
                 
                 if (userRole === 'builder') {
-                    router.push("/admin/dashboard?tab=forms"); // Land directly on Industry Pipeline
+                    router.push("/builder/dashboard"); // New dedicated URL for Builders
                 } else {
-                    router.push("/admin/dashboard"); // Land on main dashboard
+                    router.push("/admin/dashboard"); // Main dashboard for Admins
                 }
             } else {
                 const data = await res.json();
