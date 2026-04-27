@@ -36,7 +36,16 @@ interface IQuantumForm {
     description: string;
     fields: IField[];
     sections?: { section_name: string; fields: IField[] }[];
-    codeTemplates?: { hardware: string; code: string; aiEnabled: boolean; llmModelId?: string }[];
+    codeTemplates?: { 
+        hardware: string; 
+        code: string; 
+        aiEnabled: boolean; 
+        llmModelId?: string;
+        batchingEnabled?: boolean;
+        maxQubitsPerBatch?: number;
+        qubitFormula?: string;
+        batchKey?: string;
+    }[];
     active: boolean;
     batchingEnabled?: boolean;
     maxQubitsPerBatch?: number;
@@ -66,7 +75,16 @@ export default function ProblemConsole() {
     const [jsonFields, setJsonFields] = useState('[]');
 
     // Tab 2: Compute State
-    const [codeTemplates, setCodeTemplates] = useState<{ hardware: string; code: string; aiEnabled: boolean; llmModelId?: string }[]>([]);
+    const [codeTemplates, setCodeTemplates] = useState<{ 
+        hardware: string; 
+        code: string; 
+        aiEnabled: boolean; 
+        llmModelId?: string;
+        batchingEnabled?: boolean;
+        maxQubitsPerBatch?: number;
+        qubitFormula?: string;
+        batchKey?: string;
+    }[]>([]);
     const [batchingEnabled, setBatchingEnabled] = useState(false);
     const [maxQubitsPerBatch, setMaxQubitsPerBatch] = useState(64);
     const [qubitFormula, setQubitFormula] = useState('');
@@ -164,14 +182,15 @@ export default function ProblemConsole() {
                 active: true,
                 fields,
                 codeTemplates,
-                batchingEnabled,
-                maxQubitsPerBatch,
-                qubitFormula,
-                batchKey,
+                interpretationPrompt,
                 outputMapping,
                 outputTables,
                 chartConfig,
-                interpretationPrompt,
+                // Ensure legacy global fields are populated for backward compatibility
+                batchingEnabled: codeTemplates[0]?.batchingEnabled || batchingEnabled,
+                maxQubitsPerBatch: codeTemplates[0]?.maxQubitsPerBatch || maxQubitsPerBatch,
+                qubitFormula: codeTemplates[0]?.qubitFormula || qubitFormula,
+                batchKey: codeTemplates[0]?.batchKey || batchKey,
                 // Automatically infer global environment from the first template for legacy DB support
                 executionEnvironment: (codeTemplates[0]?.hardware?.toLowerCase().includes('dwave')) ? 'python-dwave' : 'python-qiskit'
             };
@@ -259,7 +278,7 @@ export default function ProblemConsole() {
             setEditorMode('visual');
         }
 
-        // 2. Handle Logic Templates
+        // 2. Handle Logic Templates & Batching Migration
         let templates = form.codeTemplates || [];
         if (templates.length === 0 && (form as any).aiEnabled) {
             templates = [{
@@ -269,7 +288,22 @@ export default function ProblemConsole() {
                 llmModelId: (form as any).llmModelId
             }];
         }
-        setCodeTemplates(templates);
+
+        // Migration logic: Seed templates with global batching settings if they are missing
+        const migratedTemplates = templates.map(t => ({
+            ...t,
+            batchingEnabled: t.batchingEnabled ?? form.batchingEnabled ?? false,
+            maxQubitsPerBatch: t.maxQubitsPerBatch ?? form.maxQubitsPerBatch ?? 64,
+            qubitFormula: t.qubitFormula || form.qubitFormula || '',
+            batchKey: t.batchKey || form.batchKey || ''
+        }));
+        
+        setCodeTemplates(migratedTemplates);
+        setBatchingEnabled(form.batchingEnabled || false);
+        setQubitFormula(form.qubitFormula || '');
+        setMaxQubitsPerBatch(form.maxQubitsPerBatch || 64);
+        setBatchKey(form.batchKey || '');
+        setInterpretationPrompt(form.interpretationPrompt || '');
         
         setEditingId(form._id || null);
         setView('editor');
@@ -317,7 +351,7 @@ export default function ProblemConsole() {
                             <option key={h.id} value={h.name}>{h.name}</option>
                         ))}
                     </select>
-                    <p className="text-[10px] text-slate-400 mt-1 italic">Use 'Universal' to map multiple solvers (D-Wave, Qiskit, etc.) in the Backend Logic tab.</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Use 'Universal' to map multiple solvers (D-Wave, Qiskit, etc.) in the Backend Logic tab.</p>
                 </div>
             </div>
 
@@ -398,7 +432,7 @@ export default function ProblemConsole() {
                                     </select>
                                 </div>
                                 <div className="flex items-center gap-6">
-                                    <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 italic transition-all group-hover:bg-white group-hover:shadow-sm">
+                                    <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 transition-all group-hover:bg-white group-hover:shadow-sm">
                                         <span className="text-[9px] text-slate-400 font-bold">AI Intelligence</span>
                                         <button 
                                             onClick={() => { const up = [...codeTemplates]; up[i].aiEnabled = !up[i].aiEnabled; setCodeTemplates(up); }} 
@@ -425,7 +459,61 @@ export default function ProblemConsole() {
                                             <div className="text-[11px] text-slate-500 font-medium">Problem logic will be generated at runtime using advanced heuristic mapping for {t.hardware}.</div>
                                         </div>
                                     </div>
-                                    <div className="space-y-2 relative z-10">
+                                    
+                                    {/* Batching Configuration (Per Hardware) */}
+                                    <div className="mt-8 pt-6 border-t border-slate-100">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex flex-col gap-0.5">
+                                                <h3 className="text-xs font-bold text-slate-800">Batching Logic</h3>
+                                                <p className="text-[10px] text-slate-400">Configure how parallel jobs are split for this hardware</p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-[10px] font-bold ${t.batchingEnabled ? 'text-[#3066bb]' : 'text-slate-400'}`}>
+                                                    {t.batchingEnabled ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                                <button 
+                                                    onClick={() => { const up = [...codeTemplates]; up[i].batchingEnabled = !up[i].batchingEnabled; setCodeTemplates(up); }} 
+                                                    className={`w-9 h-5 rounded-full relative transition-all ${t.batchingEnabled ? 'bg-[#3066bb]' : 'bg-slate-300'}`}
+                                                >
+                                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${t.batchingEnabled ? 'left-5' : 'left-1'}`} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {t.batchingEnabled && (
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-300">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-slate-500">Qubit formula</label>
+                                                    <input 
+                                                        value={t.qubitFormula || ''} 
+                                                        onChange={e => { const up = [...codeTemplates]; up[i].qubitFormula = e.target.value; setCodeTemplates(up); }} 
+                                                        placeholder="{{params.n}} * 2" 
+                                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-mono outline-none focus:ring-1 focus:ring-[#3066bb]" 
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-slate-500">Max per batch</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={t.maxQubitsPerBatch || 64} 
+                                                        onChange={e => { const up = [...codeTemplates]; up[i].maxQubitsPerBatch = parseInt(e.target.value); setCodeTemplates(up); }} 
+                                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] outline-none focus:ring-1 focus:ring-[#3066bb]" 
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-slate-500">Batch key</label>
+                                                    <input 
+                                                        value={t.batchKey || ''} 
+                                                        onChange={e => { const up = [...codeTemplates]; up[i].batchKey = e.target.value; setCodeTemplates(up); }} 
+                                                        placeholder="e.g. assets" 
+                                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] outline-none focus:ring-1 focus:ring-[#3066bb]" 
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2 relative z-10 mt-6">
                                         <label className="text-[10px] font-bold text-slate-400 ml-1">Generator Model</label>
                                         <select 
                                             value={t.llmModelId}
@@ -443,7 +531,7 @@ export default function ProblemConsole() {
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-bold text-slate-400">Hand-written template</label>
-                                        <span className="text-[9px] text-blue-400 font-medium italic">Supports template literals: {"{{parameters.key}}"}</span>
+                                        <span className="text-[9px] text-blue-400 font-medium">Supports template literals: {"{{parameters.key}}"}</span>
                                     </div>
                                     <textarea 
                                         value={t.code} 
@@ -674,8 +762,8 @@ export default function ProblemConsole() {
                                 </div>
                                 <div className="flex flex-col gap-1 mb-4">
                                     <span className="text-[9px] font-mono text-slate-400">ID: {form._id?.substring(form._id.length - 8)}</span>
-                                    <span className="text-[9px] text-slate-400 italic">Created: {form.createdAt ? new Date(form.createdAt).toLocaleString() : 'N/A'}</span>
-                                    <span className="text-[9px] text-slate-400 italic">Modified: {form.updatedAt ? new Date(form.updatedAt).toLocaleString() : 'N/A'}</span>
+                                    <span className="text-[9px] text-slate-400">Created: {form.createdAt ? new Date(form.createdAt).toLocaleString() : 'N/A'}</span>
+                                    <span className="text-[9px] text-slate-400">Modified: {form.updatedAt ? new Date(form.updatedAt).toLocaleString() : 'N/A'}</span>
                                 </div>
                                 <p className="text-xs text-slate-500 line-clamp-2 mb-6 flex-1">{form.description}</p>
                                 
@@ -706,7 +794,7 @@ export default function ProblemConsole() {
                             </div>
                         ))}
                     </div>
-                    {existingForms.length === 0 && <div className="py-20 text-center text-slate-400 text-sm italic">no blueprints found</div>}
+                    {existingForms.length === 0 && <div className="py-20 text-center text-slate-400 text-sm">no blueprints found</div>}
                 </div>
             ) : (
                 <div className="flex flex-col h-full animate-in fade-in duration-300">

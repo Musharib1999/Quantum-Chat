@@ -252,6 +252,7 @@ export async function executeIndustryWorkflow(
 
         // --- STEP 2: TEMPLATE LOOKUP ---
         let templateCode = "";
+        let batchesNeeded = 1;
         if (formDef?.codeTemplates && formDef.codeTemplates.length > 0) {
             const sanitizeStr = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
             const hwSanitized = sanitizeStr(hardware);
@@ -263,34 +264,38 @@ export async function executeIndustryWorkflow(
             });
             
             // 2. Fallback to Universal template or first template
-            templateCode = matched?.code || 
-                          formDef.codeTemplates.find((t: any) => sanitizeStr(t.hardware) === 'universal')?.code ||
-                          formDef.codeTemplates[0].code;
+            const bestTemplate = matched || 
+                           formDef.codeTemplates.find((t: any) => sanitizeStr(t.hardware) === 'universal') ||
+                           formDef.codeTemplates[0];
             
-            console.log(`[Quantum Workflow] Template Match | Req: ${hardware} | Found: ${!!templateCode}`);
-        }
+            templateCode = bestTemplate?.code;
 
-        // --- STEP 3: BATCHING ORCHESTRATION ---
-        if (formDef?.qubitFormula) {
-            try {
-                let formula = formDef.qubitFormula;
-                Object.keys(sanitizedFormData).forEach(key => {
-                    const regex = new RegExp(`{{${key}}}`, 'g');
-                    formula = formula.replace(regex, String(sanitizedFormData[key]));
-                });
-                const sanitizedMath = formula.replace(/[^0-9+\-*/().\s]/g, '');
-                const qubits = Math.ceil(eval(sanitizedMath));
-                (contextConfig as any).estimatedQubits = qubits;
-            } catch (e) {
-                console.error("Qubit calculation failed:", e);
+            // --- STEP 3: BATCHING ORCHESTRATION ---
+            // Prioritize template-level batching over legacy global batching
+            const activeBatchingEnabled = bestTemplate?.batchingEnabled ?? formDef.batchingEnabled;
+            const activeQubitFormula = bestTemplate?.qubitFormula || formDef.qubitFormula;
+            const activeMaxQubits = bestTemplate?.maxQubitsPerBatch || formDef.maxQubitsPerBatch || 64;
+
+            if (activeQubitFormula) {
+                try {
+                    let formula = activeQubitFormula;
+                    Object.keys(sanitizedFormData).forEach(key => {
+                        const regex = new RegExp(`{{${key}}}`, 'g');
+                        formula = formula.replace(regex, String(sanitizedFormData[key]));
+                    });
+                    const sanitizedMath = formula.replace(/[^0-9+\-*/().\s]/g, '');
+                    const qubits = Math.ceil(eval(sanitizedMath));
+                    (contextConfig as any).estimatedQubits = qubits;
+                } catch (e) {
+                    console.error("Qubit calculation failed:", e);
+                }
             }
-        }
 
-        let batchesNeeded = 1;
-        if (formDef?.batchingEnabled && (contextConfig as any).estimatedQubits) {
-            const qubits = (contextConfig as any).estimatedQubits;
-            if (qubits > (formDef.maxQubitsPerBatch || 64)) {
-                batchesNeeded = Math.ceil(qubits / (formDef.maxQubitsPerBatch || 64));
+            if (activeBatchingEnabled && (contextConfig as any).estimatedQubits) {
+                const qubits = (contextConfig as any).estimatedQubits;
+                if (qubits > activeMaxQubits) {
+                    batchesNeeded = Math.ceil(qubits / activeMaxQubits);
+                }
             }
         }
 
