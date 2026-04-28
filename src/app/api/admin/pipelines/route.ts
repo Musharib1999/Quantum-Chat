@@ -24,11 +24,12 @@ export async function POST(req: NextRequest) {
 
         const pipeline = await DataPipeline.create({
             enterpriseName: body.enterpriseName,
+            userId: body.userId, // Save the linked Enterprise User ID
             description: body.description || '',
             problemId: body.problemId,
             webhookUrl: body.webhookUrl,
             status: body.status || 'draft',
-            apiKeyPreview: body.apiKeyPreview || '****' // Admin manually links or records key suffix
+            apiKeyPreview: body.apiKeyPreview || '****'
         });
 
         return NextResponse.json({ success: true, pipeline });

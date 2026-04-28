@@ -45,7 +45,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Pipeline not found' }, { status: 404, headers: corsHeaders });
         }
 
-        if (pipeline.userId.toString() !== user._id.toString()) {
+        // Allow Admins to bypass ownership for cross-tenant testing
+        const isOwner = pipeline.userId && pipeline.userId.toString() === user._id.toString();
+        const isAdmin = user.role === 'admin';
+
+        if (!isOwner && !isAdmin) {
             return NextResponse.json({ error: 'Forbidden: You do not own this pipeline' }, { status: 403, headers: corsHeaders });
         }
 

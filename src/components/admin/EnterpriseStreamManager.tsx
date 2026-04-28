@@ -22,6 +22,7 @@ export default function EnterpriseStreamManager() {
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
         enterpriseName: '',
+        userId: '',
         problemId: '',
         webhookUrl: '',
         status: 'draft'
@@ -130,7 +131,7 @@ export default function EnterpriseStreamManager() {
             });
             const data = await res.json();
             if (data.success) {
-                setFormData({ enterpriseName: '', problemId: '', webhookUrl: '', status: 'draft' });
+                setFormData({ enterpriseName: '', userId: '', problemId: '', webhookUrl: '', status: 'draft' });
                 setShowForm(false);
                 fetchPipelines();
             } else {
@@ -182,13 +183,16 @@ export default function EnterpriseStreamManager() {
                                 <label className="block text-xs font-bold text-[#0F172A] mb-1">Enterprise Account</label>
                                 <select 
                                     required 
-                                    value={formData.enterpriseName} 
-                                    onChange={e => setFormData({...formData, enterpriseName: e.target.value})} 
+                                    value={formData.userId ? JSON.stringify({ id: formData.userId, name: formData.enterpriseName }) : ''} 
+                                    onChange={e => {
+                                        const parsed = JSON.parse(e.target.value);
+                                        setFormData({...formData, userId: parsed.id, enterpriseName: parsed.name});
+                                    }} 
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
                                 >
                                     <option value="" disabled>Select an Enterprise Account</option>
                                     {enterpriseUsers.map(user => (
-                                        <option key={user._id} value={user.company || user.email}>
+                                        <option key={user._id} value={JSON.stringify({ id: user._id, name: user.company || user.email })}>
                                             {user.company || user.firstName || 'Unnamed'} ({user.email})
                                         </option>
                                     ))}
