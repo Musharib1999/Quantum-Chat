@@ -40,7 +40,7 @@ export async function getExperiments(userEmail?: string, isAdmin: boolean = fals
             // Deliberately excluded: parameters, qiskitCode, results, analysis, chartData, assignmentsTable
         })
             .sort({ timestamp: -1 })
-            .limit(source ? 10 : 100) // 10 for stream polling, 100 for global logs view
+            .limit(source ? 10 : 20) // 10 for stream polling, 20 for global logs view (performance optimization)
             .lean();
 
         return experiments.map((exp: any) => ({
