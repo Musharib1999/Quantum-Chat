@@ -70,6 +70,30 @@ export default function ExperimentManager() {
                         className="flex-1 md:w-64 px-4 py-2 bg-white border border-[rgb(27,176,206)]/30 rounded-xl focus:ring-1 focus:ring-[rgb(27,176,206)] outline-none text-sm text-[#0F172A]"
                     />
                     <button
+                        onClick={async () => {
+                            const key = localStorage.getItem('guru_api_key');
+                            if (!key) return alert("Admin API Key required for export.");
+                            try {
+                                const res = await fetch('/api/admin/experiments/export', {
+                                    headers: { 'X-API-Key': key }
+                                });
+                                if (!res.ok) throw new Error("Export failed");
+                                const blob = await res.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `quantum-shots-${new Date().toISOString().split('T')[0]}.csv`;
+                                a.click();
+                            } catch (e) {
+                                alert("Failed to export CSV. Ensure you are logged in as admin.");
+                            }
+                        }}
+                        className="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-2"
+                    >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        EXPORT CSV
+                    </button>
+                    <button
                         onClick={loadExperiments}
                         className="px-4 py-2 text-[#0F172A] hover:text-[#0F172A] font-semibold text-sm transition-colors"
                     >
