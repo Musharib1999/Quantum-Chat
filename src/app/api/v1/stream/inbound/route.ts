@@ -39,9 +39,24 @@ export async function POST(req: NextRequest) {
             }, { status: 400, headers: corsHeaders }); // Immediate rejection of bad data (Requirement from Business Rules)
         }
 
-        // 3. Validate Pipeline Status and Ownership
-        const pipeline = await DataPipeline.findById(pipelineId).lean() as any;
+        // 3. Validate Pipeline Status and Ownership (Robustly)
+        let pipeline: any = null;
+        try {
+            // Check if ID is valid ObjectId to prevent Mongoose cast errors
+            const isObjectId = /^[0-9a-fA-F]{24}$/.test(pipelineId);
+            if (isObjectId) {
+                pipeline = await DataPipeline.findById(pipelineId).lean();
+            } else {
+                console.error(`[Stream-API] Invalid Pipeline ID format: ${pipelineId}`);
+                return NextResponse.json({ error: 'Invalid Pipeline ID format' }, { status: 400, headers: corsHeaders });
+            }
+        } catch (dbErr: any) {
+            console.error(`[Stream-API] Database error looking up pipeline:`, dbErr);
+            return NextResponse.json({ error: 'Database lookup failed' }, { status: 500, headers: corsHeaders });
+        }
+
         if (!pipeline) {
+            console.error(`[Stream-API] Pipeline not found: ${pipelineId}`);
             return NextResponse.json({ error: 'Pipeline not found' }, { status: 404, headers: corsHeaders });
         }
 
@@ -50,10 +65,12 @@ export async function POST(req: NextRequest) {
         const isAdmin = user.role === 'admin';
 
         if (!isOwner && !isAdmin) {
+            console.error(`[Stream-API] Forbidden: User ${user.email} does not own pipeline ${pipelineId}`);
             return NextResponse.json({ error: 'Forbidden: You do not own this pipeline' }, { status: 403, headers: corsHeaders });
         }
 
         if (pipeline.status !== 'active') {
+            console.error(`[Stream-API] Forbidden: Pipeline ${pipelineId} is ${pipeline.status}`);
             return NextResponse.json({ error: `Pipeline is currently ${pipeline.status}. Must be active to accept streams.` }, { status: 403, headers: corsHeaders });
         }
 
