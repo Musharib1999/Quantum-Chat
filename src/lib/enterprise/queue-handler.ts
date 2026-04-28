@@ -121,6 +121,7 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
         // 5. Push the Oubound Result to the Enterprise Webhook
         await pushToWebhook(pipeline.webhookUrl, {
             shotId: shot._id,
+            callId: payload.call?.call_id || 'N/A', // Correlation ID for the showcase
             enterprise: pipeline.enterpriseName,
             status: executionResult?.error ? 'failed' : 'success',
             results: executionResult,
