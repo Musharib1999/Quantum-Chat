@@ -31,21 +31,33 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
 
         // 2. Synthesize/Embed the Payload into the Blueprint Template
         let executableCode = template;
-        
-        // Very basic string replacement embedding (Enterprise payloads MUST match blueprint variables exactly)
-        // e.g., if payload is { "budget": 5000 }, we replace {{budget}} with 5000.
-        // For strings, we wrap in quotes.
+
+        /**
+         * Convert a JSON string to Python-safe literal syntax.
+         * JSON:   true / false / null
+         * Python: True / False / None
+         */
+        const toPythonLiteral = (json: string): string =>
+            json
+                .replace(/\btrue\b/g, 'True')
+                .replace(/\bfalse\b/g, 'False')
+                .replace(/\bnull\b/g, 'None');
+
+        // Very basic string replacement embedding
         Object.keys(payload).forEach(key => {
             const val = payload[key];
-            const replacement = typeof val === 'string' 
-                ? `"${val.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"` 
-                : JSON.stringify(val);
+            const replacement = typeof val === 'string'
+                ? `"${val.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`
+                : toPythonLiteral(JSON.stringify(val));
             const regex = new RegExp(`{{${key}}}`, 'g');
             executableCode = executableCode.replace(regex, replacement);
         });
 
-        // Fallback for GUI-builder format dictionaries:
-        executableCode = executableCode.replace('{{PARAMETERS_JSON}}', JSON.stringify(payload, null, 2));
+        // Fallback for GUI-builder format dictionaries ({{PARAMETERS_JSON}}):
+        executableCode = executableCode.replace(
+            '{{PARAMETERS_JSON}}',
+            toPythonLiteral(JSON.stringify(payload, null, 2))
+        );
 
         // 3. Execute the Simulator
         let provider = 'qiskit';
