@@ -86,6 +86,12 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                                 <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Builder Hub</span>
                             </div>
                             <SidebarLink
+                                label="Quantum Solver Studio"
+                                active={false}
+                                onClick={() => window.location.href = '/builder/studio'}
+                            />
+                            <div className="my-2 border-b border-[rgb(27,176,206)]/10" />
+                            <SidebarLink
                                 label="Industry Pipeline"
                                 active={false}
                                 onClick={() => window.location.href = '/industry'}
@@ -103,13 +109,18 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                             <SidebarLink
                                 label="Quantum Guru LLM"
                                 active={false}
-                                onClick={() => window.location.href = '/'}
+                                onClick={() => window.location.href = '/quantum-assistant'}
                             />
                             <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20">
                                 <SidebarLink
                                     label="Problem Console"
                                     active={activeTab === 'forms'}
                                     onClick={() => handleNav('forms')}
+                                />
+                                <SidebarLink
+                                    label="Shot Logs"
+                                    active={activeTab === 'experiments'}
+                                    onClick={() => handleNav('experiments')}
                                 />
                             </div>
                         </>

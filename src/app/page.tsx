@@ -147,10 +147,10 @@ export default function LandingPage() {
 
           {/* Card 4: Quantum Solver Studio */}
           <FeatureCard
-            href={isAuthenticated ? "/builder/dashboard" : "/login?redirect=/builder/dashboard"}
+            href={isAuthenticated ? "/builder/studio" : "/login?redirect=/builder/studio"}
             icon={<Atom size={32} />}
             title="Quantum Solver Studio"
-            description="Write, test and run quantum and hybrid optimization solutions from a single interface. Integrates leading frameworks with built-in simulators for rapid experimentation"
+            description="Our flagship professional development environment. Write, test, and deploy frontier quantum algorithms with integrated real-time telemetry and hardware-aware optimization."
             actionText="Launch Studio"
             isDarkMode={false}
             accentColor="violet"
