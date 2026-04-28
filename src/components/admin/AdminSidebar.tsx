@@ -36,19 +36,6 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMenuOpen, role }: AdminSidebarProps) {
-    const [showFuture, setShowFuture] = useState(false);
-
-    useEffect(() => {
-        const saved = localStorage.getItem('qg_admin_show_future');
-        if (saved === 'true') setShowFuture(true);
-    }, []);
-
-    const toggleFuture = () => {
-        const next = !showFuture;
-        setShowFuture(next);
-        localStorage.setItem('qg_admin_show_future', String(next));
-    };
-
     const handleNav = (tab: string) => {
         setActiveTab(tab);
         setIsMobileMenuOpen(false);
@@ -180,52 +167,45 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                         </>
                     )}
 
-                    {showFuture && role !== 'builder' && (
-                        <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20 animate-in fade-in slide-in-from-top-2 duration-300">
+                    {role !== 'builder' && (
+                        <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20">
                             <div className="px-4 mb-2">
-                                <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Future Scope</span>
+                                <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Advanced Modules</span>
                             </div>
                             <SidebarLink
                                 label="Market Prompts"
                                 active={activeTab === 'market_prompts'}
                                 onClick={() => handleNav('market_prompts')}
-                                isExperimental
                             />
                             <SidebarLink
                                 label="Use Cases"
                                 active={activeTab === 'use_cases'}
                                 onClick={() => handleNav('use_cases')}
-                                isExperimental
                             />
                             <SidebarLink
                                 label="Enterprise Streams"
                                 active={activeTab === 'enterprise_streams'}
                                 onClick={() => handleNav('enterprise_streams')}
-                                isExperimental
                             />
                             <SidebarLink
                                 label="Shot Logs"
                                 active={activeTab === 'experiments'}
                                 onClick={() => handleNav('experiments')}
-                                isExperimental
                             />
                             <SidebarLink
                                 label="News Blocklist"
                                 active={activeTab === 'news_blocklist'}
                                 onClick={() => handleNav('news_blocklist')}
-                                isExperimental
                             />
                             <SidebarLink
                                 label="Analytics"
                                 active={activeTab === 'analytics'}
                                 onClick={() => handleNav('analytics')}
-                                isExperimental
                             />
                             <SidebarLink
                                 label="Stock Debugger"
                                 active={activeTab === 'stock_debug'}
                                 onClick={() => handleNav('stock_debug')}
-                                isExperimental
                             />
                         </div>
                     )}
