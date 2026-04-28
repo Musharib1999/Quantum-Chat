@@ -55,6 +55,17 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
             provider = 'ortools';
         }
 
+        const mongoose = (await import('mongoose')).default;
+        const Hardware = mongoose.models.Hardware || (await import('@/models/Hardware')).default;
+        let hwRecord = await Hardware.findOne({ 
+            name: { $regex: new RegExp(`^${hardware}$`, 'i') } 
+        }).lean() as any;
+
+        if (!hwRecord) {
+             hwRecord = await Hardware.findOne({ provider: provider === 'dwave' ? 'dwave' : { $ne: 'dwave' } }).sort({ order: 1 }).lean() as any;
+        }
+        const serviceUrl = hwRecord?.serviceUrl;
+
         // For D-Wave: strip any pre-existing import lines that the executor will inject automatically.
         // The executor's main.py prepends didom/neal/numpy imports using the absolute venv path.
         // Duplicate imports confuse the subprocess and cause ModuleNotFoundError.
@@ -67,14 +78,14 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
         }
 
         let executionResult: any;
-        console.log(`[StreamHandler] Dispatching to ${provider.toUpperCase()} backend...`);
+        console.log(`[StreamHandler] Dispatching to ${provider.toUpperCase()} backend at ${serviceUrl || 'Default Env'}...`);
 
         if (provider === 'qiskit') {
-            executionResult = await executeQuantumCircuit(executableCode);
+            executionResult = await executeQuantumCircuit(executableCode, serviceUrl);
         } else if (provider === 'dwave') {
-            executionResult = await executeDWaveAnnealer(executableCode);
+            executionResult = await executeDWaveAnnealer(executableCode, serviceUrl);
         } else if (provider === 'ortools') {
-            executionResult = await executeORTools(executableCode);
+            executionResult = await executeORTools(executableCode, serviceUrl);
         }
 
         // 4. Log the "Shot" for billing and audit
