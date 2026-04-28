@@ -100,7 +100,8 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
             executionResult = await executeORTools(executableCode, serviceUrl);
         }
 
-        // 4. Log the "Shot" for billing and audit
+        // 4. Persistence: Log the execution as a Shot (Experiment)
+        const executionDuration = Date.now() - startTime;
         const shot = await Shot.create({
             userId: userId,
             timestamp: new Date(),
@@ -112,10 +113,10 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
             qiskitCode: executableCode,
             results: executionResult,
             analysis: 'Automated Enterprise Stream Execution',
-            source: 'Enterprise-Stream'
+            source: 'Enterprise-Stream',
+            executionTimeMs: executionDuration
         });
 
-        const executionDuration = Date.now() - startTime;
         console.log(`[StreamHandler] Shot ${shot._id} executed in ${executionDuration}ms.`);
 
         // 5. Push the Oubound Result to the Enterprise Webhook

@@ -18,6 +18,7 @@ export interface IShot extends Document {
     outputTables?: any[]; // Dynamic table configuration
     cacheKey?: string; // SHA-256 hash for result caching
     source: string; // "Web" or "API"
+    executionTimeMs?: number; // Latency tracking for enterprise streams
 }
 
 const ShotSchema: Schema = new Schema({
@@ -37,7 +38,8 @@ const ShotSchema: Schema = new Schema({
     qubitCount: { type: Number, default: 0 },
     outputTables: { type: Schema.Types.Mixed },
     cacheKey: { type: String, index: true },
-    source: { type: String, default: 'Web', index: true }
+    source: { type: String, default: 'Web', index: true },
+    executionTimeMs: { type: Number }
 }, { collection: 'experiments' }); // <--- Explicit collection mapping to PRESERVE historical execution logs!
 
 export default mongoose.models.Shot || mongoose.model<IShot>('Shot', ShotSchema);
