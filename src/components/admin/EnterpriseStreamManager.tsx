@@ -90,7 +90,7 @@ export default function EnterpriseStreamManager() {
         try {
             // Use a direct REST endpoint with no-store cache to guarantee fresh data.
             // Server Actions are cached by Next.js and are NOT suitable for live polling.
-            const res = await fetch('/api/admin/stream-shots?limit=3', {
+            const res = await fetch('/api/admin/stream-shots?limit=10', {
                 cache: 'no-store',
                 headers: { 'Cache-Control': 'no-cache' }
             });
@@ -340,7 +340,7 @@ export default function EnterpriseStreamManager() {
             )}
 
             {viewMode === 'visualizer' && (
-                <div className="bg-white/80 backdrop-blur-2xl rounded-2xl border border-[rgb(27,176,206)]/30 overflow-hidden shadow-xl flex flex-col h-[600px] animate-in fade-in duration-500">
+                <div className="bg-white/80 backdrop-blur-2xl rounded-2xl border border-[rgb(27,176,206)]/30 overflow-hidden shadow-xl flex flex-col h-[700px] animate-in fade-in duration-500">
                     <div className="bg-white/80 p-5 border-b border-[rgb(27,176,206)]/30 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <div className="flex gap-1.5 opacity-60">
@@ -360,9 +360,9 @@ export default function EnterpriseStreamManager() {
 
                     <div className="flex-1 grid grid-cols-3 divide-x divide-slate-100 bg-white/40">
                         {/* INBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white/30">
-                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Database size={14} className="text-[#0F172A]" /> Inbound Load</h4>
-                            <div className="flex-1 space-y-4 font-mono text-[10px]">
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white/30 scroll-smooth">
+                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase sticky top-0 bg-white/80 backdrop-blur-sm pb-3 border-b border-slate-100 z-10"><Database size={14} className="text-[#0F172A]" /> Inbound Load</h4>
+                            <div className="space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[rgb(27,176,206)]/30 shadow-md ring-1 ring-[rgb(27,176,206)]/5' : 'bg-white border-[rgb(27,176,206)]/20 opacity-60'}`}>
                                         <div className="text-[#0F172A] mb-2 truncate font-semibold">[{new Date(shot.timestamp).toISOString()}]</div>
@@ -398,9 +398,9 @@ export default function EnterpriseStreamManager() {
                         </div>
 
                         {/* OUTBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white/30">
-                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Activity size={14} className="text-emerald-500" /> Webhook Out</h4>
-                            <div className="flex-1 space-y-4 font-mono text-[10px]">
+                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white/30 scroll-smooth">
+                            <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase sticky top-0 bg-white/80 backdrop-blur-sm pb-3 border-b border-slate-100 z-10"><Activity size={14} className="text-emerald-500" /> Webhook Out</h4>
+                            <div className="space-y-4 font-mono text-[10px]">
                                 {liveShots.map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-white border-[rgb(27,176,206)]/20 opacity-60'}`}>
                                         <div className="text-[#0F172A] mb-2 truncate flex justify-between font-semibold">
