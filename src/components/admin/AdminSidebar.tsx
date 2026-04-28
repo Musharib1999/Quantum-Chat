@@ -41,6 +41,28 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
         setIsMobileMenuOpen(false);
     };
 
+    // Self-healing check: If the guru_api_key is missing but user is logged in, sync it from the session
+    useEffect(() => {
+        const syncApiKey = async () => {
+            const existingKey = localStorage.getItem('guru_api_key');
+            if (!existingKey) {
+                try {
+                    const res = await fetch('/api/user/profile');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.user?.apiKey) {
+                            localStorage.setItem('guru_api_key', data.user.apiKey);
+                            console.log("[AdminSidebar] API Key synced successfully");
+                        }
+                    }
+                } catch (e) {
+                    console.error("[AdminSidebar] Failed to sync API key:", e);
+                }
+            }
+        };
+        syncApiKey();
+    }, []);
+
     return (
         <>
             {/* Mobile Sidebar Overlay */}

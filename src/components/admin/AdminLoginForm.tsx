@@ -28,6 +28,11 @@ export default function AdminLoginForm() {
                 const data = await res.json();
                 const userRole = data.user?.role || 'admin';
                 
+                // Persist the API Key for administrative tool authorization
+                if (data.user?.apiKey) {
+                    localStorage.setItem('guru_api_key', data.user.apiKey);
+                }
+                
                 if (userRole === 'builder') {
                     router.push("/builder/dashboard"); // New dedicated URL for Builders
                 } else {
