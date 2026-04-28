@@ -32,15 +32,15 @@ export async function getExperiments(userEmail?: string, isAdmin: boolean = fals
             service: 1,
             problem: 1,
             hardware: 1,
-            parameters: 1,
             timestamp: 1,
             cacheKey: 1,
             qubitCount: 1,
             source: 1,
-            // Deliberately excluded: qiskitCode, results, analysis, chartData, assignmentsTable
+            executionTimeMs: 1,
+            // Deliberately excluded: parameters, qiskitCode, results, analysis, chartData, assignmentsTable
         })
             .sort({ timestamp: -1 })
-            .limit(source ? 10 : 50) // Take fewer if specifically polling for streams
+            .limit(source ? 10 : 100) // 10 for stream polling, 100 for global logs view
             .lean();
 
         return experiments.map((exp: any) => ({

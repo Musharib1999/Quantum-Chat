@@ -127,8 +127,13 @@ export default function ExperimentManager() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-[#0F172A] text-xs">{new Date(exp.timestamp).toLocaleDateString()}</div>
-                                            <div className="text-[10px] text-[#0F172A]">{new Date(exp.timestamp).toLocaleTimeString()}</div>
+                                            <div className="text-[#0F172A] text-xs font-semibold">{new Date(exp.timestamp).toLocaleDateString()}</div>
+                                            <div className="text-[10px] text-slate-500 font-medium">
+                                                {new Date(exp.timestamp).toLocaleTimeString()}
+                                                {exp.executionTimeMs && (
+                                                    <span className="ml-2 text-emerald-600 font-bold">({exp.executionTimeMs}ms)</span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <button
