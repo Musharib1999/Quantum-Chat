@@ -73,11 +73,9 @@ export default function EnterpriseStreamManager() {
 
     const fetchLatestShots = async () => {
         try {
-            const allShots = await getExperiments(undefined, true);
-            // In a real environment, filter by source = 'Enterprise-Stream'
-            // For now, take the latest 3 of any source to show the UI works
-            const streamShots = allShots.filter((s:any) => s.source === 'Enterprise-Stream' || s.source === 'API').slice(0, 3);
-            setLiveShots(streamShots);
+            // Specifically fetch shots from the Enterprise-Stream source to keep visualizer clean
+            const streamShots = await getExperiments(undefined, true, 'Enterprise-Stream');
+            setLiveShots(streamShots.slice(0, 3));
         } catch (e) {
             console.error(e);
         }

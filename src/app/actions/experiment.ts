@@ -8,7 +8,7 @@ import Shot from '@/models/Shot';
  * Only includes fields needed for display — excludes heavy fields like
  * qiskitCode, results (raw output), analysis (LLM text), and chartData.
  */
-export async function getExperiments(userEmail?: string, isAdmin: boolean = false) {
+export async function getExperiments(userEmail?: string, isAdmin: boolean = false, source?: string) {
     await dbConnect();
     try {
         if (!isAdmin && !userEmail) {
@@ -18,6 +18,10 @@ export async function getExperiments(userEmail?: string, isAdmin: boolean = fals
         const query: any = {};
         if (!isAdmin && userEmail) {
             query.userId = userEmail;
+        }
+        
+        if (source) {
+            query.source = source;
         }
 
         // Only select lightweight fields needed for the list view
@@ -36,7 +40,7 @@ export async function getExperiments(userEmail?: string, isAdmin: boolean = fals
             // Deliberately excluded: qiskitCode, results, analysis, chartData, assignmentsTable
         })
             .sort({ timestamp: -1 })
-            .limit(50)
+            .limit(source ? 10 : 50) // Take fewer if specifically polling for streams
             .lean();
 
         return experiments.map((exp: any) => ({
