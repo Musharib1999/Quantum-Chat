@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, ChevronDown, ChevronRight, FlaskConical, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarLinkProps {
     label: string;
@@ -36,32 +37,23 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMenuOpen, role }: AdminSidebarProps) {
+    const { user } = useAuth();
+    
     const handleNav = (tab: string) => {
         setActiveTab(tab);
         setIsMobileMenuOpen(false);
     };
 
-    // Self-healing check: If the guru_api_key is missing but user is logged in, sync it from the session
+    // Self-healing check: Ensure legacy 'guru_api_key' is synced from the current authenticated session
     useEffect(() => {
-        const syncApiKey = async () => {
+        if (user?.apiKey) {
             const existingKey = localStorage.getItem('guru_api_key');
-            if (!existingKey) {
-                try {
-                    const res = await fetch('/api/user/profile');
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.user?.apiKey) {
-                            localStorage.setItem('guru_api_key', data.user.apiKey);
-                            console.log("[AdminSidebar] API Key synced successfully");
-                        }
-                    }
-                } catch (e) {
-                    console.error("[AdminSidebar] Failed to sync API key:", e);
-                }
+            if (existingKey !== user.apiKey) {
+                localStorage.setItem('guru_api_key', user.apiKey);
+                console.log("[AdminSidebar] guru_api_key synchronized from session");
             }
-        };
-        syncApiKey();
-    }, []);
+        }
+    }, [user?.apiKey]);
 
     return (
         <>

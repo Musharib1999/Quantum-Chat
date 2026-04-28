@@ -71,8 +71,13 @@ export default function ExperimentManager() {
                     />
                     <button
                         onClick={async () => {
-                            const key = localStorage.getItem('guru_api_key');
-                            if (!key) return alert("Admin API Key required for export.");
+                            // Prioritize the key from the active session, fallback to localStorage
+                            const key = user?.apiKey || localStorage.getItem('guru_api_key');
+                            
+                            if (!key) {
+                                return alert("Authorization Error: Admin API Key not found in session. Please refresh your browser or log in again.");
+                            }
+                            
                             try {
                                 const res = await fetch('/api/admin/experiments/export', {
                                     headers: { 'X-API-Key': key }
@@ -85,7 +90,7 @@ export default function ExperimentManager() {
                                 a.download = `quantum-shots-${new Date().toISOString().split('T')[0]}.csv`;
                                 a.click();
                             } catch (e) {
-                                alert("Failed to export CSV. Ensure you are logged in as admin.");
+                                alert("Failed to export CSV. Ensure you are logged in with administrative privileges.");
                             }
                         }}
                         className="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-2"
