@@ -42,21 +42,24 @@ export async function PUT(req: NextRequest) {
     try {
         await dbConnect();
         const body = await req.json();
+        const { pipelineId, ...updates } = body;
         
-        if (!body.pipelineId || !body.status) {
-            return NextResponse.json({ error: 'Missing required fields (pipelineId, status)' }, { status: 400 });
+        if (!pipelineId) {
+            return NextResponse.json({ error: 'Missing pipelineId' }, { status: 400 });
         }
 
-        const pipeline = await DataPipeline.findById(body.pipelineId);
+        const pipeline = await DataPipeline.findByIdAndUpdate(
+            pipelineId,
+            { ...updates, updatedAt: new Date() },
+            { new: true }
+        );
+
         if (!pipeline) {
             return NextResponse.json({ error: 'Pipeline not found' }, { status: 404 });
         }
 
-        pipeline.status = body.status;
-        await pipeline.save();
-
         return NextResponse.json({ success: true, pipeline });
     } catch (error: any) {
-        return NextResponse.json({ error: 'Failed to update pipeline status', message: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to update pipeline', message: error.message }, { status: 500 });
     }
 }

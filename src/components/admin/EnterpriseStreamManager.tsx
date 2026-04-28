@@ -27,6 +27,7 @@ export default function EnterpriseStreamManager() {
         webhookUrl: '',
         status: 'draft'
     });
+    const [editingPipelineId, setEditingPipelineId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchPipelines();
@@ -116,21 +117,23 @@ export default function EnterpriseStreamManager() {
         }
     };
 
-    const handleCreatePipeline = async (e: React.FormEvent) => {
+    const handleSavePipeline = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const method = editingPipelineId ? 'PUT' : 'POST';
+            const payload = editingPipelineId ? { ...formData, pipelineId: editingPipelineId } : formData;
+
             const res = await fetch('/api/admin/pipelines', {
-                method: 'POST',
+                method,
                 headers: { 
                     'Content-Type': 'application/json',
                     'X-API-Key': localStorage.getItem('guru_api_key') || ''
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (data.success) {
-                setFormData({ enterpriseName: '', userId: '', problemId: '', webhookUrl: '', status: 'draft' });
-                setShowForm(false);
+                resetForm();
                 fetchPipelines();
             } else {
                 alert(data.error);
@@ -138,6 +141,24 @@ export default function EnterpriseStreamManager() {
         } catch (error) {
             alert("Submission failed.");
         }
+    };
+
+    const resetForm = () => {
+        setFormData({ enterpriseName: '', userId: '', problemId: '', webhookUrl: '', status: 'draft' });
+        setEditingPipelineId(null);
+        setShowForm(false);
+    };
+
+    const editPipeline = (p: any) => {
+        setFormData({
+            enterpriseName: p.enterpriseName,
+            userId: p.userId,
+            problemId: p.problemId,
+            webhookUrl: p.webhookUrl,
+            status: p.status
+        });
+        setEditingPipelineId(p._id);
+        setShowForm(true);
     };
 
     return (
@@ -176,7 +197,13 @@ export default function EnterpriseStreamManager() {
                     </div>
 
                     {showForm && (
-                        <form onSubmit={handleCreatePipeline} className="mb-8 p-6 bg-white rounded-xl border border-[rgb(27,176,206)]/30 grid grid-cols-2 gap-4">
+                        <form onSubmit={handleSavePipeline} className="mb-8 p-6 bg-white rounded-xl border border-[rgb(27,176,206)]/30 grid grid-cols-2 gap-4 animate-in slide-in-from-top-4 duration-300">
+                            <div className="col-span-2 mb-2 flex justify-between items-center">
+                                <h4 className="text-sm font-bold text-[#0F172A]">{editingPipelineId ? 'Edit Pipeline' : 'Create New Pipeline'}</h4>
+                                {editingPipelineId && (
+                                    <button type="button" onClick={resetForm} className="text-[10px] font-bold text-red-500 hover:underline">Cancel Edit</button>
+                                )}
+                            </div>
                             <div className="col-span-1">
                                 <label className="block text-xs font-bold text-[#0F172A] mb-1">Enterprise Account</label>
                                 <select 
@@ -204,8 +231,10 @@ export default function EnterpriseStreamManager() {
                                 <label className="block text-xs font-bold text-[#0F172A] mb-1">Outbound Webhook URL</label>
                                 <input required type="url" value={formData.webhookUrl} onChange={e => setFormData({...formData, webhookUrl: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono" placeholder="https://api.acme.com/quantum/receive" />
                             </div>
-                            <div className="col-span-2 flex justify-end">
-                                <button type="submit" className="bg-[rgb(48,102,187)] text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm hover:opacity-90">Save Pipeline</button>
+                            <div className="col-span-2 flex justify-end gap-3">
+                                <button type="submit" className="bg-[rgb(48,102,187)] text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm hover:opacity-90">
+                                    {editingPipelineId ? 'Update Pipeline' : 'Save Pipeline'}
+                                </button>
                             </div>
                         </form>
                     )}
@@ -219,6 +248,7 @@ export default function EnterpriseStreamManager() {
                                     <th className="px-6 py-4">Pipeline ID (Integration Key)</th>
                                     <th className="px-6 py-4">Problem Mapping</th>
                                     <th className="px-6 py-4">Webhook target</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -253,6 +283,14 @@ export default function EnterpriseStreamManager() {
                                         </td>
                                         <td className="px-6 py-4 font-mono text-[10px] text-[#0F172A]">{p.problemId}</td>
                                         <td className="px-6 py-4 text-xs font-mono text-[#0F172A] truncate max-w-[200px]">{p.webhookUrl}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button 
+                                                onClick={() => editPipeline(p)}
+                                                className="text-[10px] font-bold text-[#3066bb] hover:underline px-3 py-1 bg-blue-50 rounded border border-blue-100"
+                                            >
+                                                EDIT
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
