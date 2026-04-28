@@ -755,6 +755,9 @@ export default function ProblemConsole() {
                             >
                                 <svg viewBox="0 0 24 24" className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                             </button>
+                            <span className="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">
+                                Debug: {user?.role || 'no-role'} | {user?.email || 'no-email'}
+                            </span>
                         </div>
                         <button onClick={resetForm} className="bg-[rgb(48,102,187)] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#255299] transition-all shadow-sm">
                             New blueprint

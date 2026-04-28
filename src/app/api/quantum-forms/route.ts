@@ -17,15 +17,17 @@ export async function GET(req: Request) {
         const userRole = searchParams.get('userRole');
 
         // If no params, return all for Admin/Builder Overview
-        if (!industry && !service && !problem || industry === 'null') {
+        if (!industry && !service && !problem || industry === 'null' || industry === 'undefined') {
             let query: any = {};
             
+            const isPowerUser = userRole === 'admin' || userRole === 'enterprise';
+            
             // Access Control: Builders only see their own, Admins/Enterprise see everything
-            if (userRole === 'builder' && userEmail) {
+            if (userRole === 'builder' && userEmail && !isPowerUser) {
                 query.createdBy = userEmail;
             }
             
-            console.log(`[QuantumForms API] Fetching all forms. Role: ${userRole}, Email: ${userEmail}, Query:`, query);
+            console.log(`[QuantumForms API] Fetching all forms. Role: ${userRole}, Email: ${userEmail}, PowerUser: ${isPowerUser}, Query:`, query);
             
             const allForms = await QuantumForm.find(query).sort({ createdAt: -1 });
             return NextResponse.json(allForms);
