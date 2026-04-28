@@ -746,60 +746,81 @@ export default function ProblemConsole() {
             {view === 'overview' ? (
                 <div className="space-y-6">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-xl font-bold text-[#0F172A]">Problem blueprints</h2>
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-bold text-[#0F172A]">Problem blueprints</h2>
+                            <button 
+                                onClick={fetchInitialData}
+                                className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-500"
+                                title="Refresh"
+                            >
+                                <svg viewBox="0 0 24 24" className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            </button>
+                        </div>
                         <button onClick={resetForm} className="bg-[rgb(48,102,187)] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#255299] transition-all shadow-sm">
                             New blueprint
                         </button>
                     </div>
 
+                    {status && (
+                        <div className={`p-4 rounded-xl text-xs font-bold ${status.startsWith('Error') ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                            {status}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {existingForms.map((form) => (
-                            <div key={form._id} className="bg-white border border-[rgb(27,176,206)]/30 p-6 rounded-2xl hover:border-[rgb(27,176,206)] hover:shadow-md transition-all flex flex-col min-h-[220px]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="text-[10px] font-bold text-[#0F172A] bg-white px-2 py-0.5 rounded-md border border-[rgb(27,176,206)]/20">{form.industry}</span>
-                                    {form.active && <span className="text-[10px] text-green-600 font-bold">Active</span>}
-                                </div>
-                                <h3 className="text-lg font-bold text-[#0F172A] mb-2 line-clamp-1">{form.problem}</h3>
-                                <div className="text-[10px] text-[#0F172A] font-bold mb-2">
-                                    {form.service} • {form.hardware === 'Universal' && form.codeTemplates?.length 
-                                        ? `Universal (${form.codeTemplates.map(t => t.hardware).join(', ')})` 
-                                        : form.hardware}
-                                </div>
-                                <div className="flex flex-col gap-1 mb-4">
-                                    <span className="text-[9px] font-mono text-[#0F172A]">ID: {form._id?.substring(form._id.length - 8)}</span>
-                                    <span className="text-[9px] text-[#0F172A]">Created: {form.createdAt ? new Date(form.createdAt).toLocaleString() : 'N/A'}</span>
-                                    <span className="text-[9px] text-[#0F172A]">Modified: {form.updatedAt ? new Date(form.updatedAt).toLocaleString() : 'N/A'}</span>
-                                </div>
-                                <p className="text-xs text-[#0F172A] line-clamp-2 mb-6 flex-1">{form.description}</p>
-                                
-                                <div className="grid grid-cols-3 gap-2 mt-auto">
-                                    <button 
-                                        onClick={() => editForm(form)} 
-                                        className="py-2.5 rounded-xl border border-[rgb(27,176,206)]/20 bg-white text-[9px] font-bold text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-[rgb(27,176,206)] transition-all tracking-tight"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button 
-                                        onClick={() => handleToggleActive(form)} 
-                                        className={`py-2.5 rounded-xl border transition-all text-[9px] font-bold tracking-tight ${
-                                            form.active 
-                                                ? 'bg-white border-[rgb(27,176,206)]/20 text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-amber-600' 
-                                                : 'bg-green-50 border-green-100 text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600'
-                                        }`}
-                                    >
-                                        {form.active ? 'Hide' : 'Show'}
-                                    </button>
-                                    <button 
-                                        onClick={() => handleDelete(form)} 
-                                        className="py-2.5 rounded-xl border border-[rgb(27,176,206)]/20 bg-white text-[9px] font-bold text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-red-600 transition-all tracking-tight"
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
+                        {existingForms.length === 0 ? (
+                            <div className="col-span-full py-20 text-center space-y-4 bg-white/50 rounded-3xl border border-dashed border-slate-200">
+                                <div className="text-slate-400 font-medium">No problem blueprints found.</div>
+                                <button onClick={resetForm} className="text-[#3066bb] font-bold text-sm hover:underline">Create your first blueprint →</button>
                             </div>
-                        ))}
+                        ) : (
+                            existingForms.map((form) => (
+                                <div key={form._id} className="bg-white border border-[rgb(27,176,206)]/30 p-6 rounded-2xl hover:border-[rgb(27,176,206)] hover:shadow-md transition-all flex flex-col min-h-[220px]">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <span className="text-[10px] font-bold text-[#0F172A] bg-white px-2 py-0.5 rounded-md border border-[rgb(27,176,206)]/20">{form.industry}</span>
+                                        {form.active && <span className="text-[10px] text-green-600 font-bold">Active</span>}
+                                    </div>
+                                    <h3 className="text-lg font-bold text-[#0F172A] mb-2 line-clamp-1">{form.problem}</h3>
+                                    <div className="text-[10px] text-[#0F172A] font-bold mb-2">
+                                        {form.service} • {form.hardware === 'Universal' && form.codeTemplates?.length 
+                                            ? `Universal (${form.codeTemplates.map(t => t.hardware).join(', ')})` 
+                                            : form.hardware}
+                                    </div>
+                                    <div className="flex flex-col gap-1 mb-4">
+                                        <span className="text-[9px] font-mono text-[#0F172A]">ID: {String(form._id).substring(String(form._id).length - 8)}</span>
+                                        <span className="text-[9px] text-[#0F172A]">Created: {form.createdAt ? new Date(form.createdAt).toLocaleString() : 'N/A'}</span>
+                                        <span className="text-[9px] text-[#0F172A]">Modified: {form.updatedAt ? new Date(form.updatedAt).toLocaleString() : 'N/A'}</span>
+                                    </div>
+                                    <p className="text-xs text-[#0F172A] line-clamp-2 mb-6 flex-1">{form.description}</p>
+                                    
+                                    <div className="grid grid-cols-3 gap-2 mt-auto">
+                                        <button 
+                                            onClick={() => editForm(form)} 
+                                            className="py-2.5 rounded-xl border border-[rgb(27,176,206)]/20 bg-white text-[9px] font-bold text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-[rgb(27,176,206)] transition-all tracking-tight"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button 
+                                            onClick={() => handleToggleActive(form)} 
+                                            className={`py-2.5 rounded-xl border transition-all text-[9px] font-bold tracking-tight ${
+                                                form.active 
+                                                    ? 'bg-white border-[rgb(27,176,206)]/20 text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-amber-600' 
+                                                    : 'bg-green-50 border-green-100 text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600'
+                                            }`}
+                                        >
+                                            {form.active ? 'Hide' : 'Show'}
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDelete(form)} 
+                                            className="py-2.5 rounded-xl border border-[rgb(27,176,206)]/20 bg-white text-[9px] font-bold text-[#0F172A] hover:bg-[rgb(48,102,187)] hover:text-white hover:border-red-600 transition-all tracking-tight"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
-                    {existingForms.length === 0 && <div className="py-20 text-center text-[#0F172A] text-sm">no blueprints found</div>}
                 </div>
             ) : (
                 <div className="flex flex-col h-full animate-in fade-in duration-300">
