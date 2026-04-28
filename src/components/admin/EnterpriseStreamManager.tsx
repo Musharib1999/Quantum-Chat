@@ -16,6 +16,8 @@ export default function EnterpriseStreamManager() {
 
     // Enterprise Users for Dropdown
     const [enterpriseUsers, setEnterpriseUsers] = useState<any[]>([]);
+    // Blueprints for Dropdown
+    const [blueprints, setBlueprints] = useState<any[]>([]);
 
     // Form State
     const [showForm, setShowForm] = useState(false);
@@ -31,6 +33,7 @@ export default function EnterpriseStreamManager() {
     useEffect(() => {
         fetchPipelines();
         fetchEnterpriseUsers();
+        fetchBlueprints();
         return () => stopPolling();
     }, []);
 
@@ -41,6 +44,18 @@ export default function EnterpriseStreamManager() {
             stopPolling();
         }
     }, [viewMode, isPolling]);
+
+    const fetchBlueprints = async () => {
+        try {
+            const res = await fetch('/api/quantum-forms?userRole=admin&userEmail=admin');
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setBlueprints(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch blueprints", error);
+        }
+    };
 
     const fetchEnterpriseUsers = async () => {
         try {
@@ -234,8 +249,23 @@ export default function EnterpriseStreamManager() {
                                 </select>
                             </div>
                             <div className="col-span-1">
-                                <label className="block text-xs font-bold text-[#0F172A] mb-1">Problem Blueprint ID</label>
-                                <input required value={formData.problemId} onChange={e => setFormData({...formData, problemId: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono" placeholder="MongoDB ObjectId" />
+                                <label className="block text-xs font-bold text-[#0F172A] mb-1">Problem Blueprint</label>
+                                <select
+                                    required
+                                    value={formData.problemId}
+                                    onChange={e => setFormData({...formData, problemId: e.target.value})}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                                >
+                                    <option value="" disabled>Select a Problem Blueprint</option>
+                                    {blueprints.map((bp: any) => (
+                                        <option key={bp._id} value={bp._id}>
+                                            {bp.problem} — {bp.industry} ({bp.hardware})
+                                        </option>
+                                    ))}
+                                </select>
+                                {formData.problemId && (
+                                    <p className="text-[10px] font-mono text-slate-400 mt-1 truncate">ID: {formData.problemId}</p>
+                                )}
                             </div>
                             <div className="col-span-2">
                                 <label className="block text-xs font-bold text-[#0F172A] mb-1">Outbound Webhook URL</label>

@@ -790,7 +790,14 @@ export default function ProblemConsole() {
                                             : form.hardware}
                                     </div>
                                     <div className="flex flex-col gap-1 mb-4">
-                                        <span className="text-[9px] font-mono text-[#0F172A]">ID: {String(form._id).substring(String(form._id).length - 8)}</span>
+                                        <div className="flex items-center gap-1.5 group">
+                                            <span className="text-[9px] font-mono text-[#0F172A] truncate" title={String(form._id)}>ID: {String(form._id)}</span>
+                                            <button
+                                                onClick={() => { navigator.clipboard.writeText(String(form._id)); alert('Blueprint ID copied!'); }}
+                                                className="opacity-0 group-hover:opacity-100 text-[9px] font-bold text-[#3066bb] underline transition-opacity shrink-0"
+                                                title="Copy full Blueprint ID"
+                                            >COPY</button>
+                                        </div>
                                         <span className="text-[9px] text-[#0F172A]">Created: {form.createdAt ? new Date(form.createdAt).toLocaleString() : 'N/A'}</span>
                                         <span className="text-[9px] text-[#0F172A]">Modified: {form.updatedAt ? new Date(form.updatedAt).toLocaleString() : 'N/A'}</span>
                                     </div>
