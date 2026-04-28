@@ -39,10 +39,14 @@ export async function POST(req: NextRequest) {
             }, { status: 400, headers: corsHeaders }); // Immediate rejection of bad data (Requirement from Business Rules)
         }
 
-        // 3. Validate Pipeline Status
+        // 3. Validate Pipeline Status and Ownership
         const pipeline = await DataPipeline.findById(pipelineId).lean() as any;
         if (!pipeline) {
             return NextResponse.json({ error: 'Pipeline not found' }, { status: 404, headers: corsHeaders });
+        }
+
+        if (pipeline.userId.toString() !== user._id.toString()) {
+            return NextResponse.json({ error: 'Forbidden: You do not own this pipeline' }, { status: 403, headers: corsHeaders });
         }
 
         if (pipeline.status !== 'active') {

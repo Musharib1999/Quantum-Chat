@@ -37,7 +37,9 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
         // For strings, we wrap in quotes.
         Object.keys(payload).forEach(key => {
             const val = payload[key];
-            const replacement = typeof val === 'string' ? `"${val}"` : JSON.stringify(val);
+            const replacement = typeof val === 'string' 
+                ? `"${val.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"` 
+                : JSON.stringify(val);
             const regex = new RegExp(`{{${key}}}`, 'g');
             executableCode = executableCode.replace(regex, replacement);
         });
