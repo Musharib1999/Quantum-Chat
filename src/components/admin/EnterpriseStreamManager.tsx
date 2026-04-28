@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { getExperiments } from '@/app/actions/experiment';
 import { Play, Square, Activity, Database, Workflow, CheckCircle, XCircle } from 'lucide-react';
 
 export default function EnterpriseStreamManager() {
@@ -74,11 +73,22 @@ export default function EnterpriseStreamManager() {
 
     const fetchLatestShots = async () => {
         try {
-            // Specifically fetch shots from the Enterprise-Stream source to keep visualizer clean
-            const streamShots = await getExperiments(undefined, true, 'Enterprise-Stream');
-            setLiveShots(streamShots.slice(0, 3));
+            // Use a direct REST endpoint with no-store cache to guarantee fresh data.
+            // Server Actions are cached by Next.js and are NOT suitable for live polling.
+            const res = await fetch('/api/admin/stream-shots?limit=3', {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' }
+            });
+            if (!res.ok) {
+                console.error('[Visualizer] Failed to fetch shots:', res.status);
+                return;
+            }
+            const data = await res.json();
+            if (data.success) {
+                setLiveShots(data.shots || []);
+            }
         } catch (e) {
-            console.error(e);
+            console.error('[Visualizer] Polling error:', e);
         }
     };
 
