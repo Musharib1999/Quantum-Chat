@@ -19,121 +19,122 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
             throw new Error(`Linked Blueprint ${pipeline.problemId} not found or inactive.`);
         }
 
-        const hardware = blueprint.hardware || 'Universal';
-        const normalize = (s: string) => s.toLowerCase().replace(/[-_\s]/g, '');
-        const template = blueprint.codeTemplates?.find((t: any) => 
-            normalize(t.hardware) === normalize(hardware)
-        )?.code;
-        
-        if (!template) {
-            throw new Error(`No code template found for hardware: ${hardware}`);
+        const templates = blueprint.codeTemplates || [];
+        if (templates.length === 0) {
+            throw new Error(`No code templates found for blueprint ${blueprint.problem}`);
         }
 
-        // 2. Synthesize/Embed the Payload into the Blueprint Template
-        let executableCode = template;
+        const mongoose = (await import('mongoose')).default;
+        const Hardware = mongoose.models.Hardware || (await import('@/models/Hardware')).default;
 
-        /**
-         * Convert a JSON string to Python-safe literal syntax.
-         * JSON:   true / false / null
-         * Python: True / False / None
-         */
         const toPythonLiteral = (json: string): string =>
             json
                 .replace(/\btrue\b/g, 'True')
                 .replace(/\bfalse\b/g, 'False')
                 .replace(/\bnull\b/g, 'None');
 
-        // Very basic string replacement embedding
-        Object.keys(payload).forEach(key => {
-            const val = payload[key];
-            const replacement = typeof val === 'string'
-                ? `"${val.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`
-                : toPythonLiteral(JSON.stringify(val));
-            const regex = new RegExp(`{{${key}}}`, 'g');
-            executableCode = executableCode.replace(regex, replacement);
-        });
+        const executions = await Promise.all(templates.map(async (t: any) => {
+            const hardwareName = t.hardware;
+            let executableCode = t.code;
 
-        // Fallback for GUI-builder format dictionaries ({{PARAMETERS_JSON}}):
-        executableCode = executableCode.replace(
-            '{{PARAMETERS_JSON}}',
-            toPythonLiteral(JSON.stringify(payload, null, 2))
-        );
+            Object.keys(payload).forEach(key => {
+                const val = payload[key];
+                const replacement = typeof val === 'string'
+                    ? `"${val.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`
+                    : toPythonLiteral(JSON.stringify(val));
+                const regex = new RegExp(`{{${key}}}`, 'g');
+                executableCode = executableCode.replace(regex, () => replacement);
+            });
 
-        // 3. Execute the Simulator
-        let provider = 'qiskit';
-        if (blueprint.executionEnvironment === 'python-dwave' || hardware.toLowerCase().includes('dwave')) {
-            provider = 'dwave';
-        } else if (hardware.toLowerCase().includes('google') || hardware.toLowerCase().includes('ortools')) {
-            provider = 'ortools';
-        }
+            executableCode = executableCode.replace(
+                '{{PARAMETERS_JSON}}',
+                () => toPythonLiteral(JSON.stringify(payload, null, 2))
+            );
 
-        const mongoose = (await import('mongoose')).default;
-        const Hardware = mongoose.models.Hardware || (await import('@/models/Hardware')).default;
-        let hwRecord = await Hardware.findOne({ 
-            name: { $regex: new RegExp(`^${hardware}$`, 'i') } 
-        }).lean() as any;
+            let provider = 'qiskit';
+            if (blueprint.executionEnvironment === 'python-dwave' || hardwareName.toLowerCase().includes('dwave')) {
+                provider = 'dwave';
+            } else if (hardwareName.toLowerCase().includes('google') || hardwareName.toLowerCase().includes('ortools')) {
+                provider = 'ortools';
+            }
 
-        if (!hwRecord) {
-             hwRecord = await Hardware.findOne({ provider: provider === 'dwave' ? 'dwave' : { $ne: 'dwave' } }).sort({ order: 1 }).lean() as any;
-        }
-        const serviceUrl = hwRecord?.serviceUrl;
+            let hwRecord = await Hardware.findOne({ 
+                name: { $regex: new RegExp(`^${hardwareName}$`, 'i') } 
+            }).lean() as any;
 
-        // For D-Wave: strip any pre-existing import lines that the executor will inject automatically.
-        // The executor's main.py prepends didom/neal/numpy imports using the absolute venv path.
-        // Duplicate imports confuse the subprocess and cause ModuleNotFoundError.
-        if (provider === 'dwave') {
-            const importBlacklist = ['import dimod', 'from dimod import', 'import neal', 'from neal import', 'import numpy', 'from numpy import'];
-            executableCode = executableCode
-                .split('\n')
-                .filter((line: string) => !importBlacklist.some(bad => line.trim().startsWith(bad)))
-                .join('\n');
-        }
+            if (!hwRecord) {
+                 hwRecord = await Hardware.findOne({ provider: provider === 'dwave' ? 'dwave' : { $ne: 'dwave' } }).sort({ order: 1 }).lean() as any;
+            }
+            const serviceUrl = hwRecord?.serviceUrl;
 
-        let executionResult: any;
-        console.log(`[StreamHandler] Dispatching to ${provider.toUpperCase()} backend at ${serviceUrl || 'Default Env'}...`);
+            if (provider === 'dwave') {
+                const importBlacklist = ['import dimod', 'from dimod import', 'import neal', 'from neal import', 'import numpy', 'from numpy import'];
+                executableCode = executableCode
+                    .split('\n')
+                    .filter((line: string) => !importBlacklist.some(bad => line.trim().startsWith(bad)))
+                    .join('\n');
+            }
 
-        if (provider === 'qiskit') {
-            executionResult = await executeQuantumCircuit(executableCode, serviceUrl);
-        } else if (provider === 'dwave') {
-            executionResult = await executeDWaveAnnealer(executableCode, serviceUrl);
-        } else if (provider === 'ortools') {
-            executionResult = await executeORTools(executableCode, serviceUrl);
-        }
+            let executionResult: any;
+            const execStartTime = Date.now();
+            console.log(`[StreamHandler] Dispatching to ${provider.toUpperCase()} backend at ${serviceUrl || 'Default Env'}...`);
 
-        // 4. Persistence: Log the execution as a Shot (Experiment)
-        const executionDuration = Date.now() - startTime;
-        const shot = await Shot.create({
-            userId: userId,
-            timestamp: new Date(),
-            industry: blueprint.industry,
-            service: blueprint.service,
-            problem: blueprint.problem,
-            hardware: hardware,
-            parameters: payload,
-            qiskitCode: executableCode,
-            results: executionResult,
-            analysis: 'Automated Enterprise Stream Execution',
-            source: 'Enterprise-Stream',
-            executionTimeMs: executionDuration
-        });
+            try {
+                if (provider === 'qiskit') {
+                    executionResult = await executeQuantumCircuit(executableCode, serviceUrl);
+                } else if (provider === 'dwave') {
+                    executionResult = await executeDWaveAnnealer(executableCode, serviceUrl);
+                } else if (provider === 'ortools') {
+                    executionResult = await executeORTools(executableCode, serviceUrl);
+                }
+            } catch (e: any) {
+                executionResult = { error: e.message };
+            }
 
-        console.log(`[StreamHandler] Shot ${shot._id} executed in ${executionDuration}ms.`);
+            const executionDuration = Date.now() - execStartTime;
+            
+            const shot = await Shot.create({
+                userId: userId,
+                timestamp: new Date(),
+                industry: blueprint.industry,
+                service: blueprint.service,
+                problem: blueprint.problem,
+                hardware: hardwareName,
+                parameters: payload,
+                qiskitCode: executableCode,
+                results: executionResult,
+                analysis: 'Automated Enterprise Stream Execution',
+                source: 'Enterprise-Stream',
+                executionTimeMs: executionDuration
+            });
+
+            console.log(`[StreamHandler] Shot ${shot._id} executed on ${hardwareName} in ${executionDuration}ms.`);
+
+            return {
+                hardware: hardwareName,
+                shotId: shot._id,
+                status: executionResult?.error ? 'failed' : 'success',
+                results: executionResult,
+                executionTimeMs: executionDuration
+            };
+        }));
+
+        const totalDuration = Date.now() - startTime;
 
         // 5. Push the Oubound Result to the Enterprise Webhook
         await pushToWebhook(pipeline.webhookUrl, {
-            shotId: shot._id,
             callId: payload.call?.call_id || 'N/A', // Correlation ID for the showcase
             enterprise: pipeline.enterpriseName,
-            status: executionResult?.error ? 'failed' : 'success',
-            results: executionResult,
-            executionTimeMs: executionDuration,
+            status: executions.some(e => e.status === 'success') ? 'success' : 'failed',
+            solutions: executions,
+            totalExecutionTimeMs: totalDuration,
             timestamp: new Date().toISOString()
         });
 
         return {
             success: true,
-            shotId: shot._id,
-            durationMs: executionDuration
+            shotIds: executions.map(e => e.shotId),
+            durationMs: totalDuration
         };
 
     } catch (error: any) {

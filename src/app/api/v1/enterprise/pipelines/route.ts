@@ -7,16 +7,23 @@ export async function GET(req: NextRequest) {
     try {
         await dbConnect();
         
-        // Use API Key authentication since Enterprise Users have active API keys
         const user = await authenticateApiKey(req);
-        if (!user || user.role !== 'enterprise') {
-            return NextResponse.json({ error: 'Unauthorized: Enterprise API access required' }, { status: 401 });
+        if (!user || (user.role !== 'enterprise' && user.role !== 'admin')) {
+            return NextResponse.json({ error: 'Unauthorized: Access denied' }, { status: 401 });
         }
 
-        // 2. Fetch all active pipelines for this enterprise user (Demo Mode)
-        const pipelines = await DataPipeline.find({ 
-            status: 'active'
-        }).sort({ createdAt: -1 });
+        // 2. Build Query based on Role
+        const query: any = {};
+        if (user.role !== 'admin') {
+            query.$or = [
+                { userId: user._id.toString() },
+                { enterpriseName: user.company ? new RegExp(`^${user.company}$`, 'i') : { $exists: false } },
+                { enterpriseName: user.email ? new RegExp(`^${user.email}$`, 'i') : { $exists: false } }
+            ];
+        }
+
+        // 3. Fetch pipelines
+        const pipelines = await DataPipeline.find(query).sort({ createdAt: -1 });
 
         return NextResponse.json({ success: true, pipelines });
 

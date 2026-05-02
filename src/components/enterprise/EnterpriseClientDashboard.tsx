@@ -65,7 +65,7 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
 
     const fetchLatestShots = async () => {
         try {
-            const res = await fetch('/api/v1/simulation/history?limit=3', { headers: getAuthHeaders() });
+            const res = await fetch('/api/v1/simulation/history?limit=10', { headers: getAuthHeaders() });
             const data = await res.json();
             if (data.success) {
                 const streamShots = (data.data || []).filter((s:any) => s.source === 'API' || s.source === 'Enterprise-Stream');
@@ -103,6 +103,12 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
         }
+    };
+
+    const handleRestartStream = () => {
+        setLiveShots([]);
+        fetchLatestShots();
+        fetchMetrics();
     };
 
     const handleSaveWebhook = async (pipelineId: string) => {
@@ -153,11 +159,11 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                     background: transparent;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #e2e8f0;
+                    background: #cbd5e1;
                     border-radius: 10px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: #cbd5e1;
+                    background: #94a3b8;
                 }
             `}</style>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -292,23 +298,37 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                         <div className="flex items-center gap-4">
                             <span className="text-slate-900 text-xs font-sans font-bold tracking-[0.2em]">Enterprise Telemetry</span>
                         </div>
-                        <button 
-                            onClick={() => setIsPolling(!isPolling)}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border ${isPolling ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50' : 'bg-[#3066bb] text-white border-[#3066bb] hover:bg-[#3066bb]/90'}`}
-                        >
-                            {isPolling ? 'Pause Pipeline' : 'Resume Pipeline'}
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={handleRestartStream}
+                                className="px-4 py-2 rounded-lg text-xs font-bold transition-all border bg-white text-[#3066bb] border-[#3066bb]/20 hover:bg-slate-50 flex items-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                                Restart Stream
+                            </button>
+                            <button 
+                                onClick={() => setIsPolling(!isPolling)}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border ${isPolling ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50' : 'bg-[#3066bb] text-white border-[#3066bb] hover:bg-[#3066bb]/90'}`}
+                            >
+                                {isPolling ? 'Pause Pipeline' : 'Resume Pipeline'}
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
+                    <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 min-h-0">
                         {/* INBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white">
+                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white min-h-0">
                             <h4 className="text-slate-900 flex flex-col font-sans text-xs font-bold mb-6 tracking-wider gap-1">
                                 <span>Inbound Packets</span>
                                 <span className="text-[10px] text-slate-500 font-semibold">POST /v1/stream</span>
                             </h4>
                             <div className="flex-1 space-y-4 font-sans text-[11px] overflow-y-auto pr-2 custom-scrollbar">
-                                {liveShots.map((shot, i) => (
+                                {liveShots.filter((s, idx, self) => 
+                                    idx === self.findIndex((t) => (
+                                        (t.parameters?.call?.call_id && t.parameters?.call?.call_id === s.parameters?.call?.call_id) || 
+                                        (!t.parameters?.call?.call_id && t.id === s.id)
+                                    ))
+                                ).map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border ${i === 0 ? 'bg-blue-50/50 border-[#3066bb]/30 shadow-sm' : 'bg-white border-slate-200'}`}>
                                         <div className="text-slate-600 mb-3 font-semibold">
                                             {new Date(shot.timestamp).toISOString().split('T')[1]}
@@ -320,48 +340,62 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                             </div>
                         </div>
 
-                        {/* QUANTUM EMBEDDING CORE */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-slate-50/50">
-                            <h4 className="text-[#3066bb] flex flex-col font-sans text-xs font-bold mb-6 tracking-wider gap-1">
-                                <span>Quantum Engine</span>
-                                <span className="text-[10px] text-slate-500 font-semibold">Embedding Node</span>
+                        {/* KPI METRICS BLOCK */}
+                        <div className="col-span-1 p-8 overflow-y-auto flex flex-col bg-slate-50/30 backdrop-blur-md">
+                            <h4 className="text-[#3066bb] flex flex-col font-sans text-xs font-bold mb-8 tracking-wider gap-1 uppercase">
+                                <span>Optimization KPI</span>
+                                <span className="text-[10px] text-slate-400 font-semibold normal-case">Real-time pipeline health</span>
                             </h4>
-                            <div className="flex-1 flex flex-col items-center justify-center space-y-8">
-                                {isPolling ? (
-                                    <>
-                                        <div className="relative flex items-center justify-center w-40 h-40">
-                                            <div className="absolute inset-0 rounded-full border border-[#3066bb]/10 animate-[spin_6s_linear_infinite]"></div>
-                                            <div className="absolute inset-3 rounded-full border border-b-transparent border-[#3066bb]/30 animate-[spin_3s_linear_infinite_reverse]"></div>
-                                            <div className="absolute inset-6 rounded-full border border-t-transparent border-[#3066bb] animate-[spin_2s_linear_infinite]"></div>
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                                                <div className="text-center font-sans text-[10px] font-bold text-[#3066bb] tracking-[0.2em] animate-pulse">Processing</div>
-                                            </div>
+                            
+                            <div className="flex-1 space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-white/60 p-4 rounded-2xl border border-slate-200/50 shadow-sm">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Inbound</p>
+                                        <p className="text-xl font-bold text-slate-900">{metrics.totalRequests}</p>
+                                    </div>
+                                    <div className="bg-white/60 p-4 rounded-2xl border border-slate-200/50 shadow-sm">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Outbound</p>
+                                        <p className="text-xl font-bold text-slate-900">{metrics.totalRequests}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/80 p-5 rounded-2xl border border-[#3066bb]/10 shadow-md relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#3066bb]/5 rounded-bl-full -mr-8 -mt-8"></div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10">Success Rate</p>
+                                    <div className="flex items-end gap-2 relative z-10">
+                                        <span className="text-3xl font-black text-slate-900 leading-none">{metrics.successRate}%</span>
+                                        <span className="text-[10px] font-bold text-green-500 mb-1">Operational</span>
+                                    </div>
+                                    <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-[#3066bb]" style={{ width: `${metrics.successRate}%` }}></div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Avg Execution Latency</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full border-2 border-[#3066bb] border-t-transparent animate-spin"></div>
+                                        <div>
+                                            <span className="text-2xl font-bold text-white leading-none">{metrics.avgExecutionTime}</span>
+                                            <span className="text-xs font-bold text-slate-400 ml-1">ms</span>
                                         </div>
-                                        <div className="bg-white border border-slate-200 rounded-xl p-5 w-full shadow-sm">
-                                            <ul className="space-y-4">
-                                                <li className="flex items-center justify-between text-xs font-sans">
-                                                    <span className="text-slate-600 font-bold">Blueprint Valid</span>
-                                                    <span className="text-[#3066bb] font-bold">OK</span>
-                                                </li>
-                                                <li className="flex items-center justify-between text-xs font-sans">
-                                                    <span className="text-slate-600 font-bold">Engine Throughput</span>
-                                                    <span className="text-slate-900 font-bold">24ms avg</span>
-                                                </li>
-                                                <li className="flex items-center justify-between text-xs font-sans">
-                                                    <span className="text-slate-600 font-bold">Hardware</span>
-                                                    <span className="text-slate-900 font-bold tracking-wider text-[10px]">Universal</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="text-slate-500 font-sans text-[11px] font-bold tracking-widest border border-slate-200 px-4 py-2 rounded-lg bg-white">Pipeline Paused</div>
-                                )}
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-200/50">
+                                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                        <span>Engine Status</span>
+                                        <span className="text-emerald-500 flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            Active
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {/* OUTBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white">
+                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white min-h-0">
                             <h4 className="text-slate-900 flex flex-col font-mono text-xs font-bold mb-6 tracking-wider gap-1">
                                 <span>WEBHOOK OUT</span>
                                 <span className="text-[10px] text-slate-500 font-semibold">PUSH DELIVERY</span>

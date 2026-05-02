@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
                 success: true,
                 message: 'Payload processed and webhook dispatched successfully',
-                shotId: result.shotId,
+                shotIds: result.shotIds,
                 durationMs: result.durationMs,
                 queueStatus: 'Synchronous delivery'
             }, { status: 200, headers: corsHeaders });

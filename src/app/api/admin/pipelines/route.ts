@@ -5,6 +5,14 @@ import dbConnect from '@/lib/db';
 export async function GET(req: NextRequest) {
     try {
         await dbConnect();
+
+        // Security: Ensure only Admins can view the global pipeline list
+        const { authenticateApiKey } = await import('@/lib/api-auth');
+        const user = await authenticateApiKey(req);
+        if (!user || user.role !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+        }
+
         const pipelines = await DataPipeline.find().sort({ createdAt: -1 });
         return NextResponse.json({ success: true, pipelines });
     } catch (error: any) {

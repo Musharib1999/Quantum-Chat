@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const userId = user._id;
+        const userId = user._id.toString();
 
         // 2. Aggregate Metrics
         // Total Executed Requests (API + Stream)
