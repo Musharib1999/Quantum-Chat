@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import AcademyProgress from '@/models/AcademyProgress';
-import { authenticateApiKey } from '@/lib/api-auth';
+import User from '@/models/User';
 
 export async function GET(
     req: NextRequest,
@@ -10,17 +10,17 @@ export async function GET(
     try {
         await dbConnect();
         const { id } = await params;
-        const user = await authenticateApiKey(req);
+        const email = req.nextUrl.searchParams.get('email');
+        if (!email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+        const user = await User.findOne({ email, isApproved: true });
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        let progress = await AcademyProgress.findOne({ 
-            userId: user.email, 
-            courseId: id 
-        });
+        let progress = await AcademyProgress.findOne({ userId: email, courseId: id });
 
         if (!progress) {
             progress = await AcademyProgress.create({
-                userId: user.email,
+                userId: email,
                 courseId: id,
                 completedSections: [],
                 attempts: {}

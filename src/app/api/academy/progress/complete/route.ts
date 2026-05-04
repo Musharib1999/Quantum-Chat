@@ -2,26 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import AcademyProgress from '@/models/AcademyProgress';
 import AcademySection from '@/models/AcademySection';
-import AcademyCourse from '@/models/AcademyCourse';
-import { authenticateApiKey } from '@/lib/api-auth';
+import User from '@/models/User';
 
 export async function POST(req: NextRequest) {
     try {
         await dbConnect();
-        const user = await authenticateApiKey(req);
+        const { courseId, sectionId, email } = await req.json();
+
+        if (!email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+        const user = await User.findOne({ email, isApproved: true });
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        const { courseId, sectionId } = await req.json();
-
         const progress = await AcademyProgress.findOneAndUpdate(
-            { userId: user.email, courseId },
+            { userId: email, courseId },
             { $addToSet: { completedSections: sectionId }, $set: { lastAccessed: new Date() } },
             { new: true, upsert: true }
         );
 
         // Check if course is fully completed
         const totalSections = await AcademySection.countDocuments({ courseId });
-        if (progress.completedSections.length === totalSections) {
+        if (progress.completedSections.length >= totalSections) {
             progress.isCompleted = true;
             progress.earnedBadge = true;
             await progress.save();

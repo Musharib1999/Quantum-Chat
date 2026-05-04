@@ -43,16 +43,11 @@ export default function CourseViewer() {
 
     const fetchCourseData = async () => {
         try {
+            const email = user?.email;
             const [courseRes, sectionsRes, progressRes] = await Promise.all([
-                axios.get(`/api/academy/courses/${courseId}`, {
-                    headers: { 'x-api-key': user?.apiKey }
-                }),
-                axios.get(`/api/academy/courses/${courseId}/sections`, {
-                    headers: { 'x-api-key': user?.apiKey }
-                }), 
-                axios.get(`/api/academy/progress/${courseId}`, {
-                    headers: { 'x-api-key': user?.apiKey }
-                })
+                axios.get(`/api/academy/courses/${courseId}`),
+                axios.get(`/api/academy/courses/${courseId}/sections?email=${encodeURIComponent(email || '')}`),
+                axios.get(`/api/academy/progress/${courseId}?email=${encodeURIComponent(email || '')}`)
             ]);
             
             setCourse(courseRes.data);
@@ -105,7 +100,8 @@ export default function CourseViewer() {
         try {
             await axios.post(`/api/academy/progress/complete`, {
                 courseId,
-                sectionId: activeSection._id
+                sectionId: activeSection._id,
+                email: user?.email
             });
             toast.success('Section completed!');
             

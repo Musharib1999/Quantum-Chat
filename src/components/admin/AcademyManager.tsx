@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface Course {
     _id: string;
