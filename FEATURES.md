@@ -72,6 +72,23 @@
 | Article search | Filter articles by title/topic |
 | Article chat | Context-aware chat based on selected article |
 | Article management | Admin can add/edit/delete articles via the admin dashboard |
+| **Article Chatbot** | Real-time chat with papers using semantic grounding |
+
+---
+
+## 🏢 Enterprise Telemetry Pipeline (`/enterprise/dashboard`)
+
+| Feature | Details |
+|---|---|
+| **Pipeline Management** | B2B dashboard for configuring problem-to-hardware mathematical mappings |
+| **Data Ingestion API** | RESTful endpoint (`/api/v1/stream/inbound`) for high-frequency packet ingestion |
+| **Multi-Hardware Parallelism** | Executes problems on all mapped solvers (D-Wave, Qiskit, OR-Tools) in parallel |
+| **Live Telemetry Visualizer** | Three-block live monitoring: Inbound → KPI Engine → Outbound Webhook |
+| **Real-time KPI Tracking** | Live calculation of Success Rate, Throughput, and Avg Execution Latency |
+| **Correlation ID (call_id)** | Passthrough of external tracking IDs for end-to-end auditability |
+| **Automated Webhooks** | Pushes aggregated solutions back to client endpoints via POST requests |
+| **Multi-Tenant Isolation** | Enterprise users strictly confined to their own pipeline data and metrics |
+| **Stream Interactivity** | Pause, Resume, and Restart Stream controls for live debugging |
 
 ---
 
@@ -155,6 +172,10 @@
 | `/api/admin/news/refresh` | POST | Trigger news scrape |
 | `/api/admin/scrape` | POST | Scrape articles from URLs |
 | `/api/admin/prompts` | GET/POST/PUT | System prompt management |
+| `/api/v1/stream/inbound` | POST | Enterprise data ingestion & quantum execution |
+| `/api/v1/enterprise/metrics` | GET | Real-time KPI aggregation for enterprise accounts |
+| `/api/v1/enterprise/pipelines` | GET/PUT | Manage B2B pipeline routes and webhooks |
+| `/api/v1/simulation/history` | GET | Retrieve past experiment and shot data |
 
 ---
 
