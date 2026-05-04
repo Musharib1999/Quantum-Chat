@@ -11,14 +11,17 @@ import axios from 'axios';
 import { generateCertificate } from '@/lib/certificate-generator';
 
 export default function AcademyDashboard() {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, isInitializing, user } = useAuth();
     const [courses, setCourses] = useState([]);
     const [progress, setProgress] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Wait for AuthContext to finish hydrating from localStorage before fetching.
+        // This ensures progress is fetched with the correct email on page refresh.
+        if (isInitializing) return;
         fetchData();
-    }, []);
+    }, [isInitializing, isAuthenticated]);
 
     const fetchData = async () => {
         try {

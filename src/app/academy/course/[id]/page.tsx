@@ -20,7 +20,7 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false 
 export default function CourseViewer() {
     const { id: courseId } = useParams();
     const router = useRouter();
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, isInitializing, user } = useAuth();
     
     const [course, setCourse] = useState<any>(null);
     const [sections, setSections] = useState<any[]>([]);
@@ -34,12 +34,17 @@ export default function CourseViewer() {
     const [attemptsLeft, setAttemptsLeft] = useState(3);
 
     useEffect(() => {
+        // Wait for AuthContext to finish reading localStorage before making auth decisions.
+        // Without this guard, a page refresh causes isAuthenticated to be momentarily false
+        // during hydration, triggering a premature redirect to /login.
+        if (isInitializing) return;
+
         if (!isAuthenticated) {
             router.push(`/login?redirect=/academy/course/${courseId}`);
             return;
         }
         fetchCourseData();
-    }, [courseId, isAuthenticated]);
+    }, [courseId, isAuthenticated, isInitializing]);
 
     const fetchCourseData = async () => {
         try {
@@ -111,6 +116,9 @@ export default function CourseViewer() {
             
             if (res.data.isCompleted) {
                 toast.success('Congratulations! Course Completed!', { duration: 5000, icon: '🏆' });
+            } else {
+                // Automatically move to the next section if not finished
+                handleNext();
             }
         } catch (err) {
             toast.error('Failed to save progress');
