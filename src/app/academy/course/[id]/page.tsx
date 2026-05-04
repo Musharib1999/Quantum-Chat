@@ -110,15 +110,24 @@ export default function CourseViewer() {
             });
             toast.success('Section completed!');
             
-            // Refresh progress
-            const res = await axios.get(`/api/academy/progress/${courseId}`);
+            // Refresh progress with email param
+            const res = await axios.get(`/api/academy/progress/${courseId}?email=${encodeURIComponent(user?.email || '')}`);
             setProgress(res.data);
             
             if (res.data.isCompleted) {
                 toast.success('Congratulations! Course Completed!', { duration: 5000, icon: '🏆' });
             } else {
-                // Automatically move to the next section if not finished
-                handleNext();
+                // Navigate directly using fresh index — bypasses stale closure in handleSectionChange
+                const currentIndex = sections.findIndex(s => s._id === activeSection._id);
+                if (currentIndex < sections.length - 1) {
+                    const nextSection = sections[currentIndex + 1];
+                    setActiveSection(nextSection);
+                    if (nextSection.type === 'question') {
+                        setCode(nextSection.boilerplateCode || '');
+                        setAttemptsLeft(3);
+                    }
+                    setExecutionOutput(null);
+                }
             }
         } catch (err) {
             toast.error('Failed to save progress');
@@ -246,8 +255,8 @@ export default function CourseViewer() {
             </aside>
 
             {/* Content Area */}
-            <main className="flex-1 flex flex-col min-w-0 bg-white">
-                <div className="flex-1 overflow-y-auto">
+            <main className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-y-auto">
                     <div className="max-w-4xl mx-auto py-16 px-12">
                         <div className="mb-10">
                             <h2 className="text-4xl font-black text-slate-900 mb-2">{activeSection?.title}</h2>
@@ -274,7 +283,7 @@ export default function CourseViewer() {
 
                 {/* Lab Environment (Monaco) */}
                 {activeSection?.type === 'question' && (
-                    <div className="h-[500px] border-t-4 border-[rgb(27,176,206)] flex flex-col bg-[#1e1e1e] relative">
+                    <div className="h-[500px] shrink-0 border-t-4 border-[rgb(27,176,206)] flex flex-col bg-[#1e1e1e]">
                         <div className="h-12 bg-slate-900 flex items-center justify-between px-6 shrink-0 border-b border-white/5">
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
