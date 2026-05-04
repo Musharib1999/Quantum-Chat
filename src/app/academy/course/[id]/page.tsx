@@ -45,7 +45,7 @@ export default function CourseViewer() {
         try {
             const [courseRes, sectionsRes, progressRes] = await Promise.all([
                 axios.get(`/api/academy/courses/${courseId}`),
-                axios.get(`/api/admin/academy/courses/${courseId}/sections`), // We'll use the same for student
+                axios.get(`/api/academy/courses/${courseId}/sections`), 
                 axios.get(`/api/academy/progress/${courseId}`)
             ]);
             
@@ -253,7 +253,7 @@ export default function CourseViewer() {
                                 <div />
                                 <button 
                                     onClick={isActiveCompleted ? handleNext : handleMarkComplete}
-                                    className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 active:scale-95"
+                                    className="bg-[rgb(27,176,206)] text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-[rgb(27,176,206)]/90 transition-all shadow-xl shadow-[rgb(27,176,206)]/20 active:scale-95"
                                 >
                                     {isActiveCompleted ? 'Next Lesson' : 'Mark as Completed'} <ArrowRight size={20} />
                                 </button>
@@ -264,8 +264,8 @@ export default function CourseViewer() {
 
                 {/* Lab Environment (Monaco) */}
                 {activeSection?.type === 'question' && (
-                    <div className="h-[500px] border-t-4 border-slate-900 flex flex-col bg-[#1e1e1e] relative">
-                        <div className="h-12 bg-slate-900 flex items-center justify-between px-6 shrink-0">
+                    <div className="h-[500px] border-t-4 border-[rgb(27,176,206)] flex flex-col bg-[#1e1e1e] relative">
+                        <div className="h-12 bg-slate-900 flex items-center justify-between px-6 shrink-0 border-b border-white/5">
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <Terminal size={14} className="text-emerald-400" />
@@ -401,7 +401,7 @@ export default function CourseViewer() {
                                         courseName: course?.title || 'Quantum Course',
                                         date: new Date().toLocaleString()
                                     })}
-                                    className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-900/20 active:scale-95"
+                                    className="w-full py-5 bg-[rgb(27,176,206)] text-white rounded-2xl font-black text-lg hover:bg-[rgb(27,176,206)]/90 transition-all flex items-center justify-center gap-3 shadow-xl shadow-[rgb(27,176,206)]/20 active:scale-95"
                                 >
                                     <Award size={24} /> Download Certificate
                                 </button>

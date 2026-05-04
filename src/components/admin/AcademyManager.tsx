@@ -327,7 +327,7 @@ export default function AcademyManager() {
                                 <div className="flex gap-4 pt-4">
                                     <button 
                                         type="submit"
-                                        className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                                        className="flex-1 bg-[rgb(27,176,206)] text-white py-3 rounded-xl font-bold hover:bg-[rgb(27,176,206)]/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[rgb(27,176,206)]/20"
                                     >
                                         <Save size={18} /> Save Section
                                     </button>
@@ -588,7 +588,7 @@ export default function AcademyManager() {
 
                             <button 
                                 type="submit"
-                                className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10"
+                                className="w-full bg-[rgb(27,176,206)] text-white py-5 rounded-2xl font-black text-lg hover:bg-[rgb(27,176,206)]/90 transition-all shadow-xl shadow-[rgb(27,176,206)]/20"
                             >
                                 {editingCourse ? 'Update Course Metadata' : 'Initialize Course Structure'}
                             </button>

@@ -65,7 +65,7 @@ export default function AcademyDashboard() {
                             </div>
                         </div>
                     ) : (
-                        <Link href="/login?redirect=/academy" className="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">
+                        <Link href="/login?redirect=/academy" className="bg-[rgb(27,176,206)] text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-[rgb(27,176,206)]/20 hover:bg-[rgb(27,176,206)]/90 transition-all">
                             Login to Start
                         </Link>
                     )}
@@ -74,9 +74,9 @@ export default function AcademyDashboard() {
 
             <main className="max-w-7xl mx-auto py-12 px-8">
                 {/* Hero Section */}
-                <div className="mb-16 relative rounded-[40px] overflow-hidden bg-slate-900 text-white p-12 shadow-2xl">
+                <div className="mb-16 relative rounded-[40px] overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-[rgb(27,176,206)]/30 text-white p-12 shadow-2xl border border-white/5">
                     <div className="absolute top-0 right-0 p-12 opacity-10">
-                        <Trophy size={200} />
+                        <Trophy size={200} className="text-[rgb(27,176,206)]" />
                     </div>
                     <div className="relative z-10 max-w-2xl">
                         <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
@@ -174,10 +174,10 @@ export default function AcademyDashboard() {
                                                 <div className="grid grid-cols-1 gap-3">
                                                     <Link 
                                                         href={`/academy/course/${course._id}`}
-                                                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${
+                                                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${
                                                             isEnrolled 
-                                                            ? 'bg-slate-900 text-white hover:bg-slate-800' 
-                                                            : 'bg-[rgb(27,176,206)]/5 text-[rgb(27,176,206)] hover:bg-[rgb(27,176,206)] hover:text-white'
+                                                            ? 'bg-[rgb(27,176,206)] text-white hover:bg-[rgb(27,176,206)]/90 shadow-[rgb(27,176,206)]/20' 
+                                                            : 'bg-[rgb(27,176,206)]/5 text-[rgb(27,176,206)] hover:bg-[rgb(27,176,206)] hover:text-white hover:shadow-[rgb(27,176,206)]/20'
                                                         }`}
                                                     >
                                                         {isEnrolled ? (
