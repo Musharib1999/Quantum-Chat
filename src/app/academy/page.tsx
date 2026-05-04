@@ -23,8 +23,12 @@ export default function AcademyDashboard() {
     const fetchData = async () => {
         try {
             const [coursesRes, progressRes] = await Promise.all([
-                axios.get('/api/academy/courses'),
-                isAuthenticated ? axios.get('/api/academy/progress') : Promise.resolve({ data: [] })
+                axios.get('/api/academy/courses', {
+                    headers: { 'x-api-key': user?.apiKey }
+                }),
+                isAuthenticated ? axios.get('/api/academy/progress', {
+                    headers: { 'x-api-key': user?.apiKey }
+                }) : Promise.resolve({ data: [] })
             ]);
             setCourses(coursesRes.data);
             setProgress(progressRes.data);

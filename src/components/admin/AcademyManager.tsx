@@ -33,6 +33,7 @@ interface Section {
 }
 
 export default function AcademyManager() {
+    const { user } = useAuth();
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeSubTab, setActiveSubTab] = useState('courses'); // 'courses', 'approvals'
@@ -77,7 +78,9 @@ export default function AcademyManager() {
     const fetchCourses = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/api/admin/academy/courses');
+            const res = await axios.get('/api/admin/academy/courses', {
+                headers: { 'x-api-key': user?.apiKey }
+            });
             setCourses(res.data);
         } catch (err) {
             toast.error('Failed to load courses');
@@ -89,7 +92,9 @@ export default function AcademyManager() {
     const fetchStudents = async () => {
         setFetchingStudents(true);
         try {
-            const res = await axios.get('/api/admin/academy/students');
+            const res = await axios.get('/api/admin/academy/students', {
+                headers: { 'x-api-key': user?.apiKey }
+            });
             setStudents(res.data);
         } catch (err) {
             toast.error('Failed to load students');
@@ -102,10 +107,14 @@ export default function AcademyManager() {
         e.preventDefault();
         try {
             if (editingCourse) {
-                await axios.put(`/api/admin/academy/courses/${editingCourse._id}`, courseForm);
+                await axios.put(`/api/admin/academy/courses/${editingCourse._id}`, courseForm, {
+                    headers: { 'x-api-key': user?.apiKey }
+                });
                 toast.success('Course updated');
             } else {
-                await axios.post('/api/admin/academy/courses', courseForm);
+                await axios.post('/api/admin/academy/courses', courseForm, {
+                    headers: { 'x-api-key': user?.apiKey }
+                });
                 toast.success('Course created');
             }
             setIsModalOpen(false);
@@ -117,7 +126,9 @@ export default function AcademyManager() {
 
     const fetchSections = async (courseId: string) => {
         try {
-            const res = await axios.get(`/api/admin/academy/courses/${courseId}/sections`);
+            const res = await axios.get(`/api/admin/academy/courses/${courseId}/sections`, {
+                headers: { 'x-api-key': user?.apiKey }
+            });
             setSections(res.data);
         } catch (err) {
             toast.error('Failed to load sections');
@@ -131,10 +142,14 @@ export default function AcademyManager() {
         try {
             const data = { ...sectionForm, courseId: selectedCourse._id };
             if (editingSection) {
-                await axios.put(`/api/admin/academy/sections/${editingSection._id}`, data);
+                await axios.put(`/api/admin/academy/sections/${editingSection._id}`, data, {
+                    headers: { 'x-api-key': user?.apiKey }
+                });
                 toast.success('Section updated');
             } else {
-                await axios.post('/api/admin/academy/sections', data);
+                await axios.post('/api/admin/academy/sections', data, {
+                    headers: { 'x-api-key': user?.apiKey }
+                });
                 toast.success('Section added');
             }
             setIsSectionModalOpen(false);
@@ -146,7 +161,9 @@ export default function AcademyManager() {
 
     const handleApprove = async (userId: string, approve: boolean) => {
         try {
-            await axios.put(`/api/admin/academy/students/${userId}`, { isApproved: approve });
+            await axios.put(`/api/admin/academy/students/${userId}`, { isApproved: approve }, {
+                headers: { 'x-api-key': user?.apiKey }
+            });
             toast.success(approve ? 'Student Approved' : 'Student Denied');
             fetchStudents();
         } catch (err) {
