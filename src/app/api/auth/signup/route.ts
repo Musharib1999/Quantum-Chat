@@ -8,7 +8,10 @@ export async function POST(req: Request) {
         await dbConnect();
         const body = await req.json();
 
-        const { firstName, lastName, email, company, password } = body;
+        const { firstName, lastName, email, company, password, role } = body;
+        
+        // Safety: only allow user or student roles to be requested
+        const requestedRole = (role === 'student') ? 'student' : 'user';
 
         // Basic validation
         if (!email || !password || !firstName || !lastName) {
@@ -33,8 +36,8 @@ export async function POST(req: Request) {
             company: company || '',
             password: hashedPassword,
             isApproved: false, // Requires admin approval
-            role: 'user', // Default role
-            plan: 'Guest' // Default plan starts as guest
+            role: requestedRole,
+            plan: requestedRole === 'student' ? 'Pro' : 'Guest' // Students get Pro tier features
         });
 
         return NextResponse.json(

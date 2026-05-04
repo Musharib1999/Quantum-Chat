@@ -207,6 +207,11 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                                 onClick={() => handleNav('experiments')}
                             />
                             <SidebarLink
+                                label="Quantum Academy"
+                                active={activeTab === 'academy'}
+                                onClick={() => handleNav('academy')}
+                            />
+                            <SidebarLink
                                 label="News Blocklist"
                                 active={activeTab === 'news_blocklist'}
                                 onClick={() => handleNav('news_blocklist')}

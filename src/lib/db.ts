@@ -28,8 +28,8 @@ async function dbConnect() {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
-            maxPoolSize: 10,
-            minPoolSize: 1,
+            maxPoolSize: 50,
+            minPoolSize: 5,
             serverSelectionTimeoutMS: 5000,
             connectTimeoutMS: 5000,       // Fail-fast on initial connection
             waitQueueTimeoutMS: 5000,     // Fail-fast when all pool slots are busy (was ∞ — caused 27s hangs)

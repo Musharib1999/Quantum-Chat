@@ -1429,7 +1429,7 @@ export async function savePipelineExperiment(data: {
             parameters: data.parameters,
             qiskitCode: data.qiskitCode,
             results: data.results,
-            analysis: data.analysis,
+            analysis: data.analysis || 'Automated experiment analysis result.',
             chartData: data.chartData,
             assignmentsTable: data.assignmentsTable,
             portfolioMetrics: data.portfolioMetrics,

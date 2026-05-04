@@ -21,6 +21,7 @@ import EnterpriseStreamManager from '../../../components/admin/EnterpriseStreamM
 import MarketPromptManager from '../../../components/admin/MarketPromptManager';
 import LLMSettingsManager from '../../../components/admin/LLMSettingsManager';
 import StockSearchDebugger from '../../../components/admin/StockSearchDebugger';
+import AcademyManager from '../../../components/admin/AcademyManager';
 import HardwareManager from '../../../components/admin/HardwareManager';
 import BlockedSourceManager from '../../../components/admin/BlockedSourceManager';
 
@@ -93,6 +94,7 @@ export default function AdminDashboard() {
                     {activeTab === 'enterprise_streams' && canSee('enterprise_streams') && <EnterpriseStreamManager />}
                     {activeTab === 'experiments' && canSee('experiments') && <ExperimentManager />}
                     {activeTab === 'users' && canSee('users') && <UserManager />}
+                    {activeTab === 'academy' && canSee('academy') && <AcademyManager />}
                     {activeTab === 'analytics' && canSee('analytics') && (
                         <div className="flex flex-col items-center justify-center h-full text-slate-400">
                             <h3 className="text-xl font-semibold text-slate-900">Analytics module</h3>

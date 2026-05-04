@@ -20,6 +20,7 @@ function LoginForm() {
     const [company, setCompany] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isStudent, setIsStudent] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -42,7 +43,7 @@ function LoginForm() {
             const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/signup';
             const bodyPayload = mode === 'login'
                 ? { email, password }
-                : { firstName, lastName, company, email, password, role: 'user' };
+                : { firstName, lastName, company, email, password, role: isStudent ? 'student' : 'user' };
 
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -57,14 +58,13 @@ function LoginForm() {
             }
 
             if (mode === 'login') {
-                // Store full user profile in AuthContext
                 login(data);
                 showToast('Login Successful', 'success');
                 router.push(redirect);
             } else {
-                setSuccessMsg(data.message || 'Registration successful Your account is pending admin approval');
-                setMode('login'); // Switch back to login view
-                setPassword(''); // Clear password for security
+                setSuccessMsg(data.message || 'Registration successful. Your account is pending admin approval');
+                setMode('login');
+                setPassword('');
             }
         } catch (err: any) {
             setError(err.message || 'Authentication failed Please check your connection');
@@ -123,6 +123,25 @@ function LoginForm() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {mode === 'signup' && (
                             <>
+                                <div className="space-y-2 p-3 bg-secondary/30 rounded-xl border border-white/5 mb-4">
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">I am registering as a:</label>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setIsStudent(false)}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isStudent ? 'bg-primary text-white shadow-lg' : 'bg-secondary/50 text-muted-foreground'}`}
+                                        >
+                                            Professional
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setIsStudent(true)}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isStudent ? 'bg-emerald-500 text-white shadow-lg' : 'bg-secondary/50 text-muted-foreground'}`}
+                                        >
+                                            Student
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">First Name</label>
@@ -146,7 +165,9 @@ function LoginForm() {
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">Company / Institution</label>
+                                    <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">
+                                        {isStudent ? 'University / Institute' : 'Company / Institution'}
+                                    </label>
                                     <input
                                         type="text"
                                         value={company}

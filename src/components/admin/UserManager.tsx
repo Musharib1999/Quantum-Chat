@@ -44,7 +44,7 @@ export default function UserManager() {
     const [simMinutesUsed, setSimMinutesUsed] = useState<number>(0);
     const [apiKey, setApiKey] = useState("");
     const [apiEnabled, setApiEnabled] = useState(false);
-    const [role, setRole] = useState<'user' | 'admin' | 'enterprise' | 'builder'>('user');
+    const [role, setRole] = useState<'user' | 'admin' | 'enterprise' | 'builder' | 'student'>('user');
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
 
@@ -253,6 +253,8 @@ export default function UserManager() {
                                                 <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold border border-purple-100">Enterprise</span>
                                             ) : user.role === 'builder' ? (
                                                 <span className="px-2 py-0.5 bg-white text-[#0F172A] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/20">Builder</span>
+                                            ) : user.role === 'student' ? (
+                                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold border border-emerald-100">Student</span>
                                             ) : user.isApproved ? (
                                                 <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded text-[10px] font-bold border border-green-100">Active</span>
                                             ) : (
@@ -413,6 +415,7 @@ export default function UserManager() {
                                     onChange={e => setRole(e.target.value as any)}
                                 >
                                     <option value="user">Standard User</option>
+                                    <option value="student">Academy Student</option>
                                     <option value="builder">Quantum Builder</option>
                                     <option value="enterprise">Enterprise Partner</option>
                                     <option value="admin">Administrator</option>
@@ -506,6 +509,7 @@ export default function UserManager() {
                                         onChange={e => setRole(e.target.value as any)}
                                     >
                                         <option value="user">Standard User</option>
+                                        <option value="student">Academy Student</option>
                                         <option value="builder">Quantum Builder</option>
                                         <option value="enterprise">Enterprise Partner</option>
                                         <option value="admin">Administrator</option>

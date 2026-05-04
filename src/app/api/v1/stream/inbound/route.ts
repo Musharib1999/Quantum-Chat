@@ -15,6 +15,18 @@ export async function OPTIONS() {
     return NextResponse.json({}, { headers: corsHeaders });
 }
 
+// 0. Idempotency Guard (In-Memory Cache)
+// Prevents duplicate processing during client retries/storms
+const processedCalls = new Map<string, { timestamp: number, response: any }>();
+const CACHE_TTL = 10000; // 10 seconds
+
+function cleanupCache() {
+    const now = Date.now();
+    for (const [id, data] of processedCalls.entries()) {
+        if (now - data.timestamp > CACHE_TTL) processedCalls.delete(id);
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         await dbConnect();
@@ -32,6 +44,17 @@ export async function POST(req: NextRequest) {
         // 2. Parse payload
         const body = await req.json();
         const { pipelineId, payload } = body;
+        const callId = payload?.call?.call_id;
+
+        // Idempotency Check
+        if (callId) {
+            cleanupCache();
+            const cached = processedCalls.get(callId);
+            if (cached) {
+                console.log(`[Stream-API] Returning cached response for duplicate callId: ${callId}`);
+                return NextResponse.json(cached.response, { status: 200, headers: corsHeaders });
+            }
+        }
 
         if (!pipelineId || !payload || typeof payload !== 'object') {
             return NextResponse.json({ 
@@ -83,13 +106,19 @@ export async function POST(req: NextRequest) {
             // Unpack execution
             const result = await processEnterpriseStream(payload, pipeline, user._id.toString());
             
-            return NextResponse.json({
+            const responseData = {
                 success: true,
                 message: 'Payload processed and webhook dispatched successfully',
                 shotIds: result.shotIds,
                 durationMs: result.durationMs,
                 queueStatus: 'Synchronous delivery'
-            }, { status: 200, headers: corsHeaders });
+            };
+
+            if (callId) {
+                processedCalls.set(callId, { timestamp: Date.now(), response: responseData });
+            }
+            
+            return NextResponse.json(responseData, { status: 200, headers: corsHeaders });
 
         } catch (execError: any) {
              return NextResponse.json({ 

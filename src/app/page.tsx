@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Shield, Cpu, ArrowRight, TrendingUp, BookOpen, Bot, Lock as LockIcon, Unlock as UnlockIcon, LogOut, Sun, Moon, CheckCircle, Menu, X, Atom, Zap } from 'lucide-react';
+import { Shield, Cpu, ArrowRight, TrendingUp, BookOpen, Bot, Lock as LockIcon, Unlock as UnlockIcon, LogOut, Sun, Moon, CheckCircle, Menu, X, Atom, Zap, GraduationCap } from 'lucide-react';
 
 export default function LandingPage() {
   const { isAuthenticated, logout } = useAuth();
@@ -156,6 +156,19 @@ export default function LandingPage() {
             accentColor="violet"
             status="locked"
             badgeText="Unlock with free account"
+          />
+
+          {/* Card 5: Quantum Academy */}
+          <FeatureCard
+            href="/academy"
+            icon={<GraduationCap size={32} />}
+            title="Quantum Academy"
+            description="Master quantum computing through structured curriculum, text lessons, and interactive code challenges. Earn badges and professional certificates upon completion."
+            actionText="Start Learning"
+            isDarkMode={false}
+            accentColor="emerald"
+            status="unlocked"
+            badgeText="Open Enrollment"
           />
 
         </div>
