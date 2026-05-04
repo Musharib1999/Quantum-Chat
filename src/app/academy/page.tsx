@@ -47,7 +47,7 @@ export default function AcademyDashboard() {
             <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-8 sticky top-0 z-40">
                 <div className="flex items-center gap-4">
                     <Link href="/">
-                        <img src="/logo.png" alt="Quantum Guru" className="h-10 w-auto" />
+                        <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain cursor-pointer" />
                     </Link>
                     <div className="h-6 w-px bg-slate-200 mx-2" />
                     <div className="flex items-center gap-2 text-slate-900 font-bold">
@@ -67,7 +67,7 @@ export default function AcademyDashboard() {
                             </div>
                         </div>
                     ) : (
-                        <Link href="/login?redirect=/academy" className="bg-[rgb(27,176,206)] text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-[rgb(27,176,206)]/20 hover:bg-[rgb(27,176,206)]/90 transition-all">
+                        <Link href="/login?redirect=/academy" className="bg-[#3066bb] text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-[#3066bb]/20 hover:bg-[#3066bb]/90 transition-all">
                             Login to Start
                         </Link>
                     )}
@@ -178,8 +178,8 @@ export default function AcademyDashboard() {
                                                         href={`/academy/course/${course._id}`}
                                                         className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${
                                                             isEnrolled 
-                                                            ? 'bg-[rgb(27,176,206)] text-white hover:bg-[rgb(27,176,206)]/90 shadow-[rgb(27,176,206)]/20' 
-                                                            : 'bg-[rgb(27,176,206)]/5 text-[rgb(27,176,206)] hover:bg-[rgb(27,176,206)] hover:text-white hover:shadow-[rgb(27,176,206)]/20'
+                                                            ? 'bg-[#3066bb] text-white hover:bg-[#3066bb]/90 shadow-[#3066bb]/20' 
+                                                            : 'bg-[#3066bb]/5 text-[#3066bb] hover:bg-[#3066bb] hover:text-white hover:shadow-[#3066bb]/20'
                                                         }`}
                                                     >
                                                         {isEnrolled ? (

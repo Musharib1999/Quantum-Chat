@@ -200,7 +200,7 @@ export default function AcademyManager() {
                             });
                             setIsSectionModalOpen(true);
                         }}
-                        className="bg-[rgb(27,176,206)] hover:bg-[rgb(27,176,206)]/90 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-all shadow-lg shadow-[rgb(27,176,206)]/20"
+                        className="bg-[#3066bb] hover:bg-[#3066bb]/90 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-all shadow-lg shadow-[#3066bb]/20"
                     >
                         <Plus size={18} /> Add Section
                     </button>
@@ -345,7 +345,7 @@ export default function AcademyManager() {
                                 <div className="flex gap-4 pt-4">
                                     <button 
                                         type="submit"
-                                        className="flex-1 bg-[rgb(27,176,206)] text-white py-3 rounded-xl font-bold hover:bg-[rgb(27,176,206)]/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[rgb(27,176,206)]/20"
+                                        className="flex-1 bg-[#3066bb] text-white py-3 rounded-xl font-bold hover:bg-[#3066bb]/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#3066bb]/20"
                                     >
                                         <Save size={18} /> Save Section
                                     </button>
@@ -392,7 +392,7 @@ export default function AcademyManager() {
                             });
                             setIsModalOpen(true);
                         }}
-                        className="bg-[rgb(27,176,206)] hover:bg-[rgb(27,176,206)]/90 text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold transition-all shadow-lg shadow-[rgb(27,176,206)]/25 active:scale-95"
+                        className="bg-[#3066bb] hover:bg-[#3066bb]/90 text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold transition-all shadow-lg shadow-[#3066bb]/25 active:scale-95"
                     >
                         <Plus size={20} /> Create Course
                     </button>
@@ -606,7 +606,7 @@ export default function AcademyManager() {
 
                             <button 
                                 type="submit"
-                                className="w-full bg-[rgb(27,176,206)] text-white py-5 rounded-2xl font-black text-lg hover:bg-[rgb(27,176,206)]/90 transition-all shadow-xl shadow-[rgb(27,176,206)]/20"
+                                className="w-full bg-[#3066bb] text-white py-5 rounded-2xl font-black text-lg hover:bg-[#3066bb]/90 transition-all shadow-xl shadow-[#3066bb]/20"
                             >
                                 {editingCourse ? 'Update Course Metadata' : 'Initialize Course Structure'}
                             </button>

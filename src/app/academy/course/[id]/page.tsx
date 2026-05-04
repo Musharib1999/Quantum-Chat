@@ -255,7 +255,7 @@ export default function CourseViewer() {
                                 <div />
                                 <button 
                                     onClick={isActiveCompleted ? handleNext : handleMarkComplete}
-                                    className="bg-[rgb(27,176,206)] text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-[rgb(27,176,206)]/90 transition-all shadow-xl shadow-[rgb(27,176,206)]/20 active:scale-95"
+                                    className="bg-[#3066bb] text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#3066bb]/90 transition-all shadow-xl shadow-[#3066bb]/20 active:scale-95"
                                 >
                                     {isActiveCompleted ? 'Next Lesson' : 'Mark as Completed'} <ArrowRight size={20} />
                                 </button>
@@ -403,7 +403,7 @@ export default function CourseViewer() {
                                         courseName: course?.title || 'Quantum Course',
                                         date: new Date().toLocaleString()
                                     })}
-                                    className="w-full py-5 bg-[rgb(27,176,206)] text-white rounded-2xl font-black text-lg hover:bg-[rgb(27,176,206)]/90 transition-all flex items-center justify-center gap-3 shadow-xl shadow-[rgb(27,176,206)]/20 active:scale-95"
+                                    className="w-full py-5 bg-[#3066bb] text-white rounded-2xl font-black text-lg hover:bg-[#3066bb]/90 transition-all flex items-center justify-center gap-3 shadow-xl shadow-[#3066bb]/20 active:scale-95"
                                 >
                                     <Award size={24} /> Download Certificate
                                 </button>
