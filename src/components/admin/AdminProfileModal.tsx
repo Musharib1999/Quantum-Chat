@@ -55,16 +55,40 @@ export default function AdminProfileModal({ isOpen, onClose, onShowPassword }: A
                             {user?.firstName ? user.firstName[0].toUpperCase() : 'A'}
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-semibold text-[#0F172A] truncate">
+                            <span className="text-sm font-bold text-[#0F172A] truncate">
                                 {user?.role === 'builder' ? 'Quantum Builder' : 'Administrator'}
                             </span>
-                            <span className="text-[11px] text-[#0F172A] truncate">{user?.email || 'admin@quantumguru.com'}</span>
+                            <span className="text-[11px] text-slate-500 truncate">{user?.email || 'admin@quantumguru.com'}</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-green-50 border border-green-100 w-fit">
                         <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider text-xs">SYSTEM ONLINE</span>
+                        <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider text-xs">System Online</span>
                     </div>
+
+                    {/* API Key Section */}
+                    {user?.apiKey && (
+                        <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                <span>Master API Key</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <code className="flex-1 text-[10px] font-mono p-1.5 bg-white border border-slate-200 rounded text-slate-500 truncate">
+                                    {user.apiKey}
+                                </code>
+                                <button 
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(user.apiKey || '');
+                                        alert("API Key copied!");
+                                    }}
+                                    className="p-1.5 hover:bg-slate-100 rounded transition-colors text-slate-400 hover:text-[#3066bb]"
+                                    title="Copy to clipboard"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

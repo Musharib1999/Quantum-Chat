@@ -60,11 +60,16 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
         }
     };
 
+    const isEnterprise = pathname?.startsWith('/enterprise');
+    const modalPosition = isEnterprise 
+        ? { bottom: '80px', left: '16px' } 
+        : { top: '72px', right: '16px' };
+
     return (
         <div
             ref={cardRef}
-            style={{ position: 'fixed', top: '72px', right: '16px', zIndex: 201, width: '260px' }}
-            className="bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-200 overflow-hidden"
+            style={{ position: 'fixed', zIndex: 201, width: '260px', ...modalPosition }}
+            className={`bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl animate-in fade-in duration-200 overflow-hidden ${isEnterprise ? 'slide-in-from-bottom-2' : 'slide-in-from-top-4'}`}
         >
             {/* User Info Header */}
             <div className="p-5 border-b border-border/40">

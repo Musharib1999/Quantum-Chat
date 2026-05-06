@@ -60,7 +60,16 @@ function LoginForm() {
             if (mode === 'login') {
                 login(data);
                 showToast('Login Successful', 'success');
-                router.push(redirect);
+                
+                // Determine default redirect based on role if no specific redirect is requested
+                let targetRedirect = redirect;
+                if (redirect === '/') {
+                    if (data.user?.role === 'admin') targetRedirect = '/admin';
+                    else if (data.user?.role === 'enterprise') targetRedirect = '/enterprise/dashboard';
+                    else targetRedirect = '/industry'; // Standard user default
+                }
+                
+                router.push(targetRedirect);
             } else {
                 setSuccessMsg(data.message || 'Registration successful. Your account is pending admin approval');
                 setMode('login');

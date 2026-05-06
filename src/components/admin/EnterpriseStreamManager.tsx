@@ -11,6 +11,7 @@ export default function EnterpriseStreamManager() {
     
     // Live Stream Visualizer State
     const [liveShots, setLiveShots] = useState<any[]>([]);
+    const [selectedPipeline, setSelectedPipeline] = useState<string>('all');
     const [isPolling, setIsPolling] = useState(true);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -100,7 +101,15 @@ export default function EnterpriseStreamManager() {
             }
             const data = await res.json();
             if (data.success) {
-                setLiveShots(data.shots || []);
+                // Filter shots by selected pipeline if not 'all'
+                let shots = data.shots || [];
+                if (selectedPipeline !== 'all') {
+                    shots = shots.filter((s: any) => 
+                        s.parameters?.pipelineId === selectedPipeline || 
+                        s.pipelineId === selectedPipeline
+                    );
+                }
+                setLiveShots(shots);
             }
         } catch (e) {
             console.error('[Visualizer] Polling error:', e);
@@ -110,8 +119,15 @@ export default function EnterpriseStreamManager() {
     const startPolling = () => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         fetchLatestShots();
-        pollIntervalRef.current = setInterval(fetchLatestShots, 3000); // 3-second polling
+        pollIntervalRef.current = setInterval(fetchLatestShots, 3000); 
     };
+
+    // Re-fetch immediately when pipeline filter changes
+    useEffect(() => {
+        if (viewMode === 'visualizer') {
+            fetchLatestShots();
+        }
+    }, [selectedPipeline]);
 
     const stopPolling = () => {
         if (pollIntervalRef.current) {
@@ -350,19 +366,31 @@ export default function EnterpriseStreamManager() {
                             </div>
                             <span className="text-[#0F172A] text-xs font-bold tracking-[0.2em] pl-4 border-l border-[rgb(27,176,206)]/30 uppercase">Pipeline Telemetry</span>
                         </div>
-                        <button 
-                            onClick={() => setIsPolling(!isPolling)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${isPolling ? 'bg-white text-red-500 border-red-100 hover:bg-red-50' : 'bg-[rgb(48,102,187)] text-white border-[rgb(27,176,206)] hover:opacity-90'}`}
-                        >
-                            {isPolling ? <><Square size={12} fill="currentColor" /> STOP STREAM</> : <><Play size={12} fill="currentColor" /> LIVE MONITOR</>}
-                        </button>
+                        <div className="flex items-center gap-4">
+                            <select 
+                                value={selectedPipeline}
+                                onChange={(e) => setSelectedPipeline(e.target.value)}
+                                className="px-3 py-2 rounded-xl text-xs font-bold border border-[rgb(27,176,206)]/30 bg-white focus:outline-none"
+                            >
+                                <option value="all">All Active Streams</option>
+                                {pipelines.map(p => (
+                                    <option key={p._id} value={p._id}>{p.enterpriseName} ({p.problemId})</option>
+                                ))}
+                            </select>
+                            <button 
+                                onClick={() => setIsPolling(!isPolling)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border ${isPolling ? 'bg-white text-red-500 border-red-100 hover:bg-red-50' : 'bg-[rgb(48,102,187)] text-white border-[rgb(27,176,206)] hover:opacity-90'}`}
+                            >
+                                {isPolling ? <><Square size={12} fill="currentColor" /> Stop Stream</> : <><Play size={12} fill="currentColor" /> Live Monitor</>}
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex-1 grid grid-cols-3 divide-x divide-slate-100 bg-white/40">
                         {/* INBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white/30 scroll-smooth">
+                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white/30 scroll-smooth">
                             <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase sticky top-0 bg-white/80 backdrop-blur-sm pb-3 border-b border-slate-100 z-10"><Database size={14} className="text-[#0F172A]" /> Inbound Load</h4>
-                            <div className="space-y-4 font-mono text-[10px]">
+                            <div className="flex-1 space-y-4 font-mono text-[10px] overflow-y-auto pr-2 custom-scrollbar">
                                 {liveShots.map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-[rgb(27,176,206)]/30 shadow-md ring-1 ring-[rgb(27,176,206)]/5' : 'bg-white border-[rgb(27,176,206)]/20 opacity-60'}`}>
                                         <div className="text-[#0F172A] mb-2 truncate font-semibold">[{new Date(shot.timestamp).toISOString()}]</div>
@@ -373,38 +401,82 @@ export default function EnterpriseStreamManager() {
                             </div>
                         </div>
 
-                        {/* QUANTUM EMBEDDING CORE */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white">
+                        {/* QUANTUM EMBEDDING CORE & LIVE KPIs */}
+                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white">
                             <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase"><Workflow size={14} className="text-purple-500" /> Quantum Core</h4>
-                            <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+                            <div className="flex-1 flex flex-col items-center min-h-0 overflow-y-auto custom-scrollbar">
                                 {isPolling ? (
                                     <>
-                                        <div className="relative flex items-center justify-center w-40 h-40">
+                                        {/* Animation Core */}
+                                        <div className="relative flex items-center justify-center w-32 h-32 mb-8 flex-shrink-0">
                                             <div className="absolute inset-0 rounded-full border-2 border-[rgb(27,176,206)]/20 border-t-[rgb(27,176,206)]/20 animate-[spin_6s_linear_infinite]"></div>
                                             <div className="absolute inset-3 rounded-full border-2 border-[rgb(27,176,206)]/20 border-b-purple-500/40 animate-[spin_4s_linear_infinite_reverse]"></div>
                                             <div className="absolute inset-6 rounded-full border-2 border-[rgb(27,176,206)]/20 border-l-[rgb(27,176,206)] animate-[spin_3s_linear_infinite]"></div>
-                                            <div className="text-center font-bold text-[10px] text-[#0F172A] tracking-[0.2em] z-10 drop-shadow-sm uppercase">Embedding<br/>Payload</div>
+                                            <div className="text-center font-bold text-[8px] text-[#0F172A] tracking-[0.2em] z-10 drop-shadow-sm uppercase">Embedding<br/>Payload</div>
                                         </div>
-                                        <div className="text-center space-y-2">
-                                            <div className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100"><CheckCircle size={12} /> Schema Verified</div>
-                                            <div className="text-xs font-semibold text-[#0F172A] flex items-center justify-center gap-2"><Activity size={12} className="text-[#0F172A]" /> Queue Depth: 0</div>
-                                            <div className="text-[10px] font-bold text-slate-300 mt-4 tracking-widest uppercase">Active Simulator: QISKIT 1.3.1</div>
+
+                                        {/* Real-time KPIs for Selected Pipeline */}
+                                        <div className="w-full space-y-4 px-2">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Inbound</p>
+                                                    <p className="text-lg font-bold text-[#0F172A]">
+                                                        {liveShots.length}
+                                                    </p>
+                                                </div>
+                                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Outbound</p>
+                                                    <p className="text-lg font-bold text-emerald-600">
+                                                        {liveShots.filter(s => s.results && !s.results.error).length}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 bg-[rgb(15,23,42)] rounded-xl border border-slate-800 shadow-lg">
+                                                <div className="flex justify-between items-end mb-2">
+                                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Avg Latency</p>
+                                                    <p className="text-xl font-bold text-white leading-none">
+                                                        {liveShots.length > 0 
+                                                            ? Math.round(liveShots.reduce((acc, s) => acc + (s.results?.executionTimeMs || 0), 0) / liveShots.length) 
+                                                            : 0
+                                                        }<span className="text-[10px] text-slate-400 ml-1">ms</span>
+                                                    </p>
+                                                </div>
+                                                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-[rgb(27,176,206)] animate-pulse" style={{ width: '65%' }}></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-3 bg-white rounded-xl border border-slate-100 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                    <span className="text-[10px] font-bold text-[#0F172A] uppercase">Success Rate</span>
+                                                </div>
+                                                <span className="text-xs font-bold text-[#0F172A]">
+                                                    {liveShots.length > 0 
+                                                        ? Math.round((liveShots.filter(s => s.results && !s.results.error).length / liveShots.length) * 100) 
+                                                        : 0
+                                                    }%
+                                                </span>
+                                            </div>
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="text-slate-200 font-bold text-[10px] tracking-widest animate-pulse">STREAM PAUSED...</div>
+                                    <div className="flex-1 flex items-center justify-center">
+                                        <div className="text-slate-200 font-bold text-[10px] tracking-widest animate-pulse uppercase">Stream Paused</div>
+                                    </div>
                                 )}
                             </div>
                         </div>
 
                         {/* OUTBOUND STREAM */}
-                        <div className="col-span-1 p-6 overflow-y-auto flex flex-col bg-white/30 scroll-smooth">
+                        <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white/30 scroll-smooth">
                             <h4 className="text-[#0F172A] flex items-center gap-2 font-bold text-xs mb-6 tracking-wide uppercase sticky top-0 bg-white/80 backdrop-blur-sm pb-3 border-b border-slate-100 z-10"><Activity size={14} className="text-emerald-500" /> Webhook Out</h4>
-                            <div className="space-y-4 font-mono text-[10px]">
+                            <div className="space-y-4 font-mono text-[10px] overflow-y-auto pr-2 custom-scrollbar">
                                 {liveShots.map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-white border-[rgb(27,176,206)]/20 opacity-60'}`}>
                                         <div className="text-[#0F172A] mb-2 truncate flex justify-between font-semibold">
-                                            <span>Target: POST 200 OK</span>
+                                            <span>Target: Post 200 OK</span>
                                             <span className="text-[#0F172A]">{shot.hardware}</span>
                                         </div>
                                         <div className="text-[#0F172A] whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.results || { status: 'processed' }, null, 2)}</div>

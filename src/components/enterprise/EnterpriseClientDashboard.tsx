@@ -320,7 +320,7 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                         <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white min-h-0">
                             <h4 className="text-slate-900 flex flex-col font-sans text-xs font-bold mb-6 tracking-wider gap-1">
                                 <span>Inbound Packets</span>
-                                <span className="text-[10px] text-slate-500 font-semibold">POST /v1/stream</span>
+                                <span className="text-[10px] text-slate-500 font-semibold">Post /v1/stream</span>
                             </h4>
                             <div className="flex-1 space-y-4 font-sans text-[11px] overflow-y-auto pr-2 custom-scrollbar">
                                 {liveShots.filter((s, idx, self) => 
@@ -350,12 +350,12 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                             <div className="flex-1 space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-white/60 p-4 rounded-2xl border border-slate-200/50 shadow-sm">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Inbound</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Inbound Packets</p>
                                         <p className="text-xl font-bold text-slate-900">{metrics.totalRequests}</p>
                                     </div>
                                     <div className="bg-white/60 p-4 rounded-2xl border border-slate-200/50 shadow-sm">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Outbound</p>
-                                        <p className="text-xl font-bold text-slate-900">{metrics.totalRequests}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Webhook Pushes</p>
+                                        <p className="text-xl font-bold text-slate-900">{liveShots.length}</p>
                                     </div>
                                 </div>
 
@@ -397,8 +397,8 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                         {/* OUTBOUND STREAM */}
                         <div className="col-span-1 p-6 overflow-hidden flex flex-col bg-white min-h-0">
                             <h4 className="text-slate-900 flex flex-col font-mono text-xs font-bold mb-6 tracking-wider gap-1">
-                                <span>WEBHOOK OUT</span>
-                                <span className="text-[10px] text-slate-500 font-semibold">PUSH DELIVERY</span>
+                                <span>Webhook Out</span>
+                                <span className="text-[10px] text-slate-500 font-semibold">Push Delivery</span>
                             </h4>
                             <div className="flex-1 space-y-4 font-mono text-[11px] overflow-y-auto pr-2 custom-scrollbar">
                                 {liveShots.map((shot, i) => (
