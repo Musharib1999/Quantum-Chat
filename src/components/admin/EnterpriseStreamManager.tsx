@@ -475,9 +475,14 @@ export default function EnterpriseStreamManager() {
                             <div className="space-y-4 font-mono text-[10px] overflow-y-auto pr-2 custom-scrollbar">
                                 {liveShots.map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border transition-all ${i === 0 ? 'bg-white border-emerald-500/30 shadow-md ring-1 ring-emerald-500/5' : 'bg-white border-[rgb(27,176,206)]/20 opacity-60'}`}>
-                                        <div className="text-[#0F172A] mb-2 truncate flex justify-between font-semibold">
-                                            <span>Target: Post 200 OK</span>
-                                            <span className="text-[#0F172A]">{shot.hardware}</span>
+                                        <div className="text-[#0F172A] mb-2 truncate flex flex-col gap-1">
+                                            <div className="flex justify-between items-center font-bold">
+                                                <span>200 OK</span>
+                                                <span className="text-[10px] px-2 py-0.5 bg-blue-50 border border-blue-100 rounded text-blue-600">
+                                                    {shot.parameters?.call?.call_id || shot.parameters?.callId || shot.parameters?.id || 'No ID'}
+                                                </span>
+                                            </div>
+                                            <span className="text-[9px] text-slate-400 font-bold uppercase">{shot.hardware || 'Simulator'}</span>
                                         </div>
                                         <div className="text-[#0F172A] whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.results || { status: 'processed' }, null, 2)}</div>
                                     </div>
