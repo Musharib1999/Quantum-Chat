@@ -157,15 +157,15 @@ export default function LandingPage() {
 
           {/* Card 5: Quantum Academy */}
           <FeatureCard
-            href="/academy"
+            href={isAuthenticated ? "/academy" : "/login?redirect=/academy"}
             icon={<GraduationCap size={32} />}
             title="Quantum Academy"
             description="Master quantum computing through structured curriculum, text lessons, and interactive code challenges. Earn badges and professional certificates upon completion."
             actionText="Start Learning"
             isDarkMode={false}
             accentColor="emerald"
-            status="unlocked"
-            badgeText="Open Enrollment"
+            status="locked"
+            badgeText="Unlock with free account"
           />
 
         </div>
