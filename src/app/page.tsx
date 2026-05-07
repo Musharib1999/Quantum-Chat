@@ -200,17 +200,20 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-semibold text-slate-900">The Problem</h3>
               </div>
               <p className="text-sm text-slate-500 leading-relaxed mb-6">
-                Traditional BPO and telecalling software routes incoming calls using <strong className="text-slate-800 font-semibold">static rules</strong> — round-robin or first-come-first-serve assignment that ignores language proficiency, domain expertise, and agent availability simultaneously.
+                Traditional BPO and telecalling platforms still route calls using rigid round robin or first available logic without truly understanding who the best agent is for that customer. Factors like language fluency, product expertise, conversion history, customer intent and real time agent availability are often ignored.
+              </p>
+              <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                When scaled to 100+ agents with multiple skill and performance attributes, the routing challenge becomes a massive combinatorial optimization problem with nearly 2^900 possible assignment combinations. This is far beyond what classical brute force systems can evaluate in real time.
               </p>
               <p className="text-sm text-slate-500 leading-relaxed">
-                With <strong className="text-slate-800 font-semibold">100 agents</strong>, each with multiple attributes, the optimal matching problem spans a combinatorial search space of <strong className="text-[#3066bb] font-bold">2<sup>90</sup></strong> possible configurations — completely intractable for classical brute-force solvers.
+                The outcome is slower resolutions, lower conversions, agent overload and lost revenue.
               </p>
               <div className="mt-8 p-5 bg-slate-50 rounded-2xl border border-slate-100">
                 <div className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Problem Scale</div>
                 <div className="font-mono text-sm text-slate-700 space-y-1">
-                  <div>Variables: <span className="text-[#3066bb] font-bold">90+</span> per QUBO instance</div>
-                  <div>Search space: <span className="text-[#3066bb] font-bold">2<sup>90</sup></span> ≈ 1.2 × 10<sup>27</sup> states</div>
-                  <div>Model: <span className="text-[#3066bb] font-bold">Simulated Annealing (D-Wave)</span></div>
+                  <div>Variables: <span className="text-[#3066bb]">900+</span> per QUBO instance</div>
+                  <div>Search space: <span className="text-[#3066bb]">2^900</span> combinations</div>
+                  <div>Model: <span className="text-[#3066bb]">Simulated Annealing (D-Wave)</span></div>
                 </div>
               </div>
             </div>
