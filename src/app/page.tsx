@@ -192,49 +192,49 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
 
             {/* Left: Description */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 md:p-10 shadow-sm transition-all hover:shadow-md">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-[#3066bb]/10 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(48,102,187)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+                <div className="w-12 h-12 rounded-2xl bg-[#3066bb]/10 flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(48,102,187)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">The Problem</h3>
+                <h3 className="text-2xl font-semibold text-slate-900">The Problem</h3>
               </div>
-              <p className="text-slate-600 leading-relaxed mb-6">
-                Traditional BPO and telecalling software routes incoming calls using <strong className="text-slate-800">static rules</strong> — round-robin or first-come-first-serve assignment that ignores language proficiency, domain expertise, and agent availability simultaneously.
+              <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                Traditional BPO and telecalling software routes incoming calls using <strong className="text-slate-800 font-semibold">static rules</strong> — round-robin or first-come-first-serve assignment that ignores language proficiency, domain expertise, and agent availability simultaneously.
               </p>
-              <p className="text-slate-600 leading-relaxed">
-                With <strong className="text-slate-800">100 agents</strong>, each with multiple attributes, the optimal matching problem spans a combinatorial search space of <strong className="text-[#3066bb]">2<sup>90</sup></strong> possible configurations — completely intractable for classical brute-force solvers.
+              <p className="text-sm text-slate-500 leading-relaxed">
+                With <strong className="text-slate-800 font-semibold">100 agents</strong>, each with multiple attributes, the optimal matching problem spans a combinatorial search space of <strong className="text-[#3066bb] font-bold">2<sup>90</sup></strong> possible configurations — completely intractable for classical brute-force solvers.
               </p>
-              <div className="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Problem Scale</div>
-                <div className="font-mono text-sm text-slate-700">
-                  Variables: <span className="text-[#3066bb] font-bold">90+</span> per QUBO instance<br/>
-                  Search space: <span className="text-[#3066bb] font-bold">2<sup>90</sup></span> ≈ 1.2 × 10<sup>27</sup> states<br/>
-                  Model: <span className="text-[#3066bb] font-bold">Simulated Annealing (D-Wave)</span>
+              <div className="mt-8 p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Problem Scale</div>
+                <div className="font-mono text-sm text-slate-700 space-y-1">
+                  <div>Variables: <span className="text-[#3066bb] font-bold">90+</span> per QUBO instance</div>
+                  <div>Search space: <span className="text-[#3066bb] font-bold">2<sup>90</sup></span> ≈ 1.2 × 10<sup>27</sup> states</div>
+                  <div>Model: <span className="text-[#3066bb] font-bold">Simulated Annealing (D-Wave)</span></div>
                 </div>
               </div>
             </div>
 
             {/* Right: Methodology */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 md:p-10 shadow-sm transition-all hover:shadow-md">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(139,92,246)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(139,92,246)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">Methodology</h3>
+                <h3 className="text-2xl font-semibold text-slate-900">Methodology</h3>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {[
                   { step: '01', title: 'Call Ingress', desc: 'Incoming call attributes (language, domain, callback preference) are captured and streamed via API.', color: 'bg-[#3066bb]' },
                   { step: '02', title: 'QUBO Formulation', desc: 'Call-agent match scores are encoded into a binary optimization matrix with language, domain, and proficiency weights.', color: 'bg-violet-500' },
                   { step: '03', title: 'Quantum Annealing', desc: 'D-Wave Simulated Annealing solver explores the 2⁹⁰ energy landscape to find the global minimum — the optimal agent.', color: 'bg-emerald-500' },
                   { step: '04', title: 'Routing Decision', desc: 'Matched agent ID is returned via webhook and compared against the classical static-rule result.', color: 'bg-amber-500' },
                 ].map(({ step, title, desc, color }) => (
-                  <div key={step} className="flex gap-4">
-                    <div className={`w-7 h-7 rounded-lg ${color} flex items-center justify-center text-white text-[10px] font-black shrink-0 mt-0.5`}>{step}</div>
+                  <div key={step} className="flex gap-5">
+                    <div className={`w-8 h-8 rounded-xl ${color} flex items-center justify-center text-white text-xs font-black shrink-0 mt-1 shadow-sm`}>{step}</div>
                     <div>
-                      <div className="text-sm font-bold text-slate-800 mb-0.5">{title}</div>
-                      <div className="text-xs text-slate-500 leading-relaxed">{desc}</div>
+                      <div className="text-sm font-semibold text-slate-900 mb-1">{title}</div>
+                      <div className="text-sm text-slate-500 leading-relaxed">{desc}</div>
                     </div>
                   </div>
                 ))}
@@ -243,40 +243,40 @@ export default function LandingPage() {
           </div>
 
           {/* Outcome KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             {[
               { value: '>50%', label: 'Calls Better Routed', sub: 'vs classical static rules', color: 'text-[#3066bb]', bg: 'bg-[#3066bb]/5 border-[#3066bb]/15' },
               { value: '90+', label: 'QUBO Variables', sub: 'per routing decision', color: 'text-violet-600', bg: 'bg-violet-50 border-violet-100' },
               { value: '2⁹⁰', label: 'Search Space', sub: 'explored by quantum solver', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
               { value: '~3s', label: 'Avg Solve Time', sub: 'per call via D-Wave', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' },
             ].map(({ value, label, sub, color, bg }) => (
-              <div key={label} className={`rounded-2xl border p-6 text-center ${bg}`}>
-                <div className={`text-3xl md:text-4xl font-black mb-1 ${color}`}>{value}</div>
-                <div className="text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">{label}</div>
-                <div className="text-[10px] text-slate-400">{sub}</div>
+              <div key={label} className={`rounded-3xl border p-8 text-center transition-all hover:scale-[1.02] ${bg}`}>
+                <div className={`text-4xl md:text-5xl font-black mb-2 ${color}`}>{value}</div>
+                <div className="text-sm font-semibold text-slate-700 mb-1 uppercase tracking-wider">{label}</div>
+                <div className="text-xs text-slate-400">{sub}</div>
               </div>
             ))}
           </div>
 
           {/* Comparison Block */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-slate-100">
-              <h3 className="text-xl font-bold text-slate-900 mb-1">Quantum vs. Classical — Head-to-Head</h3>
+            <div className="p-8 md:p-10 border-b border-slate-100">
+              <h3 className="text-2xl font-semibold text-slate-900 mb-2">Quantum vs. Classical — Head-to-Head</h3>
               <p className="text-sm text-slate-500">Simulation results across 100 agents, multiple languages and domains.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="text-left px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Criteria</th>
-                    <th className="text-center px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#3066bb]">
-                      <span className="inline-flex items-center gap-1.5 bg-[#3066bb]/8 px-3 py-1.5 rounded-full border border-[#3066bb]/20">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#3066bb] animate-pulse"></span>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <th className="text-left px-8 py-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">Criteria</th>
+                    <th className="text-center px-6 py-5 text-sm font-bold uppercase tracking-wider text-[#3066bb]">
+                      <span className="inline-flex items-center gap-2 bg-[#3066bb]/8 px-4 py-2 rounded-full border border-[#3066bb]/20">
+                        <span className="w-2 h-2 rounded-full bg-[#3066bb] animate-pulse"></span>
                         Quantum (QUBO)
                       </span>
                     </th>
-                    <th className="text-center px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      <span className="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                    <th className="text-center px-6 py-5 text-sm font-bold uppercase tracking-wider text-slate-500">
+                      <span className="inline-flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
                         Classical (Static Rules)
                       </span>
                     </th>
@@ -293,15 +293,15 @@ export default function LandingPage() {
                     { criteria: 'Decision Latency', quantum: '~3 seconds', classical: '<100ms', qBetter: false },
                     { criteria: 'Adaptability', quantum: 'Dynamic per call features', classical: 'Static rule-based', qBetter: true },
                   ].map(({ criteria, quantum, classical, qBetter }) => (
-                    <tr key={criteria} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-8 py-4 font-medium text-slate-700">{criteria}</td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-block px-3 py-1.5 rounded-lg text-xs font-semibold ${qBetter ? 'bg-[#3066bb]/8 text-[#3066bb] border border-[#3066bb]/15' : 'bg-slate-100 text-slate-600'}`}>
+                    <tr key={criteria} className="hover:bg-slate-50/30 transition-colors">
+                      <td className="px-8 py-5 font-semibold text-slate-700">{criteria}</td>
+                      <td className="px-6 py-5 text-center">
+                        <span className={`inline-block px-4 py-2 rounded-xl text-sm font-semibold ${qBetter ? 'bg-[#3066bb]/8 text-[#3066bb] border border-[#3066bb]/15' : 'bg-slate-100 text-slate-600'}`}>
                           {quantum}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-block px-3 py-1.5 rounded-lg text-xs font-semibold ${!qBetter ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-slate-100 text-slate-500'}`}>
+                      <td className="px-6 py-5 text-center">
+                        <span className={`inline-block px-4 py-2 rounded-xl text-sm font-semibold ${!qBetter ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-slate-100 text-slate-500'}`}>
                           {classical}
                         </span>
                       </td>
@@ -310,12 +310,13 @@ export default function LandingPage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-8 py-5 bg-gradient-to-r from-[#3066bb]/5 to-transparent border-t border-slate-100 flex items-center justify-between gap-4 flex-wrap">
-              <p className="text-xs text-slate-500 max-w-lg">
-                <strong className="text-slate-700">Simulation context:</strong> Results derived from the Quantum Telecom Routing Showcase — a live benchmarking platform comparing D-Wave QUBO solvers against classical BPO routing strategies across multi-attribute agent pools.
+            <div className="px-8 py-6 bg-gradient-to-r from-[#3066bb]/5 to-transparent border-t border-slate-100 flex items-center justify-between gap-6 flex-wrap">
+              <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
+                <strong className="text-slate-700 font-semibold">Simulation context:</strong> Results derived from the Quantum Telecom Routing Showcase — comparing D-Wave QUBO solvers against classical BPO routing strategies across multi-attribute agent pools.
               </p>
-              <a href="/industry" className="text-xs font-bold text-[#3066bb] hover:underline whitespace-nowrap flex items-center gap-1">
-                Run your own simulation →
+              <a href="/industry" className="text-sm font-bold text-[#3066bb] hover:underline whitespace-nowrap flex items-center gap-2 group">
+                Run your own simulation
+                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </a>
             </div>
           </div>
