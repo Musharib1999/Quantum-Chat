@@ -408,8 +408,45 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                                                 <span>200 OK</span>
                                                 <span className="text-[#3066bb] uppercase tracking-wider text-[9px] border border-[#3066bb]/20 bg-[#3066bb]/5 px-2 py-0.5 rounded">{shot.hardware || 'Simulator'}</span>
                                             </div>
-                                            <div className="text-[10px] text-slate-500 font-medium bg-white px-2 py-1 rounded border border-slate-100 w-fit">
-                                                Call ID: <span className="text-slate-800 font-bold">{shot.parameters?.call?.call_id || shot.parameters?.callId || shot.parameters?.id || 'N/A'}</span>
+                                            <div className="text-[10px] text-slate-500 font-medium bg-white px-2 py-1 rounded border border-slate-100 flex items-center justify-between gap-4">
+                                                <span>Call ID: <span className="text-slate-800 font-bold">{shot.parameters?.call?.call_id || shot.parameters?.callId || shot.parameters?.id || 'N/A'}</span></span>
+                                                <button 
+                                                    onClick={async () => {
+                                                        try {
+                                                            const url = pipelines[0]?.webhookUrl;
+                                                            if (!url) {
+                                                                alert("No active webhook URL configured.");
+                                                                return;
+                                                            }
+                                                            const payload = {
+                                                                callId: shot.parameters?.call?.call_id || shot.parameters?.callId || shot.parameters?.id || 'N/A',
+                                                                enterprise: pipelines[0]?.enterpriseName || 'Unknown Enterprise',
+                                                                status: shot.results?.error ? 'failed' : 'success',
+                                                                solutions: [{
+                                                                    hardware: shot.hardware,
+                                                                    shotId: shot._id || shot.shotId,
+                                                                    status: shot.results?.error ? 'failed' : 'success',
+                                                                    results: shot.results,
+                                                                    executionTimeMs: shot.executionTimeMs || 0
+                                                                }],
+                                                                totalExecutionTimeMs: shot.executionTimeMs || 0,
+                                                                timestamp: new Date().toISOString()
+                                                            };
+                                                            await fetch(url, {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify(payload)
+                                                            });
+                                                            alert(`Webhook manually resent successfully!`);
+                                                        } catch (e) {
+                                                            console.error("Manual resend failed:", e);
+                                                            alert("Failed to resend webhook. Check console.");
+                                                        }
+                                                    }}
+                                                    className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-[9px] font-bold tracking-wider transition-colors"
+                                                >
+                                                    RESEND
+                                                </button>
                                             </div>
                                         </div>
                                         <div className="text-slate-900 whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.results || { status: 'delivered successfully' }, null, 2)}</div>
