@@ -199,13 +199,13 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-2xl font-semibold text-slate-900">The Problem</h3>
               </div>
-              <p className="text-sm text-slate-500 leading-relaxed mb-6">
+              <p className="text-sm text-slate-700 leading-relaxed mb-6">
                 Traditional BPO and telecalling platforms still route calls using rigid round robin or first available logic without truly understanding who the best agent is for that customer. Factors like language fluency, product expertise, conversion history, customer intent and real time agent availability are often ignored.
               </p>
-              <p className="text-sm text-slate-500 leading-relaxed mb-6">
+              <p className="text-sm text-slate-700 leading-relaxed mb-6">
                 When scaled to 100+ agents with multiple skill and performance attributes, the routing challenge becomes a massive combinatorial optimization problem with nearly 2^900 possible assignment combinations. This is far beyond what classical brute force systems can evaluate in real time.
               </p>
-              <p className="text-sm text-slate-500 leading-relaxed">
+              <p className="text-sm text-slate-700 leading-relaxed">
                 The outcome is slower resolutions, lower conversions, agent overload and lost revenue.
               </p>
               <div className="mt-8 p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -237,7 +237,7 @@ export default function LandingPage() {
                     <div className={`w-8 h-8 rounded-xl ${color} flex items-center justify-center text-white text-xs font-black shrink-0 mt-1 shadow-sm`}>{step}</div>
                     <div>
                       <div className="text-sm font-semibold text-slate-900 mb-1">{title}</div>
-                      <div className="text-sm text-slate-500 leading-relaxed">{desc}</div>
+                      <div className="text-sm text-slate-700 leading-relaxed">{desc}</div>
                     </div>
                   </div>
                 ))}
