@@ -22,7 +22,7 @@ export default function TelecomUseCase() {
               Quantum-Optimized <span className="text-[#3066bb]">Telecaller Routing</span>
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed">
-              Discover how Prime Blazar leverages D-Wave quantum annealing to solve the massive combinatorial challenge of matching customers to the right telecallers in real-time.
+              Discover how Quantum Guru leverages D-Wave quantum annealing to solve the massive combinatorial challenge of matching customers to the right telecallers in real-time.
             </p>
           </div>
         </div>
@@ -231,7 +231,7 @@ export default function TelecomUseCase() {
         <div className="max-w-7xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-black text-slate-900 mb-6">Ready to Optimize your Workforce?</h2>
           <p className="text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Connect your telephony stream to Prime Blazar and experience the difference of Quantum-first workforce optimization.
+            Connect your telephony stream to Quantum Guru and experience the difference of Quantum-first workforce optimization.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-6">
             <Link href="/login?redirect=/industry/telecom" className="px-10 py-4 rounded-2xl bg-[#3066bb] text-white font-bold transition-all shadow-xl hover:shadow-[#3066bb]/20 hover:-translate-y-1">
