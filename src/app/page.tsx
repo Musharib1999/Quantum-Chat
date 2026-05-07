@@ -308,10 +308,7 @@ export default function LandingPage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-8 py-6 bg-gradient-to-r from-[#3066bb]/5 to-transparent border-t border-slate-100 flex items-center justify-between gap-6 flex-wrap">
-              <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
-                <strong className="text-slate-700 font-semibold">Simulation context:</strong> Results derived from the Quantum Telecom Routing Showcase — comparing D-Wave QUBO solvers against classical BPO routing strategies across multi-attribute agent pools.
-              </p>
+            <div className="px-8 py-6 bg-gradient-to-r from-[#3066bb]/5 to-transparent border-t border-slate-100 flex items-center justify-end gap-6 flex-wrap">
               <a href="/industry" className="text-sm font-bold text-[#3066bb] hover:underline whitespace-nowrap flex items-center gap-2 group">
                 Run your own simulation
                 <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
