@@ -267,14 +267,14 @@ export default function LandingPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="text-left px-8 py-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">Criteria</th>
-                    <th className="text-center px-6 py-5 text-sm font-bold uppercase tracking-wider text-[#3066bb]">
-                      <span className="inline-flex items-center gap-2 bg-[#3066bb]/8 px-4 py-2 rounded-full border border-[#3066bb]/20">
-                        <span className="w-2 h-2 rounded-full bg-[#3066bb] animate-pulse"></span>
+                    <th className="text-left px-8 py-5 text-sm font-semibold text-slate-500 tracking-wider">Criteria</th>
+                    <th className="text-center px-6 py-5 text-sm font-bold tracking-wider text-[#3066bb]">
+                      <span className="inline-flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100 text-emerald-700">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         Quantum (QUBO)
                       </span>
                     </th>
-                    <th className="text-center px-6 py-5 text-sm font-bold uppercase tracking-wider text-slate-500">
+                    <th className="text-center px-6 py-5 text-sm font-bold tracking-wider text-slate-500">
                       <span className="inline-flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
                         Classical (Static Rules)
                       </span>
@@ -284,22 +284,22 @@ export default function LandingPage() {
                 <tbody className="divide-y divide-slate-50">
                   {[
                     { criteria: 'Routing Algorithm', quantum: 'QUBO Simulated Annealing', classical: 'Round Robin / FCFS' },
-                    { criteria: 'Language Match Rate', quantum: '60%+ Match', classical: '15.4% Match', qBetter: true },
-                    { criteria: 'Domain Match Rate', quantum: 'Optimized per call', classical: 'Ignored in routing', qBetter: true },
-                    { criteria: 'Variables Considered', quantum: 'n+ simultaneously', classical: '1–2 (queue position)', qBetter: true },
-                    { criteria: 'Search Space Explored', quantum: '2ⁿ', classical: 'O(n) linear scan', qBetter: true },
-                    { criteria: 'Handles Combinatorial Explosion', quantum: '✓ Native capability', classical: '✗ Not feasible', qBetter: true },
-                    { criteria: 'Adaptability', quantum: 'Dynamic per call features', classical: 'Static rule-based', qBetter: true },
-                  ].map(({ criteria, quantum, classical, qBetter }) => (
+                    { criteria: 'Language Match Rate', quantum: '60%+ Match', classical: '15.4% Match' },
+                    { criteria: 'Domain Match Rate', quantum: 'Optimized per call', classical: 'Ignored in routing' },
+                    { criteria: 'Variables Considered', quantum: 'n+ simultaneously', classical: '1–2 (queue position)' },
+                    { criteria: 'Search Space Explored', quantum: '2ⁿ', classical: 'O(n) linear scan' },
+                    { criteria: 'Handles Combinatorial Explosion', quantum: '✓ Native capability', classical: '✗ Not feasible' },
+                    { criteria: 'Adaptability', quantum: 'Dynamic per call features', classical: 'Static rule-based' },
+                  ].map(({ criteria, quantum, classical }) => (
                     <tr key={criteria} className="hover:bg-slate-50/30 transition-colors">
                       <td className="px-8 py-5 font-semibold text-slate-700">{criteria}</td>
                       <td className="px-6 py-5 text-center">
-                        <span className={`inline-block px-4 py-2 rounded-xl text-sm font-semibold ${qBetter ? 'bg-[#3066bb]/8 text-[#3066bb] border border-[#3066bb]/15' : 'bg-slate-100 text-slate-600'}`}>
+                        <span className="inline-block px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
                           {quantum}
                         </span>
                       </td>
                       <td className="px-6 py-5 text-center">
-                        <span className={`inline-block px-4 py-2 rounded-xl text-sm font-semibold ${!qBetter ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-slate-100 text-slate-500'}`}>
+                        <span className="inline-block px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                           {classical}
                         </span>
                       </td>
