@@ -203,7 +203,7 @@ export default function LandingPage() {
                 Traditional BPO and telecalling platforms still route calls using rigid round robin or first available logic without truly understanding who the best agent is for that customer. Factors like language fluency, product expertise, conversion history, customer intent and real time agent availability are often ignored.
               </p>
               <p className="text-sm text-slate-700 leading-relaxed mb-6">
-                When scaled to 100+ agents with multiple skill and performance attributes, the routing challenge becomes a massive combinatorial optimization problem with nearly 2^n possible assignment combinations. This is far beyond what classical brute force systems can evaluate in real time.
+                When scaled to 100+ agents with multiple skill and performance attributes, the routing challenge becomes a massive combinatorial optimization problem with nearly 2ⁿ possible assignment combinations. This is far beyond what classical brute force systems can evaluate in real time.
               </p>
               <p className="text-sm text-slate-700 leading-relaxed">
                 The outcome is slower resolutions, lower conversions, agent overload and lost revenue.
@@ -212,7 +212,7 @@ export default function LandingPage() {
                 <div className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Problem Scale</div>
                 <div className="font-mono text-sm text-slate-700 space-y-1">
                   <div>Variables: <span className="text-[#3066bb]">n+</span> per QUBO instance</div>
-                  <div>Search space: <span className="text-[#3066bb]">2^n</span> combinations</div>
+                  <div>Search space: <span className="text-[#3066bb]">2ⁿ</span> combinations</div>
                   <div>Model: <span className="text-[#3066bb]">Simulated Annealing (D-Wave)</span></div>
                 </div>
               </div>
