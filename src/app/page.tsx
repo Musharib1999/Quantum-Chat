@@ -85,26 +85,23 @@ export default function LandingPage() {
       </nav>
 
       {/* Main Content */}
-      <main className="relative z-10 pt-24 md:pt-32 pb-12 md:pb-20 px-4 md:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-start">
-          
-          {/* Block 1: Hero Text (Sticky on Desktop) */}
-          <div className="lg:w-2/5 shrink-0">
-            <div className="lg:sticky lg:top-40 animate-fade-in-up text-left">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-6 leading-tight">
-                The Future of <br />
-                <span className="text-[rgb(48,102,187)]">
-                  Quantum Analysis
-                </span>
-              </h1>
-              <p className="text-lg md:text-xl mb-8 leading-relaxed text-slate-600">
-                Select your specialized interface below to begin your journey of respective quantum domain
-              </p>
-            </div>
-          </div>
+      <main className="relative z-10 pt-32 md:pt-40 pb-12 md:pb-20 px-4 md:px-8 max-w-7xl mx-auto">
 
-          {/* Block 2: Vertically Stacked Cards */}
-          <div className="lg:w-3/5 flex flex-col gap-6 w-full">
+        {/* Hero Section - Centered */}
+        <div className="text-center mb-16 animate-fade-in-up">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-6 leading-tight">
+            The Future of <br />
+            <span className="text-[rgb(48,102,187)]">
+              Quantum Analysis
+            </span>
+          </h1>
+          <p className="text-lg md:text-xl mb-8 leading-relaxed text-slate-600 max-w-2xl mx-auto">
+            Select your specialized interface below to begin your journey of respective quantum domain
+          </p>
+        </div>
+
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
 
           {/* Card 1: Optimization Studio */}
           <FeatureCard
@@ -119,7 +116,7 @@ export default function LandingPage() {
             badgeText="Unlock with free account"
           />
 
-          {/* Card 2: Quantum Assistant */}
+          {/* Card 2: Quantum Guru LLM */}
           <FeatureCard
             href="/quantum-assistant"
             icon={<Bot size={32} />}
@@ -171,7 +168,6 @@ export default function LandingPage() {
             badgeText="Open Enrollment"
           />
 
-        </div>
         </div>
       </main>
 
