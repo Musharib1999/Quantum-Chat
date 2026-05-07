@@ -193,10 +193,7 @@ export default function LandingPage() {
 
             {/* Left: Description */}
             <div className="bg-white rounded-3xl border border-slate-200 p-8 md:p-10 shadow-sm transition-all hover:shadow-md">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-[#3066bb]/10 flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(48,102,187)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-                </div>
+              <div className="mb-6">
                 <h3 className="text-2xl font-semibold text-slate-900">The Problem</h3>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed mb-6">
@@ -220,21 +217,18 @@ export default function LandingPage() {
 
             {/* Right: Methodology */}
             <div className="bg-white rounded-3xl border border-slate-200 p-8 md:p-10 shadow-sm transition-all hover:shadow-md">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(139,92,246)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                </div>
+              <div className="mb-6">
                 <h3 className="text-2xl font-semibold text-slate-900">Methodology</h3>
               </div>
               <div className="space-y-6">
                 {[
-                  { step: '01', title: 'Call Ingress', desc: 'Incoming call attributes (language, domain, callback preference) are captured and streamed via API.', color: 'bg-[#3066bb]' },
-                  { step: '02', title: 'QUBO Formulation', desc: 'Call-agent match scores are encoded into a binary optimization matrix with language, domain, and proficiency weights.', color: 'bg-violet-500' },
-                  { step: '03', title: 'Quantum Annealing', desc: 'D-Wave Simulated Annealing solver explores the 2ⁿ energy landscape to find the global minimum — the optimal agent.', color: 'bg-emerald-500' },
-                  { step: '04', title: 'Routing Decision', desc: 'Matched agent ID is returned via webhook and compared against the classical static-rule result.', color: 'bg-amber-500' },
-                ].map(({ step, title, desc, color }) => (
+                  { step: '01', title: 'Call Ingress', desc: 'Incoming call attributes (language, domain, callback preference) are captured and streamed via API.' },
+                  { step: '02', title: 'QUBO Formulation', desc: 'Call-agent match scores are encoded into a binary optimization matrix with language, domain, and proficiency weights.' },
+                  { step: '03', title: 'Quantum Annealing', desc: 'D-Wave Simulated Annealing solver explores the 2ⁿ energy landscape to find the global minimum — the optimal agent.' },
+                  { step: '04', title: 'Routing Decision', desc: 'Matched agent ID is returned via webhook and compared against the classical static-rule result.' },
+                ].map(({ step, title, desc }) => (
                   <div key={step} className="flex gap-5">
-                    <div className={`w-8 h-8 rounded-xl ${color} flex items-center justify-center text-white text-xs font-black shrink-0 mt-1 shadow-sm`}>{step}</div>
+                    <div className="w-8 h-8 rounded-xl bg-[rgb(48,102,187)] flex items-center justify-center text-white text-xs font-black shrink-0 mt-1 shadow-sm">{step}</div>
                     <div>
                       <div className="text-sm font-semibold text-slate-900 mb-1">{title}</div>
                       <div className="text-sm text-slate-700 leading-relaxed">{desc}</div>
