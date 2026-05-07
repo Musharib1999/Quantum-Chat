@@ -413,14 +413,24 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                                                 <button 
                                                     onClick={async () => {
                                                         try {
-                                                            const url = pipelines[0]?.webhookUrl;
+                                                            // Find the pipeline matching this shot's enterprise, or fall back to first active pipeline
+                                                            const targetPipeline = pipelines.find(p => 
+                                                                p.enterpriseName === shot.parameters?.enterprise || 
+                                                                p.status === 'active'
+                                                            ) || pipelines[0];
+                                                            
+                                                            const url = targetPipeline?.webhookUrl;
+                                                            
                                                             if (!url) {
-                                                                alert("No active webhook URL configured.");
+                                                                alert(`No webhook URL found. Make sure your pipeline has a Webhook Target configured in the Pipelines tab.`);
                                                                 return;
                                                             }
+                                                            
+                                                            const callId = shot.parameters?.call?.call_id || shot.parameters?.callId || shot.parameters?.id || 'N/A';
+                                                            
                                                             const payload = {
-                                                                callId: shot.parameters?.call?.call_id || shot.parameters?.callId || shot.parameters?.id || 'N/A',
-                                                                enterprise: pipelines[0]?.enterpriseName || 'Unknown Enterprise',
+                                                                callId,
+                                                                enterprise: targetPipeline.enterpriseName || 'Unknown Enterprise',
                                                                 status: shot.results?.error ? 'failed' : 'success',
                                                                 solutions: [{
                                                                     hardware: shot.hardware,
@@ -432,18 +442,28 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                                                                 totalExecutionTimeMs: shot.executionTimeMs || 0,
                                                                 timestamp: new Date().toISOString()
                                                             };
-                                                            await fetch(url, {
+                                                            
+                                                            console.log(`[Resend] Firing to ${url} for Call ID: ${callId}`, payload);
+                                                            
+                                                            const res = await fetch(url, {
                                                                 method: 'POST',
                                                                 headers: { 'Content-Type': 'application/json' },
                                                                 body: JSON.stringify(payload)
                                                             });
-                                                            alert(`Webhook manually resent successfully!`);
-                                                        } catch (e) {
-                                                            console.error("Manual resend failed:", e);
-                                                            alert("Failed to resend webhook. Check console.");
+                                                            
+                                                            if (res.ok) {
+                                                                alert(`✅ Webhook for ${callId} resent successfully to ${url}`);
+                                                            } else {
+                                                                const errText = await res.text();
+                                                                console.error(`[Resend] Failed: ${res.status}`, errText);
+                                                                alert(`❌ Resend failed with status ${res.status}. Check console.`);
+                                                            }
+                                                        } catch (e: any) {
+                                                            console.error("[Resend] Network error:", e?.message || e);
+                                                            alert(`❌ Network error: ${e?.message || 'Unknown error'}. Check console.`);
                                                         }
                                                     }}
-                                                    className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-[9px] font-bold tracking-wider transition-colors"
+                                                    className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-[9px] font-bold tracking-wider transition-colors flex-shrink-0"
                                                 >
                                                     RESEND
                                                 </button>
