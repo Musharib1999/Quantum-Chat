@@ -403,9 +403,14 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                             <div className="flex-1 space-y-4 font-mono text-[11px] overflow-y-auto pr-2 custom-scrollbar">
                                 {liveShots.map((shot, i) => (
                                     <div key={i} className={`p-4 rounded-xl border ${i === 0 ? 'bg-blue-50/50 border-[#3066bb]/30 shadow-sm' : 'bg-white border-slate-200'}`}>
-                                        <div className="text-slate-600 font-bold mb-3 flex items-center justify-between">
-                                            <span>200 OK</span>
-                                            <span className="text-[#3066bb] uppercase tracking-wider text-[9px] border border-[#3066bb]/20 bg-[#3066bb]/5 px-2 py-0.5 rounded">{shot.hardware || 'Simulator'}</span>
+                                        <div className="text-slate-600 font-bold mb-3 flex flex-col gap-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <span>200 OK</span>
+                                                <span className="text-[#3066bb] uppercase tracking-wider text-[9px] border border-[#3066bb]/20 bg-[#3066bb]/5 px-2 py-0.5 rounded">{shot.hardware || 'Simulator'}</span>
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 font-medium bg-white px-2 py-1 rounded border border-slate-100 w-fit">
+                                                Call ID: <span className="text-slate-800 font-bold">{shot.parameters?.call?.call_id || shot.parameters?.callId || shot.parameters?.id || 'N/A'}</span>
+                                            </div>
                                         </div>
                                         <div className="text-slate-900 whitespace-pre-wrap break-words leading-relaxed">{JSON.stringify(shot.results || { status: 'delivered successfully' }, null, 2)}</div>
                                     </div>
