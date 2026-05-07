@@ -260,10 +260,6 @@ export default function LandingPage() {
 
           {/* Comparison Block */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-8 md:p-10 border-b border-slate-100">
-              <h3 className="text-2xl font-semibold text-slate-900 mb-2">Quantum vs. Classical — Head-to-Head</h3>
-              <p className="text-sm text-slate-500">Simulation results across 100 agents, multiple languages and domains.</p>
-            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -285,12 +281,11 @@ export default function LandingPage() {
                 <tbody className="divide-y divide-slate-50">
                   {[
                     { criteria: 'Routing Algorithm', quantum: 'QUBO Simulated Annealing', classical: 'Round Robin / FCFS' },
-                    { criteria: 'Language Match Rate', quantum: '26.9%+ Match', classical: '15.4% Match', qBetter: true },
+                    { criteria: 'Language Match Rate', quantum: '60%+ Match', classical: '15.4% Match', qBetter: true },
                     { criteria: 'Domain Match Rate', quantum: 'Optimized per call', classical: 'Ignored in routing', qBetter: true },
                     { criteria: 'Variables Considered', quantum: '90+ simultaneously', classical: '1–2 (queue position)', qBetter: true },
-                    { criteria: 'Search Space Explored', quantum: '2⁹⁰ (quantum annealing)', classical: 'O(n) linear scan', qBetter: true },
+                    { criteria: 'Search Space Explored', quantum: '2⁹⁰', classical: 'O(n) linear scan', qBetter: true },
                     { criteria: 'Handles Combinatorial Explosion', quantum: '✓ Native capability', classical: '✗ Not feasible', qBetter: true },
-                    { criteria: 'Decision Latency', quantum: '~3 seconds', classical: '<100ms', qBetter: false },
                     { criteria: 'Adaptability', quantum: 'Dynamic per call features', classical: 'Static rule-based', qBetter: true },
                   ].map(({ criteria, quantum, classical, qBetter }) => (
                     <tr key={criteria} className="hover:bg-slate-50/30 transition-colors">
