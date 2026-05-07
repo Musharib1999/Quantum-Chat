@@ -443,12 +443,15 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                                                                 timestamp: new Date().toISOString()
                                                             };
                                                             
-                                                            console.log(`[Resend] Firing to ${url} for Call ID: ${callId}`, payload);
+                                                            console.log(`[Resend] Proxying via server for Call ID: ${callId} → ${url}`);
                                                             
-                                                            const res = await fetch(url, {
+                                                            const res = await fetch('/api/v1/enterprise/resend-webhook', {
                                                                 method: 'POST',
-                                                                headers: { 'Content-Type': 'application/json' },
-                                                                body: JSON.stringify(payload)
+                                                                headers: { 
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-API-Key': user?.apiKey || ''
+                                                                },
+                                                                body: JSON.stringify({ webhookUrl: url, payload })
                                                             });
                                                             
                                                             if (res.ok) {
