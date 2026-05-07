@@ -230,7 +230,7 @@ export default function LandingPage() {
                 {[
                   { step: '01', title: 'Call Ingress', desc: 'Incoming call attributes (language, domain, callback preference) are captured and streamed via API.', color: 'bg-[#3066bb]' },
                   { step: '02', title: 'QUBO Formulation', desc: 'Call-agent match scores are encoded into a binary optimization matrix with language, domain, and proficiency weights.', color: 'bg-violet-500' },
-                  { step: '03', title: 'Quantum Annealing', desc: 'D-Wave Simulated Annealing solver explores the 2⁹⁰ energy landscape to find the global minimum — the optimal agent.', color: 'bg-emerald-500' },
+                  { step: '03', title: 'Quantum Annealing', desc: 'D-Wave Simulated Annealing solver explores the 2⁹⁰⁰ energy landscape to find the global minimum — the optimal agent.', color: 'bg-emerald-500' },
                   { step: '04', title: 'Routing Decision', desc: 'Matched agent ID is returned via webhook and compared against the classical static-rule result.', color: 'bg-amber-500' },
                 ].map(({ step, title, desc, color }) => (
                   <div key={step} className="flex gap-5">
@@ -249,8 +249,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             {[
               { value: '>50%', label: 'Calls Better Routed', sub: 'vs classical static rules', color: 'text-[#3066bb]', bg: 'bg-[#3066bb]/5 border-[#3066bb]/15' },
-              { value: '90+', label: 'QUBO Variables', sub: 'per routing decision', color: 'text-violet-600', bg: 'bg-violet-50 border-violet-100' },
-              { value: '2⁹⁰', label: 'Search Space', sub: 'explored by quantum solver', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
+              { value: '900+', label: 'QUBO Variables', sub: 'per routing decision', color: 'text-violet-600', bg: 'bg-violet-50 border-violet-100' },
+              { value: '2⁹⁰⁰', label: 'Search Space', sub: 'explored by quantum solver', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
               { value: '~3s', label: 'Avg Solve Time', sub: 'per call via D-Wave', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' },
             ].map(({ value, label, sub, color, bg }) => (
               <div key={label} className={`rounded-3xl border p-8 text-center transition-all hover:scale-[1.02] ${bg}`}>
@@ -286,8 +286,8 @@ export default function LandingPage() {
                     { criteria: 'Routing Algorithm', quantum: 'QUBO Simulated Annealing', classical: 'Round Robin / FCFS' },
                     { criteria: 'Language Match Rate', quantum: '60%+ Match', classical: '15.4% Match', qBetter: true },
                     { criteria: 'Domain Match Rate', quantum: 'Optimized per call', classical: 'Ignored in routing', qBetter: true },
-                    { criteria: 'Variables Considered', quantum: '90+ simultaneously', classical: '1–2 (queue position)', qBetter: true },
-                    { criteria: 'Search Space Explored', quantum: '2⁹⁰', classical: 'O(n) linear scan', qBetter: true },
+                    { criteria: 'Variables Considered', quantum: '900+ simultaneously', classical: '1–2 (queue position)', qBetter: true },
+                    { criteria: 'Search Space Explored', quantum: '2⁹⁰⁰', classical: 'O(n) linear scan', qBetter: true },
                     { criteria: 'Handles Combinatorial Explosion', quantum: '✓ Native capability', classical: '✗ Not feasible', qBetter: true },
                     { criteria: 'Adaptability', quantum: 'Dynamic per call features', classical: 'Static rule-based', qBetter: true },
                   ].map(({ criteria, quantum, classical, qBetter }) => (
