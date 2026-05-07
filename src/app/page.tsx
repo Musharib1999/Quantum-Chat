@@ -262,13 +262,12 @@ export default function LandingPage() {
                 <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
                     <th className="text-left px-8 py-5 text-sm font-semibold text-slate-500 tracking-wider">Criteria</th>
-                    <th className="text-center px-6 py-5 text-sm font-bold tracking-wider text-[#3066bb]">
-                      <span className="inline-flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100 text-emerald-700">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <th className="text-center px-6 py-5 text-sm font-semibold text-slate-500 tracking-wider">
+                      <span className="inline-flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">
                         Quantum (QUBO)
                       </span>
                     </th>
-                    <th className="text-center px-6 py-5 text-sm font-bold tracking-wider text-slate-500">
+                    <th className="text-center px-6 py-5 text-sm font-semibold text-slate-500 tracking-wider">
                       <span className="inline-flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
                         Classical (Static Rules)
                       </span>
