@@ -197,13 +197,13 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-semibold text-slate-900">The Problem</h3>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed mb-6">
-                Traditional BPO and telecalling platforms still route calls using rigid round robin or first available logic without truly understanding who the best agent is for that customer. Factors like language fluency, product expertise, conversion history, customer intent and real time agent availability are often ignored.
+                Traditional BPO and telecalling platforms still route calls using rigid round robin or first available logic without truly understanding who the best telecaller is for that customer. Factors like language fluency, product expertise, conversion history, customer intent and real time telecaller availability are often ignored.
               </p>
               <p className="text-sm text-slate-700 leading-relaxed mb-6">
-                When scaled to 100+ agents with multiple skill and performance attributes, the routing challenge becomes a massive combinatorial optimization problem with nearly 2ⁿ possible assignment combinations. This is far beyond what classical brute force systems can evaluate in real time.
+                When scaled to 100+ telecallers with multiple skill and performance attributes, the routing challenge becomes a massive combinatorial optimization problem with nearly 2ⁿ possible assignment combinations. This is far beyond what classical brute force systems can evaluate in real time.
               </p>
               <p className="text-sm text-slate-700 leading-relaxed">
-                The outcome is slower resolutions, lower conversions, agent overload and lost revenue.
+                The outcome is slower resolutions, lower conversions, telecaller overload and lost revenue.
               </p>
               <div className="mt-8 p-5 bg-slate-50 rounded-2xl border border-slate-100">
                 <div className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Problem Scale</div>
@@ -223,9 +223,9 @@ export default function LandingPage() {
               <div className="space-y-6">
                 {[
                   { step: '01', title: 'Call Ingress', desc: 'Incoming call attributes (language, domain, callback preference) are captured and streamed via API.' },
-                  { step: '02', title: 'QUBO Formulation', desc: 'Call-agent match scores are encoded into a binary optimization matrix with language, domain, and proficiency weights.' },
-                  { step: '03', title: 'Quantum Annealing', desc: 'D-Wave Simulated Annealing solver explores the 2ⁿ energy landscape to find the global minimum — the optimal agent.' },
-                  { step: '04', title: 'Routing Decision', desc: 'Matched agent ID is returned via webhook and compared against the classical static-rule result.' },
+                  { step: '02', title: 'QUBO Formulation', desc: 'Call-telecaller match scores are encoded into a binary optimization matrix with language, domain, and proficiency weights.' },
+                  { step: '03', title: 'Quantum Annealing', desc: 'D-Wave Simulated Annealing solver explores the 2ⁿ energy landscape to find the global minimum — the optimal telecaller.' },
+                  { step: '04', title: 'Routing Decision', desc: 'Matched telecaller ID is returned via webhook and compared against the classical static-rule result.' },
                 ].map(({ step, title, desc }) => (
                   <div key={step} className="flex gap-5">
                     <div className="w-8 h-8 rounded-xl bg-[rgb(48,102,187)] flex items-center justify-center text-white text-xs font-black shrink-0 mt-1 shadow-sm">{step}</div>
