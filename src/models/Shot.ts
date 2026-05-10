@@ -19,6 +19,8 @@ export interface IShot extends Document {
     cacheKey?: string; // SHA-256 hash for result caching
     source: string; // "Web" or "API"
     executionTimeMs?: number; // Latency tracking for enterprise streams
+    webhookStatus?: 'pending' | 'success' | 'failed'; // Tracks delivery status
+    webhookRetries?: number; // Tracks number of retry attempts
 }
 
 const ShotSchema: Schema = new Schema({
@@ -39,7 +41,13 @@ const ShotSchema: Schema = new Schema({
     outputTables: { type: Schema.Types.Mixed },
     cacheKey: { type: String, index: true },
     source: { type: String, default: 'Web', index: true },
-    executionTimeMs: { type: Number }
+    executionTimeMs: { type: Number },
+    webhookStatus: { type: String, enum: ['pending', 'success', 'failed'], default: 'pending', index: true },
+    webhookRetries: { type: Number, default: 0 }
 }, { collection: 'experiments' }); // <--- Explicit collection mapping to PRESERVE historical execution logs!
+
+// Compound index to optimize the real-time polling by industry and timestamp
+ShotSchema.index({ industry: 1, timestamp: -1 });
+ShotSchema.index({ industry: 1, problem: 1, timestamp: -1 });
 
 export default mongoose.models.Shot || mongoose.model<IShot>('Shot', ShotSchema);

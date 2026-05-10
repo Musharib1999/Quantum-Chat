@@ -160,7 +160,8 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
 }
 
 /**
- * Pushes the executed JSON payload asynchronously to the client's Webhook URL.
+ * Pushes the executed JSON payload asynchronously to the client's Webhook URL
+ * and logs the delivery status for self-healing.
  */
 async function pushToWebhook(url: string, payload: any) {
     try {
@@ -170,8 +171,18 @@ async function pushToWebhook(url: string, payload: any) {
             timeout: 5000 // Do not block our server forever if their webhook is down
         });
         console.log(`[Webhook] Successfully delivered shot ${payload.shotId}`);
+        
+        // Update database status for Self-Healing Dashboard
+        await Shot.findByIdAndUpdate(payload.shotId, { 
+            $set: { webhookStatus: 'success' } 
+        });
+
     } catch (error: any) {
         console.error(`[Webhook] Failed to deliver shot ${payload.shotId} to ${url}. Error: ${error.message}`);
-        // In a production environment, we would implement retry logic or a Dead Letter Queue (DLQ) here.
+        
+        // Mark as failed in database so the Dead Letter Queue / Self Healing job can pick it up
+        await Shot.findByIdAndUpdate(payload.shotId, { 
+            $set: { webhookStatus: 'failed' } 
+        });
     }
 }
