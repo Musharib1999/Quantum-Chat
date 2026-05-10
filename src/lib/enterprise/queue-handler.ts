@@ -164,25 +164,30 @@ export async function processEnterpriseStream(payload: any, pipeline: IDataPipel
  * and logs the delivery status for self-healing.
  */
 async function pushToWebhook(url: string, payload: any) {
+    const shotId = payload.solutions?.[0]?.shotId;
     try {
         console.log(`[Webhook] Pushing result to ${url}`);
         await axios.post(url, payload, {
             headers: { 'Content-Type': 'application/json' },
             timeout: 5000 // Do not block our server forever if their webhook is down
         });
-        console.log(`[Webhook] Successfully delivered shot ${payload.shotId}`);
+        console.log(`[Webhook] Successfully delivered shot ${shotId}`);
         
         // Update database status for Self-Healing Dashboard
-        await Shot.findByIdAndUpdate(payload.shotId, { 
-            $set: { webhookStatus: 'success' } 
-        });
+        if (shotId) {
+            await Shot.findByIdAndUpdate(shotId, { 
+                $set: { webhookStatus: 'success' } 
+            });
+        }
 
     } catch (error: any) {
-        console.error(`[Webhook] Failed to deliver shot ${payload.shotId} to ${url}. Error: ${error.message}`);
+        console.error(`[Webhook] Failed to deliver shot ${shotId} to ${url}. Error: ${error.message}`);
         
         // Mark as failed in database so the Dead Letter Queue / Self Healing job can pick it up
-        await Shot.findByIdAndUpdate(payload.shotId, { 
-            $set: { webhookStatus: 'failed' } 
-        });
+        if (shotId) {
+            await Shot.findByIdAndUpdate(shotId, { 
+                $set: { webhookStatus: 'failed' } 
+            });
+        }
     }
 }
