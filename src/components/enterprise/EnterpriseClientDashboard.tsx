@@ -167,6 +167,35 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
         }
     };
 
+    const handleClearTelemetry = async (pipelineId: string | null = null) => {
+        if (!confirm("⚠️ This will permanently delete all historical telemetry records for this pipeline. Are you sure?")) {
+            return;
+        }
+
+        try {
+            // If no pipelineId provided, clear all active ones
+            const idsToClear = pipelineId ? [pipelineId] : pipelines.filter(p => p.status === 'active').map(p => p._id);
+            
+            for (const id of idsToClear) {
+                const res = await fetch('/api/v1/enterprise/clear-telemetry', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ pipelineId: id })
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    console.error(`Failed to clear pipeline ${id}:`, data.error);
+                }
+            }
+            
+            alert("✅ Telemetry cleared successfully.");
+            fetchLatestShots(); // Refresh the list
+            fetchMetrics(); // Refresh KPIs
+        } catch (error) {
+            alert("Failed to clear telemetry data.");
+        }
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
             <style jsx>{`
@@ -298,6 +327,13 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                                                     >
                                                         Edit Route
                                                     </button>
+                                                    <div className="w-px h-3 bg-slate-200"></div>
+                                                    <button 
+                                                        onClick={() => handleClearTelemetry(p._id)}
+                                                        className="text-[11px] font-bold text-red-500 hover:underline"
+                                                    >
+                                                        Clear Data
+                                                    </button>
                                                 </div>
                                             )}
                                         </td>
@@ -324,6 +360,13 @@ export default function EnterpriseClientDashboard({ viewMode }: EnterpriseClient
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
                                 Self-Heal DLQ
+                            </button>
+                            <button 
+                                onClick={() => handleClearTelemetry()}
+                                className="px-4 py-2 rounded-lg text-xs font-bold transition-all border bg-white text-red-600 border-red-100 hover:bg-red-50 flex items-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                Clear Telemetry
                             </button>
                             <button 
                                 onClick={handleRestartStream}
