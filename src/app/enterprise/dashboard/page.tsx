@@ -69,12 +69,7 @@ export default function EnterpriseDashboardPage() {
                         Active Pipelines
                     </button>
                     <div className="my-2 border-t border-slate-200"></div>
-                    <button 
-                        onClick={() => router.push('/api-docs')} 
-                        className="w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-slate-100/80 text-slate-600 hover:text-slate-900 font-bold text-sm tracking-wide transition-all"
-                    >
-                        API Documentation
-                    </button>
+
                     <button 
                         onClick={() => router.push('/industry')} 
                         className="w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-slate-100/80 text-slate-600 hover:text-slate-900 font-bold text-sm tracking-wide transition-all"

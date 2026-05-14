@@ -47,12 +47,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-8">
-            <Link 
-              href="/api-docs" 
-              className="text-sm font-semibold text-slate-500 hover:text-[#3066bb] transition-colors"
-            >
-              API Documentation
-            </Link>
+
 
             {/* Actions */}
             <div className="flex items-center gap-4">
@@ -165,14 +160,7 @@ export default function LandingPage() {
             <X size={32} />
           </button>
           
-          <Link 
-            href="/api-docs" 
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="text-2xl font-bold text-slate-900 flex items-center gap-3"
-          >
-            <Zap className="text-[#3066bb]" size={28} />
-            API Documentation
-          </Link>
+
 
           <div className="w-12 h-0.5 bg-slate-100 rounded-full" />
 
