@@ -24,7 +24,7 @@ export async function getQuantumExposureScore(name: string, type: 'stock' | 'new
         let activeModel = 'gemini-2.0-flash-lite'; // Default fallback
 
         try {
-            const settings = await LLMSetting.findOne({ key: "global_llm_settings" }).lean();
+            const settings = await LLMSetting.findOne({ isDefault: true }).lean();
             if (settings) {
                 activeProvider = settings.activeProvider;
                 activeModel = settings.activeModel;

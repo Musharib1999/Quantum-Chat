@@ -57,6 +57,7 @@ interface IQuantumForm {
     interpretationPrompt?: string;
     chartConfig?: IChartConfig[];
     executionEnvironment?: 'python-qiskit' | 'python-dwave';
+    isToyProblem?: boolean;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -69,6 +70,7 @@ export default function ProblemConsole() {
     const [problem, setProblem] = useState('');
     const [hardware, setHardware] = useState('Universal');
     const [description, setDescription] = useState('');
+    const [isToyProblem, setIsToyProblem] = useState(false);
     const [activeTab, setActiveTab] = useState<'input' | 'compute' | 'output' | 'ai'>('input');
 
     // Tab 1: Input State
@@ -183,6 +185,7 @@ export default function ProblemConsole() {
                 problem,
                 hardware,
                 description,
+                isToyProblem,
                 active: true,
                 fields,
                 codeTemplates,
@@ -266,6 +269,7 @@ export default function ProblemConsole() {
         setProblem(form.problem || '');
         setHardware(form.hardware || 'Universal');
         setDescription(form.description || '');
+        setIsToyProblem(form.isToyProblem || false);
         
         // 1. Handle Parameter Loading (Fields vs Sections)
         const hasSections = form.sections && form.sections.length > 0;
@@ -320,7 +324,7 @@ export default function ProblemConsole() {
         setIndustry('');
         setService('');
         setProblem(''); setHardware('Universal');
-        setDescription(''); setFields([]); setJsonFields('[]'); setCodeTemplates([]);
+        setDescription(''); setIsToyProblem(false); setFields([]); setJsonFields('[]'); setCodeTemplates([]);
         setBatchingEnabled(false); setMaxQubitsPerBatch(64); setQubitFormula('');
         setInterpretationPrompt(''); setExecutionEnvironment('python-qiskit');
         setView('editor'); setActiveTab('input');
@@ -360,9 +364,20 @@ export default function ProblemConsole() {
                 </div>
             </div>
 
-            <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-[#0F172A]">Description</label>
-                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="problem description..." className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] h-20" />
+            <div className="space-y-1.5 flex items-start gap-6">
+                <div className="flex-1 space-y-1.5">
+                    <label className="text-[10px] font-bold text-[#0F172A]">Description</label>
+                    <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="problem description..." className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm text-[#0F172A] h-20" />
+                </div>
+                <div className="flex items-center gap-3 mt-6 p-4 bg-white border border-[rgb(27,176,206)]/20 rounded-xl">
+                    <span className="text-[10px] font-bold text-[#0F172A]">Toy Problem</span>
+                    <button 
+                        onClick={() => setIsToyProblem(!isToyProblem)} 
+                        className={`w-9 h-5 rounded-full relative transition-all ${isToyProblem ? 'bg-[rgb(48,102,187)]' : 'bg-slate-300'}`}
+                    >
+                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${isToyProblem ? 'left-5' : 'left-1'}`} />
+                    </button>
+                </div>
             </div>
 
             <div className="pt-6 border-t border-[rgb(27,176,206)]/20">
@@ -780,7 +795,10 @@ export default function ProblemConsole() {
                             existingForms.map((form) => (
                                 <div key={form._id} className="bg-white border border-[rgb(27,176,206)]/30 p-6 rounded-2xl hover:border-[rgb(27,176,206)] hover:shadow-md transition-all flex flex-col min-h-[220px]">
                                     <div className="flex items-center justify-between mb-4">
-                                        <span className="text-[10px] font-bold text-[#0F172A] bg-white px-2 py-0.5 rounded-md border border-[rgb(27,176,206)]/20">{form.industry}</span>
+                                        <div className="flex gap-2">
+                                            <span className="text-[10px] font-bold text-[#0F172A] bg-white px-2 py-0.5 rounded-md border border-[rgb(27,176,206)]/20">{form.industry}</span>
+                                            {form.isToyProblem && <span className="text-[10px] font-bold text-white bg-[rgb(48,102,187)] px-2 py-0.5 rounded-md">Toy Problem</span>}
+                                        </div>
                                         {form.active && <span className="text-[10px] text-green-600 font-bold">Active</span>}
                                     </div>
                                     <h3 className="text-lg font-bold text-[#0F172A] mb-2 line-clamp-1">{form.problem}</h3>

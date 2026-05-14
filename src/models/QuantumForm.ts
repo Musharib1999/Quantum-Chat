@@ -54,6 +54,7 @@ export interface IQuantumForm extends Document {
     aiEnabled: boolean;
     llmModelId?: string;
     category?: 'public' | 'enterprise';
+    isToyProblem?: boolean;
     createdAt: Date;
     updatedAt: Date;
     createdBy?: string; // User ID
@@ -114,6 +115,7 @@ const QuantumFormSchema: Schema = new Schema({
     aiEnabled: { type: Boolean, default: false },
     llmModelId: { type: String },
     category: { type: String, enum: ['public', 'enterprise'], default: 'public' },
+    isToyProblem: { type: Boolean, default: false },
     createdBy: { type: String, index: true },
     createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });

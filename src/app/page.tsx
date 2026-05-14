@@ -103,6 +103,7 @@ export default function LandingPage() {
         {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
 
+          {/* Optimization Studio and other modules */}
           {/* Card 1: Optimization Studio */}
           <FeatureCard
             href={isAuthenticated ? "/industry" : "/login?redirect=/industry"}
@@ -114,32 +115,6 @@ export default function LandingPage() {
             accentColor="indigo"
             status="locked"
             badgeText="Unlock with free account"
-          />
-
-          {/* Card 2: Quantum Guru LLM */}
-          <FeatureCard
-            href="/quantum-assistant"
-            icon={<Bot size={32} />}
-            title="Quantum Guru LLM"
-            description="A frontier AI model fine-tuned on 240 million high-fidelity quantum computing data points, designed to generate quantum algorithms, analyze quantum information and solve complex scientific queries"
-            actionText="Chat Now"
-            isDarkMode={false}
-            accentColor="electric"
-            status="unlocked"
-            badgeText="Try now"
-          />
-
-          {/* Card 3: Market Intelligence */}
-          <FeatureCard
-            href="/market"
-            icon={<TrendingUp size={32} />}
-            title="Quantum Stocks and Market Intelligence"
-            description="Current market analysis of your quantum asset"
-            actionText="Launch"
-            isDarkMode={false}
-            accentColor="amber"
-            status="unlocked"
-            badgeText="Try now"
           />
 
           {/* Card 4: Quantum Solver Studio */}

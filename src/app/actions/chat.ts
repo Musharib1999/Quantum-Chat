@@ -144,7 +144,7 @@ export async function chatWithGroq(
     let activeModel = 'gemini-2.0-flash-lite';
 
     try {
-        const settings = await LLMSetting.findOne({ key: "global_llm_settings" }).lean();
+        const settings = await LLMSetting.findOne({ isDefault: true }).lean();
         if (settings) {
             activeProvider = settings.activeProvider as 'groq' | 'gemini';
             activeModel = settings.activeModel;

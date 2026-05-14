@@ -15,6 +15,7 @@ export async function GET(req: Request) {
         const hardware = searchParams.get('hardware');
         const userEmail = searchParams.get('userEmail');
         const userRole = searchParams.get('userRole');
+        const isToyProblem = searchParams.get('isToyProblem');
 
         // If no params, return all for Admin/Builder Overview
         if (!industry && !service && !problem || industry === 'null' || industry === 'undefined') {
@@ -25,6 +26,11 @@ export async function GET(req: Request) {
             // Access Control: Builders only see their own, Admins/Enterprise see everything
             if (userRole === 'builder' && userEmail && !isPowerUser) {
                 query.createdBy = userEmail;
+            }
+            
+            if (isToyProblem === 'true') {
+                query.isToyProblem = true;
+                query.active = true;
             }
             
             console.log(`[QuantumForms API] Fetching all forms. Role: ${userRole}, Email: ${userEmail}, PowerUser: ${isPowerUser}, Query:`, query);
