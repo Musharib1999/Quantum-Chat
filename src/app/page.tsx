@@ -103,7 +103,7 @@ export default function LandingPage() {
         {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
 
-          {/* Optimization Studio and other modules */}
+          {/* Optimization Studio - Primary Entry Point */}
           {/* Card 1: Optimization Studio */}
           <FeatureCard
             href={isAuthenticated ? "/industry" : "/login?redirect=/industry"}
@@ -113,32 +113,6 @@ export default function LandingPage() {
             actionText="Launch"
             isDarkMode={false}
             accentColor="indigo"
-            status="locked"
-            badgeText="Unlock with free account"
-          />
-
-          {/* Card 4: Quantum Solver Studio */}
-          <FeatureCard
-            href={isAuthenticated ? "/builder/dashboard" : "/login?redirect=/builder/dashboard"}
-            icon={<Atom size={32} />}
-            title="Quantum Solver Studio"
-            description="Write, test and run quantum and hybrid optimization solutions from a single interface. Integrates leading frameworks with built-in simulators for rapid experimentation"
-            actionText="Launch Studio"
-            isDarkMode={false}
-            accentColor="violet"
-            status="locked"
-            badgeText="Unlock with free account"
-          />
-
-          {/* Card 5: Quantum Academy */}
-          <FeatureCard
-            href={isAuthenticated ? "/academy" : "/login?redirect=/academy"}
-            icon={<GraduationCap size={32} />}
-            title="Quantum Academy"
-            description="Master quantum computing through structured curriculum, text lessons, and interactive code challenges. Earn badges and professional certificates upon completion."
-            actionText="Start Learning"
-            isDarkMode={false}
-            accentColor="emerald"
             status="locked"
             badgeText="Unlock with free account"
           />
