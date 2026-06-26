@@ -61,9 +61,13 @@ function LoginForm() {
                 login(data);
                 showToast('Login Successful', 'success');
                 
+                // Bulletproof check of search params directly from window to avoid Next.js client hydration delays
+                const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+                const activeRedirect = params?.get('redirect') || redirect;
+                
                 // Determine default redirect based on role if no specific redirect is requested
-                let targetRedirect = redirect;
-                if (redirect === '/') {
+                let targetRedirect = activeRedirect;
+                if (activeRedirect === '/') {
                     if (data.user?.role === 'admin') targetRedirect = '/admin';
                     else if (data.user?.role === 'enterprise') targetRedirect = '/enterprise/dashboard';
                     else targetRedirect = '/industry'; // Standard user default
