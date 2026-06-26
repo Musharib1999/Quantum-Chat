@@ -67,3 +67,34 @@ fix_avatar.py
 REPOSITORIES.md
 scratch/
 
+
+# ── Model weights & adapter files (stored on HuggingFace, NOT GitHub) ─────────
+# HF Repo: https://huggingface.co/musharibsubhani/OptGuruV2
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.gguf
+*.ggml
+*.ckpt
+
+# Adapter weight files (only adapter_config.json is safe to commit)
+quantum-backend/adapters/*/adapter_model.bin
+quantum-backend/adapters/*/adapters.safetensors
+quantum-backend/v2/adapters/
+
+# Python virtual environments
+quantum-backend/venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Model download cache
+.cache/
+hub/
+models--*/
+
+# Simulator logs
+quantum-backend/simulator_log.txt

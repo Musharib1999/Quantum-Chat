@@ -1,0 +1,116 @@
+{
+  "version": "2.0",
+  "description": "QuantumGuru Engine v2 — LoRA Adapter Registry",
+  "huggingface_repo": "https://huggingface.co/musharibsubhani/OptGuruV2",
+  "base_model": "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit",
+  "note": "Adapter weights (*.bin, *.safetensors) are stored on HuggingFace, NOT in this repo. Download using: huggingface-cli download musharibsubhani/OptGuruV2 --local-dir ./adapters/",
+
+  "active_adapters": [
+    {
+      "name": "adapter_suggestor",
+      "role": "Solver Suggestor",
+      "description": "Routes optimization problems to CQM, QUBO, or OR-Tools solver",
+      "pipeline_step": 1,
+      "engine": "Llama 3 8B LoRA",
+      "lora_rank": 16,
+      "lora_alpha": 32,
+      "training_samples": 2025,
+      "status": "active"
+    },
+    {
+      "name": "adapter_master_guru",
+      "role": "CQM Code Generator",
+      "description": "Generates D-Wave dimod ConstrainedQuadraticModel Python code",
+      "pipeline_step": 5,
+      "engine": "Llama 3 8B LoRA",
+      "lora_rank": 32,
+      "lora_alpha": 64,
+      "training_samples": 500,
+      "status": "active"
+    },
+    {
+      "name": "adapter_qubo_coder",
+      "role": "QUBO Code Generator",
+      "description": "Generates D-Wave Ocean SDK BinaryQuadraticModel QUBO code",
+      "pipeline_step": 5,
+      "engine": "Llama 3 8B LoRA",
+      "lora_rank": 16,
+      "lora_alpha": 32,
+      "training_samples": 370,
+      "status": "active"
+    },
+    {
+      "name": "adapter_ortools_coder",
+      "role": "OR-Tools Code Generator",
+      "description": "Generates Google OR-Tools CP-SAT classical Python solver code",
+      "pipeline_step": 5,
+      "engine": "Llama 3 8B LoRA",
+      "lora_rank": 16,
+      "lora_alpha": 32,
+      "training_samples": 810,
+      "status": "active"
+    },
+    {
+      "name": "adapter_qa_debugger",
+      "role": "QA Debugger",
+      "description": "Audits generated solver code for syntax and constraint errors. Triggers DCC fallback on failure.",
+      "pipeline_step": 6,
+      "engine": "Llama 3 8B LoRA",
+      "lora_rank": 16,
+      "lora_alpha": 32,
+      "training_samples": 500,
+      "status": "active"
+    },
+    {
+      "name": "adapter_personality",
+      "role": "Personality Wrapper",
+      "description": "Wraps final output in the Bit2Qubit professional brand voice",
+      "pipeline_step": 8,
+      "engine": "Llama 3 8B LoRA",
+      "lora_rank": 16,
+      "lora_alpha": 32,
+      "training_samples": 300,
+      "status": "active"
+    }
+  ],
+
+  "archived_adapters": [
+    {
+      "name": "adapter_nlp_parser",
+      "role": "NLP Parser",
+      "description": "Replaced by Qwen 3 32B — Call 1 in v2 pipeline",
+      "replaced_by": "Qwen 3 32B",
+      "training_samples": 500,
+      "status": "archived"
+    },
+    {
+      "name": "adapter_math_logic",
+      "role": "Math Logic Reasoner",
+      "description": "Replaced by Qwen 3 32B — Call 2 in v2 pipeline",
+      "replaced_by": "Qwen 3 32B",
+      "training_samples": 1350,
+      "status": "archived"
+    },
+    {
+      "name": "adapter_knowledge",
+      "role": "Quantum Knowledge Expert",
+      "description": "Replaced by Qwen 3 32B — Call 3 in v2 pipeline",
+      "replaced_by": "Qwen 3 32B",
+      "training_samples": 1200,
+      "status": "archived"
+    }
+  ],
+
+  "qwen_roles": [
+    { "step": 2, "role": "NLP Parser",              "output": "Structured JSON IR" },
+    { "step": 3, "role": "Math Logic Reasoner",      "output": "Feasibility check + reasoning trace" },
+    { "step": 4, "role": "Quantum Knowledge Expert", "output": "D-Wave penalty math + domain context" },
+    { "step": 7, "role": "Output Interpreter",       "output": "200-word plain English summary" }
+  ],
+
+  "download_instructions": {
+    "cli": "huggingface-cli download musharibsubhani/OptGuruV2 --local-dir ./quantum-backend/adapters/",
+    "python": "from huggingface_hub import snapshot_download; snapshot_download('musharibsubhani/OptGuruV2', local_dir='./quantum-backend/adapters/')",
+    "runpod": "huggingface-cli login --token $HF_TOKEN && huggingface-cli download musharibsubhani/OptGuruV2 --local-dir /workspace/adapters/"
+  }
+}
