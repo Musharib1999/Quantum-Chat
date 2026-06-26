@@ -3,13 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Shield, Cpu, ArrowRight, TrendingUp, BookOpen, Bot, Lock as LockIcon, Unlock as UnlockIcon, LogOut, Sun, Moon, CheckCircle, Menu, X, Atom, Zap, GraduationCap } from 'lucide-react';
+import { Cpu, ArrowRight, Bot, Lock as LockIcon, Unlock as UnlockIcon, Menu, X } from 'lucide-react';
 
 export default function LandingPage() {
   const { isAuthenticated, logout } = useAuth();
-  const theme = 'light';
-  const isDarkMode = false;
-  const toggleTheme = () => {};
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -47,9 +44,6 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-8">
-
-
-            {/* Actions */}
             <div className="flex items-center gap-4">
               {isAuthenticated ? (
                 <button
@@ -61,28 +55,18 @@ export default function LandingPage() {
               ) : (
                 <Link
                   href="/login"
-                  className="px-6 py-1.5 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white font-semibold rounded transition-all shadow-sm text-sm"
+                  className="px-6 py-1.5 bg-[#3066bb] text-white border-2 border-[#3066bb] hover:bg-white hover:text-[#3066bb] font-semibold rounded transition-all shadow-sm text-sm"
                 >
                   Login
                 </Link>
               )}
             </div>
-
-            {/* Mobile Menu Toggle */}
-            <button
-              className="md:hidden p-2 text-slate-600"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X /> : <Menu />}
-            </button>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="relative z-10 pt-32 md:pt-40 pb-12 md:pb-20 px-4 md:px-8 max-w-7xl mx-auto">
-
-        {/* Hero Section - Centered */}
+      {/* Hero Section */}
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-36 pb-24 flex flex-col justify-center min-h-[calc(100vh-80px)]">
         <div className="text-center mb-16 animate-fade-in-up">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-6 leading-tight">
             The Future of <br />
@@ -96,7 +80,7 @@ export default function LandingPage() {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full">
 
           {/* Card 1: Optimization Studio */}
           <FeatureCard
@@ -124,22 +108,8 @@ export default function LandingPage() {
             badgeText="Try now"
           />
 
-          {/* Card 3: Market Intelligence */}
-          <FeatureCard
-            href="/market"
-            icon={<TrendingUp size={32} />}
-            title="Quantum Stocks and Market Intelligence"
-            description="Current market analysis of your quantum asset"
-            actionText="Launch"
-            isDarkMode={false}
-            accentColor="amber"
-            status="unlocked"
-            badgeText="Try now"
-          />
-
         </div>
       </main>
-
 
       {/* Footer */}
       <footer className="py-12 border-t border-slate-100 text-slate-400">
@@ -160,8 +130,6 @@ export default function LandingPage() {
             <X size={32} />
           </button>
           
-
-
           <div className="w-12 h-0.5 bg-slate-100 rounded-full" />
 
           {isAuthenticated ? (
