@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from v2 import config
 from v2.pipelines.optimization import run_optimization_pipeline
+from v2.retriever import VectorRetriever
 
 # =========================================================================
 # APP SETUP
@@ -38,6 +39,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize Vector Retriever globally
+print("Initializing Vector Retriever globally...")
+retriever = VectorRetriever()
+print("Retriever initialization complete.")
 
 # =========================================================================
 # REQUEST / RESPONSE MODELS
@@ -147,25 +153,52 @@ async def run_pipeline_v2(request: PipelineRequest):
 
 
 # =========================================================================
-# ASSISTANT CHAT RAG PROXY
+# NATIVE ASSISTANT CHAT RAG
 # =========================================================================
 @app.post("/assistant/chat")
 async def assistant_chat(request: AssistantChatRequest):
     """
-    Proxy assistant chat requests to the local FAISS retriever server.
+    Query the local FAISS retriever directly.
     """
-    retriever_url = os.environ.get("RETRIEVER_URL", "http://127.0.0.1:8003")
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        try:
-            r = await client.post(f"{retriever_url}/assistant/chat", json={"message": request.message})
-            r.raise_for_status()
-            return r.json()
-        except Exception as e:
+    try:
+        # Perform retrieval
+        hits = retriever.retrieve(request.message, k=3)
+        if "error" in hits:
             return {
-                "response": f"❌ **FAISS Proxy Error**: Could not connect to the local FAISS retriever server at {retriever_url}. Details: {e}",
+                "response": f"❌ **Retriever Error**: {hits['error']}",
                 "success": False,
                 "score": 0.0
             }
+            
+        if not hits:
+            return {
+                "response": "❌ No matching concepts or identity entries found in the database.",
+                "success": False,
+                "score": 0.0
+            }
+            
+        # Apply 85% similarity threshold gate
+        top_hit = hits[0]
+        similarity = top_hit['score']
+        if similarity < 0.85:
+            return {
+                "response": f"❌ No high-confidence match found in the local database (similarity: {similarity*100:.1f}%).",
+                "success": False,
+                "score": similarity
+            }
+            
+        return {
+            "response": top_hit['response'],
+            "success": True,
+            "score": similarity,
+            "matched_prompt": top_hit['prompt']
+        }
+    except Exception as e:
+        return {
+            "response": f"❌ **FAISS Error**: {e}",
+            "success": False,
+            "score": 0.0
+        }
 
 
 # =========================================================================
