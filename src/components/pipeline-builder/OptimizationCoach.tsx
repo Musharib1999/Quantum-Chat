@@ -86,7 +86,7 @@ export default function OptimizationCoach() {
       setActiveStep(1);
       setStatusMsg('Running NLP parser...');
 
-      const res = await fetch('http://127.0.0.1:8002/enterprise/analyze', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002'}/enterprise/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ unstructured_problem: problem }),
@@ -138,7 +138,7 @@ export default function OptimizationCoach() {
     setStatusMsg('Generating solver code...');
 
     try {
-      const res = await fetch('http://127.0.0.1:8002/enterprise/pipeline', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002'}/enterprise/pipeline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

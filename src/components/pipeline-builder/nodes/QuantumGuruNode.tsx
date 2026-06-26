@@ -59,7 +59,7 @@ export default function QuantumGuruNode({ id, data }: NodeProps) {
     setUsedSolver(null);
     setSolverRationale(null);
     try {
-      const res = await fetch('http://127.0.0.1:8002/enterprise/pipeline', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002'}/enterprise/pipeline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -15,7 +15,8 @@ export default function QuantumPipelineDemo() {
     setActiveStep(1);
     
     try {
-      const response = await fetch("http://localhost:8002/enterprise/pipeline", {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8002";
+      const response = await fetch(`${backendUrl}/enterprise/pipeline`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ unstructured_problem: problem }),
@@ -26,7 +27,8 @@ export default function QuantumPipelineDemo() {
       setActiveStep(4);
     } catch (e) {
       console.error(e);
-      alert("Backend connection failed. Ensure python3 main.py is running on port 8002.");
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8002";
+      alert(`Backend connection failed. Ensure the backend server is running at ${backendUrl}.`);
     }
     
     setLoading(false);

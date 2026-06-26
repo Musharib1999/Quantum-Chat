@@ -473,7 +473,8 @@ export async function chatWithGroq(
         try {
             console.log(`[useQuantumChat] Routing assistant message directly to local FAISS retriever server...`);
             
-            const backendRes = await axios.post('http://127.0.0.1:8002/assistant/chat', {
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002';
+            const backendRes = await axios.post(`${backendUrl}/assistant/chat`, {
                 message: prompt
             });
             const data = backendRes.data;
