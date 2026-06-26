@@ -7,3 +7,9 @@ numpy
 faiss-cpu
 sentence-transformers
 dimod
+neal
+ortools
+qiskit
+qiskit-optimization
+qiskit-aer
+dwave-system
