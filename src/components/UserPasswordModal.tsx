@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -17,8 +18,14 @@ export default function UserPasswordModal({ isOpen, onClose }: UserPasswordModal
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    if (!isOpen || !mounted) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -72,7 +79,7 @@ export default function UserPasswordModal({ isOpen, onClose }: UserPasswordModal
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-full max-w-sm rounded-[24px] border border-slate-200 shadow-2xl p-7 relative animate-in zoom-in-95 duration-200">
                 <button
@@ -107,7 +114,7 @@ export default function UserPasswordModal({ isOpen, onClose }: UserPasswordModal
                     )}
 
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Current Password</label>
+                        <label className="text-[11px] font-semibold text-slate-500 tracking-wide ml-1">Current password</label>
                         <input
                             type="password"
                             required
@@ -119,7 +126,7 @@ export default function UserPasswordModal({ isOpen, onClose }: UserPasswordModal
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">New Password</label>
+                        <label className="text-[11px] font-semibold text-slate-500 tracking-wide ml-1">New password</label>
                         <input
                             type="password"
                             required
@@ -131,7 +138,7 @@ export default function UserPasswordModal({ isOpen, onClose }: UserPasswordModal
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Confirm New Password</label>
+                        <label className="text-[11px] font-semibold text-slate-500 tracking-wide ml-1">Confirm new password</label>
                         <input
                             type="password"
                             required
@@ -155,6 +162,7 @@ export default function UserPasswordModal({ isOpen, onClose }: UserPasswordModal
                     </p>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

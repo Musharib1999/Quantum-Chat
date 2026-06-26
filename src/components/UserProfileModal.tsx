@@ -77,16 +77,14 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 {isAuthenticated && user ? (
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold">
-                                {user.firstName && user.lastName 
-                                    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-                                    : (user.firstName || user.name || 'U').substring(0, 2).toUpperCase()}
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                                <UserIcon size={18} />
                             </div>
                             <div className="flex flex-col min-w-0">
                                 <span className="text-sm font-semibold text-foreground truncate">
                                     {user?.role === 'builder' ? 'Quantum Builder' : (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.name || 'Quantum User')}
                                 </span>
-                                <span className="text-[11px] text-muted-foreground truncate">{user.email}</span>
+
                             </div>
                         </div>
                         <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border w-fit ${user.role === 'builder' ? 'bg-[#3066bb]/5 border-[#3066bb]/10' : 'bg-green-500/5 border-green-500/10'}`}>
@@ -115,19 +113,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             </div>
 
             <div className="p-2 space-y-1">
-                {/* Module Highlight CTA - hidden when already in industry module */}
-                {!pathname?.startsWith('/industry') && (
-                    <button
-                        onClick={handleTryPortfolio}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all group shadow-lg shadow-primary/20"
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <Layout size={16} />
-                            <span className="text-sm font-semibold">Portfolio Optimization</span>
-                        </div>
-                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                    </button>
-                )}
+
 
                 {/* Builder Dashboard Button */}
                 {isAuthenticated && user?.role === 'builder' && (
@@ -174,27 +160,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     </button>
                 )}
 
-                {/* API Key Section */}
-                {isAuthenticated && user?.apiKey && (
-                    <div className="mx-2 mt-4 p-3 rounded-xl bg-primary/5 border border-primary/10 space-y-2">
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-wider">
-                            <Key size={12} />
-                            <span>Developer API Key</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <code className="flex-1 text-[10px] font-mono p-1.5 bg-background border border-border/50 rounded text-muted-foreground truncate">
-                                {user.apiKey}
-                            </code>
-                            <button 
-                                onClick={handleCopyKey}
-                                className="p-1.5 hover:bg-primary/10 rounded transition-colors text-primary"
-                                title="Copy to clipboard"
-                            >
-                                {copied ? <Check size={14} /> : <Copy size={14} />}
-                            </button>
-                        </div>
-                    </div>
-                )}
+
 
                 <div className="pt-2">
                     {isAuthenticated ? (

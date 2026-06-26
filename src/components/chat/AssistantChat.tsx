@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, StopCircle, Send, Plus, History, Layers, Activity, CheckCircle, ChevronRight, AlertCircle, Paperclip, X, Link2 } from 'lucide-react';
+import { Bot, User, StopCircle, Send, Plus, History, Layers, Activity, CheckCircle, ChevronRight, AlertCircle, Paperclip, X, Link2, MessageSquare, BrainCircuit, Terminal, Check } from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
 
@@ -377,15 +377,12 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                 <div className="p-6 shrink-0 bg-white z-20 w-full">
                     <div className="w-full max-w-[90%] mx-auto space-y-2">
                         <div className="flex items-center px-1">
-                            <span className="text-[10px] font-bold text-zinc-400 tracking-wider flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-brand-blue animate-pulse"></span>
-                                Connected pipeline: <span className="text-zinc-600 font-semibold">
-                                    {selectedPipeline === 'general' 
-                                        ? 'General quantum computing question' 
-                                        : selectedPipeline === 'optimization' 
-                                        ? 'Business problem to optimization' 
-                                        : 'Quantum code generator'}
-                                </span>
+                            <span className="text-[10px] font-bold text-zinc-600 tracking-wider flex items-center gap-1.5">
+                                {selectedPipeline === 'general' 
+                                    ? 'General quantum computing question' 
+                                    : selectedPipeline === 'optimization' 
+                                    ? 'Business problem to optimization' 
+                                    : 'Quantum code generator'}
                             </span>
                         </div>
                         {/* Hidden file input */}
@@ -449,25 +446,81 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                                 {showOptions && (
                                     <div 
                                         style={{ bottom: 'calc(100% + 12px)', left: 0 }}
-                                        className="absolute bg-white rounded-xl shadow-xl shadow-zinc-200/40 p-1.5 min-w-[260px] z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 flex flex-col"
+                                        className="absolute bg-white rounded-xl shadow-xl shadow-zinc-200/40 p-2 min-w-[290px] z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 flex flex-col gap-1 border border-zinc-100"
                                     >
+                                        {/* Option 1: General */}
                                         <button
                                             onClick={() => handleSelectOption('general')}
-                                            className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 text-xs font-semibold rounded-lg transition-all"
+                                            className={`w-full text-left px-3 py-2 flex items-start gap-3 hover:bg-zinc-50 rounded-lg transition-all ${
+                                                selectedPipeline === 'general' ? 'bg-zinc-50/80' : ''
+                                            }`}
                                         >
-                                            General quantum computing question
+                                            <div className={`p-2 rounded-lg shrink-0 ${
+                                                selectedPipeline === 'general' ? 'bg-teal-50 text-teal-600' : 'bg-zinc-100 text-zinc-500'
+                                            }`}>
+                                                <MessageSquare size={15} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[12px] font-bold text-zinc-800 leading-snug">
+                                                    General Q&A
+                                                </div>
+                                                <div className="text-[10px] text-zinc-400 font-medium leading-normal mt-0.5">
+                                                    Ask about quantum concepts & brand identity
+                                                </div>
+                                            </div>
+                                            {selectedPipeline === 'general' && (
+                                                <Check size={14} className="text-teal-600 shrink-0 self-center" />
+                                            )}
                                         </button>
+
+                                        {/* Option 2: Optimization */}
                                         <button
                                             onClick={() => handleSelectOption('optimization')}
-                                            className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 text-xs font-semibold rounded-lg transition-all"
+                                            className={`w-full text-left px-3 py-2 flex items-start gap-3 hover:bg-zinc-50 rounded-lg transition-all ${
+                                                selectedPipeline === 'optimization' ? 'bg-zinc-50/80' : ''
+                                            }`}
                                         >
-                                            Business problem to optimization
+                                            <div className={`p-2 rounded-lg shrink-0 ${
+                                                selectedPipeline === 'optimization' ? 'bg-teal-50 text-teal-600' : 'bg-zinc-100 text-zinc-500'
+                                            }`}>
+                                                <BrainCircuit size={15} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[12px] font-bold text-zinc-800 leading-snug">
+                                                    Business Optimization
+                                                </div>
+                                                <div className="text-[10px] text-zinc-400 font-medium leading-normal mt-0.5">
+                                                    Analyze constraints & verify feasibility
+                                                </div>
+                                            </div>
+                                            {selectedPipeline === 'optimization' && (
+                                                <Check size={14} className="text-teal-600 shrink-0 self-center" />
+                                            )}
                                         </button>
+
+                                        {/* Option 3: Code Gen */}
                                         <button
                                             onClick={() => handleSelectOption('coder')}
-                                            className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 text-xs font-semibold rounded-lg transition-all"
+                                            className={`w-full text-left px-3 py-2 flex items-start gap-3 hover:bg-zinc-50 rounded-lg transition-all ${
+                                                selectedPipeline === 'coder' ? 'bg-zinc-50/80' : ''
+                                            }`}
                                         >
-                                            Quantum code generator
+                                            <div className={`p-2 rounded-lg shrink-0 ${
+                                                selectedPipeline === 'coder' ? 'bg-teal-50 text-teal-600' : 'bg-zinc-100 text-zinc-500'
+                                            }`}>
+                                                <Terminal size={15} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[12px] font-bold text-zinc-800 leading-snug">
+                                                    Quantum Coder
+                                                </div>
+                                                <div className="text-[10px] text-zinc-400 font-medium leading-normal mt-0.5">
+                                                    Generate D-Wave & OR-Tools scripts
+                                                </div>
+                                            </div>
+                                            {selectedPipeline === 'coder' && (
+                                                <Check size={14} className="text-teal-600 shrink-0 self-center" />
+                                            )}
                                         </button>
                                     </div>
                                 )}
