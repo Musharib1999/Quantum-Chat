@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { usePipelineStore } from '@/store/usePipelineStore';
-import { GripHorizontal, Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown, GripHorizontal } from 'lucide-react';
 
 export default function LeftSidebar() {
   const { updateField, addVariable, resetPipeline } = usePipelineStore();
   const [toyProblems, setToyProblems] = useState<any[]>([]);
   const [loadingToys, setLoadingToys] = useState(true);
+  const [isDragOpen, setIsDragOpen] = useState(false);
+
+  const onDragStart = (e: React.DragEvent, type: string) => {
+    e.dataTransfer.setData('application/reactflow', type);
+    e.dataTransfer.effectAllowed = 'move';
+  };
 
   useEffect(() => {
       async function fetchToyProblems() {
@@ -50,45 +56,50 @@ export default function LeftSidebar() {
     }, 50);
   };
 
-  const onDragStart = (e: React.DragEvent, type: string) => {
-    e.dataTransfer.setData('application/reactflow', type);
-    e.dataTransfer.effectAllowed = 'move';
-  };
 
   return (
     <div className="flex flex-col h-full">
       <div className="p-6 space-y-8">
-        
-        {/* Nodes section */}
-        <section>
-          <h3 className="text-[11px] text-muted-foreground font-semibold tracking-wide mb-3">Drag to canvas</h3>
-          <div className="flex flex-col gap-2.5">
-            {[
-              { type: 'problemNode', label: 'Problem definition' },
-              { type: 'variableNode', label: 'Variables list' },
-              { type: 'hardwareNode', label: 'Hardware / simulator' },
-              { type: 'analyticsNode', label: 'Output analytics' },
-              { type: 'promptNode', label: 'AI interpretation' },
-              { type: 'saveNode', label: 'Save pipeline' },
-              { type: 'executeNode', label: 'Execute pipeline' },
-            ].map(node => (
-              <div 
-                key={node.type}
-                className="bg-card border border-border hover:border-primary/50 hover:bg-secondary/50 transition-colors rounded-lg p-3 cursor-grab active:cursor-grabbing text-xs font-medium text-foreground flex items-center gap-2 shadow-sm"
-                onDragStart={(e) => onDragStart(e, node.type)} 
-                draggable
-              >
-                <GripHorizontal size={14} className="text-muted-foreground" />
-                {node.label}
-              </div>
-            ))}
-          </div>
+
+        {/* Collapsible Drag to canvas section */}
+        <section className="border-b border-border/40 pb-5">
+          <button 
+            onClick={() => setIsDragOpen(!isDragOpen)}
+            className="w-full flex items-center justify-between text-[11px] text-muted-foreground font-semibold tracking-wide hover:text-foreground transition-colors"
+          >
+            <span>Drag to canvas</span>
+            <ChevronDown size={13} className={`transform transition-transform duration-200 ${isDragOpen ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {isDragOpen && (
+            <div className="flex flex-col gap-2.5 mt-3 animate-in slide-in-from-top-2 duration-200">
+              {[
+                { type: 'problemNode', label: 'Problem definition' },
+                { type: 'variableNode', label: 'Variables list' },
+                { type: 'hardwareNode', label: 'Hardware / simulator' },
+                { type: 'analyticsNode', label: 'Output analytics' },
+                { type: 'promptNode', label: 'AI interpretation' },
+                { type: 'saveNode', label: 'Save pipeline' },
+                { type: 'executeNode', label: 'Execute pipeline' },
+              ].map(node => (
+                <div 
+                  key={node.type}
+                  className="bg-card border border-border hover:border-primary/50 hover:bg-secondary/50 transition-colors rounded-lg p-2.5 cursor-grab active:cursor-grabbing text-xs font-medium text-foreground flex items-center gap-2 shadow-sm"
+                  onDragStart={(e) => onDragStart(e, node.type)} 
+                  draggable
+                >
+                  <GripHorizontal size={14} className="text-muted-foreground" />
+                  {node.label}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Toy Problems section */}
         <section>
            <h3 className="text-[11px] text-muted-foreground font-semibold tracking-wide mb-3 flex items-center gap-1.5">
-             <span className="text-sm">✨</span> Try sample optimization problem
+             Sample problem
            </h3>
            <div className="flex flex-col gap-3">
             {loadingToys ? (

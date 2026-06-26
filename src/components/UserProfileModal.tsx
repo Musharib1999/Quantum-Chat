@@ -3,6 +3,7 @@ import { LogOut, Lock, Unlock, ArrowRight, User as UserIcon, Zap, Layout, Key, C
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import UserPasswordModal from './UserPasswordModal';
+import { TokenUsageStats } from '@/components/TokenUsageIndicator';
 
 interface UserProfileModalProps {
     isOpen: boolean;
@@ -106,6 +107,11 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* Token Usage Stats inside the profile modal */}
+            <div className="px-5 py-4 border-b border-border/40 bg-secondary/10">
+                <TokenUsageStats />
             </div>
 
             <div className="p-2 space-y-1">

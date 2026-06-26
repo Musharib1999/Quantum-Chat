@@ -22,6 +22,14 @@ export interface Message {
         config?: any;
         isEdited?: boolean;
     };
+    workflowSteps?: {
+        nlp?: string;
+        reasoner?: string;
+        suggestor?: string;
+        solver?: string;
+        verifier?: string;
+        dcc?: boolean;
+    };
 }
 
 import { useAuth } from '@/context/AuthContext';
@@ -131,7 +139,8 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
                 sender: 'bot',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isStreaming: true,
-                chartData
+                chartData,
+                workflowSteps: response.workflowSteps
             }]);
 
             let currentText = "";

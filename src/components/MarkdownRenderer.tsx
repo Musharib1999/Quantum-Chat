@@ -41,7 +41,7 @@ export default function MarkdownRenderer({ content, hideLinks }: MarkdownRendere
                                         <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 mix-blend-screen" />
                                     </div>
                                 </div>
-                                <div className="max-h-48 overflow-y-auto">
+                                <div className="w-full overflow-x-auto">
                                     <SyntaxHighlighter
                                         style={vscDarkPlus}
                                         language={match[1]}

@@ -2,285 +2,326 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { usePipelineStore } from '@/store/usePipelineStore';
-import { User, Send, StopCircle, RotateCcw, CheckCircle2, Circle } from 'lucide-react';
-import { builderChat } from '@/app/actions/builder-chat';
 
-interface Message {
-  id: string;
-  sender: 'user' | 'assistant';
-  content: string;
-}
+type Phase = 'idle' | 'analyzing' | 'solver_select' | 'generating' | 'done' | 'infeasible';
 
-type Stage = 1 | 2 | 3 | 4 | 5;
-
-const STAGES = [
-  { id: 1, label: 'Name' },
-  { id: 2, label: 'Description' },
-  { id: 3, label: 'Variables' },
-  { id: 4, label: 'Constraints' },
-  { id: 5, label: 'Output' },
+const STEPS = [
+  { id: 1, label: 'Parsing problem structure' },
+  { id: 2, label: 'Checking mathematical feasibility' },
+  { id: 3, label: 'Quantum interpretation' },
+  { id: 4, label: 'Generating solver code' },
 ];
 
-const SYSTEM_PROMPTS: Record<Stage, string> = {
-  1: `You are the Quantum Guru Optimization Coach helping a user define an optimization problem.
-You are on STAGE 1: Get the problem NAME.
-Ask the user for a short, clear name for their optimization problem (e.g., "Call Center Routing", "Supply Chain Optimizer").
-Keep your response to 1-2 sentences. Be friendly and encouraging.
-When the user provides a name, confirm it and extract it.
-ALWAYS end your message with a JSON block:
-\`\`\`json
-{"stage": 1, "problemName": "The extracted name here or empty string if not yet provided"}
-\`\`\``,
-
-  2: `You are the Quantum Guru Optimization Coach.
-You are on STAGE 2: Get the problem DESCRIPTION.
-The user has already provided a problem name. Now ask them to describe the problem in detail — what are they trying to minimize or maximize? What is the business context?
-Keep it conversational, 2-3 sentences max.
-ALWAYS end your message with a JSON block:
-\`\`\`json
-{"stage": 2, "problemDefinition": "Extracted full description here or empty string if not yet clear"}
-\`\`\``,
-
-  3: `You are the Quantum Guru Optimization Coach.
-You are on STAGE 3: Extract VARIABLES with weight and priority.
-Ask the user to list the key variables (inputs) for their optimization. For each one, gently ask about its relative importance (weight from 0.1 to 1.0).
-Help them identify 2-5 good variables.
-ALWAYS end your message with a JSON block:
-\`\`\`json
-{"stage": 3, "variables": [{"name": "Variable Name", "priority": 1, "weight": 0.9, "description": "What this variable represents"}]}
-\`\`\`
-If no variables are confirmed yet, use an empty array.`,
-
-  4: `You are the Quantum Guru Optimization Coach.
-You are on STAGE 4: Identify CONSTRAINTS.
-Ask the user what constraints or limits apply to this problem (e.g., "maximum 20 agents online", "budget must not exceed $50K").
-Summarize the constraints they give you clearly.
-ALWAYS end your message with a JSON block:
-\`\`\`json
-{"stage": 4, "currentIssues": "Summarized constraints here or empty string if none yet"}
-\`\`\``,
-
-  5: `You are the Quantum Guru Optimization Coach.
-You are on STAGE 5: Define OUTPUT VISUALS and analysis prompt.
-Ask the user how they want to see the results — charts? tables? What should the AI analysis focus on?
-Suggest 1-2 sensible visualizations based on the problem context.
-ALWAYS end your message with a JSON block:
-\`\`\`json
-{"stage": 5, "analysisPrompt": "Describe what the AI should analyze after execution", "outputVisuals": [{"type": "bar_chart", "title": "Chart Title", "xAxis": "X label", "yAxis": "Y label"}]}
-\`\`\`
-Valid types: bar_chart, line_chart, scatter_chart, table.`,
-};
+const SOLVERS = [
+  {
+    id: 'auto',
+    label: 'Auto-detect (AI decides)',
+    badge: 'Recommended',
+    badgeColor: '#6366f1',
+    desc: 'Suggestor adapter picks the best solver for your problem.',
+  },
+  {
+    id: 'cqm',
+    label: 'CQM — Constrained quadratic model',
+    badge: 'D-Wave Leap hybrid',
+    badgeColor: '#0ea5e9',
+    desc: 'Mixed-integer constraints with equality/inequality bounds.',
+  },
+  {
+    id: 'qubo',
+    label: 'QUBO — Unconstrained binary optimization',
+    badge: 'Quantum annealer (QPU)',
+    badgeColor: '#a855f7',
+    desc: 'Binary variables with soft-penalty constraints, maps to physical QPU.',
+  },
+  {
+    id: 'ortools',
+    label: 'OR-Tools — Classical CP-SAT',
+    badge: 'Classical (fast & exact)',
+    badgeColor: '#10b981',
+    desc: 'Linear scheduling, routing, constraint satisfaction — exact & fast.',
+  },
+];
 
 export default function OptimizationCoach() {
-  const { updateField, addVariable, setOutputVisuals, resetPipeline } = usePipelineStore();
-  const [stage, setStage] = useState<Stage>(1);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'assistant',
-      content: "Hello! I'm your Optimization Coach. I'll guide you through defining your problem step by step.\n\nLet's start: what would you like to name this optimization problem? (e.g., \"Telecom Call Routing\", \"Warehouse Scheduling\")",
-    }
-  ]);
+  const { updateField, resetPipeline } = usePipelineStore();
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [activeStep, setActiveStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [selectedSolver, setSelectedSolver] = useState('auto');
+  const [parsedMath, setParsedMath] = useState('');
+  const [reasoningTrace, setReasoningTrace] = useState('');
+  const [problemText, setProblemText] = useState('');
+  const [statusMsg, setStatusMsg] = useState('');
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [phase, completedSteps, statusMsg]);
+
+  const completeStep = (step: number) =>
+    setCompletedSteps(prev => prev.includes(step) ? prev : [...prev, step]);
 
   const handleReset = () => {
     resetPipeline();
-    setStage(1);
-    setMessages([{
-      id: Date.now().toString(),
-      sender: 'assistant',
-      content: "Blueprint reset. Let's start fresh — what would you like to name this optimization problem?",
-    }]);
+    setPhase('idle');
+    setActiveStep(0);
+    setCompletedSteps([]);
+    setSelectedSolver('auto');
+    setParsedMath('');
+    setReasoningTrace('');
+    setProblemText('');
+    setStatusMsg('');
+    setInput('');
   };
 
-  const handleSend = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!input.trim() || isTyping) return;
-
-    const userMsg = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'user', content: userMsg }]);
-    setIsTyping(true);
+  const runAnalysis = async (problem: string) => {
+    setPhase('analyzing');
+    updateField('problemDefinition', problem);
+    updateField('problemName', 'Custom optimization run');
 
     try {
-      const systemPrompt = SYSTEM_PROMPTS[stage];
-      const aiResponseObj = await builderChat(userMsg, systemPrompt);
+      // Step 1 starts
+      setActiveStep(1);
+      setStatusMsg('Running NLP parser...');
 
-      if (aiResponseObj.error) throw new Error(aiResponseObj.error);
+      const res = await fetch('http://127.0.0.1:8002/enterprise/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unstructured_problem: problem }),
+      });
 
-      let aiResponse = aiResponseObj.text;
+      if (!res.ok) throw new Error('Backend connection failed.');
+      const data = await res.json();
 
-      // Parse structured JSON from the LLM response
-      const jsonMatch = aiResponse.match(/```json([\s\S]*?)```/);
-      if (jsonMatch) {
-        try {
-          const parsed = JSON.parse(jsonMatch[1]);
-          const parsedStage: Stage = parsed.stage as Stage;
+      // Step 1 done — update store → canvas shows Step 1
+      completeStep(1);
+      setActiveStep(2);
+      setStatusMsg('Checking mathematical feasibility...');
+      updateField('currentIssues', data.parsed_math);
+      setParsedMath(data.parsed_math);
 
-          // Apply store updates based on the stage data
-          if (parsedStage === 1 && parsed.problemName) {
-            updateField('problemName', parsed.problemName);
-            if (parsed.problemName.trim()) setStage(2);
-          }
-          if (parsedStage === 2 && parsed.problemDefinition) {
-            updateField('problemDefinition', parsed.problemDefinition);
-            if (parsed.problemDefinition.trim()) setStage(3);
-          }
-          if (parsedStage === 3 && parsed.variables && Array.isArray(parsed.variables) && parsed.variables.length > 0) {
-            parsed.variables.forEach((v: any) => {
-              addVariable(v.name, v.weight ?? 1.0, v.description ?? '');
-            });
-            setStage(4);
-          }
-          if (parsedStage === 4 && parsed.currentIssues) {
-            updateField('currentIssues', parsed.currentIssues);
-            if (parsed.currentIssues.trim()) setStage(5);
-          }
-          if (parsedStage === 5) {
-            if (parsed.analysisPrompt) updateField('analysisPrompt', parsed.analysisPrompt);
-            if (parsed.outputVisuals && Array.isArray(parsed.outputVisuals)) {
-              setOutputVisuals(parsed.outputVisuals);
-            }
-          }
+      // Small visual pause before showing step 2 complete
+      await new Promise(r => setTimeout(r, 600));
 
-          // Strip JSON block from visible message
-          aiResponse = aiResponse.replace(/```json[\s\S]*?```/g, '').trim();
-        } catch (e) {
-          console.error('Failed to parse structural JSON from AI', e);
-        }
+      // Step 2 done → canvas shows Step 2
+      completeStep(2);
+      setActiveStep(3);
+      setStatusMsg('Building quantum interpretation...');
+      updateField('reasoningTrace', data.reasoning_trace);
+      setReasoningTrace(data.reasoning_trace);
+
+      await new Promise(r => setTimeout(r, 600));
+
+      // Step 3 done → canvas shows Step 3
+      completeStep(3);
+      setActiveStep(0);
+
+      if (!data.is_feasible) {
+        setStatusMsg(data.feasibility_note || 'Problem is mathematically infeasible.');
+        setPhase('infeasible');
+        return;
       }
 
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'assistant', content: aiResponse }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'assistant', content: 'Error: Neural link unstable. Could not connect to the reasoning engine.' }]);
-    } finally {
-      setIsTyping(false);
+      setPhase('solver_select');
+      setStatusMsg('');
+    } catch (e: any) {
+      setStatusMsg(`Error: ${e.message}`);
+      setPhase('idle');
     }
   };
+
+  const runGeneration = async () => {
+    setPhase('generating');
+    setActiveStep(4);
+    setStatusMsg('Generating solver code...');
+
+    try {
+      const res = await fetch('http://127.0.0.1:8002/enterprise/pipeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unstructured_problem: problemText,
+          mode: selectedSolver,
+        }),
+      });
+      if (!res.ok) throw new Error('Code generation failed.');
+      const data = await res.json();
+
+      completeStep(4);
+      updateField('quantumAlgorithmCode', data.final_code);
+      setActiveStep(0);
+      setStatusMsg(`Done — solver used: ${data.suggested_solver || selectedSolver.toUpperCase()}`);
+      setPhase('done');
+    } catch (e: any) {
+      setStatusMsg(`Error: ${e.message}`);
+      setPhase('solver_select');
+      setActiveStep(0);
+    }
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!input.trim() || phase !== 'idle') return;
+    const p = input.trim();
+    setProblemText(p);
+    setInput('');
+    runAnalysis(p);
+  };
+
+  const stepDone = (n: number) => completedSteps.includes(n);
+  const stepActive = (n: number) => activeStep === n;
 
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden">
 
-      {/* Stage Progress Bar */}
-      <div className="px-4 pt-3 pb-2 shrink-0 border-b border-border">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-            Stage {stage} of 5
-          </span>
-          <button
-            onClick={handleReset}
-            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
-            title="Reset blueprint"
-          >
-            <RotateCcw size={10} /> Reset
-          </button>
-        </div>
-        <div className="flex items-center gap-1">
-          {STAGES.map((s, i) => {
-            const isDone = stage > s.id;
-            const isCurrent = stage === s.id;
-            return (
-              <React.Fragment key={s.id}>
-                <div className="flex flex-col items-center gap-1 flex-1">
-                  <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
-                      isDone ? 'bg-primary text-primary-foreground' :
-                      isCurrent ? 'bg-primary/20 border-2 border-primary animate-pulse' :
-                      'bg-muted border border-border'
-                    }`}
-                  >
-                    {isDone
-                      ? <CheckCircle2 size={12} className="text-primary-foreground" />
-                      : <span className={`text-[9px] font-bold ${isCurrent ? 'text-primary' : 'text-muted-foreground'}`}>{s.id}</span>
-                    }
-                  </div>
-                  <span className={`text-[9px] font-medium ${isCurrent ? 'text-primary' : isDone ? 'text-foreground' : 'text-muted-foreground'}`}>
-                    {s.label}
-                  </span>
-                </div>
-                {i < STAGES.length - 1 && (
-                  <div className={`h-px flex-1 mb-4 transition-colors ${stage > s.id ? 'bg-primary' : 'bg-border'}`} />
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`flex max-w-[95%] md:max-w-[85%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start gap-3`}>
-              {/* Avatar */}
-              <div className={`w-8 h-8 mt-1 rounded-xl flex items-center justify-center shrink-0 ${msg.sender === 'user'
-                  ? 'bg-secondary border border-border shadow-sm'
-                  : 'bg-white border border-border shadow-sm p-1'
-                }`}>
-                {msg.sender === 'user' ? <User size={16} className="text-foreground" /> : (
-                  <div className="w-full h-full overflow-hidden rounded-xl">
-                    <img src="/qg-icon.png" alt="QG" className="w-full h-full object-contain" />
-                  </div>
-                )}
-              </div>
-              {/* Bubble */}
-              <div className={`rounded-2xl px-5 py-4 shadow-sm text-sm leading-relaxed whitespace-pre-wrap ${msg.sender === 'user'
-                  ? 'bg-secondary text-foreground border border-border rounded-tr-sm'
-                  : 'bg-card text-card-foreground border border-border rounded-tl-sm shadow-sm min-w-0 max-w-full overflow-hidden'
-                }`}>
-                {msg.content}
-              </div>
-            </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-5">
+
+        {/* Idle welcome */}
+        {phase === 'idle' && (
+          <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-5 py-4 text-sm text-card-foreground leading-relaxed">
+            Hello! Describe your optimization problem below. I will run it through 3 analysis steps, then let you choose the solver before generating code.
           </div>
-        ))}
+        )}
 
-        {isTyping && (
-          <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex flex-row items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-white border border-border flex items-center justify-center shrink-0 p-1 shadow-sm">
-                <img src="/qg-icon.png" className="w-full h-full object-contain" alt="QG typing" />
-              </div>
-              <div className="bg-card text-card-foreground border border-border rounded-2xl rounded-tl-sm shadow-sm px-5 py-4">
-                <div className="flex space-x-1 items-center h-full">
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></div>
-                </div>
-              </div>
+        {/* Problem bubble */}
+        {problemText && (
+          <div className="flex justify-end">
+            <div className="bg-secondary border border-border rounded-2xl rounded-tr-sm px-5 py-4 text-sm max-w-[90%]">
+              {problemText}
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
+
+        {/* Step Progress */}
+        {phase !== 'idle' && (
+          <div className="bg-card border border-border rounded-2xl px-5 py-4 space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Pipeline progress</p>
+
+            {/* Progress bar */}
+            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{
+                  width: `${(completedSteps.length / 4) * 100}%`,
+                  background: 'oklch(0.623 0.214 259.815)'
+                }}
+              />
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-2 mt-1">
+              {STEPS.map(s => (
+                <div key={s.id} className="flex items-center gap-3 text-xs">
+                  {/* Icon */}
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold transition-all ${
+                    stepDone(s.id)
+                      ? 'bg-emerald-500 text-white'
+                      : stepActive(s.id)
+                      ? 'bg-primary text-primary-foreground animate-pulse'
+                      : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {stepDone(s.id) ? '✓' : s.id}
+                  </div>
+                  <span className={`${stepDone(s.id) ? 'text-foreground' : stepActive(s.id) ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                    {s.label}
+                    {stepActive(s.id) && <span className="ml-1 animate-pulse">…</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Status message */}
+            {statusMsg && (
+              <p className={`text-xs mt-2 ${phase === 'done' ? 'text-emerald-400' : phase === 'infeasible' ? 'text-red-400' : 'text-muted-foreground'}`}>
+                {statusMsg}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Infeasible block */}
+        {phase === 'infeasible' && (
+          <div className="bg-card border border-border rounded-2xl px-5 py-4 text-sm text-muted-foreground">
+            Problem is mathematically infeasible. The supply cannot meet the demand under hard constraints. Please revise your problem and reset.
+          </div>
+        )}
+
+        {/* Solver selection — appears after step 3 */}
+        {(phase === 'solver_select' || phase === 'generating' || phase === 'done') && (
+          <div className="space-y-3">
+            <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-5 py-4 text-sm text-card-foreground">
+              Analysis complete. Select a solver and generate code.
+            </div>
+
+            <div className="space-y-1.5">
+              {SOLVERS.map(s => (
+                <button key={s.id}
+                  disabled={phase === 'generating' || phase === 'done'}
+                  onClick={() => setSelectedSolver(s.id)}
+                  className={`w-full text-left p-3 rounded-xl border transition-all text-xs ${
+                    selectedSolver === s.id
+                      ? 'border-primary/60 bg-primary/10'
+                      : 'border-border bg-background/40 hover:bg-background/60'
+                  } disabled:opacity-60 disabled:cursor-not-allowed`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-foreground">{s.label}</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0"
+                      style={{ background: s.badgeColor + '22', color: s.badgeColor }}>
+                      {s.badge}
+                    </span>
+                  </div>
+                  {selectedSolver === s.id && (
+                    <p className="text-muted-foreground mt-1 leading-snug">{s.desc}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {phase === 'solver_select' && (
+              <button onClick={runGeneration}
+                className="w-full py-2.5 rounded-xl text-white font-semibold text-xs transition-all active:scale-95 shadow-md"
+                style={{ backgroundColor: 'oklch(0.623 0.214 259.815)' }}>
+                Generate code with {SOLVERS.find(s => s.id === selectedSolver)?.badge}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Done result */}
+        {phase === 'done' && (
+          <div className="bg-card border border-border rounded-2xl px-5 py-4 text-sm text-muted-foreground">
+            Code generated successfully. Inspect the "Quantum algorithm" node on the canvas to view and run the code.
+          </div>
+        )}
+
+        <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-4 shrink-0 bg-transparent z-20">
-        <div className="relative flex items-end gap-2 bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-lg p-2 transition-all focus-within:ring-1 focus-within:ring-ring focus-within:border-ring focus-within:bg-card">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder={`Stage ${stage}: ${STAGES[stage - 1].label}...`}
-            rows={1}
-            className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-sm px-4 py-2 focus:outline-none resize-none scrollbar-hide"
-            style={{ minHeight: '44px' }}
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isTyping}
-            className="p-2.5 rounded-xl text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-0.5 font-semibold flex items-center justify-center"
-            style={{ backgroundColor: 'oklch(0.623 0.214 259.815)' }}
-          >
-            {isTyping ? <StopCircle size={16} className="animate-pulse" /> : <Send size={16} fill="currentColor" />}
-          </button>
+      {/* Input — only when idle */}
+      {phase === 'idle' && (
+        <div className="p-4 shrink-0">
+          <form onSubmit={handleSubmit}
+            className="flex items-end gap-2 bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-lg p-2 focus-within:ring-1 focus-within:ring-ring focus-within:border-ring">
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
+              placeholder="Describe your optimization problem..."
+              rows={1}
+              className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-sm px-4 py-2 focus:outline-none resize-none"
+              style={{ minHeight: '44px' }}
+            />
+            <button type="submit" disabled={!input.trim()}
+              className="p-2.5 rounded-xl text-white hover:opacity-90 disabled:opacity-50 transition-all shadow-md active:scale-95 mb-0.5 font-semibold text-xs"
+              style={{ backgroundColor: 'oklch(0.623 0.214 259.815)' }}>
+              Submit
+            </button>
+          </form>
         </div>
-      </div>
+      )}
     </div>
   );
 }

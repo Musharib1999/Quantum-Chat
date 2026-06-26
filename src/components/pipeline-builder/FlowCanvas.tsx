@@ -11,6 +11,11 @@ import AnalysisPromptNode from './nodes/AnalysisPromptNode';
 import SingleVariableNode from './nodes/SingleVariableNode';
 import ExecuteNode from './nodes/ExecuteNode';
 import SaveNode from './nodes/SaveNode';
+import QuantumGuruNode from './nodes/QuantumGuruNode';
+import TheProblemNode from './nodes/TheProblemNode';
+import TheMathematicalInterpretationNode from './nodes/TheMathematicalInterpretationNode';
+import TheQuantumInterpretationNode from './nodes/TheQuantumInterpretationNode';
+import QuantumAlgorithmNode from './nodes/QuantumAlgorithmNode';
 import { usePipelineStore } from '@/store/usePipelineStore';
 
 const nodeTypes = {
@@ -21,7 +26,12 @@ const nodeTypes = {
   promptNode: AnalysisPromptNode,
   singleVar: SingleVariableNode,
   executeNode: ExecuteNode,
-  saveNode: SaveNode
+  saveNode: SaveNode,
+  quantumGuruNode: QuantumGuruNode,
+  theProblemNode: TheProblemNode,
+  theMathematicalInterpretationNode: TheMathematicalInterpretationNode,
+  theQuantumInterpretationNode: TheQuantumInterpretationNode,
+  quantumAlgorithmNode: QuantumAlgorithmNode
 };
 
 const ROYAL_BLUE = 'oklch(0.623 0.214 259.815)';
@@ -31,52 +41,100 @@ let id = 0;
 const getId = () => `dndnode_${id++}`;
 
 const INITIAL_NODES = [
-  { id: 'problem-1', type: 'problemNode', position: { x: 250, y: 50 }, data: {} },
-  { id: 'variables-1', type: 'variableNode', position: { x: 250, y: 300 }, data: {} },
-  { id: 'hardware-1', type: 'hardwareNode', position: { x: 250, y: 550 }, data: {} },
-  { id: 'analytics-1', type: 'analyticsNode', position: { x: 250, y: 800 }, data: {} },
-  { id: 'prompt-1', type: 'promptNode', position: { x: 250, y: 1050 }, data: {} },
-  { id: 'execute-1', type: 'executeNode', position: { x: 250, y: 1300 }, data: {} },
+  // Left Column: Quantum Guru steps
+  { id: 'the-problem', type: 'theProblemNode', position: { x: 80, y: 50 }, data: {} },
+  { id: 'the-math', type: 'theMathematicalInterpretationNode', position: { x: 80, y: 350 }, data: {} },
+  { id: 'the-quantum', type: 'theQuantumInterpretationNode', position: { x: 80, y: 650 }, data: {} },
+  { id: 'the-algorithm', type: 'quantumAlgorithmNode', position: { x: 80, y: 950 }, data: {} },
+
+  // Right Column: execution and analytics
+  { id: 'quantum-guru-1', type: 'quantumGuruNode', position: { x: 750, y: 50 }, data: {} },
+  { id: 'hardware-1', type: 'hardwareNode', position: { x: 750, y: 350 }, data: {} },
+  { id: 'execute-1', type: 'executeNode', position: { x: 750, y: 650 }, data: {} },
+  { id: 'analytics-1', type: 'analyticsNode', position: { x: 750, y: 900 }, data: {} },
+  { id: 'prompt-1', type: 'promptNode', position: { x: 750, y: 1250 }, data: {} }
 ];
 
 const INITIAL_EDGES = [
-  { id: 'e1-2', source: 'problem-1', sourceHandle: 's-bottom', target: 'variables-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
-  { id: 'e2-3', source: 'variables-1', sourceHandle: 's-bottom', target: 'hardware-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
-  { id: 'e3-4', source: 'hardware-1', sourceHandle: 's-bottom', target: 'analytics-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
-  { id: 'e4-5', source: 'analytics-1', sourceHandle: 's-bottom', target: 'prompt-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
-  { id: 'e5-6', source: 'prompt-1', sourceHandle: 's-bottom', target: 'execute-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
+  // Quantum Guru steps chain
+  { id: 'e-tp-tm', source: 'the-problem', sourceHandle: 's-bottom', target: 'the-math', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
+  { id: 'e-tm-tq', source: 'the-math', sourceHandle: 's-bottom', target: 'the-quantum', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
+  { id: 'e-tq-ta', source: 'the-quantum', sourceHandle: 's-bottom', target: 'the-algorithm', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
+  
+  // Cross connection from algorithm to executor chain
+  { id: 'e-ta-qg', source: 'the-algorithm', sourceHandle: 's-right', target: 'quantum-guru-1', targetHandle: 't-left', animated: true, style: EDGE_STYLE },
+  
+  // Right column chain
+  { id: 'e-qg-hw', source: 'quantum-guru-1', sourceHandle: 's-bottom', target: 'hardware-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
+  { id: 'e-hw-ex', source: 'hardware-1', sourceHandle: 's-bottom', target: 'execute-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
+  { id: 'e-ex-an', source: 'execute-1', sourceHandle: 's-bottom', target: 'analytics-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE },
+  { id: 'e-an-pr', source: 'analytics-1', sourceHandle: 's-bottom', target: 'prompt-1', targetHandle: 't-top', animated: true, style: EDGE_STYLE }
 ];
 
 function FlowCanvasInternal() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { problemName, problemDefinition, currentIssues, variables, hardware, analysisPrompt, analyticsWidgets, outputVisuals } = usePipelineStore();
-  const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
+  const { 
+    problemName, 
+    problemDefinition, 
+    currentIssues, 
+    reasoningTrace,
+    quantumAlgorithmCode,
+    variables, 
+    hardware, 
+    analysisPrompt, 
+    analyticsWidgets, 
+    outputVisuals 
+  } = usePipelineStore();
+  
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
-  // Always reactively update node data when store changes
+  // Sync state data reactively based on completed steps in the store
   useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === 'problem-1') {
-          return { ...node, data: { ...node.data, name: problemName, problem: problemDefinition, issues: currentIssues } };
-        }
-        if (node.id === 'variables-1') {
-          return { ...node, data: { ...node.data, variables } };
-        }
-        if (node.id === 'hardware-1') {
-          return { ...node, data: { ...node.data, selectedHardware: hardware } };
-        }
-        if (node.id === 'analytics-1') {
-          return { ...node, data: { ...node.data, widgets: analyticsWidgets, outputVisuals } };
-        }
-        if (node.id === 'prompt-1') {
-          return { ...node, data: { ...node.data, prompt: analysisPrompt } };
-        }
-        return node;
-      })
-    );
-  }, [problemName, problemDefinition, currentIssues, variables, hardware, analysisPrompt, analyticsWidgets, outputVisuals, setNodes]);
+    const filteredNodes = INITIAL_NODES.filter(node => {
+      if (node.id === 'the-problem') return !!problemDefinition;
+      if (node.id === 'the-math') return !!currentIssues;
+      if (node.id === 'the-quantum') return !!reasoningTrace;
+      if (node.id === 'the-algorithm') return !!quantumAlgorithmCode;
+      // All right column execution blocks appear once code generation completes
+      return !!quantumAlgorithmCode;
+    }).map(node => {
+      if (node.id === 'hardware-1') {
+        return { ...node, data: { ...node.data, selectedHardware: hardware } };
+      }
+      if (node.id === 'analytics-1') {
+        return { ...node, data: { ...node.data, widgets: analyticsWidgets, outputVisuals } };
+      }
+      if (node.id === 'prompt-1') {
+        return { ...node, data: { ...node.data, prompt: analysisPrompt } };
+      }
+      return node;
+    });
+
+    setNodes(filteredNodes);
+
+    const filteredEdges = INITIAL_EDGES.filter(edge => {
+      const sourceExists = filteredNodes.some(n => n.id === edge.source);
+      const targetExists = filteredNodes.some(n => n.id === edge.target);
+      return sourceExists && targetExists;
+    });
+
+    setEdges(filteredEdges);
+  }, [
+    problemName, 
+    problemDefinition, 
+    currentIssues, 
+    reasoningTrace, 
+    quantumAlgorithmCode, 
+    variables, 
+    hardware, 
+    analysisPrompt, 
+    analyticsWidgets, 
+    outputVisuals, 
+    setNodes, 
+    setEdges
+  ]);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge({ ...params, animated: true, style: EDGE_STYLE }, eds)),
@@ -118,6 +176,24 @@ function FlowCanvasInternal() {
 
   return (
     <div className="w-full h-full flex bg-background relative" ref={reactFlowWrapper}>
+      
+      {/* Empty State Overlay */}
+      {!problemDefinition && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#09090b]/80 backdrop-blur-md z-30 pointer-events-none p-6">
+          <div className="text-center max-w-md">
+            <span className="font-semibold text-xs text-muted-foreground uppercase tracking-widest block mb-2">
+              Awaiting problem input
+            </span>
+            <h2 className="text-2xl font-extrabold text-foreground mb-4">
+              Quantum pipeline builder
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Describe your optimization problem in the right chat coach interface to dynamically compile, verifier-audit, and build your visual flowchart.
+            </p>
+          </div>
+        </div>
+      )}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}

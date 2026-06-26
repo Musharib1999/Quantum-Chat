@@ -44,6 +44,10 @@
 
   --gradient-start: #000000;
   --gradient-end: #333333;
+
+  /* Brand Blue variables */
+  --brand-blue: #2E65BF;
+  --brand-blue-hover: #2253a4;
 }
 
 [data-theme="dark"] {
@@ -102,6 +106,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Custom Brand Blue colors */
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-blue-hover: var(--brand-blue-hover);
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 4px);

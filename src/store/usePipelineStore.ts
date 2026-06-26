@@ -33,6 +33,8 @@ export interface PipelineState {
   variables: Variable[];
   hardware: string;
   analysisPrompt: string;
+  reasoningTrace: string;
+  quantumAlgorithmCode: string;
   analyticsWidgets: AnalyticsWidget[];
   outputVisuals: OutputVisual[];
 
@@ -55,6 +57,8 @@ export const usePipelineStore = create<PipelineState>((set) => ({
   variables: [],
   hardware: '',
   analysisPrompt: '',
+  reasoningTrace: '',
+  quantumAlgorithmCode: '',
   analyticsWidgets: [],
   outputVisuals: [],
 
@@ -97,6 +101,8 @@ export const usePipelineStore = create<PipelineState>((set) => ({
     variables: [],
     hardware: '',
     analysisPrompt: '',
+    reasoningTrace: '',
+    quantumAlgorithmCode: '',
     analyticsWidgets: [],
     outputVisuals: [],
   })

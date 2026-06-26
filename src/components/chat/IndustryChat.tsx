@@ -1313,7 +1313,12 @@ const InChatPipeline = ({
                         <textarea
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    sendMessage();
+                                }
+                            }}
                             placeholder={placeholder || "Ask QUANTUM GURU AI..."}
                             rows={1}
                             disabled={isLocked}
