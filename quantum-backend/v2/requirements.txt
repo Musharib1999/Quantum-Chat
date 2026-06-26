@@ -7,7 +7,7 @@ numpy
 faiss-cpu
 sentence-transformers
 dimod
-neal
+dwave-neal
 ortools
 qiskit
 qiskit-optimization
