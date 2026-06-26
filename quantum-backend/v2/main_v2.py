@@ -85,6 +85,30 @@ class AnalyzeResponse(BaseModel):
     feasibility_note: Optional[str] = None
 
 
+# ── New Integration Specs Models ──────────────────────────────────────────
+class CodeGenRequest(BaseModel):
+    unstructured_problem: str
+    mode: Optional[str] = "auto"  # auto | cqm | qubo | ortools
+
+
+class CodeGenResponse(BaseModel):
+    suggested_solver: str         # "dwave" | "qiskit" | "ortools"
+    final_code: str               # The executable python script block
+    success: bool
+    error_message: Optional[str] = None
+
+
+class FinalizeRequest(BaseModel):
+    unstructured_problem: str
+    raw_results: list             # The raw sample data array returned from simulator
+
+
+class FinalizeResponse(BaseModel):
+    final_interpretation: str     # Polished business insights explanation
+    variables_assigned: dict      # E.g., {"route_A": 100, "route_B": 0}
+    success: bool
+
+
 # =========================================================================
 # HEALTH + ROOT
 # =========================================================================
@@ -100,6 +124,7 @@ def root():
         "hf_repo": config.HF_REPO,
         "endpoints": {
             "pipeline": "/v2/pipeline",
+            "finalize": "/v2/finalize",
             "health": "/v2/health",
             "v1_compat": "/enterprise/pipeline",
             "analyze": "/enterprise/analyze",
@@ -122,34 +147,147 @@ def health():
 # =========================================================================
 # SCENARIO 1 ─ Business Problem to Optimization Pipeline
 # =========================================================================
-@app.post("/v2/pipeline", response_model=PipelineResponse)
-async def run_pipeline_v2(request: PipelineRequest):
+@app.post("/v2/pipeline", response_model=CodeGenResponse)
+async def run_pipeline_v2(request: CodeGenRequest):
     """
-    Full QuantumGuru v2 pipeline — 8 steps:
-    1. Suggestor (Llama 8B LoRA)
-    2. NLP Parser (Qwen 3 32B)
-    3. Math Logic Reasoner (Qwen 3 32B)
-    4. Quantum Knowledge Expert (Qwen 3 32B)
-    5. Code Generator (Llama 8B LoRA)
-    6. QA Debugger + DCC (Llama 8B LoRA + deterministic fallback)
-    7. Output Interpreter (Qwen 3 32B)
-    8. Personality Wrapper (Llama 8B LoRA)
+    Full QuantumGuru v2 pipeline conforming to the new integration contract.
     """
-    if not request.unstructured_problem.strip():
-        raise HTTPException(status_code=400, detail="Problem statement cannot be empty.")
+    if not request.unstructured_problem or not request.unstructured_problem.strip():
+        return CodeGenResponse(
+            suggested_solver="none",
+            final_code="",
+            success=False,
+            error_message="Problem statement cannot be empty."
+        )
 
     try:
         result = await run_optimization_pipeline(
             problem=request.unstructured_problem,
             mode=request.mode or "auto",
         )
-        return PipelineResponse(
-            **result,
-            engine=f"Qwen 3 32B + Llama 3 8B LoRA ({config.get_mode()} mode)",
-            version="2.0.0",
+        
+        # Check if mathematically infeasible
+        if not result.get("success", False):
+            error_msg = result.get("reasoning_trace", "")
+            if "[SYSTEM HALT]:" in error_msg:
+                error_msg = error_msg.split("[SYSTEM HALT]:")[-1].strip()
+            if not error_msg:
+                error_msg = "Mathematical infeasibility detected."
+                
+            return CodeGenResponse(
+                suggested_solver="none",
+                final_code=result.get("final_code", ""),
+                success=False,
+                error_message=error_msg
+            )
+            
+        decision = result.get("suggested_solver", "OR-Tools").lower()
+        if "cqm" in decision or "qubo" in decision or "dwave" in decision:
+            solver_mapped = "dwave"
+        elif "qiskit" in decision:
+            solver_mapped = "qiskit"
+        else:
+            solver_mapped = "ortools"
+            
+        return CodeGenResponse(
+            suggested_solver=solver_mapped,
+            final_code=result.get("final_code", ""),
+            success=True,
+            error_message=None
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return CodeGenResponse(
+            suggested_solver="none",
+            final_code="",
+            success=False,
+            error_message=f"Pipeline generation failed: {str(e)}"
+        )
+
+
+# =========================================================================
+# RESULTS FINALIZE AND INTERPRETATION (POST /v2/finalize)
+# =========================================================================
+def validate_finalize(data: dict) -> list:
+    """Validate parser/interpreter output for finalization."""
+    errors = []
+    if "final_interpretation" not in data:
+        errors.append("Missing required key: final_interpretation")
+    if "variables_assigned" not in data:
+        errors.append("Missing required key: variables_assigned")
+    elif not isinstance(data["variables_assigned"], dict):
+        errors.append("variables_assigned must be a JSON object (dictionary)")
+    return errors
+
+
+@app.post("/v2/finalize", response_model=FinalizeResponse)
+async def finalize_results(request: FinalizeRequest):
+    """
+    Interpret simulator results in context of the original business problem.
+    """
+    if not request.unstructured_problem or not request.unstructured_problem.strip():
+        return FinalizeResponse(
+            final_interpretation="Problem description is empty.",
+            variables_assigned={},
+            success=False
+        )
+        
+    try:
+        from v2.validators.json_schema import parse_and_validate
+        from v2.qwen_client import call_qwen
+        import json
+        
+        system_prompt = (
+            "You are the QuantumGuru Results Finalizer. Your task is to interpret the raw solver/simulator "
+            "output in the context of the original business problem.\n\n"
+            "You MUST return ONLY a valid JSON object. No explanation. No markdown. No code blocks. Just raw JSON.\n\n"
+            "JSON Schema (use EXACTLY these key names):\n"
+            "{\n"
+            "  \"final_interpretation\": \"Polished plain English explanation of the optimization results, including what was assigned and the overall business insights (max 150 words)\",\n"
+            "  \"variables_assigned\": {\"variable_name\": value, ...}\n"
+            "}\n\n"
+            "Example response:\n"
+            "{\n"
+            "  \"final_interpretation\": \"The solver successfully optimized the driver shifts. All 5 routes have been covered with zero conflicts, minimizing total overtime cost to $450.\",\n"
+            "  \"variables_assigned\": {\"x_0_0\": 1, \"x_1_1\": 1, \"x_2_2\": 1}\n"
+            "}"
+        )
+        
+        user_prompt = (
+            f"Original Business Problem:\n{request.unstructured_problem}\n\n"
+            f"Raw Simulator/Solver Results:\n{json.dumps(request.raw_results, indent=2)}\n\n"
+            "Interpret the results, extract variable assignments, and return JSON."
+        )
+        
+        raw_output = await call_qwen(
+            system=system_prompt,
+            user=user_prompt,
+            max_tokens=600,
+            temperature=0.1
+        )
+        
+        final_data = await parse_and_validate(
+            raw_output=raw_output,
+            validator_fn=validate_finalize,
+            call_fn=call_qwen,
+            system=system_prompt,
+            user=user_prompt,
+            step_name="Results Finalizer"
+        )
+        
+        if not final_data:
+            raise ValueError("Failed to obtain valid JSON from Qwen.")
+            
+        return FinalizeResponse(
+            final_interpretation=final_data["final_interpretation"],
+            variables_assigned=final_data["variables_assigned"],
+            success=True
+        )
+    except Exception as e:
+        return FinalizeResponse(
+            final_interpretation=f"Error finalizing results: {str(e)}",
+            variables_assigned={},
+            success=False
+        )
 
 
 # =========================================================================
