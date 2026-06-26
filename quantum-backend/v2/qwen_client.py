@@ -53,12 +53,13 @@ async def call_qwen(
     Falls back to Groq llama-3.3-70b if RunPod is unavailable.
     """
     last_error = None
+    model_used = "Qwen-32B"
 
     # ── Primary: RunPod Qwen 3 32B ─────────────────────────────────────────────
     if config.QWEN_BASE_URL:
         for attempt in range(retries + 1):
             try:
-                return await _call_openai_compat(
+                response = await _call_openai_compat(
                     base_url=config.QWEN_BASE_URL,
                     api_key=config.QWEN_API_KEY,
                     model=config.QWEN_MODEL,
@@ -67,6 +68,9 @@ async def call_qwen(
                     max_tokens=max_tokens,
                     temperature=temperature,
                 )
+                from .execution_logger import log_engagement
+                log_engagement(model_used, system, user, response)
+                return response
             except Exception as e:
                 last_error = e
                 if attempt < retries:
@@ -75,9 +79,10 @@ async def call_qwen(
 
     # ── Fallback: Groq llama-3.3-70b ───────────────────────────────────────────
     if config.GROQ_API_KEY:
+        model_used = "Groq (Llama-3.3-70b)"
         for attempt in range(retries + 1):
             try:
-                return await _call_openai_compat(
+                response = await _call_openai_compat(
                     base_url=config.GROQ_BASE_URL,
                     api_key=config.GROQ_API_KEY,
                     model=config.GROQ_MODEL,
@@ -86,10 +91,17 @@ async def call_qwen(
                     max_tokens=max_tokens,
                     temperature=temperature,
                 )
+                from .execution_logger import log_engagement
+                log_engagement(model_used, system, user, response)
+                return response
             except Exception as e:
                 last_error = e
                 if attempt < retries:
                     await asyncio.sleep(2 ** attempt)
+        from .execution_logger import log_engagement
+        log_engagement(model_used, system, user, "", error=str(last_error))
         raise RuntimeError(f"Both Qwen (RunPod) and Groq failed. Last error: {last_error}")
 
+    from .execution_logger import log_engagement
+    log_engagement("Qwen-32B", system, user, "", error="No LLM available")
     raise RuntimeError("No LLM available. Set QWEN_BASE_URL or GROQ_API_KEY in .env")

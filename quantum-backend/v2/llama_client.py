@@ -81,21 +81,33 @@ async def call_adapter(
     Primary: RunPod vllm (adapter_name = registered name)
     Fallback: Local MLX (mlx_adapter_path = local folder path)
     """
+    from .execution_logger import log_engagement
+    system_ctx = f"Adapter Module: {adapter_name}"
+
     # ── Primary: RunPod vllm ───────────────────────────────────────────────────
     if config.LLAMA_BASE_URL:
         try:
-            return await _call_vllm_lora(adapter_name, prompt, max_tokens, temperature)
+            res = await _call_vllm_lora(adapter_name, prompt, max_tokens, temperature)
+            log_engagement(f"Llama-8B (Adapter: {adapter_name})", system_ctx, prompt, res)
+            return res
         except Exception as e:
             print(f"[LLAMA] vllm failed for {adapter_name}: {e}")
             if not mlx_adapter_path:
+                log_engagement(f"Llama-8B (Adapter: {adapter_name})", system_ctx, prompt, "", error=str(e))
                 raise RuntimeError(f"vllm failed and no MLX fallback path: {e}")
 
     # ── Fallback: Local MLX ────────────────────────────────────────────────────
     if mlx_adapter_path:
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None, _call_mlx_local, mlx_adapter_path, prompt, max_tokens
-        )
-        return result
+        try:
+            res = await loop.run_in_executor(
+                None, _call_mlx_local, mlx_adapter_path, prompt, max_tokens
+            )
+            log_engagement(f"Local MLX (Adapter: {adapter_name})", system_ctx, prompt, res)
+            return res
+        except Exception as e:
+            log_engagement(f"Local MLX (Adapter: {adapter_name})", system_ctx, prompt, "", error=str(e))
+            raise e
 
+    log_engagement(f"Llama-8B (Adapter: {adapter_name})", system_ctx, prompt, "", error="No inference backend available")
     raise RuntimeError(f"No inference backend available for adapter: {adapter_name}")
