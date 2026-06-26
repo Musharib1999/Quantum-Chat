@@ -83,6 +83,18 @@ class AnalyzeResponse(BaseModel):
     reasoning_trace: str
     is_feasible: bool
     feasibility_note: Optional[str] = None
+    suggested_solver: Optional[str] = None
+
+
+class ExecutionRequest(BaseModel):
+    code: str
+    hardware_id: Optional[str] = None
+
+
+class ExecutionResponse(BaseModel):
+    output: str
+    error: Optional[str] = None
+    success: bool
 
 
 # ── New Integration Specs Models ──────────────────────────────────────────
@@ -398,11 +410,47 @@ async def enterprise_analyze(request: AnalyzeRequest):
         if not feasibility:
             feasibility = {"feasible": True, "reasoning_trace": "Feasibility check skipped.", "conflicts": [], "verified_constraints": []}
 
+        # ── Step 1: Solver Suggestor ──────────────────────────────────────────
+        suggestor_prompt = (
+            "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+            "You are the QuantumGuru Solver Suggestor. Analyze the optimization problem "
+            "and select the optimal solver. Options: CQM (D-Wave Leap Hybrid), "
+            "QUBO (Quantum Annealer QPU), OR-Tools (Classical solver). "
+            "Output ONLY the solver key name: CQM, QUBO, or OR-Tools."
+            "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+            f"Problem: {problem}\n\nSelect solver:"
+            "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+        )
+        from v2.llama_client import call_adapter
+        from v2 import config
+        import os
+        _ADAPTERS_BASE = os.path.join(os.path.dirname(__file__), "../../adapters")
+        _PATH = lambda name: os.path.join(_ADAPTERS_BASE, name)
+        
+        try:
+            suggestor_raw = await call_adapter(
+                adapter_name=config.ADAPTER_SUGGESTOR,
+                prompt=suggestor_prompt,
+                max_tokens=20,
+                temperature=0.1,
+                mlx_adapter_path=_PATH("adapter_suggestor"),
+            )
+            suggestor_raw = suggestor_raw.strip().upper()
+            if "CQM" in suggestor_raw:
+                suggested = "CQM"
+            elif "QUBO" in suggestor_raw:
+                suggested = "QUBO"
+            else:
+                suggested = "OR-Tools"
+        except Exception:
+            suggested = "OR-Tools"
+
         return AnalyzeResponse(
             parsed_math=str(ir),
             reasoning_trace=feasibility.get("reasoning_trace", ""),
             is_feasible=feasibility.get("feasible", True),
             feasibility_note=feasibility.get("infeasibility_reason"),
+            suggested_solver=suggested,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -433,6 +481,67 @@ async def run_pipeline_v1_compat(request: PipelineRequest):
         "engine": result.engine,
         "version": result.version,
     }
+
+
+# =========================================================================
+# CODE EXECUTION (POST /v2/execute)
+# =========================================================================
+@app.post("/v2/execute", response_model=ExecutionResponse)
+async def execute_code(request: ExecutionRequest):
+    """
+    Execute Python solver code in an isolated subprocess.
+    """
+    if not request.code.strip():
+        return ExecutionResponse(
+            output="",
+            error="No code provided for execution.",
+            success=False
+        )
+
+    import tempfile
+    import subprocess
+    import sys
+    
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp:
+        tmp.write(request.code)
+        tmp_path = tmp.name
+
+    try:
+        result = subprocess.run(
+            [sys.executable, tmp_path],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        output = result.stdout
+        error_msg = None
+        success = True
+
+        if result.returncode != 0:
+            error_msg = f"Runtime Error (Exit {result.returncode}):\n{result.stderr}"
+            success = False
+        elif result.stderr:
+            output += "\n--- Warnings/Info ---\n" + result.stderr
+
+    except subprocess.TimeoutExpired:
+        error_msg = "Execution timed out (60s limit)."
+        output = ""
+        success = False
+    except Exception as e:
+        error_msg = f"Execution failed: {str(e)}"
+        output = ""
+        success = False
+    finally:
+        import os
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+    
+    return ExecutionResponse(
+        output=output if output else "",
+        error=error_msg,
+        success=success
+    )
 
 
 # =========================================================================
