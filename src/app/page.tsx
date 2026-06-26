@@ -97,15 +97,15 @@ export default function LandingPage() {
 
           {/* Card 2: Quantum Guru LLM */}
           <FeatureCard
-            href="/quantum-assistant"
+            href={isAuthenticated ? "/quantum-assistant" : "/login?redirect=/quantum-assistant"}
             icon={<Bot size={32} />}
             title="Quantum Guru LLM"
             description="A frontier AI model fine-tuned on 240 million high-fidelity quantum computing data points, designed to generate quantum algorithms, analyze quantum information and solve complex scientific queries"
             actionText="Chat Now"
             isDarkMode={false}
             accentColor="electric"
-            status="unlocked"
-            badgeText="Try now"
+            status="locked"
+            badgeText="Unlock with free account"
           />
 
         </div>
