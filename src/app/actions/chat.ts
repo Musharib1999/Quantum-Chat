@@ -472,97 +472,99 @@ export async function chatWithGroq(
         // ─────────────────────────────────────────────────────────────────────
 
         try {
-            console.log(`[useQuantumChat] Routing assistant message directly to local FAISS retriever server...`);
-            
+            const pipelineIntent = contextConfig?.selectedPipeline || 'general';
             const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002';
-            const backendRes = await axios.post(`${backendUrl}/assistant/chat`, {
-                message: prompt
-            });
-            const data = backendRes.data;
-            let responseText = data.response;
-            let finalTokensUsed = 0;
+            
+            console.log(`[useQuantumChat] Routing message with intent: ${pipelineIntent}`);
 
-            const workflowSteps = {
-                nlp: "Bypassed (FAISS mode)",
-                reasoner: "Bypassed (FAISS mode)",
-                suggestor: "Bypassed (FAISS mode)",
-                solver: "Local FAISS vector search index",
-                verifier: "Verification: Hit matches returned successfully",
-                dcc: false
-            };
+            if (pipelineIntent === 'optimization') {
+                const backendRes = await axios.post(`${backendUrl}/enterprise/pipeline`, {
+                    unstructured_problem: prompt,
+                    mode: "auto"
+                });
+                const data = backendRes.data;
+                
+                const responseText = data.personality_response + (data.final_code ? `\n\n[STEP_CODE]\n${data.final_code}\n[/STEP_CODE]` : "");
+                
+                const workflowSteps = {
+                    nlp: data.parsed_math || "Parsed successfully",
+                    reasoner: data.reasoning_trace || "Feasibility check passed",
+                    suggestor: `Suggested Solver: ${data.suggested_solver}\nRationale: ${data.solver_rationale || 'Optimal choice based on constraints'}`,
+                    solver: "Generated Python optimization code",
+                    verifier: data.success ? "Passed validation" : "Validation failed",
+                    suggested_solver: data.suggested_solver,
+                    dcc: !data.success
+                };
 
-            if (data.success) {
-                try {
-                    console.log(`[useQuantumChat] RAG matched with score ${data.score}. Rephrasing via ${activeProvider}...`);
-                    const rephrasePrompt = `You are the Quantum Guru, an expert quantum computing assistant.
-Rephrase the following verified reference answer to make it sound natural, engaging, and conversational (with a "human touch").
-CRITICAL RULES:
-1. You MUST keep all technical facts, equations, and details 100% correct.
-2. DO NOT add any new technical facts or external details that are not present in the reference answer.
-3. Keep mathematical notation exactly as is (e.g., LaTeX formulas like $...$ or math symbols).
-4. Provide ONLY the rephrased answer directly. Do not include any introductory or meta text (such as "Here is the rephrased version:" or "Sure, here is...").
+                await ChatLog.create({
+                    userQuery: prompt,
+                    aiResponse: responseText,
+                    source: 'ai_engine_pipeline',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts,
+                    systemPrompt: `Routed to enterprise optimization pipeline`,
+                    mode: 'optimization'
+                });
 
-User Question: "${prompt}"
-Reference Answer: "${data.response}"`;
-
-                    if (activeProvider === 'groq') {
-                        if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY missing");
-                        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy" });
-                        const completion = await groq.chat.completions.create({
-                            messages: [
-                                { role: "system", content: "You are a professional rephrasing assistant for quantum computing knowledge." },
-                                { role: "user", content: rephrasePrompt }
-                            ],
-                            model: activeModel,
-                            temperature: 0.3,
-                        });
-                        responseText = completion.choices[0]?.message?.content || data.response;
-                        finalTokensUsed = completion.usage?.total_tokens || 0;
-                    } else {
-                        const model = genAI.getGenerativeModel({ model: activeModel || GEMINI_MODEL });
-                        const result = await model.generateContent([
-                            { text: "You are a professional rephrasing assistant for quantum computing knowledge." },
-                            { text: rephrasePrompt }
-                        ]);
-                        responseText = result.response.text() || data.response;
-                        finalTokensUsed = result.response.usageMetadata?.totalTokenCount || 0;
-                    }
-
-                    workflowSteps.solver = `Local FAISS database + LLM Rephrased (${activeProvider})`;
-                    workflowSteps.verifier = `Verification: Match score ${Math.round(data.score * 100)}% rephrased successfully`;
-                } catch (rephraseErr: any) {
-                    console.error("[useQuantumChat] Rephrasing failed, falling back to raw retrieved text:", rephraseErr.message);
-                    responseText = data.response; // Fallback to raw text
-                    workflowSteps.solver = `Local FAISS database (Rephrase failed)`;
-                    workflowSteps.verifier = `Verification: Match score ${Math.round(data.score * 100)}% (fallback to raw answer)`;
+                return {
+                    text: responseText,
+                    source: 'ai_engine_pipeline',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts,
+                    tokensUsed: 0,
+                    workflowSteps
+                };
+            } else {
+                // General or Code -> Route directly to Qwen on backend port 8002
+                let sysPrompt = "You are the Quantum Guru, an expert quantum computing assistant.";
+                if (pipelineIntent === 'code') {
+                    sysPrompt = "You are an expert Quantum Computing Software Engineer. Write clean, optimal Python code using libraries like Qiskit, Cirq, or D-Wave Ocean as requested. Provide explanations along with the code.";
                 }
+
+                const backendRes = await axios.post(`${backendUrl}/v2/chat`, {
+                    message: prompt,
+                    system_prompt: sysPrompt
+                });
+                const data = backendRes.data;
+                
+                const responseText = data.response;
+                const workflowSteps = {
+                    nlp: "Bypassed",
+                    reasoner: "Bypassed",
+                    suggestor: "Bypassed",
+                    solver: `Direct LLM Generation (Qwen 32B AWQ) - Mode: ${pipelineIntent}`,
+                    verifier: "Verification: Handled by generative model",
+                    dcc: false
+                };
+
+                await ChatLog.create({
+                    userQuery: prompt,
+                    aiResponse: responseText,
+                    source: 'direct_qwen',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts,
+                    systemPrompt: sysPrompt,
+                    mode: pipelineIntent
+                });
+
+                return {
+                    text: responseText,
+                    source: 'direct_qwen',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts,
+                    tokensUsed: 0,
+                    workflowSteps
+                };
             }
 
-            // Log interaction
-            await ChatLog.create({
-                userQuery: prompt,
-                aiResponse: responseText,
-                source: data.success ? 'local_faiss_retriever_rephrased' : 'local_faiss_retriever',
-                guardrailsStatus: 'passed',
-                activeGuardrails: ruleTexts,
-                systemPrompt: `Direct FAISS Cosine Search Lookup + LLM Rephrasing`,
-                mode: 'assistant'
-            });
-
-            // Update user tokens if DB user exists
-            if (dbUser && finalTokensUsed > 0) {
-                dbUser.tokensUsed = (dbUser.tokensUsed || 0) + finalTokensUsed;
-                await dbUser.save();
-            }
-
+        } catch (err: any) {
+            console.error("Backend request failed:", err);
             return {
-                text: responseText,
-                source: data.success ? 'local_faiss_retriever_rephrased' : 'local_faiss_retriever',
+                text: "❌ **Connection Error**: Failed to fetch a response from the QuantumGuru server.\n**Details**: " + err.message,
+                source: 'error',
                 guardrailsStatus: 'passed',
                 activeGuardrails: ruleTexts,
-                tokensUsed: finalTokensUsed,
-                sessionTokenLimit: SESSION_TOKEN_LIMIT,
-                workflowSteps
+                tokensUsed: 0
             };
         } catch (mlxError: any) {
             console.log(`[chat.ts] FAISS miss/failed. Attempting optimization pipeline fallback:`, mlxError.message);

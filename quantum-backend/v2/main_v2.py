@@ -559,6 +559,27 @@ async def execute_code(request: ExecutionRequest):
 # =========================================================================
 # DEMO FRONTEND ROUTE
 # =========================================================================
+
+class ChatRequest(BaseModel):
+    message: str
+    system_prompt: Optional[str] = "You are the Quantum Guru, an expert quantum computing assistant."
+
+@app.post("/v2/chat")
+async def general_chat(request: ChatRequest):
+    """
+    Directly query Qwen (vLLM) without FAISS or optimization pipeline.
+    """
+    try:
+        from v2.qwen_client import call_qwen
+        response = await call_qwen(
+            system=request.system_prompt,
+            user=request.message,
+            temperature=0.4
+        )
+        return {"response": response, "success": True}
+    except Exception as e:
+        return {"response": f"❌ Error: {str(e)}", "success": False}
+
 @app.get("/demo")
 async def demo_page():
     from fastapi.responses import HTMLResponse
