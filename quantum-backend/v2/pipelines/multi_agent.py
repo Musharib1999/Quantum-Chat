@@ -13,8 +13,8 @@ from typing import Any, Dict, List, Optional
 from .. import config
 from ..qwen_client import call_qwen
 from ..llama_client import call_adapter
-from ..compiler.dcc import audit_cqm_code, audit_ortools_code, compile_compositional_ast, SandboxedVerifier
-from ..compiler.ir import IRNormalizer, NumericalFeasibilityChecker
+from ..compiler.dcc import audit_cqm_code, audit_ortools_code, compile_compositional_ast, SandboxedVerifier, compile_v66
+from ..compiler.ir import IRNormalizer, NumericalFeasibilityChecker, Domain, ConstraintType, Constant, VarRef
 from ..compiler.autoqubo import AutoQuboCompiler, AutoQuboError
 from ..validators.json_schema import (
     parse_and_validate,
@@ -141,60 +141,94 @@ class ConstraintVerificationAgent(Agent):
     def __init__(self):
         super().__init__("ConstraintVerificationAgent")
 
+    @staticmethod
+    def _deterministic_check(ir) -> tuple:
+        """
+        Purely deterministic feasibility decision from OptimizationIR.
+        Returns (is_feasible: bool, reason: str, conflicts: list[str])
+        """
+        # 1. Numerical bounds check (catches capacity/budget violations)
+        results = NumericalFeasibilityChecker.check(ir)
+        hard_fails = [r for r in results if r.status == "FAIL"]
+        if hard_fails:
+            reasons = [f"{r.constraint_name}: {r.reason}" for r in hard_fails]
+            return False, " | ".join(reasons), reasons
+
+        # 2. Cardinality feasibility for selection problems
+        is_selection = (
+            ir.variables and
+            all(v.domain == Domain.BOOLEAN and v.is_1d for v in ir.variables)
+        )
+        if is_selection:
+            n = ir.variables[0].dimensions[0]
+            for c in ir.constraints:
+                if c.type == ConstraintType.CARDINALITY and c.operator == "==":
+                    if isinstance(c.rhs, Constant):
+                        k = c.rhs.value
+                        if k > n:
+                            reason = f"Cannot select {int(k)} from only {n} candidates — cardinality exceeds candidate count."
+                            return False, reason, [reason]
+                        if k < 0:
+                            reason = f"Cardinality {int(k)} is negative."
+                            return False, reason, [reason]
+
+        # 3. All checks passed
+        return True, "All deterministic feasibility checks passed.", []
+
     async def run(self, workspace: Workspace) -> AgentResult:
         ir = workspace.normalized_model
         if not ir:
             return AgentResult("FAIL", 0.0, "No normalized model available in workspace.")
 
         try:
-            # Step 1: Run deterministic numerical bounds checker on the IR
             feasibility_results = NumericalFeasibilityChecker.check(ir)
 
-            # Step 2: Build a focused CIR summary to pass to the LLM reasoner.
-            # We pass variable_registry, constraint_registry, and objectives DIRECTLY
-            # from the CIR — no re-abstraction to entities/slots/capacity.
-            cir_summary = {}
-            if workspace.problem_specification:
-                spec = workspace.problem_specification
-                cir_summary["variable_registry"] = spec.get("variable_registry", [])
-                cir_summary["constraint_registry"] = spec.get("constraint_registry", [])
-                cir_summary["objectives"] = spec.get("objectives", [])
-                # Include deterministic feasibility check results as additional signal
-                cir_summary["numerical_check_results"] = [
-                    {"constraint": r.constraint_id, "status": r.status, "reason": r.reason}
-                    for r in feasibility_results
-                ]
+            # DECISION: deterministic only — no LLM decides feasibility
+            is_feasible, det_reason, conflicts = self._deterministic_check(ir)
 
-            # Step 3: Run LLM-based ontology-aware feasibility verification on the CIR
-            rsn_user = reasoner_prompt.build_user_prompt(workspace.problem_text, cir_summary)
-            rsn_raw = await call_qwen(
-                system=reasoner_prompt.SYSTEM_PROMPT,
-                user=rsn_user,
-                max_tokens=600,
-                temperature=0.1,
-            )
-            feasibility = await parse_and_validate(
-                raw_output=rsn_raw,
-                validator_fn=validate_reasoner,
-                call_fn=call_qwen,
-                system=reasoner_prompt.SYSTEM_PROMPT,
-                user=rsn_user,
-                step_name="Math Reasoner",
-            )
-            if not feasibility:
-                feasibility = {"feasible": True, "reasoning_trace": "Feasibility check skipped.", "conflicts": [], "verified_constraints": []}
+            # EXPLANATION: LLM generates a human-readable reasoning trace (non-blocking)
+            reasoning_trace = det_reason
+            try:
+                cir_summary = {}
+                if workspace.problem_specification:
+                    spec = workspace.problem_specification
+                    cir_summary["variable_registry"] = spec.get("variable_registry", [])
+                    cir_summary["constraint_registry"] = spec.get("constraint_registry", [])
+                    cir_summary["objectives"] = spec.get("objectives", [])
+                    cir_summary["deterministic_verdict"] = "FEASIBLE" if is_feasible else "INFEASIBLE"
+                    cir_summary["deterministic_reason"] = det_reason
+
+                rsn_user = reasoner_prompt.build_user_prompt(workspace.problem_text, cir_summary)
+                rsn_raw = await call_qwen(
+                    system=reasoner_prompt.SYSTEM_PROMPT,
+                    user=rsn_user,
+                    max_tokens=400,
+                    temperature=0.1,
+                )
+                explanation_json = await parse_and_validate(
+                    raw_output=rsn_raw,
+                    validator_fn=validate_reasoner,
+                    call_fn=call_qwen,
+                    system=reasoner_prompt.SYSTEM_PROMPT,
+                    user=rsn_user,
+                    step_name="Reasoner (explanation only)",
+                )
+                if explanation_json and explanation_json.get("reasoning_trace"):
+                    reasoning_trace = explanation_json["reasoning_trace"]
+            except Exception as llm_err:
+                # LLM explanation failure is non-blocking — deterministic reason is used
+                print(f"[ConstraintVerificationAgent] LLM explanation failed (non-blocking): {llm_err}")
 
             workspace.verification = {
-                "feasible": feasibility.get("feasible", True),
-                "reasoning_trace": feasibility.get("reasoning_trace", ""),
-                "infeasibility_reason": feasibility.get("infeasibility_reason"),
+                "feasible": is_feasible,
+                "reasoning_trace": reasoning_trace,
+                "infeasibility_reason": det_reason if not is_feasible else None,
                 "results": [asdict(r) for r in feasibility_results]
             }
 
-            # Step 4: Only halt on hard infeasibility detected by the LLM reasoner
-            if not feasibility.get("feasible", True):
+            if not is_feasible:
                 workspace.confidence["Verification"] = 1.0
-                return AgentResult("FAIL", 1.0, f"Mathematical infeasibility detected: {feasibility.get('infeasibility_reason')}")
+                return AgentResult("FAIL", 1.0, f"Mathematical infeasibility detected: {det_reason}")
 
             workspace.confidence["Verification"] = 1.0
             return AgentResult("PASS", 1.0, "Model verified to be feasible.")
@@ -225,31 +259,29 @@ class SolverStrategyAgent(Agent):
                 if len(var.get("dimensions", [])) == 2:
                     pattern = "assignment"
 
-        s_prompt = (
-            "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
-            "You are the QuantumGuru Solver Suggestor. Analyze the optimization problem, pattern, variables, and feasibility reasoning, then decide the best solver.\n"
+        s_system = (
+            "You are the QuantumGuru Solver Suggestor. Analyze the optimization problem and decide the best solver.\n"
             "Output EXACTLY three lines:\n"
             "Decision: <CQM|QUBO|OR-Tools>\n"
             "Candidates: CP-SAT <score>%, CQM <score>%, MILP <score>% (Rank all three based on confidence percentage)\n"
-            "Rationale: <one sentence why>\n"
-            "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
-            f"Business Problem: {workspace.problem_text}\n"
+            "Rationale: <one sentence why>"
+        )
+        s_user = (
             f"Problem Pattern: {pattern}\n"
-            f"Parsed Parameters: {json.dumps(workspace.problem_specification)}\n"
-            f"Feasibility Reasoning: {workspace.verification.get('reasoning_trace') if workspace.verification else ''}\n"
-            "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+            f"Variable domains: {[v.get('domain') for v in (workspace.problem_specification or {}).get('variable_registry', [])]}\n"
+            f"Number of constraints: {len((workspace.problem_specification or {}).get('constraint_registry', []))}\n"
+            f"Feasibility verdict: {workspace.verification.get('reasoning_trace') if workspace.verification else 'FEASIBLE'}"
         )
         
         decision = "OR-Tools"
         candidates = "CP-SAT 90%, CQM 80%, MILP 60%"
         rationale = "Default fallback."
         try:
-            s_out = await call_adapter(
-                adapter_name=config.ADAPTER_SUGGESTOR,
-                prompt=s_prompt,
+            s_out = await call_qwen(
+                system=s_system,
+                user=s_user,
                 max_tokens=150,
                 temperature=0.1,
-                mlx_adapter_path=os.path.join(os.path.dirname(__file__), "../../../adapters/adapter_suggestor"),
             )
             for line in s_out.splitlines():
                 if line.startswith("Decision:"):
@@ -306,68 +338,30 @@ class CodeGenerationAgent(Agent):
                 )
                 return AgentResult("FAIL", 0.0, f"AutoQUBO compilation error: {e}")
 
-        # ── CQM / OR-Tools: generative LLM adapter path ───────────────────
-        pattern = "selection"
-        if workspace.problem_specification and "variable_registry" in workspace.problem_specification:
-            for var in workspace.problem_specification["variable_registry"]:
-                if len(var.get("dimensions", [])) == 2:
-                    pattern = "assignment"
-
-        code_system = (
-            f"You are the QuantumGuru {strategy} Code Generator. "
-            "Generate complete, executable Python solver code. "
-            "Include all imports, variables, constraints, and objective. "
-            "If there are preferred selection terms or penalties, formulate them as quadratic objective terms (e.g. penalty * S3 * S9) instead of hard constraints. "
-            "Output ONLY Python code, no explanation."
-        )
-        code_user = (
-            f"Business problem: {workspace.problem_text}\n\n"
-            f"Problem Pattern: {pattern}\n"
-            f"Extracted parameters: {json.dumps(workspace.problem_specification)}\n\n"
-            f"Feasibility trace: {workspace.verification.get('reasoning_trace') if workspace.verification else ''}\n\n"
-            f"Generate complete {strategy} Python solver code."
-        )
-        code_prompt = (
-            f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{code_system}"
-            f"<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{code_user}"
-            f"<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
-        )
-
-        adapters_base = os.path.join(os.path.dirname(__file__), "../../../adapters")
-        if strategy == "CQM":
-            adapter_name = config.ADAPTER_CQM_CODER
-            adapter_path = os.path.join(adapters_base, "adapter_master_guru")
-        else:
-            adapter_name = config.ADAPTER_ORTOOLS_CODER
-            adapter_path = os.path.join(adapters_base, "adapter_ortools_coder")
-
+        # ── CQM / OR-Tools: deterministic DCC compiler (OptimizationIR → code) ──
+        # The OptimizationIR is the single source of truth.
+        # No LLM is used here — compile_v66 translates the typed IR directly.
+        ir = workspace.normalized_model
         try:
-            final_code = await call_adapter(
-                adapter_name=adapter_name,
-                prompt=code_prompt,
-                max_tokens=800,
-                temperature=0.1,
-                mlx_adapter_path=adapter_path,
-            )
+            dcc_result = compile_v66(ir, force_solver=strategy)
+            final_code = dcc_result["code"]
 
-            # Check code audit
+            if final_code.startswith("# HALTED"):
+                workspace.generated_code = final_code
+                return AgentResult("FAIL", 0.0, f"DCC compilation halted: {dcc_result.get('verification_report', {}).get('issues', [])}")
+
             audit_result = audit_cqm_code(final_code, []) if strategy == "CQM" else audit_ortools_code(final_code)
-
-            has_2d_variables = bool(re.search(r'\[\w+,\s*\w+\]|_\w+_\w+', final_code))
-            if pattern in ("selection", "knapsack") and has_2d_variables:
-                audit_result = "FAIL: 2D assignment variables detected in a selection problem pattern."
-
             workspace.generated_code = final_code
 
             if "FAIL:" in audit_result:
-                return AgentResult("RETRY", 0.5, f"Generated code failed audit check: {audit_result}")
+                return AgentResult("RETRY", 0.5, f"DCC code failed syntax audit: {audit_result}")
 
-            workspace.confidence["CodeGen"] = 0.95
-            return AgentResult("PASS", 0.95, "Generated solver code successfully.")
+            workspace.confidence["CodeGen"] = 1.0
+            return AgentResult("PASS", 1.0, f"Generated {strategy} code via deterministic DCC compiler.")
         except Exception as e:
             if "under maintenance" in str(e):
                 return AgentResult("FAIL", 0.0, "AI engine is under maintenance, please try after few minutes")
-            return AgentResult("FAIL", 0.0, f"Code generation failed: {e}")
+            return AgentResult("FAIL", 0.0, f"DCC compilation failed: {e}")
 
 
 # ── 6. Execution Agent (Sandbox Verifier) ───────────────────────────────
