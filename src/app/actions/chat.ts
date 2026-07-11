@@ -530,7 +530,10 @@ export async function chatWithGroq(
                 });
                 const data = backendRes.data;
                 
-                const responseText = data.response;
+                let responseText = data.response || "";
+                if (!responseText.trim()) {
+                    responseText = "⚠️ The Qwen 32B model completed generation but returned an empty response. This occasionally happens with the AWQ quantized model.";
+                }
                 const workflowSteps = {
                     nlp: "Bypassed",
                     reasoner: "Bypassed",
