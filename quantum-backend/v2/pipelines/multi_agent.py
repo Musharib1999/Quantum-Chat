@@ -11,7 +11,7 @@ from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 
 from .. import config
-from ..qwen_client import call_groq_llama70b
+from ..qwen_client import call_qwen
 from ..llama_client import call_adapter
 from ..compiler.dcc import audit_cqm_code, audit_ortools_code, compile_compositional_ast, SandboxedVerifier
 from ..compiler.ir import IRNormalizer, NumericalFeasibilityChecker
@@ -75,7 +75,7 @@ class UnderstandingAgent(Agent):
     async def run(self, workspace: Workspace) -> AgentResult:
         try:
             comp_user = comp_prompt.build_user_prompt(workspace.problem_text)
-            comp_raw = await call_groq_llama70b(
+            comp_raw = await call_qwen(
                 system=comp_prompt.SYSTEM_PROMPT,
                 user=comp_user,
                 max_tokens=2000,
@@ -84,7 +84,7 @@ class UnderstandingAgent(Agent):
             comp_ir = await parse_and_validate(
                 raw_output=comp_raw,
                 validator_fn=validate_compositional_parser,
-                call_fn=call_groq_llama70b,
+                call_fn=call_qwen,
                 system=comp_prompt.SYSTEM_PROMPT,
                 user=comp_user,
                 step_name="Compositional Parser",
@@ -171,7 +171,7 @@ class ConstraintVerificationAgent(Agent):
 
             # Run LLM-based logic reasoner context verify
             rsn_user = reasoner_prompt.build_user_prompt(workspace.problem_text, legacy_ir)
-            rsn_raw = await call_groq_llama70b(
+            rsn_raw = await call_qwen(
                 system=reasoner_prompt.SYSTEM_PROMPT,
                 user=rsn_user,
                 max_tokens=512,
@@ -180,7 +180,7 @@ class ConstraintVerificationAgent(Agent):
             feasibility = await parse_and_validate(
                 raw_output=rsn_raw,
                 validator_fn=validate_reasoner,
-                call_fn=call_groq_llama70b,
+                call_fn=call_qwen,
                 system=reasoner_prompt.SYSTEM_PROMPT,
                 user=rsn_user,
                 step_name="Math Reasoner",
@@ -476,7 +476,7 @@ class ExplanationAgent(Agent):
                 f"Generated code:\n{code_summary}"
             )
             
-            explanation = await call_groq_llama70b(
+            explanation = await call_qwen(
                 system=analysis_system,
                 user=analysis_user,
                 max_tokens=400,

@@ -167,30 +167,14 @@ async def call_adapter(
     temperature: float = 0.1,
     mlx_adapter_path: Optional[str] = None,
 ) -> str:
-    """
-    Call a LoRA adapter. 
-    Primary: RunPod vllm
-    Secondary: Groq API fallback
-    """
     from .execution_logger import log_engagement
+    from .qwen_client import call_qwen
     system_ctx = f"Adapter Module: {adapter_name}"
 
-    if config.LLAMA_BASE_URL:
-        try:
-            res = await _call_vllm_lora(adapter_name, prompt, max_tokens, temperature)
-            log_engagement(f"Llama-8B (Adapter: {adapter_name})", system_ctx, prompt, res)
-            return res
-        except Exception as e:
-            print(f"[LLAMA] vllm failed for {adapter_name}: {e}")
+    try:
+        res = await call_qwen(system=system_ctx, user=prompt, max_tokens=max_tokens, temperature=temperature)
+        return res
+    except Exception as e:
+        print(f"[LLAMA-TO-QWEN] Failed for {adapter_name}: {e}")
+        raise e
 
-    if config.GROQ_API_KEY:
-        try:
-            messages = _parse_llama_prompt(prompt)
-            res = await _call_groq_api(messages, max_tokens, temperature)
-            log_engagement(f"Groq (Adapter: {adapter_name})", system_ctx, prompt, res)
-            return res
-        except Exception as e:
-            print(f"[LLAMA] Groq fallback failed for {adapter_name}: {e}")
-            raise e
-
-    raise RuntimeError(f"No inference backend available for adapter: {adapter_name}")
