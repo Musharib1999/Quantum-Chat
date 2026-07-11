@@ -3,7 +3,7 @@
 # This script starts vLLM, D-Wave Microservice, and the FastAPI backend
 
 echo "Starting vLLM Inference Engine (Qwen 32B AWQ)..."
-nohup vllm serve neuralmagic/Qwen2.5-32B-Instruct-FP8 \
+nohup vllm serve predibase/Qwen2.5-32B-Instruct-FP8 \
   --dtype auto \
   --max-model-len 8192 \
   --gpu-memory-utilization 0.90 \
@@ -28,7 +28,7 @@ nohup uvicorn dwave_service:app --host 0.0.0.0 --port 8004 > /root/dwave.log 2>&
 
 # Export Qwen Engine Configuration for the Backend
 export QWEN_BASE_URL="http://127.0.0.1:8000/v1"
-export QWEN_MODEL="neuralmagic/Qwen2.5-32B-Instruct-FP8"
+export QWEN_MODEL="predibase/Qwen2.5-32B-Instruct-FP8"
 
 echo "Starting FastAPI Backend (Council of Experts Pipeline on Port 8002)..."
 
