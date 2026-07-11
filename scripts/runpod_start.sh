@@ -2,6 +2,8 @@
 # Prime Blazar AI Engine - RunPod Startup Script
 # This script starts vLLM, D-Wave Microservice, and the FastAPI backend
 
+export HF_HOME=/workspace/huggingface_cache
+
 echo "Starting vLLM Inference Engine (Qwen 32B AWQ)..."
 nohup vllm serve predibase/Qwen2.5-32B-Instruct-FP8 \
   --dtype auto \
