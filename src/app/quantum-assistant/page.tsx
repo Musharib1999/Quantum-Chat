@@ -485,7 +485,7 @@ export default function App() {
     }
   };
 
-  // Load MathJax dynamically and re-typeset on state changes
+  // Load MathJax dynamically and re-typeset on state changes with debouncing and stream-proofing
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const win = window as any;
@@ -494,6 +494,13 @@ export default function App() {
         win.MathJax.typesetPromise().catch(() => {});
       }
     };
+
+    // Check if any message in the chat is currently streaming
+    const isAnyStreaming = messages.some((m: any) => m.isStreaming);
+    if (isAnyStreaming) {
+      return; // Skip typesetting during active streams to prevent concurrent rendering browser crashes
+    }
+
     if (!win.MathJax) {
       win.MathJax = {
         tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
@@ -505,9 +512,11 @@ export default function App() {
       s.async = true;
       document.head.appendChild(s);
     } else {
-      setTimeout(typeset, 80);
+      // Debounce typesetting to prevent concurrent calls and let DOM fully settle
+      const timer = setTimeout(typeset, 250);
+      return () => clearTimeout(timer);
     }
-  }, [activeSession, messages, activeSessionId, isTyping]);
+  }, [activeSessionId, messages, isTyping]);
 
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans relative overflow-hidden">
