@@ -34,6 +34,9 @@ export interface Message {
         solver_routing?: any;
         qa_report?: any;
         compiler_metrics?: any;
+        suggested_solver?: string;
+        math_rigor?: any;
+        classifier?: string;
     };
 }
 

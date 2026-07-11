@@ -56,6 +56,7 @@ export default function App() {
   } = useQuantumChat('assistant', { mode: selectedStrategy.toLowerCase(), selectedPipeline });
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [expandObjective, setExpandObjective] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -259,7 +260,75 @@ export default function App() {
   const getWorkflowDetails = () => {
     if (!activeSession || !activeSession.workflowSteps) return null;
     const steps = activeSession.workflowSteps;
+    const mathRigor = steps.math_rigor;
     
+    // 1. Problem classification
+    const classification = steps.classifier || "Selection Optimization";
+
+    // Build agent logs status checks
+    const hasNlp = !!steps.nlp;
+    const hasReasoner = !!steps.reasoner;
+    const hasSuggestor = !!steps.suggestor;
+    const hasSolver = !!steps.solver;
+    const hasVerifier = !!steps.verifier;
+
+    const agentLogs = [
+      { agent: "SupervisorAgent", action: "Initialized shared workspace (memory bounds set)", status: hasNlp ? "Success" : "Pending" },
+      { agent: "UnderstandingAgent", action: "Wrote variables & constraints to problem spec registry", status: hasNlp ? "Success" : "Pending" },
+      { agent: "ModelingAgent", action: "Constructed normalized OptimizationIR mathematical formulations", status: hasNlp ? "Success" : "Pending" },
+      { agent: "ConstraintVerificationAgent", action: "Checked numerical feasibility & logic constraints", status: hasReasoner ? "Success" : "Pending" },
+      { agent: "SolverStrategyAgent", action: "Determined optimal solver path & hardware registry compatibility", status: hasSuggestor ? "Success" : "Pending" },
+      { agent: "CodeGenerationAgent", action: "Wrote executable Python solver model implementation", status: hasSolver ? "Success" : "Pending" },
+      { agent: "ExecutionAgent", action: "Evaluated solver output values & optimization metrics", status: hasVerifier ? "Success" : "Pending" },
+      { agent: "RepairAgent", action: "Verified solution bounds & applied AST syntax repair rules", status: hasVerifier ? "Success" : "Pending" }
+    ];
+
+    if (mathRigor && Object.keys(mathRigor).length > 0) {
+      const objectiveLatex = mathRigor.objective_latex;
+      const objectiveExpanded = mathRigor.objective_expanded;
+      const objectiveIsLarge = mathRigor.objective_is_large;
+      
+      const variablesList = mathRigor.variables || [];
+      const parametersList = mathRigor.parameters || [];
+      const constraintsList = mathRigor.constraints || [];
+      const constraintCounts = mathRigor.constraint_counts || {};
+      const solverRecommendation = mathRigor.solver_recommendation || {};
+      
+      const varsDomainsLatex = variablesList.map((v: any) => {
+        return `${v.latex_def} \\quad \\text{where } ${v.index_set}`;
+      }).join("\n\n");
+      
+      const constraintsLatex = constraintsList.map((c: any) => c.latex).join("\n\n");
+      const modelLatex = objectiveLatex ? `${objectiveLatex}\n\n$$\\text{subject to:}$$\n\n${constraintsLatex}` : constraintsLatex;
+      
+      let totalVarCount = variablesList.length;
+
+      return {
+        classification,
+        objectives: mathRigor.objectives || [],
+        variables: variablesList,
+        parameters: parametersList,
+        constraints: constraintsList,
+        totalVarCount,
+        feasibilityText: steps.reasoner || "Feasibility check passed",
+        qaAudit: steps.verifier || "Verification: Code passed QA audit",
+        dccActive: steps.dcc || false,
+        modelDetails: {
+          solver: steps.suggested_solver || "D-Wave / OR-Tools Solver",
+          suggestor: steps.suggestor || "Decision: Auto-routed solver path",
+        },
+        objectiveLatex,
+        objectiveExpanded,
+        objectiveIsLarge,
+        modelLatex,
+        varsDomainsLatex,
+        agentLogs,
+        constraintCounts,
+        solverRecommendation
+      };
+    }
+
+    // Legacy Fallback if math_rigor is missing (e.g. historical sessions)
     let parsedSpecs: any = null;
     if (steps.nlp) {
       try {
@@ -272,10 +341,6 @@ export default function App() {
       }
     }
     
-    // 1. Problem classification
-    const classification = steps.classifier || (parsedSpecs ? `Pattern: ${parsedSpecs.problem_pattern || 'unknown'}` : "Pattern: General Optimization");
-
-    // 2. Objective & Objective Latex
     let objectivesList: any[] = [];
     let objectiveLatex = "";
     if (parsedSpecs && Array.isArray(parsedSpecs.objectives)) {
@@ -301,13 +366,9 @@ export default function App() {
       }
     }
     
-    // 3. Variables
     const variablesList = (parsedSpecs && Array.isArray(parsedSpecs.variable_registry)) ? parsedSpecs.variable_registry : [];
-
-    // 4. Constraints
     const constraintsList = (parsedSpecs && Array.isArray(parsedSpecs.constraint_registry)) ? parsedSpecs.constraint_registry : [];
 
-    // 5. Variable count
     let totalVarCount = 0;
     variablesList.forEach((v: any) => {
       if (v.dimensions && Array.isArray(v.dimensions)) {
@@ -318,20 +379,15 @@ export default function App() {
       }
     });
 
-    // 6. Feasibility
     const feasibilityText = steps.reasoner || "Feasibility check passed";
-
-    // 7. QA Audit status
     const qaAudit = steps.verifier || "Verification: Code passed QA audit";
     const dccActive = steps.dcc || false;
 
-    // 8. Optimization model details
     const modelDetails = {
       solver: steps.solver || "D-Wave / OR-Tools Solver",
       suggestor: steps.suggestor || "Decision: Auto-routed solver path",
     };
 
-    // 9. LaTeX formulations compiled (For Card 5 & Card 6)
     const constraintsLatex = constraintsList.map((c: any) => {
       if (c.formula) {
         return `$$ ${c.formula} \\quad \\text{(${c.name || c.id})} $$`;
@@ -339,7 +395,7 @@ export default function App() {
         const opMap: any = {"<=": "\\le", ">=": "\\ge", "==": "="};
         const op = opMap[c.operator] || c.operator;
         let lhsStr = c.lhs?.var_id || "x";
-        if (c.lhs?.coefficients) {
+        if (c.lhs?.coefficients && Array.isArray(c.lhs.coefficients)) {
           lhsStr = c.lhs.coefficients.map((coeff: number, idx: number) => `${coeff} \\cdot ${c.lhs.var_id}_{${idx}}`).join(" + ");
         }
         let rhsStr = c.rhs?.value !== undefined ? String(c.rhs.value) : c.rhs?.var_id || "0";
@@ -351,32 +407,15 @@ export default function App() {
 
     const varsDomainsLatex = variablesList.map((v: any) => {
       const domainSet = v.domain === "boolean" ? "\\{0, 1\\}" : v.domain === "integer" ? "\\mathbb{Z}" : "\\mathbb{R}";
-      const dimStr = v.dimensions && v.dimensions.length > 0 ? `^{${v.dimensions.join(" \\times ")}}` : "";
+      const dimStr = v.dimensions && Array.isArray(v.dimensions) && v.dimensions.length > 0 ? `^{${v.dimensions.join(" \\times ")}}` : "";
       return `$$ ${v.id} \\in ${domainSet}${dimStr} $$`;
     }).join("\n\n");
-
-    // 10. Agent Shared Memory Trace — status only shows when step data is genuinely populated
-    const hasNlp = !!(steps.nlp && (typeof steps.nlp === 'string' || (Array.isArray(steps.nlp.variables) ? steps.nlp.variables.length > 0 : steps.nlp.parsed)));
-    const hasReasoner = !!(steps.reasoner && (typeof steps.reasoner === 'string' || steps.reasoner.verdict || steps.reasoner.result || steps.reasoner.feasible !== undefined));
-    const hasSuggestor = !!(steps.suggestor && (typeof steps.suggestor === 'string' || steps.suggestor.strategy));
-    const hasSolver = !!(steps.solver && (typeof steps.solver === 'string' || steps.solver.code));
-    const hasVerifier = !!(steps.verifier && (typeof steps.verifier === 'string' || steps.verifier.passed !== undefined || steps.verifier.output));
-
-    const agentLogs = [
-      { agent: "SupervisorAgent", action: "Initialized shared workspace (memory bounds set)", status: hasNlp ? "Success" : "Pending" },
-      { agent: "UnderstandingAgent", action: "Wrote variables & constraints to problem spec registry", status: hasNlp ? "Success" : "Pending" },
-      { agent: "ModelingAgent", action: "Constructed normalized OptimizationIR mathematical formulations", status: hasNlp ? "Success" : "Pending" },
-      { agent: "ConstraintVerificationAgent", action: "Checked numerical feasibility & logic constraints", status: hasReasoner ? "Success" : "Pending" },
-      { agent: "SolverStrategyAgent", action: "Determined optimal solver path & hardware registry compatibility", status: hasSuggestor ? "Success" : "Pending" },
-      { agent: "CodeGenerationAgent", action: "Wrote executable Python solver model implementation", status: hasSolver ? "Success" : "Pending" },
-      { agent: "ExecutionAgent", action: "Evaluated solver output values & optimization metrics", status: hasVerifier ? "Success" : "Pending" },
-      { agent: "RepairAgent", action: "Verified solution bounds & applied AST syntax repair rules", status: hasVerifier ? "Success" : "Pending" }
-    ];
 
     return {
       classification,
       objectives: objectivesList,
       variables: variablesList,
+      parameters: [],
       constraints: constraintsList,
       totalVarCount,
       feasibilityText,
@@ -386,7 +425,9 @@ export default function App() {
       objectiveLatex,
       modelLatex,
       varsDomainsLatex,
-      agentLogs
+      agentLogs,
+      constraintCounts: null,
+      solverRecommendation: null
     };
   };
 
@@ -866,12 +907,22 @@ export default function App() {
 
                 {/* Card 2: Objective */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
-                  <span className="text-[11px] font-semibold text-blue-600">
-                    2. Objective
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-600">
+                      2. Objective
+                    </span>
+                    {details.objectiveIsLarge && (
+                      <button
+                        onClick={() => setExpandObjective(!expandObjective)}
+                        className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold cursor-pointer px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50/50"
+                      >
+                        {expandObjective ? "Collapse" : "Expand"}
+                      </button>
+                    )}
+                  </div>
                   {details.objectiveLatex ? (
                     <div className="font-mono text-[11px] text-slate-700 bg-white border border-slate-200 p-2.5 rounded-lg leading-relaxed overflow-x-auto">
-                      <MarkdownRenderer content={details.objectiveLatex} />
+                      <MarkdownRenderer content={expandObjective && details.objectiveExpanded ? details.objectiveExpanded : details.objectiveLatex} />
                     </div>
                   ) : (
                     <div className="text-[11px] text-slate-400 italic">
@@ -879,7 +930,6 @@ export default function App() {
                     </div>
                   )}
                 </div>
-
                 {/* Card 3: Variables */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">
@@ -892,9 +942,25 @@ export default function App() {
                           <div className="text-[11px] text-slate-700 font-medium">
                             <span className="font-semibold text-slate-800">{v.id}</span>: {v.name}
                           </div>
-                          <div className="mt-1 font-mono text-[11px] text-slate-400">
-                            Domain: {v.domain} · [{v.dimensions?.join(' × ')}]
-                          </div>
+                          {v.latex_def ? (
+                            <div className="mt-1 space-y-0.5">
+                              <div className="font-mono text-[10px] text-slate-500 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 flex items-center gap-1 overflow-x-auto">
+                                <MarkdownRenderer content={v.latex_def} />
+                              </div>
+                              {v.index_set && (
+                                <div className="text-[10px] text-slate-400 font-mono">
+                                  for {v.index_set}
+                                </div>
+                              )}
+                              <div className="text-[10px] text-slate-500 italic">
+                                {v.mapping_text}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-1 font-mono text-[11px] text-slate-400">
+                              Domain: {v.domain} · [{v.dimensions?.join(' × ')}]
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (
@@ -904,7 +970,6 @@ export default function App() {
                     )}
                   </div>
                 </div>
-
                 {/* Card 4: Constraints summary */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">
@@ -913,11 +978,21 @@ export default function App() {
                   <div className="text-[11px] text-slate-700 font-medium">
                     Total registered: <span className="text-blue-600 font-semibold">{details.constraints.length}</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 leading-normal">
-                    Families: {details.constraints.map((c: any) => c.family).filter((v: any, i: number, self: any[]) => self.indexOf(v) === i).join(', ') || 'None'}
-                  </div>
+                  {details.constraintCounts ? (
+                    <div className="space-y-1 mt-1 text-[11px] text-slate-500 bg-white border border-slate-200 p-2 rounded-lg">
+                      {Object.entries(details.constraintCounts).map(([family, count]: any) => (
+                        <div key={family} className="flex justify-between border-b border-slate-100 last:border-b-0 py-0.5">
+                          <span className="text-slate-500">{family}</span>
+                          <span className="font-semibold text-slate-700">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-slate-500 leading-normal">
+                      Families: {details.constraints.map((c: any) => c.family).filter((v: any, i: number, self: any[]) => self.indexOf(v) === i).join(', ') || 'None'}
+                    </div>
+                  )}
                 </div>
-
                 {/* Card 5: Mathematical model */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">
@@ -935,26 +1010,47 @@ export default function App() {
                 {/* Card 6: Optimization model */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">
-                    6. Optimization model
+                    6. Solver recommendation
                   </span>
-                  <div className="text-[11px] text-slate-700 font-semibold border-b border-slate-200 pb-1.5 mb-1.5">
-                    {details.modelDetails.solver}
-                  </div>
-                  <div className="text-[11px] text-slate-500 mb-1">
-                    Decision variable domains
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-700 bg-white border border-slate-200 p-2 rounded-lg overflow-x-auto max-h-[140px] overflow-y-auto">
-                    {details.varsDomainsLatex ? (
-                      <MarkdownRenderer content={details.varsDomainsLatex} />
-                    ) : (
-                      <span className="italic text-slate-400">No variable domains.</span>
-                    )}
-                  </div>
-                  <div className="text-[11px] text-slate-500 leading-normal pt-0.5">
-                    {details.modelDetails.suggestor}
-                  </div>
+                  {details.solverRecommendation ? (
+                    <div className="space-y-2">
+                      <div className="text-[11px] text-slate-500 leading-normal">
+                        Detected Features:
+                        <div className="mt-1 space-y-1 bg-white border border-slate-200 p-2 rounded-lg">
+                          {details.solverRecommendation.features?.map((f: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-1.5 text-slate-600">
+                              <span className="text-emerald-500 font-semibold">✓</span>
+                              <span>{f.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="pt-1.5 border-t border-slate-200">
+                        <div className="text-[9px] text-slate-400 uppercase tracking-wider">Recommended Solver</div>
+                        <div className="text-[11px] text-blue-600 font-semibold">{details.solverRecommendation.recommended_solver}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-[11px] text-slate-700 font-semibold border-b border-slate-200 pb-1.5 mb-1.5">
+                        {details.modelDetails.solver}
+                      </div>
+                      <div className="text-[11px] text-slate-500 mb-1">
+                        Decision variable domains
+                      </div>
+                      <div className="font-mono text-[11px] text-slate-700 bg-white border border-slate-200 p-2 rounded-lg overflow-x-auto max-h-[140px] overflow-y-auto">
+                        {details.varsDomainsLatex ? (
+                          <MarkdownRenderer content={details.varsDomainsLatex} />
+                        ) : (
+                          <span className="italic text-slate-400">No variable domains.</span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-500 leading-normal pt-0.5">
+                        {details.modelDetails.suggestor}
+                      </div>
+                    </>
+                  )}
                 </div>
-
                 {/* Card 7: Constraint details */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">
@@ -998,16 +1094,27 @@ export default function App() {
                 {/* Card 9: Variable count */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">
-                    9. Variable count
+                    9. Parameters
                   </span>
-                  <div className="text-[11px] text-slate-700 font-medium">
-                    Total generated: <span className="text-blue-600 font-semibold">{details.totalVarCount}</span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 leading-normal">
-                    Dimension bounds check: passed
+                  <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+                    {details.parameters && details.parameters.length > 0 ? (
+                      details.parameters.map((p: any, pidx: number) => (
+                        <div key={pidx} className="bg-white border border-slate-200 p-2 rounded-lg">
+                          <div className="text-[11px] font-medium text-slate-700">
+                            {p.name}
+                          </div>
+                          <div className="mt-0.5 font-mono text-[10px] text-slate-400 break-all bg-slate-50 p-1 rounded border border-slate-100 overflow-x-auto">
+                            {p.value}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-[11px] text-slate-400 italic">
+                        No external parameters parsed
+                      </div>
+                    )}
                   </div>
                 </div>
-
                 {/* Card 10: QA audit */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">

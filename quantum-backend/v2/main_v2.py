@@ -492,6 +492,7 @@ async def run_pipeline_v1_compat(request: PipelineRequest):
         "pattern": result.get("pattern", ""),
         "engine": "QuantumEngine-V5",
         "version": "5.0.0",
+        "math_rigor": result.get("math_rigor", {})
     }
 
 

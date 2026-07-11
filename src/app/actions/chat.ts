@@ -487,7 +487,7 @@ export async function chatWithGroq(
                 // Build visible response text — prefer personality_response (ExplanationAgent output),
                 // fall back to reasoning_trace for infeasible problems where ExplanationAgent may have failed
                 const visibleText = data.personality_response || data.reasoning_trace || "";
-                const codeBlock = data.final_code ? `\n\n[STEP_CODE]\n${data.final_code}\n[/STEP_CODE]` : "";
+                const codeBlock = data.final_code ? `\n\n\`\`\`python\n${data.final_code}\n\`\`\`` : "";
                 let responseText = visibleText + codeBlock;
                 if (!responseText.trim()) {
                     responseText = "⚠️ The Council of Experts completed the pipeline but generated an empty response. Check backend logs for parsing errors.";
@@ -500,7 +500,9 @@ export async function chatWithGroq(
                     solver: "Generated Python optimization code",
                     verifier: data.success ? "Passed validation" : "Validation failed",
                     suggested_solver: data.suggested_solver,
-                    dcc: !data.success
+                    dcc: !data.success,
+                    math_rigor: data.math_rigor || {},
+                    classifier: data.pattern || "Selection Optimization"
                 };
 
                 await ChatLog.create({

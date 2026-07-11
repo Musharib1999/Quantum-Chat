@@ -154,9 +154,14 @@ class Constraint:
     def __repr__(self):
         return f"Constraint({self.name}: {self.lhs} {self.operator} {self.rhs} [{self.confidence:.2f}])"
 
-    def to_latex(self) -> str:
-        lhs_l = self.lhs.to_latex() if hasattr(self.lhs, 'to_latex') else str(self.lhs)
-        rhs_l = self.rhs.to_latex() if hasattr(self.rhs, 'to_latex') else str(self.rhs)
+    def to_latex(self, ir=None) -> str:
+        if ir is None:
+            lhs_l = self.lhs.to_latex() if hasattr(self.lhs, 'to_latex') else str(self.lhs)
+            rhs_l = self.rhs.to_latex() if hasattr(self.rhs, 'to_latex') else str(self.rhs)
+        else:
+            from .formula_renderer import FormulaRenderer
+            lhs_l = FormulaRenderer.render_expr(self.lhs, ir)
+            rhs_l = FormulaRenderer.render_expr(self.rhs, ir)
         op_map = {"<=": "\\le", ">=": "\\ge", "==": "="}
         op = op_map.get(self.operator, self.operator)
         return f"{lhs_l} {op} {rhs_l}" 

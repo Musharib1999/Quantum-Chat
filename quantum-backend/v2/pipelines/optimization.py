@@ -47,6 +47,28 @@ async def run_optimization_pipeline(
                 + (infeasibility_reason or reasoning_trace or "The constraints cannot all be satisfied simultaneously.")
             )
 
+        # Generate pre-compiled LaTeX and math metadata from OptimizationIR
+        math_rigor = {}
+        if workspace.normalized_model:
+            try:
+                from ..compiler.formula_renderer import FormulaRenderer
+                math_rigor = FormulaRenderer.to_math_rigor_dict(
+                    workspace.normalized_model,
+                    workspace.solver_strategy
+                )
+            except Exception as math_err:
+                print(f"[optimization.py] Error rendering math rigor: {math_err}")
+
+        # Determine pattern from math_rigor counts or fallback
+        final_pattern = pattern
+        if math_rigor and "constraint_counts" in math_rigor:
+            # We can classify problem types based on variables and counts
+            has_boolean = any(v.get("latex_def", "").find("\{0, 1\}") != -1 for v in math_rigor.get("variables", []))
+            if has_boolean:
+                final_pattern = "Selection Optimization"
+            else:
+                final_pattern = "General Optimization"
+
         return {
             "parsed_math": json.dumps(workspace.problem_specification) if workspace.problem_specification else "",
             "reasoning_trace": reasoning_trace,
@@ -55,8 +77,9 @@ async def run_optimization_pipeline(
             "solver_rationale": workspace.solver_rationale or "",
             "interpretation": interpretation,
             "personality_response": interpretation,
-            "pattern": pattern,
+            "pattern": final_pattern,
             "success": success,
+            "math_rigor": math_rigor
         }
     except Exception as e:
         print(f"[run_optimization_pipeline] Exception caught: {e}")
