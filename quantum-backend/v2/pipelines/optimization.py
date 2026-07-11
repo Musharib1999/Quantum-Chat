@@ -33,14 +33,28 @@ async def run_optimization_pipeline(
         if workspace.generated_code and "HALTED: AI engine is under maintenance" in workspace.generated_code:
             reasoning_trace = "AI engine is under maintenance, please try after few minutes"
 
+        # Get interpretation from ExplanationAgent — fall back to reasoning_trace if it wasn't set
+        # (happens when ExplanationAgent fails on the infeasible halt path)
+        interpretation = (
+            workspace.execution_result.get("interpretation", "") if workspace.execution_result else ""
+        ) or reasoning_trace
+
+        # If still empty and halted on infeasibility, build a user-friendly fallback
+        if not interpretation and workspace.generated_code and workspace.generated_code.startswith("# HALTED"):
+            infeasibility_reason = workspace.verification.get("infeasibility_reason", "") if workspace.verification else ""
+            interpretation = (
+                "This optimization problem was analyzed and found to be mathematically infeasible. "
+                + (infeasibility_reason or reasoning_trace or "The constraints cannot all be satisfied simultaneously.")
+            )
+
         return {
             "parsed_math": json.dumps(workspace.problem_specification) if workspace.problem_specification else "",
             "reasoning_trace": reasoning_trace,
             "final_code": workspace.generated_code or "",
             "suggested_solver": workspace.solver_strategy or "OR-Tools",
             "solver_rationale": workspace.solver_rationale or "",
-            "interpretation": workspace.execution_result.get("interpretation", "") if workspace.execution_result else "",
-            "personality_response": workspace.execution_result.get("interpretation", "") if workspace.execution_result else "",
+            "interpretation": interpretation,
+            "personality_response": interpretation,
             "pattern": pattern,
             "success": success,
         }

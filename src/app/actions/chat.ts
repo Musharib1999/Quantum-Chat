@@ -484,7 +484,11 @@ export async function chatWithGroq(
                 });
                 const data = backendRes.data;
                 
-                let responseText = (data.personality_response || "") + (data.final_code ? `\n\n[STEP_CODE]\n${data.final_code}\n[/STEP_CODE]` : "");
+                // Build visible response text — prefer personality_response (ExplanationAgent output),
+                // fall back to reasoning_trace for infeasible problems where ExplanationAgent may have failed
+                const visibleText = data.personality_response || data.reasoning_trace || "";
+                const codeBlock = data.final_code ? `\n\n[STEP_CODE]\n${data.final_code}\n[/STEP_CODE]` : "";
+                let responseText = visibleText + codeBlock;
                 if (!responseText.trim()) {
                     responseText = "⚠️ The Council of Experts completed the pipeline but generated an empty response. Check backend logs for parsing errors.";
                 }
