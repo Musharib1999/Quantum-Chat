@@ -755,16 +755,16 @@ export default function App() {
                           </div>
 
                           {[
-                            { label: 'General Quantum Computing Questions', icon: '⚛️' },
+                            { label: 'General Quantum Computing Question', icon: '⚛️' },
                             { label: 'Business Problem to Optimization', icon: '📊' },
-                            { label: 'Generate Quantum Code', icon: '💻' },
+                            { label: 'Generate Quantum Algorithm', icon: '💻' },
                           ].map(({ label, icon }) => (
                             <button
                               key={label}
                               onClick={() => { 
                                 setSelectedPipeline(
                                   label === 'Business Problem to Optimization' ? 'optimization' :
-                                  label === 'Generate Quantum Code' ? 'coder' : 'general'
+                                  label === 'Generate Quantum Algorithm' ? 'coder' : 'general'
                                 );
                                 setShowAttachMenu(false); 
                               }}
@@ -808,12 +808,11 @@ export default function App() {
             
             {/* Pipeline Connection Status */}
             <div className="flex items-center justify-center gap-1.5 mt-1 opacity-80">
-                <div className={`w-1.5 h-1.5 rounded-full ${selectedPipeline === 'optimization' ? 'bg-blue-500' : selectedPipeline === 'coder' ? 'bg-purple-500' : 'bg-teal-500'} animate-pulse`}></div>
                 <span className="text-[10px] font-medium text-slate-500">
                     Connected to: <span className="font-bold text-slate-600">{
-                        selectedPipeline === 'general' ? 'General QA Engine (Qwen 32B)' :
-                        selectedPipeline === 'coder' ? 'Quantum Code Generator (Qwen 32B)' :
-                        'Council of Experts Optimization Pipeline (OR-Tools / D-Wave)'
+                        selectedPipeline === 'general' ? 'General Quantum Computing Question' :
+                        selectedPipeline === 'coder' ? 'Generate Quantum Algorithm' :
+                        'Business Problem to Optimization'
                     }</span>
                 </span>
             </div>
