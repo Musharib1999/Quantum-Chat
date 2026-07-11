@@ -138,6 +138,7 @@ class ConstraintType(str, Enum):
     ORDERING = "ordering"
     CARDINALITY = "cardinality"
     UNIQUENESS = "uniqueness"
+    QUADRATIC_REWARD = "quadratic_reward"
 
 
 @dataclass
@@ -210,12 +211,49 @@ class Objective:
         return f"{sense_l} \\quad {expr_l}" 
 
 
+# ── Quadratic Interaction Term ──────────────────────────────────────────
+@dataclass
+class QuadraticTerm:
+    """
+    Represents a pairwise quadratic interaction term in the objective function.
+    Semantics: + coefficient * x[index_i] * x[index_j]
+    
+    Generated when the NLP parser detects bonus/synergy/reward phrases such as:
+      "Selecting both A and B gives an extra +20 benefit"
+    """
+    var_id: str           # The shared variable array (e.g. "x")
+    index_i: int          # Index of first item in pair
+    index_j: int          # Index of second item in pair
+    coefficient: float    # Numeric bonus value (positive = reward, negative = penalty)
+    label: str = ""       # Human-readable label e.g. "ai_threat_bonus"
+
+    def to_latex(self, ir: "OptimizationIR" = None) -> str:
+        """Render as LaTeX quadratic term."""
+        coeff = self.coefficient
+        coeff_str = str(int(coeff)) if float(coeff).is_integer() else f"{coeff:.2f}"
+
+        # Try to get subscript labels from the variable labels list
+        sub_i = str(self.index_i + 1)  # default: 1-indexed
+        sub_j = str(self.index_j + 1)
+        if ir:
+            var = next((v for v in ir.variables if v.id == self.var_id), None)
+            if var and var.labels:
+                if self.index_i < len(var.labels):
+                    sub_i = str(var.labels[self.index_i])
+                if self.index_j < len(var.labels):
+                    sub_j = str(var.labels[self.index_j])
+
+        sign = "+" if coeff >= 0 else ""
+        return f"{sign}{coeff_str}\,x_{{{sub_i}}}\,x_{{{sub_j}}}"
+
+
 # ── Top-Level IR Container ──────────────────────────────────────────────
 @dataclass
 class OptimizationIR:
     variables: list = field(default_factory=list)
     constraints: list = field(default_factory=list)
     objectives: list = field(default_factory=list)
+    quadratic_terms: list = field(default_factory=list)  # List[QuadraticTerm]
     parameters: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
 
@@ -272,6 +310,21 @@ class IRNormalizer:
             obj = IRNormalizer._normalize_objective(o, ir.variables)
             if obj:
                 ir.objectives.append(obj)
+
+        # Parse quadratic_terms from LLM output (synergy/bonus interactions)
+        qt_list = parsed_json.get("quadratic_terms", [])
+        for qt_data in qt_list:
+            try:
+                qt = QuadraticTerm(
+                    var_id=qt_data.get("var_id", "x"),
+                    index_i=int(qt_data.get("index_i", 0)),
+                    index_j=int(qt_data.get("index_j", 1)),
+                    coefficient=float(qt_data.get("coefficient", 0.0)),
+                    label=qt_data.get("label", "")
+                )
+                ir.quadratic_terms.append(qt)
+            except (KeyError, TypeError, ValueError) as e:
+                pass  # Skip malformed quadratic terms
 
         return ir
 

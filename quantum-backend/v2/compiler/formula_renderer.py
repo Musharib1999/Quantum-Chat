@@ -170,6 +170,8 @@ class FormulaRenderer:
         has_boolean = any(v.domain.value == "boolean" if hasattr(v.domain, 'value') else v.domain == "boolean" for v in ir.variables)
         has_integer = any(v.domain.value == "integer" if hasattr(v.domain, 'value') else v.domain == "integer" for v in ir.variables)
         has_continuous = any(v.domain.value == "continuous" if hasattr(v.domain, 'value') else v.domain == "continuous" for v in ir.variables)
+        quadratic_terms = getattr(ir, "quadratic_terms", [])
+        has_quadratic = len(quadratic_terms) > 0
         
         var_types = []
         if has_boolean: var_types.append("Boolean")
@@ -180,24 +182,49 @@ class FormulaRenderer:
             "checked": True
         })
 
-        features.append({
-            "name": "Linear objective",
-            "checked": True
-        })
+        if has_quadratic:
+            features.append({
+                "name": f"Quadratic pairwise interactions detected ({len(quadratic_terms)} synergy term{'s' if len(quadratic_terms) > 1 else ''})",
+                "checked": True,
+                "highlight": True
+            })
+            features.append({
+                "name": "Linear constraints",
+                "checked": True
+            })
+        else:
+            features.append({
+                "name": "Linear objective",
+                "checked": True
+            })
+            features.append({
+                "name": "Linear constraints",
+                "checked": True
+            })
+            features.append({
+                "name": "No quadratic terms",
+                "checked": True
+            })
 
-        features.append({
-            "name": "Linear constraints",
-            "checked": True
-        })
-
-        features.append({
-            "name": "No quadratic terms",
-            "checked": True
-        })
+        # Determine solver scores based on problem structure
+        if has_quadratic:
+            recommended = "QUBO"
+            solver_scores = {"QUBO": 65, "CQM": 30, "CP-SAT": 5}
+        elif has_continuous:
+            recommended = final_strategy or "CP-SAT"
+            solver_scores = {"CP-SAT": 70, "CQM": 25, "QUBO": 5}
+        elif has_boolean and not has_integer:
+            recommended = final_strategy or "CQM"
+            solver_scores = {"CQM": 55, "CP-SAT": 40, "QUBO": 5}
+        else:
+            recommended = final_strategy or "CP-SAT"
+            solver_scores = {"CP-SAT": 65, "CQM": 30, "QUBO": 5}
 
         return {
             "features": features,
-            "recommended_solver": final_strategy or "CP-SAT"
+            "recommended_solver": recommended,
+            "has_quadratic": has_quadratic,
+            "solver_scores": solver_scores
         }
 
     @staticmethod
@@ -206,6 +233,8 @@ class FormulaRenderer:
         obj_expanded = ""
         obj_is_large = False
         
+        quadratic_terms = getattr(ir, "quadratic_terms", [])
+
         if ir.objectives:
             obj = ir.objectives[0]
             sense = "\\text{Maximize}" if obj.sense == "maximize" else "\\text{Minimize}"
@@ -213,7 +242,12 @@ class FormulaRenderer:
             expr = obj.expression
             if isinstance(expr, Aggregate):
                 f_latex = FormulaRenderer.render_expr(expr, ir)
-                obj_latex = f"$$ {sense} \\quad {f_latex} $$"
+                
+                # Append quadratic interaction terms to LaTeX
+                qt_latex_parts = [qt.to_latex(ir) for qt in quadratic_terms]
+                qt_suffix = " " + " ".join(qt_latex_parts) if qt_latex_parts else ""
+                
+                obj_latex = f"$$ {sense} \\quad {f_latex}{qt_suffix} $$"
                 
                 if expr.index_range > 8 and expr.coefficients:
                     obj_is_large = True
@@ -228,9 +262,11 @@ class FormulaRenderer:
                             expanded_terms.append("\\dots")
                         elif i >= len(expr.coefficients) - 2:
                             expanded_terms.append(f"{coeff_str}{term_var}")
-                    obj_expanded = f"$$ {sense} \\quad " + " + ".join(expanded_terms).replace(" + \\dots + ", " + \dots + ") + " $$"
+                    obj_expanded = f"$$ {sense} \\quad " + " + ".join(expanded_terms).replace(" + \\dots + ", " + \dots + ") + qt_suffix + " $$"
             else:
-                obj_latex = f"$$ {sense} \\quad {FormulaRenderer.render_expr(expr, ir)} $$"
+                qt_latex_parts = [qt.to_latex(ir) for qt in quadratic_terms]
+                qt_suffix = " " + " ".join(qt_latex_parts) if qt_latex_parts else ""
+                obj_latex = f"$$ {sense} \\quad {FormulaRenderer.render_expr(expr, ir)}{qt_suffix} $$"
                 
         constraints_list = []
         for c in ir.constraints:
@@ -243,6 +279,20 @@ class FormulaRenderer:
                 "description": c.description
             })
             
+        # Build quadratic terms list for frontend
+        qt_display = []
+        for qt in quadratic_terms:
+            coeff = qt.coefficient
+            coeff_str = str(int(coeff)) if float(coeff).is_integer() else f"{coeff:.2f}"
+            qt_display.append({
+                "label": qt.label,
+                "latex": qt.to_latex(ir),
+                "coefficient": coeff,
+                "index_i": qt.index_i,
+                "index_j": qt.index_j,
+                "description": f"+{coeff_str} bonus when both items are selected together"
+            })
+
         return {
             "objective_latex": obj_latex,
             "objective_expanded": obj_expanded,
@@ -251,5 +301,7 @@ class FormulaRenderer:
             "parameters": FormulaRenderer.render_parameters(ir),
             "constraints": constraints_list,
             "constraint_counts": FormulaRenderer.get_constraint_counts(ir),
-            "solver_recommendation": FormulaRenderer.render_solver_recommendation(ir, final_strategy)
+            "solver_recommendation": FormulaRenderer.render_solver_recommendation(ir, final_strategy),
+            "quadratic_terms": qt_display,
+            "has_quadratic": len(quadratic_terms) > 0
         }

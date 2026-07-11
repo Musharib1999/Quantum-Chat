@@ -644,6 +644,7 @@ class CompilerPlanner:
         plan = {
             "variables": ir.variables,
             "objectives": ir.objectives,
+            "quadratic_terms": getattr(ir, "quadratic_terms", []),  # QuadraticTerm list
             "equations": [],
             "coverage_matrix": [],
         }
@@ -937,19 +938,39 @@ class CQMTranslatorPlugin:
 
     def _render_objective(self, plan: dict) -> str:
         objectives = plan.get("objectives", [])
+        quadratic_terms = plan.get("quadratic_terms", [])
+
         if not objectives:
             # Fallback: minimize sum of first variable
             v = plan["variables"][0] if plan["variables"] else None
             if not v:
                 return "0"
             if v.is_1d:
-                return f"sum({v.id}[i] for i in range({v.dimensions[0]}))"
+                base_expr = f"sum({v.id}[i] for i in range({v.dimensions[0]}))"
             elif v.is_2d:
-                return f"sum({v.id}[i, j] for i in range({v.dimensions[0]}) for j in range({v.dimensions[1]}))"
-            return "0"
+                base_expr = f"sum({v.id}[i, j] for i in range({v.dimensions[0]}) for j in range({v.dimensions[1]}))"
+            else:
+                base_expr = "0"
+        else:
+            obj = objectives[0]
+            base_expr = self._render_expr(obj.expression, plan["variables"])
 
-        obj = objectives[0]
-        return self._render_expr(obj.expression, plan["variables"])
+        # Append quadratic interaction terms (synergy/bonus)
+        # CQM natively supports quadratic objectives, so this is direct multiplication.
+        qt_parts = []
+        for qt in quadratic_terms:
+            coeff = qt.coefficient
+            coeff_str = str(int(coeff)) if float(coeff).is_integer() else f"{coeff:.4f}"
+            # CQM variables are dimod Binary objects — multiplication is native
+            qt_parts.append(f"{coeff_str} * {qt.var_id}[{qt.index_i}] * {qt.var_id}[{qt.index_j}]  # {qt.label}")
+
+        if qt_parts:
+            # CQM objective sense: if maximize, the caller passes negative objective.
+            # We add/subtract quadratic terms accordingly.
+            qt_joined = ("\n                - ").join(qt_parts)
+            base_expr = "(" + base_expr + ")\n                - " + qt_joined
+
+        return base_expr
 
     def _render_expr(self, expr: Expr, variables: list) -> str:
         if isinstance(expr, Constant):
@@ -1038,17 +1059,35 @@ class CPSatTranslatorPlugin:
 
     def _render_objective(self, plan: dict) -> str:
         objectives = plan.get("objectives", [])
+        quadratic_terms = plan.get("quadratic_terms", [])
+
         if not objectives:
             v = plan["variables"][0] if plan["variables"] else None
             if not v:
                 return "0"
             if v.is_1d:
-                return f"sum({v.id}[i] for i in range({v.dimensions[0]}))"
+                base_expr = f"sum({v.id}[i] for i in range({v.dimensions[0]}))"
             elif v.is_2d:
-                return f"sum({v.id}[i, j] for i in range({v.dimensions[0]}) for j in range({v.dimensions[1]}))"
-            return "0"
-        obj = objectives[0]
-        return CQMTranslatorPlugin()._render_expr(obj.expression, plan["variables"])
+                base_expr = f"sum({v.id}[i, j] for i in range({v.dimensions[0]}) for j in range({v.dimensions[1]}))"
+            else:
+                base_expr = "0"
+        else:
+            obj = objectives[0]
+            base_expr = CQMTranslatorPlugin()._render_expr(obj.expression, plan["variables"])
+
+        # CP-SAT (OR-Tools) supports LinearExprT and basic products via IntVar multiplication
+        # For quadratic terms, we need explicit BoolVar multiplication
+        qt_parts = []
+        for qt in quadratic_terms:
+            coeff = qt.coefficient
+            coeff_str = str(int(coeff)) if float(coeff).is_integer() else f"{coeff:.4f}"
+            qt_parts.append(f"{coeff_str} * {qt.var_id}[{qt.index_i}] * {qt.var_id}[{qt.index_j}]  # {qt.label}")
+
+        if qt_parts:
+            qt_joined = ("\n            + ").join(qt_parts)
+            base_expr = "(" + base_expr + ")\n            + " + qt_joined
+
+        return base_expr
 
 
 # ── Compiler Verification Engine (5-stage audit) ───────────────────────

@@ -293,6 +293,8 @@ export default function App() {
       const constraintsList = mathRigor.constraints || [];
       const constraintCounts = mathRigor.constraint_counts || {};
       const solverRecommendation = mathRigor.solver_recommendation || {};
+      const quadraticTerms = mathRigor.quadratic_terms || [];
+      const hasQuadratic = mathRigor.has_quadratic || false;
       
       const varsDomainsLatex = variablesList.map((v: any) => {
         return `${v.latex_def} \\quad \\text{where } ${v.index_set}`;
@@ -324,7 +326,9 @@ export default function App() {
         varsDomainsLatex,
         agentLogs,
         constraintCounts,
-        solverRecommendation
+        solverRecommendation,
+        quadraticTerms,
+        hasQuadratic
       };
     }
 
@@ -1027,17 +1031,51 @@ export default function App() {
                         Detected Features:
                         <div className="mt-1 space-y-1 bg-white border border-slate-200 p-2 rounded-lg">
                           {details.solverRecommendation.features?.map((f: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-1.5 text-slate-600">
-                              <span className="text-emerald-500 font-semibold">✓</span>
+                            <div key={idx} className={`flex items-center gap-1.5 ${f.highlight ? 'text-amber-700 font-medium' : 'text-slate-600'}`}>
+                              <span className={f.highlight ? 'text-amber-500 font-semibold' : 'text-emerald-500 font-semibold'}>
+                                {f.highlight ? '⚡' : '✓'}
+                              </span>
                               <span>{f.name}</span>
                             </div>
                           ))}
                         </div>
                       </div>
-                      <div className="pt-1.5 border-t border-slate-200">
-                        <div className="text-[9px] text-slate-400 uppercase tracking-wider">Recommended Solver</div>
-                        <div className="text-[11px] text-blue-600 font-semibold">{details.solverRecommendation.recommended_solver}</div>
-                      </div>
+
+                      {/* Solver Score Bars — shown when quadratic terms detected */}
+                      {details.solverRecommendation.solver_scores ? (
+                        <div className="space-y-1.5 pt-1">
+                          <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-1.5">Solver Suitability</div>
+                          {Object.entries(details.solverRecommendation.solver_scores as Record<string, number>)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([solver, score]) => (
+                              <div key={solver} className="flex items-center gap-2">
+                                <div className={`text-[10px] font-mono w-14 text-right font-semibold ${solver === details.solverRecommendation.recommended_solver ? 'text-blue-600' : 'text-slate-500'}`}>
+                                  {solver}
+                                </div>
+                                <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className={`h-1.5 rounded-full transition-all duration-700 ${solver === details.solverRecommendation.recommended_solver ? 'bg-blue-500' : 'bg-slate-400'}`}
+                                    style={{ width: `${score}%` }}
+                                  />
+                                </div>
+                                <div className="text-[9px] text-slate-400 w-6 text-right">{score}%</div>
+                              </div>
+                            ))}
+                          <div className="pt-1.5 border-t border-slate-200 mt-1.5">
+                            <div className="text-[9px] text-slate-400 uppercase tracking-wider">Recommended Solver</div>
+                            <div className="text-[11px] text-blue-600 font-semibold flex items-center gap-1.5">
+                              {details.hasQuadratic && <span className="text-amber-500">⚡</span>}
+                              {details.solverRecommendation.recommended_solver}
+                              {details.hasQuadratic && <span className="text-[9px] text-amber-600 font-normal">(quadratic objective)</span>}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-1.5 border-t border-slate-200">
+                          <div className="text-[9px] text-slate-400 uppercase tracking-wider">Recommended Solver</div>
+                          <div className="text-[11px] text-blue-600 font-semibold">{details.solverRecommendation.recommended_solver}</div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <>

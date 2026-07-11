@@ -66,6 +66,19 @@ JSON SCHEMA
         "coefficients": <array of numbers — profit/cost per item e.g. [45,70,120,95]>
       }
     }
+  ],
+
+  "quadratic_terms": [
+    {
+      // ONLY emit when the problem describes a bonus/synergy/extra reward for selecting BOTH of two items together.
+      // This is a quadratic objective term: + coefficient * x[index_i] * x[index_j]
+      // NEVER put this in constraint_registry. It belongs in the OBJECTIVE, not a constraint.
+      "var_id": <same variable id as the items, e.g. "x">,
+      "index_i": <integer — 0-based index of the first item>,
+      "index_j": <integer — 0-based index of the second item>,
+      "coefficient": <positive number for reward/bonus, negative for penalty>,
+      "label": <snake_case short description e.g. "ai_threat_bonus">
+    }
   ]
 }
 
@@ -94,6 +107,29 @@ RULES — READ CAREFULLY
 
 6. DO NOT USE PLACEHOLDERS OR ABBREVIATIONS.
    Never use abbreviation dots like "..." or "etc." inside json arrays. Output every element in full. If the dimension size is extremely large (e.g. over 30), do not emit individual string labels; instead, keep labels array empty: "labels": [].
+
+7. SYNERGY / QUADRATIC REWARD DETECTION — CRITICAL.
+   If the problem states a BONUS, EXTRA REWARD, ADDITIONAL GAIN, SYNERGY, or COMBINED BENEFIT
+   for selecting two specific items TOGETHER, you MUST emit this as a "quadratic_terms" entry.
+   NEVER put it in constraint_registry.
+
+   Trigger phrases that indicate a quadratic reward (not a constraint):
+     "bonus", "extra reward", "synergy", "additional benefit", "combined gain",
+     "reward if both", "additional security", "extra revenue", "gives a bonus",
+     "together provide", "joint benefit", "additional X if both selected".
+
+   WRONG (do not do this):
+     constraint_registry: [{"family": "conflict", "lhs": x[3], "rhs": x[9], ...}]
+
+   CORRECT:
+     quadratic_terms: [{"var_id": "x", "index_i": 3, "index_j": 9, "coefficient": 20, "label": "ai_threat_bonus"}]
+
+   The quadratic_terms array may be empty ([]) if no synergy phrases are present.
+   It MUST be non-empty whenever the problem says two items give a combined bonus.
+
+8. MUTUAL EXCLUSION vs SYNERGY — DO NOT CONFUSE.
+   "A and B CANNOT coexist" / "at most one of A or B" → constraint: conflict/cardinality with <= 1.
+   "Selecting A AND B TOGETHER gives a bonus" → quadratic_terms entry. NOT a constraint.
 
 Return ONLY valid JSON.
 """
