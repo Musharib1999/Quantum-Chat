@@ -356,11 +356,11 @@ export default function App() {
     }).join("\n\n");
 
     // 10. Agent Shared Memory Trace — status only shows when step data is genuinely populated
-    const hasNlp = !!(steps.nlp && (Array.isArray(steps.nlp.variables) ? steps.nlp.variables.length > 0 : steps.nlp.parsed));
-    const hasReasoner = !!(steps.reasoner && (steps.reasoner.verdict || steps.reasoner.result || steps.reasoner.feasible !== undefined));
-    const hasSuggestor = !!(steps.suggestor && steps.suggestor.strategy);
-    const hasSolver = !!(steps.solver && steps.solver.code);
-    const hasVerifier = !!(steps.verifier && (steps.verifier.passed !== undefined || steps.verifier.output));
+    const hasNlp = !!(steps.nlp && (typeof steps.nlp === 'string' || (Array.isArray(steps.nlp.variables) ? steps.nlp.variables.length > 0 : steps.nlp.parsed)));
+    const hasReasoner = !!(steps.reasoner && (typeof steps.reasoner === 'string' || steps.reasoner.verdict || steps.reasoner.result || steps.reasoner.feasible !== undefined));
+    const hasSuggestor = !!(steps.suggestor && (typeof steps.suggestor === 'string' || steps.suggestor.strategy));
+    const hasSolver = !!(steps.solver && (typeof steps.solver === 'string' || steps.solver.code));
+    const hasVerifier = !!(steps.verifier && (typeof steps.verifier === 'string' || steps.verifier.passed !== undefined || steps.verifier.output));
 
     const agentLogs = [
       { agent: "SupervisorAgent", action: "Initialized shared workspace (memory bounds set)", status: hasNlp ? "Success" : "Pending" },
