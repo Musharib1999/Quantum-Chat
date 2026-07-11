@@ -1,7 +1,5 @@
 "use server";
 
-export const maxDuration = 300; // Allow up to 5 minutes for optimization pipeline
-
 import Groq from "groq-sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from 'axios';
