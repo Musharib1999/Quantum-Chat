@@ -4,7 +4,7 @@
 
 export HF_HOME=/workspace/huggingface_cache
 
-echo "Starting vLLM Inference Engine (Qwen 32B AWQ)..."
+echo "Starting vLLM Inference Engine (Qwen 32B FP8)..."
 nohup vllm serve predibase/Qwen2.5-32B-Instruct-FP8 \
   --dtype auto \
   --max-model-len 8192 \
