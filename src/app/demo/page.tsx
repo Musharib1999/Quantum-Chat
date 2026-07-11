@@ -146,7 +146,7 @@ export default function App() {
         targetSessionId = newDbSession._id || newDbSession.id;
         
         const newSession: ChatSession = {
-          id: targetSessionId,
+          id: targetSessionId as string,
           title: shortTitle,
           messages: [],
           workflowSteps: undefined
@@ -157,7 +157,7 @@ export default function App() {
         console.error("Failed to create chat session in DB:", err);
         targetSessionId = 'session-' + Date.now(); // local fallback
         const newSession: ChatSession = {
-          id: targetSessionId,
+          id: targetSessionId as string,
           title: shortTitle,
           messages: [],
           workflowSteps: undefined
