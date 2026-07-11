@@ -278,7 +278,7 @@ export default function App() {
     // 2. Objective & Objective Latex
     let objectivesList: any[] = [];
     let objectiveLatex = "";
-    if (parsedSpecs && parsedSpecs.objectives) {
+    if (parsedSpecs && Array.isArray(parsedSpecs.objectives)) {
       objectivesList = parsedSpecs.objectives;
     } else if (parsedSpecs && parsedSpecs.objective) {
       objectivesList = [parsedSpecs.objective];
@@ -289,7 +289,7 @@ export default function App() {
         objectiveLatex = `$$ ${obj.formula} $$`;
       } else {
         const sense = obj.sense === "maximize" ? "\\text{Maximize}" : "\\text{Minimize}";
-        if (obj.expression && obj.expression.coefficients) {
+        if (obj.expression && Array.isArray(obj.expression.coefficients)) {
           const terms = obj.expression.coefficients.map((c: number, idx: number) => {
             const varName = obj.expression.var_id || "x";
             return `${c} \\cdot ${varName}_{${idx}}`;
@@ -302,10 +302,10 @@ export default function App() {
     }
     
     // 3. Variables
-    const variablesList = (parsedSpecs && parsedSpecs.variable_registry) ? parsedSpecs.variable_registry : [];
+    const variablesList = (parsedSpecs && Array.isArray(parsedSpecs.variable_registry)) ? parsedSpecs.variable_registry : [];
 
     // 4. Constraints
-    const constraintsList = (parsedSpecs && parsedSpecs.constraint_registry) ? parsedSpecs.constraint_registry : [];
+    const constraintsList = (parsedSpecs && Array.isArray(parsedSpecs.constraint_registry)) ? parsedSpecs.constraint_registry : [];
 
     // 5. Variable count
     let totalVarCount = 0;

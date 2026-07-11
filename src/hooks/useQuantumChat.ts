@@ -170,7 +170,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             }]);
 
             let currentText = "";
-            const words = cleanText.split(" ");
+            const words = (cleanText || "").split(" ");
 
             for (let i = 0; i < words.length; i++) {
                 currentText += words[i] + " ";
