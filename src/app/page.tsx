@@ -86,8 +86,8 @@ export default function LandingPage() {
           <FeatureCard
             href={isAuthenticated ? "/quantum-assistant" : "/login?redirect=/quantum-assistant"}
             icon={<Bot size={32} />}
-            title="Quantum Guru LLM"
-            description="A frontier AI model fine-tuned on 240 million high-fidelity quantum computing data points, designed to generate quantum algorithms, analyze quantum information and solve complex scientific queries"
+            title="Optimization Studio"
+            description="Industry specific guided problem solving wizards based on hardware, use case and service selection"
             actionText="Chat Now"
             isDarkMode={false}
             accentColor="electric"
