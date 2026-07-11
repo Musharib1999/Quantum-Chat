@@ -6,3 +6,4 @@ python-multipart
 dimod
 numpy
 # Note: dwave-ocean-sdk, dwave-system, and matplotlib removed
+ortools
