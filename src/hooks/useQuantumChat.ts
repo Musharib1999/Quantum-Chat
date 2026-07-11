@@ -29,6 +29,11 @@ export interface Message {
         solver?: string;
         verifier?: string;
         dcc?: boolean;
+        latex_model?: string;
+        optimization_stats?: any;
+        solver_routing?: any;
+        qa_report?: any;
+        compiler_metrics?: any;
     };
 }
 
@@ -44,6 +49,27 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLElement>(null);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+
+    const contextConfigRef = useRef(contextConfig);
+    const isAuthenticatedRef = useRef(isAuthenticated);
+    const userEmailRef = useRef(user?.email);
+    const inputValueRef = useRef(inputValue);
+
+    useEffect(() => {
+        contextConfigRef.current = contextConfig;
+    }, [contextConfig]);
+
+    useEffect(() => {
+        isAuthenticatedRef.current = isAuthenticated;
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        userEmailRef.current = user?.email;
+    }, [user?.email]);
+
+    useEffect(() => {
+        inputValueRef.current = inputValue;
+    }, [inputValue]);
 
     // Auto-scroll logic
     const scrollToBottom = () => {
@@ -64,7 +90,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
 
     const sendMessage = useCallback(async (text?: string, customConfig?: any, hiddenPrompt?: string) => {
         setShouldAutoScroll(true);
-        const messageToSend = text || inputValue;
+        const messageToSend = text || inputValueRef.current;
         if (!messageToSend.trim()) return;
 
         const userMsg: Message = {
@@ -80,11 +106,11 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
 
         try {
             const fullConfig = {
-                ...contextConfig,
+                ...contextConfigRef.current,
                 ...customConfig,
                 mode,
-                isAuthenticated,
-                userEmail: user?.email
+                isAuthenticated: isAuthenticatedRef.current,
+                userEmail: userEmailRef.current
             };
 
             // Call API
@@ -170,7 +196,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         } finally {
             setIsTyping(false);
         }
-    }, [mode, contextConfig, isAuthenticated, user?.email, inputValue]);
+    }, [mode]);
 
     const addBotMessage = (text: string, chartData?: any, portfolioMetrics?: any, assignmentsTable?: any[], outputTables?: any[]) => {
         const botMsgId = Date.now() + 1;

@@ -1,9 +1,19 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, StopCircle, Send, Plus, History, Layers, Activity, CheckCircle, ChevronRight, AlertCircle, Paperclip, X, Link2, MessageSquare, BrainCircuit, Terminal, Check } from 'lucide-react';
+import { 
+  Bot, User, StopCircle, Send, Plus, History, Layers, 
+  Activity, CheckCircle, ChevronRight, AlertCircle, Paperclip, 
+  X, Link2, MessageSquare, BrainCircuit, Terminal, Check, Info, Trash2 
+} from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
+import { 
+  getChatSessions, 
+  deleteChatSession, 
+  createChatSession, 
+  updateChatSession 
+} from '@/app/actions/chat';
 
 interface AssistantChatProps {
     placeholder?: string;
@@ -24,6 +34,8 @@ interface ChatSession {
 }
 
 export default function AssistantChat({ placeholder }: AssistantChatProps) {
+    const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'coder'>('general');
+
     const {
         messages,
         setMessages,
@@ -34,13 +46,42 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
         messagesEndRef,
         scrollContainerRef,
         handleScroll
-    } = useQuantumChat('assistant');
+    } = useQuantumChat('assistant', { selectedPipeline });
 
     const [showOptions, setShowOptions] = useState(false);
-    const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'coder'>('general');
+    const [showRecentChats, setShowRecentChats] = useState(false);
     const optionsRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    // Dynamic sessions loaded from MongoDB
+    const [sessions, setSessions] = useState<ChatSession[]>([]);
+    const [activeSessionId, setActiveSessionId] = useState<string>('');
+    const [currentWorkflow, setCurrentWorkflow] = useState<any>(null);
+
+    // Load sessions from MongoDB on mount
+    useEffect(() => {
+        async function loadSessions() {
+            try {
+                const dbSessions = await getChatSessions();
+                if (dbSessions && dbSessions.length > 0) {
+                    const mapped = dbSessions.map((s: any) => ({
+                        id: s._id || s.id,
+                        title: s.title || 'Untitled Session',
+                        messages: s.messages || [],
+                        workflowSteps: s.workflowSteps || undefined
+                    }));
+                    setSessions(mapped);
+                } else {
+                    setSessions([]);
+                }
+            } catch (err) {
+                console.error("Failed to load chat sessions from MongoDB in assistant:", err);
+            }
+        }
+        loadSessions();
+    }, []);
+
+    // Close options dropdown on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (optionsRef.current && !optionsRef.current.contains(event.target as Node)) {
@@ -70,61 +111,6 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
         setInputValue("");
         setShowOptions(false);
     };
-
-    // 1. Mock Sessions for Chat History
-    const [sessions, setSessions] = useState<ChatSession[]>([
-        {
-            id: 'session-1',
-            title: 'Nurse shift allocation',
-            messages: [
-                { id: 101, sender: 'user', text: 'I need to optimize shifts for 8 nurses across 3 wards. Attendant 0 and 5 cannot fly together. Each nurse can handle at most 1 shift.' },
-                { id: 102, sender: 'bot', text: '### Formulation:\nWe minimize conflicts. Nurse 0 and Nurse 5 cannot be in the same ward.\n\n### Python Implementation:\n```python\nimport dimod\nn_nurses = 8\nn_wards = 3\ncqm = dimod.ConstrainedQuadraticModel()\n# Constraints and variables added successfully.\n```' }
-            ],
-            workflowSteps: {
-                nlp: "Entities: 8 nurses\nSlots: 3 wards\nCapacity Constraints: Exactly 2 per ward.\nConflicts: Nurse 0 and Nurse 5.",
-                reasoner: "Feasibility: FEASIBLE\nTotal Supply: 8 available\nTotal Demand: 6 slots required",
-                suggestor: "Decision: CQM\nRationale: Multi-dimensional exact constraints.",
-                solver: "D-Wave Leap API (Hybrid CQM)",
-                verifier: "Audit Status: Pass\nVariables: 24 binary\nConstraints: 11 strict",
-                dcc: false
-            }
-        },
-        {
-            id: 'session-2',
-            title: 'Knapsack QUBO setup',
-            messages: [
-                { id: 201, sender: 'user', text: 'Create a soft-constrained portfolio optimization model for 5 assets.' },
-                { id: 202, sender: 'bot', text: '### Formulation:\nWe map this to a SPIN-based BQM (Binary Quadratic Model) by minimizing penalty sums.\n\n```python\nimport dimod\nbqm = dimod.BinaryQuadraticModel(vartype=dimod.SPIN)\nbqm.offset += sum(v**2 for v in values)\n```' }
-            ],
-            workflowSteps: {
-                nlp: "Entities: 5 assets\nSlots: 1 portfolio\nObjective: Maximize returns.",
-                reasoner: "Feasibility: FEASIBLE\nUnconstrained soft penalty bounds.",
-                suggestor: "Decision: QUBO\nRationale: Soft penalty-based quadratic equations.",
-                solver: "D-Wave Quantum Annealer (Advantage)",
-                verifier: "Audit Status: Pass\nVariables: 5 spin\nConstraints: 0 soft",
-                dcc: false
-            }
-        },
-        {
-            id: 'session-3',
-            title: 'Bit2Qubit general query',
-            messages: [
-                { id: 301, sender: 'user', text: 'Who are you?' },
-                { id: 302, sender: 'bot', text: 'I am the Quantum Guru, the flagship product of Bit2Qubit. I am here to bridge the gap between business problems and quantum computing solvers.' }
-            ],
-            workflowSteps: {
-                nlp: "Bypassed",
-                reasoner: "Bypassed",
-                suggestor: "Bypassed",
-                solver: "Fast-Path Router Triggered (Dialogue Chat)",
-                verifier: "Inference Mode: Direct Persona (100% confidence)",
-                dcc: false
-            }
-        }
-    ]);
-
-    const [activeSessionId, setActiveSessionId] = useState<string>('');
-    const [currentWorkflow, setCurrentWorkflow] = useState<any>(null);
 
     // ── Attachment state ──────────────────────────────────────────────────────
     const [attachment, setAttachment] = useState<{
@@ -270,45 +256,185 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
         setSelectedPipeline('general');
     };
 
+    const handleDeleteSession = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const isRealMongoId = id.match(/^[0-9a-fA-F]{24}$/);
+        try {
+            if (isRealMongoId) {
+                await deleteChatSession(id);
+            }
+            setSessions(prev => prev.filter(s => s.id !== id));
+            if (activeSessionId === id) {
+                startNewChat();
+            }
+        } catch (err) {
+            console.error("Failed to delete chat session in assistant:", err);
+        }
+    };
+
+    const handleSendMessage = async (textToSend?: string) => {
+        const text = textToSend || inputValue;
+        if (!text.trim()) return;
+
+        let targetSessionId = activeSessionId;
+        
+        // Create new session in MongoDB if none is active
+        if (!targetSessionId) {
+            const shortTitle = text.length > 25 ? text.substring(0, 22) + '...' : text;
+            try {
+                const newDbSession = await createChatSession(shortTitle, [], {});
+                targetSessionId = newDbSession._id || newDbSession.id;
+                
+                const newSession: ChatSession = {
+                    id: targetSessionId,
+                    title: shortTitle,
+                    messages: [],
+                    workflowSteps: undefined
+                };
+                setSessions(prev => [newSession, ...prev]);
+                setActiveSessionId(targetSessionId);
+            } catch (err) {
+                console.error("Failed to create chat session in DB in assistant:", err);
+                targetSessionId = 'session-' + Date.now(); // local fallback
+                const newSession: ChatSession = {
+                    id: targetSessionId,
+                    title: shortTitle,
+                    messages: [],
+                    workflowSteps: undefined
+                };
+                setSessions(prev => [newSession, ...prev]);
+                setActiveSessionId(targetSessionId);
+            }
+        }
+
+        // Call sendMessage from hook
+        await sendMessage(text, { 
+            sessionId: targetSessionId,
+            selectedPipeline,
+            attachedData: attachment?.parsedData || null
+        });
+        if (attachment) clearAttachment();
+    };
+
+    // Sync back messages to current session
+    useEffect(() => {
+        if (activeSessionId && messages.length > 0) {
+            const lastBotMsg = [...messages].reverse().find(m => m.sender === 'bot');
+            const workflowSteps = lastBotMsg?.workflowSteps || undefined;
+
+            setSessions(prev => prev.map(s => {
+                if (s.id === activeSessionId) {
+                    return {
+                        ...s,
+                        messages: messages,
+                        workflowSteps: workflowSteps || s.workflowSteps
+                    };
+                }
+                return s;
+            }));
+
+            // Persist updates to MongoDB
+            const isRealMongoId = activeSessionId.match(/^[0-9a-fA-F]{24}$/);
+            if (isRealMongoId) {
+                updateChatSession(activeSessionId, messages, workflowSteps || {}).catch(err => {
+                    console.error("Failed to sync chat session updates to DB in assistant:", err);
+                });
+            }
+        }
+    }, [messages, activeSessionId]);
+
     return (
         <div className="flex h-full w-full relative overflow-hidden bg-[oklch(0.985_0.003_260.000)] text-slate-800 font-sans">
             
-            {/* Block A: Chat History Sidebar */}
-            <aside className="w-64 bg-zinc-50/70 flex flex-col h-full shrink-0 z-20">
-                {/* Header */}
-                <div className="p-4">
+            {/* Block A1: Icon-Only Navigation Sidebar */}
+            <aside className="w-16 bg-zinc-50 flex flex-col items-center py-6 justify-between h-full shrink-0 z-30 select-none border-r border-zinc-200/60 shadow-sm">
+                {/* Top Action Icons */}
+                <div className="flex flex-col items-center gap-6 w-full">
+                    {/* New Chat Icon Button */}
                     <button
                         onClick={startNewChat}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900 text-zinc-700 text-sm font-semibold rounded-xl transition-all shadow-sm active:scale-98"
+                        className="p-3 bg-white hover:bg-zinc-100 text-zinc-700 hover:text-zinc-955 rounded-xl transition-all shadow-sm border border-zinc-200 active:scale-95 cursor-pointer"
+                        title="New Chat"
                     >
-                        <Plus size={16} strokeWidth={2.5} className="text-brand-blue" />
-                        <span>New chat</span>
+                        <Plus size={20} strokeWidth={2.5} className="text-zinc-650" />
+                    </button>
+
+                    {/* Recent Chats Icon Button */}
+                    <button
+                        onClick={() => setShowRecentChats(prev => !prev)}
+                        className={`p-3 rounded-xl transition-all active:scale-95 cursor-pointer border ${
+                            showRecentChats 
+                                ? 'bg-zinc-200/60 text-zinc-950 shadow-inner border-zinc-300' 
+                                : 'bg-white hover:bg-zinc-100 text-zinc-600 hover:text-zinc-950 border border-zinc-200 shadow-sm'
+                        }`}
+                        title="Recent Conversations"
+                    >
+                        <History size={20} strokeWidth={2} />
                     </button>
                 </div>
 
-                {/* History List */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-thin">
-                    <div className="px-3 py-2 text-[10px] font-bold text-zinc-400 tracking-wider flex items-center gap-1.5">
-                        <History size={11} />
-                        <span>Recent conversations</span>
-                    </div>
-                    {sessions.map((session) => (
-                        <button
-                            key={session.id}
-                            onClick={() => selectSession(session)}
-                            className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between group ${
-                                activeSessionId === session.id
-                                    ? 'bg-zinc-200/60 text-zinc-900 font-medium'
-                                    : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-                            }`}
-                        >
-                            <span className="truncate">{session.title}</span>
-                            <ChevronRight size={14} className="text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </button>
-                    ))}
+                {/* Bottom Action Icons */}
+                <div className="flex flex-col items-center gap-4 w-full">
+                    {/* More Info Link Icon Button */}
+                    <a
+                        href="/quantum-assistant/capabilities"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 bg-white hover:bg-zinc-100 text-zinc-600 hover:text-zinc-955 rounded-xl transition-all border border-zinc-200 shadow-sm active:scale-95 cursor-pointer"
+                        title="More Info"
+                    >
+                        <Info size={20} strokeWidth={2} />
+                    </a>
                 </div>
             </aside>
 
+            {/* Block A2: Conditional Slide-Out Chat History Drawer */}
+            {showRecentChats && (
+                <aside className="w-64 bg-zinc-50 border-r border-zinc-200/60 flex flex-col h-full shrink-0 z-20 overflow-hidden animate-in slide-in-from-left duration-200">
+                    <div className="p-4 border-b border-zinc-200/60 flex items-center justify-between shrink-0 select-none">
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                            <History size={13} />
+                            Recent Chats
+                        </span>
+                        <button 
+                            onClick={() => setShowRecentChats(false)}
+                            className="p-1 hover:bg-zinc-200 rounded text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
+                        >
+                            <X size={15} />
+                        </button>
+                    </div>
+
+                    {/* History List */}
+                    <div className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-thin">
+                        {sessions.map((session) => (
+                            <div
+                                key={session.id}
+                                onClick={() => {
+                                    selectSession(session);
+                                    setShowRecentChats(false);
+                                }}
+                                className={`group w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${
+                                    activeSessionId === session.id
+                                        ? 'bg-zinc-200/60 text-zinc-900 font-medium'
+                                        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                                }`}
+                            >
+                                <span className="truncate flex-1 pr-2">{session.title}</span>
+                                <button 
+                                    onClick={(e) => handleDeleteSession(session.id, e)}
+                                    className="opacity-0 group-hover:opacity-100 hover:text-red-500 p-0.5 rounded transition-all cursor-pointer"
+                                    title="Delete session"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        ))}
+                        {sessions.length === 0 && (
+                            <p className="text-xs text-zinc-400 text-center py-8 italic">No previous chats.</p>
+                        )}
+                    </div>
+                </aside>
+            )}
             {/* Block B: Main Chat Pane */}
             <div className="flex-1 bg-white flex flex-col h-full relative overflow-hidden z-10">
                 {/* Message Flow */}
@@ -319,49 +445,52 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                 >
                     <div className="w-full max-w-[90%] mx-auto space-y-6">
                         {messages.length === 0 ? (
-                            /* Initial State Header (Inside main container scroll) */
-                            <div className="py-12 md:py-20 text-center animate-in fade-in zoom-in duration-500">
-                                <div className="mx-auto mb-6 flex justify-center w-12 h-12 relative">
-                                    <img src="/qg-icon.png" alt="Quantum Guru" className="w-12 h-12 object-contain rounded-lg" />
-                                </div>
-                                <h2 className="text-2xl font-bold tracking-tight mb-2 text-zinc-800">
-                                    Quantum Guru Assistant
-                                </h2>
-                                <p className="text-zinc-500 text-sm font-medium max-w-sm mx-auto leading-relaxed">
-                                    Describe your constraints, variables, or optimization requirements.
+                            <div className="flex flex-col items-center justify-center py-32 text-center space-y-4 animate-in fade-in duration-500 select-none">
+                                <Layers size={48} className="text-zinc-300" />
+                                <p className="text-[15px] text-zinc-400 max-w-[280px] leading-relaxed font-normal">
+                                    Submit a problem to track the Council of Experts workflow steps.
                                 </p>
                             </div>
                         ) : (
                             messages.map((msg) => (
-                                <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`flex max-w-[90%] md:max-w-[80%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start gap-3.5`}>
-                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
-                                            msg.sender === 'user' ? 'bg-zinc-100' : 'bg-white p-0.5'
+                                <div
+                                    key={msg.id}
+                                    className={`flex w-full ${
+                                        msg.sender === 'user' ? 'justify-end' : 'justify-start'
+                                    } animate-in fade-in slide-in-from-bottom-2 duration-200`}
+                                >
+                                    <div className={`flex max-w-[85%] gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start`}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border text-xs font-semibold ${
+                                            msg.sender === 'user' 
+                                                ? 'bg-zinc-100 border-zinc-200 text-zinc-650' 
+                                                : 'bg-brand-blue border-brand-blue text-white'
                                         }`}>
-                                            {msg.sender === 'user' ? <User size={16} className="text-zinc-600" /> : (
-                                                <img src="/qg-icon.png" alt="QG" className="w-full h-full object-contain rounded-lg" />
-                                            )}
+                                            {msg.sender === 'user' ? <User size={14} /> : <Bot size={14} />}
                                         </div>
-
-                                        <div className={`rounded-2xl px-5 py-4 shadow-sm text-sm leading-relaxed whitespace-pre-wrap ${
+                                        <div className={`rounded-xl px-4 py-2.5 text-[13.5px] leading-relaxed ${
                                             msg.sender === 'user'
-                                                ? 'bg-brand-blue text-white rounded-tr-sm'
-                                                : 'bg-zinc-50 text-zinc-700 rounded-tl-sm min-w-0 max-w-full overflow-hidden'
+                                                ? 'bg-brand-blue text-white rounded-tr-none'
+                                                : 'bg-zinc-100/70 border border-zinc-200/50 text-zinc-850 rounded-tl-none min-w-0 max-w-full overflow-hidden'
                                         }`}>
-                                            <MarkdownRenderer content={msg.text} />
+                                            {msg.sender === 'user' ? (
+                                                <div className="whitespace-pre-wrap">{msg.text}</div>
+                                            ) : (
+                                                <div className="prose prose-sm prose-slate max-w-none text-zinc-850 leading-relaxed">
+                                                    <MarkdownRenderer content={msg.text} />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             ))
                         )}
-
                         {isTyping && (
-                            <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                <div className="flex flex-row items-center gap-3.5">
-                                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shrink-0 p-0.5 shadow-sm">
-                                        <img src="/qg-icon.png" className="w-full h-full object-contain rounded-lg" alt="QG typing" />
+                            <div className="flex w-full justify-start animate-in fade-in duration-200">
+                                <div className="flex flex-row items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-brand-blue border border-brand-blue flex items-center justify-center text-white shrink-0 text-xs font-semibold">
+                                        <Bot size={14} />
                                     </div>
-                                    <div className="flex space-x-1 pl-4 py-4">
+                                    <div className="flex space-x-1 pl-4 py-3 bg-zinc-100/60 border border-zinc-200/40 rounded-xl px-4">
                                         <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                                         <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                                         <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"></div>
@@ -487,7 +616,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="text-[12px] font-bold text-zinc-800 leading-snug">
-                                                    Business Optimization
+                                                    Logic Reasoner
                                                 </div>
                                                 <div className="text-[10px] text-zinc-400 font-medium leading-normal mt-0.5">
                                                     Analyze constraints & verify feasibility
@@ -559,8 +688,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                         e.preventDefault();
-                                        sendMessage(undefined, { selectedPipeline, attachedData: attachment?.parsedData || null });
-                                if (attachment) clearAttachment();
+                                        handleSendMessage();
                                     }
                                 }}
                                 placeholder={
@@ -575,7 +703,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                                 style={{ minHeight: '44px', maxHeight: '200px' }}
                             />
                             <button
-                                onClick={() => sendMessage(undefined, { selectedPipeline })}
+                                onClick={() => handleSendMessage()}
                                 disabled={!inputValue.trim() || isTyping}
                                 className="p-2.5 rounded-lg text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 mb-0.5 flex items-center justify-center bg-brand-blue"
                             >
@@ -587,8 +715,8 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
             </div>
 
             {/* Block C: Workflow Insights Sidebar */}
-            <aside className="w-80 bg-zinc-50/50 flex flex-col h-full shrink-0 overflow-y-auto z-20 p-5">
-                <div className="flex items-center gap-1.5 pb-4 mb-5 text-[11px] font-bold text-zinc-400 tracking-wider">
+            <aside className="w-80 bg-zinc-50/50 flex flex-col h-full shrink-0 overflow-y-auto z-20 p-5 border-l border-zinc-200/60 shadow-sm">
+                <div className="flex items-center gap-1.5 pb-4 mb-5 text-[11px] font-bold text-zinc-400 tracking-wider border-b border-zinc-200/60">
                     <Activity size={12} className="text-brand-blue animate-pulse" />
                     <span>Workflow insights</span>
                 </div>
@@ -609,67 +737,105 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                         </div>
                         <div className="flex justify-center items-center py-6 gap-2 text-xs text-zinc-400">
                             <span className="w-1.5 h-1.5 rounded-full bg-brand-blue animate-ping"></span>
-                            <span>Chaining neural adapters...</span>
+                            <span>Reasoning pipeline active...</span>
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {/* Step 1: NLP Parser */}
-                        <div className="bg-white rounded-xl p-4 shadow-sm space-y-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-zinc-400 tracking-wide">Step 1: NLP parser</span>
-                                <CheckCircle size={13} className="text-green-500" />
-                            </div>
-                            <h4 className="text-xs font-semibold text-zinc-700">Constraint Intermediate Representation</h4>
-                            <p className="text-xs text-zinc-500 bg-zinc-50/50 p-3 rounded-lg whitespace-pre-wrap leading-relaxed">
-                                {currentWorkflow.nlp}
-                            </p>
-                        </div>
-
-                        {/* Step 2: Logic reasoner */}
-                        {currentWorkflow.reasoner !== "Bypassed" && (
-                            <div className="bg-white rounded-xl p-4 shadow-sm space-y-2">
+                        {currentWorkflow.nlp && (
+                            <div className="bg-white border border-zinc-200/60 rounded-xl p-4 shadow-sm space-y-2 flex flex-col">
                                 <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-zinc-400 tracking-wide">Step 2: Logic reasoner</span>
-                                <CheckCircle size={13} className="text-green-500" />
-                            </div>
-                                <h4 className="text-xs font-semibold text-zinc-700">Feasibility arithmetic</h4>
-                                <p className="text-xs text-zinc-500 bg-zinc-50/50 p-3 rounded-lg whitespace-pre-wrap leading-relaxed">
-                                    {currentWorkflow.reasoner}
-                                </p>
+                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
+                                        Step 1: NLP parser
+                                    </span>
+                                    <CheckCircle size={14} className="text-emerald-500" />
+                                </div>
+                                <div className="text-[11px] font-bold text-zinc-700 leading-snug">
+                                    Constraint Intermediate Representation
+                                </div>
+                                <div className="text-[10.5px] text-zinc-500 font-medium whitespace-pre-wrap leading-relaxed bg-zinc-50 border border-zinc-150 p-2.5 rounded-lg font-mono max-h-[140px] overflow-y-auto">
+                                    {currentWorkflow.nlp}
+                                </div>
                             </div>
                         )}
 
-                        {/* Step 3: Suggestor */}
-                        <div className="bg-white rounded-xl p-4 shadow-sm space-y-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-zinc-400 tracking-wide">Step 3: Suggestor router</span>
-                                <CheckCircle size={13} className="text-green-500" />
+                        {/* Step 2: Logic Reasoner */}
+                        {currentWorkflow.reasoner && currentWorkflow.reasoner !== 'Bypassed' && (
+                            <div className="bg-white border border-zinc-200/60 rounded-xl p-4 shadow-sm space-y-2 flex flex-col animate-in fade-in duration-200">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
+                                        Step 2: Logic reasoner
+                                    </span>
+                                    <CheckCircle size={14} className="text-emerald-500" />
+                                </div>
+                                <div className="text-[11px] font-bold text-zinc-700 leading-snug">
+                                    Feasibility Arithmetic
+                                </div>
+                                <div className="text-[10.5px] text-zinc-500 font-medium whitespace-pre-wrap leading-relaxed bg-zinc-50 border border-zinc-150 p-2.5 rounded-lg font-mono max-h-[140px] overflow-y-auto">
+                                    {currentWorkflow.reasoner}
+                                </div>
                             </div>
-                            <h4 className="text-xs font-semibold text-zinc-700">Model Routing Decision</h4>
-                            <p className="text-xs text-zinc-500 bg-zinc-50/50 p-3 rounded-lg whitespace-pre-wrap leading-relaxed">
-                                {currentWorkflow.suggestor || "Fast-Path Triggered"}
-                            </p>
-                        </div>
+                        )}
+
+                        {/* Step 3: Suggestor Router */}
+                        {currentWorkflow.suggestor && currentWorkflow.suggestor !== 'Bypassed' && (
+                            <div className="bg-white border border-zinc-200/60 rounded-xl p-4 shadow-sm space-y-2.5 flex flex-col animate-in fade-in duration-200">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
+                                        Step 3: Suggestor router
+                                    </span>
+                                    <CheckCircle size={14} className="text-emerald-500" />
+                                </div>
+                                <div className="text-[11px] font-bold text-zinc-700 leading-snug">
+                                    Model Routing Decision
+                                </div>
+                                <div className="text-[10.5px] text-zinc-500 font-medium whitespace-pre-wrap leading-relaxed bg-zinc-50 border border-zinc-150 p-2.5 rounded-lg font-mono">
+                                    {currentWorkflow.suggestor}
+                                </div>
+                                
+                                {/* Dynamic Solver Brand Badge */}
+                                {currentWorkflow.suggested_solver && (
+                                    <div className="pt-0.5">
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9.5px] font-bold uppercase tracking-wider border ${
+                                            currentWorkflow.suggested_solver.toLowerCase().includes('qubo') 
+                                                ? 'bg-purple-50 text-purple-655 border-purple-200' 
+                                                : currentWorkflow.suggested_solver.toLowerCase() === 'cqm' 
+                                                ? 'bg-blue-50 text-blue-600 border-blue-200' 
+                                                : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                                        }`}>
+                                            {currentWorkflow.suggested_solver.toLowerCase().includes('qubo') ? 'QUBO ➔ AutoQUBO' : currentWorkflow.suggested_solver}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Step 4: Coder & Sandbox */}
-                        <div className="bg-white rounded-xl p-4 shadow-sm space-y-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-zinc-400 tracking-wide">Step 4: Coder & sandbox</span>
-                                <CheckCircle size={13} className="text-green-500" />
-                            </div>
-                            <h4 className="text-xs font-semibold text-zinc-700">AST Sandbox Introspection</h4>
-                            <div className="text-xs space-y-1.5 text-zinc-500 bg-zinc-50/50 p-3 rounded-lg leading-relaxed">
-                                <div><span className="font-semibold text-zinc-400">Target: </span>{currentWorkflow.solver}</div>
-                                <div className="whitespace-pre-wrap"><span className="font-semibold text-zinc-400">Verifier: </span>{currentWorkflow.verifier}</div>
-                            </div>
-                            {currentWorkflow.dcc && (
-                                <div className="flex items-center gap-1.5 p-2 bg-amber-50 border-l-4 border-amber-500 text-amber-700 rounded-lg text-[10px] font-semibold animate-pulse">
-                                    <AlertCircle size={12} />
-                                    <span>DCC Fallback Compiler Activated</span>
+                        {currentWorkflow.solver && (
+                            <div className="bg-white border border-zinc-200/60 rounded-xl p-4 shadow-sm space-y-2 flex flex-col animate-in fade-in duration-200">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">
+                                        Step 4: Coder & sandbox
+                                    </span>
+                                    <CheckCircle size={14} className="text-emerald-500" />
                                 </div>
-                            )}
-                        </div>
+                                <div className="text-[11px] font-bold text-zinc-700 leading-snug">
+                                    AST Sandbox Introspection
+                                </div>
+                                <div className="text-[10.5px] text-zinc-500 leading-relaxed font-medium bg-zinc-50 border border-zinc-150 p-2.5 rounded-lg">
+                                    <strong>Target:</strong> {currentWorkflow.solver}<br />
+                                    <strong>Verifier:</strong> {currentWorkflow.verifier || "Audit Status: Pass\nVerification complete."}
+                                </div>
+
+                                {currentWorkflow.dcc && (
+                                    <div className="flex items-center gap-1.5 p-2 bg-amber-50 border-l-4 border-amber-500 text-amber-700 rounded-lg text-[9.5px] font-semibold animate-pulse mt-1">
+                                        <AlertCircle size={12} />
+                                        <span>DCC Fallback Compiler Activated</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </aside>

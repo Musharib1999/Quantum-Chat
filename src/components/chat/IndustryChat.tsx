@@ -398,6 +398,7 @@ const InChatPipeline = ({
         setShouldAutoScroll,
     } = useQuantumChat('industry', contextConfig);
 
+    const configString = contextConfig ? JSON.stringify(contextConfig) : "";
     const [workflow, setWorkflow] = useState<WorkflowStage>({ kind: 'idle' });
     const [viewingContent, setViewingContent] = useState<{ label: string; content: string } | null>(null);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -450,7 +451,7 @@ const InChatPipeline = ({
             };
             fetchInitialForm();
         }
-    }, [contextConfig, messages.length]);
+    }, [configString, messages.length]);
        const handleEditTransition = (msg: Message) => {
         // Rollback the form message to be the latest active one
         // and remove the review message to avoid confusion
@@ -666,7 +667,7 @@ const InChatPipeline = ({
                 runStep1();
             }
         }
-    }, [contextConfig]);
+    }, [configString]);
 
 
     const runStep1 = async (overriddenBlueprint?: any, overriddenFormData?: any) => {

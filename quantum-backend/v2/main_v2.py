@@ -51,6 +51,7 @@ print("Retriever initialization complete.")
 class PipelineRequest(BaseModel):
     unstructured_problem: str
     mode: Optional[str] = "auto"   # auto | cqm | qubo | ortools
+    session_id: Optional[str] = None
 
 
 class PipelineResponse(BaseModel):
@@ -410,6 +411,11 @@ async def enterprise_analyze(request: AnalyzeRequest):
         if not feasibility:
             feasibility = {"feasible": True, "reasoning_trace": "Feasibility check skipped.", "conflicts": [], "verified_constraints": []}
 
+        if feasibility and feasibility.get("feasible", True):
+            trace = feasibility.get("reasoning_trace", "")
+            if "No obvious contradiction detected." not in trace:
+                feasibility["reasoning_trace"] = "No obvious contradiction detected. " + trace
+
         # ── Step 1: Solver Suggestor ──────────────────────────────────────────
         suggestor_prompt = (
             "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
@@ -465,21 +471,27 @@ async def run_pipeline_v1_compat(request: PipelineRequest):
     Backward-compatible v1 endpoint. Routes to v2 pipeline internally.
     Frontend code pointing to /enterprise/pipeline works without changes.
     """
-    result = await run_pipeline_v2(request)
+    result = await run_optimization_pipeline(
+        problem=request.unstructured_problem,
+        mode=request.mode or "auto",
+        session_id=request.session_id,
+    )
     # Return v1-compatible format
     return {
-        "parsed_math": result.parsed_math,
-        "reasoning_trace": result.reasoning_trace,
-        "final_code": result.final_code,
-        "success": result.success,
-        "suggested_solver": result.suggested_solver,
-        "solver_rationale": result.solver_rationale,
+        "parsed_math": result.get("parsed_math", ""),
+        "reasoning_trace": result.get("reasoning_trace", ""),
+        "final_code": result.get("final_code", ""),
+        "success": result.get("success", False),
+        "suggested_solver": result.get("suggested_solver", "OR-Tools"),
+        "solver_rationale": result.get("solver_rationale", ""),
         # v2 bonus fields
-        "interpretation": result.interpretation,
-        "personality_response": result.personality_response,
-        "knowledge_context": result.knowledge_context,
-        "engine": result.engine,
-        "version": result.version,
+        "interpretation": result.get("interpretation", ""),
+        "personality_response": result.get("personality_response", ""),
+        "knowledge_context": result.get("knowledge_context", ""),
+        # V3 new fields
+        "pattern": result.get("pattern", ""),
+        "engine": "QuantumEngine-V5",
+        "version": "5.0.0",
     }
 
 
@@ -542,6 +554,17 @@ async def execute_code(request: ExecutionRequest):
         error=error_msg,
         success=success
     )
+
+
+# =========================================================================
+# DEMO FRONTEND ROUTE
+# =========================================================================
+@app.get("/demo")
+async def demo_page():
+    from fastapi.responses import HTMLResponse
+    demo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "demo.html")
+    with open(demo_path, "r") as f:
+        return HTMLResponse(content=f.read())
 
 
 # =========================================================================

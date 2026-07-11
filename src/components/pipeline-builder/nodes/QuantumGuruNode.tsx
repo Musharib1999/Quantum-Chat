@@ -137,13 +137,38 @@ export default function QuantumGuruNode({ id, data }: NodeProps) {
       {/* Result Badges */}
       {status === 'approved' && (
         <div className="mb-3 text-[11px] text-emerald-400 bg-emerald-950/30 p-2 rounded-lg border border-emerald-500/20 font-medium">
-          ✅ Verified — Solver: <strong>{usedSolver}</strong>
-          {solverRationale && <div className="text-[10px] text-emerald-300/70 mt-0.5">{solverRationale}</div>}
+          ✅ Verified — solver: <strong>{usedSolver}</strong>
+          {solverRationale && (
+            <div className="text-[10px] text-emerald-300/70 mt-1.5 pt-1.5 border-t border-emerald-500/20 space-y-1">
+              {solverRationale.split('\n').map((line, idx) => {
+                const lowerLine = line.toLowerCase();
+                if (lowerLine.startsWith('candidates:')) {
+                  const content = line.split(':', 2)[1]?.trim() || '';
+                  return (
+                    <div key={idx} className="flex items-start gap-1">
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-emerald-400/60">candidates:</span>
+                      <span className="font-semibold text-emerald-200">{content}</span>
+                    </div>
+                  );
+                }
+                if (lowerLine.startsWith('rationale:')) {
+                  const content = line.split(':', 2)[1]?.trim() || '';
+                  return (
+                    <div key={idx} className="flex flex-col gap-0.5 mt-0.5">
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-emerald-400/60">rationale:</span>
+                      <span className="text-emerald-300/90 leading-normal">{content}</span>
+                    </div>
+                  );
+                }
+                return <div key={idx} className="whitespace-pre-wrap">{line}</div>;
+              })}
+            </div>
+          )}
         </div>
       )}
       {status === 'dcc_override' && (
         <div className="mb-3 text-[11px] text-amber-400 bg-amber-950/30 p-2 rounded-lg border border-amber-500/20 font-medium">
-          ⚠️ DCC Override Active — Solver: <strong>{usedSolver}</strong>
+          ⚠️ DCC override active — solver: <strong>{usedSolver}</strong>
         </div>
       )}
 

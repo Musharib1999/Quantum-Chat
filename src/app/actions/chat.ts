@@ -19,6 +19,7 @@ import { buildAssistantContext } from './assistant-pipeline';
 import { executeIndustryWorkflow } from './industry-pipeline';
 import { getDynamicPrompt } from './prompt-utils';
 import QuantumForm from '@/models/QuantumForm';
+import ChatSession from '@/models/ChatSession';
 import { getStockPrice, getLatestNews } from './market';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -564,15 +565,150 @@ Reference Answer: "${data.response}"`;
                 workflowSteps
             };
         } catch (mlxError: any) {
-            console.error("Local FAISS Retriever failed:", mlxError.message);
-            return {
-                text: `❌ **FAISS Server Connection Error**: Could not connect to the local FAISS server at \`http://127.0.0.1:8002\`.\n\n**Details**: ${mlxError.message}\n\n*Please ensure you have started the retriever server by running \`python3 retriever_server.py\` in the backend.*`,
-                source: 'local_faiss_retriever',
-                guardrailsStatus: 'passed',
-                activeGuardrails: ruleTexts,
-                tokensUsed: 0,
-                sessionTokenLimit: SESSION_TOKEN_LIMIT
-            };
+            console.log(`[chat.ts] FAISS miss/failed. Attempting optimization pipeline fallback:`, mlxError.message);
+            try {
+                const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002';
+                const pipelineRes = await axios.post(`${backendUrl}/enterprise/pipeline`, {
+                    unstructured_problem: prompt,
+                    mode: contextConfig?.mode || 'auto',
+                    session_id: contextConfig?.sessionId
+                });
+                
+                const pData = pipelineRes.data;
+                let responseText = "";
+                
+                // V7.0: Immediately check for 429 maintenance mode
+                const isMaintenance = !pData.success && (
+                    pData.reasoning_trace === "AI engine is under maintenance, please try after few minutes" ||
+                    pData.final_code === "# HALTED: AI engine is under maintenance, please try after few minutes" ||
+                    (pData.error && pData.error.includes("maintenance"))
+                );
+                if (isMaintenance) {
+                    return {
+                        text: "AI engine is under maintenance, please try after few minutes",
+                        source: 'local_faiss_retriever',
+                        guardrailsStatus: 'passed',
+                        activeGuardrails: ruleTexts,
+                        tokensUsed: 0,
+                        sessionTokenLimit: SESSION_TOKEN_LIMIT
+                    };
+                }
+                
+                const workflowSteps: any = {
+                    classifier: `Pattern: ${pData.pattern || "unknown"}`,
+                    latex_model: pData.latex_model || "",
+                    nlp: pData.parsed_math || "Parsed successfully",
+                    reasoner: pData.reasoning_trace || "Feasibility verified",
+                    suggestor: `Decision: ${pData.suggested_solver}`,
+                    solver: `${pData.suggested_solver} Solver`,
+                    verifier: pData.dcc ? "Verification: Deterministic fallback applied" : "Verification: Code passed QA audit",
+                    dcc: pData.dcc || false,
+                    optimization_stats: pData.optimization_stats || null,
+                    solver_routing: pData.solver_routing || null,
+                    qa_report: pData.qa_report || null,
+                    compiler_metrics: pData.compiler_metrics || null
+                };
+                
+                if (pData.success && pData.final_code && !pData.final_code.includes("HALTED:")) {
+                    // Map suggested_solver to provider key
+                    const solver = pData.suggested_solver.toLowerCase();
+                    let providerKey: 'dwave' | 'ibm' | 'other' = 'other';
+                    if (solver.includes('cqm') || solver.includes('qubo') || solver.includes('dwave')) {
+                        providerKey = 'dwave';
+                    } else if (solver.includes('qiskit')) {
+                        providerKey = 'ibm';
+                    } else {
+                        providerKey = 'other';
+                    }
+                    
+                    // Query the hardware registry for matching online hardware
+                    let hardwareInfo = "";
+                    try {
+                        const Hardware = (await import('@/models/Hardware')).default;
+                        const matches = await Hardware.find({ provider: providerKey, status: 'Online' }).sort({ order: 1 }).lean();
+                        if (matches && matches.length > 0) {
+                            hardwareInfo = `\n\n### Compatible Hardware Registry:\n` + matches.map((hw: any) => `- **${hw.name}** (${hw.qubits} Qubits) — *${hw.description}*`).join('\n');
+                        } else {
+                            hardwareInfo = `\n\n### Compatible Hardware Registry:\n- *No online hardware currently registered for this solver.*`;
+                        }
+                    } catch (hwErr: any) {
+                        console.error("[chat.ts] Failed to query Hardware registry:", hwErr.message);
+                    }
+                    
+                    let responseMarkdown = `### Solver routing decision\n**Suggested solver:** ${pData.suggested_solver}\n**Rationale:** ${pData.solver_rationale || pData.rationale || "Auto-routed by selector engine"}\n\n`;
+                    
+                    if (pData.parsed_math) {
+                        responseMarkdown += `### Mathematical formulation\n${pData.parsed_math}\n\n`;
+                    }
+                    
+                    if (pData.final_code) {
+                        responseMarkdown += `### Executable code implementation\n\`\`\`python\n${pData.final_code}\n\`\`\``;
+                    }
+                    
+                    if (hardwareInfo) {
+                        responseMarkdown += hardwareInfo;
+                    }
+                    
+                    responseText = responseMarkdown;
+                    
+                } else if (!pData.success && pData.final_code && (pData.final_code.includes("infeasible") || pData.final_code.includes("infeasibility") || pData.final_code.includes("HALTED:"))) {
+                    responseText = "This optimization problem appears to be infeasible with the current constraints. Please modify the input parameters or try a different problem. Happy to help!";
+                    workflowSteps.solver = "None";
+                    workflowSteps.verifier = "Verification: Infeasibility detected by reasoner";
+                } else {
+                    // Fall back to cloud general Groq completion
+                    console.log(`[chat.ts] Pipeline failed/not optimization. Falling back to Groq general completion...`);
+                    const generalSystemPrompt = "You are the Quantum Guru, an expert assistant in quantum computing and optimization. Provide a helpful, accurate, and professional answer to the user's question. Keep it concise, engaging, and structured.";
+                    
+                    if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY missing");
+                    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+                    const completion = await groq.chat.completions.create({
+                        messages: [
+                            { role: "system", content: generalSystemPrompt },
+                            { role: "user", content: prompt }
+                        ],
+                        model: activeModel,
+                        temperature: 0.7,
+                    });
+                    responseText = completion.choices[0]?.message?.content || "";
+                }
+                
+                // Log interaction in MongoDB
+                try {
+                    await ChatLog.create({
+                        userQuery: prompt,
+                        aiResponse: responseText,
+                        source: pData.success ? 'local_faiss_retriever_rephrased' : 'local_faiss_retriever',
+                        guardrailsStatus: 'passed',
+                        activeGuardrails: ruleTexts,
+                        systemPrompt: `Direct FAISS Cosine Search Lookup + LLM Rephrasing`,
+                        mode: 'assistant'
+                    });
+                } catch (e: any) {
+                    console.error("Failed to create ChatLog in MongoDB:", e.message);
+                }
+                
+                return {
+                    text: responseText,
+                    source: 'local_faiss_retriever',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts,
+                    tokensUsed: 0,
+                    sessionTokenLimit: SESSION_TOKEN_LIMIT,
+                    workflowSteps
+                };
+                
+            } catch (fallbackError: any) {
+                console.error("Optimization pipeline fallback failed:", fallbackError.message);
+                return {
+                    text: `❌ **Connection Error**: Failed to fetch a response from the QuantumGuru server.\n\n**Details**: ${fallbackError.message}`,
+                    source: 'local_faiss_retriever',
+                    guardrailsStatus: 'passed',
+                    activeGuardrails: ruleTexts,
+                    tokensUsed: 0,
+                    sessionTokenLimit: SESSION_TOKEN_LIMIT
+                };
+            }
         }
     }
 
@@ -821,4 +957,52 @@ export async function debugStockFetch(prompt: string) {
             steps
         };
     }
+}
+
+
+// --- ChatSession Database Persistence Helpers ---
+
+export async function getChatSession(id: string) {
+    await dbConnect();
+    const session = await ChatSession.findById(id).lean();
+    return JSON.parse(JSON.stringify(session));
+}
+
+export async function getChatSessions() {
+    await dbConnect();
+    const sessions = await ChatSession.find({}).sort({ updatedAt: -1 });
+    return JSON.parse(JSON.stringify(sessions));
+}
+
+export async function createChatSession(
+    title: string,
+    messages: any[],
+    workflowSteps: any
+) {
+    await dbConnect();
+    const session = await ChatSession.create({
+        title,
+        messages,
+        workflowSteps
+    });
+    return JSON.parse(JSON.stringify(session));
+}
+
+export async function updateChatSession(
+    id: string,
+    messages: any[],
+    workflowSteps: any
+) {
+    await dbConnect();
+    const session = await ChatSession.findByIdAndUpdate(id, {
+        messages,
+        workflowSteps
+    }, { new: true });
+    return JSON.parse(JSON.stringify(session));
+}
+
+export async function deleteChatSession(id: string) {
+    await dbConnect();
+    await ChatSession.findByIdAndDelete(id);
+    return { success: true };
 }

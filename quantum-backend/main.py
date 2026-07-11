@@ -16,6 +16,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+from v2.compiler.ir import IRNormalizer, NumericalFeasibilityChecker
+from v2.compiler.dcc import compile_v66, audit_ortools_code, audit_cqm_code
+
 
 # =============================================================================
 # MODEL & ADAPTER PATHS (Apple Silicon MLX 4-bit)
@@ -108,6 +111,105 @@ class PipelineResponse(BaseModel):
     success: bool
     suggested_solver: str
     solver_rationale: str
+
+# =============================================================================
+# V6.6 JSON IR SYSTEM PROMPT
+# =============================================================================
+_JSON_IR_PARSER_PROMPT = """You are the Quantum Optimization IR Parser.
+Convert the unstructured optimization problem and its mathematical formulation into a structured JSON object representing the optimization model parameters.
+
+You MUST return a JSON object with this exact schema:
+{
+  "variables": [
+    {
+      "id": "x",
+      "name": "variable name",
+      "domain": "boolean" | "integer" | "continuous",
+      "dimensions": [number],
+      "labels": ["label1", "label2", ...],
+      "data": {
+        "cost": [number, ...],
+        "capacity": [number, ...],
+        "weight": [number, ...]
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "id": "c1",
+      "name": "constraint name",
+      "type": "lower_bound" | "upper_bound" | "range" | "equality" | "budget" | "capacity" | "linking" | "dependency" | "coverage" | "conflict" | "balance" | "ordering" | "cardinality" | "uniqueness",
+      "lhs": {
+        "type": "aggregate" | "variable" | "constant" | "binary_op",
+        "func": "sum",
+        "var_id": "variable_id",
+        "index_var": "i",
+        "size": number,
+        "coefficients": [number, ...]
+      },
+      "operator": "<=" | ">=" | "==",
+      "rhs": {
+        "type": "constant" | "variable",
+        "value": number,
+        "var_id": "variable_id"
+      },
+      "confidence": number,
+      "description": "text explanation"
+    }
+  ],
+  "objectives": [
+    {
+      "sense": "minimize" | "maximize",
+      "expression": {
+        "type": "aggregate",
+        "func": "sum",
+        "var_id": "variable_id",
+        "coefficients": [number, ...]
+      }
+    }
+  ]
+}
+
+Only use valid JSON. Do not include markdown code block syntax in the API call response, return a raw JSON string."""
+
+
+def query_groq_json(system_prompt: str, user_prompt: str) -> dict:
+    """Call Groq API requesting a JSON response object. Auto-retries on rate limits."""
+    if not GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY not set.")
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_prompt},
+        ],
+        "temperature": 0.1,
+        "response_format": {"type": "json_object"},
+        "max_tokens": 1500,
+    }
+
+    for attempt in range(3):
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=30)
+            if resp.status_code == 200:
+                raw_text = resp.json()["choices"][0]["message"]["content"]
+                return json.loads(raw_text)
+            elif resp.status_code == 429:
+                wait = 5 * (attempt + 1)
+                print(f"[GROQ JSON] Rate limit. Waiting {wait}s...")
+                time.sleep(wait)
+            else:
+                print(f"[GROQ JSON] Error {resp.status_code}: {resp.text}")
+        except Exception as e:
+            print(f"[GROQ JSON] Network/Parse error: {e}")
+            time.sleep(5)
+
+    # Return empty fallback structure
+    return {"variables": [], "constraints": [], "objectives": []}
+
 
 # =============================================================================
 # GROQ CLIENT
@@ -423,7 +525,7 @@ async def execute_code(request: CodeExecutionRequest):
 @app.post("/enterprise/analyze", response_model=AnalyzeResponse)
 async def analyze_problem(request: PipelineRequest):
     """
-    Steps 1-3 only: NLP Parser -> Logic Reasoner -> Feasibility Check.
+    Steps 1-3 only: NLP Parser -> Logic Reasoner -> Feasibility Check (V6.6 Numerical Feasibility).
     Both use Groq llama-3.3-70b-versatile. No code generation.
     """
     try:
@@ -434,22 +536,26 @@ async def analyze_problem(request: PipelineRequest):
         print("[ANALYZE] Step 2: Logic Reasoner (Groq)...")
         reasoning_trace = query_groq(reasoner_sys, parsed_math)
 
-        print("[ANALYZE] Step 3: Feasibility check...")
-        ir       = parse_math_constraints_detailed(parsed_math)
-        ent_lim  = ir["uniqueness_val"] if ir["uniqueness_val"] is not None else 1
-        slot_lim = ir["capacity_val"] if ir["capacity_val"] else 1
-
-        if ir["capacity_type"] == "equality" and ir["capacity_val"]:
-            is_feasible = (ir["entities_count"] * ent_lim) >= (ir["slots_count"] * slot_lim)
-        else:
+        print("[ANALYZE] Step 3: Feasibility check (V6.6 Expression Tree Checking)...")
+        try:
+            json_ir = query_groq_json(_JSON_IR_PARSER_PROMPT, f"Problem: {request.unstructured_problem}\n\nMath Formulation:\n{parsed_math}")
+            opt_ir = IRNormalizer.normalize(json_ir)
+            feasibility = NumericalFeasibilityChecker.check(opt_ir)
+            
+            failed_checks = [f for f in feasibility if f.status == "FAIL"]
+            is_feasible = len(failed_checks) == 0
+            
+            if not is_feasible:
+                note = "Mathematically infeasible: " + "; ".join(f"{f.constraint_name} — {f.reason}" for f in failed_checks)
+                if "INFEASIBLE" not in reasoning_trace:
+                    reasoning_trace += f"\n\n[SYSTEM: Override -> INFEASIBLE. Details: {note}]"
+            else:
+                passed_details = "; ".join(f"{f.constraint_name} ({f.status})" for f in feasibility)
+                note = f"Feasibility checks passed: {passed_details}" if feasibility else "No feasibility issues detected."
+        except Exception as ir_err:
+            print(f"[ANALYZE] IR feasibility check error: {ir_err}")
             is_feasible = True
-
-        if not is_feasible and "INFEASIBLE" not in reasoning_trace:
-            reasoning_trace += "\n\n[SYSTEM: Override -> INFEASIBLE (supply cannot meet demand).]"
-
-        note = None
-        if not is_feasible:
-            note = "Mathematically infeasible: supply cannot meet demand under hard equality constraints."
+            note = f"Warning: Could not compute numerical feasibility checks: {ir_err}"
 
         return AnalyzeResponse(
             parsed_math=parsed_math,
@@ -458,6 +564,8 @@ async def analyze_problem(request: PipelineRequest):
             feasibility_note=note,
         )
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 # =============================================================================
@@ -527,26 +635,22 @@ async def run_pipeline(request: PipelineRequest):
 
         # ── CQM PATH ──────────────────────────────────────────────────────────
         if decision == "CQM":
-            ir = parse_math_constraints_detailed(parsed_math)
-            ir["constraints"] = extract_typed_constraints(
-                request.unstructured_problem,
-                ir["entities_count"], ir["entities_name"],
-                ir["slots_count"], ir["slots_name"],
-            )
-
-            ent_lim  = ir["uniqueness_val"] if ir["uniqueness_val"] is not None else 1
-            slot_lim = ir["capacity_val"] if ir["capacity_val"] else 1
-            if ir["capacity_type"] == "equality" and ir["capacity_val"]:
-                is_feasible = (ir["entities_count"] * ent_lim) >= (ir["slots_count"] * slot_lim)
-            else:
-                is_feasible = True
-
+            print("[PIPELINE] Translating problem to structured JSON IR...")
+            json_ir = query_groq_json(_JSON_IR_PARSER_PROMPT, f"Problem: {request.unstructured_problem}\n\nMath Formulation:\n{parsed_math}")
+            opt_ir = IRNormalizer.normalize(json_ir)
+            
+            # Check feasibility
+            feasibility = NumericalFeasibilityChecker.check(opt_ir)
+            failed_checks = [f for f in feasibility if f.status == "FAIL"]
+            is_feasible = len(failed_checks) == 0
+            
             if not is_feasible:
-                reasoning_trace += "\n\n[SYSTEM: INFEASIBLE - supply/demand mismatch.]"
+                note = "Mathematically infeasible: " + "; ".join(f"{f.constraint_name} — {f.reason}" for f in failed_checks)
+                reasoning_trace += f"\n\n[SYSTEM: INFEASIBLE. Details: {note}]"
                 return PipelineResponse(
                     parsed_math=parsed_math,
                     reasoning_trace=reasoning_trace,
-                    final_code="# HALTED: Mathematically infeasible problem.",
+                    final_code=f"# HALTED: Mathematically infeasible problem.\n# Details: {note}",
                     success=False,
                     suggested_solver="CQM",
                     solver_rationale=rationale,
@@ -565,17 +669,16 @@ async def run_pipeline(request: PipelineRequest):
             final_code = run_mlx_expert(c_prompt, CODER_ADAPTER, max_tokens=800)
 
             print("[PIPELINE] Step 4: QA Audit...")
-            audit_result = audit_cqm_code(final_code, ir.get("constraints", []))
+            audit_result = audit_cqm_code(final_code, [])
 
             if "FAIL:" in audit_result or "MLX_ERROR" in final_code:
-                print("[PIPELINE] QA FAILED - DCC fallback activating...")
-                dcc_code  = compile_to_cqm_code(ir)
-                dcc_audit = audit_cqm_code(dcc_code, ir.get("constraints", []))
+                print("[PIPELINE] QA FAILED - DCC fallback (V6.6) activating...")
+                compile_res = compile_v66(opt_ir)
+                dcc_code = compile_res["code"]
                 out_code  = (
                     "# GENERATIVE CODE REJECTED BY QA AUDIT\n"
-                    "# DCC DETERMINISTIC FALLBACK ACTIVE\n\n"
+                    "# DCC DETERMINISTIC FALLBACK ACTIVE (V6.6)\n\n"
                     + dcc_code
-                    + f"\n\n# QA TRACE:\n# {dcc_audit}"
                 )
             else:
                 out_code = final_code + f"\n\n# QA TRACE:\n# {audit_result}"
@@ -612,25 +715,26 @@ async def run_pipeline(request: PipelineRequest):
 
         # ── OR-TOOLS PATH ──────────────────────────────────────────────────────
         else:
-            ir = parse_math_constraints_detailed(parsed_math)
-            ir["constraints"] = extract_typed_constraints(
-                request.unstructured_problem,
-                ir["entities_count"], ir["entities_name"],
-                ir["slots_count"], ir["slots_name"],
-            )
-            ortools_ir = {
-                "dimensions": {
-                    "entities_count": ir["entities_count"],
-                    "entities_name":  ir["entities_name"],
-                    "slots_count":    ir["slots_count"],
-                    "slots_name":     ir["slots_name"],
-                },
-                "capacity":      {"type": ir["capacity_type"] or "inequality", "value": ir["capacity_val"] or 1},
-                "uniqueness_val": ir["uniqueness_val"] if ir["uniqueness_val"] is not None else 1,
-                "constraints":    ir["constraints"],
-            }
-            if any(t in request.unstructured_problem.lower() for t in ["maximize", "optimize", "highest"]):
-                ortools_ir["objective"] = "maximize_coverage"
+            print("[PIPELINE] Translating problem to structured JSON IR...")
+            json_ir = query_groq_json(_JSON_IR_PARSER_PROMPT, f"Problem: {request.unstructured_problem}\n\nMath Formulation:\n{parsed_math}")
+            opt_ir = IRNormalizer.normalize(json_ir)
+            
+            # Check feasibility
+            feasibility = NumericalFeasibilityChecker.check(opt_ir)
+            failed_checks = [f for f in feasibility if f.status == "FAIL"]
+            is_feasible = len(failed_checks) == 0
+            
+            if not is_feasible:
+                note = "Mathematically Infeasible: " + "; ".join(f"{f.constraint_name} — {f.reason}" for f in failed_checks)
+                reasoning_trace += f"\n\n[SYSTEM: INFEASIBLE. Details: {note}]"
+                return PipelineResponse(
+                    parsed_math=parsed_math,
+                    reasoning_trace=reasoning_trace,
+                    final_code=f"# HALTED: Mathematically infeasible problem.\n# Details: {note}",
+                    success=False,
+                    suggested_solver="OR-Tools",
+                    solver_rationale=rationale,
+                )
 
             print("[PIPELINE] Step 3: OR-Tools Coder (MLX 4-bit)...")
             c_prompt = (
@@ -639,15 +743,30 @@ async def run_pipeline(request: PipelineRequest):
                 "Generate complete Python code using ortools.sat.python.cp_model (CP-SAT) "
                 "based on the JSON IR provided."
                 "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
-                f"{json.dumps(ortools_ir, indent=2)}"
+                f"{json.dumps(json_ir, indent=2)}"
                 "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
             )
             final_code = run_mlx_expert(c_prompt, ORTOOLS_CODER_ADAPTER, max_tokens=800)
+            
+            # Audit OR-Tools code. If fails or MLX error, apply DCC CP-SAT fallback!
+            audit_result = audit_ortools_code(final_code)
+            if "FAIL:" in audit_result or "MLX_ERROR" in final_code:
+                print("[PIPELINE] OR-Tools QA FAILED - DCC v6.6 fallback activating...")
+                compile_res = compile_v66(opt_ir)
+                dcc_code = compile_res["code"]
+                out_code  = (
+                    "# GENERATIVE CODE REJECTED BY QA AUDIT\n"
+                    "# DCC DETERMINISTIC FALLBACK ACTIVE (V6.6)\n\n"
+                    + dcc_code
+                )
+            else:
+                out_code = final_code + f"\n\n# QA TRACE:\n# {audit_result}"
+
             return PipelineResponse(
                 parsed_math=parsed_math,
                 reasoning_trace=reasoning_trace,
-                final_code=final_code,
-                success="MLX_ERROR" not in final_code,
+                final_code=out_code,
+                success=True,
                 suggested_solver="OR-Tools",
                 solver_rationale=rationale,
             )

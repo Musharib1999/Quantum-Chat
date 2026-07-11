@@ -1,7 +1,9 @@
+import re
 """
 Qwen 3 32B Client — QuantumGuru Engine v2
 Primary: RunPod vllm (QWEN_BASE_URL)
-Fallback: Groq llama-3.3-70b (when RunPod not available)
+Fallback 1: Groq llama-3.3-70b (when RunPod not available)
+Fallback 2: Local Ollama llama3.1 (when Groq hits rate limit/offline)
 """
 import httpx
 import json
@@ -10,6 +12,9 @@ from typing import Optional
 from . import config
 
 _TIMEOUT = httpx.Timeout(120.0, connect=10.0)
+
+OLLAMA_URL = "http://127.0.0.1:11434/v1"
+OLLAMA_MODEL = "llama3.1"
 
 
 async def _call_openai_compat(
@@ -41,6 +46,24 @@ async def _call_openai_compat(
         return r.json()["choices"][0]["message"]["content"].strip()
 
 
+async def _call_ollama(system: str, user: str) -> str:
+    """Fallback call to local Ollama server."""
+    try:
+        print(f"[OLLAMA] Attempting local Llama3.1 fallback call...")
+        return await _call_openai_compat(
+            base_url=OLLAMA_URL,
+            api_key="none",
+            model=OLLAMA_MODEL,
+            system=system,
+            user=user,
+            max_tokens=1024,
+            temperature=0.2
+        )
+    except Exception as e:
+        print(f"[OLLAMA] Local fallback failed: {e}")
+        raise e
+
+
 async def call_qwen(
     system: str,
     user: str,
@@ -49,13 +72,9 @@ async def call_qwen(
     retries: int = 2,
 ) -> str:
     """
-    Call Qwen 3 32B on RunPod.
-    Falls back to Groq llama-3.3-70b if RunPod is unavailable.
+    Call Qwen 3 32B on RunPod, falling back to Groq.
     """
     last_error = None
-    model_used = "Qwen-32B"
-
-    # ── Primary: RunPod Qwen 3 32B ─────────────────────────────────────────────
     if config.QWEN_BASE_URL:
         for attempt in range(retries + 1):
             try:
@@ -69,17 +88,40 @@ async def call_qwen(
                     temperature=temperature,
                 )
                 from .execution_logger import log_engagement
-                log_engagement(model_used, system, user, response)
+                log_engagement("Qwen-32B", system, user, response)
                 return response
             except Exception as e:
+                is_429 = False
+                if hasattr(e, "response") and e.response is not None and getattr(e.response, "status_code", None) == 429:
+                    is_429 = True
+                    print("[QWEN] Rate limit detected (429). Will sleep and retry.")
+                
                 last_error = e
+                print(f"[GROQ-QWEN] API call attempt {attempt+1} failed: {e}")
                 if attempt < retries:
-                    await asyncio.sleep(2 ** attempt)
-        print(f"[QWEN] RunPod failed ({last_error}), falling back to Groq")
-
-    # ── Fallback: Groq llama-3.3-70b ───────────────────────────────────────────
+                    sleep_seconds = 2 ** attempt
+                    if is_429:
+                        retry_after = e.response.headers.get("retry-after")
+                        if retry_after:
+                            try:
+                                sleep_seconds = float(retry_after) + 0.5
+                                print(f"[GROQ-QWEN] Rate limit (429). Sleeping for {sleep_seconds}s from headers.")
+                            except ValueError:
+                                pass
+                        else:
+                            body_text = e.response.text
+                            match = re.search(r"retry in ([\d\.]+)s", body_text, re.IGNORECASE)
+                            if match:
+                                try:
+                                    sleep_seconds = float(match.group(1)) + 0.5
+                                    print(f"[GROQ-QWEN] Rate limit (429). Sleeping for {sleep_seconds}s from body.")
+                                except ValueError:
+                                    pass
+                    await asyncio.sleep(sleep_seconds)
+                else:
+                    if is_429:
+                        raise RuntimeError("AI engine is under maintenance, please try after few minutes") from e
     if config.GROQ_API_KEY:
-        model_used = "Groq (Llama-3.3-70b)"
         for attempt in range(retries + 1):
             try:
                 response = await _call_openai_compat(
@@ -92,16 +134,74 @@ async def call_qwen(
                     temperature=temperature,
                 )
                 from .execution_logger import log_engagement
-                log_engagement(model_used, system, user, response)
+                log_engagement("Groq (Llama-3.3-70b)", system, user, response)
+                await asyncio.sleep(15.0)
                 return response
             except Exception as e:
+                is_429 = False
+                if hasattr(e, "response") and e.response is not None and getattr(e.response, "status_code", None) == 429:
+                    is_429 = True
+                    print("[GROQ-QWEN-FALLBACK] Rate limit detected (429). Will sleep and retry.")
                 last_error = e
                 if attempt < retries:
-                    await asyncio.sleep(2 ** attempt)
-        from .execution_logger import log_engagement
-        log_engagement(model_used, system, user, "", error=str(last_error))
-        raise RuntimeError(f"Both Qwen (RunPod) and Groq failed. Last error: {last_error}")
+                    sleep_seconds = 2 ** attempt
+                    if is_429:
+                        retry_after = e.response.headers.get("retry-after")
+                        if retry_after:
+                            try:
+                                sleep_seconds = float(retry_after) + 0.5
+                            except ValueError:
+                                pass
+                    await asyncio.sleep(sleep_seconds)
+                else:
+                    if is_429:
+                        raise RuntimeError("AI engine is under maintenance, please try after few minutes") from e
+    raise RuntimeError("AI failed")
 
-    from .execution_logger import log_engagement
-    log_engagement("Qwen-32B", system, user, "", error="No LLM available")
-    raise RuntimeError("No LLM available. Set QWEN_BASE_URL or GROQ_API_KEY in .env")
+
+async def call_groq_llama70b(
+    system: str,
+    user: str,
+    max_tokens: int = 1024,
+    temperature: float = 0.2,
+    retries: int = 2,
+) -> str:
+    """Force call Groq Llama 70B directly."""
+    last_error = None
+    if config.GROQ_API_KEY:
+        for attempt in range(retries + 1):
+            try:
+                response = await _call_openai_compat(
+                    base_url=config.GROQ_BASE_URL,
+                    api_key=config.GROQ_API_KEY,
+                    model=config.GROQ_MODEL,
+                    system=system,
+                    user=user,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+                from .execution_logger import log_engagement
+                log_engagement("Groq (Llama-3.3-70b)", system, user, response)
+                await asyncio.sleep(15.0)
+                return response
+            except Exception as e:
+                is_429 = False
+                if hasattr(e, "response") and e.response is not None and getattr(e.response, "status_code", None) == 429:
+                    is_429 = True
+                    print("[GROQ-70B] Rate limit detected (429). Will sleep and retry.")
+                last_error = e
+                if attempt < retries:
+                    sleep_seconds = 2 ** attempt
+                    if is_429:
+                        retry_after = e.response.headers.get("retry-after")
+                        if retry_after:
+                            try:
+                                sleep_seconds = float(retry_after) + 0.5
+                            except ValueError:
+                                pass
+                    await asyncio.sleep(sleep_seconds)
+                else:
+                    if is_429:
+                        raise RuntimeError("AI engine is under maintenance, please try after few minutes") from e
+        raise RuntimeError("AI failed")
+    raise RuntimeError("Groq API key not configured.")

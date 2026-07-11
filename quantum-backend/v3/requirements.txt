@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+httpx
+numpy
+faiss-cpu
+sentence-transformers
+dimod
+dwave-neal
+ortools
+qiskit
+qiskit-optimization
+qiskit-aer
+dwave-system

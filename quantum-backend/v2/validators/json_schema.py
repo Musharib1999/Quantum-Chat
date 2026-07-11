@@ -117,3 +117,54 @@ async def parse_and_validate(
     # All retries exhausted — return safe fallback
     print(f"[VALIDATOR] {step_name} failed after {max_retries+1} attempts, using fallback")
     return {}
+
+# Required keys for Pattern Classifier output (v3)
+CLASSIFIER_REQUIRED = {"problem_pattern", "confidence"}
+
+# Required keys for Selection Parser output (v3)
+SELECTION_REQUIRED = {"entities_count", "entities_name", "objective"}
+
+
+def validate_pattern_classifier(data: dict) -> list:
+    errors = []
+    for key in CLASSIFIER_REQUIRED:
+        if key not in data:
+            errors.append(f"Missing required key: {key}")
+    if "problem_pattern" in data and data["problem_pattern"] not in {"selection", "assignment", "scheduling", "routing", "knapsack", "packing", "other"}:
+        errors.append(f"Invalid problem_pattern: {data['problem_pattern']}")
+    return errors
+
+
+def validate_selection_parser(data: dict) -> list:
+    errors = []
+    for key in SELECTION_REQUIRED:
+        if key not in data:
+            errors.append(f"Missing required key: {key}")
+    if "entities_count" in data and not isinstance(data["entities_count"], int):
+        errors.append("entities_count must be an integer")
+    return errors
+
+# V6 Compositional schema validation
+def validate_compositional_parser(data: dict) -> list:
+    errors = []
+    if "variable_registry" not in data or not isinstance(data["variable_registry"], list):
+        errors.append("Missing or invalid variable_registry list")
+    else:
+        for i, var in enumerate(data["variable_registry"]):
+            for key in ["id", "name", "domain", "dimensions"]:
+                if key not in var:
+                    errors.append(f"Variable {i} missing key: {key}")
+            if "domain" in var and var["domain"] not in {"boolean", "integer", "continuous"}:
+                errors.append(f"Variable {i} invalid domain: {var['domain']}")
+
+    if "constraint_registry" not in data or not isinstance(data["constraint_registry"], list):
+        errors.append("Missing or invalid constraint_registry list")
+    else:
+        for i, c in enumerate(data["constraint_registry"]):
+            for key in ["id", "name", "family", "operator"]:
+                if key not in c:
+                    errors.append(f"Constraint {i} missing key: {key}")
+            if "operator" in c and c["operator"] not in {"<=", ">=", "=="}:
+                errors.append(f"Constraint {i} invalid operator: {c['operator']}")
+
+    return errors
