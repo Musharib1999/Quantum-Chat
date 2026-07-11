@@ -354,7 +354,7 @@ export async function executeIndustryWorkflow(
                 let contentStr = "{}";
                 if (provider === 'groq') {
                     if (!GROQ_API_KEY) throw new Error("Groq API Key is missing");
-                    const groq = new Groq({ apiKey: GROQ_API_KEY });
+                    const groq = new Groq({ apiKey: GROQ_API_KEY || "dummy" });
                     const completion = await groq.chat.completions.create({
                         messages: [
                             { role: 'system', content: "You are a Quantum Workflow Engine. Always return valid JSON with 'code' and 'explanation' fields." },
@@ -525,7 +525,7 @@ ${energyLine}
 
                 try {
                     const extractRes = await (provider === 'groq'
-                        ? (new Groq({ apiKey: GROQ_API_KEY! }).chat.completions.create({ messages: [{ role: 'user', content: stateExtractPrompt }], model: modelName }))
+                        ? (new Groq({ apiKey: GROQ_API_KEY || "dummy" }).chat.completions.create({ messages: [{ role: 'user', content: stateExtractPrompt }], model: modelName }))
                         : (new GoogleGenerativeAI(GEMINI_API_KEY!).getGenerativeModel({ model: modelName }).generateContent(stateExtractPrompt)));
 
                     lastBatchState = provider === 'groq'
@@ -803,7 +803,7 @@ export async function generateQuantumCode(config: {
             }, `Default prompt fallback for ${problem}`);
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
-            const groq = new Groq({ apiKey: GROQ_API_KEY! });
+            const groq = new Groq({ apiKey: GROQ_API_KEY || "dummy" });
 
             try {
                 const genRes = await (provider === 'groq'
@@ -844,7 +844,7 @@ export async function generateQuantumCode(config: {
             }, `Default prompt fallback for ${problem}`);
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
-            const groq = new Groq({ apiKey: GROQ_API_KEY! });
+            const groq = new Groq({ apiKey: GROQ_API_KEY || "dummy" });
 
             try {
                 const genRes = await (provider === 'groq'
@@ -1283,7 +1283,7 @@ STRICT RULES:
                 
                 let tokensUsed = 0;
                 if (provider === 'groq' && GROQ_API_KEY) {
-                    const groq = new Groq({ apiKey: GROQ_API_KEY });
+                    const groq = new Groq({ apiKey: GROQ_API_KEY || "dummy" });
                     const completion = await groq.chat.completions.create({
                         messages: [{ role: 'system', content: 'You are a Quantum Analysis expert.' }, { role: 'user', content: prompt }],
                         model: modelName,

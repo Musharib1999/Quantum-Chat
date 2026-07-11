@@ -5,7 +5,7 @@ import LLMSetting from '@/models/LLMSetting';
 import dbConnect from '@/lib/db';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy" });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 /**

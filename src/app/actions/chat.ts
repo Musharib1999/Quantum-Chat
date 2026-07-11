@@ -22,7 +22,7 @@ import QuantumForm from '@/models/QuantumForm';
 import ChatSession from '@/models/ChatSession';
 import { getStockPrice, getLatestNews } from './market';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy" });
 
 const API_KEY = process.env.GROQ_API_KEY;
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
@@ -387,7 +387,7 @@ export async function chatWithGroq(
                 activeProvider: activeProvider as 'groq' | 'gemini',
                 activeModel,
                 genAI,
-                groq: new Groq({ apiKey: process.env.GROQ_API_KEY }),
+                groq: new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy" }),
                 getDynamicPrompt,
                 scrapeUrl
             };
@@ -507,7 +507,7 @@ Reference Answer: "${data.response}"`;
 
                     if (activeProvider === 'groq') {
                         if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY missing");
-                        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+                        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy" });
                         const completion = await groq.chat.completions.create({
                             messages: [
                                 { role: "system", content: "You are a professional rephrasing assistant for quantum computing knowledge." },
@@ -661,7 +661,7 @@ Reference Answer: "${data.response}"`;
                     const generalSystemPrompt = "You are the Quantum Guru, an expert assistant in quantum computing and optimization. Provide a helpful, accurate, and professional answer to the user's question. Keep it concise, engaging, and structured.";
                     
                     if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY missing");
-                    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+                    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy" });
                     const completion = await groq.chat.completions.create({
                         messages: [
                             { role: "system", content: generalSystemPrompt },
@@ -715,7 +715,7 @@ Reference Answer: "${data.response}"`;
     try {
         if (activeProvider === 'groq') {
             if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY missing");
-            const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+            const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "dummy" });
             const completion = await groq.chat.completions.create({
                 messages: [
                     { role: "system", content: systemInstructions },

@@ -63,7 +63,7 @@ export async function getQuantumExposureScore(name: string, type: 'stock' | 'new
         let responseText = "";
 
         if (activeProvider === 'groq' && GROQ_API_KEY) {
-            const groq = new Groq({ apiKey: GROQ_API_KEY });
+            const groq = new Groq({ apiKey: GROQ_API_KEY || "dummy" });
             const completion = await groq.chat.completions.create({
                 messages: [{ role: "user", content: prompt }],
                 model: activeModel,
