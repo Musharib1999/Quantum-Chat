@@ -694,13 +694,7 @@ export default function App() {
         {/* Input Area (Fixed Bottom, standard flow) */}
         <div className="bg-[#f8fafc] pt-2 pb-6 px-8 shrink-0 z-10 border-t border-slate-200/50">
           <div className="max-w-4xl mx-auto flex flex-col gap-3">
-            
-            <div className="flex items-center justify-center gap-2 text-[10px] font-bold tracking-widest uppercase mb-1">
-              {selectedPipeline === 'general' ? <span className="text-teal-600 bg-teal-50 px-2 py-0.5 rounded">General QA Mode</span> : 
-               selectedPipeline === 'coder' ? <span className="text-purple-600 bg-purple-50 px-2 py-0.5 rounded">Code Generation Mode</span> :
-               <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Optimization Mode</span>}
-            </div>
-            <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               <span>Natural Language</span>
               <ChevronRight className="w-3 h-3 text-slate-300" />
               <span>Mathematical Model</span>
@@ -810,6 +804,18 @@ export default function App() {
                 </button>
 
               </div>
+            </div>
+            
+            {/* Pipeline Connection Status */}
+            <div className="flex items-center justify-center gap-1.5 mt-1 opacity-80">
+                <div className={`w-1.5 h-1.5 rounded-full ${selectedPipeline === 'optimization' ? 'bg-blue-500' : selectedPipeline === 'coder' ? 'bg-purple-500' : 'bg-teal-500'} animate-pulse`}></div>
+                <span className="text-[10px] font-medium text-slate-500">
+                    Connected to: <span className="font-bold text-slate-600">{
+                        selectedPipeline === 'general' ? 'General QA Engine (Qwen 32B)' :
+                        selectedPipeline === 'coder' ? 'Quantum Code Generator (Qwen 32B)' :
+                        'Council of Experts Optimization Pipeline (OR-Tools / D-Wave)'
+                    }</span>
+                </span>
             </div>
           </div>
         </div>
