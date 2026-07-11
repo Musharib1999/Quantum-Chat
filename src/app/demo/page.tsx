@@ -22,13 +22,20 @@ interface ChatSession {
   title: string;
   messages: any[];
   workflowSteps?: {
-    nlp?: string;
-    reasoner?: string;
-    suggestor?: string;
-    solver?: string;
-    verifier?: string;
+    nlp?: any;
+    reasoner?: any;
+    suggestor?: any;
+    solver?: any;
+    verifier?: any;
     dcc?: boolean;
     suggested_solver?: string;
+    classifier?: string;
+    latex_model?: string;
+    optimization_stats?: any;
+    solver_routing?: any;
+    qa_report?: any;
+    compiler_metrics?: any;
+    [key: string]: any;
   };
 }
 
