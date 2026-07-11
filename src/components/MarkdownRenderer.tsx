@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -24,6 +24,136 @@ interface MarkdownRendererProps {
     onExecute?: () => void;
 }
 
+// Helper runner component to keep execution states independent per code block
+interface CodeBlockRunnerProps {
+    code: string;
+    language: string;
+    suggestedSolver?: string;
+    onExecute?: () => void;
+    props: any;
+}
+
+function CodeBlockRunner({ code, language, suggestedSolver, onExecute, props }: CodeBlockRunnerProps) {
+    const [isExecuting, setIsExecuting] = useState(false);
+    const [executionResult, setExecutionResult] = useState<{
+        success: boolean;
+        output?: string;
+        error?: string;
+    } | null>(null);
+
+    const handleCodeExecution = async () => {
+        setIsExecuting(true);
+        setExecutionResult(null);
+        try {
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002';
+            const res = await fetch(`${backendUrl}/v2/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            if (!res.ok) {
+                throw new Error(`Server returned status ${res.status}`);
+            }
+            const data = await res.json();
+            setExecutionResult({
+                success: data.success,
+                output: data.output,
+                error: data.error
+            });
+            
+            // Dispatch a visual callback event if needed
+            if (onExecute) onExecute();
+        } catch (err: any) {
+            setExecutionResult({
+                success: false,
+                error: err.message || "Failed to establish link with solver backend."
+            });
+        } finally {
+            setIsExecuting(false);
+        }
+    };
+
+    return (
+        <div className="rounded-lg overflow-hidden border border-border my-4 shadow-lg shrink-0 w-full min-w-0">
+            <div className="bg-muted/50 px-4 py-2 border-b border-border flex items-center justify-between">
+                <span className="text-xs text-muted-foreground font-mono">{language}</span>
+                <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 mix-blend-screen" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 mix-blend-screen" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 mix-blend-screen" />
+                </div>
+            </div>
+            <div className="w-full overflow-x-auto">
+                <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language={language}
+                    PreTag="div"
+                    customStyle={{ margin: 0, padding: '1.5rem', background: '#09090b', fontSize: '0.875rem' }}
+                    {...props}
+                >
+                    {code}
+                </SyntaxHighlighter>
+            </div>
+            {language === 'python' && (
+                <>
+                    <div className="bg-[#1e1e1e] px-4 py-3 border-t border-zinc-800 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            {suggestedSolver && (
+                                <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-400/10 border border-emerald-400/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    Target: {suggestedSolver}
+                                </span>
+                            )}
+                        </div>
+                        <button 
+                            onClick={handleCodeExecution}
+                            disabled={isExecuting}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white text-xs font-semibold rounded-md shadow transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                        >
+                            {isExecuting ? (
+                                <>
+                                    <span className="animate-spin">⏳</span> Executing...
+                                </>
+                            ) : (
+                                <>
+                                    <span>▶</span> Execute Code
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Execution Status / Loading */}
+                    {isExecuting && (
+                        <div className="bg-zinc-950 px-4 py-3 border-t border-zinc-800 text-xs text-blue-400 font-mono flex items-center gap-2 animate-pulse">
+                            <span>⚡</span> Connecting to solver engine and allocating QPU bounds...
+                        </div>
+                    )}
+
+                    {/* Execution Terminal Result */}
+                    {executionResult && (
+                        <div className="bg-zinc-950 border-t border-zinc-800">
+                            <div className="px-4 py-2 bg-zinc-900/50 flex items-center justify-between text-[10px] text-zinc-500 font-mono border-b border-zinc-900">
+                                <span>SOLVER TERMINAL OUTPUT</span>
+                                <span className={executionResult.success ? "text-emerald-400" : "text-rose-400"}>
+                                    {executionResult.success ? "● SUCCESS" : "● ERROR"}
+                                </span>
+                            </div>
+                            <pre className="p-4 text-xs font-mono overflow-x-auto max-h-60 leading-relaxed text-zinc-300">
+                                {executionResult.output && (
+                                    <div className="text-emerald-400/90 whitespace-pre-wrap">{executionResult.output}</div>
+                                )}
+                                {executionResult.error && (
+                                    <div className="text-rose-400 whitespace-pre-wrap">{executionResult.error}</div>
+                                )}
+                            </pre>
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
+    );
+}
+
 export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute }: MarkdownRendererProps) {
     return (
         <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:mb-6 prose-pre:p-0 prose-pre:bg-transparent">
@@ -33,55 +163,21 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
                     // Code blocks with syntax highlighting
                     code({ node, inline, className, children, ...props }: any) {
                         const match = /language-(\w+)/.exec(className || '');
+                        const codeStr = String(children).replace(/\n$/, '');
                         return !inline && match ? (
-                            <div className="rounded-lg overflow-hidden border border-border my-4 shadow-lg shrink-0 w-full min-w-0">
-                                <div className="bg-muted/50 px-4 py-2 border-b border-border flex items-center justify-between">
-                                    <span className="text-xs text-muted-foreground font-mono">{match[1]}</span>
-                                    <div className="flex gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 mix-blend-screen" />
-                                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 mix-blend-screen" />
-                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 mix-blend-screen" />
-                                    </div>
-                                </div>
-                                <div className="w-full overflow-x-auto">
-                                    <SyntaxHighlighter
-                                        style={vscDarkPlus}
-                                        language={match[1]}
-                                        PreTag="div"
-                                        customStyle={{ margin: 0, padding: '1.5rem', background: '#09090b', fontSize: '0.875rem' }}
-                                        {...props}
-                                    >
-                                        {String(children).replace(/\n$/, '')}
-                                    </SyntaxHighlighter>
-                                </div>
-                                {(suggestedSolver || onExecute) && match[1] === 'python' && (
-                                    <div className="bg-[#1e1e1e] px-4 py-3 border-t border-zinc-800 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            {suggestedSolver && (
-                                                <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-400/10 border border-emerald-400/20">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                                    Target: {suggestedSolver}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {onExecute && (
-                                            <button 
-                                                onClick={onExecute}
-                                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-md shadow transition-colors flex items-center gap-1.5 cursor-pointer"
-                                            >
-                                                <span>▶</span> Execute on D-Wave
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                            <CodeBlockRunner 
+                                code={codeStr} 
+                                language={match[1]} 
+                                suggestedSolver={suggestedSolver} 
+                                onExecute={onExecute} 
+                                props={props} 
+                            />
                         ) : (
                             <code className="bg-muted text-pink-500 rounded px-1.5 py-0.5 text-sm font-mono border border-border" {...props}>
                                 {children}
                             </code>
                         );
                     },
-                    // Custom styling for other elements
                     ul: ({ children }) => <ul className="list-disc pl-6 space-y-2 marker:text-primary">{children}</ul>,
                     ol: ({ children }) => <ol className="list-decimal pl-6 space-y-2 marker:text-primary">{children}</ol>,
                     li: ({ children }) => <li className="pl-1 text-foreground">{children}</li>,
