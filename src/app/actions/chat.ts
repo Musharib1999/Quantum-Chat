@@ -1,5 +1,7 @@
 "use server";
 
+export const maxDuration = 300; // Allow up to 5 minutes for optimization pipeline
+
 import Groq from "groq-sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from 'axios';
@@ -481,7 +483,7 @@ export async function chatWithGroq(
                 const backendRes = await axios.post(`${backendUrl}/enterprise/pipeline`, {
                     unstructured_problem: prompt,
                     mode: "auto"
-                });
+                }, { timeout: 300000 }); // 5 min — pipeline can take 2-3 min with Qwen
                 const data = backendRes.data;
                 
                 // Build visible response text — prefer personality_response (ExplanationAgent output),
