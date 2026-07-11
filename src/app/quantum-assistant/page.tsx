@@ -41,6 +41,7 @@ interface ChatSession {
 
 export default function App() {
   const [selectedStrategy, setSelectedStrategy] = useState<'Auto' | 'CQM' | 'QUBO' | 'OR-Tools'>('Auto');
+  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'coder'>('general');
   
   const {
     messages,
@@ -52,7 +53,7 @@ export default function App() {
     messagesEndRef,
     scrollContainerRef,
     handleScroll
-  } = useQuantumChat('assistant', { mode: selectedStrategy.toLowerCase() });
+  } = useQuantumChat('assistant', { mode: selectedStrategy.toLowerCase(), selectedPipeline });
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -177,7 +178,8 @@ export default function App() {
     // Call sendMessage from hook
     await sendMessage(text, { 
       sessionId: targetSessionId,
-      mode: selectedStrategy.toLowerCase()
+      mode: selectedStrategy.toLowerCase(),
+      selectedPipeline
     });
   };
 
@@ -693,6 +695,11 @@ export default function App() {
         <div className="bg-[#f8fafc] pt-2 pb-6 px-8 shrink-0 z-10 border-t border-slate-200/50">
           <div className="max-w-4xl mx-auto flex flex-col gap-3">
             
+            <div className="flex items-center justify-center gap-2 text-[10px] font-bold tracking-widest uppercase mb-1">
+              {selectedPipeline === 'general' ? <span className="text-teal-600 bg-teal-50 px-2 py-0.5 rounded">General QA Mode</span> : 
+               selectedPipeline === 'coder' ? <span className="text-purple-600 bg-purple-50 px-2 py-0.5 rounded">Code Generation Mode</span> :
+               <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Optimization Mode</span>}
+            </div>
             <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               <span>Natural Language</span>
               <ChevronRight className="w-3 h-3 text-slate-300" />
@@ -711,7 +718,13 @@ export default function App() {
                     handleSendMessage();
                   }
                 }}
-                placeholder="Describe your optimization problem... Example: optimize delivery routes, Nurse shift allocation..."
+                placeholder={
+                  selectedPipeline === 'optimization'
+                    ? "Describe your optimization problem... Example: optimize delivery routes, Nurse shift allocation..."
+                    : selectedPipeline === 'coder'
+                    ? "Describe the quantum code you want to generate..."
+                    : "Ask a general quantum computing question..."
+                }
                 className="w-full p-4 text-slate-707 placeholder:text-slate-400 outline-none resize-none bg-transparent text-sm leading-relaxed min-h-[90px]"
                 rows={3}
                 disabled={isTyping}
@@ -754,7 +767,13 @@ export default function App() {
                           ].map(({ label, icon }) => (
                             <button
                               key={label}
-                              onClick={() => { setShowAttachMenu(false); }}
+                              onClick={() => { 
+                                setSelectedPipeline(
+                                  label === 'Business Problem to Optimization' ? 'optimization' :
+                                  label === 'Generate Quantum Code' ? 'coder' : 'general'
+                                );
+                                setShowAttachMenu(false); 
+                              }}
                               className="w-full text-left px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700 rounded-lg text-[11px] font-medium text-slate-700 flex items-center gap-2.5 cursor-pointer transition-colors group"
                             >
                               <span className="text-base leading-none">{icon}</span>
