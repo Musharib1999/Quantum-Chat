@@ -484,7 +484,10 @@ export async function chatWithGroq(
                 });
                 const data = backendRes.data;
                 
-                const responseText = data.personality_response + (data.final_code ? `\n\n[STEP_CODE]\n${data.final_code}\n[/STEP_CODE]` : "");
+                let responseText = (data.personality_response || "") + (data.final_code ? `\n\n[STEP_CODE]\n${data.final_code}\n[/STEP_CODE]` : "");
+                if (!responseText.trim()) {
+                    responseText = "⚠️ The Council of Experts completed the pipeline but generated an empty response. Check backend logs for parsing errors.";
+                }
                 
                 const workflowSteps = {
                     nlp: data.parsed_math || "Parsed successfully",
