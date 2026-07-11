@@ -82,19 +82,6 @@ export default function LandingPage() {
         {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full">
 
-          {/* Card 1: Optimization Studio */}
-          <FeatureCard
-            href={isAuthenticated ? "/industry" : "/login?redirect=/industry"}
-            icon={<Cpu size={32} />}
-            title="Optimization Studio"
-            description="Industry specific guided problem solving wizards based on hardware, use case and service selection"
-            actionText="Launch"
-            isDarkMode={false}
-            accentColor="indigo"
-            status="locked"
-            badgeText="Unlock with free account"
-          />
-
           {/* Card 2: Quantum Guru LLM */}
           <FeatureCard
             href={isAuthenticated ? "/quantum-assistant" : "/login?redirect=/quantum-assistant"}
