@@ -20,9 +20,11 @@ SyntaxHighlighter.registerLanguage('json', json);
 interface MarkdownRendererProps {
     content: string;
     hideLinks?: boolean;
+    suggestedSolver?: string;
+    onExecute?: () => void;
 }
 
-export default function MarkdownRenderer({ content, hideLinks }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute }: MarkdownRendererProps) {
     return (
         <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:mb-6 prose-pre:p-0 prose-pre:bg-transparent">
             <ReactMarkdown
@@ -52,6 +54,26 @@ export default function MarkdownRenderer({ content, hideLinks }: MarkdownRendere
                                         {String(children).replace(/\n$/, '')}
                                     </SyntaxHighlighter>
                                 </div>
+                                {(suggestedSolver || onExecute) && match[1] === 'python' && (
+                                    <div className="bg-[#1e1e1e] px-4 py-3 border-t border-zinc-800 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            {suggestedSolver && (
+                                                <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-400/10 border border-emerald-400/20">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                                    Target: {suggestedSolver}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {onExecute && (
+                                            <button 
+                                                onClick={onExecute}
+                                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-md shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+                                            >
+                                                <span>▶</span> Execute on D-Wave
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <code className="bg-muted text-pink-500 rounded px-1.5 py-0.5 text-sm font-mono border border-border" {...props}>

@@ -56,6 +56,7 @@ export default function App() {
   } = useQuantumChat('assistant', { mode: selectedStrategy.toLowerCase(), selectedPipeline });
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
@@ -143,6 +144,8 @@ export default function App() {
   const handleSendMessage = async (textToSend?: string) => {
     const text = textToSend || inputValue;
     if (!text.trim()) return;
+    setIsCreatingSession(true);
+    setInputValue("");
 
     let targetSessionId = activeSessionId;
     
@@ -181,6 +184,7 @@ export default function App() {
       mode: selectedStrategy.toLowerCase(),
       selectedPipeline
     });
+    setIsCreatingSession(false);
   };
 
   // Sync back messages to current session
@@ -662,7 +666,7 @@ export default function App() {
                         <div className="whitespace-pre-wrap break-words">{msg.text}</div>
                       ) : (
                         <div className="prose prose-slate max-w-none text-slate-700 overflow-hidden break-words">
-                          <MarkdownRenderer content={msg.text} />
+                          <MarkdownRenderer content={msg.text} suggestedSolver={msg.workflowSteps?.suggested_solver} onExecute={() => alert("Execution submitted to Quantum backend!")} />
                         </div>
                       )}
                     </div>
@@ -783,7 +787,7 @@ export default function App() {
                 {/* Submit Button */}
                 <button 
                   onClick={() => handleSendMessage()}
-                  disabled={!inputValue.trim() || isTyping}
+                  disabled={!inputValue.trim() || isTyping || isCreatingSession}
                   className={`h-9 px-4 rounded-xl flex items-center justify-center gap-1.5 font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-95 ${
                     inputValue.trim().length > 0 && !isTyping 
                       ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-850 text-white' 
