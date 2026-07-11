@@ -147,34 +147,30 @@ class ConstraintVerificationAgent(Agent):
             return AgentResult("FAIL", 0.0, "No normalized model available in workspace.")
 
         try:
-            # First run the deterministic numerical bounds checker
+            # Step 1: Run deterministic numerical bounds checker on the IR
             feasibility_results = NumericalFeasibilityChecker.check(ir)
-            
-            # Map variables for reasoner context
-            pattern = "selection"
-            legacy_ir = {"entities_count": 5, "entities_name": "item", "slots_count": 3, "slots_name": "slot",
-                         "capacity_val": None, "capacity_type": "upper_bound", "uniqueness_val": 1}
-            
-            if workspace.problem_specification and "variable_registry" in workspace.problem_specification:
-                vars_list = workspace.problem_specification["variable_registry"]
-                for var in vars_list:
-                    if len(var.get("dimensions", [])) == 2:
-                        pattern = "assignment"
-                if len(vars_list) > 0:
-                    dims = vars_list[0].get("dimensions")
-                    legacy_ir["entities_count"] = dims[0] if dims else 5
-                    legacy_ir["entities_name"] = vars_list[0].get("name", "item")
-                if len(vars_list) > 1:
-                    dims = vars_list[1].get("dimensions")
-                    legacy_ir["slots_count"] = dims[0] if dims else 3
-                    legacy_ir["slots_name"] = vars_list[1].get("name", "slot")
 
-            # Run LLM-based logic reasoner context verify
-            rsn_user = reasoner_prompt.build_user_prompt(workspace.problem_text, legacy_ir)
+            # Step 2: Build a focused CIR summary to pass to the LLM reasoner.
+            # We pass variable_registry, constraint_registry, and objectives DIRECTLY
+            # from the CIR — no re-abstraction to entities/slots/capacity.
+            cir_summary = {}
+            if workspace.problem_specification:
+                spec = workspace.problem_specification
+                cir_summary["variable_registry"] = spec.get("variable_registry", [])
+                cir_summary["constraint_registry"] = spec.get("constraint_registry", [])
+                cir_summary["objectives"] = spec.get("objectives", [])
+                # Include deterministic feasibility check results as additional signal
+                cir_summary["numerical_check_results"] = [
+                    {"constraint": r.constraint_id, "status": r.status, "reason": r.reason}
+                    for r in feasibility_results
+                ]
+
+            # Step 3: Run LLM-based ontology-aware feasibility verification on the CIR
+            rsn_user = reasoner_prompt.build_user_prompt(workspace.problem_text, cir_summary)
             rsn_raw = await call_qwen(
                 system=reasoner_prompt.SYSTEM_PROMPT,
                 user=rsn_user,
-                max_tokens=512,
+                max_tokens=600,
                 temperature=0.1,
             )
             feasibility = await parse_and_validate(
@@ -195,7 +191,7 @@ class ConstraintVerificationAgent(Agent):
                 "results": [asdict(r) for r in feasibility_results]
             }
 
-            # Check if any hard infeasibility was found
+            # Step 4: Only halt on hard infeasibility detected by the LLM reasoner
             if not feasibility.get("feasible", True):
                 workspace.confidence["Verification"] = 1.0
                 return AgentResult("FAIL", 1.0, f"Mathematical infeasibility detected: {feasibility.get('infeasibility_reason')}")
