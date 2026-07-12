@@ -24,10 +24,8 @@ const MessageSchema = new mongoose.Schema({
 
 const ChatSessionSchema = new mongoose.Schema({
     sessionId: { type: String, required: true, unique: true },
-    messages: [MessageSchema],
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-});
+    messages: [MessageSchema]
+}, { timestamps: true });
 
 ChatSessionSchema.pre('save', function(next) {
     this.updatedAt = new Date();
