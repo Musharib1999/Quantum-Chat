@@ -42,7 +42,7 @@ def _extract_json(text: str) -> dict:
             except json.JSONDecodeError:
                 continue
 
-    raise ValueError(f"No valid JSON found in output: {text[:200]}")
+    raise ValueError(f"No valid JSON found in output: {text}")
 
 
 def validate_nlp_parser(data: dict) -> list:
