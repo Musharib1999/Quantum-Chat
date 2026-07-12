@@ -41,7 +41,7 @@ interface ChatSession {
 
 export default function App() {
   const [selectedStrategy, setSelectedStrategy] = useState<'Auto' | 'CQM' | 'QUBO' | 'OR-Tools'>('Auto');
-  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'coder'>('general');
+  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'coder'>('optimization');
   
   const {
     messages,
@@ -813,10 +813,10 @@ export default function App() {
                           </div>
 
                           {[
-                            { label: 'General Quantum Computing Question', icon: '⚛️' },
-                            { label: 'Business Problem to Optimization', icon: '📊' },
-                            { label: 'Generate Quantum Algorithm', icon: '💻' },
-                          ].map(({ label, icon }) => (
+                            { label: 'General Quantum Computing Question' },
+                            { label: 'Business Problem to Optimization' },
+                            { label: 'Generate Quantum Algorithm' },
+                          ].map(({ label }) => (
                             <button
                               key={label}
                               onClick={() => { 
@@ -828,7 +828,6 @@ export default function App() {
                               }}
                               className="w-full text-left px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700 rounded-lg text-[11px] font-medium text-slate-700 flex items-center gap-2.5 cursor-pointer transition-colors group"
                             >
-                              <span className="text-base leading-none">{icon}</span>
                               <span className="leading-snug">{label}</span>
                             </button>
                           ))}
