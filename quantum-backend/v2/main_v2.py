@@ -8,7 +8,9 @@ Same endpoint format, richer response payload.
 import os
 import sys
 import httpx
-from fastapi import FastAPI, HTTPException
+import asyncio, json
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -466,34 +468,52 @@ async def enterprise_analyze(request: AnalyzeRequest):
 # V1 COMPATIBILITY ─ Same endpoint as main.py for zero frontend changes
 # =========================================================================
 @app.post("/enterprise/pipeline")
-async def run_pipeline_v1_compat(request: PipelineRequest):
+async def run_pipeline_v1_compat(request: PipelineRequest, req: Request):
     """
     Backward-compatible v1 endpoint. Routes to v2 pipeline internally.
     Frontend code pointing to /enterprise/pipeline works without changes.
+    Uses StreamingResponse to bypass Railway's 100-second idle proxy timeout.
     """
-    result = await run_optimization_pipeline(
-        problem=request.unstructured_problem,
-        mode=request.mode or "auto",
-        session_id=request.session_id,
-    )
-    # Return v1-compatible format
-    return {
-        "parsed_math": result.get("parsed_math", ""),
-        "reasoning_trace": result.get("reasoning_trace", ""),
-        "final_code": result.get("final_code", ""),
-        "success": result.get("success", False),
-        "suggested_solver": result.get("suggested_solver", "OR-Tools"),
-        "solver_rationale": result.get("solver_rationale", ""),
-        # v2 bonus fields
-        "interpretation": result.get("interpretation", ""),
-        "personality_response": result.get("personality_response", ""),
-        "knowledge_context": result.get("knowledge_context", ""),
-        # V3 new fields
-        "pattern": result.get("pattern", ""),
-        "engine": "QuantumEngine-V5",
-        "version": "5.0.0",
-        "math_rigor": result.get("math_rigor", {})
-    }
+    async def generate_response():
+        # Start the pipeline in the background
+        pipeline_task = asyncio.create_task(run_optimization_pipeline(
+            problem=request.unstructured_problem,
+            mode=request.mode or "auto",
+            session_id=request.session_id,
+        ))
+        
+        # Keep Railway proxy alive by sending a space every 5 seconds
+        while not pipeline_task.done():
+            if await req.is_disconnected():
+                pipeline_task.cancel()
+                break
+            yield b" "
+            await asyncio.sleep(5)
+            
+        try:
+            result = pipeline_task.result()
+            final_json = {
+                "parsed_math": result.get("parsed_math", ""),
+                "reasoning_trace": result.get("reasoning_trace", ""),
+                "final_code": result.get("final_code", ""),
+                "success": result.get("success", False),
+                "suggested_solver": result.get("suggested_solver", "OR-Tools"),
+                "solver_rationale": result.get("solver_rationale", ""),
+                "interpretation": result.get("interpretation", ""),
+                "personality_response": result.get("personality_response", ""),
+                "knowledge_context": result.get("knowledge_context", ""),
+                "pattern": result.get("pattern", ""),
+                "engine": "QuantumEngine-V5",
+                "version": "5.0.0",
+                "math_rigor": result.get("math_rigor", {})
+            }
+            yield json.dumps(final_json).encode("utf-8")
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            yield json.dumps({"success": False, "reasoning_trace": f"Error: {str(e)}"}).encode("utf-8")
+
+    return StreamingResponse(generate_response(), media_type="application/json")
 
 
 # =========================================================================
