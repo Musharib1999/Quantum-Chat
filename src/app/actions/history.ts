@@ -23,7 +23,7 @@ export async function saveMessages(sessionId: string, messages: Message[]) {
         await dbConnect();
         await ChatSession.findOneAndUpdate(
             { sessionId },
-            { : { messages } },
+            { "$set": { messages } },
             { upsert: true, new: true }
         );
         return { success: true };
