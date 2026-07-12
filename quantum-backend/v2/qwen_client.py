@@ -11,7 +11,7 @@ import asyncio
 from typing import Optional
 from . import config
 
-_TIMEOUT = httpx.Timeout(120.0, connect=10.0)
+_TIMEOUT = httpx.Timeout(200.0, connect=10.0)
 
 OLLAMA_URL = "http://127.0.0.1:11434/v1"
 OLLAMA_MODEL = "llama3.1"
