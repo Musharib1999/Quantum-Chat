@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { chatWithGroq } from '@/app/actions/chat';
+import { getChatHistory, saveMessages } from '@/app/actions/history';
 
 export interface Message {
     id: number;
@@ -7,6 +8,7 @@ export interface Message {
     sender: 'user' | 'bot' | 'system';
     timestamp: string;
     isStreaming?: boolean;
+    executionResult?: { success: boolean; output?: string; error?: string };
     chartData?: any;
     portfolioMetrics?: any;
     assignmentsTable?: any[];
@@ -45,6 +47,29 @@ import { useAuth } from '@/context/AuthContext';
 export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed' | 'assistant', contextConfig?: any) {
     const { isAuthenticated, user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
+    const [sessionId, setSessionId] = useState<string>('');
+
+    useEffect(() => {
+        let storedId = localStorage.getItem('qg_session_id');
+        if (!storedId) {
+            storedId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('qg_session_id', storedId);
+        }
+        setSessionId(storedId);
+        
+        getChatHistory(storedId).then(history => {
+            if (history && history.length > 0) {
+                setMessages(history);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        if (sessionId && messages.length > 0) {
+            saveMessages(sessionId, messages);
+        }
+    }, [messages, sessionId]);
+
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
@@ -215,6 +240,12 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         }]);
     };
 
+    const updateMessageExecutionResult = useCallback((msgId: number, result: any) => {
+        setMessages(prev => prev.map(msg => 
+            msg.id === msgId ? { ...msg, executionResult: result } : msg
+        ));
+    }, []);
+
     return {
         messages,
         setMessages,
@@ -227,6 +258,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
         scrollContainerRef,
         handleScroll,
         setShouldAutoScroll,
-        stepOutputs
+        stepOutputs,
+        updateMessageExecutionResult
     };
 }

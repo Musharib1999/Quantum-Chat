@@ -1,65 +1,37 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose from 'mongoose';
 
-export interface IChatMessage {
-    id: number;
-    sender: 'user' | 'bot';
-    text: string;
-    workflowSteps?: IWorkflowSteps;
-}
-
-export interface IWorkflowSteps {
-    nlp?: string;
-    reasoner?: string;
-    suggestor?: string;
-    solver?: string;
-    verifier?: string;
-    dcc?: boolean;
-    loading?: boolean;
-    latex_model?: string;
-    optimization_stats?: any;
-    solver_routing?: any;
-    qa_report?: any;
-    compiler_metrics?: any;
-}
-
-export interface IChatSession extends Document {
-    title: string;
-    messages: IChatMessage[];
-    workflowSteps: IWorkflowSteps;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-const WorkflowStepsSchema = new Schema({
-    nlp: String,
-    reasoner: String,
-    suggestor: String,
-    solver: String,
-    verifier: String,
-    dcc: Boolean,
-    latex_model: String,
-    optimization_stats: Schema.Types.Mixed,
-    solver_routing: Schema.Types.Mixed,
-    qa_report: Schema.Types.Mixed,
-    compiler_metrics: Schema.Types.Mixed
-});
-
-const ChatMessageSchema = new Schema({
+const MessageSchema = new mongoose.Schema({
     id: { type: Number, required: true },
-    sender: { type: String, enum: ['user', 'bot'], required: true },
-    text: { type: String, required: true },
-    workflowSteps: WorkflowStepsSchema
+    text: { type: String },
+    sender: { type: String, enum: ['user', 'bot', 'system'], required: true },
+    timestamp: { type: String, required: true },
+    isStreaming: { type: Boolean, default: false },
+    // Code execution result attached to the message
+    executionResult: {
+        success: { type: Boolean },
+        output: { type: String },
+        error: { type: String }
+    },
+    // Optional workflow metadata
+    workflowType: { type: String },
+    workflowData: { type: mongoose.Schema.Types.Mixed },
+    workflowSteps: { type: mongoose.Schema.Types.Mixed },
+    chartData: { type: mongoose.Schema.Types.Mixed },
+    portfolioMetrics: { type: mongoose.Schema.Types.Mixed },
+    assignmentsTable: [{ type: mongoose.Schema.Types.Mixed }],
+    outputTables: [{ type: mongoose.Schema.Types.Mixed }]
+}, { _id: false });
+
+const ChatSessionSchema = new mongoose.Schema({
+    sessionId: { type: String, required: true, unique: true },
+    messages: [MessageSchema],
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
-const ChatSessionSchema = new Schema({
-    title: { type: String, required: true },
-    messages: [ChatMessageSchema],
-    workflowSteps: WorkflowStepsSchema
-}, {
-    timestamps: true
+ChatSessionSchema.pre('save', function(next) {
+    this.updatedAt = new Date();
+    next();
 });
 
-if (mongoose.models && mongoose.models.ChatSession) {
-    delete mongoose.models.ChatSession;
-}
-export default mongoose.models.ChatSession || mongoose.model<IChatSession>('ChatSession', ChatSessionSchema);
+export default mongoose.models.ChatSession || mongoose.model('ChatSession', ChatSessionSchema);

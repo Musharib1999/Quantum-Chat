@@ -22,6 +22,9 @@ interface MarkdownRendererProps {
     hideLinks?: boolean;
     suggestedSolver?: string;
     onExecute?: () => void;
+    messageId?: number;
+    executionResult?: any;
+    onUpdateExecutionResult?: (msgId: number, result: any) => void;
 }
 
 // Helper runner component to keep execution states independent per code block
@@ -30,16 +33,18 @@ interface CodeBlockRunnerProps {
     language: string;
     suggestedSolver?: string;
     onExecute?: () => void;
+    onUpdateExecutionResult?: (result: any) => void;
+    executionResult?: any;
     props: any;
 }
 
-function CodeBlockRunner({ code, language, suggestedSolver, onExecute, props }: CodeBlockRunnerProps) {
+function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateExecutionResult, executionResult: initialExecutionResult, props }: CodeBlockRunnerProps) {
     const [isExecuting, setIsExecuting] = useState(false);
     const [executionResult, setExecutionResult] = useState<{
         success: boolean;
         output?: string;
         error?: string;
-    } | null>(null);
+    } | null>(initialExecutionResult || null);
 
     const handleCodeExecution = async () => {
         setIsExecuting(true);
@@ -55,19 +60,16 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, props }: 
                 throw new Error(`Server returned status ${res.status}`);
             }
             const data = await res.json();
-            setExecutionResult({
-                success: data.success,
-                output: data.output,
-                error: data.error
-            });
+            const result = { success: data.success, output: data.output, error: data.error };
+            setExecutionResult(result);
+            if (onUpdateExecutionResult) onUpdateExecutionResult(result);
             
             // Dispatch a visual callback event if needed
             if (onExecute) onExecute();
         } catch (err: any) {
-            setExecutionResult({
-                success: false,
-                error: err.message || "Failed to establish link with solver backend."
-            });
+            const result = { success: false, error: err.message || "Failed to establish link with solver backend." };
+            setExecutionResult(result);
+            if (onUpdateExecutionResult) onUpdateExecutionResult(result);
         } finally {
             setIsExecuting(false);
         }
@@ -154,7 +156,7 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, props }: 
     );
 }
 
-export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute, messageId, executionResult, onUpdateExecutionResult }: MarkdownRendererProps) {
     return (
         <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:mb-6 prose-pre:p-0 prose-pre:bg-transparent">
             <ReactMarkdown

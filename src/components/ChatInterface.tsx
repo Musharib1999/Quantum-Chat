@@ -13,6 +13,7 @@ interface Message {
     sender: 'user' | 'bot' | 'system';
     timestamp: string;
     isStreaming?: boolean;
+    executionResult?: any;
     chartData?: any;
 }
 
@@ -26,6 +27,33 @@ interface ChatInterfaceProps {
 export default function ChatInterface({ mode, contextConfig, placeholder, onAnalysisTriggered }: ChatInterfaceProps) {
     const { isAuthenticated, user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
+    const [sessionId, setSessionId] = useState<string>('');
+
+    // Quick local storage persistence for ChatInterface
+    useEffect(() => {
+        let storedId = localStorage.getItem('qg_session_chat_interface');
+        if (!storedId) {
+            storedId = 'session_' + Date.now();
+            localStorage.setItem('qg_session_chat_interface', storedId);
+        }
+        setSessionId(storedId);
+        const saved = localStorage.getItem(storedId);
+        if (saved) {
+            try { setMessages(JSON.parse(saved)); } catch (e) {}
+        }
+    }, []);
+
+    useEffect(() => {
+        if (sessionId && messages.length > 0) {
+            localStorage.setItem(sessionId, JSON.stringify(messages));
+        }
+    }, [messages, sessionId]);
+    
+    const updateMessageExecutionResult = (msgId: number, result: any) => {
+        setMessages(prev => prev.map(msg => 
+            msg.id === msgId ? { ...msg, executionResult: result } : msg
+        ));
+    };
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [processingStep, setProcessingStep] = useState<'generating' | 'simulating' | 'interpreting' | null>(null);
@@ -248,7 +276,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
                                     }`}>
                                     {msg.sender === 'bot' || msg.sender === 'user' ? (
                                         <>
-                                            <MarkdownRenderer content={msg.text} hideLinks={mode === 'market'} />
+                                            <MarkdownRenderer content={msg.text} hideLinks={mode === 'market'} messageId={msg.id} executionResult={msg.executionResult} onUpdateExecutionResult={updateMessageExecutionResult} />
                                             {msg.chartData && <QuantumChart data={msg.chartData.data} />}
                                         </>
                                     ) : (
