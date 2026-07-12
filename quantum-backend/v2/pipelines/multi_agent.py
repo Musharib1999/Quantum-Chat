@@ -252,6 +252,16 @@ class SolverStrategyAgent(Agent):
             workspace.confidence["Strategy"] = 1.0
             return AgentResult("PASS", 1.0, f"Solver strategy set to user override: {strategy}")
 
+        # --- DEMO OVERRIDE ---
+        # Force QUBO if all variables are boolean to guarantee AutoQUBO works for the demo!
+        var_reg = (workspace.problem_specification or {}).get('variable_registry', [])
+        if var_reg and all(v.get('domain') == 'boolean' for v in var_reg):
+            workspace.solver_strategy = "QUBO"
+            workspace.solver_rationale = "Demo Override: Problem is 100% binary, forcing QUBO."
+            workspace.confidence["Strategy"] = 1.0
+            return AgentResult("PASS", 1.0, "Forced QUBO via Demo Override.")
+        # ---------------------
+
         # Auto routing using suggestor LLM
         pattern = "selection"
         if workspace.problem_specification and "variable_registry" in workspace.problem_specification:
