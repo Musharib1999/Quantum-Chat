@@ -14,11 +14,17 @@ NLP_PARSER_REQUIRED = {"entities_count", "entities_name", "slots_count", "slots_
 REASONER_REQUIRED = {"feasible", "reasoning_trace", "verified_constraints"}
 
 
+def _sanitize_json(text: str) -> str:
+    text = re.sub(r'\(?![ntr"\/bfu])', r'\\', text)
+    text = re.sub(r',\s*\}', '}', text)
+    text = re.sub(r',\s*\]', ']', text)
+    return text
+
 def _extract_json(text: str) -> dict:
     """Try to extract JSON from text, even if wrapped in markdown or prose."""
     # Direct parse
     try:
-        return json.loads(text)
+        return json.loads(_sanitize_json(text))
     except json.JSONDecodeError:
         pass
 
@@ -32,7 +38,7 @@ def _extract_json(text: str) -> dict:
         match = re.search(pattern, text, re.DOTALL)
         if match:
             try:
-                return json.loads(match.group(1))
+                return json.loads(_sanitize_json(match.group(1)))
             except json.JSONDecodeError:
                 continue
 
