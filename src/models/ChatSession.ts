@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const MessageSchema = new mongoose.Schema({
     id: { type: Number, required: true },
     text: { type: String },
-    sender: { type: String, enum: ['user', 'bot', 'system'], required: true },
+    sender: { type: String, enum: ["user", "bot", "system"], required: true },
     timestamp: { type: String, required: true },
     isStreaming: { type: Boolean, default: false },
     // Code execution result attached to the message
@@ -27,9 +27,4 @@ const ChatSessionSchema = new mongoose.Schema({
     messages: [MessageSchema]
 }, { timestamps: true });
 
-ChatSessionSchema.pre('save', function(next) {
-    this.updatedAt = new Date();
-    next();
-});
-
-export default mongoose.models.ChatSession || mongoose.model('ChatSession', ChatSessionSchema);
+export default mongoose.models.ChatSession || mongoose.model("ChatSession", ChatSessionSchema);
