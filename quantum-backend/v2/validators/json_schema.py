@@ -64,15 +64,22 @@ def _extract_json(text: str) -> dict:
         r'```\s*({.*?})\s*```',
         r'({\s*"[^"]+"\s*:.*})',
     ]
+    errors = []
     for pattern in patterns:
         match = re.search(pattern, text, re.DOTALL)
         if match:
             try:
                 return json.loads(_sanitize_json(match.group(1)))
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                errors.append(str(e))
                 continue
+                
+    try:
+        return json.loads(_sanitize_json(text))
+    except json.JSONDecodeError as e:
+        errors.append(str(e))
 
-    raise ValueError(f"No valid JSON found in output: {text}")
+    raise ValueError(f"No valid JSON found in output (Parse errors: {errors}): {text}")
 
 
 def validate_nlp_parser(data: dict) -> list:
