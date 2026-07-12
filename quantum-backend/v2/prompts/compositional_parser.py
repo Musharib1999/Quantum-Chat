@@ -131,6 +131,12 @@ RULES — READ CAREFULLY
    "A and B CANNOT coexist" / "at most one of A or B" → constraint: conflict/cardinality with <= 1.
    "Selecting A AND B TOGETHER gives a bonus" → quadratic_terms entry. NOT a constraint.
 
+9. NO MATH EXPRESSIONS IN ARRAYS OR VALUES.
+   Never emit unquoted mathematical expressions like [2 * Math.PI * r] or { "value": 2 * r }.
+   JSON requires numbers or strings. If you have a non-linear continuous formula, wrap it entirely in double quotes so it is a valid JSON string:
+   WRONG: "coefficients": [2 * Math.PI * r]
+   CORRECT: "coefficients": ["2 * Math.PI * r"]
+
 Return ONLY valid JSON.
 """
 
