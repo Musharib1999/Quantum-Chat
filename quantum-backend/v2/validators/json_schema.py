@@ -15,9 +15,39 @@ REASONER_REQUIRED = {"feasible", "reasoning_trace", "verified_constraints"}
 
 
 def _sanitize_json(text: str) -> str:
-    text = re.sub(r'\(?![ntr"\/bfu])', r'\\', text)
-    text = re.sub(r',\s*\}', '}', text)
-    text = re.sub(r',\s*\]', ']', text)
+    # 1. Escape unescaped control characters (like newlines) inside strings
+    in_string = False
+    escape_next = False
+    result = []
+    for char in text:
+        if escape_next:
+            escape_next = False
+            result.append(char)
+            continue
+        if char == "\"":
+            in_string = not in_string
+            result.append(char)
+        elif char == "\\":
+            escape_next = True
+            result.append(char)
+        elif char == "\n" and in_string:
+            result.append("\\n")
+        elif char == "\r" and in_string:
+            result.append("\\r")
+        elif char == "\t" and in_string:
+            result.append("\\t")
+        else:
+            result.append(char)
+    text = "".join(result)
+
+    # 2. Escape non-native JSON backslashes
+    import re
+    text = re.sub(r"\\(?![ntr\"\\/bfu])", r"\\\\", text)
+    
+    # 3. Remove trailing commas
+    text = re.sub(r",\s*\}", "}", text)
+    text = re.sub(r",\s*\]", "]", text)
+    
     return text
 
 def _extract_json(text: str) -> dict:
