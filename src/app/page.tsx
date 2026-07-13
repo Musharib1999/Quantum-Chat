@@ -88,7 +88,7 @@ export default function LandingPage() {
             icon={<Bot size={32} />}
             title="Optimization Studio"
             description="Industry specific guided problem solving wizards based on hardware, use case and service selection"
-            actionText="Chat Now"
+            actionText="Explore"
             isDarkMode={false}
             accentColor="electric"
             status="locked"
