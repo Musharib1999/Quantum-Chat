@@ -727,7 +727,7 @@ export default function App() {
                         <div className="whitespace-pre-wrap break-words">{msg.text}</div>
                       ) : (
                         <div className="prose prose-slate max-w-none text-slate-700 overflow-hidden break-words">
-                          <MarkdownRenderer content={msg.text} suggestedSolver={msg.workflowSteps?.suggested_solver} onExecute={() => alert("Execution submitted to Quantum backend!")} />
+                          <MarkdownRenderer content={msg.text} suggestedSolver={msg.workflowSteps?.suggested_solver} hideRunButton={selectedPipeline === 'optimization'} />
                           {/* Execute Button: shown for optimization pipeline once QUBO code is ready and not yet executed */}
                           {selectedPipeline === 'optimization' && msg.workflowSteps?.quboCodeStatus === 'done' && !msg.workflowSteps?.outputStatus?.includes('done') && !msg.isStreaming && (
                             <div className="mt-4 pt-4 border-t border-slate-200">
@@ -735,16 +735,121 @@ export default function App() {
                                 onClick={async () => {
                                   if (isExecuting) return;
                                   setIsExecuting(true);
-                                  const specToSend = msg.workflowSteps?.nlp || '';
-                                  await sendMessage(specToSend || '__rerun__', {
-                                    selectedPipeline: 'optimization',
-                                    selectedPenalty,
-                                    customPenalty,
-                                    isDirect: true,
-                                    runSolver: true,
-                                    mode: selectedStrategy.toLowerCase(),
-                                  });
-                                  setIsExecuting(false);
+                                  try {
+                                    // Update status to running first
+                                    setMessages(prev => prev.map(m => {
+                                      if (m.id === msg.id) {
+                                        return {
+                                          ...m,
+                                          workflowSteps: m.workflowSteps ? {
+                                            ...m.workflowSteps,
+                                            simulatorStatus: 'running',
+                                            outputStatus: 'pending'
+                                          } : undefined
+                                        };
+                                      }
+                                      return m;
+                                    }));
+
+                                    const res = await fetch('/api/direct-model/stream', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        model_text: msg.workflowSteps?.nlp || '',
+                                        penalty_choice: selectedPenalty === 'custom' ? parseInt(customPenalty || '30') : selectedPenalty,
+                                        num_reads: 5000,
+                                        run_solver: true,
+                                        session_id: activeSessionId
+                                      })
+                                    });
+
+                                    if (!res.ok) {
+                                      throw new Error(`Execution failed: ${res.statusText}`);
+                                    }
+
+                                    const reader = res.body?.getReader();
+                                    const decoder = new TextDecoder();
+                                    let accumulated = "";
+                                    let baseText = msg.text;
+
+                                    let simStatus = 'running';
+                                    let outStatus = 'pending';
+                                    let solverOutputText = "";
+
+                                    if (reader) {
+                                      while (true) {
+                                        const { done, value } = await reader.read();
+                                        if (done) break;
+
+                                        accumulated += decoder.decode(value, { stream: true });
+                                        const lines = accumulated.split('\n');
+                                        accumulated = lines.pop() || "";
+
+                                        for (const line of lines) {
+                                          if (line.trim().startsWith('data:')) {
+                                            try {
+                                              const update = JSON.parse(line.slice(5));
+                                              const step = update.step;
+
+                                              if (step === 'simulator') {
+                                                if (update.status === 'running') {
+                                                  simStatus = 'running';
+                                                } else if (update.status === 'done') {
+                                                  simStatus = 'done';
+                                                }
+                                              } else if (step === 'output') {
+                                                if (update.status === 'done') {
+                                                  outStatus = 'done';
+                                                  solverOutputText = update.output_text || "";
+                                                }
+                                              }
+
+                                              // Rebuild the message text in-place
+                                              let newText = baseText;
+                                              if (simStatus === 'running') {
+                                                newText += `\n\n---\n\n### ⏳ Running Solver...\nRunning D-Wave Simulated Annealing (5,000 reads)...\n\n`;
+                                              } else if (simStatus === 'done') {
+                                                newText += `\n\n---\n\n### ✅ Solver Complete\n\n`;
+                                              }
+                                              if (solverOutputText) {
+                                                newText += solverOutputText + '\n\n';
+                                              }
+
+                                              // Update state in-place
+                                              setMessages(prev => prev.map(m => {
+                                                if (m.id === msg.id) {
+                                                  return {
+                                                    ...m,
+                                                    text: newText,
+                                                    workflowSteps: m.workflowSteps ? {
+                                                      ...m.workflowSteps,
+                                                      simulatorStatus: simStatus,
+                                                      outputStatus: outStatus,
+                                                      solver_output: solverOutputText
+                                                    } : undefined
+                                                  };
+                                                }
+                                                return m;
+                                              }));
+                                            } catch (_) {}
+                                          }
+                                        }
+                                      }
+                                    }
+                                  } catch (err: any) {
+                                    console.error("Solver execution error:", err);
+                                    setMessages(prev => prev.map(m => {
+                                      if (m.id === msg.id) {
+                                        return {
+                                          ...m,
+                                          text: m.text + `\n\n❌ **Execution Error**: ${err.message}`
+                                        };
+                                      }
+                                      return m;
+                                    }));
+                                  } finally {
+                                    setIsExecuting(false);
+                                  }
                                 }}
                                 disabled={isExecuting}
                                 className="flex items-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-all shadow-sm cursor-pointer"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -24,7 +24,9 @@ interface MarkdownRendererProps {
     onExecute?: () => void;
     messageId?: number;
     executionResult?: any;
+    isCodeExecuting?: boolean;
     onUpdateExecutionResult?: (msgId: number, result: any) => void;
+    hideRunButton?: boolean;
 }
 
 // Helper runner component to keep execution states independent per code block
@@ -35,43 +37,34 @@ interface CodeBlockRunnerProps {
     onExecute?: () => void;
     onUpdateExecutionResult?: (result: any) => void;
     executionResult?: any;
+    isCodeExecuting?: boolean;
     props: any;
+    hideRunButton?: boolean;
 }
 
-function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateExecutionResult, executionResult: initialExecutionResult, props }: CodeBlockRunnerProps) {
-    const [isExecuting, setIsExecuting] = useState(false);
-    const [executionResult, setExecutionResult] = useState<{
-        success: boolean;
-        output?: string;
-        error?: string;
-    } | null>(initialExecutionResult || null);
+function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateExecutionResult, executionResult, isCodeExecuting, props, hideRunButton }: CodeBlockRunnerProps) {
+    // isExecuting is derived from the parent message state (isCodeExecuting) to survive re-renders
+    const isExecuting = isCodeExecuting ?? false;
 
     const handleCodeExecution = async () => {
-        setIsExecuting(true);
-        setExecutionResult(null);
+        if (onExecute) onExecute(); // this sets isCodeExecuting=true in parent message state
         try {
             const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002';
+            const executionCode = code.replace(/sampling_compiler/g, "autoqubo");
             const res = await fetch(`${backendUrl}/v2/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code })
+                body: JSON.stringify({ code: executionCode })
             });
             if (!res.ok) {
                 throw new Error(`Server returned status ${res.status}`);
             }
             const data = await res.json();
             const result = { success: data.success, output: data.output, error: data.error };
-            setExecutionResult(result);
             if (onUpdateExecutionResult) onUpdateExecutionResult(result);
-            
-            // Dispatch a visual callback event if needed
-            if (onExecute) onExecute();
         } catch (err: any) {
             const result = { success: false, error: err.message || "Failed to establish link with solver backend." };
-            setExecutionResult(result);
-            if (onUpdateExecutionResult) onUpdateExecutionResult(result);
-        } finally {
-            setIsExecuting(false);
+            if (onUpdateExecutionResult) onUpdateExecutionResult(result); // this sets isCodeExecuting=false in parent
         }
     };
 
@@ -103,18 +96,23 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateE
                             {suggestedSolver && (
                                 <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-400/10 border border-emerald-400/20">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    Target: {suggestedSolver}
+                                    Target: {suggestedSolver === 'GATE_BASED' ? 'Qiskit AerSimulator' : (suggestedSolver === 'QUBO' ? 'D-Wave SA' : suggestedSolver)}
                                 </span>
                             )}
                         </div>
+                        {!hideRunButton && (
                         <button 
                             onClick={handleCodeExecution}
                             disabled={isExecuting}
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white text-xs font-semibold rounded-md shadow transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-80 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-md shadow transition-all flex items-center gap-1.5 cursor-pointer min-w-[130px] justify-center"
                         >
                             {isExecuting ? (
                                 <>
-                                    <span className="animate-spin">⏳</span> Executing...
+                                    <svg className="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                    Executing...
                                 </>
                             ) : (
                                 <>
@@ -122,12 +120,22 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateE
                                 </>
                             )}
                         </button>
+                        )}
                     </div>
 
                     {/* Execution Status / Loading */}
                     {isExecuting && (
-                        <div className="bg-zinc-950 px-4 py-3 border-t border-zinc-800 text-xs text-blue-400 font-mono flex items-center gap-2 animate-pulse">
-                            <span>⚡</span> Connecting to solver engine and allocating QPU bounds...
+                        <div className="bg-zinc-950 px-4 py-3 border-t border-zinc-800 text-xs font-mono flex items-center gap-2.5">
+                            <svg className="animate-spin h-3.5 w-3.5 text-blue-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span className="text-blue-400">Execution in progress</span>
+                            <span className="text-zinc-500">
+                                {suggestedSolver === 'GATE_BASED' 
+                                    ? "· Simulating quantum circuit on Qiskit Aer backend…" 
+                                    : "· Submitting QUBO to D-Wave Simulated Annealing solver…"}
+                            </span>
                         </div>
                     )}
 
@@ -156,7 +164,24 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateE
     );
 }
 
-export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute, messageId, executionResult, onUpdateExecutionResult }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute, messageId, executionResult, isCodeExecuting, onUpdateExecutionResult, hideRunButton }: MarkdownRendererProps) {
+    const cleanContent = (content || "")
+      .replace(/autoqubo/gi, "sampling_compiler")
+      .replace(/auto_qubo/gi, "sampling_compiler")
+      .replace(/auto qubo/gi, "sampling_compiler");
+
+    const cleanExecutionResult = executionResult ? {
+        ...executionResult,
+        output: executionResult.output ? executionResult.output
+            .replace(/autoqubo/gi, "sampling_compiler")
+            .replace(/auto_qubo/gi, "sampling_compiler")
+            .replace(/auto qubo/gi, "sampling_compiler") : undefined,
+        error: executionResult.error ? executionResult.error
+            .replace(/autoqubo/gi, "sampling_compiler")
+            .replace(/auto_qubo/gi, "sampling_compiler")
+            .replace(/auto qubo/gi, "sampling_compiler") : undefined
+    } : undefined;
+
     return (
         <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:mb-6 prose-pre:p-0 prose-pre:bg-transparent">
             <ReactMarkdown
@@ -172,6 +197,14 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
                                 language={match[1]} 
                                 suggestedSolver={suggestedSolver} 
                                 onExecute={onExecute} 
+                                executionResult={cleanExecutionResult}
+                                isCodeExecuting={isCodeExecuting}
+                                hideRunButton={hideRunButton}
+                                onUpdateExecutionResult={(res) => {
+                                    if (onUpdateExecutionResult && messageId) {
+                                        onUpdateExecutionResult(messageId, res);
+                                    }
+                                }}
                                 props={props} 
                             />
                         ) : (
@@ -180,12 +213,13 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
                             </code>
                         );
                     },
-                    ul: ({ children }) => <ul className="list-disc pl-6 space-y-2 marker:text-primary">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal pl-6 space-y-2 marker:text-primary">{children}</ol>,
-                    li: ({ children }) => <li className="pl-1 text-foreground">{children}</li>,
-                    h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-foreground inline-block">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-xl font-semibold mb-3 mt-5 text-foreground flex items-center gap-2"><span className="w-1 h-5 bg-primary rounded-full inline-block"></span>{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-lg font-medium mb-2 mt-4 text-foreground/90">{children}</h3>,
+                    ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5 marker:text-slate-400 font-sans text-sm text-slate-700 leading-relaxed mb-3">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1.5 marker:text-slate-400 font-sans text-sm text-slate-700 leading-relaxed mb-3">{children}</ol>,
+                    li: ({ children }) => <li className="pl-0.5 font-sans text-sm text-slate-700 leading-relaxed">{children}</li>,
+                    p: ({ children }) => <p className="font-sans text-sm text-slate-700 leading-relaxed mb-3">{children}</p>,
+                    h1: ({ children }) => <h1 className="text-base font-bold mb-3 mt-5 text-slate-800 font-sans tracking-wide">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-sm font-bold mb-2.5 mt-4 text-slate-800 font-sans tracking-wide flex items-center gap-1.5"><span className="w-1 h-4 bg-violet-500 rounded-full inline-block"></span>{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-sm font-bold mb-2 mt-3.5 text-slate-800 font-sans tracking-wide">{children}</h3>,
                     blockquote: ({ children }) => (
                         <div className="border-l-4 border-primary/50 bg-primary/5 pl-4 py-3 my-4 rounded-r-lg italic text-muted-foreground">
                             {children}
@@ -212,7 +246,7 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
                     td: ({ children }) => <td className="px-4 py-3 text-muted-foreground">{children}</td>,
                 }}
             >
-                {content}
+                {cleanContent}
             </ReactMarkdown>
         </div>
     );
