@@ -1152,7 +1152,7 @@ export default function App() {
         
         <div className="p-4 flex-1 overflow-y-auto space-y-3">
           {/* Waiting/Initial Header Status Card */}
-          {(!activeSession || !activeSession.workflowSteps) && (
+          {(!activeSession || !activeSession.workflowSteps || (!activeSession.workflowSteps.nlp && !activeSession.workflowSteps.math_rigor)) && (
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-center gap-2 animate-in fade-in duration-250">
               <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 animate-pulse">
                 <Activity className="w-4 h-4" />
@@ -1163,7 +1163,7 @@ export default function App() {
           )}
 
           {/* ── OPTIMIZATION STUDIO SIDEBAR ───────────────────────────── */}
-          {selectedPipeline === 'optimization' && activeSession && activeSession.workflowSteps && (() => {
+          {selectedPipeline === 'optimization' && activeSession && activeSession.workflowSteps && (activeSession.workflowSteps.nlp || activeSession.workflowSteps.math_rigor) && (() => {
             const ws = activeSession.workflowSteps;
             const details = getWorkflowDetails();
             const optStats = ws.optimization_stats || {};
@@ -1368,7 +1368,7 @@ export default function App() {
           })()}
 
           {/* ── COUNCIL OF EXPERTS (Optimization) 11 cards ── */}
-          {activeSession && activeSession.workflowSteps && (() => {
+          {activeSession && activeSession.workflowSteps && (activeSession.workflowSteps.nlp || activeSession.workflowSteps.math_rigor) && (() => {
             const details = getWorkflowDetails();
             if (!details) return null;
             
