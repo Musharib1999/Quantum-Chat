@@ -1087,12 +1087,12 @@ export default function App() {
             const quboCodeDone = ws.quboCodeStatus === 'done';
             const outputDone = ws.outputStatus === 'done';
             const penaltyLabels: Record<number | string, string> = {
-              1: 'Proposed Penalty 1 (Sum)',
-              2: 'Proposed Penalty 2 (Moderate)',
-              3: 'Proposed Penalty 3 (Verma-Lewis)',
-              4: 'Adaptive L2 Norm',
-              5: 'Lagrange Ratio',
-              6: 'Active Density',
+              1: 'Penalty 1',
+              2: 'Penalty 2',
+              3: 'Penalty 3',
+              4: 'Penalty 4',
+              5: 'Penalty 5',
+              6: 'Penalty 6',
               custom: 'Custom λ',
             };
             return (
@@ -1155,20 +1155,30 @@ export default function App() {
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600 block">Penalty λ</span>
                   <div className="space-y-1.5">
-                    {([1, 2, 3, 4, 5, 6] as const).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setSelectedPenalty(p)}
-                        className={`w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${selectedPenalty === p ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
-                      >
-                        {penaltyLabels[p]}
-                      </button>
-                    ))}
+                    {([1, 2, 3, 4, 5, 6] as const).map((p) => {
+                      const isActive = optStats.penalty_weight !== undefined && (
+                        (p === 1 && optStats.penalty_label?.includes("Proposed Penalty 1")) ||
+                        (p === 2 && optStats.penalty_label?.includes("Proposed Penalty 2")) ||
+                        (p === 3 && (optStats.penalty_label?.includes("Proposed Penalty 3") || optStats.penalty_label?.includes("Verma-Lewis"))) ||
+                        (p === 4 && optStats.penalty_label?.includes("Adaptive L2 Norm")) ||
+                        (p === 5 && optStats.penalty_label?.includes("Lagrange Ratio")) ||
+                        (p === 6 && optStats.penalty_label?.includes("Active Density"))
+                      );
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => setSelectedPenalty(p)}
+                          className={`w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${selectedPenalty === p ? 'bg-white text-blue-600 border-blue-600 shadow-sm ring-1 ring-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
+                        >
+                          {penaltyLabels[p]}{isActive ? ` (λ = ${optStats.penalty_weight})` : ''}
+                        </button>
+                      );
+                    })}
                     <button
                       onClick={() => setSelectedPenalty('custom')}
-                      className={`w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${selectedPenalty === 'custom' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
+                      className={`w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${selectedPenalty === 'custom' ? 'bg-white text-blue-600 border-blue-600 shadow-sm ring-1 ring-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
                     >
-                      Custom λ
+                      Custom λ{selectedPenalty === 'custom' && optStats.penalty_weight !== undefined && !optStats.penalty_label ? ` (λ = ${optStats.penalty_weight})` : ''}
                     </button>
                     {selectedPenalty === 'custom' && (
                       <input
@@ -1199,9 +1209,9 @@ export default function App() {
                         setIsExecuting(false);
                       }}
                       disabled={isExecuting}
-                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[10px] font-semibold rounded-lg transition-all cursor-pointer shadow-sm"
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[10px] font-semibold rounded-lg transition-all cursor-pointer shadow-sm"
                     >
-                      {isExecuting ? <><Loader2 className="w-3 h-3 animate-spin" /> Running...</> : <><Activity className="w-3 h-3" /> Rerun with Penalty {selectedPenalty}</>}
+                      {isExecuting ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> Running...</> : "Rerun"}
                     </button>
                   )}
                 </div>
