@@ -283,6 +283,9 @@ export default function App() {
 
   // Sync back messages to current session
   useEffect(() => {
+    // Skip database updates during active solver execution to avoid Server Action concurrency bottlenecks
+    if (isExecuting) return;
+
     if (activeSessionId && messages.length > 0) {
       const lastBotMsg = [...messages].reverse().find(m => m.sender === 'bot');
       const workflowSteps = lastBotMsg?.workflowSteps || undefined;
@@ -306,7 +309,7 @@ export default function App() {
         });
       }
     }
-  }, [messages, activeSessionId]);
+  }, [messages, activeSessionId, isExecuting]);
 
   const actionCards = [
     {
