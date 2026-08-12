@@ -385,6 +385,25 @@ export async function chatWithQuantumAI(
                 }
 
                 const compilerMetrics = data.compiler_metrics || {};
+                const qMatrixPreview = data.q_matrix_preview || "";
+                
+                // Parse Q-matrix dimension and non-zero entries from preview text
+                let q_size = compilerMetrics.q_size || 0;
+                let q_nnz = compilerMetrics.q_nnz || 0;
+                
+                const dimMatch = qMatrixPreview.match(/Dimension\D*(\d+)x/i);
+                if (dimMatch) {
+                    q_size = parseInt(dimMatch[1]);
+                }
+                const nnzMatch = qMatrixPreview.match(/Non-zero\D*(\d+)/i);
+                if (nnzMatch) {
+                    q_nnz = parseInt(nnzMatch[1]);
+                }
+
+                const decision_vars_count = data.optimization_stats?.binary_variables || 0;
+                const slack_vars_count = Math.max(0, q_size - decision_vars_count);
+                const matrix_density = q_size > 0 ? parseFloat(((q_nnz / (q_size * q_size)) * 100).toFixed(2)) : 0.0;
+
                 const workflowSteps = {
                     nlp: data.parsed_math || "Parsed successfully",
                     reasoner: data.reasoning_trace || "Feasibility check passed",
@@ -400,14 +419,14 @@ export async function chatWithQuantumAI(
                     
                     // Added for Optimization Studio right sidebar live status mapping
                     optimization_stats: {
-                        q_size: compilerMetrics.q_size || 0,
-                        q_nnz: compilerMetrics.q_nnz || 0,
-                        penalty_label: compilerMetrics.penalty_label || "Proposed Penalty 3 (Verma-Lewis)",
-                        penalty_weight: compilerMetrics.penalty_weight || 1.0,
-                        decision_vars_count: compilerMetrics.decision_vars_count || 0,
-                        slack_vars_count: compilerMetrics.slack_vars_count || 0,
-                        matrix_density: compilerMetrics.matrix_density || 0.0,
-                        certificate_status: compilerMetrics.certificate_status || "ACTIVE_FAST_PATH"
+                        q_size: q_size,
+                        q_nnz: q_nnz,
+                        penalty_label: "Proposed Penalty 3 (Verma-Lewis)",
+                        penalty_weight: 2.0, // Default Verma-Lewis penalty weight
+                        decision_vars_count: decision_vars_count,
+                        slack_vars_count: slack_vars_count,
+                        matrix_density: matrix_density,
+                        certificate_status: "ACTIVE_FAST_PATH"
                     },
                     parsingStatus: 'done',
                     qMatrixStatus: data.final_code ? 'done' : 'pending',
