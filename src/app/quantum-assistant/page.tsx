@@ -17,6 +17,36 @@ import {
   updateChatSession 
 } from '@/app/actions/chat';
 
+interface MathComponentProps {
+  math: string;
+  displayMode?: boolean;
+}
+
+function MathComponent({ math, displayMode = false }: MathComponentProps) {
+  const [html, setHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    const win = window as any;
+    if (win.katex) {
+      try {
+        const rendered = win.katex.renderToString(math, {
+          displayMode,
+          throwOnError: false
+        });
+        setHtml(rendered);
+      } catch (err) {
+        console.error("KaTeX rendering error:", err);
+      }
+    }
+  }, [math, displayMode]);
+
+  if (html) {
+    return <span dangerouslySetInnerHTML={{ __html: html }} className="inline-block max-w-full overflow-x-auto" />;
+  }
+
+  return <span>{displayMode ? `$$ ${math} $$` : `$ ${math} $`}</span>;
+}
+
 interface ChatSession {
   id: string;
   title: string;
@@ -362,22 +392,22 @@ export default function App() {
     if (objectivesList.length > 0) {
       const obj = objectivesList[0];
       if (obj.formula) {
-        objectiveLatex = `$$ ${obj.formula} $$`;
+        objectiveLatex = obj.formula.replace(/^\$\$/, "").replace(/\$\$/, "").trim();
       } else {
         const sense = obj.sense === "maximize" ? "\\text{Maximize}" : "\\text{Minimize}";
         if (obj.expression && Array.isArray(obj.expression.coefficients)) {
           // If expression is long, render summation
           if (obj.expression.coefficients.length > 5) {
-            objectiveLatex = `$$ ${sense} \\quad \\sum_{i=0}^{${obj.expression.coefficients.length - 1}} c_{i} \\cdot ${obj.expression.var_id || 'x'}_{i} $$`;
+            objectiveLatex = `${sense} \\quad \\sum_{i=0}^{${obj.expression.coefficients.length - 1}} c_{i} \\cdot ${obj.expression.var_id || 'x'}_{i}`;
           } else {
             const terms = obj.expression.coefficients.map((c: number, idx: number) => {
               const varName = obj.expression.var_id || "x";
               return `${c} \\cdot ${varName}_{${idx}}`;
             }).join(" + ");
-            objectiveLatex = `$$ ${sense} \\quad ${terms} $$`;
+            objectiveLatex = `${sense} \\quad ${terms}`;
           }
         } else {
-          objectiveLatex = `$$ ${sense} \\quad \\text{Objective Function} $$`;
+          objectiveLatex = `${sense} \\quad \\text{Objective Function}`;
         }
       }
     }
@@ -1221,18 +1251,10 @@ export default function App() {
                     <span className="text-[11px] font-semibold text-blue-600">
                       2. Objective
                     </span>
-                    {details.objectiveIsLarge && (
-                      <button
-                        onClick={() => setExpandObjective(!expandObjective)}
-                        className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold cursor-pointer px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50/50"
-                      >
-                        {expandObjective ? "Collapse" : "Expand"}
-                      </button>
-                    )}
                   </div>
                   {details.objectiveLatex ? (
-                    <div className="font-mono text-[11px] text-slate-700 bg-white border border-slate-200 p-2.5 rounded-lg leading-relaxed overflow-x-auto">
-                      <MarkdownRenderer content={expandObjective && details.objectiveExpanded ? details.objectiveExpanded : details.objectiveLatex} />
+                    <div className="font-mono text-[11px] text-slate-700 bg-white border border-slate-200 p-2.5 rounded-lg leading-relaxed overflow-x-auto flex justify-center">
+                      <MathComponent math={details.objectiveLatex} displayMode={true} />
                     </div>
                   ) : (
                     <div className="text-[11px] text-slate-400 italic">
@@ -1308,11 +1330,40 @@ export default function App() {
                   <span className="text-[11px] font-semibold text-blue-600">
                     5. Mathematical model
                   </span>
-                  <div className="font-mono text-[11px] text-slate-700 bg-white border border-slate-200 p-2.5 rounded-lg leading-relaxed overflow-x-auto max-h-[220px] overflow-y-auto">
-                    {details.modelLatex ? (
-                      <MarkdownRenderer content={details.modelLatex} />
+                  <div className="font-mono text-[11px] text-slate-700 bg-white border border-slate-200 p-2.5 rounded-lg leading-relaxed max-h-[240px] overflow-y-auto space-y-2.5">
+                    {details.objectiveLatex ? (
+                      <div className="flex justify-center border-b border-slate-100 pb-2 mb-2">
+                        <MathComponent math={details.objectiveLatex} displayMode={true} />
+                      </div>
                     ) : (
-                      <span className="italic text-slate-400">Awaiting formulation...</span>
+                      <span className="italic text-slate-400 text-[10px]">No objective registered.</span>
+                    )}
+                    <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-1">Subject to:</div>
+                    {details.constraints && details.constraints.length > 0 ? (
+                      details.constraints.map((c: any, cidx: number) => {
+                        const formula = c.formula || (() => {
+                          const opMap: any = {"<=": "\\le", ">=": "\\ge", "==": "="};
+                          const op = opMap[c.operator] || c.operator;
+                          let lhsStr = c.lhs?.var_id || "x";
+                          if (c.lhs?.coefficients && Array.isArray(c.lhs.coefficients)) {
+                            if (c.lhs.coefficients.length > 5) {
+                              lhsStr = `\\sum_{i=0}^{${c.lhs.coefficients.length - 1}} a_{i} \\cdot ${c.lhs.var_id || 'x'}_{i}`;
+                            } else {
+                              lhsStr = c.lhs.coefficients.map((coeff: number, idx: number) => `${coeff} \\cdot ${c.lhs.var_id}_{${idx}}`).join(" + ");
+                            }
+                          }
+                          let rhsStr = c.rhs?.value !== undefined ? String(c.rhs.value) : c.rhs?.var_id || "0";
+                          return `${lhsStr} ${op} ${rhsStr}`;
+                        })();
+                        return (
+                          <div key={cidx} className="flex items-center justify-between py-1 border-b border-slate-50 last:border-b-0">
+                            <MathComponent math={formula} displayMode={false} />
+                            <span className="text-[9px] text-slate-400 font-mono">({c.name || c.id})</span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <span className="italic text-slate-400 text-[10px]">No constraints registered.</span>
                     )}
                   </div>
                 </div>
@@ -1347,8 +1398,8 @@ export default function App() {
                             Family: {c.family} · Op: {c.operator}
                           </div>
                           {c.formula && (
-                            <div className="font-mono text-[11px] text-slate-600 pt-1 border-t border-slate-100 overflow-x-auto">
-                              <MarkdownRenderer content={`$$ ${c.formula} $$`} />
+                            <div className="font-mono text-[11px] text-slate-600 pt-1 border-t border-slate-100 overflow-x-auto flex justify-center">
+                              <MathComponent math={c.formula} displayMode={true} />
                             </div>
                           )}
                         </div>
