@@ -366,11 +366,16 @@ export default function App() {
       } else {
         const sense = obj.sense === "maximize" ? "\\text{Maximize}" : "\\text{Minimize}";
         if (obj.expression && Array.isArray(obj.expression.coefficients)) {
-          const terms = obj.expression.coefficients.map((c: number, idx: number) => {
-            const varName = obj.expression.var_id || "x";
-            return `${c} \\cdot ${varName}_{${idx}}`;
-          }).join(" + ");
-          objectiveLatex = `$$ ${sense} \\quad ${terms} $$`;
+          // If expression is long, render summation
+          if (obj.expression.coefficients.length > 5) {
+            objectiveLatex = `$$ ${sense} \\quad \\sum_{i=0}^{${obj.expression.coefficients.length - 1}} c_{i} \\cdot ${obj.expression.var_id || 'x'}_{i} $$`;
+          } else {
+            const terms = obj.expression.coefficients.map((c: number, idx: number) => {
+              const varName = obj.expression.var_id || "x";
+              return `${c} \\cdot ${varName}_{${idx}}`;
+            }).join(" + ");
+            objectiveLatex = `$$ ${sense} \\quad ${terms} $$`;
+          }
         } else {
           objectiveLatex = `$$ ${sense} \\quad \\text{Objective Function} $$`;
         }
@@ -407,7 +412,11 @@ export default function App() {
         const op = opMap[c.operator] || c.operator;
         let lhsStr = c.lhs?.var_id || "x";
         if (c.lhs?.coefficients && Array.isArray(c.lhs.coefficients)) {
-          lhsStr = c.lhs.coefficients.map((coeff: number, idx: number) => `${coeff} \\cdot ${c.lhs.var_id}_{${idx}}`).join(" + ");
+          if (c.lhs.coefficients.length > 5) {
+            lhsStr = `\\sum_{i=0}^{${c.lhs.coefficients.length - 1}} a_{i} \\cdot ${c.lhs.var_id || 'x'}_{i}`;
+          } else {
+            lhsStr = c.lhs.coefficients.map((coeff: number, idx: number) => `${coeff} \\cdot ${c.lhs.var_id}_{${idx}}`).join(" + ");
+          }
         }
         let rhsStr = c.rhs?.value !== undefined ? String(c.rhs.value) : c.rhs?.var_id || "0";
         return `$$ ${lhsStr} ${op} ${rhsStr} \\quad \\text{(${c.name || c.id})} $$`;
@@ -1204,9 +1213,6 @@ export default function App() {
                   <div className="text-[11px] text-slate-700 font-medium leading-snug">
                     {details.classification}
                   </div>
-                  <div className="text-[11px] text-slate-500 leading-normal">
-                    Engine: <span className="font-semibold text-slate-600">QuantumEngine-V5</span> (v5.0.0)
-                  </div>
                 </div>
 
                 {/* Card 2: Objective */}
@@ -1311,83 +1317,19 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Card 6: Optimization model */}
+                {/* Card 6: Solver recommendation */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">
                     6. Solver recommendation
                   </span>
-                  {details.solverRecommendation ? (
-                    <div className="space-y-2">
-                      <div className="text-[11px] text-slate-500 leading-normal">
-                        Detected Features:
-                        <div className="mt-1 space-y-1 bg-white border border-slate-200 p-2 rounded-lg">
-                          {details.solverRecommendation.features?.map((f: any, idx: number) => (
-                            <div key={idx} className={`flex items-center gap-1.5 ${f.highlight ? 'text-amber-700 font-medium' : 'text-slate-600'}`}>
-                              <span className={f.highlight ? 'text-amber-500 font-semibold' : 'text-emerald-500 font-semibold'}>
-                                {f.highlight ? '⚡' : '✓'}
-                              </span>
-                              <span>{f.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Solver Score Bars — shown when quadratic terms detected */}
-                      {details.solverRecommendation.solver_scores ? (
-                        <div className="space-y-1.5 pt-1">
-                          <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-1.5">Solver Suitability</div>
-                          {Object.entries(details.solverRecommendation.solver_scores as Record<string, number>)
-                            .sort(([, a], [, b]) => b - a)
-                            .map(([solver, score]) => (
-                              <div key={solver} className="flex items-center gap-2">
-                                <div className={`text-[10px] font-mono w-14 text-right font-semibold ${solver === details.solverRecommendation.recommended_solver ? 'text-blue-600' : 'text-slate-500'}`}>
-                                  {solver}
-                                </div>
-                                <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                                  <div
-                                    className={`h-1.5 rounded-full transition-all duration-700 ${solver === details.solverRecommendation.recommended_solver ? 'bg-blue-500' : 'bg-slate-400'}`}
-                                    style={{ width: `${score}%` }}
-                                  />
-                                </div>
-                                <div className="text-[9px] text-slate-400 w-6 text-right">{score}%</div>
-                              </div>
-                            ))}
-                          <div className="pt-1.5 border-t border-slate-200 mt-1.5">
-                            <div className="text-[9px] text-slate-400 uppercase tracking-wider">Recommended Solver</div>
-                            <div className="text-[11px] text-blue-600 font-semibold flex items-center gap-1.5">
-                              {details.hasQuadratic && <span className="text-amber-500">⚡</span>}
-                              {details.solverRecommendation.recommended_solver}
-                              {details.hasQuadratic && <span className="text-[9px] text-amber-600 font-normal">(quadratic objective)</span>}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="pt-1.5 border-t border-slate-200">
-                          <div className="text-[9px] text-slate-400 uppercase tracking-wider">Recommended Solver</div>
-                          <div className="text-[11px] text-blue-600 font-semibold">{details.solverRecommendation.recommended_solver}</div>
-                        </div>
-                      )}
+                  <div className="space-y-1.5">
+                    <div className="text-[11px] text-blue-600 font-semibold">
+                      {details.modelDetails.solver}
                     </div>
-                  ) : (
-                    <>
-                      <div className="text-[11px] text-slate-700 font-semibold border-b border-slate-200 pb-1.5 mb-1.5">
-                        {details.modelDetails.solver}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mb-1">
-                        Decision variable domains
-                      </div>
-                      <div className="font-mono text-[11px] text-slate-700 bg-white border border-slate-200 p-2 rounded-lg overflow-x-auto max-h-[140px] overflow-y-auto">
-                        {details.varsDomainsLatex ? (
-                          <MarkdownRenderer content={details.varsDomainsLatex} />
-                        ) : (
-                          <span className="italic text-slate-400">No variable domains.</span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-500 leading-normal pt-0.5">
-                        {details.modelDetails.suggestor}
-                      </div>
-                    </>
-                  )}
+                    <div className="text-[11px] text-slate-500 leading-normal bg-white border border-slate-200 p-2 rounded-lg">
+                      {details.modelDetails.suggestor}
+                    </div>
+                  </div>
                 </div>
                 {/* Card 7: Constraint details */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
@@ -1464,23 +1406,33 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Card 11: Shared memory access */}
+                {/* Card 11: Output Run History */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
                   <span className="text-[11px] font-semibold text-blue-600">
-                    11. Shared memory access
+                    11. Execution Output History
                   </span>
-                  <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
-                    {details.agentLogs.map((log: any, idx: number) => (
-                      <div key={idx} className="bg-white border border-slate-200 p-2 rounded-lg">
-                        <div className="text-[11px] font-semibold text-blue-600">{log.agent}</div>
-                        <div className="font-mono text-[11px] text-slate-500 mt-0.5">{log.action}</div>
-                        {log.status && (
-                          <div className={`mt-1 text-[11px] font-semibold ${log.status === 'Success' ? 'text-emerald-600' : 'text-slate-400'}`}>
-                            {log.status === 'Success' ? '✓ ' : '○ '}{log.status}
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    {(() => {
+                      const runOutputs = messages.filter(m => m.sender === 'bot' && m.workflowSteps?.solver_output);
+                      if (runOutputs.length > 0) {
+                        return runOutputs.map((run, idx) => (
+                          <div key={run.id || idx} className="bg-white border border-slate-200 p-2.5 rounded-lg space-y-1.5">
+                            <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono border-b border-slate-100 pb-1">
+                              <span>Run #{idx + 1}</span>
+                              <span>{run.timestamp || new Date().toLocaleTimeString()}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-700 leading-relaxed font-sans max-h-[100px] overflow-y-auto">
+                              <MarkdownRenderer content={run.workflowSteps?.solver_output || ""} />
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        ));
+                      }
+                      return (
+                        <div className="text-[11px] text-slate-400 italic">
+                          No execution output recorded yet
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
