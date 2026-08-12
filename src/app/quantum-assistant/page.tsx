@@ -138,7 +138,8 @@ export default function App() {
     sendMessage,
     messagesEndRef,
     scrollContainerRef,
-    handleScroll
+    handleScroll,
+    setShouldAutoScroll
   } = useQuantumChat('assistant', { mode: selectedStrategy.toLowerCase(), selectedPipeline });
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
