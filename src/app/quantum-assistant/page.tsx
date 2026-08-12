@@ -864,11 +864,8 @@ export default function App() {
                                     }
                                   ]);
 
-                                  // Force scroll to bottom immediately so user sees solver output
+                                  // Force scroll to bottom via standard scrollContainer logic
                                   setShouldAutoScroll(true);
-                                  setTimeout(() => {
-                                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                                  }, 50);
                                   
                                   try {
                                     const res = await fetch('/api/direct-model/stream', {
