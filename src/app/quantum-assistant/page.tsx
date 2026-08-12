@@ -189,7 +189,7 @@ export default function App() {
       selectedPipeline,
       selectedPenalty,
       customPenalty,
-      isDirect: selectedPipeline === 'optimization',
+      isDirect: false, // Must use LLM parser for natural language on first submit
       runSolver: false,
     });
     setIsCreatingSession(false);
