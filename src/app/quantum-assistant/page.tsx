@@ -291,12 +291,20 @@ export default function App() {
       const lastBotMsg = [...messages].reverse().find(m => m.sender === 'bot');
       const workflowSteps = lastBotMsg?.workflowSteps || undefined;
 
+      // Extract original compile steps to merge execution progress without losing metadata
+      const compileBotMsg = [...messages].reverse().find(m => m.sender === 'bot' && m.workflowSteps?.nlp);
+      const compileSteps = compileBotMsg?.workflowSteps || {};
+      const mergedSteps = {
+        ...compileSteps,
+        ...(workflowSteps || {})
+      };
+
       setSessions(prev => prev.map(s => {
         if (s.id === activeSessionId) {
           return {
             ...s,
             messages: messages,
-            workflowSteps: workflowSteps || s.workflowSteps
+            workflowSteps: mergedSteps
           };
         }
         return s;
@@ -305,7 +313,7 @@ export default function App() {
       // Persist updates to MongoDB
       const isRealMongoId = activeSessionId.match(/^[0-9a-fA-F]{24}$/);
       if (isRealMongoId) {
-        updateChatSession(activeSessionId, messages, workflowSteps || {}).catch(err => {
+        updateChatSession(activeSessionId, messages, mergedSteps).catch(err => {
           console.error("Failed to sync chat session updates to DB:", err);
         });
       }
@@ -928,8 +936,8 @@ export default function App() {
                                                     workflowSteps: m.workflowSteps ? {
                                                       ...m.workflowSteps,
                                                       simulatorStatus: simStatus,
-                                                      outputStatus: outStatus,
-                                                      solver_output: solverOutputText
+                                                      outputStatus: outStatus
+                                                      // solver_output is omitted to avoid duplicate history cards
                                                     } : undefined
                                                   };
                                                 }
@@ -1157,6 +1165,7 @@ export default function App() {
           {/* ── OPTIMIZATION STUDIO SIDEBAR ───────────────────────────── */}
           {selectedPipeline === 'optimization' && activeSession && activeSession.workflowSteps && (() => {
             const ws = activeSession.workflowSteps;
+            const details = getWorkflowDetails();
             const optStats = ws.optimization_stats || {};
             const qMatrixDone = ws.qMatrixStatus === 'done';
             const quboCodeDone = ws.quboCodeStatus === 'done';
@@ -1170,6 +1179,59 @@ export default function App() {
               6: 'Penalty 6',
               custom: 'Custom λ',
             };
+
+            // Resolve penalty weights on client side
+            const getPenaltyValue = (choice: 1 | 2 | 3 | 4 | 5 | 6) => {
+              if (!details) return null;
+              const objCoeffs = details.objectives?.[0]?.expression?.coefficients || [];
+              const absObjCoeffs = objCoeffs.length > 0 ? objCoeffs.map(Math.abs) : [1.0];
+              const maxC = Math.max(...absObjCoeffs);
+              const sumC = absObjCoeffs.reduce((a, b) => a + b, 0);
+              const nConstraints = details.constraints?.length || 1;
+
+              if (choice === 1) return Number((sumC + 1.0).toFixed(2));
+              if (choice === 2) return Number((maxC * nConstraints + 1.0).toFixed(2));
+              if (choice === 3) return Number((maxC + 1.0).toFixed(2));
+              if (choice === 4) {
+                const sumSq = absObjCoeffs.reduce((a, b) => a + b * b, 0);
+                return Number((Math.sqrt(sumSq) + 1.0).toFixed(2));
+              }
+              if (choice === 5) {
+                let maxRatio = 0;
+                (details.constraints || []).forEach((c: any) => {
+                  const coeffs = c.lhs?.coefficients || [];
+                  coeffs.forEach((cVal: number, i: number) => {
+                    if (Math.abs(cVal) > 1e-9 && objCoeffs[i] !== undefined) {
+                      const ratio = Math.abs(objCoeffs[i]) / Math.abs(cVal);
+                      if (ratio > maxRatio) maxRatio = ratio;
+                    }
+                  });
+                });
+                return maxRatio > 0 ? Number((maxRatio + 1.0).toFixed(2)) : Number((maxC + 1.0).toFixed(2));
+              }
+              if (choice === 6) {
+                let k = null;
+                (details.constraints || []).forEach((c: any) => {
+                  if (['=', '==', '<='].includes(c.operator)) {
+                    const coeffs = c.lhs?.coefficients || [];
+                    if (coeffs.length > 0 && coeffs.every((val: number) => Math.abs(val - 1.0) < 1e-9)) {
+                      const valRight = typeof c.rhs?.value === 'number' ? c.rhs.value : Number(c.rhs?.value || 0);
+                      if (k === null || valRight < k) {
+                        k = valRight;
+                      }
+                    }
+                  }
+                });
+                if (k === null) {
+                  k = Math.max(1, Math.ceil((details.variables?.length || 1) * 0.35));
+                }
+                const sortedCoeffs = [...absObjCoeffs].sort((a, b) => b - a);
+                const densitySum = sortedCoeffs.slice(0, k).reduce((a, b) => a + b, 0);
+                return Number((densitySum + 1.0).toFixed(2));
+              }
+              return null;
+            };
+
             return (
               <div className="space-y-3">
 
@@ -1231,21 +1293,14 @@ export default function App() {
                   <span className="text-[11px] font-semibold text-blue-600 block">Penalty λ</span>
                   <div className="space-y-1.5">
                     {([1, 2, 3, 4, 5, 6] as const).map((p) => {
-                      const isActive = optStats.penalty_weight !== undefined && (
-                        (p === 1 && optStats.penalty_label?.includes("Proposed Penalty 1")) ||
-                        (p === 2 && optStats.penalty_label?.includes("Proposed Penalty 2")) ||
-                        (p === 3 && (optStats.penalty_label?.includes("Proposed Penalty 3") || optStats.penalty_label?.includes("Verma-Lewis"))) ||
-                        (p === 4 && optStats.penalty_label?.includes("Adaptive L2 Norm")) ||
-                        (p === 5 && optStats.penalty_label?.includes("Lagrange Ratio")) ||
-                        (p === 6 && optStats.penalty_label?.includes("Active Density"))
-                      );
+                      const val = getPenaltyValue(p);
                       return (
                         <button
                           key={p}
                           onClick={() => setSelectedPenalty(p)}
                           className={`w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${selectedPenalty === p ? 'bg-white text-blue-600 border-blue-600 shadow-sm ring-1 ring-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
                         >
-                          {penaltyLabels[p]}{isActive ? ` (λ = ${optStats.penalty_weight})` : ''}
+                          {penaltyLabels[p]}{val !== null ? ` (λ = ${val})` : ''}
                         </button>
                       );
                     })}
@@ -1271,8 +1326,8 @@ export default function App() {
                       onClick={async () => {
                         if (isExecuting) return;
                         setIsExecuting(true);
-                        const lastBotMsg = [...messages].reverse().find((m: any) => m.sender === 'bot');
-                        const spec = lastBotMsg?.workflowSteps?.nlp || '';
+                        const compileBotMsg = [...messages].reverse().find((m: any) => m.sender === 'bot' && m.workflowSteps?.nlp);
+                        const spec = compileBotMsg?.workflowSteps?.nlp || '';
                         await sendMessage(spec || '__rerun__', {
                           selectedPipeline: 'optimization',
                           selectedPenalty,
