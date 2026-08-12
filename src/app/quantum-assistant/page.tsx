@@ -61,6 +61,9 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
+  const [selectedPenalty, setSelectedPenalty] = useState<number | 'custom'>(3);
+  const [customPenalty, setCustomPenalty] = useState<string>('30');
+  const [isExecuting, setIsExecuting] = useState(false);
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const historyDrawerRef = useRef<HTMLDivElement>(null);
 
@@ -183,7 +186,11 @@ export default function App() {
     await sendMessage(text, { 
       sessionId: targetSessionId,
       mode: selectedStrategy.toLowerCase(),
-      selectedPipeline
+      selectedPipeline,
+      selectedPenalty,
+      customPenalty,
+      isDirect: selectedPipeline === 'optimization',
+      runSolver: false,
     });
     setIsCreatingSession(false);
   };
@@ -721,6 +728,36 @@ export default function App() {
                       ) : (
                         <div className="prose prose-slate max-w-none text-slate-700 overflow-hidden break-words">
                           <MarkdownRenderer content={msg.text} suggestedSolver={msg.workflowSteps?.suggested_solver} onExecute={() => alert("Execution submitted to Quantum backend!")} />
+                          {/* Execute Button: shown for optimization pipeline once QUBO code is ready and not yet executed */}
+                          {selectedPipeline === 'optimization' && msg.workflowSteps?.quboCodeStatus === 'done' && !msg.workflowSteps?.outputStatus?.includes('done') && !msg.isStreaming && (
+                            <div className="mt-4 pt-4 border-t border-slate-200">
+                              <button
+                                onClick={async () => {
+                                  if (isExecuting) return;
+                                  setIsExecuting(true);
+                                  const specToSend = msg.workflowSteps?.nlp || '';
+                                  await sendMessage(specToSend || '__rerun__', {
+                                    selectedPipeline: 'optimization',
+                                    selectedPenalty,
+                                    customPenalty,
+                                    isDirect: true,
+                                    runSolver: true,
+                                    mode: selectedStrategy.toLowerCase(),
+                                  });
+                                  setIsExecuting(false);
+                                }}
+                                disabled={isExecuting}
+                                className="flex items-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-all shadow-sm cursor-pointer"
+                              >
+                                {isExecuting ? (
+                                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Running Solver...</>
+                                ) : (
+                                  <><Terminal className="w-3.5 h-3.5" /> Execute Solver</>
+                                )}
+                              </button>
+                              <p className="mt-2 text-[10px] text-slate-400">Runs D-Wave Simulated Annealing · 5,000 reads</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -815,14 +852,14 @@ export default function App() {
                           {[
                             { label: 'General Quantum Computing Question' },
                             { label: 'Business Problem to Optimization' },
-                            { label: 'Generate Quantum Algorithm' },
+                            { label: 'Quantum Circuit Studio' },
                           ].map(({ label }) => (
                             <button
                               key={label}
                               onClick={() => { 
                                 setSelectedPipeline(
                                   label === 'Business Problem to Optimization' ? 'optimization' :
-                                  label === 'Generate Quantum Algorithm' ? 'coder' : 'general'
+                                  label === 'Quantum Circuit Studio' ? 'coder' : 'general'
                                 );
                                 setShowAttachMenu(false); 
                               }}
@@ -868,7 +905,7 @@ export default function App() {
                 <span className="text-[10px] font-medium text-slate-500">
                     Connected to: <span className="font-bold text-slate-600">{
                         selectedPipeline === 'general' ? 'General Quantum Computing Question' :
-                        selectedPipeline === 'coder' ? 'Generate Quantum Algorithm' :
+                        selectedPipeline === 'coder' ? 'Quantum Circuit Studio' :
                         'Business Problem to Optimization'
                     }</span>
                 </span>
@@ -880,23 +917,173 @@ export default function App() {
         <div className="h-14 border-b border-slate-200 flex items-center px-6 shrink-0 justify-between">
           <div className="flex items-center">
             <Activity className="w-4 h-4 text-blue-600 mr-2" />
-            <h2 className="font-semibold text-slate-800 text-sm">Workflow Insights</h2>
+            <h2 className="font-semibold text-slate-800 text-sm">
+              {selectedPipeline === 'optimization' ? 'Optimization Studio' : selectedPipeline === 'coder' ? 'Quantum Circuit Studio' : 'Quantum Assistant'}
+            </h2>
           </div>
         </div>
         
-        <div className="p-6 flex-1 overflow-y-auto">
+        <div className="p-4 flex-1 overflow-y-auto space-y-3">
           {/* Waiting/Initial Header Status Card */}
           {(!activeSession || !activeSession.workflowSteps) && (
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 flex flex-col items-center justify-center text-center gap-2 animate-in fade-in duration-250">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-center gap-2 animate-in fade-in duration-250">
               <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 animate-pulse">
                 <Activity className="w-4 h-4" />
               </div>
               <p className="text-xs font-semibold text-slate-500">Waiting for problem submission...</p>
-              <p className="text-[10px] text-slate-400 max-w-[200px] leading-relaxed">Council of Experts neural traces will display here once execution starts.</p>
+              <p className="text-[10px] text-slate-400 max-w-[200px] leading-relaxed">Pipeline traces will display here once execution starts.</p>
             </div>
           )}
 
-          {/* Council of Experts: 11 Detailed Insights Cards */}
+          {/* ── OPTIMIZATION STUDIO SIDEBAR ───────────────────────────── */}
+          {selectedPipeline === 'optimization' && activeSession && activeSession.workflowSteps && (() => {
+            const ws = activeSession.workflowSteps;
+            const optStats = ws.optimization_stats || {};
+            const qMatrixDone = ws.qMatrixStatus === 'done';
+            const quboCodeDone = ws.quboCodeStatus === 'done';
+            const outputDone = ws.outputStatus === 'done';
+            const penaltyLabels: Record<number | string, string> = {
+              1: 'Proposed Penalty 1 (Sum)',
+              2: 'Proposed Penalty 2 (Moderate)',
+              3: 'Proposed Penalty 3 (Verma-Lewis)',
+              4: 'Adaptive L2 Norm',
+              5: 'Lagrange Ratio',
+              6: 'Active Density',
+              custom: 'Custom λ',
+            };
+            return (
+              <div className="space-y-3">
+
+                {/* Card: Q Matrix */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-600">Q Matrix</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${qMatrixDone ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>
+                      {ws.qMatrixStatus === 'running' ? '⏳ Building...' : qMatrixDone ? '✓ Done' : '○ Pending'}
+                    </span>
+                  </div>
+                  {qMatrixDone && optStats.q_size ? (
+                    <div className="space-y-1 text-[11px]">
+                      <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                        <span className="text-slate-500">Dimension</span>
+                        <span className="font-semibold text-slate-700">{optStats.q_size} × {optStats.q_size}</span>
+                      </div>
+                      <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                        <span className="text-slate-500">Non-zero entries</span>
+                        <span className="font-semibold text-slate-700">{optStats.q_nnz}</span>
+                      </div>
+                      <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                        <span className="text-slate-500">Decision vars</span>
+                        <span className="font-semibold text-slate-700">{optStats.decision_vars_count}</span>
+                      </div>
+                      <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                        <span className="text-slate-500">Slack vars</span>
+                        <span className="font-semibold text-slate-700">{optStats.slack_vars_count}</span>
+                      </div>
+                      <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                        <span className="text-slate-500">Matrix density</span>
+                        <span className="font-semibold text-slate-700">{optStats.matrix_density}%</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-400 italic">Submit a problem to build Q matrix</p>
+                  )}
+                </div>
+
+                {/* Card: QUBO Code */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-600">QUBO Code</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${quboCodeDone ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                      {quboCodeDone ? '✓ Generated' : '○ Pending'}
+                    </span>
+                  </div>
+                  {quboCodeDone ? (
+                    <div className="text-[10px] text-slate-500 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                      Python script compiled from QUBO formulation. Visible in chat below.
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-400 italic">Generated after Q matrix is compiled</p>
+                  )}
+                </div>
+
+                {/* Card: Penalty Selector */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5 hover:shadow-sm transition-all">
+                  <span className="text-[11px] font-semibold text-blue-600 block">Penalty λ</span>
+                  <div className="space-y-1.5">
+                    {([1, 2, 3, 4, 5, 6] as const).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setSelectedPenalty(p)}
+                        className={`w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${selectedPenalty === p ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
+                      >
+                        {penaltyLabels[p]}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setSelectedPenalty('custom')}
+                      className={`w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${selectedPenalty === 'custom' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'}`}
+                    >
+                      Custom λ
+                    </button>
+                    {selectedPenalty === 'custom' && (
+                      <input
+                        type="number"
+                        value={customPenalty}
+                        onChange={(e) => setCustomPenalty(e.target.value)}
+                        placeholder="e.g. 30"
+                        className="w-full text-[10px] px-2.5 py-1.5 rounded-lg border border-blue-300 bg-white text-slate-700 outline-none focus:ring-1 focus:ring-blue-400"
+                      />
+                    )}
+                  </div>
+                  {/* Rerun button */}
+                  {quboCodeDone && (
+                    <button
+                      onClick={async () => {
+                        if (isExecuting) return;
+                        setIsExecuting(true);
+                        const lastBotMsg = [...messages].reverse().find((m: any) => m.sender === 'bot');
+                        const spec = lastBotMsg?.workflowSteps?.nlp || '';
+                        await sendMessage(spec || '__rerun__', {
+                          selectedPipeline: 'optimization',
+                          selectedPenalty,
+                          customPenalty,
+                          isDirect: true,
+                          runSolver: false,
+                          mode: selectedStrategy.toLowerCase(),
+                        });
+                        setIsExecuting(false);
+                      }}
+                      disabled={isExecuting}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[10px] font-semibold rounded-lg transition-all cursor-pointer shadow-sm"
+                    >
+                      {isExecuting ? <><Loader2 className="w-3 h-3 animate-spin" /> Running...</> : <><Activity className="w-3 h-3" /> Rerun with Penalty {selectedPenalty}</>}
+                    </button>
+                  )}
+                </div>
+
+                {/* Card: Output */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-600">Solver Output</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${outputDone ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                      {ws.outputStatus === 'running' ? '⏳ Running...' : outputDone ? '✓ Done' : '○ Pending'}
+                    </span>
+                  </div>
+                  {outputDone && ws.solver_output ? (
+                    <div className="max-h-[200px] overflow-y-auto">
+                      <MarkdownRenderer content={ws.solver_output} />
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-400 italic">Click Execute Solver in chat to run</p>
+                  )}
+                </div>
+
+              </div>
+            );
+          })()}
+
+          {/* ── COUNCIL OF EXPERTS (Optimization) 11 cards ── */}
           {activeSession && activeSession.workflowSteps && (() => {
             const details = getWorkflowDetails();
             if (!details) return null;
