@@ -488,7 +488,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
                                         text: progressText,
                                         isStreaming: step !== 'output',
                                         workflowSteps: {
-                                            nlp: dmSteps.parsing?.message || 'Parsing...',
+                                            nlp: specToSend,
                                             reasoner: dmSteps.q_matrix?.message || '',
                                             suggestor: dmSteps.qubo_code?.message || '',
                                             solver: dmSteps.simulator?.message || '',
@@ -496,12 +496,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
                                             solver_output: dmSteps.output?.output_text || '',
                                             dcc: false,
                                             suggested_solver: dmSteps.simulator?.sampler || 'D-Wave SA',
-                                            math_rigor: {
-                                                variables: dmSteps.parsing?.variables?.map((v: string) => ({ name: v, latex_def: v, index_set: 'binary' })) || [],
-                                                constraints: dmSteps.parsing?.constraints || [],
-                                                objectives: dmSteps.parsing?.objective ? [dmSteps.parsing.objective] : [],
-                                                has_quadratic: true,
-                                            },
+                                            math_rigor: null,
                                             optimization_stats: dmSteps.q_matrix ? {
                                                 q_size: dmSteps.q_matrix.q_size,
                                                 q_nnz: dmSteps.q_matrix.q_nnz,
