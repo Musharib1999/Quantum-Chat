@@ -405,7 +405,7 @@ export async function chatWithQuantumAI(
                 const matrix_density = q_size > 0 ? parseFloat(((q_nnz / (q_size * q_size)) * 100).toFixed(2)) : 0.0;
 
                 const workflowSteps = {
-                    nlp: data.parsed_math || "Parsed successfully",
+                    nlp: data.problem_specification ? JSON.stringify(data.problem_specification) : (data.parsed_math || "Parsed successfully"),
                     reasoner: data.reasoning_trace || "Feasibility check passed",
                     suggestor: `Suggested Solver: ${data.suggested_solver}\nRationale: ${data.solver_rationale || 'Optimal choice based on constraints'}`,
                     solver: "Generated Python optimization code",
