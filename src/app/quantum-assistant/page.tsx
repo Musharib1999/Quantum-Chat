@@ -833,6 +833,11 @@ export default function App() {
                                 onClick={async () => {
                                   if (isExecuting) return;
                                   setIsExecuting(true);
+                                  // Force scroll to bottom immediately so user sees solver output
+                                  setShouldAutoScroll(true);
+                                  setTimeout(() => {
+                                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                                  }, 50);
                                   try {
                                     // Update status to running first
                                     setMessages(prev => prev.map(m => {
