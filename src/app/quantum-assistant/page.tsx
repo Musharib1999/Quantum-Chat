@@ -70,8 +70,64 @@ interface ChatSession {
 }
 
 export default function App() {
+  const getPipelineTitle = (pipeline: string) => {
+    switch (pipeline) {
+      case 'optimization': return 'Optimization Studio';
+      case 'algorithm': return 'Quantum Algorithm Studio';
+      case 'coder': return 'Quantum Circuit Studio';
+      case 'general':
+      default:
+        return 'Quantum Assistant';
+    }
+  };
+
+  const getPipelineTagline = (pipeline: string) => {
+    switch (pipeline) {
+      case 'optimization':
+        return (
+          <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <span>Business Problem</span>
+            <ChevronRight className="w-3 h-3 text-slate-300" />
+            <span>Deterministic Compilation</span>
+            <ChevronRight className="w-3 h-3 text-slate-300" />
+            <span>Optimal Execution</span>
+          </div>
+        );
+      case 'algorithm':
+        return (
+          <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <span>Algorithm Specification</span>
+            <ChevronRight className="w-3 h-3 text-slate-300" />
+            <span>Quantum Program</span>
+            <ChevronRight className="w-3 h-3 text-slate-300" />
+            <span>Execution</span>
+          </div>
+        );
+      case 'coder':
+        return (
+          <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <span>Quantum Intent</span>
+            <ChevronRight className="w-3 h-3 text-slate-300" />
+            <span>Deterministic Circuit</span>
+            <ChevronRight className="w-3 h-3 text-slate-300" />
+            <span>Simulation</span>
+          </div>
+        );
+      case 'general':
+      default:
+        return (
+          <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <span>Question</span>
+            <ChevronRight className="w-3 h-3 text-slate-300" />
+            <span>Verified Knowledge</span>
+            <ChevronRight className="w-3 h-3 text-slate-300" />
+            <span>Explanation</span>
+          </div>
+        );
+    }
+  };
   const [selectedStrategy, setSelectedStrategy] = useState<'Auto' | 'CQM' | 'QUBO' | 'OR-Tools'>('Auto');
-  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'coder'>('optimization');
+  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'algorithm' | 'coder'>('optimization');
   
   const {
     messages,
@@ -933,13 +989,7 @@ export default function App() {
         {/* Input Area (Fixed Bottom, standard flow) */}
         <div className="bg-[#f8fafc] pt-2 pb-6 px-8 shrink-0 z-10 border-t border-slate-200/50">
           <div className="max-w-4xl mx-auto flex flex-col gap-3">
-                        <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              <span>Natural Language</span>
-              <ChevronRight className="w-3 h-3 text-slate-300" />
-              <span>Mathematical Model</span>
-              <ChevronRight className="w-3 h-3 text-slate-300" />
-              <span>Optimal Solution</span>
-            </div>
+                        {getPipelineTagline(selectedPipeline)}
 
             <div className="bg-white border border-slate-300 rounded-2xl shadow-md focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all flex flex-col">
               <textarea 
@@ -953,10 +1003,12 @@ export default function App() {
                 }}
                 placeholder={
                   selectedPipeline === 'optimization'
-                    ? "Describe your optimization problem... Example: optimize delivery routes, Nurse shift allocation..."
+                    ? "Describe your optimization problem... Example: optimize delivery routes, nurse scheduling..."
+                    : selectedPipeline === 'algorithm'
+                    ? "Specify the quantum algorithm you want to design..."
                     : selectedPipeline === 'coder'
-                    ? "Describe the quantum code you want to generate..."
-                    : "Ask a general quantum computing question..."
+                    ? "Describe the quantum circuit you want to compile and simulate..."
+                    : "Ask a quantum computing question..."
                 }
                 className="w-full p-4 text-slate-707 placeholder:text-slate-400 outline-none resize-none bg-transparent text-sm leading-relaxed min-h-[90px]"
                 rows={3}
@@ -994,17 +1046,15 @@ export default function App() {
                           </div>
 
                           {[
-                            { label: 'General Quantum Computing Question' },
-                            { label: 'Business Problem to Optimization' },
-                            { label: 'Quantum Circuit Studio' },
-                          ].map(({ label }) => (
+                            { label: 'Quantum Assistant', pipeline: 'general' },
+                            { label: 'Optimization Studio', pipeline: 'optimization' },
+                            { label: 'Quantum Algorithm Studio', pipeline: 'algorithm' },
+                            { label: 'Quantum Circuit Studio', pipeline: 'coder' },
+                          ].map(({ label, pipeline }) => (
                             <button
                               key={label}
                               onClick={() => { 
-                                setSelectedPipeline(
-                                  label === 'Business Problem to Optimization' ? 'optimization' :
-                                  label === 'Quantum Circuit Studio' ? 'coder' : 'general'
-                                );
+                                setSelectedPipeline(pipeline as any);
                                 setShowAttachMenu(false); 
                               }}
                               className="w-full text-left px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700 rounded-lg text-[11px] font-medium text-slate-700 flex items-center gap-2.5 cursor-pointer transition-colors group"
@@ -1047,11 +1097,7 @@ export default function App() {
             {/* Pipeline Connection Status */}
             <div className="flex items-center justify-center gap-1.5 mt-1 opacity-80">
                 <span className="text-[10px] font-medium text-slate-500">
-                    Connected to: <span className="font-bold text-slate-600">{
-                        selectedPipeline === 'general' ? 'General Quantum Computing Question' :
-                        selectedPipeline === 'coder' ? 'Quantum Circuit Studio' :
-                        'Business Problem to Optimization'
-                    }</span>
+                    Connected to: <span className="font-bold text-slate-600">{getPipelineTitle(selectedPipeline)}</span>
                 </span>
             </div>
           </div>
@@ -1062,7 +1108,7 @@ export default function App() {
           <div className="flex items-center">
             <Activity className="w-4 h-4 text-blue-600 mr-2" />
             <h2 className="font-semibold text-slate-800 text-sm">
-              {selectedPipeline === 'optimization' ? 'Optimization Studio' : selectedPipeline === 'coder' ? 'Quantum Circuit Studio' : 'Quantum Assistant'}
+              {getPipelineTitle(selectedPipeline)}
             </h2>
           </div>
         </div>

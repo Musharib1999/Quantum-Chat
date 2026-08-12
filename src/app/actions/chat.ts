@@ -469,10 +469,12 @@ export async function chatWithQuantumAI(
                 };
             }
 
-            // Pipeline 2 (general) and Pipeline 3 (code) — Direct Qwen 32B on RunPod
-            let sysPrompt = "You are the Quantum Guru, an expert quantum computing assistant. Answer clearly and accurately.";
-            if (pipelineIntent === 'code') {
-                sysPrompt = "You are an expert Quantum Computing Software Engineer. Write clean, optimal Python code using libraries like Qiskit, Cirq, or D-Wave Ocean as requested. Provide explanations along with the code.";
+            // Direct Qwen 32B on RunPod
+            let sysPrompt = "You are the Quantum Guru, an expert quantum assistant. Answer clearly and accurately.";
+            if (pipelineIntent === 'algorithm') {
+                sysPrompt = "You are an expert Quantum Algorithm Scientist. Formulate high-level quantum algorithms and compile them into programs using frameworks like Qiskit or Pennylane.";
+            } else if (pipelineIntent === 'coder' || pipelineIntent === 'code') {
+                sysPrompt = "You are an expert Quantum Circuit Engineer. Design, optimize, and simulate quantum logic gate circuits using Qiskit, Cirq, or OpenQASM.";
             }
 
             const backendRes = await axios.post(`${backendUrl}/v2/chat`, {
