@@ -1272,7 +1272,7 @@ export default function App() {
                   </div>
                   {outputDone && ws.solver_output ? (
                     <div className="max-h-[200px] overflow-y-auto">
-                      <MarkdownRenderer content={ws.solver_output} />
+                      <MarkdownRenderer content={ws.solver_output} isSidebar={true} />
                     </div>
                   ) : (
                     <p className="text-[10px] text-slate-400 italic">Click Execute Solver in chat to run</p>
@@ -1333,7 +1333,7 @@ export default function App() {
                           {v.latex_def ? (
                             <div className="mt-1 space-y-0.5">
                               <div className="font-mono text-[10px] text-slate-500 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 flex items-center gap-1 overflow-x-auto">
-                                <MarkdownRenderer content={v.latex_def} />
+                                <MarkdownRenderer content={v.latex_def} isSidebar={true} />
                               </div>
                               {v.index_set && (
                                 <div className="text-[10px] text-slate-400 font-mono">
@@ -1529,7 +1529,7 @@ export default function App() {
                               <span>{run.timestamp || new Date().toLocaleTimeString()}</span>
                             </div>
                             <div className="text-[10px] text-slate-700 leading-relaxed font-sans max-h-[100px] overflow-y-auto">
-                              <MarkdownRenderer content={run.workflowSteps?.solver_output || ""} />
+                              <MarkdownRenderer content={run.workflowSteps?.solver_output || ""} isSidebar={true} />
                             </div>
                           </div>
                         ));

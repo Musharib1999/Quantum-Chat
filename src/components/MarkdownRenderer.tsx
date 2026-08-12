@@ -27,6 +27,7 @@ interface MarkdownRendererProps {
     isCodeExecuting?: boolean;
     onUpdateExecutionResult?: (msgId: number, result: any) => void;
     hideRunButton?: boolean;
+    isSidebar?: boolean;
 }
 
 // Helper runner component to keep execution states independent per code block
@@ -40,6 +41,7 @@ interface CodeBlockRunnerProps {
     isCodeExecuting?: boolean;
     props: any;
     hideRunButton?: boolean;
+    isSidebar?: boolean;
 }
 
 function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateExecutionResult, executionResult, isCodeExecuting, props, hideRunButton }: CodeBlockRunnerProps) {
@@ -164,7 +166,7 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateE
     );
 }
 
-export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute, messageId, executionResult, isCodeExecuting, onUpdateExecutionResult, hideRunButton }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute, messageId, executionResult, isCodeExecuting, onUpdateExecutionResult, hideRunButton, isSidebar }: MarkdownRendererProps) {
     const cleanContent = (content || "")
       .replace(/autoqubo/gi, "sampling_compiler")
       .replace(/auto_qubo/gi, "sampling_compiler")
@@ -181,6 +183,54 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
             .replace(/auto_qubo/gi, "sampling_compiler")
             .replace(/auto qubo/gi, "sampling_compiler") : undefined
     } : undefined;
+
+    if (isSidebar) {
+        return (
+            <div className="text-[10px] text-slate-700 leading-relaxed max-w-none">
+                <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                        code({ node, inline, className, children, ...props }: any) {
+                            return (
+                                <code className="bg-slate-100 text-slate-600 rounded px-1 py-0.5 text-[9.5px] font-mono border border-slate-200" {...props}>
+                                    {children}
+                                </code>
+                            );
+                        },
+                        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 marker:text-slate-400 font-sans text-[10px] text-slate-600 leading-relaxed mb-2">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 marker:text-slate-400 font-sans text-[10px] text-slate-600 leading-relaxed mb-2">{children}</ol>,
+                        li: ({ children }) => <li className="pl-0.5 font-sans text-[10px] text-slate-600 leading-relaxed">{children}</li>,
+                        p: ({ children }) => <p className="font-sans text-[10px] text-slate-600 leading-relaxed mb-1.5">{children}</p>,
+                        h1: ({ children }) => <h1 className="text-[11px] font-bold mb-1.5 mt-2.5 text-slate-700 font-sans tracking-wide">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-[10.5px] font-bold mb-1.5 mt-2 text-slate-700 font-sans tracking-wide">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-[10px] font-bold mb-1 mt-1.5 text-slate-700 font-sans tracking-wide">{children}</h3>,
+                        blockquote: ({ children }) => (
+                            <div className="border-l-2 border-slate-350 bg-slate-50 pl-2.5 py-1.5 my-2 italic text-slate-500 text-[10px]">
+                                {children}
+                            </div>
+                        ),
+                        a: ({ href, children }) => (
+                            <span className="text-slate-500 border-b border-slate-200">
+                                {children}
+                            </span>
+                        ),
+                        table: ({ children }) => (
+                            <div className="overflow-x-auto my-2 rounded-lg border border-slate-200">
+                                <table className="w-full text-left text-[10px]">{children}</table>
+                            </div>
+                        ),
+                        thead: ({ children }) => <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">{children}</thead>,
+                        tbody: ({ children }) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
+                        tr: ({ children }) => <tr className="hover:bg-slate-50/50 transition-colors">{children}</tr>,
+                        th: ({ children }) => <th className="px-2 py-1 font-semibold text-slate-700">{children}</th>,
+                        td: ({ children }) => <td className="px-2 py-1 text-slate-500">{children}</td>,
+                    }}
+                >
+                    {cleanContent}
+                </ReactMarkdown>
+            </div>
+        );
+    }
 
     return (
         <div className="prose prose-zinc dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:mb-6 prose-pre:p-0 prose-pre:bg-transparent">
