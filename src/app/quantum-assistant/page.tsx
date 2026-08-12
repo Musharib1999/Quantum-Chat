@@ -834,14 +834,12 @@ export default function App() {
                                 onClick={async () => {
                                   if (isExecuting) return;
                                   setIsExecuting(true);
-                                  // Force scroll to bottom immediately so user sees solver output
-                                  setShouldAutoScroll(true);
-                                  setTimeout(() => {
-                                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                                  }, 50);
-                                  try {
-                                    // Update status to running first
-                                    setMessages(prev => prev.map(m => {
+                                  
+                                  const execMsgId = Date.now() + 500;
+                                  
+                                  // Update parent status AND append the new execution bubble
+                                  setMessages(prev => [
+                                    ...prev.map(m => {
                                       if (m.id === msg.id) {
                                         return {
                                           ...m,
@@ -853,8 +851,26 @@ export default function App() {
                                         };
                                       }
                                       return m;
-                                    }));
+                                    }),
+                                    {
+                                      id: execMsgId,
+                                      sender: 'bot' as const,
+                                      text: "⏳ **Running Solver...**\nRunning D-Wave Simulated Annealing (5,000 reads)...",
+                                      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                      workflowSteps: {
+                                        outputStatus: 'running',
+                                        simulatorStatus: 'running'
+                                      }
+                                    }
+                                  ]);
 
+                                  // Force scroll to bottom immediately so user sees solver output
+                                  setShouldAutoScroll(true);
+                                  setTimeout(() => {
+                                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                                  }, 50);
+                                  
+                                  try {
                                     const res = await fetch('/api/direct-model/stream', {
                                       method: 'POST',
                                       headers: { 'Content-Type': 'application/json' },
@@ -874,7 +890,6 @@ export default function App() {
                                     const reader = res.body?.getReader();
                                     const decoder = new TextDecoder();
                                     let accumulated = "";
-                                    let baseText = msg.text;
 
                                     let simStatus = 'running';
                                     let outStatus = 'pending';
@@ -908,29 +923,34 @@ export default function App() {
                                                 }
                                               }
 
-                                              // Rebuild the message text in-place
-                                              let newText = baseText;
-                                              if (simStatus === 'running') {
-                                                newText += `\n\n---\n\n### ⏳ Running Solver...\nRunning D-Wave Simulated Annealing (5,000 reads)...\n\n`;
-                                              } else if (simStatus === 'done') {
-                                                newText += `\n\n---\n\n### ✅ Solver Complete\n\n`;
-                                              }
-                                              if (solverOutputText) {
-                                                newText += solverOutputText + '\n\n';
-                                              }
-
-                                              // Update state in-place
+                                              // Update parent status AND update new execution bubble
                                               setMessages(prev => prev.map(m => {
                                                 if (m.id === msg.id) {
                                                   return {
                                                     ...m,
-                                                    text: newText,
                                                     workflowSteps: m.workflowSteps ? {
                                                       ...m.workflowSteps,
                                                       simulatorStatus: simStatus,
                                                       outputStatus: outStatus,
                                                       solver_output: solverOutputText
                                                     } : undefined
+                                                  };
+                                                }
+                                                if (m.id === execMsgId) {
+                                                  let textToShow = "⏳ **Running Solver...**\nRunning D-Wave Simulated Annealing (5,000 reads)...";
+                                                  if (solverOutputText) {
+                                                    textToShow = solverOutputText;
+                                                  } else if (simStatus === 'done') {
+                                                    textToShow = "✅ **Solver Complete**\nPreparing optimization output...";
+                                                  }
+                                                  return {
+                                                    ...m,
+                                                    text: textToShow,
+                                                    workflowSteps: {
+                                                      outputStatus: outStatus,
+                                                      simulatorStatus: simStatus,
+                                                      solver_output: solverOutputText
+                                                    }
                                                   };
                                                 }
                                                 return m;
@@ -943,10 +963,13 @@ export default function App() {
                                   } catch (err: any) {
                                     console.error("Solver execution error:", err);
                                     setMessages(prev => prev.map(m => {
-                                      if (m.id === msg.id) {
+                                      if (m.id === execMsgId) {
                                         return {
                                           ...m,
-                                          text: m.text + `\n\n❌ **Execution Error**: ${err.message}`
+                                          text: `❌ **Execution Error**: ${err.message}`,
+                                          workflowSteps: {
+                                            outputStatus: 'error'
+                                          }
                                         };
                                       }
                                       return m;
