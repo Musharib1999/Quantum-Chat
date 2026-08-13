@@ -1367,6 +1367,160 @@ export default function App() {
             );
           })()}
 
+          {/* ── QUANTUM CIRCUIT STUDIO SIDEBAR CARDS (1 to 4) ────────────────────── */}
+          {(selectedPipeline === "coder" || selectedPipeline === "gate_based") && activeSession && activeSession.workflowSteps && (() => {
+            const ws = activeSession.workflowSteps;
+            const stats = ws.optimization_stats || {};
+            const parsingDone = ws.parsingStatus === "done";
+            const compilingDone = ws.qMatrixStatus === "done" || !!ws.final_code;
+            const simDone = ws.simulatorStatus === "done" || !!stats.counts;
+
+            return (
+              <div className="space-y-3">
+                {/* Card 1: Gate Specification & Parsing */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-600">1. Gate Specification</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${parsingDone ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-amber-50 text-amber-600 border border-amber-200"}`}>
+                      {ws.parsingStatus === "running" ? "⏳ Parsing..." : parsingDone ? "✓ Done" : "○ Pending"}
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-[11px]">
+                    <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                      <span className="text-slate-500">Qubits Allocated</span>
+                      <span className="font-semibold text-slate-700">{stats.qubits || 2} Qubits</span>
+                    </div>
+                    <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                      <span className="text-slate-500">Classical Bits</span>
+                      <span className="font-semibold text-slate-700">{stats.qubits || 2} Bits</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 2: Compiled Circuit & Qiskit Code */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-600">2. Compiled Gate Circuit</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${compilingDone ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
+                      {ws.qMatrixStatus === "running" ? "⏳ Compiling..." : compilingDone ? "✓ Generated" : "○ Pending"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                    <div className="bg-white border border-slate-200 p-2 rounded-lg text-center">
+                      <p className="text-[9px] text-slate-400 font-medium uppercase">Circuit Depth</p>
+                      <p className="font-bold text-slate-700 text-xs mt-0.5">{stats.depth || 2}</p>
+                    </div>
+                    <div className="bg-white border border-slate-200 p-2 rounded-lg text-center">
+                      <p className="text-[9px] text-slate-400 font-medium uppercase">Gate Count</p>
+                      <p className="font-bold text-slate-700 text-xs mt-0.5">{stats.gate_count || 3}</p>
+                    </div>
+                  </div>
+                  {ws.q_matrix_preview && (
+                    <div className="bg-slate-900 text-slate-200 p-2 rounded-lg font-mono text-[9px] overflow-x-auto">
+                      <pre className="whitespace-pre">{ws.q_matrix_preview}</pre>
+                    </div>
+                  )}
+                </div>
+
+                {/* Card 3: Simulator Backend Setup & Execute Button */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-600">3. Execution Simulator</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${simDone ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
+                      {ws.simulatorStatus === "running" ? "⏳ Simulating..." : simDone ? "✓ Executed" : "○ Ready"}
+                    </span>
+                  </div>
+                  <div className="bg-white border border-slate-200 p-2.5 rounded-lg space-y-1 text-[10px]">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Target Backend:</span>
+                      <span className="font-semibold text-blue-600">Qiskit AerSimulator</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Shots Configuration:</span>
+                      <span className="font-medium text-slate-700">5,000 reads</span>
+                    </div>
+                  </div>
+                  {ws.final_code && (
+                    <button
+                      onClick={async () => {
+                        if (isExecuting) return;
+                        setIsExecuting(true);
+                        try {
+                          const res = await fetch("/api/gate-model/solve", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              model_text: ws.nlp || "",
+                              shots: 5000,
+                              run_simulator: true,
+                              session_id: activeSessionId
+                            })
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data.counts && activeSessionId) {
+                              setMessages(prev => prev.map(m => m.id === activeSessionId ? {
+                                ...m,
+                                workflowSteps: {
+                                  ...m.workflowSteps,
+                                  simulatorStatus: "done",
+                                  outputStatus: "done",
+                                  optimization_stats: {
+                                    ...(m.workflowSteps?.optimization_stats || {}),
+                                    counts: data.counts
+                                  }
+                                }
+                              } : m));
+                            }
+                          }
+                        } catch (err) {
+                          console.error("Execute Circuit failed:", err);
+                        } finally {
+                          setIsExecuting(false);
+                        }
+                      }}
+                      disabled={isExecuting}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[10px] font-semibold rounded-lg transition-all cursor-pointer shadow-sm mt-1"
+                    >
+                      {isExecuting ? <>Running Simulation...</> : "▶ Execute Circuit"}
+                    </button>
+                  )}
+                </div>
+
+                {/* Card 4: Execution Results & Counts */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-600">4. Measurement Output</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${simDone ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
+                      {simDone ? "✓ Completed" : "○ Pending"}
+                    </span>
+                  </div>
+                  {stats.counts ? (
+                    <div className="space-y-1.5 text-[10px]">
+                      {Object.entries(stats.counts).map(([state, count]: [string, any]) => {
+                        const total = Object.values(stats.counts).reduce((a: any, b: any) => Number(a) + Number(b), 0) as number;
+                        const pct = (Number(count) / (total || 1)) * 100;
+                        return (
+                          <div key={state} className="bg-white border border-slate-200 p-2 rounded-lg space-y-1">
+                            <div className="flex justify-between font-mono font-semibold text-slate-700">
+                              <span>|{state}⟩</span>
+                              <span>{count} ({pct.toFixed(1)}%)</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-400 italic">Click Execute Circuit to run simulation</p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ── COUNCIL OF EXPERTS (Optimization) 11 cards ── */}
           {activeSession && activeSession.workflowSteps && (activeSession.workflowSteps.nlp || activeSession.workflowSteps.math_rigor) && (() => {
             const details = getWorkflowDetails();

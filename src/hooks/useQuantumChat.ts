@@ -175,7 +175,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             const isDirectModel = fullConfig.isDirect === true;
 
             let response: any;
-            if (fullConfig.selectedPipeline === 'gate_based') {
+            if (fullConfig.selectedPipeline === 'gate_based' || fullConfig.selectedPipeline === 'coder') {
                 // ── Gate-Based Quantum Compiler pipeline (Variant 3) ────────────────
                 const botMsgId = Date.now() + 1;
                 setMessages(prev => [...prev, {
