@@ -1,6 +1,6 @@
-# Prime Blazar: External Stream Integration Specification
+# OptiOS: External Stream Integration Specification
 
-This document defines the interface for external systems (e.g., Telecom Showcase) to stream telemetry data into the Prime Blazar Quantum Guru optimization engine.
+This document defines the interface for external systems (e.g., Telecom Showcase) to stream telemetry data into the OptiOS Quantum Guru optimization engine.
 
 ---
 
@@ -40,7 +40,7 @@ The `payload` object is the data container for the optimization problem. Its int
 | `[primary_key]` | `Object/Array` | **Yes** | The core data to be optimized. |
 | `[metadata_keys]` | `String/Number` | No | Supporting metadata for scoring and analysis. |
 
-*Note: Please refer to your specific Industry Blueprint in the Prime Blazar Administrator Console to see the exact field requirements for your pipeline.*
+*Note: Please refer to your specific Industry Blueprint in the OptiOS Administrator Console to see the exact field requirements for your pipeline.*
 
 ---
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, StopCircle, ShieldCheck, TrendingUp, BookOpen } from 'lucide-react';
 import MarkdownRenderer from './MarkdownRenderer';
 import QuantumChart from './QuantumChart';
-import { chatWithGroq, AIResponse } from '@/app/actions/chat';
+import { chatWithQuantumAI, AIResponse } from '@/app/actions/chat';
 import { useAuth } from '@/context/AuthContext';
 
 interface Message {
@@ -19,7 +19,7 @@ interface Message {
 
 interface ChatInterfaceProps {
     mode: 'industry' | 'market' | 'article' | 'embed';
-    contextConfig?: any; // The payload to send to chatWithGroq
+    contextConfig?: any; // The payload to send to chatWithQuantumAI
     placeholder?: string;
     onAnalysisTriggered?: () => void;
 }
@@ -165,7 +165,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
                 setTimeout(() => setProcessingStep('interpreting'), 4000);
             }
 
-            const response = await chatWithGroq(userMsg.text, 'chat', 'en', fullConfig);
+            const response = await chatWithQuantumAI(userMsg.text, 'chat', 'en', fullConfig);
             setProcessingStep(null);
 
             // Dispatch token usage event to sidebar indicator
@@ -349,6 +349,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
                     <div className="relative flex items-end gap-2 bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-lg p-2 transition-all focus-within:ring-1 focus-within:ring-ring focus-within:border-ring focus-within:bg-card">
                         <textarea
                             value={inputValue}
+                            maxLength={5000}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                             placeholder={placeholder || "Initialize quantum query..."}
@@ -356,6 +357,11 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
                             className="flex-1 max-h-32 bg-transparent text-foreground placeholder:text-muted-foreground text-base px-4 py-3 focus:outline-none resize-none scrollbar-hide"
                             style={{ minHeight: '52px' }}
                         />
+                        {inputValue.length > 4000 && (
+                            <span className={`absolute bottom-2 right-16 text-xs font-mono ${inputValue.length >= 5000 ? 'text-red-500 font-bold' : 'text-amber-400'}`}>
+                                {inputValue.length}/5000
+                            </span>
+                        )}
 
                         <button
                             onClick={() => handleSendMessage()}

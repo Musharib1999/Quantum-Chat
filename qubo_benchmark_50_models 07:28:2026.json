@@ -1,0 +1,8465 @@
+[
+  {
+    "problem_id": 1,
+    "problem_text": "Benchmark 1: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          9
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            33,
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 11
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 12
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 13
+            },
+            {
+              "i": 3,
+              "j": 0,
+              "coefficient": 14
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17
+          ]
+        },
+        "rhs": 59
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 8,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 2,
+    "problem_text": "Benchmark 2: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          10
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            36,
+            43,
+            50,
+            57,
+            64,
+            36,
+            43,
+            50,
+            57,
+            64
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 12
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 13
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 14
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 15
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8
+          ]
+        },
+        "rhs": 68
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 9,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 3,
+    "problem_text": "Benchmark 3: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          11
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            39,
+            46,
+            53,
+            60,
+            32,
+            39,
+            46,
+            53,
+            60,
+            32,
+            39
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 13
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 14
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 15
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 16
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14
+          ]
+        },
+        "rhs": 81
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 10,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 4,
+    "problem_text": "Benchmark 4: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          12
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            42,
+            49,
+            56,
+            63,
+            35,
+            42,
+            49,
+            56,
+            63,
+            35,
+            42,
+            49
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 14
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 15
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 16
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 17
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20
+          ]
+        },
+        "rhs": 99
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 11,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 5,
+    "problem_text": "Benchmark 5: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          13
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            45,
+            52,
+            59,
+            31,
+            38,
+            45,
+            52,
+            59,
+            31,
+            38,
+            45,
+            52,
+            59
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 15
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 16
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 17
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 18
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11
+          ]
+        },
+        "rhs": 78
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 12,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 6,
+    "problem_text": "Benchmark 6: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          14
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            48,
+            55,
+            62,
+            34,
+            41,
+            48,
+            55,
+            62,
+            34,
+            41,
+            48,
+            55,
+            62,
+            34
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 16
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 17
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 18
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 19
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17
+          ]
+        },
+        "rhs": 95
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 13,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 7,
+    "problem_text": "Benchmark 7: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          15
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 17
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 18
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 19
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 20
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8
+          ]
+        },
+        "rhs": 107
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 14,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 8,
+    "problem_text": "Benchmark 8: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          8
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 18
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 19
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 20
+            },
+            {
+              "i": 3,
+              "j": 1,
+              "coefficient": 10
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19
+          ]
+        },
+        "rhs": 64
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 7,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 9,
+    "problem_text": "Benchmark 9: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          9
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            57,
+            64,
+            36,
+            43,
+            50,
+            57,
+            64,
+            36,
+            43
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 19
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 20
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 10
+            },
+            {
+              "i": 3,
+              "j": 0,
+              "coefficient": 11
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10
+          ]
+        },
+        "rhs": 74
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 8,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 10,
+    "problem_text": "Benchmark 10: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          10
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            60,
+            32,
+            39,
+            46,
+            53,
+            60,
+            32,
+            39,
+            46,
+            53
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 20
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 10
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 11
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 12
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16
+          ]
+        },
+        "rhs": 63
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 9,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 11,
+    "problem_text": "Benchmark 11: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          11
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            63,
+            35,
+            42,
+            49,
+            56,
+            63,
+            35,
+            42,
+            49,
+            56,
+            63
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 10
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 11
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 12
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 13
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7
+          ]
+        },
+        "rhs": 72
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 10,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 12,
+    "problem_text": "Benchmark 12: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          12
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            31,
+            38,
+            45,
+            52,
+            59,
+            31,
+            38,
+            45,
+            52,
+            59,
+            31,
+            38
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 11
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 12
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 13
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 14
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13
+          ]
+        },
+        "rhs": 85
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 11,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 13,
+    "problem_text": "Benchmark 13: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          13
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            34,
+            41,
+            48,
+            55,
+            62,
+            34,
+            41,
+            48,
+            55,
+            62,
+            34,
+            41,
+            48
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 12
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 13
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 14
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 15
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19
+          ]
+        },
+        "rhs": 102
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 12,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 14,
+    "problem_text": "Benchmark 14: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          14
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 13
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 14
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 15
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 16
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10
+          ]
+        },
+        "rhs": 115
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 13,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 15,
+    "problem_text": "Benchmark 15: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          15
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 14
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 15
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 16
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 17
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16
+          ]
+        },
+        "rhs": 90
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 14,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 16,
+    "problem_text": "Benchmark 16: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          8
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            43,
+            50,
+            57,
+            64,
+            36,
+            43,
+            50,
+            57
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 15
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 16
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 17
+            },
+            {
+              "i": 3,
+              "j": 1,
+              "coefficient": 18
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12
+          ]
+        },
+        "rhs": 50
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 7,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 17,
+    "problem_text": "Benchmark 17: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          9
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            46,
+            53,
+            60,
+            32,
+            39,
+            46,
+            53,
+            60,
+            32
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 16
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 17
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 18
+            },
+            {
+              "i": 3,
+              "j": 0,
+              "coefficient": 19
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18
+          ]
+        },
+        "rhs": 64
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 8,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 18,
+    "problem_text": "Benchmark 18: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          10
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            49,
+            56,
+            63,
+            35,
+            42,
+            49,
+            56,
+            63,
+            35,
+            42
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 17
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 18
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 19
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 20
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9
+          ]
+        },
+        "rhs": 74
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 9,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 19,
+    "problem_text": "Benchmark 19: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          11
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            52,
+            59,
+            31,
+            38,
+            45,
+            52,
+            59,
+            31,
+            38,
+            45,
+            52
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 18
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 19
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 20
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 10
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15
+          ]
+        },
+        "rhs": 88
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 10,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 20,
+    "problem_text": "Benchmark 20: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          12
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            55,
+            62,
+            34,
+            41,
+            48,
+            55,
+            62,
+            34,
+            41,
+            48,
+            55,
+            62
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 19
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 20
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 10
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 11
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6
+          ]
+        },
+        "rhs": 72
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 11,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 21,
+    "problem_text": "Benchmark 21: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          13
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            58,
+            30,
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58,
+            30,
+            37
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 20
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 10
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 11
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 12
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12
+          ]
+        },
+        "rhs": 85
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 12,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 22,
+    "problem_text": "Benchmark 22: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          14
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 10
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 11
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 12
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 13
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18
+          ]
+        },
+        "rhs": 102
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 13,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 23,
+    "problem_text": "Benchmark 23: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          15
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            64,
+            36,
+            43,
+            50,
+            57,
+            64,
+            36,
+            43,
+            50,
+            57,
+            64,
+            36,
+            43,
+            50,
+            57
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 11
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 12
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 13
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 14
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9
+          ]
+        },
+        "rhs": 115
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 14,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 24,
+    "problem_text": "Benchmark 24: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          8
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            32,
+            39,
+            46,
+            53,
+            60,
+            32,
+            39,
+            46
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 12
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 13
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 14
+            },
+            {
+              "i": 3,
+              "j": 1,
+              "coefficient": 15
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20
+          ]
+        },
+        "rhs": 68
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 7,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 25,
+    "problem_text": "Benchmark 25: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          9
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            35,
+            42,
+            49,
+            56,
+            63,
+            35,
+            42,
+            49,
+            56
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 13
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 14
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 15
+            },
+            {
+              "i": 3,
+              "j": 0,
+              "coefficient": 16
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11
+          ]
+        },
+        "rhs": 54
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 8,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 26,
+    "problem_text": "Benchmark 26: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          10
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            38,
+            45,
+            52,
+            59,
+            31,
+            38,
+            45,
+            52,
+            59,
+            31
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 14
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 15
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 16
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 17
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17
+          ]
+        },
+        "rhs": 68
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 9,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 27,
+    "problem_text": "Benchmark 27: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          11
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            41,
+            48,
+            55,
+            62,
+            34,
+            41,
+            48,
+            55,
+            62,
+            34,
+            41
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 15
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 16
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 17
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 18
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8
+          ]
+        },
+        "rhs": 78
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 10,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 28,
+    "problem_text": "Benchmark 28: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          12
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            44,
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44,
+            51
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 16
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 17
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 18
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 19
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14
+          ]
+        },
+        "rhs": 92
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 11,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 29,
+    "problem_text": "Benchmark 29: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          13
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 17
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 18
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 19
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 20
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20
+          ]
+        },
+        "rhs": 110
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 12,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 30,
+    "problem_text": "Benchmark 30: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          14
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            50,
+            57,
+            64,
+            36,
+            43,
+            50,
+            57,
+            64,
+            36,
+            43,
+            50,
+            57,
+            64,
+            36
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 18
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 19
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 20
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 10
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11
+          ]
+        },
+        "rhs": 81
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 13,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 31,
+    "problem_text": "Benchmark 31: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          15
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            53,
+            60,
+            32,
+            39,
+            46,
+            53,
+            60,
+            32,
+            39,
+            46,
+            53,
+            60,
+            32,
+            39,
+            46
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 19
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 20
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 10
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 11
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17
+          ]
+        },
+        "rhs": 99
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 14,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 32,
+    "problem_text": "Benchmark 32: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          8
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            56,
+            63,
+            35,
+            42,
+            49,
+            56,
+            63,
+            35
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 20
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 10
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 11
+            },
+            {
+              "i": 3,
+              "j": 1,
+              "coefficient": 12
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13
+          ]
+        },
+        "rhs": 54
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 7,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 33,
+    "problem_text": "Benchmark 33: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          9
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            59,
+            31,
+            38,
+            45,
+            52,
+            59,
+            31,
+            38,
+            45
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 10
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 11
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 12
+            },
+            {
+              "i": 3,
+              "j": 0,
+              "coefficient": 13
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19
+          ]
+        },
+        "rhs": 69
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 8,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 34,
+    "problem_text": "Benchmark 34: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          10
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            62,
+            34,
+            41,
+            48,
+            55,
+            62,
+            34,
+            41,
+            48,
+            55
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 11
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 12
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 13
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 14
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10
+          ]
+        },
+        "rhs": 79
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 9,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 35,
+    "problem_text": "Benchmark 35: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          11
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            30,
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58,
+            30
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 12
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 13
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 14
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 15
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16
+          ]
+        },
+        "rhs": 69
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 10,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 36,
+    "problem_text": "Benchmark 36: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          12
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            33,
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33,
+            40
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 13
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 14
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 15
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 16
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7
+          ]
+        },
+        "rhs": 79
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 11,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 37,
+    "problem_text": "Benchmark 37: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          13
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            36,
+            43,
+            50,
+            57,
+            64,
+            36,
+            43,
+            50,
+            57,
+            64,
+            36,
+            43,
+            50
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 14
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 15
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 16
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 17
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13
+          ]
+        },
+        "rhs": 92
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 12,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 38,
+    "problem_text": "Benchmark 38: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          14
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            39,
+            46,
+            53,
+            60,
+            32,
+            39,
+            46,
+            53,
+            60,
+            32,
+            39,
+            46,
+            53,
+            60
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 15
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 16
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 17
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 18
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19
+          ]
+        },
+        "rhs": 110
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 13,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 39,
+    "problem_text": "Benchmark 39: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          15
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            42,
+            49,
+            56,
+            63,
+            35,
+            42,
+            49,
+            56,
+            63,
+            35,
+            42,
+            49,
+            56,
+            63,
+            35
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 16
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 17
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 18
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 19
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10
+          ]
+        },
+        "rhs": 123
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 14,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 40,
+    "problem_text": "Benchmark 40: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          8
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            45,
+            52,
+            59,
+            31,
+            38,
+            45,
+            52,
+            59
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 17
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 18
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 19
+            },
+            {
+              "i": 3,
+              "j": 1,
+              "coefficient": 20
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6
+          ]
+        },
+        "rhs": 48
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 7,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 41,
+    "problem_text": "Benchmark 41: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          9
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            48,
+            55,
+            62,
+            34,
+            41,
+            48,
+            55,
+            62,
+            34
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 18
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 19
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 20
+            },
+            {
+              "i": 3,
+              "j": 0,
+              "coefficient": 10
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12
+          ]
+        },
+        "rhs": 59
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 8,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 42,
+    "problem_text": "Benchmark 42: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          10
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 19
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 20
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 10
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 11
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18
+          ]
+        },
+        "rhs": 74
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 9,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 43,
+    "problem_text": "Benchmark 43: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          11
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 20
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 10
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 11
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 12
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9
+          ]
+        },
+        "rhs": 84
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 10,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 44,
+    "problem_text": "Benchmark 44: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          12
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            57,
+            64,
+            36,
+            43,
+            50,
+            57,
+            64,
+            36,
+            43,
+            50,
+            57,
+            64
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 10
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 11
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 12
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 13
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15
+          ]
+        },
+        "rhs": 99
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 11,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 45,
+    "problem_text": "Benchmark 45: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          13
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            60,
+            32,
+            39,
+            46,
+            53,
+            60,
+            32,
+            39,
+            46,
+            53,
+            60,
+            32,
+            39
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 11
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 12
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 13
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 14
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 6
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6
+          ]
+        },
+        "rhs": 75
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 12,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 46,
+    "problem_text": "Benchmark 46: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          14
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            63,
+            35,
+            42,
+            49,
+            56,
+            63,
+            35,
+            42,
+            49,
+            56,
+            63,
+            35,
+            42,
+            49
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 12
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 13
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 14
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 15
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12,
+            17,
+            7,
+            12
+          ]
+        },
+        "rhs": 89
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 13,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 47,
+    "problem_text": "Benchmark 47: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          15
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            31,
+            38,
+            45,
+            52,
+            59,
+            31,
+            38,
+            45,
+            52,
+            59,
+            31,
+            38,
+            45,
+            52,
+            59
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 13
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 14
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 15
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 16
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 7
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18,
+            8,
+            13,
+            18
+          ]
+        },
+        "rhs": 107
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 14,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 48,
+    "problem_text": "Benchmark 48: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          8
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            34,
+            41,
+            48,
+            55,
+            62,
+            34,
+            41,
+            48
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 14
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 15
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 16
+            },
+            {
+              "i": 3,
+              "j": 1,
+              "coefficient": 17
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            9,
+            14,
+            19,
+            9,
+            14,
+            19,
+            9,
+            14
+          ]
+        },
+        "rhs": 58
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 7,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 49,
+    "problem_text": "Benchmark 49: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          9
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            37,
+            44,
+            51,
+            58,
+            30,
+            37,
+            44,
+            51,
+            58
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 15
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 16
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 17
+            },
+            {
+              "i": 3,
+              "j": 0,
+              "coefficient": 18
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 4
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            10,
+            15,
+            20,
+            10,
+            15,
+            20,
+            10,
+            15,
+            20
+          ]
+        },
+        "rhs": 74
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 8,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  },
+  {
+    "problem_id": 50,
+    "problem_text": "Benchmark 50: Enterprise Optimization Problem",
+    "variable_registry": [
+      {
+        "id": "vars",
+        "name": "x",
+        "domain": "boolean",
+        "dimensions": [
+          10
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "sense": "MAXIMIZE",
+        "expression": {
+          "type": "quadratic",
+          "var_id": "vars",
+          "linear_coefficients": [
+            40,
+            47,
+            54,
+            61,
+            33,
+            40,
+            47,
+            54,
+            61,
+            33
+          ],
+          "quadratic_terms": [
+            {
+              "i": 0,
+              "j": 3,
+              "coefficient": 16
+            },
+            {
+              "i": 1,
+              "j": 5,
+              "coefficient": 17
+            },
+            {
+              "i": 2,
+              "j": 7,
+              "coefficient": 18
+            },
+            {
+              "i": 3,
+              "j": 9,
+              "coefficient": 19
+            }
+          ]
+        }
+      }
+    ],
+    "constraint_registry": [
+      {
+        "id": "c1",
+        "name": "select_exactly_half",
+        "operator": "=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 5
+      },
+      {
+        "id": "c2",
+        "name": "budget",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "coefficients": [
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11,
+            16,
+            6,
+            11
+          ]
+        },
+        "rhs": 60
+      },
+      {
+        "id": "c3",
+        "name": "dependency",
+        "operator": "<=",
+        "lhs": {
+          "type": "linear_difference",
+          "terms": [
+            {
+              "var_id": "vars",
+              "index": 9,
+              "coefficient": 1
+            },
+            {
+              "var_id": "vars",
+              "index": 0,
+              "coefficient": -1
+            }
+          ]
+        },
+        "rhs": 0
+      },
+      {
+        "id": "c4",
+        "name": "mutual_exclusion",
+        "operator": "<=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            1,
+            4
+          ],
+          "coefficients": [
+            1,
+            1
+          ]
+        },
+        "rhs": 1
+      },
+      {
+        "id": "c5",
+        "name": "coverage",
+        "operator": ">=",
+        "lhs": {
+          "type": "aggregate",
+          "var_id": "vars",
+          "indices": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "coefficients": [
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "rhs": 2
+      }
+    ],
+    "penalty_weight": 30.0
+  }
+]

@@ -30,14 +30,9 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
-    plan: {
-        type: String,
-        enum: ['Guest', 'Pro', 'Enterprise'],
-        default: 'Guest',
-    },
     role: {
         type: String,
-        enum: ['user', 'admin', 'enterprise', 'builder', 'student'], // 'user', 'admin', 'enterprise', 'builder', or 'student'
+        enum: ['user', 'admin'], // Only two roles: standard user and administrator
         default: 'user',
     },
     createdAt: {
@@ -52,24 +47,6 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    simMinutesLimit: {
-        type: Number,
-        default: 5,
-    },
-    simMinutesUsed: {
-        type: Number,
-        default: 0,
-    },
-    apiKey: {
-        type: String,
-        unique: true,
-        sparse: true, // Only for users who have a key
-        index: true,
-    },
-    apiEnabled: {
-        type: Boolean,
-        default: false,
-    }
 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

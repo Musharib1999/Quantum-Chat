@@ -25,19 +25,8 @@ export default function AdminLoginForm() {
             });
 
             if (res.ok) {
-                const data = await res.json();
-                const userRole = data.user?.role || 'admin';
-                
-                // Persist the API Key for administrative tool authorization
-                if (data.user?.apiKey) {
-                    localStorage.setItem('guru_api_key', data.user.apiKey);
-                }
-                
-                if (userRole === 'builder') {
-                    router.push("/builder/dashboard"); // New dedicated URL for Builders
-                } else {
-                    router.push("/admin/dashboard"); // Main dashboard for Admins
-                }
+                // Session cookie is set by the server (HttpOnly) — just navigate
+                router.push("/admin/dashboard");
             } else {
                 const data = await res.json();
                 setError(data.error || "Invalid credentials");

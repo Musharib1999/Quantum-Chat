@@ -421,8 +421,8 @@ export async function chatWithQuantumAI(
                     optimization_stats: {
                         q_size: q_size,
                         q_nnz: q_nnz,
-                        penalty_label: "Proposed Penalty 3 (Verma-Lewis)",
-                        penalty_weight: 2.0, // Default Verma-Lewis penalty weight
+                        penalty_label: data.optimization_stats?.penalty_label || data.compiler_metrics?.penalty_label || "Proposed Penalty 3 (Verma-Lewis)",
+                        penalty_weight: typeof data.optimization_stats?.penalty_weight === "number" ? data.optimization_stats.penalty_weight : (typeof data.compiler_metrics?.penalty_weight === "number" ? data.compiler_metrics.penalty_weight : 2.0),
                         decision_vars_count: decision_vars_count,
                         slack_vars_count: slack_vars_count,
                         matrix_density: matrix_density,

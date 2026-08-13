@@ -1,29 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { X, ChevronDown, ChevronRight, FlaskConical, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import React from 'react';
+import { X } from 'lucide-react';
 
 interface SidebarLinkProps {
     label: string;
     active: boolean;
     onClick: () => void;
-    isExperimental?: boolean;
 }
 
-const SidebarLink = ({ label, active, onClick, isExperimental }: SidebarLinkProps) => {
+const SidebarLink = ({ label, active, onClick }: SidebarLinkProps) => {
     return (
         <button
             onClick={onClick}
             className={`w-full flex items-center px-4 py-2.5 rounded-lg transition-all border ${active
                 ? 'bg-white text-[#0F172A] border-[rgb(27,176,206)]/50'
                 : 'text-[#0F172A] hover:bg-white hover:text-[#0F172A] border-transparent'
-                } ${isExperimental ? 'opacity-80' : ''}`}
+                }`}
         >
-            <span className={`font-medium text-sm flex items-center gap-2`}>
-                {label}
-                {isExperimental && <FlaskConical size={12} className="text-amber-500" />}
-            </span>
+            <span className="font-medium text-sm">{label}</span>
         </button>
     );
 };
@@ -33,27 +28,13 @@ interface AdminSidebarProps {
     setActiveTab: (tab: string) => void;
     isMobileMenuOpen: boolean;
     setIsMobileMenuOpen: (open: boolean) => void;
-    role?: string;
 }
 
-export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMenuOpen, role }: AdminSidebarProps) {
-    const { user } = useAuth();
-    
+export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMenuOpen }: AdminSidebarProps) {
     const handleNav = (tab: string) => {
         setActiveTab(tab);
         setIsMobileMenuOpen(false);
     };
-
-    // Self-healing check: Ensure legacy 'guru_api_key' is synced from the current authenticated session
-    useEffect(() => {
-        if (user?.apiKey) {
-            const existingKey = localStorage.getItem('guru_api_key');
-            if (existingKey !== user.apiKey) {
-                localStorage.setItem('guru_api_key', user.apiKey);
-                console.log("[AdminSidebar] guru_api_key synchronized from session");
-            }
-        }
-    }, [user?.apiKey]);
 
     return (
         <>
@@ -81,163 +62,58 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1 mt-4 overflow-y-auto custom-scrollbar">
-                    {role === 'builder' ? (
-                        <>
-                            <div className="px-4 py-2 mb-2">
-                                <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Builder Hub</span>
-                            </div>
-                            <SidebarLink
-                                label="Industry Pipeline"
-                                active={false}
-                                onClick={() => window.location.href = '/industry'}
-                            />
-                            <SidebarLink
-                                label="Market Intelligence"
-                                active={false}
-                                onClick={() => window.location.href = '/market'}
-                            />
-                            <SidebarLink
-                                label="Quantum Info Analysis"
-                                active={false}
-                                onClick={() => window.location.href = '/article-learn'}
-                            />
-                            <SidebarLink
-                                label="Quantum Guru LLM"
-                                active={false}
-                                onClick={() => window.location.href = '/quantum-assistant'}
-                            />
-                            <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20">
-                                <SidebarLink
-                                    label="Problem Console"
-                                    active={activeTab === 'forms'}
-                                    onClick={() => handleNav('forms')}
-                                />
-                                <SidebarLink
-                                    label="Shot Logs"
-                                    active={activeTab === 'experiments'}
-                                    onClick={() => handleNav('experiments')}
-                                />
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <SidebarLink
-                                label="Knowledge Base"
-                                active={activeTab === 'knowledge_base'}
-                                onClick={() => handleNav('knowledge_base')}
-                            />
-                            <SidebarLink
-                                label="Guardrails (Safety)"
-                                active={activeTab === 'guardrails'}
-                                onClick={() => handleNav('guardrails')}
-                            />
-                            <SidebarLink
-                                label="System Prompts"
-                                active={activeTab === 'prompts'}
-                                onClick={() => handleNav('prompts')}
-                            />
-                            <SidebarLink
-                                label="Stocks"
-                                active={activeTab === 'stocks'}
-                                onClick={() => handleNav('stocks')}
-                            />
-                            
-                            <SidebarLink
-                                label="Problem Console"
-                                active={activeTab === 'forms'}
-                                onClick={() => handleNav('forms')}
-                            />
+                    {/* Core Management */}
+                    <div className="px-4 py-2 mb-2">
+                        <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Platform</span>
+                    </div>
+                    <SidebarLink
+                        label="Knowledge Base"
+                        active={activeTab === 'knowledge_base'}
+                        onClick={() => handleNav('knowledge_base')}
+                    />
+                    <SidebarLink
+                        label="Guardrails (Safety)"
+                        active={activeTab === 'guardrails'}
+                        onClick={() => handleNav('guardrails')}
+                    />
+                    <SidebarLink
+                        label="System Prompts"
+                        active={activeTab === 'prompts'}
+                        onClick={() => handleNav('prompts')}
+                    />
+                    <SidebarLink
+                        label="LLM Settings"
+                        active={activeTab === 'llm_settings'}
+                        onClick={() => handleNav('llm_settings')}
+                    />
+                    <SidebarLink
+                        label="Hardware"
+                        active={activeTab === 'hardware'}
+                        onClick={() => handleNav('hardware')}
+                    />
 
-                            <SidebarLink
-                                label="Hardware"
-                                active={activeTab === 'hardware'}
-                                onClick={() => handleNav('hardware')}
-                            />
-                            <SidebarLink
-                                label="News Integration"
-                                active={activeTab === 'news'}
-                                onClick={() => handleNav('news')}
-                            />
-                            <SidebarLink
-                                label="Articles"
-                                active={activeTab === 'articles'}
-                                onClick={() => handleNav('articles')}
-                            />
-                            <SidebarLink
-                                label="Users"
-                                active={activeTab === 'users'}
-                                onClick={() => handleNav('users')}
-                            />
-                            <SidebarLink
-                                label="Chat Logs"
-                                active={activeTab === 'logs'}
-                                onClick={() => handleNav('logs')}
-                            />
-                            <SidebarLink
-                                label="LLM Settings"
-                                active={activeTab === 'llm_settings'}
-                                onClick={() => handleNav('llm_settings')}
-                            />
-                        </>
-                    )}
-
-                    {role !== 'builder' && (
-                        <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20">
-                            <div className="px-4 mb-2">
-                                <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Advanced Modules</span>
-                            </div>
-                            <SidebarLink
-                                label="Market Prompts"
-                                active={activeTab === 'market_prompts'}
-                                onClick={() => handleNav('market_prompts')}
-                            />
-                            <SidebarLink
-                                label="Use Cases"
-                                active={activeTab === 'use_cases'}
-                                onClick={() => handleNav('use_cases')}
-                            />
-                            <SidebarLink
-                                label="Enterprise Streams"
-                                active={activeTab === 'enterprise_streams'}
-                                onClick={() => handleNav('enterprise_streams')}
-                            />
-                            <SidebarLink
-                                label="Shot Logs"
-                                active={activeTab === 'experiments'}
-                                onClick={() => handleNav('experiments')}
-                            />
-                            <SidebarLink
-                                label="Quantum Academy"
-                                active={activeTab === 'academy'}
-                                onClick={() => handleNav('academy')}
-                            />
-                            <SidebarLink
-                                label="News Blocklist"
-                                active={activeTab === 'news_blocklist'}
-                                onClick={() => handleNav('news_blocklist')}
-                            />
-                            <SidebarLink
-                                label="Analytics"
-                                active={activeTab === 'analytics'}
-                                onClick={() => handleNav('analytics')}
-                            />
-                            <SidebarLink
-                                label="Stock Debugger"
-                                active={activeTab === 'stock_debug'}
-                                onClick={() => handleNav('stock_debug')}
-                            />
+                    {/* User Management */}
+                    <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20">
+                        <div className="px-4 mb-2">
+                            <span className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Users & Logs</span>
                         </div>
-                    )}
+                        <SidebarLink
+                            label="Users"
+                            active={activeTab === 'users'}
+                            onClick={() => handleNav('users')}
+                        />
+                        <SidebarLink
+                            label="Chat Logs"
+                            active={activeTab === 'logs'}
+                            onClick={() => handleNav('logs')}
+                        />
+                        <SidebarLink
+                            label="System Logs"
+                            active={activeTab === 'system_logs'}
+                            onClick={() => handleNav('system_logs')}
+                        />
+                    </div>
                 </nav>
-
-                <div className="p-4 border-t border-[rgb(27,176,206)]/20 bg-white/50 backdrop-blur-sm">
-                    <button
-                        onClick={() => window.location.href = '/developer'}
-                        className="w-full flex items-center px-4 py-2 rounded-lg transition-all border text-[#0F172A] hover:bg-white hover:text-[#0F172A] border-transparent hover:border-[rgb(27,176,206)]/30"
-                    >
-                        <span className="font-bold text-sm">Developer Console</span>
-                    </button>
-                </div>
             </aside>
         </>
     );

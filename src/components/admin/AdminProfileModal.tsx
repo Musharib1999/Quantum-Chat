@@ -30,7 +30,13 @@ export default function AdminProfileModal({ isOpen, onClose, onShowPassword }: A
 
     if (!isOpen) return null;
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        // Clear the HttpOnly session cookie server-side
+        try {
+            await fetch('/api/admin/auth/logout', { method: 'POST' });
+        } catch (_) {
+            // Continue logout even if request fails
+        }
         logout();
         router.push('/admin/login');
         onClose();

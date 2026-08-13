@@ -10,8 +10,8 @@ const ChatLogSchema = new mongoose.Schema({
         required: true,
     },
     source: {
-        type: String, // 'direct', 'rag', 'gemini', 'blocked'
-        default: 'gemini',
+        type: String, // 'direct', 'rag', 'ai_engine_pipeline', 'direct_qwen', 'blocked'
+        default: 'direct_qwen',
     },
     context: {
         type: String, // The snippet used for RAG, if any
@@ -21,11 +21,8 @@ const ChatLogSchema = new mongoose.Schema({
         default: 'passed'
     },
     activeGuardrails: [String], // List of rules checked
-    ticker: String,
-    rawData: mongoose.Schema.Types.Mixed,
     systemPrompt: String,
-    tickerPrompt: String,
-    mode: String,
+    mode: String, // 'optimization', 'code', 'general'
     timestamp: {
         type: Date,
         default: Date.now,

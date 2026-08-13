@@ -1,45 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Hardware from '@/models/Hardware';
-import dbConnect from '@/lib/db';
-import { executeQuantumCircuit, executeDWaveAnnealer, executeORTools } from '@/lib/quantum-simulator';
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
+export const dynamic = 'force-dynamic';
+
+/**
+ * API route to execute python code locally on the server.
+ * Used by CodeBlockRunner when users click "Execute Code" in the chat interface.
+ */
 export async function POST(req: NextRequest) {
     try {
-        await dbConnect();
-        const body = await req.json();
-        const { code, hardwareId, hardwareName } = body;
-
-        if (!code || !hardwareId) {
-            return NextResponse.json({ error: "Missing required fields (code or hardwareId)." }, { status: 400 });
+        const { code } = await req.json();
+        if (!code) {
+            return NextResponse.json({ success: false, error: "No code provided" }, { status: 400 });
         }
 
-        // Fetch hardware details to determine the execution path
-        const hardware = await Hardware.findById(hardwareId);
-        if (!hardware) {
-            return NextResponse.json({ error: "Selected hardware mapping not found in the platform registry." }, { status: 404 });
+        // Create a temporary file name in the project scratch directory
+        const tempDir = path.join(process.cwd(), 'scratch');
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
         }
+        const tempFile = path.join(tempDir, `exec_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.py`);
+        
+        // Write the code to the temp file
+        fs.writeFileSync(tempFile, code);
 
-        const provider = (hardware.provider || 'ibm').toLowerCase();
-        const name = (hardware.name || '').toLowerCase();
-        let result;
+        // Run python3 on the temp file
+        return new Promise<NextResponse>((resolve) => {
+            exec(`python3 ${tempFile}`, (error, stdout, stderr) => {
+                // Delete the temp file
+                try {
+                    if (fs.existsSync(tempFile)) {
+                        fs.unlinkSync(tempFile);
+                    }
+                } catch (e) {
+                    console.error("Failed to delete temp file:", e);
+                }
 
-        // Routing to the correct simulator based on provider and name
-        if (provider === 'dwave' || name.includes('annealer')) {
-            result = await executeDWaveAnnealer(code, hardware.serviceUrl);
-        } else if (name.includes('or-tools') || name.includes('solver')) {
-            result = await executeORTools(code, hardware.serviceUrl);
-        } else {
-            // Default to Qiskit/Quantum Circuit path for ibm, ionq, rigetti, or other general simulators
-            result = await executeQuantumCircuit(code, hardware.serviceUrl);
-        }
+                if (error) {
+                    resolve(NextResponse.json({
+                        success: false,
+                        output: stdout,
+                        error: stderr || error.message
+                    }));
+                } else {
+                    resolve(NextResponse.json({
+                        success: true,
+                        output: stdout,
+                        error: stderr || ""
+                    }));
+                }
+            });
+        });
 
-        return NextResponse.json(result);
-
-    } catch (error: any) {
-        console.error("Developer Console Execution Error:", error);
-        return NextResponse.json({ 
-            error: "Execution Bridge Failure",
-            details: error.message 
-        }, { status: 500 });
+    } catch (e: any) {
+        console.error("[/api/developer/execute] Error:", e);
+        return NextResponse.json({ success: false, error: e.message }, { status: 500 });
     }
 }

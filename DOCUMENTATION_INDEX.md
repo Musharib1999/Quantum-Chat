@@ -1,14 +1,14 @@
-# Prime Blazar & Quantum Guru: Master Documentation Index
+# OptiOS & Quantum Guru: Master Documentation Index
 
-This document serves as the central directory for all technical specifications, architectural blueprints, and training logs across the Prime Blazar Enterprise Platform and the Quantum Guru LLM ecosystem.
+This document serves as the central directory for all technical specifications, architectural blueprints, and training logs across the OptiOS Enterprise Platform and the Quantum Guru LLM ecosystem.
 
 ---
 
 ## 1. Platform Core & Architecture
-Documents defining the Prime Blazar web platform, backend services, and enterprise integration capabilities.
+Documents defining the OptiOS web platform, backend services, and enterprise integration capabilities.
 
 *   **`PLATFORM_SPECIFICATION.md`**
-    *   *Purpose:* The master blueprint of the Prime Blazar platform. Details the Next.js frontend, MongoDB schemas, API routing, and Enterprise Telemetry pipelines.
+    *   *Purpose:* The master blueprint of the OptiOS platform. Details the Next.js frontend, MongoDB schemas, API routing, and Enterprise Telemetry pipelines.
 *   **`FEATURES.md`**
     *   *Purpose:* Comprehensive list of all modules (Logistics, Healthcare, Retail), SaaS tiers, and administrative capabilities.
 *   **`Quantum Guru LLM.md`**

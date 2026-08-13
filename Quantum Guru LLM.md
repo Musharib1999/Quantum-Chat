@@ -3,7 +3,7 @@
 ## 1. Overview
 The Quantum Guru AI has evolved from a single LLM into a **Multi-Agent AI System**. This document outlines the architectural changes made to the `prime-blazar` platform to support this advanced execution model.
 
-## 2. What Changes Were Made to Prime Blazar?
+## 2. What Changes Were Made to OptiOS?
 We implemented a **Multi-LoRA Agent Architecture** directly into the `prime-blazar/quantum-backend/main.py`.
 
 A new API endpoint (`/enterprise/pipeline`) was created to act as the **Pipeline Orchestrator**. When it receives an unstructured enterprise problem (e.g., Call Center routing logs), it routes the data through a sequential pipeline of "Experts":
@@ -46,7 +46,7 @@ Instead of asking an LLM "Is this right?", the pipeline now:
 4. Extracts the actual `cqm` object from memory.
 5. Programmatically asserts `len(cqm.variables)` and `len(cqm.constraints)` exactly against the numerical variables extracted by the NLP Parser.
 
-If the LLM forgets a uniqueness constraint, the Verifier catches the missing equation mathematically and halts execution. **Architecture Quality > Reasoning Quality.** Prime Blazar is now a machine-verifiable optimization system.
+If the LLM forgets a uniqueness constraint, the Verifier catches the missing equation mathematically and halts execution. **Architecture Quality > Reasoning Quality.** OptiOS is now a machine-verifiable optimization system.
 
 ---
 

@@ -804,7 +804,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
                                                 ? 'bg-blue-50 text-blue-600 border-blue-200' 
                                                 : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                                         }`}>
-                                            {currentWorkflow.suggested_solver.toLowerCase().includes('qubo') ? 'QUBO ➔ AutoQUBO' : currentWorkflow.suggested_solver}
+                                            {currentWorkflow.suggested_solver.toLowerCase().includes('qubo') ? 'QUBO Compiler' : currentWorkflow.suggested_solver}
                                         </span>
                                     </div>
                                 )}

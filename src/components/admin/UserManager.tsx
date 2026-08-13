@@ -174,7 +174,7 @@ export default function UserManager() {
 
     const generateNewApiKey = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = 'pb_'; // Prime Blazar prefix
+        let result = 'pb_'; // OptiOS prefix
         for (let i = 0; i < 32; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }

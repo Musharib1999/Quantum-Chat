@@ -23,8 +23,11 @@ const MessageSchema = new mongoose.Schema({
 }, { _id: false });
 
 const ChatSessionSchema = new mongoose.Schema({
-    sessionId: { type: String, required: true, unique: true },
+    sessionId: { type: String, default: () => new mongoose.Types.ObjectId().toString(), unique: true },
+    title: { type: String, default: "Untitled Session" },
+    workflowSteps: { type: mongoose.Schema.Types.Mixed },
     messages: [MessageSchema]
 }, { timestamps: true });
 
+if (mongoose.models && mongoose.models.ChatSession) { delete mongoose.models.ChatSession; }
 export default mongoose.models.ChatSession || mongoose.model("ChatSession", ChatSessionSchema);
