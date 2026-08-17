@@ -51,7 +51,7 @@ export default function AlgorithmCatalogModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] max-h-[820px] flex flex-col overflow-hidden my-auto">
+      <div style={{ height: "85vh", maxHeight: "800px", display: "flex", flexDirection: "column", overflow: "hidden" }} className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-5xl my-auto">
         
         {/* Header - Fixed Top */}
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
@@ -99,7 +99,7 @@ export default function AlgorithmCatalogModal({
         </div>
 
         {/* Algorithm Cards Grid - Scrollable Body */}
-        <div className="p-6 overflow-y-auto flex-1 min-h-0 bg-slate-50/30">
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }} className="p-6 bg-slate-50/30">
           {filteredAlgorithms.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredAlgorithms.map(item => (
