@@ -1384,6 +1384,9 @@ export default function App() {
             const parsingDone = ws.parsingStatus === "done";
             const compilingDone = ws.qMatrixStatus === "done" || !!ws.final_code;
             const simDone = ws.simulatorStatus === "done" || !!stats.counts;
+            const numQubits = ws.qubits || stats.qubits || stats.qubits_count || 2;
+            const numDepth = ws.depth || stats.depth || stats.circuit_depth || 2;
+            const numGates = ws.gate_count || stats.gate_count || stats.operations_count || 3;
 
             return (
               <div className="space-y-3">
@@ -1398,11 +1401,11 @@ export default function App() {
                   <div className="space-y-1 text-[11px]">
                     <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
                       <span className="text-slate-500">Qubits Allocated</span>
-                      <span className="font-semibold text-slate-700">{stats.qubits || 2} Qubits</span>
+                      <span className="font-semibold text-slate-700">{numQubits} Qubits</span>
                     </div>
                     <div className="flex justify-between bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg">
                       <span className="text-slate-500">Classical Bits</span>
-                      <span className="font-semibold text-slate-700">{stats.qubits || 2} Bits</span>
+                      <span className="font-semibold text-slate-700">{numQubits} Bits</span>
                     </div>
                   </div>
                 </div>
@@ -1418,16 +1421,16 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-1.5 text-[11px]">
                     <div className="bg-white border border-slate-200 p-2 rounded-lg text-center">
                       <p className="text-[9px] text-slate-400 font-medium uppercase">Circuit Depth</p>
-                      <p className="font-bold text-slate-700 text-xs mt-0.5">{stats.depth || 2}</p>
+                      <p className="font-bold text-slate-700 text-xs mt-0.5">{numDepth}</p>
                     </div>
                     <div className="bg-white border border-slate-200 p-2 rounded-lg text-center">
                       <p className="text-[9px] text-slate-400 font-medium uppercase">Gate Count</p>
-                      <p className="font-bold text-slate-700 text-xs mt-0.5">{stats.gate_count || 3}</p>
+                      <p className="font-bold text-slate-700 text-xs mt-0.5">{numGates}</p>
                     </div>
                   </div>
                   {ws.q_matrix_preview && (
-                    <div className="bg-slate-900 text-slate-200 p-2 rounded-lg font-mono text-[9px] overflow-x-auto">
-                      <pre className="whitespace-pre">{ws.q_matrix_preview}</pre>
+                    <div className="bg-slate-950 text-emerald-400 p-2.5 rounded-lg font-mono text-[10px] leading-snug overflow-x-auto border border-slate-800 shadow-inner">
+                      <pre className="whitespace-pre font-bold tracking-wider">{ws.q_matrix_preview}</pre>
                     </div>
                   )}
                 </div>
