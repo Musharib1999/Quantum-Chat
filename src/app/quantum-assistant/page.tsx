@@ -1,5 +1,7 @@
 "use client";
 
+import AlgorithmCatalogModal from '@/components/AlgorithmCatalogModal';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Truck, Users, Briefcase, Factory, 
@@ -127,6 +129,7 @@ export default function App() {
     }
   };
   const [selectedStrategy, setSelectedStrategy] = useState<'Auto' | 'CQM' | 'QUBO' | 'OR-Tools'>('Auto');
+  const [isAlgorithmModalOpen, setIsAlgorithmModalOpen] = useState(false);
   const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'algorithm' | 'coder'>('optimization');
   
   const {
@@ -873,6 +876,14 @@ export default function App() {
                     <p className="text-slate-500 text-md max-w-2xl mx-auto leading-relaxed">
                       Explore Variational Quantum Eigensolver (VQE), QAOA, Quantum Phase Estimation, and Shor's algorithm with step-by-step mathematical decomposition.
                     </p>
+                    <div className="pt-2">
+                      <button
+                        onClick={() => setIsAlgorithmModalOpen(true)}
+                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-sm active:scale-98"
+                      >
+                        Browse 100+ Quantum Algorithm Library
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

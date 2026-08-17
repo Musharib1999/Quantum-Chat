@@ -1,0 +1,309 @@
+[
+  {
+    "id": "vqe",
+    "name": "Variational Quantum Eigensolver (VQE)",
+    "category": "Quantum Chemistry",
+    "description": "Calculates ground state energy of molecular Hamiltonians (H2, LiH, H2O) using hybrid quantum-classical optimization.",
+    "qubits": "2 - 12 Qubits",
+    "complexity": "O(N^4)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Formulate a VQE algorithm to calculate H2 molecule ground state energy with UCCSD ansatz."
+  },
+  {
+    "id": "adapt-vqe",
+    "name": "Adapt-VQE",
+    "category": "Quantum Chemistry",
+    "description": "Adaptive derivative-assembled pseudo-trotterized VQE for compact chemical ansatz construction.",
+    "qubits": "2 - 16 Qubits",
+    "complexity": "O(N^3)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Formulate an Adapt-VQE circuit for LiH ground state energy estimation with adaptive operator pool."
+  },
+  {
+    "id": "ss-vqe",
+    "name": "Subspace-Search VQE (SS-VQE)",
+    "category": "Quantum Chemistry",
+    "description": "Determines excited energy states of molecular systems using orthogonal subspace state preparation.",
+    "qubits": "4 - 16 Qubits",
+    "complexity": "O(k * N^4)",
+    "sdks": [
+      "Qiskit"
+    ],
+    "prompt": "Build an SS-VQE algorithm to compute low-lying excited states of a 4-qubit molecular Hamiltonian."
+  },
+  {
+    "id": "qaoa",
+    "name": "Quantum Approximate Optimization (QAOA)",
+    "category": "Optimization & NISQ",
+    "description": "Solves combinatorial optimization and graph partitioning problems using alternating cost and mixer Hamiltonians.",
+    "qubits": "4 - 32 Qubits",
+    "complexity": "O(p * N^2)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane",
+      "Cirq"
+    ],
+    "prompt": "Formulate a 4-node QAOA Max-Cut algorithm with 2 p-layers and SPSA classical optimizer."
+  },
+  {
+    "id": "warm-qaoa",
+    "name": "Warm-Start QAOA",
+    "category": "Optimization & NISQ",
+    "description": "Initializes QAOA quantum state from continuous relaxation of semidefinite programming (SDP) solutions.",
+    "qubits": "4 - 32 Qubits",
+    "complexity": "O(p * N)",
+    "sdks": [
+      "Qiskit"
+    ],
+    "prompt": "Construct a Warm-Start QAOA model for Graph Coloring initialized from continuous SDP solution."
+  },
+  {
+    "id": "hhl",
+    "name": "HHL Linear Systems Solver",
+    "category": "Linear Algebra",
+    "description": "Solves linear systems of equations Ax = b with exponential speedup over classical solvers.",
+    "qubits": "4 - 16 Qubits",
+    "complexity": "O(log(N) s^2 / epsilon)",
+    "sdks": [
+      "Qiskit"
+    ],
+    "prompt": "Build an HHL quantum circuit to solve 2x2 linear equation system Ax = b."
+  },
+  {
+    "id": "vqls",
+    "name": "Variational Quantum Linear Solver (VQLS)",
+    "category": "Linear Algebra",
+    "description": "NISQ-friendly variational algorithm for solving large linear systems using shallow quantum circuits.",
+    "qubits": "4 - 24 Qubits",
+    "complexity": "O(N * log(N))",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Formulate a VQLS algorithm to solve a 4-qubit linear system with Hadamard test cost evaluation."
+  },
+  {
+    "id": "shors",
+    "name": "Shor's Factoring Algorithm",
+    "category": "Cryptography & Algebra",
+    "description": "Performs prime factorization of integers in polynomial time using quantum period finding.",
+    "qubits": "5 - 21 Qubits",
+    "complexity": "O((log N)^3)",
+    "sdks": [
+      "Qiskit",
+      "Cirq"
+    ],
+    "prompt": "Explain and construct Shor's factoring algorithm for integer N = 15."
+  },
+  {
+    "id": "simon",
+    "name": "Simon's Algorithm",
+    "category": "Cryptography & Algebra",
+    "description": "Demonstrates exponential quantum speedup for finding hidden bitstrings in periodic functions.",
+    "qubits": "6 - 12 Qubits",
+    "complexity": "O(N)",
+    "sdks": [
+      "Qiskit"
+    ],
+    "prompt": "Construct Simon's algorithm circuit for finding a 3-bit hidden period string s = 110."
+  },
+  {
+    "id": "deutsch-jozsa",
+    "name": "Deutsch-Jozsa Algorithm",
+    "category": "Cryptography & Algebra",
+    "description": "Determines whether a boolean function is constant or balanced in a single quantum evaluation.",
+    "qubits": "3 - 8 Qubits",
+    "complexity": "O(1)",
+    "sdks": [
+      "Qiskit",
+      "Cirq"
+    ],
+    "prompt": "Build a Deutsch-Jozsa circuit for a 3-qubit balanced oracle."
+  },
+  {
+    "id": "bernstein-vazirani",
+    "name": "Bernstein-Vazirani Algorithm",
+    "category": "Cryptography & Algebra",
+    "description": "Finds a hidden linear function bitstring in a single query using parallel Hadamard interference.",
+    "qubits": "4 - 10 Qubits",
+    "complexity": "O(1)",
+    "sdks": [
+      "Qiskit"
+    ],
+    "prompt": "Construct a Bernstein-Vazirani circuit to reveal hidden binary string s = 1011."
+  },
+  {
+    "id": "grover",
+    "name": "Grover Search Algorithm",
+    "category": "Search & Amplification",
+    "description": "Provides quadratic speedup for searching unstructured databases using phase inversion and amplitude amplification.",
+    "qubits": "3 - 16 Qubits",
+    "complexity": "O(sqrt(N))",
+    "sdks": [
+      "Qiskit",
+      "PennyLane",
+      "Cirq"
+    ],
+    "prompt": "Construct a 4-qubit Grover Search circuit to locate target state |1011>."
+  },
+  {
+    "id": "quantum-counting",
+    "name": "Quantum Counting Algorithm",
+    "category": "Search & Amplification",
+    "description": "Combines Grover search and Quantum Phase Estimation to count target solutions in an unstructured search space.",
+    "qubits": "5 - 16 Qubits",
+    "complexity": "O(sqrt(N))",
+    "sdks": [
+      "Qiskit"
+    ],
+    "prompt": "Formulate a Quantum Counting circuit with 3 counting qubits and Grover operator."
+  },
+  {
+    "id": "qpe",
+    "name": "Quantum Phase Estimation (QPE)",
+    "category": "Quantum Simulation",
+    "description": "Estimates the phase/eigenvalue of a unitary operator corresponding to an eigenvector.",
+    "qubits": "4 - 16 Qubits",
+    "complexity": "O(1 / epsilon)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Construct a Quantum Phase Estimation circuit for T-gate eigenvalue extraction using 3 counting qubits."
+  },
+  {
+    "id": "qft",
+    "name": "Quantum Fourier Transform (QFT)",
+    "category": "Quantum Simulation",
+    "description": "Quantum analogue of discrete Fourier transform converting computational basis to phase basis.",
+    "qubits": "3 - 16 Qubits",
+    "complexity": "O((log N)^2)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane",
+      "Cirq"
+    ],
+    "prompt": "Build a 4-qubit Quantum Fourier Transform (QFT) circuit with controlled phase rotations."
+  },
+  {
+    "id": "qnn",
+    "name": "Quantum Neural Network (QNN)",
+    "category": "Quantum Machine Learning",
+    "description": "Parameterized quantum circuit trained as a neural network model for classification tasks.",
+    "qubits": "4 - 16 Qubits",
+    "complexity": "O(Epochs * P)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Build a 4-qubit Quantum Neural Network classifier with two-local feature map and variational layers."
+  },
+  {
+    "id": "qsvm",
+    "name": "Quantum Support Vector Machine (QSVM)",
+    "category": "Quantum Machine Learning",
+    "description": "Maps data into high-dimensional Hilbert feature space for quantum kernel estimation.",
+    "qubits": "2 - 16 Qubits",
+    "complexity": "O(N^2)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Formulate a Quantum Support Vector Machine classifier with ZZFeatureMap for 2D data separation."
+  },
+  {
+    "id": "quantum-autoencoder",
+    "name": "Quantum Autoencoder",
+    "category": "Quantum Machine Learning",
+    "description": "Compresses high-dimensional quantum states into smaller latent qubit registers.",
+    "qubits": "4 - 12 Qubits",
+    "complexity": "O(P * Depth)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Design a Quantum Autoencoder to compress 4-qubit quantum states into 2 latent qubits."
+  },
+  {
+    "id": "vqr",
+    "name": "Variational Quantum Regressor",
+    "category": "Quantum Machine Learning",
+    "description": "Fits continuous function targets using parameterized quantum circuit expectation values.",
+    "qubits": "2 - 8 Qubits",
+    "complexity": "O(Iter * P)",
+    "sdks": [
+      "PennyLane",
+      "Qiskit"
+    ],
+    "prompt": "Formulate a 2-qubit Variational Quantum Regressor for sine wave function approximation."
+  },
+  {
+    "id": "trotter",
+    "name": "Trotterized Quantum Dynamics",
+    "category": "Quantum Simulation",
+    "description": "Simulates time evolution of multi-body quantum systems using Suzuki-Trotter product formulas.",
+    "qubits": "4 - 20 Qubits",
+    "complexity": "O(t^2 / epsilon)",
+    "sdks": [
+      "Qiskit",
+      "Cirq"
+    ],
+    "prompt": "Construct a 4-qubit Trotterized time-evolution circuit for 1D transverse field Ising model."
+  },
+  {
+    "id": "qsp",
+    "name": "Quantum Signal Processing (QSP)",
+    "category": "Quantum Simulation",
+    "description": "Applies arbitrary polynomial transformations to block-encoded matrix operators.",
+    "qubits": "3 - 12 Qubits",
+    "complexity": "O(d)",
+    "sdks": [
+      "Qiskit"
+    ],
+    "prompt": "Formulate a Quantum Signal Processing sequence for polynomial matrix function evaluation."
+  },
+  {
+    "id": "qsvt",
+    "name": "Quantum Singular Value Transformation (QSVT)",
+    "category": "Quantum Simulation",
+    "description": "Unifies quantum algorithms by transforming singular values of block-encoded operators.",
+    "qubits": "4 - 16 Qubits",
+    "complexity": "O(d)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Build a Quantum Singular Value Transformation blueprint for matrix inversion."
+  },
+  {
+    "id": "quantum-walk",
+    "name": "Discrete-Time Quantum Walk",
+    "category": "Search & Amplification",
+    "description": "Quantum random walk on graph networks achieving quadratic speedup over classical random walks.",
+    "qubits": "4 - 16 Qubits",
+    "complexity": "O(sqrt(N))",
+    "sdks": [
+      "Qiskit"
+    ],
+    "prompt": "Formulate a Discrete-Time Quantum Walk on a hypercube graph using coin and shift operators."
+  },
+  {
+    "id": "qGAN",
+    "name": "Quantum Generative Adversarial Network (qGAN)",
+    "category": "Quantum Machine Learning",
+    "description": "Trains quantum generator and classical discriminator to learn complex probability distributions.",
+    "qubits": "4 - 12 Qubits",
+    "complexity": "O(Epochs * P)",
+    "sdks": [
+      "Qiskit",
+      "PennyLane"
+    ],
+    "prompt": "Construct a 4-qubit Quantum GAN to learn a 1D Gaussian probability distribution."
+  }
+]
