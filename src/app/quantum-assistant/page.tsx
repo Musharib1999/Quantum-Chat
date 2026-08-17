@@ -757,57 +757,177 @@ export default function App() {
             /* Dashboard View */
             <div className="max-w-5xl mx-auto px-8 pt-12 flex flex-col gap-12 animate-in fade-in duration-300">
               
-              {/* Hero Section */}
-              <div className="text-center max-w-3xl mx-auto space-y-4">
-                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">
-                  What optimization problem would you like to solve?
-                </h1>
-                <p className="text-slate-500 text-md max-w-2xl mx-auto leading-relaxed">
-                  Describe your business challenge in natural language. The Council of Experts will analyze it, formulate a mathematical model, recommend the optimal solver, and execute it.
-                </p>
-              </div>
+              {/* Optimization Studio Dashboard */}
+              {selectedPipeline === 'optimization' && (
+                <>
+                  <div className="text-center max-w-3xl mx-auto space-y-4">
+                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">
+                      What optimization problem would you like to solve?
+                    </h1>
+                    <p className="text-slate-500 text-md max-w-2xl mx-auto leading-relaxed">
+                      Describe your business challenge in natural language. The Council of Experts will analyze it, formulate a mathematical model, recommend the optimal solver, and execute it.
+                    </p>
+                  </div>
 
-              {/* Action Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {actionCards.map((card, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => setInputValue(card.example)}
-                    className="bg-white border border-slate-200 rounded-xl p-5 cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group flex flex-col gap-3 active:scale-98 shadow-sm"
-                  >
-                    <div className={`w-12 h-12 rounded-lg ${card.color} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                      {card.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1 text-sm">{card.title}</h3>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">{card.description}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {actionCards.map((card, idx) => (
+                      <div 
+                        key={idx} 
+                        onClick={() => setInputValue(card.example)}
+                        className="bg-white border border-slate-200 rounded-xl p-5 cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group flex flex-col gap-3 active:scale-98 shadow-sm"
+                      >
+                        <div className={`w-12 h-12 rounded-lg ${card.color} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                          {card.icon}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-900 mb-1 text-sm">{card.title}</h3>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">{card.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Popular Templates</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {templates.map((template, idx) => (
+                        <button 
+                          key={idx}
+                          onClick={() => {
+                            let q = "";
+                            if (template.includes("Routing")) q = "Optimize delivery routes for 8 trucks across 12 warehouses minimizing fuel cost.";
+                            else if (template.includes("Scheduling")) q = "Schedule 8 nurses across 3 wards over 7 days. Nurse 0 and 5 cannot work the same shift.";
+                            else if (template.includes("QUBO")) q = "Create a soft-constrained portfolio optimization model for 5 assets.";
+                            else q = `Formulate a standard ${template.toLowerCase()} optimization problem.`;
+                            setInputValue(q);
+                          }}
+                          className="px-4 py-2 rounded-full border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 transition-colors active:scale-95 shadow-sm"
+                        >
+                          {template}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
+                </>
+              )}
 
-              {/* Popular Templates */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Popular Templates</h3>
-                <div className="flex flex-wrap gap-2">
-                  {templates.map((template, idx) => (
-                    <button 
-                      key={idx}
-                      onClick={() => {
-                        let q = "";
-                        if (template.includes("Routing")) q = "Optimize delivery routes for 8 trucks across 12 warehouses minimizing fuel cost.";
-                        else if (template.includes("Scheduling")) q = "Schedule 8 nurses across 3 wards over 7 days. Nurse 0 and 5 cannot work the same shift.";
-                        else if (template.includes("QUBO")) q = "Create a soft-constrained portfolio optimization model for 5 assets.";
-                        else q = `Formulate a standard ${template.toLowerCase()} optimization problem.`;
-                        setInputValue(q);
-                      }}
-                      className="px-4 py-2 rounded-full border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 transition-colors active:scale-95 shadow-sm"
-                    >
-                      {template}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Quantum Circuit Studio Dashboard */}
+              {((selectedPipeline as string) === 'coder' || (selectedPipeline as string) === 'gate_based') && (
+                <>
+                  <div className="text-center max-w-3xl mx-auto space-y-4">
+                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">
+                      What quantum circuit would you like to compile & simulate?
+                    </h1>
+                    <p className="text-slate-500 text-md max-w-2xl mx-auto leading-relaxed">
+                      Specify your gate sequence, entanglement targets, or state preparation in natural language. Our quantum compiler will construct OpenQASM 2.0 code and run Qiskit Aer simulations.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { title: "Bell State (EPR)", desc: "2-Qubit Entanglement · H + CX", query: "Create a 2-qubit Bell state EPR pair with Hadamard and CNOT gates.", color: "bg-blue-50 text-blue-600" },
+                      { title: "GHZ State", desc: "3-Qubit Maximal Entanglement", query: "Compile a 3-qubit GHZ state circuit with 1 Hadamard and 2 CNOT gates.", color: "bg-purple-50 text-purple-600" },
+                      { title: "Grover Search", desc: "Quantum Search Oracle · |1011⟩", query: "Construct a 4-qubit Grover Search circuit to find the state |1011>.", color: "bg-emerald-50 text-emerald-600" },
+                      { title: "Quantum Teleportation", desc: "3-Qubit State Transfer Protocol", query: "Create a 3-qubit Quantum Teleportation circuit with Bell measurement.", color: "bg-amber-50 text-amber-600" }
+                    ].map((card, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setInputValue(card.query)}
+                        className="bg-white border border-slate-200 rounded-xl p-5 cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group flex flex-col gap-3 active:scale-98 shadow-sm"
+                      >
+                        <div className={`w-10 h-10 rounded-lg ${card.color} flex items-center justify-center font-bold text-xs`}>
+                          Q[{idx}]
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-900 mb-1 text-sm">{card.title}</h3>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">{card.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Circuit Templates</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {["Bell State", "3-Qubit GHZ", "Grover Search 4-Qubit", "QFT 3-Qubit", "Bernstein-Vazirani"].map((t, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setInputValue(`Build a ${t} quantum circuit with measurements.`)}
+                          className="px-4 py-2 rounded-full border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 transition-colors active:scale-95 shadow-sm"
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Quantum Algorithm Studio Dashboard */}
+              {selectedPipeline === 'algorithm' && (
+                <>
+                  <div className="text-center max-w-3xl mx-auto space-y-4">
+                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">
+                      Which quantum algorithm would you like to explore?
+                    </h1>
+                    <p className="text-slate-500 text-md max-w-2xl mx-auto leading-relaxed">
+                      Explore Variational Quantum Eigensolver (VQE), QAOA, Quantum Phase Estimation, and Shor's algorithm with step-by-step mathematical decomposition.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { title: "VQE Molecular Energy", desc: "H2 Molecule Ground State Energy", query: "Formulate a VQE algorithm to calculate H2 molecule ground state energy.", color: "bg-blue-50 text-blue-600" },
+                      { title: "QAOA Max-Cut", desc: "Graph Partitioning Optimization", query: "Formulate a 4-node QAOA Max-Cut algorithm with 2 p-layers.", color: "bg-purple-50 text-purple-600" },
+                      { title: "Phase Estimation (QPE)", desc: "Eigenvalue Phase Extraction", query: "Construct a 3-counting-qubit Quantum Phase Estimation circuit.", color: "bg-emerald-50 text-emerald-600" },
+                      { title: "Shor's Factoring", desc: "Prime Factorization Protocol", query: "Explain Shor's algorithm for factoring integer N=15.", color: "bg-amber-50 text-amber-600" }
+                    ].map((card, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setInputValue(card.query)}
+                        className="bg-white border border-slate-200 rounded-xl p-5 cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group flex flex-col gap-3 active:scale-98 shadow-sm"
+                      >
+                        <div className={`w-10 h-10 rounded-lg ${card.color} flex items-center justify-center font-bold text-xs`}>
+                          Alg[{idx+1}]
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-900 mb-1 text-sm">{card.title}</h3>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">{card.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Algorithm Templates</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {["VQE Molecular Energy", "QAOA Max-Cut", "Quantum Phase Estimation", "Shor's Factoring", "Quantum Fourier Transform"].map((t, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setInputValue(`Explain and formulate ${t}.`)}
+                          className="px-4 py-2 rounded-full border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 transition-colors active:scale-95 shadow-sm"
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* General Quantum Studio Dashboard */}
+              {selectedPipeline === 'general' && (
+                <>
+                  <div className="text-center max-w-3xl mx-auto space-y-4">
+                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">
+                      Quantum Guru Expert Assistant
+                    </h1>
+                    <p className="text-slate-500 text-md max-w-2xl mx-auto leading-relaxed">
+                      Ask any question about quantum computing, qubit physics, hardware topologies, error mitigation, or SDKs like Qiskit, Cirq, and PennyLane.
+                    </p>
+                  </div>
+                </>
+              )}
 
             </div>
           ) : (
