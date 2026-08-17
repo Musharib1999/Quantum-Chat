@@ -1522,7 +1522,7 @@ export default function App() {
           })()}
 
           {/* ── COUNCIL OF EXPERTS (Optimization) 11 cards ── */}
-          {activeSession && activeSession.workflowSteps && (activeSession.workflowSteps.nlp || activeSession.workflowSteps.math_rigor) && (() => {
+          {selectedPipeline === 'optimization' && activeSession && activeSession.workflowSteps && (activeSession.workflowSteps.nlp || activeSession.workflowSteps.math_rigor) && (() => {
             const details = getWorkflowDetails();
             if (!details) return null;
             
