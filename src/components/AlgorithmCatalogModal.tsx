@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import algorithmsData from '../data/quantum_algorithms_manifest.json';
 
 interface AlgorithmCatalogModalProps {
@@ -14,6 +14,17 @@ export default function AlgorithmCatalogModal({
 }: AlgorithmCatalogModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  // Handle ESC key press to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const categories = useMemo(() => {
     const cats = ['All'];
@@ -39,46 +50,46 @@ export default function AlgorithmCatalogModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 animate-in fade-in duration-200">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] max-h-[820px] flex flex-col overflow-hidden my-auto">
         
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        {/* Header - Fixed Top */}
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+            <h2 className="text-base font-bold text-slate-900 tracking-tight">
               Quantum Algorithm Catalog
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Explore 100+ quantum algorithms across Chemistry, Optimization, Cryptography, and Machine Learning
             </p>
           </div>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           >
             Close [Esc]
           </button>
         </div>
 
-        {/* Controls: Search & Category Filter */}
-        <div className="px-6 py-4 border-b border-slate-200 space-y-3 bg-white">
+        {/* Controls: Search & Category Filter - Fixed Under Header */}
+        <div className="px-6 py-3.5 border-b border-slate-200 space-y-3 bg-slate-50/50 shrink-0">
           <input
             type="text"
-            placeholder="Search algorithms by name, domain, or computational complexity..."
+            placeholder="Search algorithms by name, domain, or computational complexity (e.g. VQE, HHL, QAOA)..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
+            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-2xs"
           />
 
-          <div className="flex flex-wrap gap-1.5 overflow-x-auto pb-1">
+          <div className="flex flex-wrap gap-1.5 overflow-x-auto pb-0.5">
             {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
                   selectedCategory === cat
                     ? 'bg-blue-600 text-white font-semibold shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 {cat}
@@ -87,8 +98,8 @@ export default function AlgorithmCatalogModal({
           </div>
         </div>
 
-        {/* Algorithm Cards Grid */}
-        <div className="p-6 overflow-y-auto flex-1 bg-slate-50/30">
+        {/* Algorithm Cards Grid - Scrollable Body */}
+        <div className="p-6 overflow-y-auto flex-1 min-h-0 bg-slate-50/30">
           {filteredAlgorithms.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredAlgorithms.map(item => (
@@ -141,16 +152,16 @@ export default function AlgorithmCatalogModal({
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-400 text-xs italic">
+            <div className="text-center py-16 text-slate-400 text-xs italic">
               No matching algorithms found for "{searchQuery}". Try searching another domain or keyword.
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-[11px] text-slate-500">
+        {/* Footer - Fixed Bottom */}
+        <div className="px-6 py-3 border-t border-slate-200 bg-white flex items-center justify-between text-[11px] text-slate-500 shrink-0">
           <span>Showing {filteredAlgorithms.length} of {algorithmsData.length} algorithms</span>
-          <span>Quantum Guru Algorithm Library v3.0</span>
+          <span className="font-mono text-[10px]">Quantum Guru Algorithm Library v3.0</span>
         </div>
 
       </div>
