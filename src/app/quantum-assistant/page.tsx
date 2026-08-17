@@ -2058,6 +2058,12 @@ export default function App() {
         </div>
       )}
 
+      <AlgorithmCatalogModal
+        isOpen={isAlgorithmModalOpen}
+        onClose={() => setIsAlgorithmModalOpen(false)}
+        onSelectAlgorithm={(prompt) => setInputValue(prompt)}
+      />
+
     </div>
   );
 }
