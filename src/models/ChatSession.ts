@@ -25,7 +25,11 @@ const MessageSchema = new mongoose.Schema({
 const ChatSessionSchema = new mongoose.Schema({
     sessionId: { type: String, default: () => new mongoose.Types.ObjectId().toString(), unique: true },
     title: { type: String, default: "Untitled Session" },
+    pipeline: { type: String, default: "general" },
+    userEmail: { type: String, required: false },
     workflowSteps: { type: mongoose.Schema.Types.Mixed },
+    shareId: { type: String, sparse: true },
+    isPublic: { type: Boolean, default: false },
     messages: [MessageSchema]
 }, { timestamps: true });
 

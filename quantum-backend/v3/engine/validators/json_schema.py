@@ -2,6 +2,7 @@
 JSON Schema Validator — QuantumGuru Engine v3
 Validates Qwen outputs for Steps 2 and 3.
 Auto-retries with corrective prompt if output is malformed.
+Patch v3.1: Strip <think>...</think> blocks before JSON extraction (Qwen3 thinking mode).
 """
 import json
 import re
@@ -14,8 +15,16 @@ NLP_PARSER_REQUIRED = {"entities_count", "entities_name", "slots_count", "slots_
 REASONER_REQUIRED = {"feasible", "reasoning_trace", "verified_constraints"}
 
 
+def _strip_think_tags(text: str) -> str:
+    """Remove <think>...</think> blocks emitted by Qwen3 thinking mode."""
+    return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
+
+
 def _extract_json(text: str) -> dict:
-    """Try to extract JSON from text, even if wrapped in markdown or prose."""
+    """Try to extract JSON from text, even if wrapped in markdown, prose, or <think> tags."""
+    # Strip Qwen3 <think> blocks first
+    text = _strip_think_tags(text)
+
     # Direct parse
     try:
         return json.loads(text)

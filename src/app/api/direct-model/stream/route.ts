@@ -4,8 +4,22 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
+        const { verifyUserSession } = await import('@/lib/auth');
+        const verifiedEmail = await verifyUserSession(req);
+        if (!verifiedEmail) {
+            return NextResponse.json({ error: "Unauthorized - user session required" }, { status: 401 });
+        }
+
+        // Check D-Wave service status
+        const { default: Hardware } = await import('@/models/Hardware');
+        const dwaveService = await Hardware.findOne({ provider: 'dwave' });
+        if (dwaveService && (dwaveService.status === 'Offline' || dwaveService.status === 'Maintenance')) {
+            return NextResponse.json({ error: `D-Wave solver service is currently disabled by administrator (status: ${dwaveService.status}).` }, { status: 503 });
+        }
+
         const body = await req.json();
-        const { model_text, penalty_choice, num_reads, email, session_id, run_solver } = body;
+        const { model_text, penalty_choice, num_reads, session_id, run_solver } = body;
+        const email = verifiedEmail;
 
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8002";
 

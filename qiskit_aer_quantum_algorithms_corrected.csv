@@ -1,0 +1,421 @@
+algorithm,slug,category,implementation_status,required_packages,qiskit_aer_code,notes
+Variational Quantum Eigensolver (VQE),vqe,Quantum Chemistry & Ground State,FULL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from qiskit.quantum_info import SparsePauliOp
+
+H = SparsePauliOp.from_list([(""Z"", 1.0), (""X"", 0.2)])
+sim = AerSimulator(method=""statevector"")
+
+def energy(theta):
+    qc = QuantumCircuit(1)
+    qc.ry(theta[0], 0)
+    qc.save_statevector()
+    sv = sim.run(qc).result().get_statevector()
+    return float(np.real(sv.expectation_value(H)))
+
+result = minimize(energy, [0.5], method=""COBYLA"")
+print({""optimal_parameters"": result.x.tolist(), ""energy"": result.fun})",Actual hybrid VQE loop: parameterized ansatz + expectation value + classical optimizer.
+Adapt-VQE,adapt-vqe,Quantum Chemistry & Ground State,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize_scalar
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from qiskit.quantum_info import SparsePauliOp
+
+H = SparsePauliOp.from_list([(""Z"", 1.0), (""X"", 0.3)])
+sim = AerSimulator(method=""statevector"")
+pool = [""rx"", ""ry""]
+
+def energy(theta, op):
+    qc = QuantumCircuit(1)
+    getattr(qc, op)(theta, 0)
+    qc.save_statevector()
+    sv = sim.run(qc).result().get_statevector()
+    return float(np.real(sv.expectation_value(H)))
+
+theta = 0.0
+chosen = []
+for _ in range(2):
+    candidates = []
+    for op in pool:
+        r = minimize_scalar(lambda t: energy(theta + t, op), bounds=(-np.pi, np.pi), method=""bounded"")
+        candidates.append((r.fun, op, r.x))
+    value, op, delta = min(candidates)
+    if op not in chosen:
+        chosen.append(op)
+    theta += delta
+
+print({""selected_operators"": chosen, ""parameter"": theta, ""energy"": value})",Small one-qubit ADAPT-style demonstration with an operator-pool selection loop; not a chemistry-scale fermionic ADAPT implementation.
+Subspace-Search VQE (SS-VQE),ss-vqe,Quantum Chemistry & Ground State,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from qiskit.quantum_info import SparsePauliOp
+
+H = SparsePauliOp.from_list([(""Z"", 1.0), (""X"", 0.2)])
+sim = AerSimulator(method=""statevector"")
+
+def state_energy(theta, excited=False):
+    qc = QuantumCircuit(1)
+    if excited:
+        qc.x(0)
+    qc.ry(theta, 0)
+    qc.save_statevector()
+    sv = sim.run(qc).result().get_statevector()
+    return float(np.real(sv.expectation_value(H)))
+
+results = []
+for excited in [False, True]:
+    r = minimize(lambda x: state_energy(x[0], excited), [0.2], method=""COBYLA"")
+    results.append({""subspace_state"": int(excited), ""energy"": float(r.fun), ""theta"": float(r.x[0])})
+
+print(results)",Small subspace-search demonstration using orthogonal initial sectors; a production SS-VQE should generalize to multiple orthogonal trial states.
+Quantum Approximate Optimization Algorithm (QAOA),qaoa,Optimization & NISQ,FULL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,networkx,scipy","import numpy as np
+import networkx as nx
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+G = nx.Graph([(0,1), (1,2), (0,2)])
+sim = AerSimulator()
+
+def circuit(params):
+    p = len(params)//2
+    qc = QuantumCircuit(3, 3)
+    qc.h(range(3))
+    for layer in range(p):
+        gamma, beta = params[2*layer], params[2*layer+1]
+        for u,v in G.edges:
+            qc.cx(u,v); qc.rz(2*gamma, v); qc.cx(u,v)
+        for q in range(3):
+            qc.rx(2*beta, q)
+    qc.measure(range(3), range(3))
+    return qc
+
+def objective(params):
+    counts = sim.run(circuit(params), shots=512).result().get_counts()
+    return -sum(n * sum(int(bit[i]) != int(bit[j]) for i,j in G.edges)
+                for bit,n in counts.items()) / 512
+
+r = minimize(objective, np.array([0.5,0.5]), method=""COBYLA"")
+counts = sim.run(circuit(r.x), shots=2048).result().get_counts()
+print({""parameters"": r.x.tolist(), ""counts"": counts})","Real QAOA loop with cost Hamiltonian construction, parameter optimization, and sampling."
+Warm-Start QAOA,warm-qaoa,Optimization & NISQ,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+sim = AerSimulator()
+warm_start_angles = [0.7, 1.0, 0.5]
+
+def circuit(params):
+    gamma, beta = params
+    qc = QuantumCircuit(3,3)
+    for q,a in enumerate(warm_start_angles):
+        qc.ry(a,q)
+    for u,v in [(0,1),(1,2),(0,2)]:
+        qc.cx(u,v); qc.rz(2*gamma,v); qc.cx(u,v)
+    qc.rx(2*beta, range(3))
+    qc.measure(range(3),range(3))
+    return qc
+
+def objective(x):
+    c = sim.run(circuit(x), shots=512).result().get_counts()
+    return -sum(n * (int(b[0])!=int(b[1]) + int(b[1])!=int(b[2]) + int(b[0])!=int(b[2]))
+                for b,n in c.items())/512
+
+r=minimize(objective,[0.5,0.5],method=""COBYLA"")
+print({""warm_start_angles"":warm_start_angles,""parameters"":r.x.tolist(),
+       ""counts"":sim.run(circuit(r.x),shots=2048).result().get_counts()})","Warm-started parameterized state plus QAOA optimization. For a production implementation, derive warm-start angles from a classical relaxation."
+HHL Linear Systems Solver,hhl,Linear Algebra Systems,EDUCATIONAL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+# Educational 1-qubit HHL-style circuit skeleton for a diagonal system.
+# It demonstrates phase-estimation, controlled rotation and uncomputation.
+sim = AerSimulator()
+qc = QuantumCircuit(3,3)
+qc.h(0)
+qc.h(1)
+qc.x(2)
+qc.cp(0.8, 0, 1)
+qc.cp(1.6, 1, 2)
+qc.ry(0.6, 2)
+qc.cp(-1.6, 1, 2)
+qc.cp(-0.8, 0, 1)
+qc.h(0); qc.h(1)
+qc.measure(range(3),range(3))
+print(sim.run(qc,shots=2048).result().get_counts())","Educational reduced HHL circuit only. A complete HHL requires a specified matrix, phase estimation, reciprocal eigenvalue rotation, uncomputation and solution-state interpretation."
+Variational Quantum Linear Solver (VQLS),vqls,Linear Algebra Systems,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+A = np.array([[1.0,0.2],[0.2,1.0]])
+b = np.array([1.0,0.0])
+sim = AerSimulator(method=""statevector"")
+
+def state(theta):
+    qc=QuantumCircuit(1); qc.ry(theta[0],0); qc.save_statevector()
+    return sim.run(qc).result().get_statevector()
+
+def cost(theta):
+    psi=np.asarray(state(theta))
+    residual=A@psi-b
+    return float(np.vdot(residual,residual).real)
+
+r=minimize(cost,[0.3],method=""COBYLA"")
+print({""theta"":r.x.tolist(),""cost"":r.fun,""state"":np.asarray(state(r.x)).tolist()})",Small variational residual-minimization demonstration for Ax=b.
+Shor's Factoring Algorithm,shors,Cryptography & Algebra,EDUCATIONAL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from math import gcd
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+# Educational order-finding circuit for N=15 is non-trivial; this compact
+# example demonstrates the quantum Fourier-transform/order-finding structure.
+N=15; a=2
+sim=AerSimulator()
+qc=QuantumCircuit(8,4)
+qc.h(range(4))
+qc.x(7)
+for q in range(4):
+    qc.cp(2**q * 0.3926990817, q, 7)
+qc.h(range(4))
+qc.measure(range(4),range(4))
+print({""N"":N,""a"":a,""gcd"":gcd(a,N),
+       ""counts"":sim.run(qc,shots=2048).result().get_counts()})","Reduced order-finding demonstration, not a full modular-exponentiation Shor implementation."
+Simon's Algorithm,simon,Cryptography & Algebra,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+secret=""11""; n=len(secret)
+sim=AerSimulator()
+qc=QuantumCircuit(2*n,n)
+qc.h(range(n))
+# Oracle f(x)=x0 XOR x1, copied into a single output register bit.
+qc.cx(0,2); qc.cx(1,2)
+qc.h(range(n))
+qc.measure(range(n),range(n))
+print(sim.run(qc,shots=2048).result().get_counts())",Small Simon circuit demonstrating a 2-bit secret and oracle-generated linear equations.
+Deutsch-Jozsa Algorithm,deutsch-jozsa,Cryptography & Algebra,FULL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+n=3; balanced=True
+sim=AerSimulator()
+qc=QuantumCircuit(n+1,n)
+qc.x(n); qc.h(range(n+1))
+if balanced:
+    for q in range(n): qc.cx(q,n)
+qc.h(range(n)); qc.measure(range(n),range(n))
+print(sim.run(qc,shots=2048).result().get_counts())",Full constant/balanced decision circuit for a simple oracle family.
+Bernstein-Vazirani Algorithm,bernstein-vazirani,Cryptography & Algebra,FULL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+secret=""1011""; n=len(secret)
+sim=AerSimulator()
+qc=QuantumCircuit(n+1,n)
+qc.x(n); qc.h(range(n+1))
+for i,b in enumerate(secret):
+    if b==""1"": qc.cx(i,n)
+qc.h(range(n)); qc.measure(range(n),range(n))
+print(sim.run(qc,shots=2048).result().get_counts())",Correct BV oracle for f(x)=s·x mod 2; measured string recovers the secret.
+Grover Search Algorithm,grover,Search & Amplitude Amplification,FULL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from math import pi, floor, sqrt
+
+target=""11""; n=len(target)
+sim=AerSimulator()
+qc=QuantumCircuit(n,n)
+qc.h(range(n))
+for i,b in enumerate(target):
+    if b==""0"": qc.x(i)
+qc.h(n-1); qc.mcx(list(range(n-1)),n-1); qc.h(n-1)
+for _ in range(max(1,floor(pi/4*sqrt(2**n)))):
+    qc.h(range(n)); qc.x(range(n))
+    qc.h(n-1); qc.mcx(list(range(n-1)),n-1); qc.h(n-1)
+    qc.x(range(n)); qc.h(range(n))
+qc.measure(range(n),range(n))
+print(sim.run(qc,shots=2048).result().get_counts())",Small textbook Grover search with a phase oracle and diffusion operator.
+Quantum Counting Algorithm,quantum-counting,Search & Amplitude Amplification,EDUCATIONAL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+# Reduced quantum-counting/QPE demonstration with a simple marked-state oracle.
+sim=AerSimulator()
+qc=QuantumCircuit(3,2)
+qc.h([0,1]); qc.x(2); qc.h(2)
+qc.cp(0.8,0,2); qc.cp(1.6,1,2)
+qc.h(1); qc.cp(-0.8,0,1); qc.h(0)
+qc.measure([0,1],[0,1])
+print(sim.run(qc,shots=2048).result().get_counts())",Reduced counting demonstration; a full implementation needs a Grover iterate whose eigenphase encodes the number of marked states.
+Discrete-Time Quantum Walk,quantum-walk,Search & Amplitude Amplification,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+sim=AerSimulator()
+steps=4
+qc=QuantumCircuit(2,2)
+for _ in range(steps):
+    qc.h(0)
+    qc.cx(0,1)
+    qc.rz(0.5,1)
+qc.measure(range(2),range(2))
+print(sim.run(qc,shots=2048).result().get_counts())",Small coin-plus-position walk demonstration. Larger position registers require a proper shift operator.
+Quantum Phase Estimation (QPE),qpe,Quantum Simulation & Phase Extraction,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from numpy import pi
+
+sim=AerSimulator()
+qc=QuantumCircuit(3,2)
+qc.x(2)
+qc.h([0,1])
+qc.cp(pi/2,1,2)
+qc.cp(pi,0,2)
+qc.h(1)
+qc.cp(-pi/2,0,1)
+qc.h(0)
+qc.measure([0,1],[0,1])
+print(sim.run(qc,shots=2048).result().get_counts())",Small two-bit QPE demonstration for a phase encoded by controlled phase rotations.
+Quantum Fourier Transform,qft,Quantum Simulation & Phase Extraction,FULL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from numpy import pi
+
+def qft(n):
+    qc=QuantumCircuit(n,n)
+    for j in range(n):
+        qc.h(j)
+        for k in range(j+1,n):
+            qc.cp(pi/(2**(k-j)),k,j)
+    for j in range(n//2): qc.swap(j,n-j-1)
+    qc.measure(range(n),range(n))
+    return qc
+
+sim=AerSimulator()
+print(sim.run(qft(3),shots=2048).result().get_counts())",Standard QFT circuit with controlled phase rotations and final swaps.
+Trotterized Quantum Dynamics,trotter,Quantum Simulation & Phase Extraction,FULL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from numpy import pi
+
+sim=AerSimulator()
+steps=4; t=1.0; dt=t/steps
+qc=QuantumCircuit(2,2)
+qc.x(0)
+for _ in range(steps):
+    qc.rzz(2*dt,0,1)
+    qc.rx(2*dt,0)
+    qc.rx(2*dt,1)
+qc.measure(range(2),range(2))
+print(sim.run(qc,shots=2048).result().get_counts())",First-order product-formula/Trotter evolution for a two-qubit Pauli Hamiltonian.
+Quantum Signal Processing (QSP),qsp,Quantum Simulation & Phase Extraction,EDUCATIONAL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from numpy import pi
+
+phases=[0.0,0.2,-0.3,0.1]
+sim=AerSimulator()
+qc=QuantumCircuit(1,1)
+for phi in phases:
+    qc.rz(2*phi,0)
+    qc.ry(0.8,0)
+qc.measure(0,0)
+print(sim.run(qc,shots=2048).result().get_counts())",Illustrative single-qubit phase-sequence circuit. Full QSP requires a signal unitary and phase synthesis constraints.
+Quantum Singular Value Transformation (QSVT),qsvt,Quantum Simulation & Phase Extraction,EDUCATIONAL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy","from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from numpy import pi
+
+# Reduced block-encoding/QSVT-style demonstration.
+phases=[0.0,0.25,-0.15]
+sim=AerSimulator()
+qc=QuantumCircuit(2,2)
+qc.h(0)
+for phi in phases:
+    qc.rz(2*phi,0)
+    qc.cx(0,1)
+    qc.ry(0.7,0)
+    qc.cx(0,1)
+qc.measure(range(2),range(2))
+print(sim.run(qc,shots=2048).result().get_counts())",Illustrative phase sequence only. Full QSVT requires a valid block-encoding and QSP phase sequence for a target polynomial.
+Quantum Neural Network (QNN),qnn,Quantum Machine Learning,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+X=np.array([0.1,0.8,1.5]); y=np.array([0.0,1.0,0.0])
+sim=AerSimulator(method=""statevector"")
+
+def predict(x,theta):
+    qc=QuantumCircuit(1)
+    qc.ry(x,0); qc.ry(theta[0],0); qc.rz(theta[1],0); qc.save_statevector()
+    sv=sim.run(qc).result().get_statevector()
+    return float(abs(sv[0])**2-abs(sv[1])**2)
+
+def loss(theta):
+    return np.mean([(predict(x,theta)-target)**2 for x,target in zip(X,y)])
+
+r=minimize(loss,[0.2,0.3],method=""COBYLA"")
+print({""parameters"":r.x.tolist(),""mse"":r.fun})",Small trainable variational quantum neural network using a classical optimizer.
+Quantum Support Vector Machine (QSVM),qsvm,Quantum Machine Learning,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scikit-learn","import numpy as np
+from sklearn.svm import SVC
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+sim=AerSimulator(method=""statevector"")
+X=np.array([[0.1],[0.4],[2.5],[2.9]]); y=np.array([0,0,1,1])
+
+def kernel(a,b):
+    qc=QuantumCircuit(1)
+    qc.ry(float(a[0]),0); qc.ry(-float(b[0]),0); qc.save_statevector()
+    sv=sim.run(qc).result().get_statevector()
+    return float(abs(sv[0])**2)
+
+K=np.array([[kernel(a,b) for b in X] for a in X])
+clf=SVC(kernel=""precomputed"").fit(K,y)
+print({""kernel_matrix"":K.tolist(),""training_predictions"":clf.predict(K).tolist()})","Small kernel-based quantum SVM: quantum feature overlap supplies a kernel matrix, classical SVM performs training."
+Quantum Autoencoder,quantum-autoencoder,Quantum Machine Learning,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+sim=AerSimulator(method=""statevector"")
+def loss(theta):
+    qc=QuantumCircuit(2)
+    qc.ry(0.7,0); qc.ry(1.0,1)
+    qc.cx(0,1)
+    qc.ry(theta[0],0); qc.ry(theta[1],1)
+    qc.save_statevector()
+    sv=np.asarray(sim.run(qc).result().get_statevector())
+    # Compression target: minimize probability of non-|00> latent/garbage state.
+    return float(1-abs(sv[0])**2)
+
+r=minimize(loss,[0.1,0.1],method=""COBYLA"")
+print({""parameters"":r.x.tolist(),""loss"":r.fun})",Small trainable compression-style demonstration. Production autoencoders require a defined training ensemble and partial-trace fidelity objective.
+Variational Quantum Regressor,vqr,Quantum Machine Learning,FULL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+X=np.array([0.0,0.5,1.0,1.5]); y=np.sin(X)
+sim=AerSimulator(method=""statevector"")
+
+def pred(x,theta):
+    qc=QuantumCircuit(1)
+    qc.ry(float(x),0); qc.ry(theta[0],0); qc.rz(theta[1],0); qc.save_statevector()
+    sv=sim.run(qc).result().get_statevector()
+    return float(abs(sv[0])**2-abs(sv[1])**2)
+
+def loss(theta): return np.mean([(pred(x,theta)-t)**2 for x,t in zip(X,y)])
+r=minimize(loss,[0.1,0.2],method=""COBYLA"")
+print({""parameters"":r.x.tolist(),""mse"":r.fun,""predictions"":[pred(x,r.x) for x in X]})",Small trainable variational quantum regressor.
+Quantum Generative Adversarial Network (qGAN),qgan,Quantum Machine Learning,EDUCATIONAL_SMALL_DEMO,"qiskit>=2.0,qiskit-aer>=0.17,numpy,scipy","import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+target=np.array([0.25,0.5,0.25,0.0])
+sim=AerSimulator(method=""statevector"")
+
+def distribution(theta):
+    qc=QuantumCircuit(2)
+    qc.ry(theta[0],0); qc.ry(theta[1],1); qc.cx(0,1); qc.save_statevector()
+    p=np.abs(np.asarray(sim.run(qc).result().get_statevector()))**2
+    return p
+
+def loss(theta): return np.sum((distribution(theta)-target)**2)
+
+r=minimize(loss,[0.5,0.7],method=""COBYLA"")
+print({""generator_parameters"":r.x.tolist(),""generated_distribution"":distribution(r.x).tolist()})",Reduced trainable quantum generator demonstration. It is not a full adversarial discriminator/generator training loop.

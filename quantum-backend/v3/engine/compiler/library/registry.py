@@ -43,7 +43,7 @@ class AlgorithmRegistry:
             return
             
         try:
-            client = MongoClient(mongo_uri)
+            client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
             db = client["test"]
             col = db["quantum_algorithms"]
             
@@ -90,22 +90,22 @@ class AlgorithmRegistry:
         mongo_uri = os.environ.get("MONGODB_URI")
         if mongo_uri:
             try:
-                client = MongoClient(mongo_uri)
+                client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
                 db = client["test"]
                 col = db["quantum_algorithms"]
                 doc = col.find_one({"key": matched_key})
                 client.close()
                 if doc:
                     return {
-                        "qiskit_code": "",  # Compiler will dynamically reconstruct code from operations
-                        "pennylane_code": "",
-                        "num_qubits": doc["num_qubits"],
-                        "depth": 0,
-                        "gate_count": len(doc["operations"]),
-                        "ascii_circuit": "",
-                        "operations": doc["operations"],
+                        "qiskit_code": doc.get("qiskit_code", ""),
+                        "pennylane_code": doc.get("pennylane_code", ""),
+                        "num_qubits": doc.get("num_qubits", 2),
+                        "depth": doc.get("depth", 0),
+                        "gate_count": doc.get("gate_count", len(doc.get("operations", []))),
+                        "ascii_circuit": doc.get("ascii_circuit", ""),
+                        "operations": doc.get("operations", []),
                         "name": doc["name"],
-                        "description": doc["description"]
+                        "description": doc.get("description", doc.get("notes", ""))
                     }
             except Exception as e:
                 print(f"[AlgorithmRegistry Warning] DB fetch failed: {e}. Falling back to static registry.")

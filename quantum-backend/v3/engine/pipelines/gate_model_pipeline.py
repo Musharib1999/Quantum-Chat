@@ -44,34 +44,57 @@ async def run_gate_pipeline_stream(
             else:
                 spec = parsed_input
         else:
-            # Check algorithm registry templates
-            from ..compiler.library import AlgorithmRegistry
             clean_input = model_text.strip().lower().replace(" ", "_").replace("-", "_")
-            template = AlgorithmRegistry.get_template(clean_input)
-            
-            if template:
-                yield {"step": "parsing", "status": "running", "message": f"Retrieved pre-optimized '{template['name']}' template dynamically from database library."}
+            from ..compiler.library.dynamic_compiler import DynamicAlgorithmCompiler
+            matched_algo = None
+            for support in DynamicAlgorithmCompiler.SUPPORTED:
+                if support in clean_input:
+                    matched_algo = support
+                    break
+                    
+            if matched_algo:
+                yield {"step": "parsing", "status": "running", "message": f"Routing query to dynamic compiler template for '{matched_algo}'."}
                 spec = {
-                    "num_qubits": template["num_qubits"],
-                    "num_cbits": template["num_qubits"],
-                    "operations": template["operations"],
-                    "algorithm": clean_input
+                    "algorithm": matched_algo,
+                    "parameters": {}
                 }
-                if clean_input == "half_adder":
-                    spec["num_cbits"] = 2
-                elif clean_input in ("deutsch_jozsa", "swap_test"):
-                    spec["num_cbits"] = 1
+                expected_manifest = None
             else:
-                yield {"step": "parsing", "status": "running", "message": "Converting natural language description to Canonical IR via LLM..."}
-                from ..llm_client import call_primary
-                system_prompt = (
-                    "You are an expert quantum compiler assistant.\n"
-                    "Convert the user's description into a Canonical Circuit IR JSON object.\n"
-                    "Your response MUST match this schema exactly:\n"
+                # Check algorithm registry templates
+                from ..compiler.library import AlgorithmRegistry
+                template = AlgorithmRegistry.get_template(clean_input)
+                
+                if template:
+                    yield {"step": "parsing", "status": "running", "message": f"Retrieved pre-optimized '{template['name']}' template dynamically from database library."}
+                    spec = {
+                        "num_qubits": template["num_qubits"],
+                        "num_cbits": template["num_qubits"],
+                        "operations": template["operations"],
+                        "algorithm": clean_input
+                    }
+                    if clean_input == "half_adder":
+                        spec["num_cbits"] = 2
+                    elif clean_input in ("deutsch_jozsa", "swap_test"):
+                        spec["num_cbits"] = 1
+                else:
+                    yield {"step": "parsing", "status": "running", "message": "Analyzing natural language query and routing to quantum algorithm..."}
+                    from ..llm_client import call_primary
+                    system_prompt = (
+                    "You are an expert quantum semantic router.\n"
+                    "Identify the target quantum algorithm and extract its parameters from the user's description.\n"
+                    "Your response MUST match this JSON schema exactly:\n"
                     "{\n"
-                    '  "expected_manifest": {\n'
-                    '    "num_qubits": <int>,\n'
-                    '    "gates": [<list of uppercase gates described, e.g. "H", "CX", "MEASURE">]\n'
+                    '  "algorithm": "bell" | "rng" | "ghz" | "teleportation" | "deutsch_jozsa" | "bernstein_vazirani" | "grover" | "qft" | "qpe" | "qaoa" | "custom",\n'
+                    '  "shots": <int_shots_requested_or_default_4096>,\n'
+                    '  "parameters": {\n'
+                    '    "num_qubits": <int_or_null>,\n'
+                    '    "hidden_string": "<binary_string_or_empty>",\n'
+                    '    "target_state": "<binary_string_or_empty>",\n'
+                    '    "phase": <float_or_null>,\n'
+                    '    "edges": [[<int>, <int>], ...],\n'
+                    '    "gamma": <float_or_null>,\n'
+                    '    "beta": <float_or_null>,\n'
+                    '    "oracle_type": "constant" | "balanced"\n'
                     '  },\n'
                     '  "canonical_ir": {\n'
                     '    "num_qubits": <int>,\n'
@@ -84,29 +107,47 @@ async def run_gate_pipeline_stream(
                     '      {"gate": "CCX", "control1": ctrl_1, "control2": ctrl_2, "target": target_index},\n'
                     '      {"gate": "CSWAP", "control": ctrl, "target": [target_index_1, target_index_2]},\n'
                     '      {"gate": "MEASURE", "qubit": qubit_index, "cbit": clbit_index},\n'
-                    '      {"gate": "MEASURE_ALL"},\n'
                     '      {"gate": "BARRIER", "target": [<optional list of qubits>]},\n'
                     '      {"gate": "RESET", "qubit": qubit_index}\n'
                     '    ]\n'
                     '  }\n'
                     "}\n"
-                    "Ensure exact chronological order is preserved. Do NOT separate gates and measurements.\n"
-                    "Return ONLY raw JSON. No markdown backticks (no ```json), no explanations."
+                    "If the query is a custom gate request not matching standard algorithms, return algorithm: 'custom' and output a custom 'canonical_ir' block.\n"
+                    "Return ONLY raw JSON. No markdown backticks, no explanations."
                 )
-                llm_response = await call_primary(system=system_prompt, user=model_text)
-                cleaned_res = llm_response.strip()
+                    llm_response = await call_primary(system=system_prompt, user=model_text)
+                    cleaned_res = llm_response.strip()
                 
-                if cleaned_res.startswith("```json"):
-                    cleaned_res = cleaned_res[7:]
-                if cleaned_res.startswith("```"):
-                    cleaned_res = cleaned_res[3:]
-                if cleaned_res.endswith("```"):
-                    cleaned_res = cleaned_res[:-3]
-                cleaned_res = cleaned_res.strip()
+                    if cleaned_res.startswith("```json"):
+                        cleaned_res = cleaned_res[7:]
+                    if cleaned_res.startswith("```"):
+                        cleaned_res = cleaned_res[3:]
+                    if cleaned_res.endswith("```"):
+                        cleaned_res = cleaned_res[:-3]
+                    cleaned_res = cleaned_res.strip()
                 
-                parsed_output = json.loads(cleaned_res)
-                spec = parsed_output.get("canonical_ir", parsed_output)
-                expected_manifest = parsed_output.get("expected_manifest")
+                    parsed_output = json.loads(cleaned_res)
+                    shots = parsed_output.get("shots") or shots
+                    if parsed_output.get("algorithm") == "custom":
+                            spec = parsed_output.get("canonical_ir", parsed_output)
+                    else:
+                        spec = parsed_output
+                    expected_manifest = None
+            
+        # Check dynamic templates for supported algorithms
+        algorithm = spec.get("algorithm", "").lower().strip()
+        from ..compiler.library.dynamic_compiler import DynamicAlgorithmCompiler
+        
+        # Determine if the specification already contains an explicit gate sequence.
+        # If operations are explicitly specified, we compile that sequence exactly and bypass dynamic template substitution.
+        has_explicit_ops = False
+        ops_list = spec.get("operations") or spec.get("parameters", {}).get("operations")
+        if ops_list and len(ops_list) > 0:
+            has_explicit_ops = True
+            
+        if algorithm in DynamicAlgorithmCompiler.SUPPORTED and not has_explicit_ops:
+            params = spec.get("parameters", spec)
+            spec = DynamicAlgorithmCompiler.compile(algorithm, params, shots=shots)
             
         # Parse & Validate Intent
         ir = GateCompiler.parse_to_ir(spec)
@@ -138,7 +179,7 @@ async def run_gate_pipeline_stream(
     await asyncio.sleep(0.1)
     
     try:
-        compiler_res = GateCompiler.compile_ir(spec, expected_manifest)
+        compiler_res = GateCompiler.compile_ir(spec, expected_manifest, shots=shots)
     except Exception as e:
         yield {"step": "error", "message": f"Compilation or Audit failed: {e}"}
         return
@@ -165,7 +206,8 @@ async def run_gate_pipeline_stream(
         "openqasm_code": openqasm_code,
         "ascii_circuit": ascii_circuit,
         "depth": metrics["depth"],
-        "gate_count": metrics["gate_count"]
+        "gate_count": metrics["gate_count"],
+        "num_qubits": num_qubits
     }
     await asyncio.sleep(0.1)
 
@@ -244,14 +286,6 @@ async def run_gate_pipeline_stream(
 
 ---
 
-## Gate-Based Quantum Simulation Output
-
-**Status:** {status_text}  
-**Simulator Backend:** {backend_info}  
-**Detected Algorithm:** {algo_name_display} (Confidence: {detected_algo['confidence']:.1f}%)  
-
----
-
 ### Circuit Manifest
 *   **Qubits:** {manifest['num_qubits']}
 *   **Classical Bits:** {manifest['num_cbits']}
@@ -283,13 +317,22 @@ async def run_gate_pipeline_stream(
 {chr(10).join(checklist_lines)}
 *   **Audit Warnings:**
 {audit_warnings_str}
-{suggestions_section}
+{suggestions_section}"""
+
+    if run_simulator:
+        output_text += f"""
+---
+
+## Gate-Based Quantum Simulation Output
+
+**Status:** {status_text}  
+**Simulator Backend:** {backend_info}  
+**Detected Algorithm:** {algo_name_display} (Confidence: {detected_algo['confidence']:.1f}%)  
 
 ---
 
 ### Measurement Probabilities
-{meas_data}
-"""
+{meas_data}"""
 
     if session_id:
         try:
@@ -299,7 +342,7 @@ async def run_gate_pipeline_stream(
             
             mongo_uri = os.environ.get("MONGODB_URI")
             if mongo_uri:
-                client = MongoClient(mongo_uri)
+                client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
                 db = client["test"]
                 
                 # Check simulator and output statuses

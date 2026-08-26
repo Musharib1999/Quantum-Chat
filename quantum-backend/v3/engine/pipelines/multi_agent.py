@@ -81,7 +81,7 @@ class UnderstandingAgent(Agent):
             comp_raw = await call_primary(
                 system=comp_prompt.SYSTEM_PROMPT,
                 user=comp_user,
-                max_tokens=4096,
+                max_tokens=1500,
                 temperature=0.1,
             )
             comp_ir = await parse_and_validate(
@@ -533,7 +533,8 @@ class ExplanationAgent(Agent):
 
 # ── Supervisor Agent (Orchestration Loop) ──────────────────────────────
 class SupervisorAgent:
-    def __init__(self):
+    def __init__(self, mode: str = "auto"):
+        self.mode = mode
         self.retry_limits = {
             "UnderstandingAgent": 3,
             "ConstraintVerificationAgent": 3,
@@ -563,7 +564,7 @@ class SupervisorAgent:
                 mongo_uri = os.environ.get("MONGODB_URI")
                 if not mongo_uri:
                     return
-                client = MongoClient(mongo_uri)
+                client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
                 db = client["test"]
                 update_fields = {}
                 for k, v in steps.items():
@@ -1008,7 +1009,7 @@ class SupervisorAgent:
                 mongo_uri = os.environ.get("MONGODB_URI")
                 if not mongo_uri:
                     return
-                client = MongoClient(mongo_uri)
+                client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
                 db = client["test"]
                 update_fields = {}
                 for k, v in steps.items():

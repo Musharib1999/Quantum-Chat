@@ -9,7 +9,8 @@ interface User {
     lastName?: string;
     phone?: string;
     plan?: 'Guest' | 'Pro' | 'Enterprise';
-    role?: 'user' | 'admin' | 'enterprise' | 'builder';
+    role?: 'user' | 'admin' | 'enterprise' | 'builder' | 'demo';
+    demoExpiresAt?: string;
     tokenLimit?: number;
     tokensUsed?: number;
     simMinutesLimit?: number;
@@ -32,6 +33,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
+
+    useEffect(() => {
+        if (!user || user.role !== 'demo' || !user.demoExpiresAt) return;
+
+        const checkExpiry = () => {
+            const expTime = new Date(user.demoExpiresAt!).getTime();
+            const now = Date.now();
+            if (now >= expTime) {
+                console.log("Demo session expired, logging out...");
+                logout();
+            }
+        };
+
+        checkExpiry();
+        const interval = setInterval(checkExpiry, 10000);
+        return () => clearInterval(interval);
+    }, [user]);
 
     useEffect(() => {
         const stored = localStorage.getItem('quantum_session');
@@ -58,21 +76,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 fetch(`/api/auth/me?email=${encodeURIComponent(parsed.email)}`)
                     .then(res => res.json())
                     .then(data => {
-                        if (!data.error) {
-                            setUser(prev => {
-                                if (!prev) return prev;
-                                const updated = {
-                                    ...prev,
-                                    tokenLimit: data.tokenLimit,
-                                    tokensUsed: data.tokensUsed,
-                                    simMinutesLimit: data.simMinutesLimit ?? 5,
-                                    simMinutesUsed: data.simMinutesUsed ?? 0,
-                                    apiKey: data.apiKey || ''
-                                };
-                                localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
-                                return updated;
-                            });
+                        if (data.error) {
+                            logout();
+                            return;
                         }
+
+                        // Demo expiration check on mount
+                        if (data.role === 'demo' && data.demoExpiresAt && new Date() > new Date(data.demoExpiresAt)) {
+                            console.log("Demo expired on mount, logging out...");
+                            logout();
+                            return;
+                        }
+
+                        setUser(prev => {
+                            if (!prev) return prev;
+                            const updated = {
+                                ...prev,
+                                tokenLimit: data.tokenLimit,
+                                tokensUsed: data.tokensUsed,
+                                simMinutesLimit: data.simMinutesLimit ?? 5,
+                                simMinutesUsed: data.simMinutesUsed ?? 0,
+                                apiKey: data.apiKey || '',
+                                role: data.role || 'user',
+                                demoExpiresAt: data.demoExpiresAt || undefined
+                            };
+                            localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
+                            return updated;
+                        });
                     })
                     .catch(err => console.error("Failed to refresh user tokens", err));
 
@@ -93,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             phone: userData.phone || '',
             plan: userData.plan || 'Guest',
             role: userData.role || 'user',
+            demoExpiresAt: userData.demoExpiresAt || undefined,
             tokenLimit: userData.tokenLimit,
             tokensUsed: userData.tokensUsed,
             simMinutesLimit: userData.simMinutesLimit ?? 5,
@@ -109,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(false);
         localStorage.removeItem('quantum_session');
         sessionStorage.removeItem('qg_session_tokens_used');
+        fetch('/api/auth/logout', { method: 'POST' }).catch(err => console.error("Logout cookie clear failed", err));
     };
 
     const updateUser = (updates: Partial<User>) => {

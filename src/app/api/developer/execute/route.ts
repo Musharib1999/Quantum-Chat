@@ -11,7 +11,39 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: NextRequest) {
     try {
+        const { verifyUserSession } = await import('@/lib/auth');
+        const email = await verifyUserSession(req);
+        if (!email) {
+            return NextResponse.json({ success: false, error: "Unauthorized - user session required" }, { status: 401 });
+        }
+
         const { code } = await req.json();
+
+        // Introspect code to determine the target provider
+        const isDWave = code.includes('dwave') || code.includes('neal') || code.includes('dimod');
+        const { default: Hardware } = await import('@/models/Hardware');
+        
+        if (isDWave) {
+            // Check D-Wave service status
+            const dwaveService = await Hardware.findOne({ provider: 'dwave' });
+            if (dwaveService && (dwaveService.status === 'Offline' || dwaveService.status === 'Maintenance')) {
+                return NextResponse.json({
+                    success: false,
+                    output: "",
+                    error: `D-Wave solver service is currently disabled by administrator (status: ${dwaveService.status}).`
+                }, { status: 503 });
+            }
+        } else {
+            // Check Qiskit service status
+            const qiskitService = await Hardware.findOne({ provider: 'ibm' });
+            if (qiskitService && (qiskitService.status === 'Offline' || qiskitService.status === 'Maintenance')) {
+                return NextResponse.json({
+                    success: false,
+                    output: "",
+                    error: `Qiskit simulation service is currently disabled by administrator (status: ${qiskitService.status}).`
+                }, { status: 503 });
+            }
+        }
         if (!code) {
             return NextResponse.json({ success: false, error: "No code provided" }, { status: 400 });
         }

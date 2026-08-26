@@ -67,10 +67,10 @@ function LoginForm() {
                 
                 // Determine default redirect based on role if no specific redirect is requested
                 let targetRedirect = activeRedirect;
-                if (activeRedirect === '/') {
+                if (activeRedirect === '/' || activeRedirect === '/industry') {
                     if (data.user?.role === 'admin') targetRedirect = '/admin';
                     else if (data.user?.role === 'enterprise') targetRedirect = '/enterprise/dashboard';
-                    else targetRedirect = '/industry'; // Standard user default
+                    else targetRedirect = '/quantum-assistant'; // Standard user default
                 }
                 
                 router.push(targetRedirect);

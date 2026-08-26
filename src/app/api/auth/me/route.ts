@@ -32,7 +32,8 @@ export async function GET(req: Request) {
             tokensUsed: user.tokensUsed,
             simMinutesLimit: user.simMinutesLimit ?? 5,
             simMinutesUsed: user.simMinutesUsed ?? 0,
-            apiKey: user.apiKey || ''
+            apiKey: user.apiKey || '',
+            demoExpiresAt: user.demoExpiresAt || null
         });
 
     } catch (error) {

@@ -45,6 +45,7 @@ export default function UserManager() {
     const [apiKey, setApiKey] = useState("");
     const [apiEnabled, setApiEnabled] = useState(false);
     const [role, setRole] = useState<'user' | 'admin' | 'enterprise' | 'builder' | 'student'>('user');
+    const [demoDuration, setDemoDuration] = useState("2");
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
 
@@ -78,6 +79,7 @@ export default function UserManager() {
         setApiKey("");
         setApiEnabled(false);
         setRole('user');
+        setDemoDuration("2");
         setFormError("");
         setSelectedUser(null);
     };
@@ -99,6 +101,7 @@ export default function UserManager() {
                 phone,
                 plan,
                 role,
+                demoDurationHours: role === 'demo' ? Number(demoDuration) : undefined,
                 apiKey: "",
                 apiEnabled: false
             });
@@ -140,7 +143,8 @@ export default function UserManager() {
             simMinutesLimit,
             simMinutesUsed,
             apiKey,
-            apiEnabled
+            apiEnabled,
+            demoDurationHours: role === 'demo' ? Number(demoDuration) : undefined
         };
 
         if (password) {
@@ -319,6 +323,13 @@ export default function UserManager() {
                                                         setApiKey(user.apiKey || "");
                                                         setApiEnabled(user.apiEnabled || false);
                                                         setRole(user.role as any || 'user');
+                                                        let durationStr = "2";
+                                                        if (user.role === 'demo' && user.demoExpiresAt && user.createdAt) {
+                                                            const diffMs = new Date(user.demoExpiresAt).getTime() - new Date(user.createdAt).getTime();
+                                                            const hours = diffMs / (1000 * 60 * 60);
+                                                            durationStr = Number(hours.toFixed(2)).toString();
+                                                        }
+                                                        setDemoDuration(durationStr);
                                                         setPassword("");
                                                         setShowEditModal(true);
                                                     }}
@@ -419,8 +430,25 @@ export default function UserManager() {
                                     <option value="builder">Quantum Builder</option>
                                     <option value="enterprise">Enterprise Partner</option>
                                     <option value="admin">Administrator</option>
+                                    <option value="demo">Demo Trial Account</option>
                                 </select>
                             </div>
+
+                            {role === 'demo' && (
+                                <div className="space-y-1 animate-in fade-in duration-200">
+                                    <label className="text-[10px] font-bold text-[#0F172A] uppercase">Demo Duration (Hours)</label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        min="0"
+                                        className="w-full p-2.5 bg-white border border-[rgb(27,176,206)]/30 rounded-lg outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-mono"
+                                        value={demoDuration}
+                                        onChange={e => setDemoDuration(e.target.value)}
+                                        placeholder="e.g. 2"
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             {formError && (
                                 <p className="text-xs text-red-500 bg-red-50 p-2 rounded border border-red-100">{formError}</p>
@@ -513,8 +541,24 @@ export default function UserManager() {
                                         <option value="builder">Quantum Builder</option>
                                         <option value="enterprise">Enterprise Partner</option>
                                         <option value="admin">Administrator</option>
+                                        <option value="demo">Demo Trial Account</option>
                                     </select>
                                 </div>
+                                {role === 'demo' && (
+                                    <div className="space-y-1.5 animate-in fade-in duration-200">
+                                        <label className="text-[10px] font-bold text-[#0F172A] uppercase">Demo Duration (Hours)</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            className="w-full p-3 bg-white border border-[rgb(27,176,206)]/30 rounded-xl outline-none focus:ring-1 focus:ring-[rgb(27,176,206)] text-sm font-mono"
+                                            value={demoDuration}
+                                            onChange={e => setDemoDuration(e.target.value)}
+                                            placeholder="e.g. 2"
+                                            required
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

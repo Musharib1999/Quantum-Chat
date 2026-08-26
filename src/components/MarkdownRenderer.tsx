@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -17,6 +17,79 @@ SyntaxHighlighter.registerLanguage('python', python);
 SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('json', json);
 
+// Native React KaTeX Component (Synchronous to prevent 2-pass flicker)
+function KaTeXMath({ math, displayMode = false }: { math: string; displayMode?: boolean }) {
+    if (typeof window !== 'undefined') {
+        const win = window as any;
+        if (win.katex) {
+            try {
+                const rendered = win.katex.renderToString(math, {
+                    displayMode,
+                    throwOnError: false
+                });
+                return <span dangerouslySetInnerHTML={{ __html: rendered }} className="inline-block max-w-full overflow-x-auto align-middle" />;
+            } catch (err) {
+                console.error("KaTeX render error:", err);
+            }
+        }
+    }
+    return <span>{displayMode ? `$$${math}$$` : `$${math}$`}</span>;
+}
+
+// Splits text by $...$ or $$...$$ or \(...\) or \[...\] and returns mapped ReactNodes
+function parseMathString(str: string): React.ReactNode[] {
+    const results: React.ReactNode[] = [];
+    const parts = str.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g);
+    
+    parts.forEach((part, index) => {
+        if (!part) return;
+        
+        if (part.startsWith('$$') && part.endsWith('$$')) {
+            results.push(<KaTeXMath key={index} math={part.slice(2, -2)} displayMode={true} />);
+        } else if (part.startsWith('$') && part.endsWith('$')) {
+            results.push(<KaTeXMath key={index} math={part.slice(1, -1)} displayMode={false} />);
+        } else {
+            const subParts = part.split(/(\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g);
+            subParts.forEach((subPart, subIdx) => {
+                if (!subPart) return;
+                const uniqueKey = `${index}-${subIdx}`;
+                if (subPart.startsWith('\\[') && subPart.endsWith('\\]')) {
+                    results.push(<KaTeXMath key={uniqueKey} math={subPart.slice(2, -2)} displayMode={true} />);
+                } else if (subPart.startsWith('\\(') && subPart.endsWith('\\)')) {
+                    results.push(<KaTeXMath key={uniqueKey} math={subPart.slice(2, -2)} displayMode={false} />);
+                } else {
+                    results.push(subPart);
+                }
+            });
+        }
+    });
+    
+    return results;
+}
+
+// Recursively processes React children to intercept text nodes and render KaTeX
+function processMathInChildren(children: React.ReactNode): React.ReactNode {
+    if (typeof children === 'string') {
+        return parseMathString(children);
+    }
+    
+    if (Array.isArray(children)) {
+        return React.Children.map(children, child => processMathInChildren(child));
+    }
+    
+    if (React.isValidElement(children)) {
+        const element = children as React.ReactElement<any>;
+        if (element.props && element.props.children) {
+            return React.cloneElement(element, {
+                ...element.props,
+                children: processMathInChildren(element.props.children)
+            });
+        }
+    }
+    
+    return children;
+}
+
 interface MarkdownRendererProps {
     content: string;
     hideLinks?: boolean;
@@ -30,7 +103,6 @@ interface MarkdownRendererProps {
     isSidebar?: boolean;
 }
 
-// Helper runner component to keep execution states independent per code block
 interface CodeBlockRunnerProps {
     code: string;
     language: string;
@@ -45,11 +117,10 @@ interface CodeBlockRunnerProps {
 }
 
 function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateExecutionResult, executionResult, isCodeExecuting, props, hideRunButton }: CodeBlockRunnerProps) {
-    // isExecuting is derived from the parent message state (isCodeExecuting) to survive re-renders
     const isExecuting = isCodeExecuting ?? false;
 
     const handleCodeExecution = async () => {
-        if (onExecute) onExecute(); // this sets isCodeExecuting=true in parent message state
+        if (onExecute) onExecute();
         try {
             const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002';
             const executionCode = code.replace(/sampling_compiler/g, "autoqubo");
@@ -66,7 +137,7 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateE
             if (onUpdateExecutionResult) onUpdateExecutionResult(result);
         } catch (err: any) {
             const result = { success: false, error: err.message || "Failed to establish link with solver backend." };
-            if (onUpdateExecutionResult) onUpdateExecutionResult(result); // this sets isCodeExecuting=false in parent
+            if (onUpdateExecutionResult) onUpdateExecutionResult(result);
         }
     };
 
@@ -166,7 +237,7 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateE
     );
 }
 
-export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, onExecute, messageId, executionResult, isCodeExecuting, onUpdateExecutionResult, hideRunButton, isSidebar }: MarkdownRendererProps) {
+function MarkdownRendererInner({ content, hideLinks, suggestedSolver, onExecute, messageId, executionResult, isCodeExecuting, onUpdateExecutionResult, hideRunButton, isSidebar }: MarkdownRendererProps) {
     const cleanContent = (content || "")
       .replace(/autoqubo/gi, "sampling_compiler")
       .replace(/auto_qubo/gi, "sampling_compiler")
@@ -197,16 +268,16 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
                                 </code>
                             );
                         },
-                        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 marker:text-slate-400 font-sans text-[10px] text-slate-600 leading-relaxed mb-2">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 marker:text-slate-400 font-sans text-[10px] text-slate-600 leading-relaxed mb-2">{children}</ol>,
-                        li: ({ children }) => <li className="pl-0.5 font-sans text-[10px] text-slate-600 leading-relaxed">{children}</li>,
-                        p: ({ children }) => <p className="font-sans text-[10px] text-slate-600 leading-relaxed mb-1.5">{children}</p>,
-                        h1: ({ children }) => <h1 className="text-[11px] font-bold mb-1.5 mt-2.5 text-slate-700 font-sans tracking-wide">{children}</h1>,
-                        h2: ({ children }) => <h2 className="text-[10.5px] font-bold mb-1.5 mt-2 text-slate-700 font-sans tracking-wide">{children}</h2>,
-                        h3: ({ children }) => <h3 className="text-[10px] font-bold mb-1 mt-1.5 text-slate-700 font-sans tracking-wide">{children}</h3>,
+                        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 marker:text-slate-400 font-sans text-[10px] text-slate-600 leading-relaxed mb-2">{processMathInChildren(children)}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 marker:text-slate-400 font-sans text-[10px] text-slate-600 leading-relaxed mb-2">{processMathInChildren(children)}</ol>,
+                        li: ({ children }) => <li className="pl-0.5 font-sans text-[10px] text-slate-600 leading-relaxed">{processMathInChildren(children)}</li>,
+                        p: ({ children }) => <p className="font-sans text-[10px] text-slate-600 leading-relaxed mb-1.5">{processMathInChildren(children)}</p>,
+                        h1: ({ children }) => <h1 className="text-[11px] font-bold mb-1.5 mt-2.5 text-slate-700 font-sans tracking-wide">{processMathInChildren(children)}</h1>,
+                        h2: ({ children }) => <h2 className="text-[10.5px] font-bold mb-1.5 mt-2 text-slate-700 font-sans tracking-wide">{processMathInChildren(children)}</h2>,
+                        h3: ({ children }) => <h3 className="text-[10px] font-bold mb-1 mt-1.5 text-slate-700 font-sans tracking-wide">{processMathInChildren(children)}</h3>,
                         blockquote: ({ children }) => (
                             <div className="border-l-2 border-slate-350 bg-slate-50 pl-2.5 py-1.5 my-2 italic text-slate-500 text-[10px]">
-                                {children}
+                                {processMathInChildren(children)}
                             </div>
                         ),
                         a: ({ href, children }) => (
@@ -222,8 +293,8 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
                         thead: ({ children }) => <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">{children}</thead>,
                         tbody: ({ children }) => <tbody className="divide-y divide-slate-100">{children}</tbody>,
                         tr: ({ children }) => <tr className="hover:bg-slate-50/50 transition-colors">{children}</tr>,
-                        th: ({ children }) => <th className="px-2 py-1 font-semibold text-slate-700">{children}</th>,
-                        td: ({ children }) => <td className="px-2 py-1 text-slate-500">{children}</td>,
+                        th: ({ children }) => <th className="px-2 py-1 font-semibold text-slate-700">{processMathInChildren(children)}</th>,
+                        td: ({ children }) => <td className="px-2 py-1 text-slate-500">{processMathInChildren(children)}</td>,
                     }}
                 >
                     {cleanContent}
@@ -237,7 +308,6 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                    // Code blocks with syntax highlighting
                     code({ node, inline, className, children, ...props }: any) {
                         const match = /language-(\w+)/.exec(className || '');
                         const codeStr = String(children).replace(/\n$/, '');
@@ -263,16 +333,16 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
                             </code>
                         );
                     },
-                    ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5 marker:text-slate-400 font-sans text-sm text-slate-700 leading-relaxed mb-3">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1.5 marker:text-slate-400 font-sans text-sm text-slate-700 leading-relaxed mb-3">{children}</ol>,
-                    li: ({ children }) => <li className="pl-0.5 font-sans text-sm text-slate-700 leading-relaxed">{children}</li>,
-                    p: ({ children }) => <p className="font-sans text-sm text-slate-700 leading-relaxed mb-3">{children}</p>,
-                    h1: ({ children }) => <h1 className="text-base font-bold mb-3 mt-5 text-slate-800 font-sans tracking-wide">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-sm font-bold mb-2.5 mt-4 text-slate-800 font-sans tracking-wide flex items-center gap-1.5"><span className="w-1 h-4 bg-violet-500 rounded-full inline-block"></span>{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-sm font-bold mb-2 mt-3.5 text-slate-800 font-sans tracking-wide">{children}</h3>,
+                    ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5 marker:text-slate-400 font-sans text-sm text-slate-700 leading-relaxed mb-3">{processMathInChildren(children)}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1.5 marker:text-slate-400 font-sans text-sm text-slate-700 leading-relaxed mb-3">{processMathInChildren(children)}</ol>,
+                    li: ({ children }) => <li className="pl-0.5 font-sans text-sm text-slate-700 leading-relaxed">{processMathInChildren(children)}</li>,
+                    p: ({ children }) => <p className="font-sans text-sm text-slate-700 leading-relaxed mb-3">{processMathInChildren(children)}</p>,
+                    h1: ({ children }) => <h1 className="text-base font-bold mb-3 mt-5 text-slate-800 font-sans tracking-wide">{processMathInChildren(children)}</h1>,
+                    h2: ({ children }) => <h2 className="text-sm font-bold mb-2.5 mt-4 text-slate-800 font-sans tracking-wide flex items-center gap-1.5"><span className="w-1 h-4 bg-violet-500 rounded-full inline-block"></span>{processMathInChildren(children)}</h2>,
+                    h3: ({ children }) => <h3 className="text-sm font-bold mb-2 mt-3.5 text-slate-800 font-sans tracking-wide">{processMathInChildren(children)}</h3>,
                     blockquote: ({ children }) => (
                         <div className="border-l-4 border-primary/50 bg-primary/5 pl-4 py-3 my-4 rounded-r-lg italic text-muted-foreground">
-                            {children}
+                            {processMathInChildren(children)}
                         </div>
                     ),
                     a: ({ href, children }) => hideLinks ? (
@@ -292,8 +362,8 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
                     thead: ({ children }) => <thead className="bg-muted text-foreground font-medium border-b border-border">{children}</thead>,
                     tbody: ({ children }) => <tbody className="divide-y divide-border">{children}</tbody>,
                     tr: ({ children }) => <tr className="hover:bg-muted/50 transition-colors">{children}</tr>,
-                    th: ({ children }) => <th className="px-4 py-3 font-semibold text-foreground">{children}</th>,
-                    td: ({ children }) => <td className="px-4 py-3 text-muted-foreground">{children}</td>,
+                    th: ({ children }) => <th className="px-4 py-3 font-semibold text-foreground">{processMathInChildren(children)}</th>,
+                    td: ({ children }) => <td className="px-4 py-3 text-muted-foreground">{processMathInChildren(children)}</td>,
                 }}
             >
                 {cleanContent}
@@ -301,3 +371,17 @@ export default function MarkdownRenderer({ content, hideLinks, suggestedSolver, 
         </div>
     );
 }
+
+const MarkdownRenderer = React.memo(MarkdownRendererInner, (prevProps, nextProps) => {
+    return (
+        prevProps.content === nextProps.content &&
+        prevProps.messageId === nextProps.messageId &&
+        prevProps.isCodeExecuting === nextProps.isCodeExecuting &&
+        prevProps.hideRunButton === nextProps.hideRunButton &&
+        prevProps.suggestedSolver === nextProps.suggestedSolver &&
+        prevProps.hideLinks === nextProps.hideLinks &&
+        prevProps.isSidebar === nextProps.isSidebar &&
+        prevProps.executionResult === nextProps.executionResult
+    );
+});
+export default MarkdownRenderer;

@@ -45,8 +45,15 @@ export async function POST(req: Request) {
         if (plan === 'Pro') tokenLimit = 500000;
         if (plan === 'Enterprise') tokenLimit = 2000000;
 
+        let demoExpiresAt = undefined;
+        if (body.role === 'demo') {
+            const hours = Number(body.demoDurationHours) || 2;
+            demoExpiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+        }
+
         const user = await User.create({
             ...body,
+            demoExpiresAt,
             simMinutesLimit: body.simMinutesLimit || simMinutesLimit,
             tokenLimit: body.tokenLimit || tokenLimit,
             apiKey: (body.isApproved || body.role === 'admin') ? generateApiKey() : undefined,
@@ -65,7 +72,8 @@ export async function PUT(req: Request) {
         const { 
             id, password, email, firstName, lastName, company, 
             isApproved, phone, plan, role, tokenLimit, tokensUsed, 
-            simMinutesLimit, simMinutesUsed, apiKey, apiEnabled 
+            simMinutesLimit, simMinutesUsed, apiKey, apiEnabled,
+            demoDurationHours
         } = body;
 
         if (!id) {
@@ -82,7 +90,19 @@ export async function PUT(req: Request) {
         if (isApproved !== undefined) updateData.isApproved = isApproved;
         if (phone !== undefined) updateData.phone = phone;
         if (plan !== undefined) updateData.plan = plan;
-        if (role !== undefined) updateData.role = role;
+        if (role !== undefined) {
+            updateData.role = role;
+            if (role === 'demo') {
+                const existing = await User.findById(id);
+                if (existing) {
+                    const hours = Number(demoDurationHours) || 2;
+                    const baseTime = existing.createdAt ? new Date(existing.createdAt).getTime() : Date.now();
+                    updateData.demoExpiresAt = new Date(baseTime + hours * 60 * 60 * 1000);
+                }
+            } else {
+                updateData.demoExpiresAt = null;
+            }
+        }
         if (password) updateData.password = password;
         if (tokenLimit !== undefined) updateData.tokenLimit = Number(tokenLimit);
         if (tokensUsed !== undefined) updateData.tokensUsed = Number(tokensUsed);

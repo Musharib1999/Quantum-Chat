@@ -2,14 +2,19 @@
 
 import AlgorithmCatalogModal from '@/components/AlgorithmCatalogModal';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Truck, Users, Briefcase, Factory, 
   Plus, History, 
   Send, ChevronRight, Circle, Activity, Info,
   CheckCircle, AlertCircle, Loader2, Bot, User, Terminal,
-  X, Settings, Database, Cpu, Trash2, Paperclip
+  X, Settings, Database, Cpu, Trash2, Paperclip, BookOpen, GraduationCap,
+  Share2, Copy, Check
 } from 'lucide-react';
+import { getCourses, getExercises } from '@/app/actions/admin';
+import { useAuth } from '@/context/AuthContext';
+import { shareSession } from '@/app/actions/history';
+import { Clock } from 'lucide-react';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { useQuantumChat } from '@/hooks/useQuantumChat';
 import { 
@@ -25,9 +30,7 @@ interface MathComponentProps {
 }
 
 function MathComponent({ math, displayMode = false }: MathComponentProps) {
-  const [html, setHtml] = useState<string | null>(null);
-
-  useEffect(() => {
+  if (typeof window !== 'undefined') {
     const win = window as any;
     if (win.katex) {
       try {
@@ -35,17 +38,12 @@ function MathComponent({ math, displayMode = false }: MathComponentProps) {
           displayMode,
           throwOnError: false
         });
-        setHtml(rendered);
+        return <span dangerouslySetInnerHTML={{ __html: rendered }} className="inline-block max-w-full overflow-x-auto" />;
       } catch (err) {
         console.error("KaTeX rendering error:", err);
       }
     }
-  }, [math, displayMode]);
-
-  if (html) {
-    return <span dangerouslySetInnerHTML={{ __html: html }} className="inline-block max-w-full overflow-x-auto" />;
   }
-
   return <span>{displayMode ? `$$ ${math} $$` : `$ ${math} $`}</span>;
 }
 
@@ -71,12 +69,117 @@ interface ChatSession {
   };
 }
 
+const getUserInitials = (u: any) => {
+  if (!u) return 'QG';
+  const first = u.firstName || u.name || '';
+  const last = u.lastName || '';
+  if (first && last) {
+    return `${first[0]}${last[0]}`.toUpperCase();
+  }
+  if (first) {
+    return first.substring(0, Math.min(first.length, 2)).toUpperCase();
+  }
+  return 'QG';
+};
+
+const getUsedGates = (code: string) => {
+  if (!code) return [];
+  const gatePatterns: { name: string; pattern: RegExp; desc: string; color: string; bg: string }[] = [
+    { name: 'H', pattern: /\.h\(/i, desc: 'Hadamard (Superposition)', color: 'text-indigo-600 border-indigo-200', bg: 'bg-indigo-50/50' },
+    { name: 'X', pattern: /\.x\(/i, desc: 'Pauli-X (NOT / Bit-Flip)', color: 'text-rose-600 border-rose-200', bg: 'bg-rose-50/50' },
+    { name: 'Y', pattern: /\.y\(/i, desc: 'Pauli-Y (Bit/Phase-Flip)', color: 'text-emerald-600 border-emerald-200', bg: 'bg-emerald-50/50' },
+    { name: 'Z', pattern: /\.z\(/i, desc: 'Pauli-Z (Phase-Flip)', color: 'text-teal-600 border-teal-200', bg: 'bg-teal-50/50' },
+    { name: 'CX / CNOT', pattern: /\.cx\(/i, desc: 'Controlled-NOT (Entanglement)', color: 'text-blue-600 border-blue-200', bg: 'bg-blue-50/50' },
+    { name: 'CCX / Toffoli', pattern: /\.ccx\(/i, desc: 'Toffoli (Controlled-CNOT)', color: 'text-sky-600 border-sky-200', bg: 'bg-sky-50/50' },
+    { name: 'Rx', pattern: /\.rx\(/i, desc: 'Rotation X', color: 'text-violet-600 border-violet-200', bg: 'bg-violet-50/50' },
+    { name: 'Ry', pattern: /\.ry\(/i, desc: 'Rotation Y', color: 'text-fuchsia-600 border-fuchsia-200', bg: 'bg-fuchsia-50/50' },
+    { name: 'Rz', pattern: /\.rz\(/i, desc: 'Rotation Z', color: 'text-purple-600 border-purple-200', bg: 'bg-purple-50/50' },
+    { name: 'S', pattern: /\.s\(/i, desc: 'S Phase Shift', color: 'text-amber-600 border-amber-200', bg: 'bg-amber-50/50' },
+    { name: 'T', pattern: /\.t\(/i, desc: 'T Phase Shift', color: 'text-orange-500 border-orange-200', bg: 'bg-orange-50/50' },
+    { name: 'SWAP', pattern: /\.swap\(/i, desc: 'State Swap', color: 'text-pink-600 border-pink-200', bg: 'bg-pink-50/50' },
+    { name: 'U', pattern: /\.u\(/i, desc: 'Universal Single-Qubit', color: 'text-cyan-600 border-cyan-200', bg: 'bg-cyan-50/50' },
+    { name: 'Measure', pattern: /\.measure\(/i, desc: 'Z-basis Measurement', color: 'text-slate-600 border-slate-200', bg: 'bg-slate-50/50' },
+  ];
+  return gatePatterns.filter(gp => gp.pattern.test(code));
+};
+
+
+
+function ModalDemoCountdown({ expiresAt }: { expiresAt: string }) {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const difference = new Date(expiresAt).getTime() - Date.now();
+      if (difference <= 0) {
+        setTimeLeft("00:00:00");
+        return;
+      }
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      const formatted = [
+        hours.toString().padStart(2, '0'),
+        minutes.toString().padStart(2, '0'),
+        seconds.toString().padStart(2, '0')
+      ].join(':');
+
+      setTimeLeft(formatted);
+    };
+
+    calculateTime();
+    const timer = setInterval(calculateTime, 1000);
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+
+  return <span className="text-slate-800 font-bold font-mono text-[11.5px]">{timeLeft}</span>;
+}
+
+function DemoCountdown({ expiresAt }: { expiresAt: string }) {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const difference = new Date(expiresAt).getTime() - Date.now();
+      if (difference <= 0) {
+        setTimeLeft("00:00:00");
+        return;
+      }
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      const formatted = [
+        hours.toString().padStart(2, '0'),
+        minutes.toString().padStart(2, '0'),
+        seconds.toString().padStart(2, '0')
+      ].join(':');
+
+      setTimeLeft(formatted);
+    };
+
+    calculateTime();
+    const timer = setInterval(calculateTime, 1000);
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+
+  return (
+    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[10px] font-bold font-mono shadow-sm">
+      <Clock className="w-3 h-3" />
+      <span>Trial Remaining: {timeLeft}</span>
+    </div>
+  );
+}
+
 export default function App() {
+  const { isAuthenticated, user } = useAuth();
   const getPipelineTitle = (pipeline: string) => {
     switch (pipeline) {
       case 'optimization': return 'Optimization Studio';
       case 'algorithm': return 'Quantum Algorithm Studio';
       case 'coder': return 'Quantum Circuit Studio';
+      case 'academy': return 'Quantum Academy';
       case 'general':
       default:
         return 'Quantum Assistant';
@@ -115,6 +218,16 @@ export default function App() {
             <span>Simulation</span>
           </div>
         );
+      case 'academy':
+        return (
+          <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+            <span>Learn Foundations</span>
+            <ChevronRight className="w-3 h-3 text-emerald-300" />
+            <span>Interactive Quizzes</span>
+            <ChevronRight className="w-3 h-3 text-emerald-300" />
+            <span>Sandbox Practice</span>
+          </div>
+        );
       case 'general':
       default:
         return (
@@ -130,7 +243,190 @@ export default function App() {
   };
   const [selectedStrategy, setSelectedStrategy] = useState<'Auto' | 'CQM' | 'QUBO' | 'OR-Tools'>('Auto');
   const [isAlgorithmModalOpen, setIsAlgorithmModalOpen] = useState(false);
-  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'algorithm' | 'coder'>('optimization');
+  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'algorithm' | 'coder' | 'academy'>('optimization');
+
+  // Restore pipeline preference from localStorage after initial hydration to prevent SSR mismatch
+  useEffect(() => {
+    const stored = localStorage.getItem('qg_selected_pipeline') as any;
+    if (stored && ['general', 'optimization', 'algorithm', 'coder', 'academy'].includes(stored)) {
+      setSelectedPipeline(stored);
+    }
+  }, []);
+  const [expandedLearningLevel, setExpandedLearningLevel] = useState<number | null>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+
+  // Load Academy Courses dynamically from database
+  useEffect(() => {
+    const loadCoursesData = async () => {
+      try {
+        const data = await getCourses();
+        setCourses(data);
+      } catch (err) {
+        console.error("Failed to load academy courses", err);
+      }
+    };
+    loadCoursesData();
+  }, []);
+  
+  // Hands-on state hook variables
+  const [levelExercises, setLevelExercises] = useState<Record<number, any[]>>({});
+  const [activeExercise, setActiveExercise] = useState<any | null>(null);
+  const [handsOnCode, setHandsOnCode] = useState('');
+  const [isSimulatingHandsOn, setIsSimulatingHandsOn] = useState(false);
+  const [handsOnLogs, setHandsOnLogs] = useState('');
+  const [handsOnError, setHandsOnError] = useState('');
+  const [handsOnChartData, setHandsOnChartData] = useState<any | null>(null);
+  const [validationLogs, setValidationLogs] = useState<string[]>([]);
+  const [validationPassed, setValidationPassed] = useState<boolean | null>(null);
+
+  // Load exercises when expandedLearningLevel changes
+  useEffect(() => {
+    if (expandedLearningLevel !== null) {
+      const loadLevelExercises = async () => {
+        try {
+          const levelCourse = courses.find(c => c.level === expandedLearningLevel);
+          if (levelCourse) {
+            const exs = await getExercises(levelCourse.id);
+            setLevelExercises(prev => ({
+              ...prev,
+              [expandedLearningLevel]: exs
+            }));
+          }
+        } catch (err) {
+          console.error("Failed to load exercises for level", err);
+        }
+      };
+      loadLevelExercises();
+    }
+  }, [expandedLearningLevel, courses]);
+
+  const handleExecuteHandsOn = async () => {
+    if (!activeExercise || !handsOnCode) return;
+    setIsSimulatingHandsOn(true);
+    setHandsOnLogs('');
+    setHandsOnError('');
+    setHandsOnChartData(null);
+    setValidationLogs([]);
+    setValidationPassed(null);
+
+    const logs: string[] = ["Starting local compilation & execution...", "Parsing resource allocations..."];
+
+    try {
+      const response = await fetch('/api/developer/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: handsOnCode })
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        setHandsOnError(data.error || "Simulation failed");
+        logs.push("✕ Code execution error: " + (data.error || "Failed"));
+        setValidationLogs(logs);
+        setValidationPassed(false);
+        return;
+      }
+
+      setHandsOnLogs(data.output || "Success (no console logs)");
+      logs.push("✓ Execution output retrieved.");
+
+      let parsedCounts: Record<string, number> = {};
+      if (data.output) {
+        const dictMatches = data.output.match(/\{[^{}]*\}/g);
+        if (dictMatches) {
+          try {
+            const lastDictStr = dictMatches[dictMatches.length - 1];
+            const jsonStr = lastDictStr.replace(/'/g, '"');
+            parsedCounts = JSON.parse(jsonStr);
+            
+            const chartItems = Object.keys(parsedCounts).map(k => ({
+              name: k,
+              value: Number(parsedCounts[k])
+            }));
+            setHandsOnChartData(chartItems);
+            logs.push("✓ Successfully parsed measurement counts.");
+          } catch (e) {
+            logs.push("⚠ Warning: Output matches dictionary structure but failed to parse JSON counts.");
+          }
+        }
+      }
+
+      logs.push("Running verification assertions...");
+      let passed = true;
+
+      if (activeExercise.qubits) {
+        const qubitRegex = new RegExp(`QuantumCircuit\\(\\s*${activeExercise.qubits}\\s*,?\\s*\\d*\\s*\\)`);
+        const altQubitRegex = new RegExp(`QuantumRegister\\(\\s*${activeExercise.qubits}\\s*,`);
+        if (qubitRegex.test(handsOnCode) || altQubitRegex.test(handsOnCode)) {
+          logs.push(`✓ Allocated exactly ${activeExercise.qubits} qubits.`);
+        } else {
+          logs.push(`✕ Resource assertion failed: Expected ${activeExercise.qubits} qubits.`);
+          passed = false;
+        }
+      }
+
+      if (activeExercise.bits) {
+        const bitRegex = new RegExp(`QuantumCircuit\\(\\s*\\d+\\s*,\\s*${activeExercise.bits}\\s*\\)`);
+        const altBitRegex = new RegExp(`ClassicalRegister\\(\\s*${activeExercise.bits}\\s*,`);
+        if (bitRegex.test(handsOnCode) || altBitRegex.test(handsOnCode)) {
+          logs.push(`✓ Allocated exactly ${activeExercise.bits} classical bits.`);
+        } else {
+          logs.push(`✕ Resource assertion failed: Expected ${activeExercise.bits} classical bits.`);
+          passed = false;
+        }
+      }
+
+      if (activeExercise.expectedGates && activeExercise.expectedGates.length > 0) {
+        for (const gate of activeExercise.expectedGates) {
+          const cleanGate = gate.toLowerCase().trim();
+          let methodPattern = `\\.${cleanGate}\\(`;
+          if (cleanGate === 'cnot' || cleanGate === 'cx') methodPattern = '\\.(cx|cnot)\\(';
+          if (cleanGate === 'hadamard' || cleanGate === 'h') methodPattern = '\\.(h|hadamard)\\(';
+          if (cleanGate === 'x') methodPattern = '\\.(x|x_gate)\\(';
+          
+          const gateRegex = new RegExp(methodPattern, 'i');
+          if (gateRegex.test(handsOnCode)) {
+            logs.push(`✓ Applied target gate: ${gate}`);
+          } else {
+            logs.push(`✕ Verification assertion failed: Missing expected gate operation "${gate}".`);
+            passed = false;
+          }
+        }
+      }
+
+      if (activeExercise.targetState === 'bell') {
+        const has00 = parsedCounts['00'] !== undefined || parsedCounts['0'] !== undefined;
+        const has11 = parsedCounts['11'] !== undefined || parsedCounts['3'] !== undefined;
+        const hasOther = Object.keys(parsedCounts).some(k => k !== '00' && k !== '11' && k !== '0' && k !== '3' && parsedCounts[k] > 50);
+        
+        if (has00 && has11 && !hasOther) {
+          logs.push("✓ State verification passed: High probability output matches Bell state |Φ+> configuration.");
+        } else {
+          logs.push("✕ State verification failed: Measurement outcomes do not represent a Bell state.");
+          passed = false;
+        }
+      } else if (activeExercise.targetState === 'superposition') {
+        const total = Object.values(parsedCounts).reduce((a, b) => a + b, 0);
+        const distinct = Object.keys(parsedCounts).filter(k => (parsedCounts[k] / total) > 0.1);
+        if (distinct.length >= 2) {
+          logs.push(`✓ State verification passed: Superposition detected across states [${distinct.join(', ')}].`);
+        } else {
+          logs.push("✕ State verification failed: Output state remains fully deterministic.");
+          passed = false;
+        }
+      }
+
+      setValidationLogs(logs);
+      setValidationPassed(passed);
+    } catch (err: any) {
+      logs.push("✕ Execution network error: " + err.message);
+      setValidationLogs(logs);
+      setValidationPassed(false);
+    } finally {
+      setIsSimulatingHandsOn(false);
+    }
+  };
+  const [selectedLearningLevel, setSelectedLearningLevel] = useState<number | null>(null);
   
   const {
     messages,
@@ -145,7 +441,39 @@ export default function App() {
     setShouldAutoScroll
   } = useQuantumChat('assistant', { mode: selectedStrategy.toLowerCase(), selectedPipeline });
 
+  const handleUpdateExecutionResult = useCallback((msgId: number, res: any) => {
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, executionResult: res } : m));
+  }, [setMessages]);
+
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [shareData, setShareData] = useState<any>(null);
+  const [isShareLoading, setIsShareLoading] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleOpenShareModal = async () => {
+    if (messages.length === 0) return;
+    setIsShareLoading(true);
+    try {
+      const targetId = activeSessionId || `session_${Date.now()}`;
+      const activeTitle = activeSession?.title || (messages[0]?.text ? (messages[0].text.substring(0, 22) + '...') : 'Quantum Simulation');
+      const res = await shareSession(targetId, messages, activeTitle, selectedPipeline);
+      if (res.success && res.shareId) {
+        const fullUrl = `${window.location.origin}/s/${res.shareId}`;
+        setShareUrl(fullUrl);
+        setShareData(res);
+        setIsShareModalOpen(true);
+      } else {
+        alert("Could not generate share link: " + (res.error || "Unknown error"));
+      }
+    } catch (err: any) {
+      console.error("Failed to generate share link:", err);
+      alert("Failed to generate share link: " + err.message);
+    } finally {
+      setIsShareLoading(false);
+    }
+  };
   const [expandObjective, setExpandObjective] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -162,11 +490,15 @@ export default function App() {
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
 
-  // Load chat sessions from MongoDB on mount
+  // Load chat sessions from MongoDB on mount or when pipeline changes.
+  // NOTE: Skip 'academy' — switchPipeline() handles academy session loading
+  // directly. Running both concurrently causes a double async race where two
+  // setMessages() calls fight each other producing rapid state flicker/lag.
   useEffect(() => {
+    if (selectedPipeline === 'academy') return;
     async function loadSessions() {
       try {
-        const dbSessions = await getChatSessions();
+        const dbSessions = await getChatSessions(selectedPipeline);
         if (dbSessions && dbSessions.length > 0) {
           const mapped = dbSessions.map((s: any) => ({
             id: s._id || s.id,
@@ -175,15 +507,22 @@ export default function App() {
             workflowSteps: s.workflowSteps || undefined
           }));
           setSessions(mapped);
+          
+          // Load the messages of the most recent session for this pipeline
+          setActiveSessionId(mapped[0].id);
+          setMessages(mapped[0].messages);
         } else {
           setSessions([]);
+          // Reset the chat interface for this pipeline
+          setActiveSessionId(null);
+          setMessages([]);
         }
       } catch (err) {
         console.error("Failed to load chat sessions from MongoDB:", err);
       }
     }
     loadSessions();
-  }, []);
+  }, [selectedPipeline]);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -211,6 +550,82 @@ export default function App() {
     }
     setShowHistoryDrawer(false);
   };
+
+  // Academy initial mount — if the user's last pipeline was academy (from localStorage),
+  // the loadSessions useEffect skips it. This effect handles that edge case.
+  useEffect(() => {
+    if (selectedPipeline !== 'academy') return;
+    async function loadAcademyOnMount() {
+      try {
+        const dbSessions = await getChatSessions('academy');
+        if (dbSessions && dbSessions.length > 0) {
+          const mapped = dbSessions.map((s: any) => ({
+            id: s._id || s.id,
+            title: s.title || 'Academy Journal',
+            messages: s.messages || [],
+            workflowSteps: s.workflowSteps || undefined
+          }));
+          setSessions(mapped);
+          setActiveSessionId(mapped[0].id);
+          setMessages(mapped[0].messages);
+        } else {
+          setSessions([]);
+          setActiveSessionId(null);
+          setMessages([]);
+        }
+      } catch (err) {
+        console.error('Failed to load Academy journal on mount:', err);
+      }
+    }
+    loadAcademyOnMount();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only — switchPipeline() handles subsequent switches
+
+  // ─── Unified pipeline switch handler ──────────────────────────────────────
+  // Academy  → loads/restores the persistent Academy journal session
+  // All else → clears workspace and starts a fresh session
+  const switchPipeline = async (pipeline: 'general' | 'optimization' | 'algorithm' | 'coder' | 'academy') => {
+    if (pipeline === selectedPipeline) return;
+
+    // Persist preference
+    localStorage.setItem('qg_selected_pipeline', pipeline);
+    setSelectedPipeline(pipeline);
+
+    if (pipeline === 'academy') {
+      // Load the dedicated persistent academy journal session
+      try {
+        const dbSessions = await getChatSessions('academy');
+        if (dbSessions && dbSessions.length > 0) {
+          const mapped = dbSessions.map((s: any) => ({
+            id: s._id || s.id,
+            title: s.title || 'Academy Journal',
+            messages: s.messages || [],
+            workflowSteps: s.workflowSteps || undefined
+          }));
+          setSessions(mapped);
+          setActiveSessionId(mapped[0].id);
+          setMessages(mapped[0].messages);
+        } else {
+          // No academy session yet — start clean, first message will create one
+          setSessions([]);
+          setActiveSessionId(null);
+          setMessages([]);
+        }
+      } catch (err) {
+        console.error('Failed to load Academy journal:', err);
+        setSessions([]);
+        setActiveSessionId(null);
+        setMessages([]);
+      }
+    } else {
+      // Non-academy pipelines: clear workspace entirely
+      setActiveSessionId(null);
+      setMessages([]);
+      setInputValue('');
+      // Sessions list will reload via the existing useEffect that watches selectedPipeline
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   const startNewChat = () => {
     setActiveSessionId(null);
@@ -247,7 +662,7 @@ export default function App() {
     if (!targetSessionId) {
       const shortTitle = text.length > 25 ? text.substring(0, 22) + '...' : text;
       try {
-        const newDbSession = await createChatSession(shortTitle, [], {});
+        const newDbSession = await createChatSession(shortTitle, [], {}, selectedPipeline);
         targetSessionId = newDbSession._id || newDbSession.id;
         
         const newSession: ChatSession = {
@@ -606,38 +1021,8 @@ export default function App() {
     }
   };
 
-  // Load MathJax dynamically and re-typeset on state changes with debouncing and stream-proofing
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const win = window as any;
-    const typeset = () => {
-      if (win.MathJax?.typesetPromise) {
-        win.MathJax.typesetPromise().catch(() => {});
-      }
-    };
-
-    // Check if any message in the chat is currently streaming
-    const isAnyStreaming = messages.some((m: any) => m.isStreaming);
-    if (isAnyStreaming) {
-      return; // Skip typesetting during active streams to prevent concurrent rendering browser crashes
-    }
-
-    if (!win.MathJax) {
-      win.MathJax = {
-        tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
-        options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] },
-        startup: { ready() { win.MathJax.startup.defaultReady(); typeset(); } }
-      };
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-      s.async = true;
-      document.head.appendChild(s);
-    } else {
-      // Debounce typesetting to prevent concurrent calls and let DOM fully settle
-      const timer = setTimeout(typeset, 250);
-      return () => clearTimeout(timer);
-    }
-  }, [activeSessionId, messages, isTyping]);
+  // LaTeX typesetting is handled natively inside React Virtual DOM by KaTeX (<KaTeXMath /> in MarkdownRenderer.tsx).
+  // Legacy MathJax global DOM-mutation script removed to prevent out-of-band DOM re-rendering flickers on click/state updates.
 
   return (
     <div className="flex h-screen bg-[#f8fafc] text-slate-800 font-sans relative overflow-hidden">
@@ -683,12 +1068,15 @@ export default function App() {
             <span className="absolute left-14 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-all duration-150 z-[9999] shadow-lg">Help & docs</span>
           </button>
 
-          {/* Profile Avatar MS (Opens Profile Modal) */}
+
+
+          {/* Profile Avatar (Opens Profile Modal) */}
           <div 
             onClick={() => setIsProfileOpen(true)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-sm active:scale-95 cursor-pointer relative group transition-opacity hover:opacity-90" style={{ backgroundColor: '#444444' }}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-sm active:scale-95 cursor-pointer relative group transition-opacity hover:opacity-90"
+            style={{ backgroundColor: '#444444' }}
           >
-            MS
+            {getUserInitials(user)}
             <span className="absolute left-14 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-all duration-150 z-[9999] shadow-lg">User account</span>
           </div>
         </div>
@@ -747,7 +1135,20 @@ export default function App() {
               </span>
             )}
           </div>
-          <div />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleOpenShareModal}
+              disabled={isShareLoading || messages.length === 0}
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:cursor-not-allowed"
+              title="Share visual Quantum Card to social media"
+            >
+              <Share2 className="w-3.5 h-3.5 text-blue-400" />
+              <span>{isShareLoading ? 'Generating...' : 'Share Card'}</span>
+            </button>
+            {user?.role === 'demo' && user?.demoExpiresAt && (
+              <DemoCountdown expiresAt={user.demoExpiresAt} />
+            )}
+          </div>
         </header>
 
         {/* Scrollable Dashboard or Message Flow */}
@@ -947,7 +1348,7 @@ export default function App() {
               {messages.map(msg => (
                 <div 
                   key={msg.id} 
-                  className={`flex w-full min-w-0 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-3 duration-300`}
+                  className={`flex w-full min-w-0 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`flex min-w-0 max-w-[85%] gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start`}>
                     
@@ -962,7 +1363,11 @@ export default function App() {
                       style={msg.sender === 'user' ? { backgroundColor: '#2E65BF' } : {}}
                     >
                       {msg.sender === 'user' ? (
-                        <div className="whitespace-pre-wrap break-words">{msg.text}</div>
+                        <div className="whitespace-pre-wrap break-words">
+                          {msg.text.trim().startsWith('{"variable_registry"') 
+                            ? "🔄 Re-running compilation with updated parameters..." 
+                            : msg.text}
+                        </div>
                       ) : (
                         <div className="prose prose-slate max-w-none text-slate-700 overflow-hidden break-words">
                           <MarkdownRenderer 
@@ -972,9 +1377,7 @@ export default function App() {
                              messageId={msg.id}
                              executionResult={msg.executionResult}
                              isCodeExecuting={isExecuting}
-                             onUpdateExecutionResult={(msgId, res) => {
-                               setMessages(prev => prev.map(m => m.id === msgId ? { ...m, executionResult: res } : m));
-                             }}
+                             onUpdateExecutionResult={handleUpdateExecutionResult}
                            />
                           {/* Execute Button: shown for optimization pipeline once QUBO code is ready and not yet executed */}
                           {selectedPipeline === 'optimization' && msg.workflowSteps?.quboCodeStatus === 'done' && !msg.workflowSteps?.outputStatus?.includes('done') && !msg.isStreaming && (
@@ -1145,7 +1548,7 @@ export default function App() {
               ))}
 
               {isTyping && (
-                <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex w-full justify-start">
                   <div className="flex flex-row items-center gap-4">
                     <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
                       <img src="/qg-icon.png" alt="Quantum Guru" className="w-8 h-8 object-cover rounded-lg" />
@@ -1186,6 +1589,8 @@ export default function App() {
                     ? "Specify the quantum algorithm you want to design..."
                     : selectedPipeline === 'coder'
                     ? "Describe the quantum circuit you want to compile and simulate..."
+                    : selectedPipeline === 'academy'
+                    ? "Ask a question about the current module, syllabus, or concept..."
                     : "Ask a quantum computing question..."
                 }
                 className="w-full p-4 text-slate-707 placeholder:text-slate-400 outline-none resize-none bg-transparent text-sm leading-relaxed min-h-[90px]"
@@ -1232,7 +1637,7 @@ export default function App() {
                             <button
                               key={label}
                               onClick={() => { 
-                                setSelectedPipeline(pipeline as any);
+                                switchPipeline(pipeline as any);
                                 setShowAttachMenu(false); 
                               }}
                               className="w-full text-left px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700 rounded-lg text-[11px] font-medium text-slate-700 flex items-center gap-2.5 cursor-pointer transition-colors group"
@@ -1244,6 +1649,26 @@ export default function App() {
                       );
                     })()}
                   </div>
+
+                  {/* Academy Mode Toggle Button */}
+                  <button
+                    onClick={() => {
+                      if (selectedPipeline === 'academy') {
+                        switchPipeline('general');
+                      } else {
+                        switchPipeline('academy');
+                      }
+                    }}
+                    className={`h-9 px-3 rounded-xl border flex items-center gap-2 text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
+                      selectedPipeline === 'academy'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm font-bold'
+                        : 'border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-slate-50'
+                    }`}
+                    title="Switch to Academy Mode"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    <span>Academy Mode</span>
+                  </button>
                 </div>
 
                 {/* Submit Button */}
@@ -1293,13 +1718,205 @@ export default function App() {
         
         <div className="p-4 flex-1 overflow-y-auto space-y-3">
           {/* Waiting/Initial Header Status Card */}
-          {(!activeSession || !activeSession.workflowSteps || (!activeSession.workflowSteps.nlp && !activeSession.workflowSteps.math_rigor)) && (
+          {selectedPipeline !== 'general' && selectedPipeline !== 'academy' && (!activeSession || !activeSession.workflowSteps || (!activeSession.workflowSteps.nlp && !activeSession.workflowSteps.math_rigor)) && (
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-center gap-2 animate-in fade-in duration-250">
               <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 animate-pulse">
                 <Activity className="w-4 h-4" />
               </div>
               <p className="text-xs font-semibold text-slate-500">Waiting for problem submission...</p>
               <p className="text-[10px] text-slate-400 max-w-[200px] leading-relaxed">Pipeline traces will display here once execution starts.</p>
+            </div>
+          )}
+
+          {/* ── GENERAL ASSISTANT TRENDING TOPICS ── */}
+          {selectedPipeline === 'general' && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3 hover:shadow-sm transition-all">
+              <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                <Activity className="w-4 h-4 text-blue-600" />
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Trending Topics</span>
+              </div>
+              <div className="space-y-2">
+                <div 
+                  onClick={() => setInputValue("Quantum Computing and its applications")}
+                  className="bg-white border border-slate-200 hover:border-blue-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                >
+                  <span>1. Quantum Computing and its application</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                </div>
+                <div 
+                  onClick={() => setInputValue("Post quantum cryptography")}
+                  className="bg-white border border-slate-200 hover:border-blue-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                >
+                  <span>2. Post quantum cryptography</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                </div>
+                <div 
+                  onClick={() => setInputValue("Future of computing")}
+                  className="bg-white border border-slate-200 hover:border-blue-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                >
+                  <span>3. Future of computing</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                </div>
+                <div 
+                  onClick={() => setInputValue("Top 10 quantum computing algorithms we must know")}
+                  className="bg-white border border-slate-200 hover:border-blue-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                >
+                  <span>4. Top 10 quantum computing algorithms we must know</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── QUANTUM ACADEMY / GUIDED LEARNING SYLLABUS ── */}
+          {(selectedPipeline === 'general' || selectedPipeline === 'academy') && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3 hover:shadow-sm transition-all">
+              <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                <BookOpen className="w-4 h-4 text-blue-600" />
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                  {selectedPipeline === 'academy' ? 'Quantum Course Syllabus' : 'Guided Learning'}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {courses.map((item) => {
+                  const isExpanded = expandedLearningLevel === item.level;
+                  return (
+                    <div 
+                      key={item.level}
+                      className="bg-white border border-slate-200 rounded-lg overflow-hidden transition-all duration-200 flex flex-col"
+                    >
+                      {/* Header trigger */}
+                      <div 
+                        onClick={() => setExpandedLearningLevel(isExpanded ? null : item.level)}
+                        className="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between group transition-colors"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-slate-800 font-bold text-[11px]">Level {item.level}: {item.title}</span>
+                          <span className="text-[9px] text-slate-400 font-normal mt-0.5">{item.subtitle}</span>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-all duration-200 ${isExpanded ? 'rotate-90 text-blue-500' : ''}`} />
+                      </div>
+
+                      {/* Collapsible content drop */}
+                      {isExpanded && (
+                        <div className="px-3 pb-3 pt-1 border-t border-slate-100 bg-slate-50/50 space-y-3.5 animate-in slide-in-from-top-2 duration-200">
+                          {/* Modules list */}
+                          <div className="space-y-2.5">
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Syllabus Modules</span>
+                            <div className="space-y-2.5">
+                              {item.modules.map((mod, midx) => (
+                                <div key={midx} className="space-y-1">
+                                  <h5 className="text-[10px] font-bold text-slate-700">
+                                    Mod {midx + 1}: {mod.name}
+                                  </h5>
+                                  <div className="space-y-1 text-[11px] text-slate-600 pl-1.5">
+                                    {mod.topics.map((t, tidx) => (
+                                      <div 
+                                        key={tidx}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setInputValue(`Explain the concept: "${t}" from ${item.title} (${item.subtitle}) in detail.`);
+                                        }}
+                                        className="hover:text-blue-600 hover:underline cursor-pointer transition-all py-0.5 font-medium leading-relaxed"
+                                        title="Click to ask Guru about this topic"
+                                      >
+                                        {t}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Hands-on */}
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-500">Hands-on Exercises</span>
+                            <div className="space-y-1 text-[11px] text-blue-600 pl-1.5">
+                              {levelExercises[item.level] && levelExercises[item.level].length > 0 ? (
+                                levelExercises[item.level].map((ex: any) => (
+                                  <div 
+                                    key={ex.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveExercise(ex);
+                                      setHandsOnCode(ex.referenceCode || "# Write your Qiskit code here\nimport qiskit\n");
+                                      setHandsOnLogs('');
+                                      setHandsOnError('');
+                                      setHandsOnChartData(null);
+                                      setValidationLogs([]);
+                                      setValidationPassed(null);
+                                    }}
+                                    className="hover:text-blue-800 hover:underline cursor-pointer transition-all py-0.5 font-semibold leading-relaxed flex items-center gap-1.5"
+                                    title="Open interactive lab exercise"
+                                  >
+                                    <span>⚙️</span>
+                                    <span>{ex.title}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                (item.handsOn || []).map((ex: any, eidx: number) => (
+                                  <div 
+                                    key={eidx}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setInputValue(`Provide a step-by-step tutorial and Qiskit code to implement the hands-on exercise: "${ex}" from ${item.title}.`);
+                                    }}
+                                    className="hover:text-blue-800 hover:underline cursor-pointer transition-all py-0.5 font-semibold leading-relaxed"
+                                    title="Ask Guru to explain this exercise"
+                                  >
+                                    {ex}
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Recommended Posts */}
+                          {item.posts && item.posts.length > 0 && (
+                            <div className="space-y-1.5">
+                              <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500">Recommended Posts</span>
+                              <div className="space-y-1 text-[11px] text-amber-600 pl-1.5">
+                                {item.posts.map((post, pidx) => (
+                                  <a 
+                                    key={pidx}
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      alert("Link to read '" + post + "' will be configured soon!");
+                                    }}
+                                    className="hover:text-amber-800 hover:underline cursor-pointer transition-all py-0.5 font-semibold leading-relaxed flex items-center gap-1.5"
+                                  >
+                                    <span>📖</span>
+                                    <span>{post}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Outcome */}
+                          <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 space-y-0.5">
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-emerald-600">Outcome</span>
+                            <p className="text-[9.5px] text-emerald-800 leading-snug">
+                              {item.outcome}
+                            </p>
+                          </div>
+
+                          {/* Action Button */}
+                          <button
+                            onClick={() => setInputValue(item.prompt)}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-md text-[10px] font-bold transition-all shadow-3xs cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <Activity className="w-3.5 h-3.5" />
+                            Ask Guru to teach me this
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -1522,7 +2139,7 @@ export default function App() {
             return (
               <div className="space-y-3">
                 {/* Card 1: Gate Specification & Parsing */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-blue-600">1. Gate Specification</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${parsingDone ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-amber-50 text-amber-600 border border-amber-200"}`}>
@@ -1542,7 +2159,7 @@ export default function App() {
                 </div>
 
                 {/* Card 2: Compiled Circuit & Qiskit Code */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-blue-600">2. Compiled Gate Circuit</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${compilingDone ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
@@ -1559,6 +2176,27 @@ export default function App() {
                       <p className="font-bold text-slate-700 text-xs mt-0.5">{numGates}</p>
                     </div>
                   </div>
+                  {compilingDone && (() => {
+                    const gates = getUsedGates(ws.final_code || ws.qiskit_code || "");
+                    if (gates.length === 0) return null;
+                    return (
+                      <div className="space-y-1.5 pt-2 border-t border-slate-200/60 animate-in fade-in duration-150">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Gates Detected</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {gates.map((g, idx) => (
+                            <span 
+                              key={idx} 
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border ${g.color} ${g.bg}`}
+                              title={g.desc}
+                            >
+                              <span className="w-1 h-1 rounded-full bg-current"></span>
+                              {g.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {ws.q_matrix_preview && (
                     <div className="bg-slate-950 text-emerald-400 p-2.5 rounded-lg font-mono text-[10px] leading-snug overflow-x-auto border border-slate-800 shadow-inner">
                       <pre className="whitespace-pre font-bold tracking-wider">{ws.q_matrix_preview}</pre>
@@ -1567,7 +2205,7 @@ export default function App() {
                 </div>
 
                 {/* Card 3: Simulator Backend Setup & Execute Button */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-blue-600">3. Execution Simulator</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${simDone ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
@@ -1663,7 +2301,7 @@ export default function App() {
                 </div>
 
                 {/* Card 4: Execution Results & Counts */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-blue-600">4. Measurement Output</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${simDone ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
@@ -1705,7 +2343,7 @@ export default function App() {
               <div className="space-y-3">
 
                 {/* Card 1: Problem classification */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     1. Problem classification
                   </span>
@@ -1715,7 +2353,7 @@ export default function App() {
                 </div>
 
                 {/* Card 2: Objective */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-blue-600">
                       2. Objective
@@ -1732,7 +2370,7 @@ export default function App() {
                   )}
                 </div>
                 {/* Card 3: Variables */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     3. Variable primitives
                   </span>
@@ -1772,7 +2410,7 @@ export default function App() {
                   </div>
                 </div>
                 {/* Card 4: Constraints summary */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     4. Constraints summary
                   </span>
@@ -1795,7 +2433,7 @@ export default function App() {
                   )}
                 </div>
                 {/* Card 5: Mathematical model */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     5. Mathematical model
                   </span>
@@ -1838,7 +2476,7 @@ export default function App() {
                 </div>
 
                 {/* Card 6: Solver recommendation */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     6. Solver recommendation
                   </span>
@@ -1852,7 +2490,7 @@ export default function App() {
                   </div>
                 </div>
                 {/* Card 7: Constraint details */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     7. Constraint details
                   </span>
@@ -1882,7 +2520,7 @@ export default function App() {
                 </div>
 
                 {/* Card 8: Feasibility */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     8. Feasibility
                   </span>
@@ -1892,7 +2530,7 @@ export default function App() {
                 </div>
 
                 {/* Card 9: Variable count */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     9. Parameters
                   </span>
@@ -1916,7 +2554,7 @@ export default function App() {
                   </div>
                 </div>
                 {/* Card 10: QA audit */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     10. QA audit
                   </span>
@@ -1927,7 +2565,7 @@ export default function App() {
                 </div>
 
                 {/* Card 11: Output Run History */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all animate-in fade-in duration-200">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 hover:shadow-sm transition-all">
                   <span className="text-[11px] font-semibold text-blue-600">
                     11. Execution Output History
                   </span>
@@ -1961,6 +2599,262 @@ export default function App() {
           })()}
         </div>
       </div>
+      {/* Guided Learning Syllabus Modal */}
+      {selectedLearningLevel !== null && (() => {
+        const levelData = courses.find(c => c.level === selectedLearningLevel);
+        if (!levelData) return null;
+
+        return (
+          <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+              
+              {/* Header */}
+              <div className="p-5 border-b border-slate-150 flex items-center justify-between shrink-0 bg-slate-50">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-extrabold">
+                    Level {levelData.level} Syllabus
+                  </span>
+                  <h3 className="font-extrabold text-base text-slate-800 mt-1.5 leading-snug">
+                    {levelData.title}
+                  </h3>
+                  <p className="text-xs text-slate-500">{levelData.subtitle}</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedLearningLevel(null)}
+                  className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200/50 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
+
+              {/* Scrollable Syllabus Content */}
+              <div className="p-6 overflow-y-auto space-y-5 flex-1">
+                
+                {/* Modules list */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4 text-blue-600" />
+                    Course Syllabus
+                  </h4>
+                  <div className="space-y-3.5">
+                    {levelData.modules.map((mod, midx) => (
+                      <div key={midx} className="space-y-1">
+                        <h5 className="text-xs font-bold text-slate-800">
+                          Module {midx + 1}: {mod.name}
+                        </h5>
+                        <ul className="list-disc pl-4 text-[11px] text-slate-600 space-y-0.5 leading-relaxed">
+                          {mod.topics.map((topic, tidx) => (
+                            <li key={tidx}>{topic}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Hands-on */}
+                {levelData.handsOn && levelData.handsOn.length > 0 && (
+                  <div className="space-y-2 bg-blue-50/40 border border-blue-100 rounded-xl p-3.5">
+                    <h4 className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <Terminal className="w-4 h-4 text-blue-600" />
+                      Hands-on Exercises
+                    </h4>
+                    <ul className="list-disc pl-4 text-[11px] text-blue-600/80 space-y-0.5">
+                      {levelData.handsOn.map((exercise, eidx) => (
+                        <li key={eidx} className="font-medium">{exercise}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Outcome */}
+                <div className="bg-emerald-50/40 border border-emerald-100 rounded-xl p-3.5 space-y-1.5">
+                  <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-emerald-600" />
+                    Learning Outcome
+                  </h4>
+                  <p className="text-[11px] text-emerald-800/90 font-medium leading-relaxed">
+                    {levelData.outcome}
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-2 shrink-0">
+                <button
+                  onClick={() => {
+                    setInputValue(levelData.prompt);
+                    setSelectedLearningLevel(null);
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Activity className="w-4 h-4" />
+                  Ask Guru to teach me this
+                </button>
+                <button
+                  onClick={() => setSelectedLearningLevel(null)}
+                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Academy Hands-on Practice Workspace Overlay */}
+      {activeExercise && (
+        <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200 flex flex-col h-[85vh] min-h-0">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-150 flex items-center justify-between shrink-0 bg-slate-50">
+              <div className="flex items-center gap-2.5">
+                <span className="text-[10px] uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-full font-bold">
+                  Level {activeExercise.courseLevel} Practical Arena
+                </span>
+                <h3 className="font-extrabold text-slate-800 text-sm">{activeExercise.title}</h3>
+              </div>
+              <button 
+                onClick={() => setActiveExercise(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200/50 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            {/* Split Screen Panel */}
+            <div className="flex flex-1 overflow-hidden min-h-0">
+              
+              {/* Left Column: Instructions & Test Assertions */}
+              <div className="w-1/3 border-r border-slate-200 p-5 overflow-y-auto space-y-4 flex flex-col bg-slate-50/50 text-left min-h-0">
+                <div className="space-y-4">
+                  <div className="bg-white border border-slate-200 p-4 rounded-xl space-y-2">
+                    <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Exercise Objective</span>
+                    <p className="text-xs text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{activeExercise.instructions}</p>
+                  </div>
+
+                  {activeExercise.hints && activeExercise.hints.length > 0 && (
+                    <div className="space-y-2 bg-amber-50/40 border border-amber-100 rounded-xl p-3.5">
+                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500">Exercise Hints</span>
+                      <ul className="list-disc pl-4 text-[10.5px] text-amber-600/90 space-y-1 font-medium leading-relaxed">
+                        {activeExercise.hints.map((hint: string, hidx: number) => (
+                          <li key={hidx}>{hint}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Validation logs panel */}
+                <div className="space-y-2">
+                  <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 block border-b border-slate-100 pb-1">Real-time Verification Panel</span>
+                  <div className="bg-slate-950/95 text-xs text-slate-200 font-mono p-3.5 rounded-xl border border-slate-800 space-y-1.5 max-h-52 overflow-y-auto">
+                    {validationLogs.length > 0 ? (
+                      validationLogs.map((log, lidx) => (
+                        <div 
+                          key={lidx} 
+                          className={log.startsWith('✓') ? 'text-emerald-400' : log.startsWith('✕') ? 'text-rose-400' : 'text-slate-400'}
+                        >
+                          {log}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-slate-500 italic text-[11px]">Compile and Run your code to trigger the validation assertions suite.</div>
+                    )}
+                  </div>
+
+                  {validationPassed !== null && (
+                    <div className={`p-3 rounded-xl border font-bold text-xs flex items-center justify-between text-center transition-all animate-in zoom-in-95 duration-200 ${
+                      validationPassed 
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                        : 'bg-rose-50 text-rose-700 border-rose-200'
+                    }`}>
+                      <span>
+                        {validationPassed 
+                          ? '✓ Exercise Solved: Verification Suite Passed!' 
+                          : '✕ Verification Failed. Review assertions details.'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Interactive Editor / Visualiser */}
+              <div className="flex-1 p-5 overflow-hidden space-y-4 flex flex-col text-left min-h-0">
+                <div className="space-y-3 flex-1 flex flex-col min-h-0">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-500">Qiskit Code Workspace</span>
+                    <button
+                      onClick={handleExecuteHandsOn}
+                      disabled={isSimulatingHandsOn || !handsOnCode}
+                      className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-350 text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      {isSimulatingHandsOn ? 'Running...' : 'Compile & Run'}
+                    </button>
+                  </div>
+
+                  <div className="flex-1 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex flex-col shadow-inner min-h-[150px]">
+                    <div className="bg-slate-900 px-4 py-1.5 flex items-center justify-between border-b border-slate-850">
+                      <span className="text-[10px] font-mono text-slate-400">workspace.py</span>
+                      <span className="text-[9px] font-mono text-slate-500">Qiskit 1.0 Aer</span>
+                    </div>
+                    <textarea
+                      value={handsOnCode}
+                      onChange={e => setHandsOnCode(e.target.value)}
+                      className="w-full h-full p-4 bg-transparent outline-none border-none text-xs font-mono text-emerald-400 resize-none leading-relaxed overflow-y-auto"
+                      placeholder="# Write your Python / Qiskit code here"
+                    />
+                  </div>
+                </div>
+
+                {/* Console logs output */}
+                {(handsOnLogs || handsOnError || handsOnChartData) && (
+                  <div className="h-44 border-t border-slate-100 pt-4 flex gap-4">
+                    {/* Console window */}
+                    <div className="flex-1 flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Standard Console Output</span>
+                      <div className="flex-1 bg-slate-950/95 border border-slate-800 p-3 rounded-lg overflow-y-auto font-mono text-xs text-slate-200">
+                        {handsOnLogs && <pre className="text-emerald-400 whitespace-pre-wrap">{handsOnLogs}</pre>}
+                        {handsOnError && <pre className="text-rose-400 whitespace-pre-wrap">{handsOnError}</pre>}
+                      </div>
+                    </div>
+
+                    {/* Chart preview */}
+                    {handsOnChartData && (
+                      <div className="w-1/3 bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex flex-col">
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1 block">Output Probability</span>
+                        <div className="flex-1 min-h-[100px] flex items-end justify-around gap-2 px-2 pb-1 bg-white border border-slate-250/60 rounded-md">
+                          {handsOnChartData.map((item: any, iidx: number) => {
+                            const total = handsOnChartData.reduce((acc: number, curr: any) => acc + curr.value, 0);
+                            const heightPct = ((item.value / (total || 1)) * 100).toFixed(0);
+                            return (
+                              <div key={iidx} className="flex flex-col items-center flex-1 h-full justify-end group relative">
+                                <span className="absolute -top-4 text-[9px] font-bold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {heightPct}%
+                                </span>
+                                <div 
+                                  className="w-full bg-blue-600/90 group-hover:bg-blue-600 rounded-t-xs" 
+                                  style={{ height: `${heightPct}%`, minHeight: '4px' }}
+                                />
+                                <span className="text-[9px] font-mono font-bold text-slate-500 mt-1">|{item.name}⟩</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* User Profile Modal Overlay */}
       {isProfileOpen && (
         <div className="fixed inset-0 bg-slate-955/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -1986,13 +2880,17 @@ export default function App() {
               {/* Profile Card Info */}
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-md" style={{ backgroundColor: '#444444' }}>
-                  MS
+                  {getUserInitials(user)}
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-md text-slate-800 leading-snug">Musharib Subhani</h4>
-                  <p className="text-xs text-slate-500">Principal Quantum Optimization Engineer</p>
+                  <h4 className="font-extrabold text-md text-slate-800 leading-snug">
+                    {user ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Guest Explorer'}
+                  </h4>
+                  <p className="text-xs text-slate-500">
+                    {user?.role === 'admin' ? 'Principal Quantum Optimization Engineer' : (user?.role === 'enterprise' ? 'Enterprise Quantum Analyst' : 'Quantum Computing Scholar')}
+                  </p>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 mt-1.5">
-                    Authorized Administrator
+                    {user?.role === 'admin' ? 'Authorized Administrator' : (user?.role === 'enterprise' ? 'Enterprise Partner' : 'Student Member')}
                   </span>
                 </div>
               </div>
@@ -2001,12 +2899,28 @@ export default function App() {
               <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-xl p-4">
                 <div className="flex items-center justify-between text-xs border-b border-slate-200/60 pb-2">
                   <span className="text-slate-500 font-medium">Email address:</span>
-                  <span className="text-slate-800 font-semibold">ms@qc.guru</span>
+                  <span className="text-slate-800 font-semibold">{user?.email || 'guest@qc.guru'}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs border-b border-slate-200/60 pb-2">
                   <span className="text-slate-500 font-medium">Session Token Usage:</span>
-                  <span className="text-slate-800 font-semibold">12,483 / 50,000 (Soft Limit)</span>
+                  <span className="text-slate-800 font-semibold">
+                    {(user?.tokensUsed ?? 0).toLocaleString()} / {(user?.tokenLimit ?? 50000).toLocaleString()} (Soft Limit)
+                  </span>
                 </div>
+                {user?.role === 'demo' && user?.demoExpiresAt && (
+                  <>
+                    <div className="flex items-center justify-between text-xs border-b border-slate-200/60 pb-2">
+                      <span className="text-slate-500 font-medium">Trial Expiration:</span>
+                      <span className="text-slate-800 font-semibold font-mono text-[10px]">
+                        {new Date(user.demoExpiresAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs border-b border-slate-200/60 pb-2">
+                      <span className="text-slate-500 font-medium">Trial Time Remaining:</span>
+                      <ModalDemoCountdown expiresAt={user.demoExpiresAt} />
+                    </div>
+                  </>
+                )}
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500 font-medium">Workspace Status:</span>
                   <span className="text-slate-800 font-semibold flex items-center gap-1">
@@ -2015,32 +2929,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Connected Infrastructure Traces */}
-              <div className="space-y-2.5">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                  Infrastructure Traces
-                </span>
-                
-                <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <Database className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-semibold text-slate-700">MongoDB Instance</span>
-                  </div>
-                  <span className="text-[10px] font-bold bg-green-50 border border-green-200 text-green-600 px-2 py-0.5 rounded-full uppercase">
-                    Connected
-                  </span>
-                </div>
 
-                <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-semibold text-slate-700">FastAPI Agent Engine</span>
-                  </div>
-                  <span className="text-[10px] font-bold bg-green-50 border border-green-200 text-green-600 px-2 py-0.5 rounded-full uppercase">
-                    Connected
-                  </span>
-                </div>
-              </div>
 
             </div>
 
@@ -2063,6 +2952,89 @@ export default function App() {
         onClose={() => setIsAlgorithmModalOpen(false)}
         onSelectAlgorithm={(prompt) => setInputValue(prompt)}
       />
+
+      {/* Share Social Card Modal */}
+      {isShareModalOpen && shareData && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-100 text-slate-800 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col p-6 space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-150 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center">
+                  <Share2 className="w-4 h-4" />
+                </div>
+                <h3 className="font-extrabold text-slate-800 text-base tracking-tight">Share Quantum Card</h3>
+              </div>
+              <button 
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Live OpenGraph Preview Image */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-extrabold text-slate-400 tracking-wider block">
+                Social media card preview (LinkedIn / X / Reddit)
+              </span>
+              <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-950 aspect-[1200/630] relative group">
+                <img 
+                  src={`/api/og?title=${encodeURIComponent(shareData.title)}&pipeline=${encodeURIComponent(shareData.pipeline)}&author=${encodeURIComponent(user?.firstName || 'Quantum Dev')}`}
+                  alt="Quantum Card Preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Direct Short Link Input */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-extrabold text-slate-400 tracking-wider block">
+                Public shareable short link (No login required)
+              </span>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  readOnly 
+                  value={shareUrl}
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-700 outline-none select-all focus:border-blue-500"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(shareUrl);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+                >
+                  {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedLink ? 'Copied!' : 'Copy Link'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 1-Click Social Media Triggers */}
+            <div className="pt-2 flex gap-3">
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Check out my quantum simulation on @QuantumGuru:')}&url=${encodeURIComponent(shareUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs active:scale-95"
+              >
+                <span>Post on X (Twitter)</span>
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-2.5 bg-[#0A66C2] hover:bg-[#084e96] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs active:scale-95"
+              >
+                <span>Share on LinkedIn</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

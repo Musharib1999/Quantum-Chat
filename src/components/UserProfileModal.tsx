@@ -46,9 +46,9 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
 
     const handleTryPortfolio = () => {
         if (isAuthenticated) {
-            router.push('/industry');
+            router.push('/quantum-assistant');
         } else {
-            router.push(`/login?redirect=${encodeURIComponent('/industry')}`);
+            router.push(`/login?redirect=${encodeURIComponent('/quantum-assistant')}`);
         }
         onClose();
     };

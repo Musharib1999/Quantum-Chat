@@ -40,6 +40,7 @@ export interface Message {
         suggested_solver?: string;
         math_rigor?: any;
         classifier?: string;
+        [key: string]: any;
     };
 }
 
@@ -50,6 +51,9 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
     const [messages, setMessages] = useState<Message[]>([]);
     const [sessionId, setSessionId] = useState<string>('');
 
+    // Session ID is managed by page.tsx; only generate a local fallback here.
+    // Do NOT auto-load history here — page.tsx controls session switching and
+    // message population to prevent cross-pipeline contamination.
     useEffect(() => {
         let storedId = localStorage.getItem('qg_session_id');
         if (!storedId) {
@@ -57,12 +61,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             localStorage.setItem('qg_session_id', storedId);
         }
         setSessionId(storedId);
-        
-        getChatHistory(storedId).then(history => {
-            if (history && history.length > 0) {
-                setMessages(history);
-            }
-        });
+        // History loading intentionally removed — see page.tsx switchPipeline()
     }, []);
 
     useEffect(() => {
@@ -273,11 +272,11 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
                                             braket_code: gbSteps.compiling?.braket_code || '',
                                             openqasm_code: gbSteps.compiling?.openqasm_code || '',
                                             q_matrix_preview: gbSteps.compiling?.ascii_circuit || '',
-                                            optimization_stats: gbSteps.simulating ? {
-                                                qubits: gbSteps.compiling?.num_qubits || 2,
+                                            optimization_stats: gbSteps.compiling ? {
+                                                qubits: gbSteps.compiling?.num_qubits || gbSteps.output?.num_qubits || 2,
                                                 depth: gbSteps.compiling?.depth || 0,
                                                 gate_count: gbSteps.compiling?.gate_count || 0,
-                                                counts: gbSteps.simulating.counts || {},
+                                                counts: gbSteps.simulating?.counts || {},
                                                 pennylane_code: gbSteps.compiling?.pennylane_code || '',
                                                 cirq_code: gbSteps.compiling?.cirq_code || '',
                                                 braket_code: gbSteps.compiling?.braket_code || '',
@@ -531,7 +530,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
                 const penaltyForPipeline = fullConfig.selectedPenalty === 'custom'
                     ? parseInt(fullConfig.customPenalty || '30')
                     : (typeof fullConfig.selectedPenalty === 'number' ? fullConfig.selectedPenalty : 3);
-                response = await chatWithQuantumAI(promptToSend, 'chat', 'en', { ...fullConfig, penalty_choice: penaltyForPipeline });
+                response = await chatWithQuantumAI(promptToSend, 'chat', 'en', { ...fullConfig, sessionId, penalty_choice: penaltyForPipeline });
             }
 
             // Dispatch token usage event to sidebar indicator

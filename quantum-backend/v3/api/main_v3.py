@@ -60,7 +60,7 @@ import asyncio as _asyncio
 # Limits simultaneous optimization pipeline executions to prevent RunPod
 # VRAM saturation. Tune via MAX_PIPELINE_SLOTS env var.
 # A100 80GB (FP8): 8 slots. A100 40GB (FP8): 4 slots. L40S: 3 slots.
-_MAX_SLOTS = int(os.environ.get("MAX_PIPELINE_SLOTS", "8"))
+_MAX_SLOTS = int(os.environ.get("MAX_PIPELINE_SLOTS", "1"))
 pipeline_semaphore = _asyncio.Semaphore(_MAX_SLOTS)
 
 # Engine URL for internal proxying

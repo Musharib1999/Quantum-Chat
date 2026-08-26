@@ -4,8 +4,22 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
+        const { verifyUserSession } = await import('@/lib/auth');
+        const verifiedEmail = await verifyUserSession(req);
+        if (!verifiedEmail) {
+            return NextResponse.json({ error: "Unauthorized - user session required" }, { status: 401 });
+        }
+
+        // Check Qiskit service status
+        const { default: Hardware } = await import('@/models/Hardware');
+        const qiskitService = await Hardware.findOne({ provider: 'ibm' });
+        if (qiskitService && (qiskitService.status === 'Offline' || qiskitService.status === 'Maintenance')) {
+            return NextResponse.json({ error: `Qiskit simulation service is currently disabled by administrator (status: ${qiskitService.status}).` }, { status: 503 });
+        }
+
         const body = await req.json();
-        const { model_text, shots, email, session_id } = body;
+        const { model_text, shots, session_id } = body;
+        const email = verifiedEmail;
 
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8002";
 

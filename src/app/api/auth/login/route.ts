@@ -32,7 +32,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Account pending admin approval.' }, { status: 403 });
         }
 
-        return NextResponse.json({
+        // Create secure session token
+        const { createUserSession } = await import('@/lib/auth');
+        const sessionToken = await createUserSession(user.email);
+
+        const response = NextResponse.json({
             email: user.email,
             firstName: user.firstName || '',
             lastName: user.lastName || '',
@@ -45,6 +49,17 @@ export async function POST(req: Request) {
             simMinutesUsed: user.simMinutesUsed ?? 0,
             apiKey: user.apiKey || ''
         });
+
+        // Set HttpOnly user session cookie
+        response.cookies.set('user_session', sessionToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+            path: '/'
+        });
+
+        return response;
 
     } catch (error) {
         console.error('Login error:', error);

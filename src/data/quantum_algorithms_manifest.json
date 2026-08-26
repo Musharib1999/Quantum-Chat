@@ -10,7 +10,10 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Formulate a VQE algorithm to calculate H2 molecule ground state energy with UCCSD ansatz."
+    "prompt": "Formulate a VQE algorithm to calculate H2 molecule ground state energy with UCCSD ansatz.",
+    "definition": "Variational method to find the minimum eigenvalue of a Hamiltonian using a parameterized ansatz.",
+    "use_case": "Molecular ground state energy calculations and quantum chemistry simulations.",
+    "practical_use": "Developing new chemical catalysts and molecular research for drug discovery."
   },
   {
     "id": "adapt-vqe",
@@ -23,7 +26,10 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Formulate an Adapt-VQE circuit for LiH ground state energy estimation with adaptive operator pool."
+    "prompt": "Formulate an Adapt-VQE circuit for LiH ground state energy estimation with adaptive operator pool.",
+    "definition": "VQE variant that dynamically grows the ansatz operator pool step-by-step based on energy gradients.",
+    "use_case": "Compact chemical ansatz representation with minimal gate depth.",
+    "practical_use": "High-precision simulation of strongly correlated electronic systems like battery materials."
   },
   {
     "id": "ss-vqe",
@@ -35,7 +41,10 @@
     "sdks": [
       "Qiskit"
     ],
-    "prompt": "Build an SS-VQE algorithm to compute low-lying excited states of a 4-qubit molecular Hamiltonian."
+    "prompt": "Build an SS-VQE algorithm to compute low-lying excited states of a 4-qubit molecular Hamiltonian.",
+    "definition": "Subspace search VQE designed to compute excited state energies of a Hamiltonian.",
+    "use_case": "Molecular excited state calculations and spectral properties.",
+    "practical_use": "Simulating photo-chemical reactions and solar cell material optimization."
   },
   {
     "id": "qaoa",
@@ -49,7 +58,10 @@
       "PennyLane",
       "Cirq"
     ],
-    "prompt": "Formulate a 4-node QAOA Max-Cut algorithm with 2 p-layers and SPSA classical optimizer."
+    "prompt": "Formulate a 4-node QAOA Max-Cut algorithm with 2 p-layers and SPSA classical optimizer.",
+    "definition": "Quantum algorithm designed to solve combinatorial optimization problems using alternating operators.",
+    "use_case": "Max-Cut, graph partitioning, and combinatorial optimization.",
+    "practical_use": "Logistics route planning, traffic flow management, and financial portfolio optimization."
   },
   {
     "id": "warm-qaoa",
@@ -61,7 +73,10 @@
     "sdks": [
       "Qiskit"
     ],
-    "prompt": "Construct a Warm-Start QAOA model for Graph Coloring initialized from continuous SDP solution."
+    "prompt": "Construct a Warm-Start QAOA model for Graph Coloring initialized from continuous SDP solution.",
+    "definition": "QAOA initialized with classical optimization solutions to speed up quantum convergence.",
+    "use_case": "Accelerated combinatorial optimization on noisy devices.",
+    "practical_use": "Power grid distribution networks optimization and supply chain layout scheduling."
   },
   {
     "id": "hhl",
@@ -73,7 +88,10 @@
     "sdks": [
       "Qiskit"
     ],
-    "prompt": "Build an HHL quantum circuit to solve 2x2 linear equation system Ax = b."
+    "prompt": "Build an HHL quantum circuit to solve 2x2 linear equation system Ax = b.",
+    "definition": "Quantum algorithm to solve linear systems of equations (Ax = b) with exponential speedup.",
+    "use_case": "Solving large-scale systems of linear differential equations.",
+    "practical_use": "Fluid dynamics simulation in aerospace design and electromagnetic modeling."
   },
   {
     "id": "vqls",
@@ -86,7 +104,10 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Formulate a VQLS algorithm to solve a 4-qubit linear system with Hadamard test cost evaluation."
+    "prompt": "Formulate a VQLS algorithm to solve a 4-qubit linear system with Hadamard test cost evaluation.",
+    "definition": "Variational algorithm to solve linear equations on NISQ-era quantum hardware.",
+    "use_case": "NISQ-friendly linear system equation solvers.",
+    "practical_use": "Stress analysis in structural engineering and thermal distribution modeling."
   },
   {
     "id": "shors",
@@ -99,7 +120,10 @@
       "Qiskit",
       "Cirq"
     ],
-    "prompt": "Explain and construct Shor's factoring algorithm for integer N = 15."
+    "prompt": "Explain and construct Shor's factoring algorithm for integer N = 15.",
+    "definition": "Quantum algorithm to find the prime factors of an integer in polynomial time.",
+    "use_case": "Integer factorization and discrete logarithms.",
+    "practical_use": "Cryptographic security analysis and transitioning to post-quantum cryptography (PQC)."
   },
   {
     "id": "simon",
@@ -111,7 +135,10 @@
     "sdks": [
       "Qiskit"
     ],
-    "prompt": "Construct Simon's algorithm circuit for finding a 3-bit hidden period string s = 110."
+    "prompt": "Construct Simon's algorithm circuit for finding a 3-bit hidden period string s = 110.",
+    "definition": "Oracle-based algorithm proving exponential speedup for finding periodicity in black-box functions.",
+    "use_case": "Determining periodicity and cryptographic structure analysis.",
+    "practical_use": "Analyzing security bounds of symmetric key cryptographic primitives like block ciphers."
   },
   {
     "id": "deutsch-jozsa",
@@ -124,7 +151,10 @@
       "Qiskit",
       "Cirq"
     ],
-    "prompt": "Build a Deutsch-Jozsa circuit for a 3-qubit balanced oracle."
+    "prompt": "Build a Deutsch-Jozsa circuit for a 3-qubit balanced oracle.",
+    "definition": "First quantum algorithm demonstrating deterministic exponential speedup over classical algorithms.",
+    "use_case": "Evaluating if a black-box function is constant or balanced.",
+    "practical_use": "Binary decision tree evaluation and testing logic gate function parity."
   },
   {
     "id": "bernstein-vazirani",
@@ -136,7 +166,10 @@
     "sdks": [
       "Qiskit"
     ],
-    "prompt": "Construct a Bernstein-Vazirani circuit to reveal hidden binary string s = 1011."
+    "prompt": "Construct a Bernstein-Vazirani circuit to reveal hidden binary string s = 1011.",
+    "definition": "Quantum algorithm to find a hidden bitstring in a black-box function in a single query.",
+    "use_case": "Hidden parameter extraction and function oracle inversion.",
+    "practical_use": "Database search key extraction and optimal query design in network routing."
   },
   {
     "id": "grover",
@@ -150,7 +183,10 @@
       "PennyLane",
       "Cirq"
     ],
-    "prompt": "Construct a 4-qubit Grover Search circuit to locate target state |1011>."
+    "prompt": "Construct a 4-qubit Grover Search circuit to locate target state |1011>.",
+    "definition": "Quantum database search algorithm providing quadratic speedup for unstructured databases.",
+    "use_case": "Unstructured database searching and solving NP-complete problems.",
+    "practical_use": "Cracking symmetric key ciphers (e.g., AES keys) and optimizing constraint satisfaction problems."
   },
   {
     "id": "quantum-counting",
@@ -162,7 +198,10 @@
     "sdks": [
       "Qiskit"
     ],
-    "prompt": "Formulate a Quantum Counting circuit with 3 counting qubits and Grover operator."
+    "prompt": "Formulate a Quantum Counting circuit with 3 counting qubits and Grover operator.",
+    "definition": "Quantum algorithm estimating the number of solutions to a search problem by combining Grover and QPE.",
+    "use_case": "Solution count estimation in unstructured search spaces.",
+    "practical_use": "Estimating feasibility in combinatorial scheduling and cryptographic key search space analysis."
   },
   {
     "id": "qpe",
@@ -175,7 +214,10 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Construct a Quantum Phase Estimation circuit for T-gate eigenvalue extraction using 3 counting qubits."
+    "prompt": "Construct a Quantum Phase Estimation circuit for T-gate eigenvalue extraction using 3 counting qubits.",
+    "definition": "Quantum algorithm to estimate the phase of an eigenvalue of a unitary operator.",
+    "use_case": "Eigenvalue estimation, Shor's algorithm, and Hamiltonian simulation.",
+    "practical_use": "Precision molecular energy level estimation and quantum phase calibration."
   },
   {
     "id": "qft",
@@ -189,7 +231,10 @@
       "PennyLane",
       "Cirq"
     ],
-    "prompt": "Build a 4-qubit Quantum Fourier Transform (QFT) circuit with controlled phase rotations."
+    "prompt": "Build a 4-qubit Quantum Fourier Transform (QFT) circuit with controlled phase rotations.",
+    "definition": "Quantum analogue of the discrete Fourier transform performing exponential speedup.",
+    "use_case": "Frequency analysis, phase estimation, and quantum arithmetic.",
+    "practical_use": "Signal processing, quantum cryptography, and spectral analysis of quantum systems."
   },
   {
     "id": "qnn",
@@ -202,7 +247,10 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Build a 4-qubit Quantum Neural Network classifier with two-local feature map and variational layers."
+    "prompt": "Build a 4-qubit Quantum Neural Network classifier with two-local feature map and variational layers.",
+    "definition": "Neural network architecture built using parameterized quantum circuits.",
+    "use_case": "Quantum machine learning, classification, and pattern recognition.",
+    "practical_use": "Predictive modeling in medical imaging diagnostics and financial anomaly detection."
   },
   {
     "id": "qsvm",
@@ -215,7 +263,10 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Formulate a Quantum Support Vector Machine classifier with ZZFeatureMap for 2D data separation."
+    "prompt": "Formulate a Quantum Support Vector Machine classifier with ZZFeatureMap for 2D data separation.",
+    "definition": "Quantum support vector machine using quantum kernels to classify non-linear data.",
+    "use_case": "Supervised machine learning and high-dimensional classification.",
+    "practical_use": "Credit risk scoring and classification of complex genomic datasets."
   },
   {
     "id": "quantum-autoencoder",
@@ -228,7 +279,10 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Design a Quantum Autoencoder to compress 4-qubit quantum states into 2 latent qubits."
+    "prompt": "Design a Quantum Autoencoder to compress 4-qubit quantum states into 2 latent qubits.",
+    "definition": "Quantum circuit trained to compress quantum states into a lower-dimensional latent space.",
+    "use_case": "Quantum data compression and noise reduction.",
+    "practical_use": "Reducing quantum communication overhead and state purification on noisy channels."
   },
   {
     "id": "vqr",
@@ -241,7 +295,10 @@
       "PennyLane",
       "Qiskit"
     ],
-    "prompt": "Formulate a 2-qubit Variational Quantum Regressor for sine wave function approximation."
+    "prompt": "Formulate a 2-qubit Variational Quantum Regressor for sine wave function approximation.",
+    "definition": "Variational algorithm trained to predict continuous output values from input features.",
+    "use_case": "Quantum regression analysis and curve fitting.",
+    "practical_use": "Macroeconomic forecasting and predicting chemical bond dynamics."
   },
   {
     "id": "trotter",
@@ -254,7 +311,10 @@
       "Qiskit",
       "Cirq"
     ],
-    "prompt": "Construct a 4-qubit Trotterized time-evolution circuit for 1D transverse field Ising model."
+    "prompt": "Construct a 4-qubit Trotterized time-evolution circuit for 1D transverse field Ising model.",
+    "definition": "Hamiltonian simulation using Trotter-Suzuki product formulas to discretize time evolution.",
+    "use_case": "Time-dependent quantum state evolution simulation.",
+    "practical_use": "Modeling superconductor dynamics and studying spin glass physics."
   },
   {
     "id": "qsp",
@@ -266,7 +326,10 @@
     "sdks": [
       "Qiskit"
     ],
-    "prompt": "Formulate a Quantum Signal Processing sequence for polynomial matrix function evaluation."
+    "prompt": "Formulate a Quantum Signal Processing sequence for polynomial matrix function evaluation.",
+    "definition": "Method to implement polynomial transformations of eigenvalues of a block-encoded matrix.",
+    "use_case": "Optimal Hamiltonian simulation and matrix function evaluation.",
+    "practical_use": "High-precision physical system simulation and implementing general matrix math on quantum chips."
   },
   {
     "id": "qsvt",
@@ -279,7 +342,10 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Build a Quantum Singular Value Transformation blueprint for matrix inversion."
+    "prompt": "Build a Quantum Singular Value Transformation blueprint for matrix inversion.",
+    "definition": "Quantum Singular Value Transformation unifying quantum algorithms into a single framework.",
+    "use_case": "Unified linear algebra, matrix inversion, and search algorithms.",
+    "practical_use": "General-purpose quantum machine learning and advanced system model solvers."
   },
   {
     "id": "quantum-walk",
@@ -291,7 +357,10 @@
     "sdks": [
       "Qiskit"
     ],
-    "prompt": "Formulate a Discrete-Time Quantum Walk on a hypercube graph using coin and shift operators."
+    "prompt": "Formulate a Discrete-Time Quantum Walk on a hypercube graph using coin and shift operators.",
+    "definition": "Quantum analogue of classical random walks displaying faster propagation speeds.",
+    "use_case": "Graph traversal and database search algorithms.",
+    "practical_use": "Analyzing topological network connections and optimization of route distributions."
   },
   {
     "id": "qGAN",
@@ -304,6 +373,9 @@
       "Qiskit",
       "PennyLane"
     ],
-    "prompt": "Construct a 4-qubit Quantum GAN to learn a 1D Gaussian probability distribution."
+    "prompt": "Construct a 4-qubit Quantum GAN to learn a 1D Gaussian probability distribution.",
+    "definition": "Quantum Generative Adversarial Network generating quantum states mirroring real data distributions.",
+    "use_case": "Generative machine learning and synthetic quantum state preparation.",
+    "practical_use": "Simulating synthetic financial market scenarios and high-dimensional probability generation."
   }
 ]

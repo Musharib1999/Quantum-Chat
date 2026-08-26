@@ -39,6 +39,7 @@ def _get_mongo_db():
                 minPoolSize=1,
                 serverSelectionTimeoutMS=3000,
                 connectTimeoutMS=3000,
+                tlsAllowInvalidCertificates=True,
             )
             db = _mongo_client.get_default_database()
             if db is None:

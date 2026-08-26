@@ -19,8 +19,8 @@ if os.path.exists(_LOCAL_ENV):
 INFERENCE_PROVIDER   = os.environ.get("INFERENCE_PROVIDER", "groq")
 FORCE_SOLVER         = os.environ.get("FORCE_SOLVER", None)
 GROQ_API_KEY         = os.environ.get("GROQ_API_KEY", "")
-GROQ_PRIMARY_MODEL   = os.environ.get("GROQ_PRIMARY_MODEL", "llama-3.3-70b-versatile")
-GROQ_FAST_MODEL      = os.environ.get("GROQ_FAST_MODEL", "llama3-8b-8192")
+GROQ_PRIMARY_MODEL   = os.environ.get("GROQ_PRIMARY_MODEL", "qwen/qwen3.6-27b")
+GROQ_FAST_MODEL      = os.environ.get("GROQ_FAST_MODEL", "qwen/qwen3.6-27b")
 
 # ── Qwen 3 32B (RunPod vllm, port 8000) ───────────────────────────────────────
 QWEN_BASE_URL  = os.environ.get("QWEN_BASE_URL", "")   # e.g. https://<pod>-8000.proxy.runpod.net/v1

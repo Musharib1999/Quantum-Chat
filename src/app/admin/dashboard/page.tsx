@@ -13,6 +13,7 @@ import PromptEditor from '../../../components/admin/PromptEditor';
 import LLMSettingsManager from '../../../components/admin/LLMSettingsManager';
 import HardwareManager from '../../../components/admin/HardwareManager';
 import SystemLogViewer from '../../../components/admin/SystemLogViewer';
+import AcademyManager from '../../../components/admin/AcademyManager';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
@@ -64,6 +65,7 @@ export default function AdminDashboard() {
                     {activeTab === 'llm_settings' && <LLMSettingsManager />}
                     {activeTab === 'hardware' && <HardwareManager />}
                     {activeTab === 'users' && <UserManager />}
+                    {activeTab === 'academy' && <AcademyManager />}
                 </div>
             </div>
 

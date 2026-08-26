@@ -3,12 +3,15 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import dbConnect from '@/lib/db';
+import mongoose from 'mongoose';
 import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
 import ChatLog from '@/models/ChatLog';
 import User from '@/models/User';
 import SystemPrompt from '@/models/SystemPrompt';
 import ChatSession from '@/models/ChatSession';
+import { cookies } from 'next/headers';
+import UserSession from '@/models/UserSession';
 import SolvedProblem from '@/models/SolvedProblem';
 import SystemLog from '@/models/SystemLog';
 import crypto from 'crypto';
@@ -132,12 +135,24 @@ export async function chatWithQuantumAI(
 ): Promise<AIResponse> {
     await dbConnect();
 
+    // Securely fetch active user email from the HttpOnly session cookie
+    const activeUserEmail = await getCurrentUserEmail();
+    if (!activeUserEmail) {
+        return {
+            text: "⚠️ Unauthorized. Please log in.",
+            source: 'system',
+            guardrailsStatus: 'passed',
+            activeGuardrails: [],
+            tokensUsed: 0
+        };
+    }
+
     // Sanitize prompt
     const sanitizedPrompt = prompt.replace(/[{}]/g, '').trim();
 
     // 1. Token limit check
-    if (contextConfig?.userEmail) {
-        const user = await User.findOne({ email: contextConfig.userEmail }).lean() as any;
+    if (activeUserEmail) {
+        const user = await User.findOne({ email: activeUserEmail }).lean() as any;
         if (user && user.tokensUsed >= user.tokenLimit) {
             return {
                 text: "⚠️ Your token limit has been reached. Please contact administration.",
@@ -259,6 +274,25 @@ export async function chatWithQuantumAI(
 
         try {
             const pipelineIntent = contextConfig?.selectedPipeline || 'general';
+
+            // Retrieve and format recent conversation history for context (except optimization)
+            let historyContext = "";
+            if (pipelineIntent !== 'optimization' && contextConfig?.sessionId && mongoose.isValidObjectId(contextConfig.sessionId)) {
+                const session = await ChatSession.findById(contextConfig.sessionId).lean() as any;
+                if (session && session.messages && session.messages.length > 0) {
+                    // Limit strictly to the last 4 messages (2 full turns) to minimize token consumption
+                    const recent = session.messages.slice(-4);
+                    historyContext = recent.map((m: any) => {
+                        const senderName = m.sender === 'user' ? 'User' : 'Assistant';
+                        return `[${senderName}]: ${m.text}`;
+                    }).join('\n\n');
+                }
+            }
+
+            if (historyContext) {
+                finalPrompt = `Below is the recent conversation history for context:\n\n${historyContext}\n\n---\n\nUser Latest Query: ${finalPrompt}`;
+            }
+
 
             // Pipeline 1: Business problem → Optimization (8-agent solver)
             if (pipelineIntent === 'optimization') {
@@ -471,7 +505,14 @@ export async function chatWithQuantumAI(
 
             // Direct Qwen 32B on RunPod
             let sysPrompt = "You are the Quantum Guru, an expert quantum assistant. Answer clearly and accurately.";
-            if (pipelineIntent === 'algorithm') {
+            if (pipelineIntent === 'general') {
+                try {
+                    const assistantResult = await buildAssistantContext({ getDynamicPrompt });
+                    sysPrompt = assistantResult.systemInstructions;
+                } catch (err) {
+                    console.error("Failed to build assistant context, using fallback", err);
+                }
+            } else if (pipelineIntent === 'algorithm') {
                 sysPrompt = "You are an expert Quantum Algorithm Scientist. Formulate high-level quantum algorithms and compile them into programs using frameworks like Qiskit or Pennylane.";
             } else if (pipelineIntent === 'coder' || pipelineIntent === 'code') {
                 sysPrompt = "You are an expert Quantum Circuit Engineer. Design, optimize, and simulate quantum logic gate circuits using Qiskit, Cirq, or OpenQASM.";
@@ -532,26 +573,79 @@ export async function chatWithQuantumAI(
 }
 
 // --- Chat Session History Actions ---
-export async function getChatSessions() {
+async function getCurrentUserEmail(): Promise<string | null> {
+    try {
+        const cookieStore = await cookies();
+        const sessionToken = cookieStore.get('user_session')?.value;
+        if (!sessionToken) return null;
+        
+        await dbConnect();
+        const session = await UserSession.findOne({ token: sessionToken });
+        if (!session) return null;
+
+        const user = await User.findOne({ email: session.email });
+        if (!user || (user.role !== 'admin' && user.isApproved === false)) return null;
+
+        // Demo expiration check
+        if (user.role === 'demo' && user.demoExpiresAt && new Date() > new Date(user.demoExpiresAt)) {
+            console.log(`[getCurrentUserEmail] Demo account expired for email: ${user.email}`);
+            return null;
+        }
+
+        return session.email;
+    } catch (e) {
+        console.error("[getCurrentUserEmail] Error reading session token:", e);
+        return null;
+    }
+}
+
+export async function getChatSessions(pipeline?: string) {
+    const userEmail = await getCurrentUserEmail();
+    if (!userEmail) return []; // strict RLS: return empty if not authenticated
+    
     await dbConnect();
-    const sessions = await ChatSession.find({}).sort({ updatedAt: -1 });
+    
+    // Scopes to this user OR legacy sessions without a userEmail field
+    const userFilter = { $or: [{ userEmail }, { userEmail: { $exists: false } }] };
+    let query: any = { ...userFilter };
+    
+    if (pipeline) {
+        if (pipeline === 'general') {
+            query = {
+                ...userFilter,
+                $or: [{ pipeline: 'general' }, { pipeline: { $exists: false } }]
+            };
+        } else {
+            query = {
+                ...userFilter,
+                pipeline
+            };
+        }
+    }
+    
+    const sessions = await ChatSession.find(query).sort({ updatedAt: -1 });
     return JSON.parse(JSON.stringify(sessions));
 }
 
 export async function createChatSession(
     title: string,
     messages: any[],
-    workflowSteps: any
+    workflowSteps: any,
+    pipeline?: string
 ) {
+    const userEmail = await getCurrentUserEmail();
+    if (!userEmail) throw new Error("Unauthorized");
+    
     await dbConnect();
-    const mongoose = require('mongoose');
     const newId = new mongoose.Types.ObjectId().toString();
     const session = await ChatSession.create({
         _id: newId,
         sessionId: newId,
         title,
         messages,
-        workflowSteps
+        workflowSteps,
+        pipeline: pipeline || "general",
+        userEmail
     });
     return JSON.parse(JSON.stringify(session));
 }
@@ -561,16 +655,37 @@ export async function updateChatSession(
     messages: any[],
     workflowSteps: any
 ) {
+    const userEmail = await getCurrentUserEmail();
+    if (!userEmail) throw new Error("Unauthorized");
+    
     await dbConnect();
+    
+    const existing = await ChatSession.findById(id);
+    // Strict RLS: Allow update if owned by user OR if it's a legacy session (no userEmail)
+    if (!existing || (existing.userEmail && existing.userEmail !== userEmail)) {
+        throw new Error("Unauthorized - Access Denied");
+    }
+    
     const session = await ChatSession.findByIdAndUpdate(id, {
         messages,
-        workflowSteps
+        workflowSteps,
+        userEmail // Claim the session under their account on first update
     }, { new: true });
     return JSON.parse(JSON.stringify(session));
 }
 
 export async function deleteChatSession(id: string) {
+    const userEmail = await getCurrentUserEmail();
+    if (!userEmail) throw new Error("Unauthorized");
+    
     await dbConnect();
+    
+    const existing = await ChatSession.findById(id);
+    // Strict RLS: Allow delete if owned by user OR if it's a legacy session (no userEmail)
+    if (!existing || (existing.userEmail && existing.userEmail !== userEmail)) {
+        throw new Error("Unauthorized - Access Denied");
+    }
+    
     await ChatSession.findByIdAndDelete(id);
     return { success: true };
 }

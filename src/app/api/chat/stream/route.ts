@@ -4,8 +4,15 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
+        const { verifyUserSession } = await import('@/lib/auth');
+        const verifiedEmail = await verifyUserSession(req);
+        if (!verifiedEmail) {
+            return NextResponse.json({ error: "Unauthorized - user session required" }, { status: 401 });
+        }
+
         const body = await req.json();
-        const { unstructured_problem, mode, session_id, email, penalty_choice } = body;
+        const { unstructured_problem, mode, session_id, penalty_choice } = body;
+        const email = verifiedEmail; // Force verified email from HttpOnly session cookie
 
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8002";
 
