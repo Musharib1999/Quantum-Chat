@@ -347,9 +347,9 @@ def solve_quantum_chemistry(spec: dict):
         
         try:
             decomp_ansatz = ansatz.decompose()
-            circuit_diagram = str(decomp_ansatz.draw(output='text'))
+            circuit_diagram = str(decomp_ansatz.draw(output='text', fold=-1))
         except Exception:
-            circuit_diagram = str(ansatz.draw(output='text'))
+            circuit_diagram = str(ansatz.draw(output='text', fold=-1))
 
         atom_elements = [atom[0] for atom in mol._atom]
         elements_summary = ", ".join(list(set(atom_elements)))

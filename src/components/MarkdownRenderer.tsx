@@ -157,12 +157,28 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateE
                     <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 mix-blend-screen" />
                 </div>
             </div>
-            <div className="w-full overflow-x-auto">
+            <div className="w-full overflow-x-auto custom-scrollbar">
                 <SyntaxHighlighter
                     style={vscDarkPlus}
                     language={language}
                     PreTag="div"
-                    customStyle={{ margin: 0, padding: '1.5rem', background: '#09090b', fontSize: '0.875rem' }}
+                    wrapLongLines={false}
+                    customStyle={{ 
+                        margin: 0, 
+                        padding: '1.5rem', 
+                        background: '#09090b', 
+                        fontSize: '0.875rem',
+                        overflowX: 'auto',
+                        whiteSpace: 'pre'
+                    }}
+                    codeTagProps={{
+                        style: {
+                            whiteSpace: 'pre',
+                            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                            display: 'block',
+                            minWidth: 'max-content'
+                        }
+                    }}
                     {...props}
                 >
                     {code}

@@ -304,7 +304,7 @@ def run_vqc_classifier(X_train: np.ndarray, X_test: np.ndarray, y_train: np.ndar
         "final_loss": round(best_loss, 4),
         "training_time_sec": runtime_sec,
         "convergence_history": history,
-        "circuit_diagram": str(circuit.decompose().draw(output='text'))
+        "circuit_diagram": str(circuit.decompose().draw(output='text', fold=-1))
     }
 
 # ---------------------------------------------------------
@@ -346,7 +346,7 @@ def solve_qml_experiment(spec: Dict[str, Any]) -> Dict[str, Any]:
     full_circ = QuantumCircuit(num_qubits)
     full_circ.compose(feature_map, inplace=True)
     full_circ.compose(ansatz, inplace=True)
-    circuit_diagram = str(full_circ.decompose().draw(output='text'))
+    circuit_diagram = str(full_circ.decompose().draw(output='text', fold=-1))
 
     sample_vector = [round(float(val), 3) for val in X_test[0]] if len(X_test) > 0 else [0.5] * num_qubits
     qiskit_code = f"""# Deterministic Qiskit QML Code ({detected_title})
