@@ -1722,7 +1722,7 @@ export default function App() {
         
         <div className="p-4 flex-1 overflow-y-auto space-y-3">
           {/* Waiting/Initial Header Status Card */}
-          {selectedPipeline !== 'general' && selectedPipeline !== 'academy' && selectedPipeline !== 'chemistry' && (!activeSession || !activeSession.workflowSteps || (!activeSession.workflowSteps.nlp && !activeSession.workflowSteps.math_rigor)) && (
+          {selectedPipeline !== 'general' && selectedPipeline !== 'academy' && selectedPipeline !== 'chemistry' && selectedPipeline !== 'qml' && (!activeSession || !activeSession.workflowSteps || (!activeSession.workflowSteps.nlp && !activeSession.workflowSteps.math_rigor)) && (
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-center gap-2 animate-in fade-in duration-250">
               <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 animate-pulse">
                 <Activity className="w-4 h-4" />
