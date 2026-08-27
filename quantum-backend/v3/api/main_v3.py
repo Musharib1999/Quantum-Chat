@@ -592,6 +592,32 @@ async def gate_model_stream(request: GateModelRequest, background_tasks: Backgro
     )
 
 
+
+# =========================================================================
+# QUANTUM CHEMISTRY ENGINE ROUTE
+# =========================================================================
+class ChemistryRequest(BaseModel):
+    user_prompt: Optional[str] = ""
+    representation: Optional[str] = "explicit"
+    smiles_string: Optional[str] = "[H][H]"
+    atoms: Optional[list] = []
+    basis: Optional[str] = "sto-3g"
+    ansatz: Optional[str] = "realamplitudes"
+    charge: Optional[int] = 0
+    spin: Optional[int] = 0
+
+@app.post("/v3/enterprise/chemistry/solve")
+async def solve_chemistry_endpoint(req: ChemistryRequest):
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from engine.chemistry_engine import solve_quantum_chemistry
+        manifest = solve_quantum_chemistry(req.model_dump())
+        return {"success": True, "manifest": manifest}
+    except Exception as e:
+        print(f"[Chemistry Error] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # =========================================================================
 # RUN (for local testing)
 # =========================================================================

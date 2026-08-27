@@ -17,9 +17,15 @@ SyntaxHighlighter.registerLanguage('python', python);
 SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('json', json);
 
-// Native React KaTeX Component (Synchronous to prevent 2-pass flicker)
+// Native React KaTeX Component (Hydration-safe with mounted state)
 function KaTeXMath({ math, displayMode = false }: { math: string; displayMode?: boolean }) {
-    if (typeof window !== 'undefined') {
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (isMounted && typeof window !== 'undefined') {
         const win = window as any;
         if (win.katex) {
             try {
@@ -27,13 +33,13 @@ function KaTeXMath({ math, displayMode = false }: { math: string; displayMode?: 
                     displayMode,
                     throwOnError: false
                 });
-                return <span dangerouslySetInnerHTML={{ __html: rendered }} className="inline-block max-w-full overflow-x-auto align-middle" />;
+                return <span dangerouslySetInnerHTML={{ __html: rendered }} className="inline-block max-w-full overflow-x-auto align-middle" suppressHydrationWarning />;
             } catch (err) {
                 console.error("KaTeX render error:", err);
             }
         }
     }
-    return <span>{displayMode ? `$$${math}$$` : `$${math}$`}</span>;
+    return <span suppressHydrationWarning>{displayMode ? `$$${math}$$` : `$${math}$`}</span>;
 }
 
 // Splits text by $...$ or $$...$$ or \(...\) or \[...\] and returns mapped ReactNodes

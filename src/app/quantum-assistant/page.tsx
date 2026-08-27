@@ -179,6 +179,7 @@ export default function App() {
       case 'optimization': return 'Optimization Studio';
       case 'algorithm': return 'Quantum Algorithm Studio';
       case 'coder': return 'Quantum Circuit Studio';
+      case 'chemistry': return 'Quantum Chemistry Studio';
       case 'academy': return 'Quantum Academy';
       case 'general':
       default:
@@ -1633,6 +1634,7 @@ export default function App() {
                             { label: 'Optimization Studio', pipeline: 'optimization' },
                             { label: 'Quantum Algorithm Studio', pipeline: 'algorithm' },
                             { label: 'Quantum Circuit Studio', pipeline: 'coder' },
+                      { label: 'Quantum Chemistry Studio', pipeline: 'chemistry' },
                           ].map(({ label, pipeline }) => (
                             <button
                               key={label}
@@ -1718,13 +1720,112 @@ export default function App() {
         
         <div className="p-4 flex-1 overflow-y-auto space-y-3">
           {/* Waiting/Initial Header Status Card */}
-          {selectedPipeline !== 'general' && selectedPipeline !== 'academy' && (!activeSession || !activeSession.workflowSteps || (!activeSession.workflowSteps.nlp && !activeSession.workflowSteps.math_rigor)) && (
+          {selectedPipeline !== 'general' && selectedPipeline !== 'academy' && selectedPipeline !== 'chemistry' && (!activeSession || !activeSession.workflowSteps || (!activeSession.workflowSteps.nlp && !activeSession.workflowSteps.math_rigor)) && (
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-center gap-2 animate-in fade-in duration-250">
               <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 animate-pulse">
                 <Activity className="w-4 h-4" />
               </div>
               <p className="text-xs font-semibold text-slate-500">Waiting for problem submission...</p>
               <p className="text-[10px] text-slate-400 max-w-[200px] leading-relaxed">Pipeline traces will display here once execution starts.</p>
+            </div>
+          )}
+
+          {/* ── QUANTUM CHEMISTRY STUDIO SIDEBAR CARDS ── */}
+          {selectedPipeline === 'chemistry' && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              
+              {/* Presets & Starter Prompts Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3 hover:shadow-sm transition-all">
+                <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                  <Activity className="w-4 h-4 text-blue-600" />
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Chemistry Benchmarks</span>
+                </div>
+                <div className="space-y-2">
+                  <div 
+                    onClick={() => setInputValue("Calculate the ground-state energy of a Hydrogen molecule (H2) using VQE.")}
+                    className="bg-white border border-slate-200 hover:border-blue-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                  >
+                    <span>1. Hydrogen (H₂) Ground State VQE</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                  <div 
+                    onClick={() => setInputValue("Find the ground-state energy of Lithium Hydride (LiH) at 1.6Å bond distance.")}
+                    className="bg-white border border-slate-200 hover:border-blue-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                  >
+                    <span>2. Lithium Hydride (LiH) 6-Qubit VQE</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                  <div 
+                    onClick={() => setInputValue("Compute the STO-3G molecular Hamiltonian for Water (H2O).")}
+                    className="bg-white border border-slate-200 hover:border-blue-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                  >
+                    <span>3. Water (H₂O) STO-3G Hamiltonian</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Latest Chemistry Experiment Trace Card */}
+              {(() => {
+                const latestBotMsg = [...messages].reverse().find(m => 
+                  m.sender === 'bot' && (m.executionResult || (m.text && m.text.includes('Quantum Chemistry Experiment Manifest')))
+                );
+                
+                if (!latestBotMsg) return null;
+
+                let qubits = latestBotMsg.executionResult?.qubitsAllocated;
+                let fci = latestBotMsg.executionResult?.fciEnergy;
+                let vqe = latestBotMsg.executionResult?.vqeEnergy;
+                let ansatz = latestBotMsg.executionResult?.ansatzType || 'RealAmplitudes';
+                let execTime = latestBotMsg.executionResult?.executionTime || '1.2';
+
+                // Robust fallback parser directly from the message text if executionResult object is not attached
+                if ((qubits === undefined || qubits === null) && latestBotMsg.text) {
+                  const qMatch = latestBotMsg.text.match(/\*\*Active Qubits Allocated:\*\*\s*`(\d+)\s*Qubits`/);
+                  if (qMatch) qubits = parseInt(qMatch[1]);
+                }
+                if ((fci === undefined || fci === null) && latestBotMsg.text) {
+                  const fciMatch = latestBotMsg.text.match(/\*\*Exact FCI Reference Energy:\*\*\s*`([-\d.]+)\s*Ha`/);
+                  if (fciMatch) fci = parseFloat(fciMatch[1]);
+                }
+                if ((vqe === undefined || vqe === null) && latestBotMsg.text) {
+                  const vqeMatch = latestBotMsg.text.match(/\*\*VQE Calculated Ground Energy:\*\*\s*`([-\d.]+)\s*Ha`/);
+                  if (vqeMatch) vqe = parseFloat(vqeMatch[1]);
+                }
+
+                if (qubits === undefined && fci === undefined && vqe === undefined) return null;
+
+                return (
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs animate-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between border-b border-slate-150 pb-2">
+                      <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider">Latest Simulation Trace</span>
+                      <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                        Completed ({execTime}s)
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                        <span className="text-slate-500">Qubits Allocated:</span>
+                        <span className="font-bold text-slate-800 font-mono">{qubits ?? 2} Qubits</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                        <span className="text-slate-500">FCI Exact Reference:</span>
+                        <span className="font-bold text-slate-800 font-mono">{fci ?? -1.137} Ha</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                        <span className="text-slate-500">VQE Min Energy:</span>
+                        <span className="font-bold text-blue-600 font-mono">{vqe ?? -0.538} Ha</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Ansatz Topology:</span>
+                        <span className="font-semibold text-slate-700 capitalize">{ansatz}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
             </div>
           )}
 

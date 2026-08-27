@@ -581,6 +581,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isStreaming: true,
                 chartData,
+                executionResult: response.executionResult,
                 workflowSteps: response.workflowSteps
             }]);
 
