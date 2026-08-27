@@ -2020,17 +2020,17 @@ export default function App() {
                     </div>
 
                     {/* Step 6: Delta Benchmarking & Verdict */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-slate-50 border border-indigo-100 rounded-xl p-3.5 shadow-xs space-y-2">
-                      <div className="flex items-center justify-between border-b border-indigo-100 pb-1.5">
+                    <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs space-y-2">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">06</span>
-                          <span className="text-[11px] font-bold text-slate-900">Delta Benchmark & Verdict</span>
+                          <span className="text-[9px] font-mono font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">06</span>
+                          <span className="text-[11px] font-bold text-slate-800">Delta Benchmark & Verdict</span>
                         </div>
-                        <span className="text-[9px] font-mono text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">{execTime}</span>
+                        <span className="text-[9px] font-mono text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">{execTime}</span>
                       </div>
-                      <div className="text-[11px] space-y-1 text-slate-700">
-                        <div className="flex justify-between"><span className="text-slate-500">Accuracy Delta (Δ):</span> <span className="font-mono font-bold text-indigo-700">{delta}</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Scientific Status:</span> <span className="font-bold text-emerald-600">{advantageStatus}</span></div>
+                      <div className="text-[11px] space-y-1 text-slate-600">
+                        <div className="flex justify-between"><span className="text-slate-400">Accuracy Delta (Δ):</span> <span className="font-mono font-bold text-indigo-600">{delta}</span></div>
+                        <div className="flex justify-between"><span className="text-slate-400">Scientific Status:</span> <span className="font-semibold text-emerald-600">{advantageStatus}</span></div>
                       </div>
                     </div>
 
