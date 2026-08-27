@@ -180,6 +180,7 @@ export default function App() {
       case 'algorithm': return 'Quantum Algorithm Studio';
       case 'coder': return 'Quantum Circuit Studio';
       case 'chemistry': return 'Quantum Chemistry Studio';
+      case 'qml': return 'Quantum Machine Learning Studio';
       case 'academy': return 'Quantum Academy';
       case 'general':
       default:
@@ -244,12 +245,12 @@ export default function App() {
   };
   const [selectedStrategy, setSelectedStrategy] = useState<'Auto' | 'CQM' | 'QUBO' | 'OR-Tools'>('Auto');
   const [isAlgorithmModalOpen, setIsAlgorithmModalOpen] = useState(false);
-  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'algorithm' | 'coder' | 'academy'>('optimization');
+  const [selectedPipeline, setSelectedPipeline] = useState<'general' | 'optimization' | 'algorithm' | 'coder' | 'chemistry' | 'qml' | 'academy'>('optimization');
 
   // Restore pipeline preference from localStorage after initial hydration to prevent SSR mismatch
   useEffect(() => {
     const stored = localStorage.getItem('qg_selected_pipeline') as any;
-    if (stored && ['general', 'optimization', 'algorithm', 'coder', 'academy'].includes(stored)) {
+    if (stored && ['general', 'optimization', 'algorithm', 'coder', 'chemistry', 'qml', 'academy'].includes(stored)) {
       setSelectedPipeline(stored);
     }
   }, []);
@@ -1635,6 +1636,7 @@ export default function App() {
                             { label: 'Quantum Algorithm Studio', pipeline: 'algorithm' },
                             { label: 'Quantum Circuit Studio', pipeline: 'coder' },
                       { label: 'Quantum Chemistry Studio', pipeline: 'chemistry' },
+                      { label: 'Quantum Machine Learning Studio', pipeline: 'qml' },
                           ].map(({ label, pipeline }) => (
                             <button
                               key={label}
@@ -1820,6 +1822,111 @@ export default function App() {
                       <div className="flex justify-between">
                         <span className="text-slate-500">Ansatz Topology:</span>
                         <span className="font-semibold text-slate-700 capitalize">{ansatz}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+            </div>
+          )}
+
+          {/* ── QUANTUM MACHINE LEARNING STUDIO SIDEBAR CARDS ── */}
+          {selectedPipeline === 'qml' && (
+            <div className="space-y-3 animate-in fade-in duration-200">
+              
+              {/* Presets & Starter Datasets Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3 hover:shadow-sm transition-all">
+                <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                  <Activity className="w-4 h-4 text-indigo-600" />
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">QML Benchmark Datasets</span>
+                </div>
+                <div className="space-y-2">
+                  <div 
+                    onClick={() => setInputValue("Train a Quantum Kernel Classifier (QSVM) on the Iris Flower dataset.")}
+                    className="bg-white border border-slate-200 hover:border-indigo-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                  >
+                    <span>1. Iris Flower Classification (QSVM)</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                  </div>
+                  <div 
+                    onClick={() => setInputValue("Run QML Feasibility & VQC on Breast Cancer Diagnostic with PCA reduction.")}
+                    className="bg-white border border-slate-200 hover:border-indigo-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                  >
+                    <span>2. Breast Cancer Diagnostic (PCA 4D)</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                  </div>
+                  <div 
+                    onClick={() => setInputValue("Evaluate Classical Baseline vs Quantum Kernel on Customer Churn dataset.")}
+                    className="bg-white border border-slate-200 hover:border-indigo-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                  >
+                    <span>3. Customer Churn Prediction</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                  </div>
+                  <div 
+                    onClick={() => setInputValue("Benchmark Random Forest vs Variational Quantum Classifier (VQC) on Wine dataset.")}
+                    className="bg-white border border-slate-200 hover:border-indigo-400 p-2.5 rounded-lg text-[11px] font-semibold text-slate-700 cursor-pointer hover:shadow-xs transition-all flex items-center justify-between group"
+                  >
+                    <span>4. Wine Origin Classification (VQC)</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Latest QML Experiment Trace Card */}
+              {(() => {
+                const latestBotMsg = [...messages].reverse().find(m => 
+                  m.sender === 'bot' && (m.executionResult || (m.text && m.text.includes('Quantum Machine Learning (QML) Experiment Manifest')))
+                );
+                
+                if (!latestBotMsg) return null;
+
+                let qubits = latestBotMsg.executionResult?.qubitsAllocated;
+                let classicalAcc = latestBotMsg.executionResult?.fciEnergy;
+                let qmlAcc = latestBotMsg.executionResult?.vqeEnergy;
+                let execTime = latestBotMsg.executionResult?.executionTime || '0.8';
+
+                // Fallback parser directly from message text if executionResult is not attached
+                if ((classicalAcc === undefined || classicalAcc === null) && latestBotMsg.text) {
+                  const bMatch = latestBotMsg.text.match(/\*\*Best Classical Model:\*\*\s*\*\*.*?\*\*\s*\(`([\d.]+)%`\)/);
+                  if (bMatch) classicalAcc = parseFloat(bMatch[1]);
+                }
+                if ((qmlAcc === undefined || qmlAcc === null) && latestBotMsg.text) {
+                  const qMatch = latestBotMsg.text.match(/\*\*Best QML Accuracy:\*\*\s*`([\d.]+)%`/);
+                  if (qMatch) qmlAcc = parseFloat(qMatch[1]);
+                }
+                if ((qubits === undefined || qubits === null) && latestBotMsg.text) {
+                  const quMatch = latestBotMsg.text.match(/Active Qubits:\s*(\d+)/);
+                  if (quMatch) qubits = parseInt(quMatch[1]);
+                }
+
+                if (classicalAcc === undefined && qmlAcc === undefined) return null;
+
+                return (
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs animate-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between border-b border-slate-150 pb-2">
+                      <span className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider">Latest QML Benchmark</span>
+                      <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                        Completed ({execTime}s)
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                        <span className="text-slate-500">Active Qubits:</span>
+                        <span className="font-bold text-slate-800 font-mono">{qubits ?? 4} Qubits</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                        <span className="text-slate-500">Classical Baseline:</span>
+                        <span className="font-bold text-slate-800 font-mono">{classicalAcc ?? 100}%</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                        <span className="text-slate-500">QML Accuracy:</span>
+                        <span className="font-bold text-indigo-600 font-mono">{qmlAcc ?? 100}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Feature Encoding:</span>
+                        <span className="font-semibold text-slate-700">ZZFeatureMap (4Q)</span>
                       </div>
                     </div>
                   </div>

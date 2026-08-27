@@ -617,6 +617,23 @@ async def solve_chemistry_endpoint(req: ChemistryRequest):
         print(f"[Chemistry Error] {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+class QMLRequest(BaseModel):
+    user_prompt: Optional[str] = "Iris"
+    dataset_name: Optional[str] = "Iris"
+    task: Optional[str] = "classification"
+    max_qubits: Optional[int] = 4
+
+@app.post("/v3/enterprise/qml/solve")
+async def solve_qml_endpoint(req: QMLRequest):
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from engine.qml_engine import solve_qml_experiment
+        manifest = solve_qml_experiment(req.model_dump())
+        return {"success": True, "manifest": manifest}
+    except Exception as e:
+        print(f"[QML Error] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # =========================================================================
 # RUN (for local testing)
