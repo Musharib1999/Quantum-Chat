@@ -348,26 +348,40 @@ def solve_qml_experiment(spec: Dict[str, Any]) -> Dict[str, Any]:
     full_circ.compose(ansatz, inplace=True)
     circuit_diagram = str(full_circ.decompose().draw(output='text'))
 
+    sample_vector = [round(float(val), 3) for val in X_test[0]] if len(X_test) > 0 else [0.5] * num_qubits
     qiskit_code = f"""# Deterministic Qiskit QML Code ({detected_title})
 import numpy as np
+import warnings
+warnings.filterwarnings('ignore', category=DeprecationWarning)
+
 from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
 from qiskit.quantum_info import Statevector, SparsePauliOp
 from scipy.optimize import minimize
 
-# 1. Feature Map & Trainable Ansatz ({num_qubits} Qubits)
-feature_map = ZZFeatureMap(feature_dimension={num_qubits}, reps=1)
-ansatz = RealAmplitudes(num_qubits={num_qubits}, reps=2)
+# 1. Feature Encoding & Parameterized Ansatz ({num_qubits} Qubits)
+num_qubits = {num_qubits}
+sample_x = np.array({sample_vector}) # Sample features from test set
+feature_map = ZZFeatureMap(feature_dimension=num_qubits, reps=1, entanglement='linear')
+ansatz = RealAmplitudes(num_qubits=num_qubits, reps=2)
 
 circuit = feature_map.compose(ansatz)
-observable = SparsePauliOp.from_list([("Z" + "I" * {num_qubits - 1}, 1.0)])
+observable = SparsePauliOp.from_list([("Z" + "I" * (num_qubits - 1), 1.0)])
 
-# 2. Objective Function
+# 2. Hybrid Variational Objective
 def objective(weights):
-    circ = circuit.assign_parameters(np.concatenate([sample_x, weights]))
-    return float(np.real(Statevector(circ).expectation_value(observable)))
+    bound_circ = circuit.assign_parameters(np.concatenate([sample_x, weights]))
+    sv = Statevector(bound_circ)
+    return float(np.real(sv.expectation_value(observable)))
 
-res = minimize(objective, np.zeros(ansatz.num_parameters), method='COBYLA')
-print(f"Optimal Parameters: {{res.x}}")
+initial_weights = np.zeros(ansatz.num_parameters)
+res = minimize(objective, initial_weights, method='COBYLA', options={{'maxiter': 35}})
+
+print(f"--- QML Execution Results ({detected_title}) ---")
+print(f"Active Qubits:           {{num_qubits}} Qubits")
+print(f"Sample Input (PCA 4D):   {{sample_x}}")
+print(f"Optimal Parameter Count: {{len(res.x)}}")
+print(f"Optimized Expectation:   {{res.fun:.4f}}")
+print(f"Predicted Class:         {{1 if res.fun >= 0 else 0}}")
 """
 
     manifest = {
