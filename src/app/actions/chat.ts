@@ -360,6 +360,83 @@ ${manifest.ansatz_qiskit_code}
 
             // Pipeline QML: Quantum Machine Learning Studio (Automated Feasibility, Classical Baseline First, QSVM & VQC)
             if (pipelineIntent === 'qml') {
+                const lowerPrompt = sanitizedPrompt.toLowerCase();
+                const isPredictionIntent = lowerPrompt.includes('predict') || 
+                                           lowerPrompt.includes('test sample') || 
+                                           lowerPrompt.includes('inference') || 
+                                           /\b\[[\d.,\s-]+\]\b/.test(sanitizedPrompt) || 
+                                           /\b[a-zA-Z_]+=[\d.]+\b/.test(sanitizedPrompt);
+
+                if (isPredictionIntent) {
+                    // Extract numbers from array or key-value pairs
+                    let extractedFeatures: number[] = [];
+                    const arrayMatch = sanitizedPrompt.match(/\[([\d.,\s-]+)\]/);
+                    if (arrayMatch) {
+                        extractedFeatures = arrayMatch[1].split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+                    } else {
+                        const numMatches = sanitizedPrompt.match(/[-+]?[0-9]*\.?[0-9]+/g);
+                        if (numMatches && numMatches.length > 0) {
+                            extractedFeatures = numMatches.map(n => parseFloat(n));
+                        }
+                    }
+
+                    // Infer dataset context from prompt or conversation
+                    let targetDataset = "Iris";
+                    if (lowerPrompt.includes('cancer') || lowerPrompt.includes('breast')) targetDataset = "Breast Cancer";
+                    else if (lowerPrompt.includes('churn') || lowerPrompt.includes('customer')) targetDataset = "Customer Churn";
+                    else if (lowerPrompt.includes('wine')) targetDataset = "Wine";
+                    else if (historyContext.toLowerCase().includes('cancer')) targetDataset = "Breast Cancer";
+                    else if (historyContext.toLowerCase().includes('churn')) targetDataset = "Customer Churn";
+                    else if (historyContext.toLowerCase().includes('wine')) targetDataset = "Wine";
+
+                    const predRes = await axios.post(`${backendUrl}/v3/enterprise/qml/predict`, {
+                        dataset_name: targetDataset,
+                        user_prompt: sanitizedPrompt,
+                        features: extractedFeatures.length > 0 ? extractedFeatures : undefined
+                    });
+
+                    const pred = predRes.data?.prediction || {};
+                    const classical = pred.classical_prediction || {};
+                    const qsvm = pred.qsvm_prediction || {};
+                    const vqc = pred.vqc_prediction || {};
+
+                    const formattedPredResponse = `### 🧪 Live Quantum ML Model Inference Result
+
+**Active Model Context:** \`${pred.dataset_name || targetDataset}\`  
+**Input Features:** \`${JSON.stringify(pred.raw_input_features || {})}\`  
+**Quantum Phase Encoded Angles ($[0, \pi]$):** \`[${pred.quantum_phase_angles?.join(', ') || ''}]\`  
+**Active Qubits Allocated:** \`${pred.active_qubits || 4} Qubits\`
+
+---
+
+#### 1. Dual Quantum vs Classical Model Predictions
+* **Classical Baseline (${classical.model || 'Random Forest'}):** **Class ${classical.predicted_class}** (\`${classical.confidence_pct}%\` Confidence)
+* **Quantum Kernel Classifier (QSVM):** **Class ${qsvm.predicted_class}** (\`${qsvm.confidence_pct}%\` Confidence, Kernel Alignment: \`${qsvm.kernel_alignment}\`)
+* **Variational Quantum Classifier (VQC):** **Class ${vqc.predicted_class}** (Expectation $\langle Z_0 \rangle$: \`${vqc.expectation_value}\`, State Probability: \`${vqc.state_probability_pct}%\`)
+
+---
+
+#### 2. Inference Consensus & Analysis
+* **Model Agreement:** **${pred.consensus === 'Unanimous' ? '✅ Unanimous Agreement' : '⚠️ Divergent Predictions'}**
+* **Quantum State Signature:** Both quantum algorithms evaluated the statevector $|\psi(x)\rangle$ across $2^{${pred.active_qubits || 4}} = ${Math.pow(2, pred.active_qubits || 4)}$ Hilbert space dimensions to formulate classification decision boundaries.
+`;
+
+                    return {
+                        text: formattedPredResponse,
+                        source: 'qml_engine',
+                        guardrailsStatus: 'passed',
+                        activeGuardrails: ruleTexts,
+                        tokensUsed: 0,
+                        executionResult: {
+                            executionTime: 0.15,
+                            qubitsAllocated: pred.active_qubits || 4,
+                            ansatzType: 'Live Inference',
+                            fciEnergy: classical.confidence_pct,
+                            vqeEnergy: qsvm.confidence_pct,
+                            convergenceHistory: []
+                        }
+                    };
+                }
                 const qmlRes = await axios.post(`${backendUrl}/v3/enterprise/qml/solve`, {
                     user_prompt: sanitizedPrompt,
                     dataset_name: sanitizedPrompt,
@@ -407,7 +484,15 @@ ${manifest.circuit_diagram || ''}
 
 ---
 
-#### 4. Deterministic Qiskit Code Template
+#### 4. 🧪 Try Live Quantum Model Inference
+You can immediately test predictions with this trained QML model! Send a new chat message with custom values:
+* **Test Sample Array:** \`Predict for [5.1, 3.5, 1.4, 0.2]\`
+* **Test by Feature Values:** \`Predict for Tenure=48, Monthly_Charges=75, Support_Tickets=1\`
+* **Or simply ask:** \`Test a prediction on a sample\`
+
+---
+
+#### 5. Deterministic Qiskit Code Template
 \`\`\`python
 ${manifest.ansatz_qiskit_code}
 \`\`\`

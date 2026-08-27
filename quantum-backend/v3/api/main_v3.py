@@ -634,6 +634,24 @@ async def solve_qml_endpoint(req: QMLRequest):
         print(f"[QML Error] {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+class QMLPredictRequest(BaseModel):
+    dataset_name: Optional[str] = "Iris"
+    user_prompt: Optional[str] = None
+    features: Optional[list[float]] = None
+    feature_dict: Optional[dict[str, float]] = None
+    weights: Optional[list[float]] = None
+
+@app.post("/v3/enterprise/qml/predict")
+async def predict_qml_endpoint(req: QMLPredictRequest):
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from engine.qml_engine import predict_qml_sample
+        result = predict_qml_sample(req.model_dump())
+        return {"success": True, "prediction": result}
+    except Exception as e:
+        print(f"[QML Predict Error] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # =========================================================================
 # RUN (for local testing)

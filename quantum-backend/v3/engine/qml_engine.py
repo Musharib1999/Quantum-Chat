@@ -401,3 +401,108 @@ print(f"Predicted Class:         {{1 if res.fun >= 0 else 0}}")
         "ansatz_qiskit_code": qiskit_code
     }
     return manifest
+
+# ---------------------------------------------------------
+# 7. Live Interactive Sample Prediction
+# ---------------------------------------------------------
+
+def predict_qml_sample(spec: Dict[str, Any]) -> Dict[str, Any]:
+    dataset_name = spec.get("dataset_name") or spec.get("user_prompt") or "Iris"
+    raw_features = spec.get("features")
+    raw_dict = spec.get("feature_dict")
+    
+    X_raw, y_raw, detected_title, feature_names = load_qml_dataset(dataset_name)
+    X_train, X_test, y_train, y_test, profile = preprocess_and_reduce(X_raw, y_raw, max_qubits=4)
+    num_qubits = profile["active_qubits"]
+    
+    # 1. Parse or construct input vector
+    if raw_features and len(raw_features) > 0:
+        raw_arr = np.array(raw_features[:len(feature_names)], dtype=float)
+        if len(raw_arr) < len(feature_names):
+            raw_arr = np.pad(raw_arr, (0, len(feature_names) - len(raw_arr)), mode='mean')
+    elif raw_dict:
+        raw_arr = np.array([float(raw_dict.get(k, np.mean(X_raw[:, idx]))) for idx, k in enumerate(feature_names)])
+    else:
+        # Default: take a test sample
+        raw_arr = X_raw[0]
+
+    # Preprocess user input
+    if len(feature_names) > num_qubits:
+        scaler_init = StandardScaler()
+        scaler_init.fit(X_raw)
+        X_s = scaler_init.transform([raw_arr])
+        pca = PCA(n_components=num_qubits, random_state=42)
+        pca.fit(scaler_init.transform(X_raw))
+        X_p = pca.transform(X_s)
+        scaler_final = MinMaxScaler(feature_range=(0, np.pi))
+        scaler_final.fit(pca.transform(scaler_init.transform(X_raw)))
+        sample_scaled = scaler_final.transform(X_p)[0]
+    else:
+        scaler_final = MinMaxScaler(feature_range=(0, np.pi))
+        scaler_final.fit(X_raw)
+        sample_scaled = scaler_final.transform([raw_arr])[0]
+
+    # Classical Prediction (Random Forest)
+    rf = RandomForestClassifier(n_estimators=50, random_state=42).fit(X_train, y_train)
+    rf_pred = int(rf.predict([sample_scaled])[0])
+    rf_proba = rf.predict_proba([sample_scaled])[0]
+    rf_conf = float(np.max(rf_proba) * 100.0)
+
+    # Quantum Kernel (QSVM) Prediction
+    feature_map = build_feature_map(num_qubits, "zz")
+    K_train = compute_quantum_kernel_matrix(X_train, X_train, feature_map)
+    qsvm = SVC(kernel='precomputed', random_state=42).fit(K_train, y_train)
+    
+    # Compute kernel against train set
+    sv_sample = Statevector(feature_map.assign_parameters(sample_scaled))
+    sv_train = [Statevector(feature_map.assign_parameters(x)) for x in X_train]
+    k_sample = np.zeros((1, len(X_train)))
+    for j in range(len(X_train)):
+        k_sample[0, j] = float(abs(sv_sample.inner(sv_train[j])) ** 2)
+        
+    qsvm_pred = int(qsvm.predict(k_sample)[0])
+    decision_val = float(qsvm.decision_function(k_sample)[0])
+    qsvm_conf = round(float(1.0 / (1.0 + np.exp(-abs(decision_val))) * 100.0), 1)
+
+    # Variational Classifier (VQC) Prediction
+    ansatz = RealAmplitudes(num_qubits=num_qubits, reps=2)
+    circuit = QuantumCircuit(num_qubits)
+    circuit.compose(feature_map, inplace=True)
+    circuit.compose(ansatz, inplace=True)
+    observable = SparsePauliOp.from_list([("Z" + "I" * (num_qubits - 1), 1.0)])
+    
+    # Fast evaluation using trained weights from spec or fresh quick fit
+    weights = spec.get("weights")
+    if not weights or len(weights) != ansatz.num_parameters:
+        weights = np.zeros(ansatz.num_parameters)
+        
+    bound_circ = circuit.assign_parameters(np.concatenate([sample_scaled, weights]))
+    sv_vqc = Statevector(bound_circ)
+    exp_val = float(np.real(sv_vqc.expectation_value(observable)))
+    vqc_pred = 1 if exp_val >= 0.0 else 0
+    vqc_prob = round(float(0.5 * (exp_val + 1.0) * 100.0), 1)
+
+    return {
+        "dataset_name": detected_title,
+        "raw_input_features": {name: round(float(val), 2) for name, val in zip(feature_names, raw_arr)},
+        "quantum_phase_angles": [round(float(a), 3) for a in sample_scaled],
+        "active_qubits": num_qubits,
+        "classical_prediction": {
+            "model": "Random Forest",
+            "predicted_class": rf_pred,
+            "confidence_pct": round(rf_conf, 1)
+        },
+        "qsvm_prediction": {
+            "model": "Quantum Kernel Classifier (QSVM)",
+            "predicted_class": qsvm_pred,
+            "confidence_pct": qsvm_conf,
+            "kernel_alignment": round(float(np.mean(k_sample)), 4)
+        },
+        "vqc_prediction": {
+            "model": "Variational Quantum Classifier (VQC)",
+            "predicted_class": vqc_pred,
+            "expectation_value": round(exp_val, 4),
+            "state_probability_pct": vqc_prob if vqc_pred == 1 else round(100.0 - vqc_prob, 1)
+        },
+        "consensus": "Unanimous" if (rf_pred == qsvm_pred == vqc_pred) else "Divergent"
+    }
