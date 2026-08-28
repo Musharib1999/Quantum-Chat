@@ -185,3 +185,22 @@ body {
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
 }
+
+/* Typography Rules for Quantum Guru */
+:root {
+  --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-manrope: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+body, .font-sans {
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-manrope), sans-serif;
+}
+
+code, pre, kbd, samp, .font-mono {
+  font-family: var(--font-jetbrains-mono), monospace;
+}

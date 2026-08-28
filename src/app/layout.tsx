@@ -1,18 +1,31 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Inter, Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
 import { ToastProvider } from "../context/ToastContext";
 
-const montserrat = Montserrat({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-montserrat",
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Quantum Guru AI",
-  description: "Turning Quantum Complexity into Clear Intelligence",
+  title: "Quantum Guru AI — AI-Native Quantum IDE",
+  description: "The AI-Native Development Environment for Quantum Computing",
 };
 
 export const viewport = {
@@ -20,7 +33,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#000000",
+  themeColor: "#0B0F17",
 };
 
 export default function RootLayout({
@@ -29,13 +42,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="light">
+    <html lang="en" data-theme="light" className={`${inter.variable} ${manrope.variable} ${jetbrainsMono.variable}`}>
       <head>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
         <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
       </head>
-      <body className={`${montserrat.variable} font-sans antialiased select-none`}>
+      <body className="font-sans antialiased select-none">
         <AuthProvider>
           <ToastProvider>
             {children}
