@@ -679,3 +679,43 @@ if __name__ == "__main__":
         reload=False,
         log_level="info",
     )
+
+
+# =====================================================================
+# QUANTUM GURU IDE: 33-TOOL AGENT & DIRECT TOOL INVOCATION ENDPOINTS
+# (Additive only - Existing 7 studio pipelines remain 100% frozen)
+# =====================================================================
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from engine.tools.registry import invoke_quantum_tool, get_all_tool_schemas, TOOL_DISPATCH_TABLE
+
+class IDEToolInvokeRequest(BaseModel):
+    tool_name: str
+    params: dict[str, Any] = Field(default_factory=dict)
+
+@app.post("/v3/enterprise/ide/tools/invoke")
+async def invoke_ide_tool_endpoint(req: IDEToolInvokeRequest):
+    """
+    Direct execution gateway for any of the 33 Quantum AI Tools.
+    """
+    try:
+        result = invoke_quantum_tool(req.tool_name, req.params)
+        return {
+            "success": True,
+            "tool_name": req.tool_name,
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Tool execution failed for {req.tool_name}: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/v3/enterprise/ide/tools/schemas")
+async def get_ide_tool_schemas_endpoint():
+    """
+    Returns OpenAI/Groq/RunPod function calling schemas for all 33 tools.
+    """
+    return {
+        "total_tools": len(TOOL_DISPATCH_TABLE),
+        "tools": get_all_tool_schemas()
+    }
