@@ -1126,27 +1126,40 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                 </button>
               </div>
 
-              {/* Input form */}
+              {/* Input form (Doubled Height with Multi-Line Textarea) */}
               <div 
                 style={{ backgroundColor: colors.bgInput, borderColor: colors.border }}
-                className="flex items-center gap-2 border rounded-lg p-1.5 transition-all shadow-2xs focus-within:border-sky-500"
+                className="flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs focus-within:border-sky-500 min-h-[76px]"
               >
-                <input 
-                  type="text"
+                <textarea 
+                  rows={2}
                   value={copilotInput}
                   onChange={(e) => setCopilotInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
-                  placeholder="Ask Copilot or try /execute@program..."
+                  onKeyDown={(e) => { 
+                    if (e.key === 'Enter' && !e.shiftKey) { 
+                      e.preventDefault(); 
+                      handleSendMessage(); 
+                    } 
+                  }}
+                  placeholder="Ask Copilot, describe a quantum algorithm, or try /execute@program..."
                   style={{ color: colors.textPrimary }}
-                  className="flex-1 bg-transparent border-none outline-hidden text-xs font-medium px-1 font-sans placeholder:opacity-40"
+                  className="w-full bg-transparent border-none outline-hidden text-xs font-medium font-sans resize-none placeholder:opacity-40 leading-relaxed"
                 />
-                <button 
-                  onClick={() => handleSendMessage()}
-                  style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
-                  className="w-6 h-6 rounded flex items-center justify-center transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border"
-                >
-                  <Send className="w-3 h-3" />
-                </button>
+                
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[10px] font-mono select-none" style={{ color: colors.textMuted }}>
+                    <span style={{ color: colors.textCyan }}>Enter</span> to send • <span style={{ color: colors.textCyan }}>Shift+Enter</span> for new line
+                  </span>
+
+                  <button 
+                    onClick={() => handleSendMessage()}
+                    style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
+                    className="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border text-[11px] font-bold"
+                  >
+                    <span>Send</span>
+                    <Send className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
             </div>
           </aside>
