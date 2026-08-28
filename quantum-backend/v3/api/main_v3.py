@@ -719,3 +719,47 @@ async def get_ide_tool_schemas_endpoint():
         "total_tools": len(TOOL_DISPATCH_TABLE),
         "tools": get_all_tool_schemas()
     }
+
+# =====================================================================
+# QUANTUM GURU IDE: PROJECT MEMORY & AUDIT TRAIL ENDPOINTS
+# =====================================================================
+from engine.memory.project_memory import memory_manager, MemoryTurn, ProjectMemoryLedger
+
+class RecordMemoryTurnRequest(BaseModel):
+    project_id: str
+    turn: MemoryTurn
+
+@app.get("/v3/enterprise/ide/memory/{project_id}")
+async def get_project_memory_endpoint(project_id: str):
+    """
+    Returns full chronological audit ledger for a quantum project.
+    """
+    try:
+        ledger = memory_manager.get_memory(project_id)
+        return {"success": True, "ledger": ledger.model_dump()}
+    except Exception as e:
+        logger.error(f"Error fetching memory for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/v3/enterprise/ide/memory/turn")
+async def record_memory_turn_endpoint(req: RecordMemoryTurnRequest):
+    """
+    Appends a new turn (user prompt, agent called, tools invoked, code changes) to project memory.
+    """
+    try:
+        updated_ledger = memory_manager.record_turn(req.project_id, req.turn)
+        return {"success": True, "total_turns": updated_ledger.total_turns}
+    except Exception as e:
+        logger.error(f"Error recording memory turn: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/v3/enterprise/ide/memory/{project_id}")
+async def clear_project_memory_endpoint(project_id: str):
+    """
+    Clears project memory history for a fresh slate.
+    """
+    try:
+        memory_manager.clear_memory(project_id)
+        return {"success": True, "message": f"Memory cleared for project {project_id}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

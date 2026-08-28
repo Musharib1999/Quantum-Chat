@@ -26,7 +26,11 @@ import {
   Plus,
   Sun,
   Moon,
-  GitBranch
+  GitBranch,
+  History,
+  Brain,
+  FileDiff,
+  Database
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -47,6 +51,8 @@ export default function QuantumIDE() {
   const [activeModel, setActiveModel] = useState<'groq' | 'runpod'>('groq');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+  const [isMemoryOpen, setIsMemoryOpen] = useState(false);
+  const [memoryLedger, setMemoryLedger] = useState<any>(null);
   const [projectName, setProjectName] = useState('my-quantum-project');
   const [targetBackend, setTargetBackend] = useState('aer_simulator');
   const [optimizationLevel, setOptimizationLevel] = useState<number>(2);
@@ -72,7 +78,20 @@ export default function QuantumIDE() {
       setLeftWidth(Math.round(w * 0.20));
       setRightWidth(Math.round(w * 0.40));
     }
-  }, []);
+    fetchProjectMemory();
+  }, [projectName]);
+
+  const fetchProjectMemory = async () => {
+    try {
+      const res = await fetch(`http://localhost:8002/v3/enterprise/ide/memory/${projectName}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMemoryLedger(data.ledger);
+      }
+    } catch (e) {
+      console.error('Error fetching project memory:', e);
+    }
+  };
 
   const isDark = theme === 'dark';
 
@@ -456,8 +475,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           </div>
         </div>
 
-        {/* Right: Theme Switcher & Section 3 Toggle */}
+        {/* Right: Project Memory & Audit Trail, Theme Switcher & Section 3 Toggle */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setIsMemoryOpen(true); fetchProjectMemory(); }}
+            title="Open Project Memory & Audit Trail"
+            style={{ 
+              backgroundColor: colors.bgPill, 
+              borderColor: colors.border,
+              color: colors.textCyan
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border transition-colors cursor-pointer text-xs font-bold hover:border-sky-500"
+          >
+            <Brain className="w-3.5 h-3.5" style={{ color: colors.textCyan }} />
+            <span>Memory ({memoryLedger?.total_turns || 1})</span>
+          </button>
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             title={`Switch to ${isDark ? 'Light' : 'Dark'} Theme`}
@@ -1274,6 +1306,199 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                   </div>
                 </div>
               ))}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* PROJECT MEMORY & AUDIT TRAIL MODAL                            */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isMemoryOpen && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div 
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
+            className="border rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150"
+          >
+            {/* Modal Header */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="px-5 py-3.5 border-b flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center">
+                  <Brain className="w-4 h-4" style={{ color: colors.textCyan }} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold font-heading" style={{ color: colors.textCyan }}>
+                    Quantum Project Memory & Audit Ledger
+                  </h3>
+                  <p className="text-[11px]" style={{ color: colors.textMuted }}>
+                    Chronological trace of user intents, LLM reasoning, 33-tool calls, and code diff snapshots
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setIsMemoryOpen(false)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-75 transition-opacity cursor-pointer"
+                style={{ color: colors.textMuted }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body: Memory Turns Timeline */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              {memoryLedger?.turns && memoryLedger.turns.length > 0 ? (
+                memoryLedger.turns.map((turn: any, idx: number) => (
+                  <div 
+                    key={turn.turn_id || idx}
+                    style={{ backgroundColor: colors.bgEditor, borderColor: colors.border }}
+                    className="border rounded-xl p-4 space-y-3 shadow-2xs font-mono"
+                  >
+                    {/* Turn Header */}
+                    <div className="flex items-center justify-between border-b pb-2 text-[11px]" style={{ borderColor: colors.border }}>
+                      <span className="font-bold flex items-center gap-1.5" style={{ color: colors.textCyan }}>
+                        <span>Turn #{idx + 1}</span>
+                        <span style={{ color: colors.textMuted }}>•</span>
+                        <span style={{ color: colors.textAmber }}>{turn.agent_called}</span>
+                      </span>
+                      <span className="text-[10px]" style={{ color: colors.textMuted }}>
+                        {turn.timestamp}
+                      </span>
+                    </div>
+
+                    {/* 1. What User Said */}
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-bold uppercase tracking-wider font-sans" style={{ color: colors.textCyan }}>
+                        1. What User Said
+                      </div>
+                      <div 
+                        style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                        className="p-2 rounded border text-xs font-sans font-medium"
+                      >
+                        "{turn.user_prompt}"
+                      </div>
+                    </div>
+
+                    {/* 2. What LLM Suggested */}
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-bold uppercase tracking-wider font-sans" style={{ color: colors.textCyan }}>
+                        2. What LLM Suggested & Reasoned
+                      </div>
+                      <div 
+                        style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                        className="p-2 rounded border text-xs font-sans leading-relaxed"
+                      >
+                        {turn.llm_reasoning}
+                      </div>
+                    </div>
+
+                    {/* 3. Which Tool / Agent Was Called */}
+                    {turn.tools_invoked && turn.tools_invoked.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-bold uppercase tracking-wider font-sans" style={{ color: colors.textEmerald }}>
+                          3. Tool / Agent Invocation Trace ({turn.tools_invoked.length})
+                        </div>
+                        {turn.tools_invoked.map((t: any, tIdx: number) => (
+                          <div 
+                            key={tIdx}
+                            style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                            className="p-2 rounded-lg border text-[11px] space-y-1.5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold font-mono" style={{ color: colors.textPrimary }}>
+                                #{t.tool_id || 19} {t.tool_name}
+                              </span>
+                              <span style={{ color: colors.textEmerald }} className="font-bold text-[10px]">
+                                {t.status?.toUpperCase() || 'SUCCESS'} ({t.execution_time_ms}ms)
+                              </span>
+                            </div>
+                            <div className="text-[10px] space-y-0.5" style={{ color: colors.textMuted }}>
+                              <div>Inputs: <span style={{ color: colors.textAmber }}>{JSON.stringify(t.inputs)}</span></div>
+                              <div>Outputs: <span style={{ color: colors.textSkyBlue }}>{JSON.stringify(t.outputs)}</span></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 4. Code Changes Proposed */}
+                    {turn.code_changes && turn.code_changes.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-bold uppercase tracking-wider font-sans" style={{ color: colors.textAmber }}>
+                          4. Code Diffs & File Changes
+                        </div>
+                        {turn.code_changes.map((c: any, cIdx: number) => (
+                          <div 
+                            key={cIdx}
+                            style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                            className="p-2 rounded-lg border text-[11px] flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span style={{ color: colors.textAmber }} className="font-bold font-mono">{c.action}: {c.file_path}</span>
+                              <span style={{ color: colors.textMuted }}>({c.lines_modified})</span>
+                            </div>
+                            <span className="font-sans text-[10px]" style={{ color: colors.textPrimary }}>{c.summary}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 5. Quantum Physical State Snapshot */}
+                    {turn.quantum_state && (
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-bold uppercase tracking-wider font-sans" style={{ color: colors.textSkyBlue }}>
+                          5. Quantum Physical State Snapshot
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 text-[10px] font-mono">
+                          <div style={{ backgroundColor: colors.bgPill, borderColor: colors.border }} className="p-1.5 rounded border text-center">
+                            <div style={{ color: colors.textMuted }}>Target QPU</div>
+                            <div className="font-bold" style={{ color: colors.textSkyBlue }}>{turn.quantum_state.target_backend}</div>
+                          </div>
+                          <div style={{ backgroundColor: colors.bgPill, borderColor: colors.border }} className="p-1.5 rounded border text-center">
+                            <div style={{ color: colors.textMuted }}>Active Qubits</div>
+                            <div className="font-bold" style={{ color: colors.textSkyBlue }}>{turn.quantum_state.active_qubits}</div>
+                          </div>
+                          <div style={{ backgroundColor: colors.bgPill, borderColor: colors.border }} className="p-1.5 rounded border text-center">
+                            <div style={{ color: colors.textMuted }}>Depth</div>
+                            <div className="font-bold" style={{ color: colors.textSkyBlue }}>{turn.quantum_state.circuit_depth}</div>
+                          </div>
+                          <div style={{ backgroundColor: colors.bgPill, borderColor: colors.border }} className="p-1.5 rounded border text-center">
+                            <div style={{ color: colors.textMuted }}>Fidelity</div>
+                            <div className="font-bold" style={{ color: colors.textEmerald }}>{(turn.quantum_state.fidelity * 100).toFixed(2)}%</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8" style={{ color: colors.textMuted }}>
+                  No memory turns recorded yet for project: <b style={{ color: colors.textCyan }}>{projectName}</b>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="px-5 py-3 border-t flex items-center justify-between text-xs"
+            >
+              <span className="font-mono text-[11px]" style={{ color: colors.textMuted }}>
+                Storage: <b style={{ color: colors.textCyan }}>.quantum_projects/{projectName}_memory.json</b>
+              </span>
+              <button 
+                onClick={() => setIsMemoryOpen(false)}
+                style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
+                className="px-4 py-1.5 font-bold rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
+              >
+                Close Audit Trail
+              </button>
             </div>
 
           </div>
