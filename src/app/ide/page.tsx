@@ -331,9 +331,8 @@ matplotlib>=3.8.0
           </div>
         </div>
 
-        {/* Right: Section 3 Toggle, Settings & User Profile */}
-        <div className="flex items-center gap-2.5">
-          
+        {/* Right: Section 3 Toggle (Ultra-Clean) */}
+        <div className="flex items-center gap-2">
           {/* Section 3 Toggle Button in Top Bar */}
           <button
             onClick={() => setIsRightOpen(!isRightOpen)}
@@ -342,22 +341,6 @@ matplotlib>=3.8.0
           >
             <PanelRight className="w-4 h-4" />
           </button>
-
-          {/* Settings Modal Button */}
-          <button 
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-md text-xs font-bold transition-all shadow-2xs cursor-pointer"
-          >
-            <Settings className="w-3.5 h-3.5 text-slate-600" />
-            <span>Settings</span>
-            <span className="text-[9px] font-mono bg-blue-50 text-blue-700 border border-blue-200 px-1 py-0.2 rounded font-bold ml-0.5">
-              {activeModel === 'groq' ? 'Groq' : 'RunPod'}
-            </span>
-          </button>
-
-          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-800 shadow-2xs font-heading">
-            QD
-          </div>
         </div>
       </header>
 
@@ -586,6 +569,35 @@ matplotlib>=3.8.0
                 </div>
               </div>
             </div>
+
+            {/* Pinned Bottom Controls in Left Sidebar: Settings & Profile */}
+            <div className="p-2 border-t border-slate-200 bg-slate-100/70 space-y-1 shrink-0">
+              {/* Settings Action */}
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-white text-slate-700 hover:text-slate-900 border border-transparent hover:border-slate-200 text-xs font-semibold transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-slate-500 group-hover:text-blue-600 group-hover:rotate-45 transition-all" />
+                  <span>Settings</span>
+                </div>
+                <span className="text-[9px] font-mono bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.2 rounded font-bold">
+                  {activeModel === 'groq' ? 'Groq' : 'RunPod'}
+                </span>
+              </button>
+
+              {/* User Profile Action */}
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white border border-transparent hover:border-slate-200 transition-all cursor-pointer">
+                <div className="w-6 h-6 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-800 font-heading shrink-0">
+                  QD
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-bold text-slate-900 truncate">Quantum Dev</div>
+                  <div className="text-[9px] text-slate-500 truncate font-mono">ms@qc.guru</div>
+                </div>
+              </div>
+            </div>
+
           </aside>
         ) : null}
 
