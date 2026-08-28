@@ -142,7 +142,6 @@ export default function QuantumIDE() {
     'blank': {
       title: 'Blank Quantum Project',
       desc: 'Clean 4-qubit parametric ansatz and AerSimulator entrypoint.',
-      icon: '⚛️',
       files: {
         'main.py': {
           name: 'main.py',
@@ -195,9 +194,8 @@ if __name__ == "__main__":
       }
     },
     'optimization': {
-      title: '⚡ Optimization & QUBO Starter',
+      title: 'Optimization & QUBO Starter',
       desc: 'Binary quadratic models, constraint penalization, and D-Wave SA / QAOA.',
-      icon: '⚡',
       files: {
         'portfolio_optimization.py': {
           name: 'portfolio_optimization.py',
@@ -229,9 +227,8 @@ print("Target: Select 2 assets out of 4 to maximize Sharpe Ratio.")
       }
     },
     'chemistry': {
-      title: '🧪 Quantum Chemistry CAS-VQE',
+      title: 'Quantum Chemistry CAS-VQE',
       desc: 'Molecular orbital integrals, CAS active space, and Ground State Energy.',
-      icon: '🧪',
       files: {
         'vqe_chemistry.py': {
           name: 'vqe_chemistry.py',
@@ -251,9 +248,8 @@ print("Active Spatial Orbitals: 4 | Active Electrons: 2 | Active Qubits: 8")
       }
     },
     'qml': {
-      title: '🤖 Quantum Machine Learning (QML)',
+      title: 'Quantum Machine Learning (QML)',
       desc: 'Quantum Kernel (QSVM) and Variational Classifiers with PCA reduction.',
-      icon: '🤖',
       files: {
         'qml_classifier.py': {
           name: 'qml_classifier.py',
@@ -1026,14 +1022,9 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
             
             {/* Header */}
             <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 font-bold">
-                  <FolderPlus className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 font-heading">Start a New Quantum Project</h3>
-                  <p className="text-[11px] text-slate-500">Choose a quantum scaffold or blank workspace</p>
-                </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 font-heading">Start a New Quantum Project</h3>
+                <p className="text-[11px] text-slate-500">Choose a quantum scaffold or blank workspace</p>
               </div>
               <button 
                 onClick={() => setIsNewProjectOpen(false)}
@@ -1049,25 +1040,20 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                 <div
                   key={key}
                   onClick={() => handleSelectTemplate(key)}
-                  className="p-3 rounded-xl border border-slate-200 hover:border-blue-500 bg-white hover:bg-blue-50/40 p-3.5 cursor-pointer transition-all shadow-2xs group flex items-start gap-3"
+                  className="p-4 rounded-xl border border-slate-200 hover:border-blue-500 bg-white hover:bg-blue-50/30 cursor-pointer transition-all shadow-2xs group flex flex-col gap-1.5"
                 >
-                  <div className="text-xl p-2 rounded-lg bg-slate-100 group-hover:bg-white border border-slate-200 shrink-0">
-                    {tpl.icon}
+                  <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center justify-between">
+                    <span>{tpl.title}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-transform group-hover:translate-x-0.5" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center justify-between">
-                      <span>{tpl.title}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                    <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
-                      {tpl.desc}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-slate-500">
-                      <span>Files:</span>
-                      {Object.keys(tpl.files).map(f => (
-                        <span key={f} className="bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 text-slate-700">{f}</span>
-                      ))}
-                    </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    {tpl.desc}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono text-slate-500">
+                    <span className="font-semibold text-slate-400">Files:</span>
+                    {Object.keys(tpl.files).map(f => (
+                      <span key={f} className="bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 text-slate-700 font-medium">{f}</span>
+                    ))}
                   </div>
                 </div>
               ))}
