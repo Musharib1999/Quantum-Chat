@@ -1399,21 +1399,56 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
       {/* ───────────────────────────────────────────────────────────── */}
       
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 33 QUANTUM TOOLS: VERTICAL SCROLLABLE MODAL                   */}
+      {/* 33 QUANTUM TOOLS: VERTICAL SCROLLABLE MODAL (BULLETPROOF INLINE CSS) */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isToolPaletteOpen && (
         <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            overflow: 'hidden'
+          }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsToolPaletteOpen(false); }}
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-hidden animate-in fade-in duration-150"
         >
           <div 
-            style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
-            className="border rounded-2xl shadow-2xl w-full max-w-3xl h-[620px] max-h-[82vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+            style={{ 
+              backgroundColor: colors.bgCard, 
+              borderColor: colors.border, 
+              color: colors.textPrimary,
+              width: '100%',
+              maxWidth: '760px',
+              height: '80vh',
+              maxHeight: '650px',
+              minHeight: '400px',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '16px',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9)'
+            }}
           >
-            {/* Modal Header */}
+            {/* 1. Modal Header (Strictly Locked - Never Scrolls) */}
             <div 
-              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="px-5 py-3.5 border-b flex items-center justify-between shrink-0"
+              style={{ 
+                backgroundColor: colors.bgHeader, 
+                borderColor: colors.border,
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                padding: '14px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexShrink: 0
+              }}
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
@@ -1428,7 +1463,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                       style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textAmber }}
                       className="text-[10px] font-mono px-1.5 py-0.2 rounded border font-bold uppercase"
                     >
-                      33 Tools Registered
+                      33 Tools Available
                     </span>
                   </div>
                   <p className="text-[11px]" style={{ color: colors.textMuted }}>
@@ -1439,23 +1474,32 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
 
               <button 
                 onClick={() => setIsToolPaletteOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-75 transition-opacity cursor-pointer"
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-75 transition-opacity cursor-pointer border border-slate-700/50"
                 style={{ color: colors.textMuted }}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Filter & Search Bar */}
+            {/* 2. Filter & Search Bar (Strictly Locked - Never Scrolls) */}
             <div 
-              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="p-3 border-b space-y-2.5 shrink-0"
+              style={{ 
+                backgroundColor: colors.bgHeader, 
+                borderColor: colors.border,
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+                padding: '12px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                flexShrink: 0
+              }}
             >
               <input 
                 type="text"
                 value={toolSearchQuery}
                 onChange={(e) => setToolSearchQuery(e.target.value)}
-                placeholder="Search tools by name, identifier (e.g. transpile), studio, or capability..."
+                placeholder="Search tools by name, identifier (e.g. transpile, vqe), studio, or capability..."
                 style={{ backgroundColor: colors.bgEditor, borderColor: colors.border, color: colors.textPrimary }}
                 className="w-full border rounded-lg px-3 py-2 text-xs outline-hidden font-mono placeholder:opacity-40 focus:border-sky-500"
               />
@@ -1487,8 +1531,18 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
               </div>
             </div>
 
-            {/* Modal Body: Vertical Scrollable Tools List */}
-            <div className="p-4 space-y-2.5 overflow-y-auto flex-1 min-h-0 text-xs">
+            {/* 3. Modal Body: Vertical Scrollable Tools List (ONLY THIS CONTAINER SCROLLS) */}
+            <div 
+              style={{
+                flex: '1 1 0%',
+                minHeight: 0,
+                overflowY: 'auto',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}
+            >
               {allQuantumTools
                 .filter(t => selectedStudioFilter === 'all' || t.studio === selectedStudioFilter)
                 .filter(t => 
@@ -1505,7 +1559,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                       setIsToolPaletteOpen(false);
                     }}
                     style={{ backgroundColor: colors.bgEditor, borderColor: colors.border }}
-                    className="p-3.5 rounded-xl border cursor-pointer transition-all hover:border-sky-500 shadow-2xs group flex items-start justify-between gap-3"
+                    className="p-3 rounded-xl border cursor-pointer transition-all hover:border-sky-500 shadow-2xs group flex items-start justify-between gap-3 shrink-0"
                   >
                     <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -1546,13 +1600,24 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                 ))}
             </div>
 
-            {/* Modal Footer */}
+            {/* 4. Modal Footer (Strictly Locked - Never Scrolls) */}
             <div 
-              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="px-5 py-3 border-t flex items-center justify-between text-xs font-mono shrink-0"
+              style={{ 
+                backgroundColor: colors.bgHeader, 
+                borderColor: colors.border,
+                borderTopWidth: '1px',
+                borderTopStyle: 'solid',
+                padding: '12px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                flexShrink: 0
+              }}
             >
               <span style={{ color: colors.textMuted }}>
-                Tip: Click any tool to insert its command directly into Copilot chat
+                Tip: Click any tool to connect its execution command into Copilot chat
               </span>
               <button 
                 onClick={() => setIsToolPaletteOpen(false)}
