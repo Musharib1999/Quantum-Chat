@@ -71,21 +71,21 @@ export default function QuantumIDE() {
 
   const isDark = theme === 'dark';
 
-  // Palette definitions for bulletproof dark/light rendering
+  // Palette definitions for ultra-deep pitch black / midnight OLED rendering
   const colors = {
-    bgMain: isDark ? '#0D1117' : '#F8FAFC',
-    bgHeader: isDark ? '#161B22' : '#FFFFFF',
-    bgSidebar: isDark ? '#0E131F' : '#F8FAFC',
-    bgCard: isDark ? '#161B22' : '#FFFFFF',
-    bgEditor: isDark ? '#0D1117' : '#FFFFFF',
-    bgInput: isDark ? '#0D1117' : '#F1F5F9',
-    border: isDark ? '#30363D' : '#E2E8F0',
-    borderSubtle: isDark ? '#21262D' : '#F1F5F9',
-    textMain: isDark ? '#F0F6FC' : '#0F172A',
-    textMuted: isDark ? '#8B949E' : '#64748B',
-    accentBlue: isDark ? '#58A6FF' : '#2563EB',
-    accentGreen: isDark ? '#3FB950' : '#059669',
-    accentAmber: isDark ? '#D29922' : '#D97706',
+    bgMain: isDark ? '#030712' : '#F8FAFC',        // Deepest pitch black
+    bgHeader: isDark ? '#060B17' : '#FFFFFF',      // Deep midnight header
+    bgSidebar: isDark ? '#040814' : '#F8FAFC',     // Obsidian sidebar
+    bgCard: isDark ? '#0B1120' : '#FFFFFF',        // Deep navy-black card
+    bgEditor: isDark ? '#02050E' : '#FFFFFF',      // Ultra deep code editor
+    bgInput: isDark ? '#060B17' : '#F1F5F9',       // Clean input recessed
+    border: isDark ? '#1E293B' : '#E2E8F0',        // Refined subtle border
+    borderSubtle: isDark ? '#0F172A' : '#F1F5F9',  // Subtle hairline
+    textMain: isDark ? '#FFFFFF' : '#0F172A',      // Crisp 100% pure white
+    textMuted: isDark ? '#64748B' : '#64748B',     // Clean slate muted text
+    accentBlue: isDark ? '#38BDF8' : '#2563EB',    // Sky Ice Blue (sharp contrast, zero purple)
+    accentGreen: isDark ? '#34D399' : '#059669',   // Emerald
+    accentAmber: isDark ? '#FBBF24' : '#D97706',   // Amber
   };
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
