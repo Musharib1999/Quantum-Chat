@@ -779,23 +779,25 @@ class IDEAgentChatRequest(BaseModel):
     model_engine: str = "groq"
     history: list[dict[str, str]] = Field(default_factory=list)
 
+from engine.orchestrator.quantum_orchestrator import orchestrator
+
 @app.post("/v3/enterprise/ide/agent/chat")
 async def ide_agent_chat_endpoint(req: IDEAgentChatRequest):
     """
-    Context-aware Copilot reasoning endpoint with 33-tool dispatch and project memory.
+    Autonomous Quantum Orchestrator endpoint: plans workflows, chains 33 tools,
+    mutates code, updates continuous canvas, and delivers verified results.
     """
     try:
-        res = process_ide_chat_request(
+        res = orchestrator.plan_and_execute(
             project_id=req.project_id,
             user_message=req.user_message,
             active_file=req.active_file,
             file_content=req.file_content,
             target_backend=req.target_backend,
             optimization_level=req.optimization_level,
-            model_engine=req.model_engine,
-            history=req.history
+            model_engine=req.model_engine
         )
-        return res
+        return res.model_dump()
     except Exception as e:
-        logger.error(f"Error in IDE agent chat: {e}")
+        print(f"Error in QuantumOrchestrator: {e}")
         raise HTTPException(status_code=500, detail=str(e))

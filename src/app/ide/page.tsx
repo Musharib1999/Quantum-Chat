@@ -30,10 +30,21 @@ import {
   Brain
 } from 'lucide-react';
 
+interface WorkflowStepItem {
+  step_num: number;
+  tool_tag: string;
+  name: string;
+  status: string;
+  execution_time_ms: number;
+  summary: string;
+}
+
 interface ChatMessage {
   id: string;
   sender: 'user' | 'agent';
   text: string;
+  workflowSteps?: WorkflowStepItem[];
+  scientificVerdict?: string;
   toolCall?: {
     name: string;
     badge: string;
@@ -498,15 +509,17 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       if (res.ok) {
         const data = await res.json();
         
-        // 1. Update Chat Response
+        // 1. Update Chat Response with Autonomous Workflow Steps
         setChatMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           sender: 'agent',
-          text: data.response_text || 'Completed quantum analysis.',
+          text: data.response_text || 'Completed autonomous quantum analysis.',
+          workflowSteps: data.workflow_steps || undefined,
+          scientificVerdict: data.scientific_verdict || undefined,
           toolCall: data.tool_call || undefined
         }]);
 
-        // 2. Dynamically Mutate Code in Monaco Editor if Agent generated/optimized code!
+        // 2. Dynamically Mutate Code in Monaco Editor
         if (data.updated_code) {
           setProjectFiles(prev => ({
             ...prev,
@@ -517,7 +530,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           }));
         }
 
-        // 3. Dynamically Mutate Real-Time Runtime Telemetry (Qubits, Depth, CNOTs, Canvas, Expectation, Terminal)
+        // 3. Dynamically Mutate Real-Time Runtime Telemetry
         if (data.runtime_telemetry) {
           setRuntimeMetrics({
             activeQubits: data.runtime_telemetry.active_qubits || runtimeMetrics.activeQubits,
@@ -1150,20 +1163,18 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 />
                 
                 <div className="flex items-center justify-between pt-1">
-                  {/* Left: Plus Button (Opens 33-Tool Modal) */}
-                  <button 
-                    onClick={() => setIsToolPaletteOpen(true)}
-                    title="Open 33 Quantum Tools Modal"
+                  {/* Left: Agent Autonomous Mode Status Pill */}
+                  <div 
                     style={{ 
                       backgroundColor: colors.bgPill, 
-                      color: colors.textCyan, 
+                      color: colors.textMuted, 
                       borderColor: colors.border 
                     }}
-                    className="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all hover:border-sky-500 shadow-2xs cursor-pointer border text-[11px] font-normal group"
+                    className="px-2 py-0.5 rounded-md flex items-center gap-1.5 border text-[10px] font-mono select-none"
                   >
-                    <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" style={{ color: colors.textAmber }} />
-                    <span>Connect Tool</span>
-                  </button>
+                    <Zap className="w-2.5 h-2.5" style={{ color: colors.textAmber }} />
+                    <span>Autonomous Orchestrator: <span style={{ color: colors.textEmerald }}>Active</span></span>
+                  </div>
 
                   {/* Right: Send Button */}
                   <button 
@@ -1228,240 +1239,6 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           </button>
         </div>
       </footer>
-
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 33 QUANTUM TOOLS: VERTICAL SCROLLABLE MODAL                   */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {isToolPaletteOpen && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            overflow: 'hidden'
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) setIsToolPaletteOpen(false); }}
-        >
-          <div 
-            style={{ 
-              backgroundColor: colors.bgCard, 
-              borderColor: colors.border, 
-              color: colors.textPrimary,
-              width: '100%',
-              maxWidth: '760px',
-              height: '80vh',
-              maxHeight: '650px',
-              minHeight: '400px',
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: '16px',
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9)'
-            }}
-          >
-            {/* 1. Modal Header (Strictly Locked - Never Scrolls) */}
-            <div 
-              style={{ 
-                backgroundColor: colors.bgHeader, 
-                borderColor: colors.border,
-                borderBottomWidth: '1px',
-                borderBottomStyle: 'solid',
-                padding: '14px 20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexShrink: 0
-              }}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-                  <Plus className="w-4 h-4" style={{ color: colors.textAmber }} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-normal font-heading" style={{ color: colors.textCyan }}>
-                      Connect Quantum Tool
-                    </h3>
-                    <span 
-                      style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textAmber }}
-                      className="text-[10px] font-mono px-1.5 py-0.2 rounded border font-normal uppercase"
-                    >
-                      33 Tools Available
-                    </span>
-                  </div>
-                  <p className="text-[11px]" style={{ color: colors.textMuted }}>
-                    Select a specialized quantum primitive to connect directly to the active workspace
-                  </p>
-                </div>
-              </div>
-
-              <button 
-                onClick={() => setIsToolPaletteOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-75 transition-opacity cursor-pointer border border-slate-700/50"
-                style={{ color: colors.textMuted }}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* 2. Filter & Search Bar (Strictly Locked - Never Scrolls) */}
-            <div 
-              style={{ 
-                backgroundColor: colors.bgHeader, 
-                borderColor: colors.border,
-                borderBottomWidth: '1px',
-                borderBottomStyle: 'solid',
-                padding: '12px 16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                flexShrink: 0
-              }}
-            >
-              <input 
-                type="text"
-                value={toolSearchQuery}
-                onChange={(e) => setToolSearchQuery(e.target.value)}
-                placeholder="Search tools by name, identifier (e.g. transpile, vqe), studio, or capability..."
-                style={{ backgroundColor: colors.bgEditor, borderColor: colors.border, color: colors.textPrimary }}
-                className="w-full border rounded-lg px-3 py-2 text-xs outline-hidden font-mono placeholder:opacity-40 focus:border-sky-500"
-              />
-
-              {/* Studio Filter Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-mono font-normal pb-0.5">
-                {[
-                  { id: 'all', label: 'All Tools (33)' },
-                  { id: 'Optimization', label: 'Optimization (6)' },
-                  { id: 'Academy', label: 'Academy (5)' },
-                  { id: 'Algorithms', label: 'Algorithms (5)' },
-                  { id: 'Circuit', label: 'Circuit (5)' },
-                  { id: 'Chemistry', label: 'Chemistry (6)' },
-                  { id: 'QML', label: 'QML (6)' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setSelectedStudioFilter(tab.id)}
-                    style={{ 
-                      backgroundColor: selectedStudioFilter === tab.id ? colors.bgPill : 'transparent',
-                      borderColor: selectedStudioFilter === tab.id ? colors.textCyan : 'transparent',
-                      color: selectedStudioFilter === tab.id ? colors.textCyan : colors.textMuted
-                    }}
-                    className="px-2.5 py-1 rounded-md border transition-all cursor-pointer shrink-0 hover:border-slate-600"
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. Modal Body: Vertical Scrollable Tools List */}
-            <div 
-              style={{
-                flex: '1 1 0%',
-                minHeight: 0,
-                overflowY: 'auto',
-                padding: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px'
-              }}
-            >
-              {allQuantumTools
-                .filter(t => selectedStudioFilter === 'all' || t.studio === selectedStudioFilter)
-                .filter(t => 
-                  t.name.toLowerCase().includes(toolSearchQuery.toLowerCase()) || 
-                  t.studio.toLowerCase().includes(toolSearchQuery.toLowerCase()) ||
-                  t.tag.toLowerCase().includes(toolSearchQuery.toLowerCase()) ||
-                  t.desc.toLowerCase().includes(toolSearchQuery.toLowerCase())
-                )
-                .map((tool) => (
-                  <div
-                    key={tool.id}
-                    onClick={() => {
-                      setCopilotInput(`/${tool.tag}`);
-                      setIsToolPaletteOpen(false);
-                    }}
-                    style={{ backgroundColor: colors.bgEditor, borderColor: colors.border }}
-                    className="p-3 rounded-xl border cursor-pointer transition-all hover:border-sky-500 shadow-2xs group flex items-start justify-between gap-3 shrink-0"
-                  >
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span style={{ color: colors.textAmber }} className="font-mono text-xs font-normal">#{tool.id < 10 ? `0${tool.id}` : tool.id}</span>
-                        <span className="font-normal text-xs group-hover:text-sky-400 transition-colors font-heading" style={{ color: colors.textPrimary }}>
-                          {tool.name}
-                        </span>
-                        <span 
-                          style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }} 
-                          className="text-[9px] px-1.5 py-0.2 rounded font-mono font-normal border"
-                        >
-                          {tool.studio}
-                        </span>
-                        <span 
-                          style={{ backgroundColor: colors.bgPill, color: tool.nature.includes('Deterministic') ? colors.textEmerald : colors.textAmber }} 
-                          className="text-[9px] px-1.5 py-0.2 rounded font-mono font-normal"
-                        >
-                          {tool.nature}
-                        </span>
-                      </div>
-
-                      <p className="text-[11px] leading-relaxed font-sans" style={{ color: colors.textMuted }}>
-                        {tool.desc}
-                      </p>
-
-                      <div className="text-[10px] font-mono" style={{ color: colors.textCyan }}>
-                        Identifier: <span style={{ color: colors.textPrimary }}>{tool.tag}</span>
-                      </div>
-                    </div>
-
-                    <button 
-                      style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
-                      className="px-3 py-1.5 rounded-lg border text-[11px] font-normal font-mono shrink-0 group-hover:border-sky-500 transition-all"
-                    >
-                      Connect ➔
-                    </button>
-                  </div>
-                ))}
-            </div>
-
-            {/* 4. Modal Footer */}
-            <div 
-              style={{ 
-                backgroundColor: colors.bgHeader, 
-                borderColor: colors.border,
-                borderTopWidth: '1px',
-                borderTopStyle: 'solid',
-                padding: '12px 20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '12px',
-                fontFamily: 'monospace',
-                flexShrink: 0
-              }}
-            >
-              <span style={{ color: colors.textMuted }}>
-                Tip: Click any tool to connect its execution command into Copilot chat
-              </span>
-              <button 
-                onClick={() => setIsToolPaletteOpen(false)}
-                style={{ backgroundColor: colors.bgPill, color: colors.textPrimary, borderColor: colors.border }}
-                className="px-4 py-1.5 font-normal rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* SETTINGS MODAL                                                */}
