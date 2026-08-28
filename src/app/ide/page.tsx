@@ -469,10 +469,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setIsNewProjectOpen(false);
     setIsProjectsDropdownOpen(false);
 
+    // Persist to MongoDB
+    saveProjectToDatabase(finalName, { title: finalName, desc: `Custom project scaffolded from ${templateData.title}`, files: newFiles }, 'main.py', runtimeMetrics);
+
     setChatMessages(prev => [...prev, {
       id: Date.now().toString(),
       sender: 'agent',
-      text: `Created and opened project: **${finalName}** (scaffolded from ${templateData.title}). Initialized \`main.py\` and \`MEMORY.md\`.`
+      text: `Created and opened project: ${finalName} (scaffolded from ${templateData.title}). Saved to MongoDB with \`main.py\` and \`MEMORY.md\`.`
     }]);
   };
 
@@ -483,14 +486,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       return;
     }
 
-    // 1. Save current project's files before switching
+    // 1. Save current project's files before switching (local + MongoDB)
+    const currentProjData = {
+      ...(allProjects[projectName] || {}),
+      files: projectFiles
+    };
     setAllProjects(prev => ({
       ...prev,
-      [projectName]: {
-        ...prev[projectName],
-        files: projectFiles
-      }
+      [projectName]: currentProjData
     }));
+    saveProjectToDatabase(projectName, currentProjData, activeFile, runtimeMetrics);
 
     // 2. Load target project's files
     const target = allProjects[targetProject] || initialProjectTemplates[targetProject] || initialProjectTemplates['my-quantum-project'];
@@ -947,13 +952,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                         content: val
                       }
                     };
+                    const updatedProj = {
+                      ...(allProjects[projectName] || {}),
+                      files: updated
+                    };
                     setAllProjects(pPrev => ({
                       ...pPrev,
-                      [projectName]: {
-                        ...pPrev[projectName],
-                        files: updated
-                      }
+                      [projectName]: updatedProj
                     }));
+                    saveProjectToDatabase(projectName, updatedProj, activeFile, runtimeMetrics);
                     return updated;
                   });
                 }}
