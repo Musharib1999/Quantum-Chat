@@ -30,6 +30,16 @@ import {
   Brain
 } from 'lucide-react';
 
+type AgentPhase = 
+  | 'idle' 
+  | 'thinking' 
+  | 'planning' 
+  | 'calling_tool' 
+  | 'tool_name' 
+  | 'writing_code' 
+  | 'simulating' 
+  | 'generating_output';
+
 interface WorkflowStepItem {
   step_num: number;
   tool_tag: string;
@@ -65,6 +75,9 @@ export default function QuantumIDE() {
   const [copilotInput, setCopilotInput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isCopilotThinking, setIsCopilotThinking] = useState(false);
+  const [agentPhase, setAgentPhase] = useState<AgentPhase>('idle');
+  const [activeToolDisplay, setActiveToolDisplay] = useState<string>('');
+  const [expandedTraces, setExpandedTraces] = useState<Record<string, boolean>>({});
   const [isToolPaletteOpen, setIsToolPaletteOpen] = useState(false);
   const [toolSearchQuery, setToolSearchQuery] = useState('');
   const [selectedStudioFilter, setSelectedStudioFilter] = useState<string>('all');
