@@ -68,28 +68,32 @@ export default function QuantumIDE() {
   const isDark = theme === 'dark';
 
   // ─────────────────────────────────────────────────────────────
-  // STRICT 3-COLOR TEXT HIERARCHY FOR BOTH DARK & LIGHT MODES
-  // 1. textPrimary: Main code, titles, active tabs (#FFFFFF / #0F172A)
-  // 2. textMuted: Secondary info, line numbers, meta (#94A3B8 / #64748B)
-  // 3. textAccent: Single focused Blue accent (#38BDF8 / #2563EB)
-  // ─────────────────────────────────────────────────────────────
-  // ─────────────────────────────────────────────────────────────
-  // PURE MONOCHROMATIC NEUTRAL CHARCOAL / GRAPHITE (ZERO BLUE TINT)
-  // Strict R=G=B neutral values: No blue, no purple, no saturation
+  // 🎯 4 CLEAR SEMANTIC TEXT ROLES (DARK & LIGHT THEMES)
+  // 1. textPrimary:  Crisp White / Deep Charcoal (#FFFFFF / #0F172A)
+  // 2. textMuted:    Secondary Meta (#94A3B8 / #64748B)
+  // 3. textCyan:     Titles & Section Headers (#38BDF8 / #0284C7)
+  // 4. textEmerald:  Success, Status & Badges (#34D399 / #059669)
+  // 5. textAmber:    Commands, Triggers & Prompts (#FBBF24 / #D97706)
+  // 6. textSkyBlue:  Physics Values & Metrics (#60A5FA / #2563EB)
   // ─────────────────────────────────────────────────────────────
   const colors = {
-    bgMain: isDark ? '#0D0D0D' : '#FAFAFA',        // Pure Neutral Matte Dark
-    bgHeader: isDark ? '#141414' : '#FFFFFF',      // Pure Neutral Charcoal Header
-    bgSidebar: isDark ? '#101010' : '#FAFAFA',     // Pure Neutral Sidebar
-    bgCard: isDark ? '#181818' : '#FFFFFF',        // Pure Neutral Card Surface
-    bgEditor: isDark ? '#0D0D0D' : '#FFFFFF',      // Pure Neutral Editor Canvas
-    bgInput: isDark ? '#141414' : '#F5F5F5',       // Pure Neutral Input Field
-    bgPill: isDark ? '#222222' : '#F0F0F0',        // Pure Neutral Subtle Pill
-    border: isDark ? '#262626' : '#E5E5E5',        // Pure Neutral 1px Hairline
-    borderSubtle: isDark ? '#1A1A1A' : '#F5F5F5',  // Subtle Hairline Divider
-    textPrimary: isDark ? '#D4D4D4' : '#171717',   // Pure Neutral Silver-Gray (Zero glare)
-    textMuted: isDark ? '#737373' : '#737373',     // Pure Neutral Medium Gray
-    textAccent: isDark ? '#E5E5E5' : '#171717',    // Clean Monochromatic Accent
+    bgMain: isDark ? '#0D0D0D' : '#FAFAFA',
+    bgHeader: isDark ? '#141414' : '#FFFFFF',
+    bgSidebar: isDark ? '#101010' : '#FAFAFA',
+    bgCard: isDark ? '#181818' : '#FFFFFF',
+    bgEditor: isDark ? '#0D0D0D' : '#FFFFFF',
+    bgInput: isDark ? '#141414' : '#F5F5F5',
+    bgPill: isDark ? '#222222' : '#F0F0F0',
+    border: isDark ? '#262626' : '#E5E5E5',
+    borderSubtle: isDark ? '#1A1A1A' : '#F5F5F5',
+    
+    // Semantic Text Roles
+    textPrimary: isDark ? '#FFFFFF' : '#0F172A',
+    textMuted: isDark ? '#94A3B8' : '#64748B',
+    textCyan: isDark ? '#38BDF8' : '#0284C7',
+    textEmerald: isDark ? '#34D399' : '#059669',
+    textAmber: isDark ? '#FBBF24' : '#D97706',
+    textSkyBlue: isDark ? '#60A5FA' : '#2563EB',
   };
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -399,7 +403,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               style={{ 
                 backgroundColor: colors.bgPill,
                 borderColor: colors.border,
-                color: colors.textPrimary 
+                color: colors.textCyan 
               }}
               className="p-1.5 rounded-md border transition-colors cursor-pointer hover:border-slate-400 mr-0.5"
             >
@@ -422,9 +426,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               style={{ 
                 backgroundColor: colors.bgPill, 
                 borderColor: colors.border,
-                color: colors.textMuted 
+                color: colors.textCyan 
               }}
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold"
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider"
             >
               IDE
             </span>
@@ -437,7 +441,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs cursor-pointer transition-colors font-medium"
           >
-            <Folder className="w-3.5 h-3.5" style={{ color: colors.textMuted }} />
+            <Folder className="w-3.5 h-3.5" style={{ color: colors.textCyan }} />
             <span className="font-mono font-bold" style={{ color: colors.textPrimary }}>{projectName}</span>
             <ChevronDown className="w-3 h-3 ml-1" style={{ color: colors.textMuted }} />
           </div>
@@ -451,7 +455,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             style={{ 
               backgroundColor: colors.bgPill, 
               borderColor: colors.border,
-              color: colors.textPrimary
+              color: colors.textAmber
             }}
             className="p-1.5 rounded-md border transition-colors cursor-pointer"
           >
@@ -462,9 +466,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             onClick={() => setIsRightOpen(!isRightOpen)}
             title={isRightOpen ? "Hide Copilot" : "Show Copilot"}
             style={{ 
-              backgroundColor: isRightOpen ? (isDark ? '#161B22' : '#F1F5F9') : 'transparent',
+              backgroundColor: isRightOpen ? colors.bgPill : 'transparent',
               borderColor: colors.border,
-              color: colors.textPrimary 
+              color: colors.textCyan 
             }}
             className="p-1.5 rounded-md border transition-colors cursor-pointer"
           >
@@ -488,7 +492,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               className="px-5 py-3.5 border-b flex items-center justify-between"
             >
               <div>
-                <h3 className="text-sm font-bold font-heading" style={{ color: colors.textPrimary }}>Quantum Environment Settings</h3>
+                <h3 className="text-sm font-bold font-heading" style={{ color: colors.textCyan }}>Quantum Environment Settings</h3>
                 <p className="text-[11px]" style={{ color: colors.textMuted }}>Configure AI copilot models, theme appearance, target backends, and compiler passes</p>
               </div>
               <button 
@@ -505,7 +509,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               
               {/* Theme */}
               <div className="space-y-2.5">
-                <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textMuted }}>
+                <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
                   Theme Appearance
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -513,39 +517,39 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     onClick={() => setTheme('dark')}
                     style={{ 
                       backgroundColor: isDark ? colors.bgPill : 'transparent',
-                      borderColor: isDark ? colors.textAccent : colors.border,
+                      borderColor: isDark ? colors.textCyan : colors.border,
                       color: colors.textPrimary
                     }}
                     className="p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2 font-bold">
-                      <Moon className="w-4 h-4" style={{ color: colors.textMuted }} />
+                      <Moon className="w-4 h-4" style={{ color: colors.textAmber }} />
                       <span>Dark Theme</span>
                     </div>
-                    {isDark && <Check className="w-3.5 h-3.5" style={{ color: colors.textAccent }} />}
+                    {isDark && <Check className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} />}
                   </div>
 
                   <div 
                     onClick={() => setTheme('light')}
                     style={{ 
                       backgroundColor: !isDark ? colors.bgPill : 'transparent',
-                      borderColor: !isDark ? colors.textAccent : colors.border,
+                      borderColor: !isDark ? colors.textCyan : colors.border,
                       color: colors.textPrimary
                     }}
                     className="p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2 font-bold">
-                      <Sun className="w-4 h-4" style={{ color: colors.textMuted }} />
+                      <Sun className="w-4 h-4" style={{ color: colors.textAmber }} />
                       <span>Light Theme</span>
                     </div>
-                    {!isDark && <Check className="w-3.5 h-3.5" style={{ color: colors.textAccent }} />}
+                    {!isDark && <Check className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} />}
                   </div>
                 </div>
               </div>
 
               {/* AI Copilot Model */}
               <div style={{ borderColor: colors.border }} className="space-y-2.5 pt-2 border-t">
-                <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textMuted }}>
+                <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
                   AI Copilot Inference Engine
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -553,14 +557,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     onClick={() => setActiveModel('groq')}
                     style={{ 
                       backgroundColor: activeModel === 'groq' ? colors.bgPill : 'transparent',
-                      borderColor: activeModel === 'groq' ? colors.textAccent : colors.border,
+                      borderColor: activeModel === 'groq' ? colors.textCyan : colors.border,
                       color: colors.textPrimary
                     }}
                     className="p-3 rounded-xl border cursor-pointer transition-all"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold">Groq (Llama-3.3)</span>
-                      {activeModel === 'groq' && <Check className="w-3.5 h-3.5" style={{ color: colors.textAccent }} />}
+                      <span className="font-bold" style={{ color: colors.textAmber }}>Groq (Llama-3.3)</span>
+                      {activeModel === 'groq' && <Check className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} />}
                     </div>
                     <p style={{ color: colors.textMuted }} className="text-[11px] leading-relaxed">
                       Ultra-low latency streaming (~120ms), instant AST code edits, and rapid tool execution.
@@ -571,14 +575,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     onClick={() => setActiveModel('runpod')}
                     style={{ 
                       backgroundColor: activeModel === 'runpod' ? colors.bgPill : 'transparent',
-                      borderColor: activeModel === 'runpod' ? colors.textAccent : colors.border,
+                      borderColor: activeModel === 'runpod' ? colors.textCyan : colors.border,
                       color: colors.textPrimary
                     }}
                     className="p-3 rounded-xl border cursor-pointer transition-all"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold">RunPod (Qwen-27B)</span>
-                      {activeModel === 'runpod' && <Check className="w-3.5 h-3.5" style={{ color: colors.textAccent }} />}
+                      <span className="font-bold" style={{ color: colors.textAmber }}>RunPod (Qwen-27B)</span>
+                      {activeModel === 'runpod' && <Check className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} />}
                     </div>
                     <p style={{ color: colors.textMuted }} className="text-[11px] leading-relaxed">
                       Deep mathematical rigor, Hamiltonian parsing, and specialized quantum domain weights.
@@ -590,13 +594,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               {/* Backend */}
               <div style={{ borderColor: colors.border }} className="space-y-2.5 pt-2 border-t">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textMuted }}>
+                  <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
                     Target Execution Backend
                   </div>
                   <span 
                     style={{ 
                       backgroundColor: colors.bgPill, 
-                      color: colors.textAccent,
+                      color: colors.textSkyBlue,
                       borderColor: colors.border 
                     }} 
                     className="text-[10px] font-mono px-2 py-0.5 rounded border font-bold"
@@ -615,12 +619,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       onClick={() => setTargetBackend(b.id)}
                       style={{ 
                         backgroundColor: targetBackend === b.id ? colors.bgPill : 'transparent',
-                        borderColor: targetBackend === b.id ? colors.textAccent : colors.border,
+                        borderColor: targetBackend === b.id ? colors.textCyan : colors.border,
                         color: colors.textPrimary
                       }}
                       className="p-2.5 rounded-lg border text-center cursor-pointer transition-all"
                     >
-                      <div className="text-xs font-bold">{b.label}</div>
+                      <div className="text-xs font-bold" style={{ color: targetBackend === b.id ? colors.textCyan : colors.textPrimary }}>{b.label}</div>
                       <div className="text-[9px] font-sans mt-0.5" style={{ color: colors.textMuted }}>{b.desc}</div>
                     </div>
                   ))}
@@ -630,13 +634,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               {/* Transpiler */}
               <div style={{ borderColor: colors.border }} className="space-y-2.5 pt-2 border-t">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textMuted }}>
+                  <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
                     Compiler Optimization Level
                   </div>
                   <span 
                     style={{ 
                       backgroundColor: colors.bgPill, 
-                      color: colors.textAccent, 
+                      color: colors.textAmber, 
                       borderColor: colors.border 
                     }} 
                     className="font-mono text-xs font-bold px-2 py-0.5 rounded border"
@@ -651,8 +655,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       onClick={() => setOptimizationLevel(lvl)}
                       style={{ 
                         backgroundColor: optimizationLevel === lvl ? colors.bgPill : 'transparent',
-                        borderColor: optimizationLevel === lvl ? colors.textAccent : colors.border,
-                        color: optimizationLevel === lvl ? colors.textAccent : colors.textPrimary
+                        borderColor: optimizationLevel === lvl ? colors.textAmber : colors.border,
+                        color: optimizationLevel === lvl ? colors.textAmber : colors.textPrimary
                       }}
                       className="py-1.5 rounded-md border text-xs font-bold transition-all cursor-pointer"
                     >
@@ -671,8 +675,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             >
               <button 
                 onClick={() => setIsSettingsOpen(false)}
-                style={{ backgroundColor: isDark ? '#262626' : '#E5E5E5', color: colors.textPrimary, borderColor: colors.border }} className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
-                className="px-4 py-1.5 font-bold text-xs rounded-lg shadow-xs transition-opacity hover:opacity-90 cursor-pointer"
+                style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
+                className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
               >
                 Apply & Close
               </button>
@@ -707,7 +711,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 style={{ 
                   backgroundColor: colors.bgPill,
                   borderColor: colors.border,
-                  color: colors.textMuted 
+                  color: colors.textCyan 
                 }}
                 className="p-1.5 rounded-md border transition-colors cursor-pointer hover:border-slate-400 shrink-0 flex items-center justify-center"
               >
@@ -719,18 +723,18 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 style={{ 
                   backgroundColor: colors.bgPill, 
                   borderColor: colors.border,
-                  color: colors.textPrimary 
+                  color: colors.textAmber 
                 }}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 border rounded-md text-xs font-bold transition-all shadow-2xs cursor-pointer group hover:border-slate-400"
               >
-                <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" style={{ color: colors.textAccent }} />
+                <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" style={{ color: colors.textAmber }} />
                 <span>Start New Project</span>
               </button>
             </div>
 
             {/* Project File Tree */}
             <div className="p-2 space-y-0.5 text-xs flex-1 overflow-y-auto font-mono">
-              <div className="flex items-center gap-1.5 px-2 py-1 font-bold" style={{ color: colors.textMuted }}>
+              <div className="flex items-center gap-1.5 px-2 py-1 font-bold tracking-wider uppercase font-heading text-[11px]" style={{ color: colors.textCyan }}>
                 <ChevronDown className="w-3.5 h-3.5" />
                 <span>{projectName.toUpperCase()}</span>
               </div>
@@ -746,13 +750,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   }}
                   className="flex items-center gap-2 px-6 py-1.5 rounded-md cursor-pointer transition-colors border font-medium"
                 >
-                  <FileCode className="w-3.5 h-3.5" style={{ color: activeFile === fName ? colors.textAccent : colors.textMuted }} />
-                  <span className="truncate">{fName}</span>
+                  <FileCode className="w-3.5 h-3.5" style={{ color: activeFile === fName ? colors.textCyan : colors.textMuted }} />
+                  <span className="truncate font-semibold">{fName}</span>
                 </div>
               ))}
 
               <div className="pt-4 px-2">
-                <div className="text-[10px] font-bold uppercase tracking-wider mb-2 font-heading" style={{ color: colors.textMuted }}>
+                <div className="text-[10px] font-bold uppercase tracking-wider mb-2 font-heading" style={{ color: colors.textCyan }}>
                   Active Quantum Sub-Engines
                 </div>
                 <div className="space-y-1.5 text-[11px]">
@@ -761,21 +765,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-medium"
                   >
                     <span style={{ color: colors.textPrimary }}>Optimization</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textMuted }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
+                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">READY</span>
                   </div>
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-medium"
                   >
                     <span style={{ color: colors.textPrimary }}>Chemistry CAS</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textMuted }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
+                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">READY</span>
                   </div>
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-medium"
                   >
                     <span style={{ color: colors.textPrimary }}>QML Engine</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textMuted }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
+                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">READY</span>
                   </div>
                 </div>
               </div>
@@ -798,7 +802,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 <span 
                   style={{ 
                     backgroundColor: colors.bgPill, 
-                    color: colors.textAccent, 
+                    color: colors.textAmber, 
                     borderColor: colors.border 
                   }}
                   className="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold border"
@@ -812,7 +816,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 className="flex items-center gap-2 px-2 py-1.5 rounded-md border transition-all cursor-pointer"
               >
                 <div 
-                  style={{ backgroundColor: colors.bgPill, color: colors.textPrimary }}
+                  style={{ backgroundColor: colors.bgPill, color: colors.textCyan }}
                   className="w-6 h-6 rounded-full border border-slate-700/50 flex items-center justify-center text-[10px] font-bold font-heading shrink-0"
                 >
                   QD
@@ -831,10 +835,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         {isLeftOpen && (
           <div 
             onMouseDown={handleLeftMouseDown}
-            className="w-1.5 hover:w-2 bg-transparent hover:bg-blue-500/30 active:bg-blue-500 cursor-col-resize z-30 transition-all shrink-0 flex items-center justify-center -ml-0.5 group"
+            className="w-1.5 hover:w-2 bg-transparent hover:bg-sky-500/30 active:bg-sky-500 cursor-col-resize z-30 transition-all shrink-0 flex items-center justify-center -ml-0.5 group"
             title="Drag to resize Section 1 width"
           >
-            <div style={{ backgroundColor: colors.border }} className="w-0.5 h-6 rounded group-hover:bg-blue-500" />
+            <div style={{ backgroundColor: colors.border }} className="w-0.5 h-6 rounded group-hover:bg-sky-500" />
           </div>
         )}
 
@@ -880,11 +884,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   style={{ 
                     backgroundColor: activeBottomTab === 'circuit' ? colors.bgPill : 'transparent',
                     borderColor: activeBottomTab === 'circuit' ? colors.border : 'transparent',
-                    color: activeBottomTab === 'circuit' ? colors.textPrimary : colors.textMuted
+                    color: activeBottomTab === 'circuit' ? colors.textCyan : colors.textMuted
                   }}
                   className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded border transition-colors cursor-pointer"
                 >
-                  <Zap className="w-3 h-3" style={{ color: colors.textAccent }} />
+                  <Zap className="w-3 h-3" style={{ color: colors.textCyan }} />
                   <span>Continuous Circuit (fold=-1)</span>
                 </button>
 
@@ -893,7 +897,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   style={{ 
                     backgroundColor: activeBottomTab === 'results' ? colors.bgPill : 'transparent',
                     borderColor: activeBottomTab === 'results' ? colors.border : 'transparent',
-                    color: activeBottomTab === 'results' ? colors.textPrimary : colors.textMuted
+                    color: activeBottomTab === 'results' ? colors.textCyan : colors.textMuted
                   }}
                   className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded border transition-colors cursor-pointer"
                 >
@@ -906,19 +910,19 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   style={{ 
                     backgroundColor: activeBottomTab === 'terminal' ? colors.bgPill : 'transparent',
                     borderColor: activeBottomTab === 'terminal' ? colors.border : 'transparent',
-                    color: activeBottomTab === 'terminal' ? colors.textPrimary : colors.textMuted
+                    color: activeBottomTab === 'terminal' ? colors.textAmber : colors.textMuted
                   }}
                   className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded border transition-colors cursor-pointer"
                 >
-                  <TerminalIcon className="w-3 h-3" style={{ color: colors.textMuted }} />
+                  <TerminalIcon className="w-3 h-3" style={{ color: colors.textAmber }} />
                   <span>Solver Terminal</span>
                 </button>
               </div>
 
               <div className="flex items-center gap-3 text-[11px] font-mono" style={{ color: colors.textMuted }}>
-                <span>Active Qubits: <b style={{ color: colors.textPrimary }}>4</b></span>
-                <span>Depth: <b style={{ color: colors.textPrimary }}>6</b></span>
-                <span>CNOTs: <b style={{ color: colors.textPrimary }}>3</b></span>
+                <span>Active Qubits: <b style={{ color: colors.textSkyBlue }}>4</b></span>
+                <span>Depth: <b style={{ color: colors.textSkyBlue }}>6</b></span>
+                <span>CNOTs: <b style={{ color: colors.textSkyBlue }}>3</b></span>
               </div>
             </div>
 
@@ -929,7 +933,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             >
               {activeBottomTab === 'circuit' && (
                 <div className="space-y-1">
-                  <div className="text-[10px] font-bold mb-1" style={{ color: colors.textMuted }}>
+                  <div className="text-[10px] font-bold mb-1" style={{ color: colors.textCyan }}>
                     Continuous Horizontal Circuit Canvas (Zero vertical wrapping — scroll horizontally):
                   </div>
                   <pre className="font-mono text-[11px] font-semibold leading-tight select-text" style={{ color: colors.textPrimary }}>
@@ -952,24 +956,24 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="border rounded-lg p-3 space-y-1 shadow-2xs"
                   >
-                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textMuted }}>Expectation Value</div>
-                    <div className="text-xl font-bold font-mono" style={{ color: colors.textPrimary }}>-0.4125 Ha</div>
+                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textCyan }}>Expectation Value</div>
+                    <div className="text-xl font-bold font-mono" style={{ color: colors.textSkyBlue }}>-0.4125 Ha</div>
                     <div className="text-[10px] font-medium" style={{ color: colors.textMuted }}>Target: Z ⊗ I ⊗ I ⊗ I</div>
                   </div>
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="border rounded-lg p-3 space-y-1 shadow-2xs"
                   >
-                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textMuted }}>Simulator Fidelity</div>
-                    <div className="text-xl font-bold font-mono" style={{ color: colors.textPrimary }}>99.82%</div>
+                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textCyan }}>Simulator Fidelity</div>
+                    <div className="text-xl font-bold font-mono" style={{ color: colors.textEmerald }}>99.82%</div>
                     <div className="text-[10px] font-medium" style={{ color: colors.textMuted }}>Statevector exact match</div>
                   </div>
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="border rounded-lg p-3 space-y-1 shadow-2xs"
                   >
-                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textMuted }}>Execution Latency</div>
-                    <div className="text-xl font-bold font-mono" style={{ color: colors.textPrimary }}>0.14s</div>
+                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textCyan }}>Execution Latency</div>
+                    <div className="text-xl font-bold font-mono" style={{ color: colors.textAmber }}>0.14s</div>
                     <div className="text-[10px] font-medium" style={{ color: colors.textMuted }}>Aer C++ Statevector backend</div>
                   </div>
                 </div>
@@ -977,10 +981,10 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
 
               {activeBottomTab === 'terminal' && (
                 <div className="space-y-1 font-mono text-xs">
-                  <div className="font-bold" style={{ color: colors.textAccent }}>➜ python3 main.py</div>
+                  <div className="font-bold" style={{ color: colors.textAmber }}>➜ python3 main.py</div>
                   <div style={{ color: colors.textMuted }}>Initializing Quantum Circuit on AerSimulator...</div>
-                  <div className="font-bold" style={{ color: colors.textPrimary }}>Simulation Complete. Expectation &lt;Z_0&gt;: -0.4125</div>
-                  <div style={{ color: colors.textMuted }}>Process finished with exit code 0 (0.142s)</div>
+                  <div className="font-bold" style={{ color: colors.textPrimary }}>Simulation Complete. Expectation &lt;Z_0&gt;: <span style={{ color: colors.textSkyBlue }}>-0.4125</span></div>
+                  <div style={{ color: colors.textEmerald }}>Process finished with <span className="font-bold">exit code 0</span> (<span style={{ color: colors.textAmber }}>0.142s</span>)</div>
                 </div>
               )}
             </div>
@@ -991,10 +995,10 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
         {isRightOpen && (
           <div 
             onMouseDown={handleRightMouseDown}
-            className="w-1.5 hover:w-2 bg-transparent hover:bg-blue-500/30 active:bg-blue-500 cursor-col-resize z-30 transition-all shrink-0 flex items-center justify-center -mr-0.5 group"
+            className="w-1.5 hover:w-2 bg-transparent hover:bg-sky-500/30 active:bg-sky-500 cursor-col-resize z-30 transition-all shrink-0 flex items-center justify-center -mr-0.5 group"
             title="Drag to resize Section 3 width"
           >
-            <div style={{ backgroundColor: colors.border }} className="w-0.5 h-6 rounded group-hover:bg-blue-500" />
+            <div style={{ backgroundColor: colors.border }} className="w-0.5 h-6 rounded group-hover:bg-sky-500" />
           </div>
         )}
 
@@ -1019,7 +1023,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                       style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                       className="border rounded-xl p-3 shadow-2xs font-medium"
                     >
-                      <div className="text-[10px] font-bold mb-1" style={{ color: colors.textMuted }}>You</div>
+                      <div className="text-[10px] font-bold mb-1 uppercase tracking-wider" style={{ color: colors.textCyan }}>You</div>
                       <div style={{ color: colors.textPrimary }}>{msg.text}</div>
                     </div>
                   ) : (
@@ -1028,7 +1032,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                       className="border rounded-xl p-3 space-y-2 shadow-2xs"
                     >
                       <div style={{ borderColor: colors.border }} className="flex items-center justify-between border-b pb-1.5">
-                        <span className="text-[10px] font-bold flex items-center gap-1 font-heading" style={{ color: colors.textAccent }}>
+                        <span className="text-[10px] font-bold flex items-center gap-1 font-heading uppercase tracking-wider" style={{ color: colors.textCyan }}>
                           <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
                         </span>
                         <span className="text-[9px] font-mono font-semibold" style={{ color: colors.textMuted }}>
@@ -1036,7 +1040,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                         </span>
                       </div>
 
-                      <p className="leading-relaxed" style={{ color: colors.textPrimary }}>
+                      <p className="leading-relaxed font-medium" style={{ color: colors.textPrimary }}>
                         {msg.text}
                       </p>
 
@@ -1047,15 +1051,15 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                         >
                           <div className="flex items-center justify-between text-[10px]">
                             <span className="font-bold flex items-center gap-1 font-heading" style={{ color: colors.textPrimary }}>
-                              <Check className="w-3 h-3" style={{ color: colors.textAccent }} /> {msg.toolCall.name}
+                              <Check className="w-3 h-3" style={{ color: colors.textEmerald }} /> {msg.toolCall.name}
                             </span>
                             <span 
                               style={{ 
                                 backgroundColor: colors.bgCard, 
                                 borderColor: colors.border,
-                                color: colors.textAccent 
+                                color: colors.textEmerald 
                               }}
-                              className="font-mono px-1 py-0.5 rounded font-bold text-[9px] border"
+                              className="font-mono px-1.5 py-0.5 rounded font-bold text-[9px] border"
                             >
                               {msg.toolCall.badge}
                             </span>
@@ -1076,38 +1080,38 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
               style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
               className="p-3 border-t space-y-2"
             >
-              {/* Interactive Slash Command Chips */}
+              {/* Interactive Slash Command Chips with Semantic Colors */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] font-mono font-bold">
                 <button 
                   onClick={() => handleSendMessage('/execute@program')}
                   style={{ 
                     backgroundColor: colors.bgPill, 
                     borderColor: colors.border,
-                    color: colors.textPrimary 
+                    color: colors.textAmber 
                   }}
-                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-slate-400"
+                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-amber-400"
                 >
-                  <Play className="w-2.5 h-2.5 fill-current" style={{ color: colors.textAccent }} /> /execute@program
+                  <Play className="w-2.5 h-2.5 fill-current" style={{ color: colors.textAmber }} /> /execute@program
                 </button>
                 <button 
                   onClick={() => handleSendMessage('/simulate@circuit')}
                   style={{ 
                     backgroundColor: colors.bgPill, 
                     borderColor: colors.border,
-                    color: colors.textPrimary 
+                    color: colors.textCyan 
                   }}
-                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-slate-400"
+                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-sky-400"
                 >
-                  <Zap className="w-2.5 h-2.5" style={{ color: colors.textMuted }} /> /simulate@circuit
+                  <Zap className="w-2.5 h-2.5" style={{ color: colors.textCyan }} /> /simulate@circuit
                 </button>
                 <button 
                   onClick={() => handleSendMessage('/transpile@level2')}
                   style={{ 
                     backgroundColor: colors.bgPill, 
                     borderColor: colors.border,
-                    color: colors.textMuted 
+                    color: colors.textEmerald 
                   }}
-                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 hover:border-slate-400"
+                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 hover:border-emerald-400"
                 >
                   /transpile@level2
                 </button>
@@ -1116,7 +1120,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
               {/* Input form */}
               <div 
                 style={{ backgroundColor: colors.bgInput, borderColor: colors.border }}
-                className="flex items-center gap-2 border rounded-lg p-1.5 transition-all shadow-2xs focus-within:border-blue-500"
+                className="flex items-center gap-2 border rounded-lg p-1.5 transition-all shadow-2xs focus-within:border-sky-500"
               >
                 <input 
                   type="text"
@@ -1129,7 +1133,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                 />
                 <button 
                   onClick={() => handleSendMessage()}
-                  style={{ backgroundColor: isDark ? '#262626' : '#E5E5E5', color: colors.textPrimary, borderColor: colors.border }} className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
+                  style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
                   className="w-6 h-6 rounded flex items-center justify-center transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border"
                 >
                   <Send className="w-3 h-3" />
@@ -1149,13 +1153,13 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
         className="h-6 border-t px-3 flex items-center justify-between text-[10px] font-mono shrink-0 z-20 font-medium"
       >
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1 font-bold" style={{ color: colors.textPrimary }}>
+          <span className="flex items-center gap-1 font-bold" style={{ color: colors.textCyan }}>
             <GitBranch className="w-3 h-3" style={{ color: colors.textMuted }} /> feature/quantum-cursor-ide
           </span>
           
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-            <span>Workspace: <b style={{ color: colors.textPrimary }}>Ready</b></span>
+            <span>Workspace: <b style={{ color: colors.textEmerald }}>Ready</b></span>
           </span>
 
           <button
@@ -1163,7 +1167,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
             title="Click to configure Target QPU in Settings"
             className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
           >
-            <span>Target QPU: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textPrimary }}>{targetBackend}</b></span>
+            <span>Target QPU: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textSkyBlue }}>{targetBackend}</b></span>
           </button>
 
           <button
@@ -1171,7 +1175,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
             title="Click to switch AI Engine in Settings"
             className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
           >
-            <span>AI Engine: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textPrimary }}>{activeModel === 'groq' ? 'Groq (Llama-3.3)' : 'RunPod (Qwen-27B)'}</b></span>
+            <span>AI Engine: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textAmber }}>{activeModel === 'groq' ? 'Groq (Llama-3.3)' : 'RunPod (Qwen-27B)'}</b></span>
           </button>
         </div>
 
@@ -1183,7 +1187,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
             title="Click to toggle Theme"
             className="hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <span>Theme: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textAccent }}>{isDark ? 'Dark' : 'Light'}</b></span>
+            <span>Theme: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textCyan }}>{isDark ? 'Dark' : 'Light'}</b></span>
           </button>
         </div>
       </footer>
@@ -1203,7 +1207,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
               className="px-5 py-3.5 border-b flex items-center justify-between"
             >
               <div>
-                <h3 className="text-sm font-bold font-heading" style={{ color: colors.textPrimary }}>Start a New Quantum Project</h3>
+                <h3 className="text-sm font-bold font-heading" style={{ color: colors.textCyan }}>Start a New Quantum Project</h3>
                 <p className="text-[11px]" style={{ color: colors.textMuted }}>Choose a quantum scaffold or blank workspace</p>
               </div>
               <button 
@@ -1225,17 +1229,17 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                     backgroundColor: colors.bgEditor, 
                     borderColor: colors.border 
                   }}
-                  className="p-4 rounded-xl border cursor-pointer transition-all shadow-2xs group flex flex-col gap-1.5 hover:border-slate-400"
+                  className="p-4 rounded-xl border cursor-pointer transition-all shadow-2xs group flex flex-col gap-1.5 hover:border-sky-500"
                 >
                   <div className="text-xs font-bold flex items-center justify-between" style={{ color: colors.textPrimary }}>
-                    <span>{tpl.title}</span>
+                    <span className="group-hover:text-sky-400 transition-colors">{tpl.title}</span>
                     <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" style={{ color: colors.textMuted }} />
                   </div>
                   <p className="text-[11px] leading-relaxed" style={{ color: colors.textMuted }}>
                     {tpl.desc}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono">
-                    <span className="font-semibold" style={{ color: colors.textMuted }}>Files:</span>
+                    <span className="font-semibold" style={{ color: colors.textCyan }}>Files:</span>
                     {Object.keys(tpl.files).map(f => (
                       <span 
                         key={f} 
