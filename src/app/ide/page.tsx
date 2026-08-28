@@ -73,20 +73,23 @@ export default function QuantumIDE() {
   // 2. textMuted: Secondary info, line numbers, meta (#94A3B8 / #64748B)
   // 3. textAccent: Single focused Blue accent (#38BDF8 / #2563EB)
   // ─────────────────────────────────────────────────────────────
-  // Toned-down, eye-friendly, glare-free color palette
+  // ─────────────────────────────────────────────────────────────
+  // PURE MONOCHROMATIC NEUTRAL CHARCOAL / GRAPHITE (ZERO BLUE TINT)
+  // Strict R=G=B neutral values: No blue, no purple, no saturation
+  // ─────────────────────────────────────────────────────────────
   const colors = {
-    bgMain: isDark ? '#070B14' : '#F8FAFC',
-    bgHeader: isDark ? '#0C111D' : '#FFFFFF',
-    bgSidebar: isDark ? '#090E1A' : '#F8FAFC',
-    bgCard: isDark ? '#0F1626' : '#FFFFFF',
-    bgEditor: isDark ? '#050912' : '#FFFFFF',
-    bgInput: isDark ? '#0A0F1C' : '#F1F5F9',
-    bgPill: isDark ? '#131C2E' : '#F1F5F9',
-    border: isDark ? '#1E2B42' : '#E2E8F0',
-    borderSubtle: isDark ? '#111827' : '#F1F5F9',
-    textPrimary: isDark ? '#CBD5E1' : '#1E293B',    // Soft Slate 300 (toned down from blinding #FFFFFF)
-    textMuted: isDark ? '#7E8C9F' : '#64748B',      // Gentle Slate 500
-    textAccent: isDark ? '#7BA7DF' : '#3B82F6',     // Soft Steel Sky Blue (toned down from neon #38BDF8)
+    bgMain: isDark ? '#0D0D0D' : '#FAFAFA',        // Pure Neutral Matte Dark
+    bgHeader: isDark ? '#141414' : '#FFFFFF',      // Pure Neutral Charcoal Header
+    bgSidebar: isDark ? '#101010' : '#FAFAFA',     // Pure Neutral Sidebar
+    bgCard: isDark ? '#181818' : '#FFFFFF',        // Pure Neutral Card Surface
+    bgEditor: isDark ? '#0D0D0D' : '#FFFFFF',      // Pure Neutral Editor Canvas
+    bgInput: isDark ? '#141414' : '#F5F5F5',       // Pure Neutral Input Field
+    bgPill: isDark ? '#222222' : '#F0F0F0',        // Pure Neutral Subtle Pill
+    border: isDark ? '#262626' : '#E5E5E5',        // Pure Neutral 1px Hairline
+    borderSubtle: isDark ? '#1A1A1A' : '#F5F5F5',  // Subtle Hairline Divider
+    textPrimary: isDark ? '#D4D4D4' : '#171717',   // Pure Neutral Silver-Gray (Zero glare)
+    textMuted: isDark ? '#737373' : '#737373',     // Pure Neutral Medium Gray
+    textAccent: isDark ? '#E5E5E5' : '#171717',    // Clean Monochromatic Accent
   };
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -656,7 +659,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             >
               <button 
                 onClick={() => setIsSettingsOpen(false)}
-                style={{ backgroundColor: isDark ? '#1D2E4A' : '#EFF6FF', color: colors.textAccent, borderColor: colors.border }} className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
+                style={{ backgroundColor: isDark ? '#262626' : '#E5E5E5', color: colors.textPrimary, borderColor: colors.border }} className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
                 className="px-4 py-1.5 font-bold text-xs rounded-lg shadow-xs transition-opacity hover:opacity-90 cursor-pointer"
               >
                 Apply & Close
@@ -1101,7 +1104,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                 />
                 <button 
                   onClick={() => handleSendMessage()}
-                  style={{ backgroundColor: isDark ? '#1D2E4A' : '#EFF6FF', color: colors.textAccent, borderColor: colors.border }} className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
+                  style={{ backgroundColor: isDark ? '#262626' : '#E5E5E5', color: colors.textPrimary, borderColor: colors.border }} className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
                   className="w-6 h-6 rounded flex items-center justify-center transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border"
                 >
                   <Send className="w-3 h-3" />
