@@ -1142,7 +1142,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
       </div>
 
       {/* ───────────────────────────────────────────────────────── */}
-      {/* BLOCK F: BOTTOM GLOBAL STATUS BAR                         */}
+      {/* BLOCK F: BOTTOM GLOBAL STATUS BAR (CLEAN & INTERACTIVE)   */}
       {/* ───────────────────────────────────────────────────────── */}
       <footer 
         style={{ backgroundColor: colors.bgHeader, borderColor: colors.border, color: colors.textMuted }}
@@ -1152,16 +1152,39 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
           <span className="flex items-center gap-1 font-bold" style={{ color: colors.textPrimary }}>
             <GitBranch className="w-3 h-3" style={{ color: colors.textMuted }} /> feature/quantum-cursor-ide
           </span>
-          <span>Workspace: <b style={{ color: colors.textPrimary }}>Ready</b></span>
-          <span>Target QPU: <b style={{ color: colors.textPrimary }}>{targetBackend}</b></span>
-          <span>AI Engine: <b style={{ color: colors.textPrimary }}>{activeModel === 'groq' ? 'Groq (Llama-3.3)' : 'RunPod (Qwen-27B)'}</b></span>
+          
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+            <span>Workspace: <b style={{ color: colors.textPrimary }}>Ready</b></span>
+          </span>
+
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            title="Click to configure Target QPU in Settings"
+            className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
+          >
+            <span>Target QPU: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textPrimary }}>{targetBackend}</b></span>
+          </button>
+
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            title="Click to switch AI Engine in Settings"
+            className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
+          >
+            <span>AI Engine: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textPrimary }}>{activeModel === 'groq' ? 'Groq (Llama-3.3)' : 'RunPod (Qwen-27B)'}</b></span>
+          </button>
         </div>
 
         <div className="flex items-center gap-4">
           <span>Active File: <b style={{ color: colors.textPrimary }}>{activeFile}</b></span>
-          <span>Theme: <b style={{ color: colors.textAccent }}>{isDark ? 'Dark' : 'Light'}</b></span>
-          <span>Section 1: <b style={{ color: colors.textPrimary }}>{isLeftOpen ? `${leftWidth}px` : 'Hidden'}</b></span>
-          <span>Section 3: <b style={{ color: colors.textPrimary }}>{isRightOpen ? `${rightWidth}px` : 'Hidden'}</b></span>
+          
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            title="Click to toggle Theme"
+            className="hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            <span>Theme: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textAccent }}>{isDark ? 'Dark' : 'Light'}</b></span>
+          </button>
         </div>
       </footer>
 
