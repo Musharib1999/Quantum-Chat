@@ -80,17 +80,17 @@ export default function QuantumIDE() {
     bgCard: isDark ? '#181818' : '#FFFFFF',
     bgEditor: isDark ? '#0D0D0D' : '#FFFFFF',
     bgInput: isDark ? '#141414' : '#F5F5F5',
-    bgPill: isDark ? '#222222' : '#F0F0F0',
+    bgPill: isDark ? '#1E1E1E' : '#F0F0F0',
     border: isDark ? '#262626' : '#E5E5E5',
     borderSubtle: isDark ? '#1A1A1A' : '#F5F5F5',
     
-    // Semantic Text Roles
-    textPrimary: isDark ? '#FFFFFF' : '#0F172A',
-    textMuted: isDark ? '#94A3B8' : '#64748B',
-    textCyan: isDark ? '#38BDF8' : '#0284C7',
-    textEmerald: isDark ? '#34D399' : '#059669',
-    textAmber: isDark ? '#FBBF24' : '#D97706',
-    textSkyBlue: isDark ? '#60A5FA' : '#2563EB',
+    // 10% Toned Down Semantic Text Roles (Soft, Non-Glare)
+    textPrimary: isDark ? '#DDE2E8' : '#1E293B',
+    textMuted: isDark ? '#808D9E' : '#64748B',
+    textCyan: isDark ? '#33A8DB' : '#0376AD',
+    textEmerald: isDark ? '#2FB885' : '#0A8760',
+    textAmber: isDark ? '#DEAA21' : '#BF6C08',
+    textSkyBlue: isDark ? '#5390DD' : '#2A5BC7',
   };
 
   // ─────────────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         'MEMORY.md': {
           name: 'MEMORY.md',
           lang: 'markdown',
-          content: `# 🧠 Project Memory: my-quantum-project\n\n## Turn #1 — CNOT Depth Optimization\n- **User Prompt**: "Optimize CNOT depth in main.py"\n- **Agent**: Quantum Guru Transpiler Agent\n- **Tool**: [#19] tools.circuit.transpile_passes (Level 2) -> Depth: 6 to 4 (-33%)\n- **State**: aer_simulator | Active Qubits: 4 | Fidelity: 99.82%`
+          content: `# 🧠 Project Memory: my-quantum-project\n\n## Turn #1 — CNOT Depth Optimization\n- User Prompt: "Optimize CNOT depth in main.py"\n- Agent: Quantum Guru Transpiler Agent\n- Tool: [#19] tools.circuit.transpile_passes (Level 2) -> Depth: 6 to 4 (-33%)\n- State: aer_simulator | Active Qubits: 4 | Fidelity: 99.82%`
         },
         'README.md': {
           name: 'README.md',
@@ -215,7 +215,7 @@ print("Target: Select 2 assets out of 4 to maximize Sharpe Ratio.")
         'MEMORY.md': {
           name: 'MEMORY.md',
           lang: 'markdown',
-          content: `# 🧠 Project Memory: portfolio-optimization\n\n## Turn #1 — QUBO Formulation\n- **Tool**: [#01] tools.opt.formulate_problem`
+          content: `# 🧠 Project Memory: portfolio-optimization\n\n## Turn #1 — QUBO Formulation\n- Tool: [#01] tools.opt.formulate_problem`
         }
       }
     },
@@ -241,7 +241,7 @@ print("Active Spatial Orbitals: 4 | Active Electrons: 2 | Active Qubits: 8")
         'MEMORY.md': {
           name: 'MEMORY.md',
           lang: 'markdown',
-          content: `# 🧠 Project Memory: lih-cas-vqe\n\n## Turn #1 — Active Space CAS(2,4)\n- **Tool**: [#24] tools.chem.select_active_space`
+          content: `# 🧠 Project Memory: lih-cas-vqe\n\n## Turn #1 — Active Space CAS(2,4)\n- Tool: [#24] tools.chem.select_active_space`
         }
       }
     },
@@ -266,7 +266,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         'MEMORY.md': {
           name: 'MEMORY.md',
           lang: 'markdown',
-          content: `# 🧠 Project Memory: iris-qsvm-classifier\n\n## Turn #1 — Quantum Kernel Training\n- **Tool**: [#31] tools.qml.train_classifier`
+          content: `# 🧠 Project Memory: iris-qsvm-classifier\n\n## Turn #1 — Quantum Kernel Training\n- Tool: [#31] tools.qml.train_classifier`
         }
       }
     }
@@ -350,7 +350,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     {
       id: '2',
       sender: 'agent',
-      text: 'I analyzed your quantum circuit in `main.py` and ran **Transpiler Pass Optimization (Level 2)**.\n\n- **Depth Reduction**: `6` $\\longrightarrow$ `4` (**-33.3%**)\n- **2-Qubit CNOTs**: Reduced to 4 gates.\n- **Code Mutation**: `main.py` has been updated with the optimized commutative block.',
+      text: 'I analyzed your quantum circuit in `main.py` and ran Transpiler Pass Optimization (Level 2).\n\n- Depth Reduction: `6` $\\longrightarrow$ `4` (-33.3%)\n- 2-Qubit CNOTs: Reduced to 4 gates.\n- Code Mutation: `main.py` has been updated with the optimized commutative block.',
       toolCall: {
         name: 'Transpiler Pass Completed',
         badge: '-33.3% Depth',
@@ -439,7 +439,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         sender: 'agent',
-        text: `Initialized new workspace: **${selected.title}** (\`${newPName}\`). Created entrypoint \`${Object.keys(selected.files)[0]}\`.`,
+        text: `Initialized new workspace: ${selected.title} (\`${newPName}\`). Created entrypoint \`${Object.keys(selected.files)[0]}\`.`,
         toolCall: {
           name: 'Workspace Scaffold Created',
           badge: 'Ready',
@@ -538,7 +538,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         setChatMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           sender: 'agent',
-          text: `### ⚛️ Quantum Analysis & Contextual Response\n\nRegarding your query: *"${text}"*\n\n**1. Active Code Context (\`${activeFile}\`):**\nYour current workspace is running **${runtimeMetrics.activeQubits} qubits** (depth **${runtimeMetrics.depth}**) on **${targetBackend}**.\n\n**2. Mathematical State:**\n$$\\vert\\psi(\\theta)\\rangle = U_{\\text{ansatz}}(\\theta) U_{\\Phi}(\\mathbf{x})\\vert 0^{\\otimes 4}\\rangle$$\n- Statevector fidelity: **${runtimeMetrics.fidelity}**\n- Expectation value: $\\langle Z_0 \\rangle = ${runtimeMetrics.expectationVal}$\n\n**3. Recommended Actions:**\n- Type **\`/execute@program\`** to stream results.\n- Click **\`+ Connect Tool\`** to attach any of the 33 quantum primitives.`,
+          text: `### ⚛️ Quantum Analysis & Contextual Response\n\nRegarding your query: *"${text}"*\n\n1. Active Code Context (\`${activeFile}\`):\nYour current workspace is running ${runtimeMetrics.activeQubits} qubits (depth ${runtimeMetrics.depth}) on ${targetBackend}.\n\n2. Mathematical State:\n$$\\vert\\psi(\\theta)\\rangle = U_{\\text{ansatz}}(\\theta) U_{\\Phi}(\\mathbf{x})\\vert 0^{\\otimes 4}\\rangle$$\n- Statevector fidelity: ${runtimeMetrics.fidelity}\n- Expectation value: $\\langle Z_0 \\rangle = ${runtimeMetrics.expectationVal}$\n\n3. Recommended Actions:\n- Type \`/execute@program\` to stream results.\n- Click \`+ Connect Tool\` to attach any of the 33 quantum primitives.`,
           toolCall: {
             name: `Quantum Copilot (${activeModel.toUpperCase()})`,
             badge: 'Context Synced',
@@ -591,7 +591,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="font-extrabold text-sm tracking-tight font-heading" style={{ color: colors.textPrimary }}>
+            <span className="font-normal text-sm tracking-tight font-heading" style={{ color: colors.textPrimary }}>
               Quantum Guru
             </span>
             <span 
@@ -600,7 +600,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 borderColor: colors.border,
                 color: colors.textCyan 
               }}
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider"
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded border font-normal uppercase tracking-wider"
             >
               IDE
             </span>
@@ -613,10 +613,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             <div 
               onClick={() => setIsProjectsDropdownOpen(!isProjectsDropdownOpen)}
               style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs cursor-pointer transition-colors font-medium hover:border-sky-500"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs cursor-pointer transition-colors font-normal hover:border-sky-500"
             >
               <Folder className="w-3.5 h-3.5" style={{ color: colors.textCyan }} />
-              <span className="font-mono font-bold" style={{ color: colors.textPrimary }}>{projectName}</span>
+              <span className="font-mono font-normal" style={{ color: colors.textPrimary }}>{projectName}</span>
               <ChevronDown className="w-3 h-3 ml-1" style={{ color: colors.textMuted }} />
             </div>
 
@@ -626,7 +626,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                 className="absolute top-full left-0 mt-1.5 w-64 border rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100"
               >
-                <div className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 mb-1 font-heading" style={{ color: colors.textCyan }}>
+                <div className="text-[10px] font-normal uppercase tracking-wider px-2 py-1 mb-1 font-heading" style={{ color: colors.textCyan }}>
                   Switch Workspace Project
                 </div>
                 <div className="space-y-1">
@@ -650,7 +650,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   <button
                     onClick={() => { setIsProjectsDropdownOpen(false); setIsNewProjectOpen(true); }}
                     style={{ backgroundColor: colors.bgPill, color: colors.textAmber, borderColor: colors.border }}
-                    className="w-full py-1 text-xs rounded-md border font-bold flex items-center justify-center gap-1 hover:border-amber-400 cursor-pointer"
+                    className="w-full py-1 text-xs rounded-md border font-normal flex items-center justify-center gap-1 hover:border-amber-400 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Create New Project</span>
@@ -730,7 +730,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   borderColor: colors.border,
                   color: colors.textAmber 
                 }}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 border rounded-md text-xs font-bold transition-all shadow-2xs cursor-pointer group hover:border-amber-400"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 border rounded-md text-xs font-normal transition-all shadow-2xs cursor-pointer group hover:border-amber-400"
               >
                 <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" style={{ color: colors.textAmber }} />
                 <span>Start New Project</span>
@@ -739,7 +739,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
             {/* Project File Tree & Sub-Engines */}
             <div className="p-2 space-y-0.5 text-xs flex-1 overflow-y-auto font-mono">
-              <div className="flex items-center gap-1.5 px-2 py-1 font-bold tracking-wider uppercase font-heading text-[11px]" style={{ color: colors.textCyan }}>
+              <div className="flex items-center gap-1.5 px-2 py-1 font-normal tracking-wider uppercase font-heading text-[11px]" style={{ color: colors.textCyan }}>
                 <ChevronDown className="w-3.5 h-3.5" />
                 <span>{projectName.toUpperCase()}</span>
               </div>
@@ -753,39 +753,39 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     borderColor: activeFile === fName ? colors.border : 'transparent',
                     color: activeFile === fName ? colors.textPrimary : colors.textMuted
                   }}
-                  className="flex items-center gap-2 px-6 py-1.5 rounded-md cursor-pointer transition-colors border font-medium"
+                  className="flex items-center gap-2 px-6 py-1.5 rounded-md cursor-pointer transition-colors border font-normal"
                 >
                   <FileCode className="w-3.5 h-3.5" style={{ color: activeFile === fName ? colors.textCyan : colors.textMuted }} />
-                  <span className="truncate font-semibold">{fName}</span>
+                  <span className="truncate font-normal">{fName}</span>
                 </div>
               ))}
 
               {/* Active Sub-Engines */}
               <div className="pt-4 px-2">
-                <div className="text-[10px] font-bold uppercase tracking-wider mb-2 font-heading" style={{ color: colors.textCyan }}>
+                <div className="text-[10px] font-normal uppercase tracking-wider mb-2 font-heading" style={{ color: colors.textCyan }}>
                   Active Quantum Sub-Engines
                 </div>
                 <div className="space-y-1.5 text-[11px]">
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-medium"
+                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-normal"
                   >
                     <span style={{ color: colors.textPrimary }}>Optimization</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">READY</span>
+                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal">READY</span>
                   </div>
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-medium"
+                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-normal"
                   >
                     <span style={{ color: colors.textPrimary }}>Chemistry CAS</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">READY</span>
+                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal">READY</span>
                   </div>
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-medium"
+                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-normal"
                   >
                     <span style={{ color: colors.textPrimary }}>QML Engine</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">READY</span>
+                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal">READY</span>
                   </div>
                 </div>
               </div>
@@ -799,7 +799,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 style={{ borderColor: colors.border, color: colors.textPrimary }}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md border text-xs font-semibold transition-all cursor-pointer group hover:opacity-80"
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md border text-xs font-normal transition-all cursor-pointer group hover:opacity-80"
               >
                 <div className="flex items-center gap-2">
                   <Settings className="w-4 h-4 group-hover:rotate-45 transition-all" style={{ color: colors.textMuted }} />
@@ -811,7 +811,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     color: colors.textAmber, 
                     borderColor: colors.border 
                   }}
-                  className="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold border"
+                  className="text-[9px] font-mono px-1.5 py-0.2 rounded font-normal border"
                 >
                   {activeModel === 'groq' ? 'Groq' : 'RunPod'}
                 </span>
@@ -823,12 +823,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               >
                 <div 
                   style={{ backgroundColor: colors.bgPill, color: colors.textCyan }}
-                  className="w-6 h-6 rounded-full border border-slate-700/50 flex items-center justify-center text-[10px] font-bold font-heading shrink-0"
+                  className="w-6 h-6 rounded-full border border-slate-700/50 flex items-center justify-center text-[10px] font-normal font-heading shrink-0"
                 >
                   QD
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-bold truncate" style={{ color: colors.textPrimary }}>Quantum Dev</div>
+                  <div className="text-[11px] font-normal truncate" style={{ color: colors.textPrimary }}>Quantum Dev</div>
                   <div className="text-[9px] truncate font-mono" style={{ color: colors.textMuted }}>ms@qc.guru</div>
                 </div>
               </div>
@@ -868,7 +868,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   <div key={idx}>{idx + 1}</div>
                 ))}
               </div>
-              <pre className="flex-1 overflow-x-auto whitespace-pre font-medium font-mono" style={{ color: colors.textPrimary }}>
+              <pre className="flex-1 overflow-x-auto whitespace-pre font-normal font-mono" style={{ color: colors.textPrimary }}>
                 {files[activeFile]?.content || '# Empty file'}
               </pre>
             </div>
@@ -892,7 +892,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     borderColor: activeBottomTab === 'circuit' ? colors.border : 'transparent',
                     color: activeBottomTab === 'circuit' ? colors.textCyan : colors.textMuted
                   }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded border transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-normal rounded border transition-colors cursor-pointer"
                 >
                   <Zap className="w-3 h-3" style={{ color: colors.textCyan }} />
                   <span>Continuous Circuit (fold=-1)</span>
@@ -905,7 +905,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     borderColor: activeBottomTab === 'results' ? colors.border : 'transparent',
                     color: activeBottomTab === 'results' ? colors.textCyan : colors.textMuted
                   }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded border transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-normal rounded border transition-colors cursor-pointer"
                 >
                   <Activity className="w-3 h-3" style={{ color: colors.textMuted }} />
                   <span>Simulation Results & Metrics</span>
@@ -918,7 +918,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     borderColor: activeBottomTab === 'terminal' ? colors.border : 'transparent',
                     color: activeBottomTab === 'terminal' ? colors.textAmber : colors.textMuted
                   }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded border transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-normal rounded border transition-colors cursor-pointer"
                 >
                   <TerminalIcon className="w-3 h-3" style={{ color: colors.textAmber }} />
                   <span>Solver Terminal</span>
@@ -927,9 +927,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
               {/* Dynamic Live Telemetry Counters */}
               <div className="flex items-center gap-3 text-[11px] font-mono" style={{ color: colors.textMuted }}>
-                <span>Active Qubits: <b style={{ color: colors.textSkyBlue }}>{runtimeMetrics.activeQubits}</b></span>
-                <span>Depth: <b style={{ color: colors.textSkyBlue }}>{runtimeMetrics.depth}</b></span>
-                <span>CNOTs: <b style={{ color: colors.textSkyBlue }}>{runtimeMetrics.cnots}</b></span>
+                <span>Active Qubits: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.activeQubits}</span></span>
+                <span>Depth: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.depth}</span></span>
+                <span>CNOTs: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.cnots}</span></span>
               </div>
             </div>
 
@@ -940,10 +940,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             >
               {activeBottomTab === 'circuit' && (
                 <div className="space-y-1">
-                  <div className="text-[10px] font-bold mb-1" style={{ color: colors.textCyan }}>
+                  <div className="text-[10px] font-normal mb-1" style={{ color: colors.textCyan }}>
                     Continuous Horizontal Circuit Canvas (Zero vertical wrapping — scroll horizontally):
                   </div>
-                  <pre className="font-mono text-[11px] font-semibold leading-tight select-text" style={{ color: colors.textPrimary }}>
+                  <pre className="font-mono text-[11px] font-normal leading-tight select-text" style={{ color: colors.textPrimary }}>
                     {runtimeMetrics.circuitText}
                   </pre>
                 </div>
@@ -955,25 +955,25 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="border rounded-lg p-3 space-y-1 shadow-2xs"
                   >
-                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textCyan }}>Expectation Value</div>
-                    <div className="text-xl font-bold font-mono" style={{ color: colors.textSkyBlue }}>{runtimeMetrics.expectationVal}</div>
-                    <div className="text-[10px] font-medium" style={{ color: colors.textMuted }}>Target: Z ⊗ I ⊗ I ⊗ I</div>
+                    <div className="text-[10px] font-normal uppercase" style={{ color: colors.textCyan }}>Expectation Value</div>
+                    <div className="text-xl font-normal font-mono" style={{ color: colors.textSkyBlue }}>{runtimeMetrics.expectationVal}</div>
+                    <div className="text-[10px] font-normal" style={{ color: colors.textMuted }}>Target: Z ⊗ I ⊗ I ⊗ I</div>
                   </div>
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="border rounded-lg p-3 space-y-1 shadow-2xs"
                   >
-                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textCyan }}>Simulator Fidelity</div>
-                    <div className="text-xl font-bold font-mono" style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</div>
-                    <div className="text-[10px] font-medium" style={{ color: colors.textMuted }}>Statevector exact match</div>
+                    <div className="text-[10px] font-normal uppercase" style={{ color: colors.textCyan }}>Simulator Fidelity</div>
+                    <div className="text-xl font-normal font-mono" style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</div>
+                    <div className="text-[10px] font-normal" style={{ color: colors.textMuted }}>Statevector exact match</div>
                   </div>
                   <div 
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="border rounded-lg p-3 space-y-1 shadow-2xs"
                   >
-                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.textCyan }}>Execution Latency</div>
-                    <div className="text-xl font-bold font-mono" style={{ color: colors.textAmber }}>{runtimeMetrics.latencySec}</div>
-                    <div className="text-[10px] font-medium" style={{ color: colors.textMuted }}>Target: {targetBackend}</div>
+                    <div className="text-[10px] font-normal uppercase" style={{ color: colors.textCyan }}>Execution Latency</div>
+                    <div className="text-xl font-normal font-mono" style={{ color: colors.textAmber }}>{runtimeMetrics.latencySec}</div>
+                    <div className="text-[10px] font-normal" style={{ color: colors.textMuted }}>Target: {targetBackend}</div>
                   </div>
                 </div>
               )}
@@ -1021,9 +1021,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   {msg.sender === 'user' ? (
                     <div 
                       style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                      className="border rounded-xl p-3 shadow-2xs font-medium"
+                      className="border rounded-xl p-3 shadow-2xs font-normal"
                     >
-                      <div className="text-[10px] font-bold mb-1 uppercase tracking-wider" style={{ color: colors.textCyan }}>You</div>
+                      <div className="text-[10px] font-normal mb-1 uppercase tracking-wider" style={{ color: colors.textCyan }}>You</div>
                       <div style={{ color: colors.textPrimary }}>{msg.text}</div>
                     </div>
                   ) : (
@@ -1032,15 +1032,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       className="border rounded-xl p-3 space-y-2 shadow-2xs"
                     >
                       <div style={{ borderColor: colors.border }} className="flex items-center justify-between border-b pb-1.5">
-                        <span className="text-[10px] font-bold flex items-center gap-1 font-heading uppercase tracking-wider" style={{ color: colors.textCyan }}>
+                        <span className="text-[10px] font-normal flex items-center gap-1 font-heading uppercase tracking-wider" style={{ color: colors.textCyan }}>
                           <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
                         </span>
-                        <span className="text-[9px] font-mono font-semibold" style={{ color: colors.textMuted }}>
+                        <span className="text-[9px] font-mono font-normal" style={{ color: colors.textMuted }}>
                           {activeModel === 'groq' ? 'Groq (118ms)' : 'RunPod (240ms)'}
                         </span>
                       </div>
 
-                      <div className="leading-relaxed font-medium whitespace-pre-wrap font-sans" style={{ color: colors.textPrimary }}>
+                      <div className="leading-relaxed font-normal whitespace-pre-wrap font-sans" style={{ color: colors.textPrimary }}>
                         {msg.text}
                       </div>
 
@@ -1050,7 +1050,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                           className="border rounded-lg p-2.5 space-y-1"
                         >
                           <div className="flex items-center justify-between text-[10px]">
-                            <span className="font-bold flex items-center gap-1 font-heading" style={{ color: colors.textPrimary }}>
+                            <span className="font-normal flex items-center gap-1 font-heading" style={{ color: colors.textPrimary }}>
                               <Check className="w-3 h-3" style={{ color: colors.textEmerald }} /> {msg.toolCall.name}
                             </span>
                             <span 
@@ -1059,7 +1059,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                 borderColor: colors.border,
                                 color: colors.textEmerald 
                               }}
-                              className="font-mono px-1.5 py-0.5 rounded font-bold text-[9px] border"
+                              className="font-mono px-1.5 py-0.5 rounded font-normal text-[9px] border"
                             >
                               {msg.toolCall.badge}
                             </span>
@@ -1079,7 +1079,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                   className="border rounded-xl p-3 space-y-1.5 shadow-2xs animate-pulse"
                 >
-                  <div className="flex items-center gap-2 text-[10px] font-bold" style={{ color: colors.textCyan }}>
+                  <div className="flex items-center gap-2 text-[10px] font-normal" style={{ color: colors.textCyan }}>
                     <Sparkles className="w-3.5 h-3.5 animate-spin" />
                     <span>Quantum Copilot is inspecting `{activeFile}`, dispatching tools & compiling telemetry...</span>
                   </div>
@@ -1093,7 +1093,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               className="p-3 border-t space-y-2"
             >
               {/* Interactive Slash Command Chips with Semantic Colors */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] font-mono font-bold">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] font-mono font-normal">
                 <button 
                   onClick={() => handleSendMessage('/execute@program')}
                   style={{ 
@@ -1146,7 +1146,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   }}
                   placeholder="Ask Copilot, describe a quantum algorithm, or connect a tool with '+'..."
                   style={{ color: colors.textPrimary }}
-                  className="w-full bg-transparent border-none outline-hidden text-xs font-medium font-sans resize-none placeholder:opacity-40 leading-relaxed"
+                  className="w-full bg-transparent border-none outline-hidden text-xs font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
                 />
                 
                 <div className="flex items-center justify-between pt-1">
@@ -1159,7 +1159,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       color: colors.textCyan, 
                       borderColor: colors.border 
                     }}
-                    className="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all hover:border-sky-500 shadow-2xs cursor-pointer border text-[11px] font-bold group"
+                    className="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all hover:border-sky-500 shadow-2xs cursor-pointer border text-[11px] font-normal group"
                   >
                     <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" style={{ color: colors.textAmber }} />
                     <span>Connect Tool</span>
@@ -1169,7 +1169,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   <button 
                     onClick={() => handleSendMessage()}
                     style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
-                    className="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border text-[11px] font-bold"
+                    className="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border text-[11px] font-normal"
                   >
                     <span>Send</span>
                     <Send className="w-3 h-3" />
@@ -1187,16 +1187,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       {/* ───────────────────────────────────────────────────────── */}
       <footer 
         style={{ backgroundColor: colors.bgHeader, borderColor: colors.border, color: colors.textMuted }}
-        className="h-6 border-t px-3 flex items-center justify-between text-[10px] font-mono shrink-0 z-20 font-medium"
+        className="h-6 border-t px-3 flex items-center justify-between text-[10px] font-mono shrink-0 z-20 font-normal"
       >
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1 font-bold" style={{ color: colors.textCyan }}>
+          <span className="flex items-center gap-1 font-normal" style={{ color: colors.textCyan }}>
             <GitBranch className="w-3 h-3" style={{ color: colors.textMuted }} /> feature/quantum-cursor-ide
           </span>
           
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-            <span>Workspace: <b style={{ color: colors.textEmerald }}>Ready</b></span>
+            <span>Workspace: <span style={{ color: colors.textEmerald }}>Ready</span></span>
           </span>
 
           <button
@@ -1204,7 +1204,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             title="Click to configure Target QPU in Settings"
             className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
           >
-            <span>Target QPU: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textSkyBlue }}>{targetBackend}</b></span>
+            <span>Target QPU: <span className="underline decoration-dotted underline-offset-2" style={{ color: colors.textSkyBlue }}>{targetBackend}</span></span>
           </button>
 
           <button
@@ -1212,19 +1212,19 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             title="Click to switch AI Engine in Settings"
             className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
           >
-            <span>AI Engine: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textAmber }}>{activeModel === 'groq' ? 'Groq (Llama-3.3)' : 'RunPod (Qwen-27B)'}</b></span>
+            <span>AI Engine: <span className="underline decoration-dotted underline-offset-2" style={{ color: colors.textAmber }}>{activeModel === 'groq' ? 'Groq (Llama-3.3)' : 'RunPod (Qwen-27B)'}</span></span>
           </button>
         </div>
 
         <div className="flex items-center gap-4">
-          <span>Active File: <b style={{ color: colors.textPrimary }}>{activeFile}</b></span>
+          <span>Active File: <span style={{ color: colors.textPrimary }}>{activeFile}</span></span>
           
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             title="Click to toggle Theme"
             className="hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <span>Theme: <b className="underline decoration-dotted underline-offset-2" style={{ color: colors.textCyan }}>{isDark ? 'Dark' : 'Light'}</b></span>
+            <span>Theme: <span className="underline decoration-dotted underline-offset-2" style={{ color: colors.textCyan }}>{isDark ? 'Dark' : 'Light'}</span></span>
           </button>
         </div>
       </footer>
@@ -1287,12 +1287,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold font-heading" style={{ color: colors.textCyan }}>
+                    <h3 className="text-sm font-normal font-heading" style={{ color: colors.textCyan }}>
                       Connect Quantum Tool
                     </h3>
                     <span 
                       style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textAmber }}
-                      className="text-[10px] font-mono px-1.5 py-0.2 rounded border font-bold uppercase"
+                      className="text-[10px] font-mono px-1.5 py-0.2 rounded border font-normal uppercase"
                     >
                       33 Tools Available
                     </span>
@@ -1336,7 +1336,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               />
 
               {/* Studio Filter Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-mono font-bold pb-0.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-mono font-normal pb-0.5">
                 {[
                   { id: 'all', label: 'All Tools (33)' },
                   { id: 'Optimization', label: 'Optimization (6)' },
@@ -1394,19 +1394,19 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   >
                     <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span style={{ color: colors.textAmber }} className="font-mono text-xs font-bold">#{tool.id < 10 ? `0${tool.id}` : tool.id}</span>
-                        <span className="font-bold text-xs group-hover:text-sky-400 transition-colors font-heading" style={{ color: colors.textPrimary }}>
+                        <span style={{ color: colors.textAmber }} className="font-mono text-xs font-normal">#{tool.id < 10 ? `0${tool.id}` : tool.id}</span>
+                        <span className="font-normal text-xs group-hover:text-sky-400 transition-colors font-heading" style={{ color: colors.textPrimary }}>
                           {tool.name}
                         </span>
                         <span 
                           style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }} 
-                          className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold border"
+                          className="text-[9px] px-1.5 py-0.2 rounded font-mono font-normal border"
                         >
                           {tool.studio}
                         </span>
                         <span 
                           style={{ backgroundColor: colors.bgPill, color: tool.nature.includes('Deterministic') ? colors.textEmerald : colors.textAmber }} 
-                          className="text-[9px] px-1.5 py-0.2 rounded font-mono font-semibold"
+                          className="text-[9px] px-1.5 py-0.2 rounded font-mono font-normal"
                         >
                           {tool.nature}
                         </span>
@@ -1423,7 +1423,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                     <button 
                       style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
-                      className="px-3 py-1.5 rounded-lg border text-[11px] font-bold font-mono shrink-0 group-hover:border-sky-500 transition-all"
+                      className="px-3 py-1.5 rounded-lg border text-[11px] font-normal font-mono shrink-0 group-hover:border-sky-500 transition-all"
                     >
                       Connect ➔
                     </button>
@@ -1453,7 +1453,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               <button 
                 onClick={() => setIsToolPaletteOpen(false)}
                 style={{ backgroundColor: colors.bgPill, color: colors.textPrimary, borderColor: colors.border }}
-                className="px-4 py-1.5 font-bold rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
+                className="px-4 py-1.5 font-normal rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
               >
                 Close
               </button>
@@ -1481,7 +1481,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               className="px-5 py-3.5 border-b flex items-center justify-between"
             >
               <div>
-                <h3 className="text-sm font-bold font-heading" style={{ color: colors.textCyan }}>Quantum Environment Settings</h3>
+                <h3 className="text-sm font-normal font-heading" style={{ color: colors.textCyan }}>Quantum Environment Settings</h3>
                 <p className="text-[11px]" style={{ color: colors.textMuted }}>Configure AI copilot models, theme appearance, target backends, and compiler passes</p>
               </div>
               <button 
@@ -1498,7 +1498,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               
               {/* Theme */}
               <div className="space-y-2.5">
-                <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
+                <div className="text-xs font-normal uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
                   Theme Appearance
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1511,7 +1511,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     }}
                     className="p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between"
                   >
-                    <div className="flex items-center gap-2 font-bold">
+                    <div className="flex items-center gap-2 font-normal">
                       <Moon className="w-4 h-4" style={{ color: colors.textAmber }} />
                       <span>Dark Theme</span>
                     </div>
@@ -1527,7 +1527,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     }}
                     className="p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between"
                   >
-                    <div className="flex items-center gap-2 font-bold">
+                    <div className="flex items-center gap-2 font-normal">
                       <Sun className="w-4 h-4" style={{ color: colors.textAmber }} />
                       <span>Light Theme</span>
                     </div>
@@ -1538,7 +1538,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
               {/* AI Copilot Model */}
               <div style={{ borderColor: colors.border }} className="space-y-2.5 pt-2 border-t">
-                <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
+                <div className="text-xs font-normal uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
                   AI Copilot Inference Engine
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1552,7 +1552,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     className="p-3 rounded-xl border cursor-pointer transition-all"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold" style={{ color: colors.textAmber }}>Groq (Llama-3.3)</span>
+                      <span className="font-normal" style={{ color: colors.textAmber }}>Groq (Llama-3.3)</span>
                       {activeModel === 'groq' && <Check className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} />}
                     </div>
                     <p style={{ color: colors.textMuted }} className="text-[11px] leading-relaxed">
@@ -1570,7 +1570,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     className="p-3 rounded-xl border cursor-pointer transition-all"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold" style={{ color: colors.textAmber }}>RunPod (Qwen-27B)</span>
+                      <span className="font-normal" style={{ color: colors.textAmber }}>RunPod (Qwen-27B)</span>
                       {activeModel === 'runpod' && <Check className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} />}
                     </div>
                     <p style={{ color: colors.textMuted }} className="text-[11px] leading-relaxed">
@@ -1583,7 +1583,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               {/* Backend */}
               <div style={{ borderColor: colors.border }} className="space-y-2.5 pt-2 border-t">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
+                  <div className="text-xs font-normal uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
                     Target Execution Backend
                   </div>
                   <span 
@@ -1592,7 +1592,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       color: colors.textSkyBlue,
                       borderColor: colors.border 
                     }} 
-                    className="text-[10px] font-mono px-2 py-0.5 rounded border font-bold"
+                    className="text-[10px] font-mono px-2 py-0.5 rounded border font-normal"
                   >
                     Active: {targetBackend}
                   </span>
@@ -1613,7 +1613,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       }}
                       className="p-2.5 rounded-lg border text-center cursor-pointer transition-all"
                     >
-                      <div className="text-xs font-bold" style={{ color: targetBackend === b.id ? colors.textCyan : colors.textPrimary }}>{b.label}</div>
+                      <div className="text-xs font-normal" style={{ color: targetBackend === b.id ? colors.textCyan : colors.textPrimary }}>{b.label}</div>
                       <div className="text-[9px] font-sans mt-0.5" style={{ color: colors.textMuted }}>{b.desc}</div>
                     </div>
                   ))}
@@ -1623,7 +1623,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               {/* Transpiler */}
               <div style={{ borderColor: colors.border }} className="space-y-2.5 pt-2 border-t">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
+                  <div className="text-xs font-normal uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
                     Compiler Optimization Level
                   </div>
                   <span 
@@ -1632,7 +1632,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       color: colors.textAmber, 
                       borderColor: colors.border 
                     }} 
-                    className="font-mono text-xs font-bold px-2 py-0.5 rounded border"
+                    className="font-mono text-xs font-normal px-2 py-0.5 rounded border"
                   >
                     Level {optimizationLevel}
                   </span>
@@ -1647,7 +1647,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                         borderColor: optimizationLevel === lvl ? colors.textAmber : colors.border,
                         color: optimizationLevel === lvl ? colors.textAmber : colors.textPrimary
                       }}
-                      className="py-1.5 rounded-md border text-xs font-bold transition-all cursor-pointer"
+                      className="py-1.5 rounded-md border text-xs font-normal transition-all cursor-pointer"
                     >
                       Level {lvl}
                     </button>
@@ -1665,7 +1665,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               <button 
                 onClick={() => setIsSettingsOpen(false)}
                 style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
-                className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
+                className="px-4 py-1.5 font-normal text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
               >
                 Apply & Close
               </button>
@@ -1693,7 +1693,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               className="px-5 py-3.5 border-b flex items-center justify-between"
             >
               <div>
-                <h3 className="text-sm font-bold font-heading" style={{ color: colors.textCyan }}>Start a New Quantum Project</h3>
+                <h3 className="text-sm font-normal font-heading" style={{ color: colors.textCyan }}>Start a New Quantum Project</h3>
                 <p className="text-[11px]" style={{ color: colors.textMuted }}>Choose a quantum scaffold or create a blank workspace</p>
               </div>
               <button 
@@ -1717,7 +1717,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   }}
                   className="p-4 rounded-xl border cursor-pointer transition-all shadow-2xs group flex flex-col gap-1.5 hover:border-sky-500"
                 >
-                  <div className="text-xs font-bold flex items-center justify-between" style={{ color: colors.textPrimary }}>
+                  <div className="text-xs font-normal flex items-center justify-between" style={{ color: colors.textPrimary }}>
                     <span className="group-hover:text-sky-400 transition-colors">{tpl.title}</span>
                     <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" style={{ color: colors.textMuted }} />
                   </div>
@@ -1725,7 +1725,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     {tpl.desc}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono">
-                    <span className="font-semibold" style={{ color: colors.textCyan }}>Files:</span>
+                    <span className="font-normal" style={{ color: colors.textCyan }}>Files:</span>
                     {Object.keys(tpl.files).map(f => (
                       <span 
                         key={f} 
@@ -1734,7 +1734,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                           borderColor: colors.border,
                           color: colors.textMuted
                         }}
-                        className="px-1.5 py-0.5 rounded border font-medium"
+                        className="px-1.5 py-0.5 rounded border font-normal"
                       >
                         {f}
                       </span>
