@@ -28,8 +28,20 @@ import {
   X,
   SlidersHorizontal,
   Server,
-  Wrench
+  Wrench,
+  Command
 } from 'lucide-react';
+
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'agent';
+  text: string;
+  toolCall?: {
+    name: string;
+    badge: string;
+    detail: string;
+  };
+}
 
 export default function QuantumIDE() {
   const [activeFile, setActiveFile] = useState('main.py');
@@ -42,6 +54,24 @@ export default function QuantumIDE() {
   const [errorMitigation, setErrorMitigation] = useState(true);
   const [copilotInput, setCopilotInput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      id: '1',
+      sender: 'user',
+      text: 'Optimize the 2-qubit CNOT depth for the active circuit in main.py and explain the reduction.'
+    },
+    {
+      id: '2',
+      sender: 'agent',
+      text: 'I inspected your 4-qubit parameterized ansatz in `main.py`. Reduced 2-qubit CNOT gate count from 6 to 4 (-33% depth) while preserving exact statevector fidelity (100.0%).',
+      toolCall: {
+        name: 'Transpiler Pass Completed',
+        badge: '-33% Depth',
+        detail: 'Applied CommutativeCancellation & ConsolidateBlocks (Level 2).'
+      }
+    }
+  ]);
 
   // Starter file content dictionary
   const files: Record<string, { name: string; lang: string; content: string }> = {
@@ -122,15 +152,10 @@ if __name__ == "__main__":
 
 Welcome to your Quantum Guru Development Workspace.
 
-## 🚀 Quick Actions
-- **Run Circuit:** Click \`Run ▶\` (Ctrl+Enter) in the top command bar.
-- **Ask Copilot:** Type natural language questions in the right panel.
-- **Settings:** Click \`⚙️ Settings\` to change AI Models, Backend QPUs, and Transpiler passes.
-
-## 💡 Try Asking Quantum Copilot:
-1. *"Optimize the 2-qubit CNOT depth for this circuit."*
-2. *"Convert this Hamiltonian into a QUBO formulation."*
-3. *"Simulate with depolarizing noise model T1=50us, T2=70us."*
+## 🚀 Chat Command Shortcuts
+- \`/execute@program\` — Executes active script in solver terminal.
+- \`/simulate@circuit\` — Renders continuous horizontal circuit canvas.
+- \`/transpile@level2\` — Optimizes circuit depth and cancels redundant gates.
 `
     },
     'requirements.txt': {
@@ -150,67 +175,107 @@ matplotlib>=3.8.0
     setIsRunning(true);
     setTimeout(() => {
       setIsRunning(false);
-      setActiveBottomTab('results');
-    }, 800);
+      setActiveBottomTab('terminal');
+    }, 700);
+  };
+
+  const handleSimulate = () => {
+    setActiveBottomTab('circuit');
+  };
+
+  const handleSendMessage = (textToSend?: string) => {
+    const text = (textToSend || copilotInput).trim();
+    if (!text) return;
+
+    // Add user message
+    const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text };
+    setChatMessages(prev => [...prev, userMsg]);
+    setCopilotInput('');
+
+    // Process slash commands
+    if (text === '/execute@program' || text.toLowerCase().includes('run program') || text.toLowerCase().includes('/run')) {
+      handleRun();
+      setTimeout(() => {
+        setChatMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          sender: 'agent',
+          text: 'Executed `main.py` on AerSimulator. Expectation value $\\langle Z_0 \\rangle = -0.4125$ (1024 shots). Output streamed to Solver Terminal.',
+          toolCall: {
+            name: 'Solver Execution',
+            badge: 'Exit 0 (0.14s)',
+            detail: 'Target: AerSimulator | Fidelity: 99.82%'
+          }
+        }]);
+      }, 750);
+    } else if (text === '/simulate@circuit' || text.toLowerCase().includes('simulate circuit')) {
+      handleSimulate();
+      setChatMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        sender: 'agent',
+        text: 'Generated continuous horizontal circuit diagram for active 4-qubit parameterized ansatz (`ZZFeatureMap + RealAmplitudes`). Canvas updated below.',
+        toolCall: {
+          name: 'Circuit Visualizer',
+          badge: '4 Qubits | Depth 6',
+          detail: 'Unfolded continuous horizontal track (fold=-1).'
+        }
+      }]);
+    } else {
+      setTimeout(() => {
+        setChatMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          sender: 'agent',
+          text: `Analyzing your quantum request: "${text}". I have mapped your intent and verified that all 4 active qubits are properly bound and phase-normalized in $[0, \\pi]$.`,
+          toolCall: {
+            name: 'Quantum Copilot Analysis',
+            badge: activeModel === 'groq' ? 'Groq (110ms)' : 'RunPod (220ms)',
+            detail: `Active Backend: ${targetBackend} | Level ${optimizationLevel}`
+          }
+        }]);
+      }, 500);
+    }
   };
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] font-sans select-none overflow-hidden relative">
       
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* BLOCK A: TOP GLOBAL COMMAND BAR & RUNTIME CONTROLS            */}
+      {/* BLOCK A: MINIMALIST UNCLUTTERED TOP COMMAND BAR               */}
       {/* ───────────────────────────────────────────────────────────── */}
       <header className="h-12 bg-white border-b border-slate-200 px-4 flex items-center justify-between shrink-0 z-20 shadow-xs">
         
-        {/* Left: Brand & Project Selector */}
+        {/* Left: Clean Brand & Workspace Breadcrumb */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-black text-sm">
               ⚛
             </div>
-            <span className="font-extrabold text-sm tracking-tight text-slate-900">Quantum Guru <span className="text-[10px] text-blue-700 font-mono px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200 font-bold">IDE</span></span>
+            <span className="font-extrabold text-sm tracking-tight text-slate-900 font-heading">Quantum Guru <span className="text-[10px] text-blue-700 font-mono px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200 font-bold">IDE</span></span>
           </div>
 
           <div className="h-4 w-px bg-slate-200 mx-1" />
 
           {/* Project Breadcrumb */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 cursor-pointer transition-colors">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 cursor-pointer transition-colors font-medium">
             <Folder className="w-3.5 h-3.5 text-blue-600" />
             <span className="font-mono text-slate-900 font-bold">my-quantum-project</span>
             <ChevronDown className="w-3 h-3 text-slate-500 ml-1" />
           </div>
-
-          {/* Target Backend Summary Badge */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 font-mono font-semibold">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Target: {targetBackend === 'aer_simulator' ? 'AerSimulator (4Q)' : targetBackend}</span>
-          </div>
         </div>
 
-        {/* Center: Clean Core Execution Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        {/* Center: Single Clean Primary Run Trigger */}
+        <div className="flex items-center gap-2">
           <button 
             onClick={handleRun}
             disabled={isRunning}
             className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-md shadow-xs transition-all cursor-pointer"
           >
             {isRunning ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-            <span>Run Program (Ctrl+↵)</span>
-          </button>
-
-          <button 
-            onClick={() => setActiveBottomTab('circuit')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-md border border-slate-300 shadow-2xs transition-colors cursor-pointer"
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-600" />
-            <span>Simulate Circuit</span>
+            <span>Run (Ctrl+↵)</span>
           </button>
         </div>
 
         {/* Right: Settings Modal Trigger & User Profile */}
         <div className="flex items-center gap-2.5">
-          
-          {/* Settings Button */}
           <button 
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-md text-xs font-bold transition-all shadow-2xs cursor-pointer"
@@ -222,14 +287,14 @@ matplotlib>=3.8.0
             </span>
           </button>
 
-          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-800 shadow-2xs">
+          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-800 shadow-2xs font-heading">
             QD
           </div>
         </div>
       </header>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* SETTINGS DIALOG / MODAL (CONTAINING AI & RUNTIME OPTIONS)     */}
+      {/* SETTINGS MODAL (HOUSES TARGET QPU, AI ENGINES & COMPILER)     */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && (
         <div className="absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -242,7 +307,7 @@ matplotlib>=3.8.0
                   <Settings className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Quantum Environment Settings</h3>
+                  <h3 className="text-sm font-bold text-slate-900 font-heading">Quantum Environment Settings</h3>
                   <p className="text-[11px] text-slate-500">Configure AI copilot inference models, target backends, and compiler passes</p>
                 </div>
               </div>
@@ -254,12 +319,12 @@ matplotlib>=3.8.0
               </button>
             </div>
 
-            {/* Modal Body (Settings Sections) */}
+            {/* Modal Body */}
             <div className="p-5 space-y-5 overflow-y-auto max-h-[75vh] text-xs">
               
               {/* 1. AI Copilot Inference Engine */}
               <div className="space-y-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">
                   <Bot className="w-3.5 h-3.5 text-blue-600" />
                   <span>1. AI Copilot Inference Engine</span>
                 </div>
@@ -292,15 +357,18 @@ matplotlib>=3.8.0
                 </div>
               </div>
 
-              {/* 2. Quantum Target Backend Simulator / Hardware */}
+              {/* 2. Target Execution Backend */}
               <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  <Server className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>2. Target Execution Backend</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">
+                    <Server className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>2. Target Execution Backend</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">Active: {targetBackend}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 font-mono">
                   {[
-                    { id: 'aer_simulator', label: 'AerSimulator', desc: 'Local C++ Simulator' },
+                    { id: 'aer_simulator', label: 'AerSimulator', desc: 'Local C++ Simulator (4Q)' },
                     { id: 'statevector', label: 'Statevector', desc: 'Exact Ideal Simulation' },
                     { id: 'ibm_heron', label: 'IBM Heron QPU', desc: 'Cloud QPU Bridge' }
                   ].map((b) => (
@@ -319,7 +387,7 @@ matplotlib>=3.8.0
               {/* 3. Transpiler Optimization Level */}
               <div className="space-y-2.5 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">
                     <Wrench className="w-3.5 h-3.5 text-amber-600" />
                     <span>3. Compiler Optimization Level</span>
                   </div>
@@ -336,9 +404,6 @@ matplotlib>=3.8.0
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-500">
-                  Level 2 includes CommutativeCancellation and 2-qubit CNOT gate consolidation.
-                </p>
               </div>
 
               {/* 4. Measurement Shots & Error Mitigation */}
@@ -395,7 +460,7 @@ matplotlib>=3.8.0
         <aside className="w-60 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0">
           
           {/* Section Header */}
-          <div className="px-3.5 py-2.5 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700 uppercase tracking-wider bg-slate-100/60">
+          <div className="px-3.5 py-2.5 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700 uppercase tracking-wider bg-slate-100/60 font-heading">
             <span>Explorer</span>
             <span className="text-[9px] font-mono bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-bold">Block B</span>
           </div>
@@ -419,7 +484,7 @@ matplotlib>=3.8.0
             ))}
 
             <div className="pt-4 px-2">
-              <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+              <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2 font-heading">
                 Active Quantum Sub-Engines
               </div>
               <div className="space-y-1.5 text-[11px]">
@@ -471,7 +536,7 @@ matplotlib>=3.8.0
               </div>
             </div>
 
-            {/* Simulated Monaco Editor Area with Dark Text Syntax */}
+            {/* Code Editor Canvas */}
             <div className="flex-1 overflow-auto p-4 font-mono text-xs text-slate-900 leading-relaxed bg-[#FAFAFA] flex">
               {/* Line Numbers */}
               <div className="pr-4 text-slate-400 select-none text-right font-mono border-r border-slate-200 mr-4 space-y-0.5">
@@ -480,8 +545,8 @@ matplotlib>=3.8.0
                 ))}
               </div>
 
-              {/* Code Contents with Dark High-Contrast Text */}
-              <pre className="flex-1 overflow-x-auto text-slate-900 whitespace-pre font-medium">
+              {/* Code Contents */}
+              <pre className="flex-1 overflow-x-auto text-slate-900 whitespace-pre font-medium font-mono">
                 {files[activeFile].content}
               </pre>
             </div>
@@ -595,7 +660,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
               <div className="w-5 h-5 rounded bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold">
                 <Bot className="w-3.5 h-3.5" />
               </div>
-              <span className="text-xs font-bold text-slate-900">Quantum Copilot</span>
+              <span className="text-xs font-bold text-slate-900 font-heading">Quantum Copilot</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[9px] font-mono text-emerald-800 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">Live</span>
@@ -606,62 +671,86 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
           {/* Conversation Stream & Tool Execution Cards */}
           <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
             
-            {/* User Message */}
-            <div className="bg-white border border-slate-200 rounded-xl p-3 text-slate-900 shadow-2xs font-medium">
-              <div className="text-[10px] font-bold text-slate-500 mb-1">You</div>
-              <div>Optimize the 2-qubit CNOT depth for the active circuit in main.py and explain the reduction.</div>
-            </div>
+            {chatMessages.map((msg) => (
+              <div key={msg.id} className="space-y-2">
+                {msg.sender === 'user' ? (
+                  <div className="bg-white border border-slate-200 rounded-xl p-3 text-slate-900 shadow-2xs font-medium">
+                    <div className="text-[10px] font-bold text-slate-500 mb-1">You</div>
+                    <div>{msg.text}</div>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 text-slate-800 shadow-2xs">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                      <span className="text-[10px] font-bold text-blue-700 flex items-center gap-1 font-heading">
+                        <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
+                      </span>
+                      <span className="text-[9px] font-mono text-slate-500 font-semibold">{activeModel === 'groq' ? 'Groq (118ms)' : 'RunPod (240ms)'}</span>
+                    </div>
 
-            {/* AI Agent Response with Tool Trigger */}
-            <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 text-slate-800 shadow-2xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                <span className="text-[10px] font-bold text-blue-700 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
-                </span>
-                <span className="text-[9px] font-mono text-slate-500 font-semibold">{activeModel === 'groq' ? 'Groq (118ms)' : 'RunPod (240ms)'}</span>
+                    <p className="leading-relaxed text-slate-800">
+                      {msg.text}
+                    </p>
+
+                    {/* Invoked Tool Badge if present */}
+                    {msg.toolCall && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 space-y-1">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-bold text-slate-900 flex items-center gap-1 font-heading">
+                            <Check className="w-3 h-3 text-emerald-600" /> {msg.toolCall.name}
+                          </span>
+                          <span className="font-mono text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded font-bold text-[9px]">{msg.toolCall.badge}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-600 font-mono">
+                          {msg.toolCall.detail}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-
-              <p className="leading-relaxed text-slate-800">
-                I inspected your 4-qubit parameterized ansatz in <code className="text-blue-700 font-mono bg-blue-50 px-1 py-0.5 rounded border border-blue-100 font-bold">main.py</code>.
-              </p>
-
-              {/* Invoked Tool Badge */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 space-y-1">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-slate-900 flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-600" /> Transpiler Pass Completed
-                  </span>
-                  <span className="font-mono text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded font-bold text-[9px]">-33% Depth</span>
-                </div>
-                <div className="text-[10px] text-slate-600 font-mono">
-                  Applied CommutativeCancellation & ConsolidateBlocks (Level {optimizationLevel}).
-                </div>
-              </div>
-
-              <p className="leading-relaxed text-[11px] text-slate-700 font-medium">
-                Reduced 2-qubit CNOT gate count from 6 to 4 while preserving exact statevector fidelity (100.0%).
-              </p>
-            </div>
+            ))}
 
           </div>
 
-          {/* Copilot Input Box */}
+          {/* Copilot Input Box & Slash Shortcuts */}
           <div className="p-3 border-t border-slate-200 bg-white space-y-2">
-            <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-mono text-slate-600 font-semibold">
-              <span className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer transition-colors">/optimize-depth</span>
-              <span className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer transition-colors">/qubo-solve</span>
-              <span className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer transition-colors">/cas-vqe</span>
+            
+            {/* Interactive Slash Command Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] font-mono text-slate-700 font-bold">
+              <button 
+                onClick={() => handleSendMessage('/execute@program')}
+                className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer transition-colors shrink-0 flex items-center gap-1"
+              >
+                <Play className="w-2.5 h-2.5 fill-current" /> /execute@program
+              </button>
+              <button 
+                onClick={() => handleSendMessage('/simulate@circuit')}
+                className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer transition-colors shrink-0 flex items-center gap-1"
+              >
+                <Zap className="w-2.5 h-2.5" /> /simulate@circuit
+              </button>
+              <button 
+                onClick={() => handleSendMessage('/transpile@level2')}
+                className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer transition-colors shrink-0"
+              >
+                /transpile@level2
+              </button>
             </div>
 
+            {/* Input form */}
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg p-1.5 focus-within:border-blue-500 focus-within:bg-white transition-all shadow-2xs">
               <input 
                 type="text"
                 value={copilotInput}
                 onChange={(e) => setCopilotInput(e.target.value)}
-                placeholder="Ask Copilot or use Cmd+K..."
-                className="flex-1 bg-transparent border-none outline-hidden text-xs text-slate-900 font-medium placeholder:text-slate-400 px-1"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                placeholder="Ask Copilot or try /execute@program..."
+                className="flex-1 bg-transparent border-none outline-hidden text-xs text-slate-900 font-medium placeholder:text-slate-400 px-1 font-sans"
               />
-              <button className="w-6 h-6 rounded bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-2xs cursor-pointer">
+              <button 
+                onClick={() => handleSendMessage()}
+                className="w-6 h-6 rounded bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+              >
                 <Send className="w-3 h-3" />
               </button>
             </div>
