@@ -442,37 +442,62 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   }, []);
 
-  const handleSelectTemplate = (templateKey: string) => {
-    const selected = initialProjectTemplates[templateKey] || initialProjectTemplates['my-quantum-project'];
-    if (selected) {
-      const newPName = templateKey === 'my-quantum-project' ? `quantum-proj-${Date.now().toString().slice(-4)}` : `${templateKey}-${Date.now().toString().slice(-4)}`;
-      
-      const updatedAll = {
-        ...allProjects,
-        [newPName]: {
-          title: selected.title,
-          desc: selected.desc,
-          files: selected.files
-        }
-      };
+  // Create a new project with custom name and chosen scaffold template
+  const handleCreateCustomProject = () => {
+    const rawName = customProjectInput.trim();
+    const finalName = rawName ? rawName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '') : `quantum-project-${Date.now().toString().slice(-4)}`;
+    
+    // Get scaffold files from selected template
+    const templateData = initialProjectTemplates[selectedTemplateKey] || initialProjectTemplates['my-quantum-project'];
+    const newFiles = { ...templateData.files };
 
-      setAllProjects(updatedAll);
-      setProjectName(newPName);
-      setProjectFiles(selected.files);
-      setActiveFile(Object.keys(selected.files)[0]);
-      setIsNewProjectOpen(false);
-      
-      setChatMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        sender: 'agent',
-        text: `Initialized new workspace: ${selected.title} (\`${newPName}\`). Created entrypoint \`${Object.keys(selected.files)[0]}\`.`,
-        toolCall: {
-          name: 'Workspace Scaffold Created',
-          badge: 'Ready',
-          detail: `Loaded ${Object.keys(selected.files).length} project files.`
-        }
-      }]);
+    // Update allProjects dictionary
+    setAllProjects(prev => ({
+      ...prev,
+      [finalName]: {
+        title: finalName,
+        desc: `Custom project scaffolded from ${templateData.title}`,
+        files: newFiles
+      }
+    }));
+
+    // Switch active workspace
+    setProjectName(finalName);
+    setProjectFiles(newFiles);
+    setActiveFile('main.py');
+    setCustomProjectInput('');
+    setIsNewProjectOpen(false);
+    setIsProjectDropdownOpen(false);
+
+    setChatMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      sender: 'agent',
+      text: `Created and opened project: **${finalName}** (scaffolded from ${templateData.title}). Initialized \`main.py\` and \`MEMORY.md\`.`
+    }]);
+  };
+
+  // Switch between existing projects while preserving file edits
+  const handleSwitchProject = (targetProject: string) => {
+    if (targetProject === projectName) {
+      setIsProjectDropdownOpen(false);
+      return;
     }
+
+    // 1. Save current project's files before switching
+    setAllProjects(prev => ({
+      ...prev,
+      [projectName]: {
+        ...prev[projectName],
+        files: projectFiles
+      }
+    }));
+
+    // 2. Load target project's files
+    const target = allProjects[targetProject] || initialProjectTemplates[targetProject] || initialProjectTemplates['my-quantum-project'];
+    setProjectName(targetProject);
+    setProjectFiles(target.files);
+    setActiveFile('main.py');
+    setIsProjectDropdownOpen(false);
   };
 
   const handleRun = () => {
