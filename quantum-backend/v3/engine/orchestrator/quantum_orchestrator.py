@@ -636,8 +636,8 @@ if __name__ == "__main__":
     async def _execute_groq_reasoning_workflow(self, project_id, msg, active_file, backend, opt_lvl, model, timestamp):
         steps = [
             WorkflowStep(
-                step_num=1, tool_tag="groq.llama3_70b.reasoning", name="Groq LLM Reasoning Engine",
-                status="completed", execution_time_ms=118.0, summary="Generated factual quantum derivation via Groq Llama-3.3-70B"
+                step_num=1, tool_tag="groq.qwen3_6_27b.reasoning", name="Groq LLM Reasoning Engine",
+                status="completed", execution_time_ms=118.0, summary="Generated factual quantum derivation via Groq Qwen 3.6 27B"
             )
         ]
 
@@ -653,7 +653,7 @@ if __name__ == "__main__":
                 user=groq_prompt
             )
             groq_clean = groq_resp.replace("**", "").replace("<b>", "").replace("</b>", "").strip()
-            response_text = f"Quantum Workspace Reasoning (Groq Llama-3.3-70B):\n\n{groq_clean}"
+            response_text = f"Quantum Workspace Reasoning (Groq Qwen 3.6 27B):\n\n{groq_clean}"
         except Exception as e:
             response_text = (
                 f"Quantum Workspace Analysis & Theoretical Context:\n\n"
@@ -675,7 +675,7 @@ if __name__ == "__main__":
             "fidelity": "99.82%",
             "latency_sec": "0.118s",
             "terminal_log": [
-                f"➜ groq.reasoning --model llama-3.3-70b-versatile",
+                f"➜ groq.reasoning --model qwen/qwen3.6-27b",
                 "Reasoning completed in 118ms.",
                 "Process finished with exit code 0"
             ]

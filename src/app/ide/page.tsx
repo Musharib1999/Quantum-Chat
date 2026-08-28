@@ -853,7 +853,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   }}
                   className="text-[9px] font-mono px-1.5 py-0.2 rounded font-normal border"
                 >
-                  {activeModel === 'groq' ? 'Groq' : 'RunPod'}
+                  {activeModel === 'groq' ? 'Qwen 3.6 (Groq)' : 'RunPod'}
                 </span>
               </button>
 
@@ -1105,7 +1105,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                           <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
                         </span>
                         <span className="text-[9px] font-mono font-normal" style={{ color: colors.textMuted }}>
-                          {activeModel === 'groq' ? 'Groq (118ms)' : 'RunPod (240ms)'}
+                          {activeModel === 'groq' ? 'Qwen 3.6 27B (Groq 118ms)' : 'RunPod (240ms)'}
                         </span>
                       </div>
 
