@@ -583,10 +583,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       {/* SETTINGS MODAL                                                */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden animate-in fade-in duration-150">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setIsSettingsOpen(false); }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-hidden animate-in fade-in duration-150"
+        >
           <div 
             style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
-            className="border rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+            className="border rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
           >
             {/* Header */}
             <div 
@@ -1323,10 +1326,13 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
       {/* START NEW PROJECT TEMPLATE SELECTOR MODAL                     */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isNewProjectOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden animate-in fade-in duration-150">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setIsNewProjectOpen(false); }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-hidden animate-in fade-in duration-150"
+        >
           <div 
             style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
-            className="border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+            className="border rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
           >
             {/* Header */}
             <div 
@@ -1396,10 +1402,13 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
       {/* 33 QUANTUM TOOLS: VERTICAL SCROLLABLE MODAL                   */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isToolPaletteOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden animate-in fade-in duration-150">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setIsToolPaletteOpen(false); }}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-hidden animate-in fade-in duration-150"
+        >
           <div 
             style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
-            className="border rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-150"
+            className="border rounded-2xl shadow-2xl w-full max-w-3xl h-[620px] max-h-[82vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
           >
             {/* Modal Header */}
             <div 
