@@ -467,7 +467,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setActiveFile('main.py');
     setCustomProjectInput('');
     setIsNewProjectOpen(false);
-    setIsProjectDropdownOpen(false);
+    setIsProjectsDropdownOpen(false);
 
     setChatMessages(prev => [...prev, {
       id: Date.now().toString(),
@@ -479,7 +479,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   // Switch between existing projects while preserving file edits
   const handleSwitchProject = (targetProject: string) => {
     if (targetProject === projectName) {
-      setIsProjectDropdownOpen(false);
+      setIsProjectsDropdownOpen(false);
       return;
     }
 
@@ -497,7 +497,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setProjectName(targetProject);
     setProjectFiles(target.files);
     setActiveFile('main.py');
-    setIsProjectDropdownOpen(false);
+    setIsProjectsDropdownOpen(false);
   };
 
   const handleRun = () => {
