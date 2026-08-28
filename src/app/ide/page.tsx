@@ -390,20 +390,22 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
         className="h-12 border-b px-4 flex items-center justify-between shrink-0 z-20 shadow-xs"
       >
-        {/* Left: Brand & Toggle Explorer */}
+        {/* Left: Brand & Project Breadcrumb */}
         <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => setIsLeftOpen(!isLeftOpen)}
-            title={isLeftOpen ? "Hide Explorer" : "Show Explorer"}
-            style={{ 
-              backgroundColor: isLeftOpen ? (isDark ? '#161B22' : '#F1F5F9') : 'transparent',
-              borderColor: colors.border,
-              color: colors.textPrimary 
-            }}
-            className="p-1.5 rounded-md border transition-colors cursor-pointer"
-          >
-            <PanelLeft className="w-4 h-4" />
-          </button>
+          {!isLeftOpen && (
+            <button
+              onClick={() => setIsLeftOpen(true)}
+              title="Show Explorer Sidebar"
+              style={{ 
+                backgroundColor: colors.bgPill,
+                borderColor: colors.border,
+                color: colors.textPrimary 
+              }}
+              className="p-1.5 rounded-md border transition-colors cursor-pointer hover:border-slate-400 mr-0.5"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+          )}
 
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-0.5 shrink-0 shadow-xs">
@@ -697,8 +699,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             }}
             className="border-r flex flex-col shrink-0 relative transition-[width] duration-0"
           >
-            {/* Start New Project Action Button */}
-            <div style={{ backgroundColor: colors.bgSidebar, borderColor: colors.border }} className="p-2 border-b">
+            {/* Start New Project Action Button Row with Left Sidebar Toggle */}
+            <div style={{ backgroundColor: colors.bgSidebar, borderColor: colors.border }} className="p-2 border-b flex items-center gap-1.5">
+              <button
+                onClick={() => setIsLeftOpen(false)}
+                title="Hide Explorer Sidebar"
+                style={{ 
+                  backgroundColor: colors.bgPill,
+                  borderColor: colors.border,
+                  color: colors.textMuted 
+                }}
+                className="p-1.5 rounded-md border transition-colors cursor-pointer hover:border-slate-400 shrink-0 flex items-center justify-center"
+              >
+                <PanelLeft className="w-3.5 h-3.5" />
+              </button>
+
               <button
                 onClick={() => setIsNewProjectOpen(true)}
                 style={{ 
@@ -706,7 +721,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   borderColor: colors.border,
                   color: colors.textPrimary 
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 border rounded-md text-xs font-bold transition-all shadow-2xs cursor-pointer group hover:border-slate-400"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 border rounded-md text-xs font-bold transition-all shadow-2xs cursor-pointer group hover:border-slate-400"
               >
                 <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" style={{ color: colors.textAccent }} />
                 <span>Start New Project</span>
