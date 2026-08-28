@@ -406,11 +406,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           </button>
 
           <div className="flex items-center gap-2.5">
-            <img 
-              src="/qg-icon.png" 
-              alt="Quantum Guru Logo" 
-              className="w-6 h-6 rounded-md object-contain"
-            />
+            <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-0.5 shrink-0 shadow-xs">
+              <img 
+                src="/qg-icon.png" 
+                alt="Quantum Guru Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
             <span className="font-extrabold text-sm tracking-tight font-heading" style={{ color: colors.textPrimary }}>
               Quantum Guru
             </span>
