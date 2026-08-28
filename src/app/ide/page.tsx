@@ -73,19 +73,20 @@ export default function QuantumIDE() {
   // 2. textMuted: Secondary info, line numbers, meta (#94A3B8 / #64748B)
   // 3. textAccent: Single focused Blue accent (#38BDF8 / #2563EB)
   // ─────────────────────────────────────────────────────────────
+  // Toned-down, eye-friendly, glare-free color palette
   const colors = {
-    bgMain: isDark ? '#030712' : '#F8FAFC',
-    bgHeader: isDark ? '#060B17' : '#FFFFFF',
-    bgSidebar: isDark ? '#040814' : '#F8FAFC',
-    bgCard: isDark ? '#0B1120' : '#FFFFFF',
-    bgEditor: isDark ? '#02050E' : '#FFFFFF',
-    bgInput: isDark ? '#060B17' : '#F1F5F9',
-    bgPill: isDark ? '#161B22' : '#F1F5F9',
-    border: isDark ? '#1E293B' : '#E2E8F0',
-    borderSubtle: isDark ? '#0F172A' : '#F1F5F9',
-    textPrimary: isDark ? '#FFFFFF' : '#0F172A',
-    textMuted: isDark ? '#94A3B8' : '#64748B',
-    textAccent: isDark ? '#38BDF8' : '#2563EB',
+    bgMain: isDark ? '#070B14' : '#F8FAFC',
+    bgHeader: isDark ? '#0C111D' : '#FFFFFF',
+    bgSidebar: isDark ? '#090E1A' : '#F8FAFC',
+    bgCard: isDark ? '#0F1626' : '#FFFFFF',
+    bgEditor: isDark ? '#050912' : '#FFFFFF',
+    bgInput: isDark ? '#0A0F1C' : '#F1F5F9',
+    bgPill: isDark ? '#131C2E' : '#F1F5F9',
+    border: isDark ? '#1E2B42' : '#E2E8F0',
+    borderSubtle: isDark ? '#111827' : '#F1F5F9',
+    textPrimary: isDark ? '#CBD5E1' : '#1E293B',    // Soft Slate 300 (toned down from blinding #FFFFFF)
+    textMuted: isDark ? '#7E8C9F' : '#64748B',      // Gentle Slate 500
+    textAccent: isDark ? '#7BA7DF' : '#3B82F6',     // Soft Steel Sky Blue (toned down from neon #38BDF8)
   };
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -655,7 +656,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             >
               <button 
                 onClick={() => setIsSettingsOpen(false)}
-                style={{ backgroundColor: colors.textAccent, color: '#000000' }}
+                style={{ backgroundColor: isDark ? '#1D2E4A' : '#EFF6FF', color: colors.textAccent, borderColor: colors.border }} className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
                 className="px-4 py-1.5 font-bold text-xs rounded-lg shadow-xs transition-opacity hover:opacity-90 cursor-pointer"
               >
                 Apply & Close
@@ -1100,8 +1101,8 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                 />
                 <button 
                   onClick={() => handleSendMessage()}
-                  style={{ backgroundColor: colors.textAccent, color: '#000000' }}
-                  className="w-6 h-6 rounded flex items-center justify-center transition-opacity hover:opacity-90 shadow-2xs cursor-pointer"
+                  style={{ backgroundColor: isDark ? '#1D2E4A' : '#EFF6FF', color: colors.textAccent, borderColor: colors.border }} className="px-4 py-1.5 font-bold text-xs rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
+                  className="w-6 h-6 rounded flex items-center justify-center transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border"
                 >
                   <Send className="w-3 h-3" />
                 </button>
