@@ -763,3 +763,39 @@ async def clear_project_memory_endpoint(project_id: str):
         return {"success": True, "message": f"Memory cleared for project {project_id}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# =====================================================================
+# QUANTUM GURU IDE: CONTEXT-AWARE AGENTIC COPILOT CHAT ENDPOINT
+# =====================================================================
+from engine.ide_agent_service import process_ide_chat_request
+
+class IDEAgentChatRequest(BaseModel):
+    project_id: str = "my-quantum-project"
+    user_message: str
+    active_file: str = "main.py"
+    file_content: str = ""
+    target_backend: str = "aer_simulator"
+    optimization_level: int = 2
+    model_engine: str = "groq"
+    history: list[dict[str, str]] = Field(default_factory=list)
+
+@app.post("/v3/enterprise/ide/agent/chat")
+async def ide_agent_chat_endpoint(req: IDEAgentChatRequest):
+    """
+    Context-aware Copilot reasoning endpoint with 33-tool dispatch and project memory.
+    """
+    try:
+        res = process_ide_chat_request(
+            project_id=req.project_id,
+            user_message=req.user_message,
+            active_file=req.active_file,
+            file_content=req.file_content,
+            target_backend=req.target_backend,
+            optimization_level=req.optimization_level,
+            model_engine=req.model_engine,
+            history=req.history
+        )
+        return res
+    except Exception as e:
+        logger.error(f"Error in IDE agent chat: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
