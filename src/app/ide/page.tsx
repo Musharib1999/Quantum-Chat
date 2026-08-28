@@ -55,53 +55,54 @@ export default function QuantumIDE() {
   const [memoryLedger, setMemoryLedger] = useState<any>(null);
   const [isToolPaletteOpen, setIsToolPaletteOpen] = useState(false);
   const [toolSearchQuery, setToolSearchQuery] = useState('');
+  const [selectedStudioFilter, setSelectedStudioFilter] = useState<string>('all');
 
   // The 33 Quantum AI Tools Registry for the Connect Palette
   const allQuantumTools = [
     // 1. Optimization Studio (6)
-    { id: 1, studio: 'Optimization', name: 'Problem Formulator', tag: 'tools.opt.formulate_problem', desc: 'Extracts variables, bounds & constraints from problem specs.' },
-    { id: 2, studio: 'Optimization', name: 'QUBO Matrix Synthesizer', tag: 'tools.opt.translate_to_qubo', desc: 'Converts constrained models to QUBO Q-matrix.' },
-    { id: 3, studio: 'Optimization', name: 'Ising Hamiltonian Mapper', tag: 'tools.opt.map_quantum_solver', desc: 'Maps QUBO to Ising spin Pauli-Z operators for QAOA.' },
-    { id: 4, studio: 'Optimization', name: 'QAOA & Annealing Solver', tag: 'tools.opt.execute_solver', desc: 'Executes QAOA or D-Wave SA parameter optimization.' },
-    { id: 5, studio: 'Optimization', name: 'Bitstring Solution Decoder', tag: 'tools.opt.decode_solution', desc: 'Decodes bitstrings & validates constraint feasibility.' },
-    { id: 6, studio: 'Optimization', name: 'Optimization Benchmarker', tag: 'tools.opt.benchmark_classical', desc: 'Compares quantum solver against Gurobi & PuLP.' },
+    { id: 1, studio: 'Optimization', name: 'Problem Formulator', tag: 'tools.opt.formulate_problem', desc: 'Extracts decision variables, bounds & constraint equations from natural language specifications.', nature: 'Deterministic' },
+    { id: 2, studio: 'Optimization', name: 'QUBO Matrix Synthesizer', tag: 'tools.opt.translate_to_qubo', desc: 'Converts constrained optimization models into binary quadratic forms (Q-matrix) via Lagrange multipliers.', nature: 'Deterministic' },
+    { id: 3, studio: 'Optimization', name: 'Ising Hamiltonian Mapper', tag: 'tools.opt.map_quantum_solver', desc: 'Maps QUBO matrices to Pauli-Z Ising Spin Hamiltonians for QAOA or D-Wave BQM graph embeddings.', nature: 'Deterministic' },
+    { id: 4, studio: 'Optimization', name: 'QAOA & Annealing Solver', tag: 'tools.opt.execute_solver', desc: 'Executes QAOA parameter optimization or D-Wave Simulated Annealing for lowest energy samples.', nature: 'Probabilistic' },
+    { id: 5, studio: 'Optimization', name: 'Bitstring Solution Decoder', tag: 'tools.opt.decode_solution', desc: 'Decodes measured binary bitstrings into business decisions and validates constraint feasibility.', nature: 'Deterministic' },
+    { id: 6, studio: 'Optimization', name: 'Optimization Benchmarker', tag: 'tools.opt.benchmark_classical', desc: 'Evaluates quantum optimization performance against exact classical solvers (PuLP, Gurobi, SimAn).', nature: 'Deterministic' },
 
     // 2. Quantum Academy (5)
-    { id: 7, studio: 'Academy', name: 'Concept Decomposer', tag: 'tools.academy.concept_explainer', desc: 'Decomposes quantum mechanics with physical analogies.' },
-    { id: 8, studio: 'Academy', name: 'Dirac Proof Engine', tag: 'tools.academy.math_derivation', desc: 'Step-by-step mathematical proofs & Kronecker matrices.' },
-    { id: 9, studio: 'Academy', name: 'Tutorial Circuit Builder', tag: 'tools.academy.generate_tutorial_circuit', desc: 'Synthesizes educational Bell & Teleportation circuits.' },
-    { id: 10, studio: 'Academy', name: 'Socratic Diagnostic', tag: 'tools.academy.socratic_assessment', desc: 'Adaptive diagnostic questions to test mastery.' },
-    { id: 11, studio: 'Academy', name: 'Misconception Debugger', tag: 'tools.academy.misconception_debugger', desc: 'Detects & clarifies quantum physics misconceptions.' },
+    { id: 7, studio: 'Academy', name: 'Concept Decomposer', tag: 'tools.academy.concept_explainer', desc: 'Decomposes deep quantum mechanics concepts using physical and computational analogies.', nature: 'Deterministic' },
+    { id: 8, studio: 'Academy', name: 'Dirac Proof Engine', tag: 'tools.academy.math_derivation', desc: 'Generates step-by-step mathematical proofs, Dirac bra-ket equations, and matrix Kronecker products.', nature: 'Deterministic' },
+    { id: 9, studio: 'Academy', name: 'Tutorial Circuit Builder', tag: 'tools.academy.generate_tutorial_circuit', desc: 'Synthesizes educational starter circuits (Bell State, Teleportation) with state evolution checkpoints.', nature: 'Deterministic' },
+    { id: 10, studio: 'Academy', name: 'Socratic Diagnostic', tag: 'tools.academy.socratic_assessment', desc: 'Generates adaptive diagnostic questions and multi-choice quizzes to verify student comprehension.', nature: 'Deterministic' },
+    { id: 11, studio: 'Academy', name: 'Misconception Debugger', tag: 'tools.academy.misconception_debugger', desc: 'Analyzes student code or statements to detect and clarify fundamental quantum physics misunderstandings.', nature: 'Deterministic' },
 
     // 3. Quantum Algorithms (5)
-    { id: 12, studio: 'Algorithms', name: 'Algorithm Classifier', tag: 'tools.algo.classify_algorithm', desc: 'Classifies tasks into Grover, Shor, QPE, or HHL.' },
-    { id: 13, studio: 'Algorithms', name: 'Phase Oracle Synthesizer', tag: 'tools.algo.synthesize_oracle', desc: 'Constructs unitary phase oracles for search states.' },
-    { id: 14, studio: 'Algorithms', name: 'Grover Diffusion Architect', tag: 'tools.algo.build_diffusion_operator', desc: 'Builds diffusion operator & optimal iteration count.' },
-    { id: 15, studio: 'Algorithms', name: 'Statevector Amplitude Analyzer', tag: 'tools.algo.simulate_statevector', desc: 'Simulates exact statevector probability amplitudes.' },
-    { id: 16, studio: 'Algorithms', name: 'Quantum Advantage Evaluator', tag: 'tools.algo.analyze_quantum_speedup', desc: 'Calculates runtime crossover where quantum wins.' },
+    { id: 12, studio: 'Algorithms', name: 'Algorithm Classifier', tag: 'tools.algo.classify_algorithm', desc: 'Classifies computational tasks into optimal quantum algorithm families (Grover, Shor, QPE, HHL).', nature: 'Deterministic' },
+    { id: 13, studio: 'Algorithms', name: 'Phase Oracle Synthesizer', tag: 'tools.algo.synthesize_oracle', desc: 'Constructs unitary phase or boolean quantum oracles for targeted marked search states.', nature: 'Deterministic' },
+    { id: 14, studio: 'Algorithms', name: 'Grover Diffusion Architect', tag: 'tools.algo.build_diffusion_operator', desc: 'Builds Grover diffusion operators and computes optimal iteration count (pi/4 * sqrt(N)).', nature: 'Deterministic' },
+    { id: 15, studio: 'Algorithms', name: 'Statevector Amplitude Analyzer', tag: 'tools.algo.simulate_statevector', desc: 'Computes exact statevector evolution, amplitude amplification tracking, and probability distributions.', nature: 'Deterministic' },
+    { id: 16, studio: 'Algorithms', name: 'Quantum Advantage Evaluator', tag: 'tools.algo.analyze_quantum_speedup', desc: 'Calculates runtime crossover thresholds where quantum algorithms outperform classical baselines.', nature: 'Deterministic' },
 
     // 4. Quantum Circuits (5)
-    { id: 17, studio: 'Circuit', name: 'Quantum Register Builder', tag: 'tools.circuit.build_quantum_circuit', desc: 'Appends 1Q/2Q gate operations to quantum registers.' },
-    { id: 18, studio: 'Circuit', name: 'Variational Parameter Binder', tag: 'tools.circuit.bind_parameters', desc: 'Binds continuous floating-point values to rotation angles.' },
-    { id: 19, studio: 'Circuit', name: 'Transpiler Pass Optimizer', tag: 'tools.circuit.transpile_passes', desc: 'Applies compiler passes (0-3) for 2Q CNOT reduction.' },
-    { id: 20, studio: 'Circuit', name: 'Decoherence Noise Simulator', tag: 'tools.circuit.simulate_noisy', desc: 'Injects T1/T2 thermal relaxation & depolarizing error.' },
-    { id: 21, studio: 'Circuit', name: 'Continuous Circuit Drawer', tag: 'tools.circuit.render_continuous', desc: 'Draws unfolded continuous horizontal ASCII track.' },
+    { id: 17, studio: 'Circuit', name: 'Quantum Register Builder', tag: 'tools.circuit.build_quantum_circuit', desc: 'Instantiates base quantum/classical registers and appends single and multi-qubit gate operations.', nature: 'Deterministic' },
+    { id: 18, studio: 'Circuit', name: 'Variational Parameter Binder', tag: 'tools.circuit.bind_parameters', desc: 'Declares symbolic variational parameter vectors and binds continuous numerical floating-point values.', nature: 'Deterministic' },
+    { id: 19, studio: 'Circuit', name: 'Transpiler Pass Optimizer', tag: 'tools.circuit.transpile_passes', desc: 'Runs compiler optimization passes (Level 0-3) for 2-qubit CNOT depth and gate reduction.', nature: 'Deterministic' },
+    { id: 20, studio: 'Circuit', name: 'Decoherence Noise Simulator', tag: 'tools.circuit.simulate_noisy', desc: 'Emulates real hardware decoherence by injecting thermal relaxation (T1, T2) and depolarizing error.', nature: 'Probabilistic' },
+    { id: 21, studio: 'Circuit', name: 'Continuous Circuit Drawer', tag: 'tools.circuit.render_continuous', desc: 'Generates a continuous horizontal ASCII/Unicode circuit diagram without vertical line-wrapping.', nature: 'Deterministic' },
 
     // 5. Quantum Chemistry (6)
-    { id: 22, studio: 'Chemistry', name: 'Molecular Geometry Ingester', tag: 'tools.chem.ingest_geometry', desc: 'Parses XYZ/SMILES coordinates & atomic basis sets.' },
-    { id: 23, studio: 'Chemistry', name: 'Hartree-Fock Integral Engine', tag: 'tools.chem.compute_scf_integrals', desc: 'Extracts 1e and 2e molecular orbital tensors.' },
-    { id: 24, studio: 'Chemistry', name: 'CASCI Active Space Reducer', tag: 'tools.chem.select_active_space', desc: 'Prunes core/virtual orbitals to fit qubit budgets.' },
-    { id: 25, studio: 'Chemistry', name: 'Fermion-to-Pauli Mapper', tag: 'tools.chem.fermion_to_qubit_mapping', desc: 'Maps fermionic creation ops via Jordan-Wigner / Parity.' },
-    { id: 26, studio: 'Chemistry', name: 'Chemistry Ansatz Synthesizer', tag: 'tools.chem.build_chemistry_ansatz', desc: 'Synthesizes particle-conserving UCCSD circuits.' },
-    { id: 27, studio: 'Chemistry', name: 'VQE Ground State Solver', tag: 'tools.chem.solve_ground_state_vqe', desc: 'Minimizes ground state energy within chemical accuracy.' },
+    { id: 22, studio: 'Chemistry', name: 'Molecular Geometry Ingester', tag: 'tools.chem.ingest_geometry', desc: 'Ingests molecular coordinates (XYZ / SMILES), charge, spin multiplicity, and selects basis sets.', nature: 'Deterministic' },
+    { id: 23, studio: 'Chemistry', name: 'Hartree-Fock Integral Engine', tag: 'tools.chem.compute_scf_integrals', desc: 'Solves Hartree-Fock (SCF) to compute 1-electron (hpq) and 2-electron (hpqrs) molecular orbital tensors.', nature: 'Deterministic' },
+    { id: 24, studio: 'Chemistry', name: 'CASCI Active Space Reducer', tag: 'tools.chem.select_active_space', desc: 'Performs Complete Active Space (CASCI) orbital reduction, pruning inactive core/virtual orbitals.', nature: 'Deterministic' },
+    { id: 25, studio: 'Chemistry', name: 'Fermion-to-Pauli Mapper', tag: 'tools.chem.fermion_to_qubit_mapping', desc: 'Converts second-quantized fermionic creation/annihilation operators into Pauli strings via Jordan-Wigner.', nature: 'Deterministic' },
+    { id: 26, studio: 'Chemistry', name: 'Chemistry Ansatz Synthesizer', tag: 'tools.chem.build_chemistry_ansatz', desc: 'Synthesizes UCCSD or Hardware-Efficient chemistry ansatz circuits preserving particle-number symmetry.', nature: 'Deterministic' },
+    { id: 27, studio: 'Chemistry', name: 'VQE Ground State Solver', tag: 'tools.chem.solve_ground_state_vqe', desc: 'Minimizes ground state energy via VQE parameter optimization within chemical accuracy (<1.6 mHa).', nature: 'Probabilistic' },
 
     // 6. Quantum Machine Learning (6)
-    { id: 28, studio: 'QML', name: 'Bloch Phase Normalizer', tag: 'tools.qml.normalize_features', desc: 'PCA dimension reduction & [0, pi] phase mapping.' },
-    { id: 29, studio: 'QML', name: 'Feature Map Generator', tag: 'tools.qml.build_feature_map', desc: 'Builds ZZFeatureMap Hilbert space embedding layers.' },
-    { id: 30, studio: 'QML', name: 'Variational QML Architect', tag: 'tools.qml.build_variational_ansatz', desc: 'Stacks RealAmplitudes rotational layers & entanglement.' },
-    { id: 31, studio: 'QML', name: 'Quantum Kernel & VQC Trainer', tag: 'tools.qml.train_classifier', desc: 'Computes Gram matrix for QSVM or trains VQC weights.' },
-    { id: 32, studio: 'QML', name: 'Dual Q-Classical Benchmarker', tag: 'tools.qml.benchmark_classical', desc: 'Benchmarks QSVM & VQC against Logistic Regression & RF.' },
-    { id: 33, studio: 'QML', name: 'Quantum Sample Predictor', tag: 'tools.qml.predict_sample', desc: 'Live single-sample classification & margin confidence.' },
+    { id: 28, studio: 'QML', name: 'Bloch Phase Normalizer', tag: 'tools.qml.normalize_features', desc: 'Applies PCA dimensionality reduction and maps continuous features to [0, pi] phase space.', nature: 'Deterministic' },
+    { id: 29, studio: 'QML', name: 'Feature Map Generator', tag: 'tools.qml.build_feature_map', desc: 'Constructs quantum Hilbert space embedding circuits (ZZFeatureMap, PauliFeatureMap) with entanglement.', nature: 'Deterministic' },
+    { id: 30, studio: 'QML', name: 'Variational QML Architect', tag: 'tools.qml.build_variational_ansatz', desc: 'Constructs parameterized variational ansatz layers (RealAmplitudes, EfficientSU2) with tunable rotation gates.', nature: 'Deterministic' },
+    { id: 31, studio: 'QML', name: 'Quantum Kernel & VQC Trainer', tag: 'tools.qml.train_classifier', desc: 'Computes Quantum Kernel Gram Matrix for QSVM or trains VQC variational weights via COBYLA.', nature: 'Deterministic / Probabilistic' },
+    { id: 32, studio: 'QML', name: 'Dual Q-Classical Benchmarker', tag: 'tools.qml.benchmark_classical', desc: 'Benchmarks QSVM & VQC accuracy against classical baselines (Logistic Regression, Random Forest, SVM-RBF).', nature: 'Deterministic' },
+    { id: 33, studio: 'QML', name: 'Quantum Sample Predictor', tag: 'tools.qml.predict_sample', desc: 'Evaluates live single-sample queries and computes confidence scores side-by-side with classical models.', nature: 'Deterministic' },
   ];
   const [projectName, setProjectName] = useState('my-quantum-project');
   const [targetBackend, setTargetBackend] = useState('aer_simulator');
@@ -1218,76 +1219,11 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                 </button>
               </div>
 
-              {/* Input form with Tool Connect Palette */}
+              {/* Input form with Dedicated '+' Tool Connect Action */}
               <div 
                 style={{ backgroundColor: colors.bgInput, borderColor: colors.border }}
-                className="flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs focus-within:border-sky-500 min-h-[76px] relative"
+                className="flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs focus-within:border-sky-500 min-h-[76px]"
               >
-                {/* Floating Tool Connect Palette Popover */}
-                {isToolPaletteOpen && (
-                  <div 
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="absolute bottom-full left-0 right-0 mb-2 border rounded-xl shadow-2xl p-3 z-50 max-h-80 flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-150"
-                  >
-                    <div className="flex items-center justify-between pb-2 border-b mb-2" style={{ borderColor: colors.border }}>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-sky-500 inline-block" />
-                        <span className="text-xs font-bold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
-                          Connect Quantum Tool (33 Available)
-                        </span>
-                      </div>
-                      <button 
-                        onClick={() => setIsToolPaletteOpen(false)}
-                        className="text-xs hover:opacity-75 cursor-pointer"
-                        style={{ color: colors.textMuted }}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <input 
-                      type="text"
-                      value={toolSearchQuery}
-                      onChange={(e) => setToolSearchQuery(e.target.value)}
-                      placeholder="Search tools by name, studio, or capability..."
-                      style={{ backgroundColor: colors.bgEditor, borderColor: colors.border, color: colors.textPrimary }}
-                      className="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-hidden mb-2 font-mono"
-                    />
-
-                    <div className="overflow-y-auto space-y-1 flex-1 pr-1">
-                      {allQuantumTools
-                        .filter(t => 
-                          t.name.toLowerCase().includes(toolSearchQuery.toLowerCase()) || 
-                          t.studio.toLowerCase().includes(toolSearchQuery.toLowerCase()) ||
-                          t.tag.toLowerCase().includes(toolSearchQuery.toLowerCase())
-                        )
-                        .map((tool) => (
-                          <div
-                            key={tool.id}
-                            onClick={() => {
-                              setCopilotInput(`/${tool.tag}`);
-                              setIsToolPaletteOpen(false);
-                            }}
-                            style={{ backgroundColor: colors.bgEditor, borderColor: colors.border }}
-                            className="p-2 rounded-lg border cursor-pointer transition-all hover:border-sky-500 group flex items-start justify-between gap-2"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span style={{ color: colors.textAmber }} className="font-mono text-[10px] font-bold">#{tool.id}</span>
-                                <span className="font-bold text-xs group-hover:text-sky-400 transition-colors" style={{ color: colors.textPrimary }}>{tool.name}</span>
-                                <span style={{ backgroundColor: colors.bgPill, color: colors.textCyan }} className="text-[9px] px-1 py-0.2 rounded font-mono font-bold">{tool.studio}</span>
-                              </div>
-                              <p className="text-[10px] leading-tight mt-0.5" style={{ color: colors.textMuted }}>{tool.desc}</p>
-                            </div>
-                            <span style={{ color: colors.textCyan }} className="text-[10px] font-mono shrink-0 font-semibold group-hover:underline">
-                              Connect ➔
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
                 <textarea 
                   rows={2}
                   value={copilotInput}
@@ -1304,18 +1240,18 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                 />
                 
                 <div className="flex items-center justify-between pt-1">
-                  {/* Left: Plus Button (Connect Tool) */}
+                  {/* Left: Plus Button (Opens Vertical Scrollable Modal) */}
                   <button 
-                    onClick={() => setIsToolPaletteOpen(!isToolPaletteOpen)}
-                    title="Connect any of the 33 Quantum Tools"
+                    onClick={() => setIsToolPaletteOpen(true)}
+                    title="Open 33 Quantum Tools Modal"
                     style={{ 
-                      backgroundColor: isToolPaletteOpen ? colors.bgEditor : colors.bgPill, 
+                      backgroundColor: colors.bgPill, 
                       color: colors.textCyan, 
-                      borderColor: isToolPaletteOpen ? colors.textCyan : colors.border 
+                      borderColor: colors.border 
                     }}
-                    className="px-2 py-1 rounded-md flex items-center gap-1.5 transition-all hover:border-sky-500 shadow-2xs cursor-pointer border text-[11px] font-bold"
+                    className="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all hover:border-sky-500 shadow-2xs cursor-pointer border text-[11px] font-bold group"
                   >
-                    <Plus className="w-3.5 h-3.5" style={{ color: colors.textCyan }} />
+                    <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" style={{ color: colors.textAmber }} />
                     <span>Connect Tool</span>
                   </button>
 
@@ -1455,6 +1391,173 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
 
 
       {/* ───────────────────────────────────────────────────────────── */}
+      
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 33 QUANTUM TOOLS: VERTICAL SCROLLABLE MODAL                   */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isToolPaletteOpen && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div 
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
+            className="border rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150"
+          >
+            {/* Modal Header */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="px-5 py-3.5 border-b flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                  <Plus className="w-4 h-4" style={{ color: colors.textAmber }} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold font-heading" style={{ color: colors.textCyan }}>
+                      Connect Quantum Tool
+                    </h3>
+                    <span 
+                      style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textAmber }}
+                      className="text-[10px] font-mono px-1.5 py-0.2 rounded border font-bold uppercase"
+                    >
+                      33 Tools Registered
+                    </span>
+                  </div>
+                  <p className="text-[11px]" style={{ color: colors.textMuted }}>
+                    Select a specialized quantum primitive to connect directly to the active workspace
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setIsToolPaletteOpen(false)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-75 transition-opacity cursor-pointer"
+                style={{ color: colors.textMuted }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="p-3 border-b space-y-2.5"
+            >
+              <input 
+                type="text"
+                value={toolSearchQuery}
+                onChange={(e) => setToolSearchQuery(e.target.value)}
+                placeholder="Search tools by name, identifier (e.g. transpile), studio, or capability..."
+                style={{ backgroundColor: colors.bgEditor, borderColor: colors.border, color: colors.textPrimary }}
+                className="w-full border rounded-lg px-3 py-2 text-xs outline-hidden font-mono placeholder:opacity-40 focus:border-sky-500"
+              />
+
+              {/* Studio Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-mono font-bold pb-0.5">
+                {[
+                  { id: 'all', label: 'All Tools (33)' },
+                  { id: 'Optimization', label: 'Optimization (6)' },
+                  { id: 'Academy', label: 'Academy (5)' },
+                  { id: 'Algorithms', label: 'Algorithms (5)' },
+                  { id: 'Circuit', label: 'Circuit (5)' },
+                  { id: 'Chemistry', label: 'Chemistry (6)' },
+                  { id: 'QML', label: 'QML (6)' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSelectedStudioFilter(tab.id)}
+                    style={{ 
+                      backgroundColor: selectedStudioFilter === tab.id ? colors.bgPill : 'transparent',
+                      borderColor: selectedStudioFilter === tab.id ? colors.textCyan : 'transparent',
+                      color: selectedStudioFilter === tab.id ? colors.textCyan : colors.textMuted
+                    }}
+                    className="px-2.5 py-1 rounded-md border transition-all cursor-pointer shrink-0 hover:border-slate-600"
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Body: Vertical Scrollable Tools List */}
+            <div className="p-4 space-y-2.5 overflow-y-auto flex-1 text-xs">
+              {allQuantumTools
+                .filter(t => selectedStudioFilter === 'all' || t.studio === selectedStudioFilter)
+                .filter(t => 
+                  t.name.toLowerCase().includes(toolSearchQuery.toLowerCase()) || 
+                  t.studio.toLowerCase().includes(toolSearchQuery.toLowerCase()) ||
+                  t.tag.toLowerCase().includes(toolSearchQuery.toLowerCase()) ||
+                  t.desc.toLowerCase().includes(toolSearchQuery.toLowerCase())
+                )
+                .map((tool) => (
+                  <div
+                    key={tool.id}
+                    onClick={() => {
+                      setCopilotInput(`/${tool.tag}`);
+                      setIsToolPaletteOpen(false);
+                    }}
+                    style={{ backgroundColor: colors.bgEditor, borderColor: colors.border }}
+                    className="p-3.5 rounded-xl border cursor-pointer transition-all hover:border-sky-500 shadow-2xs group flex items-start justify-between gap-3"
+                  >
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span style={{ color: colors.textAmber }} className="font-mono text-xs font-bold">#{tool.id < 10 ? `0${tool.id}` : tool.id}</span>
+                        <span className="font-bold text-xs group-hover:text-sky-400 transition-colors font-heading" style={{ color: colors.textPrimary }}>
+                          {tool.name}
+                        </span>
+                        <span 
+                          style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }} 
+                          className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold border"
+                        >
+                          {tool.studio}
+                        </span>
+                        <span 
+                          style={{ backgroundColor: colors.bgPill, color: tool.nature.includes('Deterministic') ? colors.textEmerald : colors.textAmber }} 
+                          className="text-[9px] px-1.5 py-0.2 rounded font-mono font-semibold"
+                        >
+                          {tool.nature}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] leading-relaxed font-sans" style={{ color: colors.textMuted }}>
+                        {tool.desc}
+                      </p>
+
+                      <div className="text-[10px] font-mono" style={{ color: colors.textCyan }}>
+                        Identifier: <span style={{ color: colors.textPrimary }}>{tool.tag}</span>
+                      </div>
+                    </div>
+
+                    <button 
+                      style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+                      className="px-3 py-1.5 rounded-lg border text-[11px] font-bold font-mono shrink-0 group-hover:border-sky-500 transition-all"
+                    >
+                      Connect ➔
+                    </button>
+                  </div>
+                ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="px-5 py-3 border-t flex items-center justify-between text-xs font-mono"
+            >
+              <span style={{ color: colors.textMuted }}>
+                Tip: Click any tool to insert its command directly into Copilot chat
+              </span>
+              <button 
+                onClick={() => setIsToolPaletteOpen(false)}
+                style={{ backgroundColor: colors.bgPill, color: colors.textPrimary, borderColor: colors.border }}
+                className="px-4 py-1.5 font-bold rounded-lg border transition-opacity hover:opacity-80 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* PROJECT MEMORY & AUDIT TRAIL MODAL                            */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isMemoryOpen && (
