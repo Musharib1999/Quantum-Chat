@@ -68,6 +68,8 @@ export default function QuantumIDE() {
   const [activeModel, setActiveModel] = useState<'groq' | 'runpod'>('groq');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+  const [customProjectInput, setCustomProjectInput] = useState('');
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState('optimization');
   const [isProjectsDropdownOpen, setIsProjectsDropdownOpen] = useState(false);
   const [targetBackend, setTargetBackend] = useState('aer_simulator');
   const [optimizationLevel, setOptimizationLevel] = useState<number>(2);
@@ -532,15 +534,27 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           toolCall: data.tool_call || undefined
         }]);
 
-        // 2. Dynamically Mutate Code in Monaco Editor
+        // 2. Dynamically Mutate Code in Monaco Editor & Persist to Workspace
         if (data.updated_code) {
-          setProjectFiles(prev => ({
-            ...prev,
-            [activeFile]: {
-              ...prev[activeFile],
-              content: data.updated_code
-            }
-          }));
+          const newCode = data.updated_code;
+          setProjectFiles(prev => {
+            const updated = {
+              ...prev,
+              [activeFile]: {
+                ...prev[activeFile],
+                content: newCode
+              }
+            };
+            // Also sync into allProjects workspace store
+            setAllProjects(projPrev => ({
+              ...projPrev,
+              [projectName]: {
+                ...projPrev[projectName],
+                files: updated
+              }
+            }));
+            return updated;
+          });
         }
 
         // 3. Dynamically Mutate Real-Time Runtime Telemetry
@@ -879,24 +893,53 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         {/* ───────────────────────────────────────────────────────── */}
         <div style={{ backgroundColor: colors.bgEditor }} className="flex-1 flex flex-col min-w-0">
           
-          {/* Upper Pane: Monaco Code Editor */}
+          {/* Upper Pane: Interactive Monaco Code Canvas */}
           <div style={{ borderColor: colors.border }} className="flex-1 flex flex-col min-h-0 border-b">
-            {/* Code Contents (Updated Live by Agent) */}
             <div 
               style={{ backgroundColor: colors.bgEditor, color: colors.textPrimary }}
               className="flex-1 overflow-auto p-4 font-mono text-xs leading-relaxed flex"
             >
+              {/* Line Numbers */}
               <div 
                 style={{ borderColor: colors.border, color: colors.textMuted }}
                 className="pr-4 select-none text-right font-mono border-r mr-4 space-y-0.5 opacity-50"
               >
-                {files[activeFile]?.content?.split('\n').map((_, idx) => (
+                {(projectFiles[activeFile]?.content || '# Empty file').split('\n').map((_, idx) => (
                   <div key={idx}>{idx + 1}</div>
                 ))}
               </div>
-              <pre className="flex-1 overflow-x-auto whitespace-pre font-normal font-mono" style={{ color: colors.textPrimary }}>
-                {files[activeFile]?.content || '# Empty file'}
-              </pre>
+
+              {/* Editable Code Canvas */}
+              <textarea
+                value={projectFiles[activeFile]?.content || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setProjectFiles(prev => {
+                    const updated = {
+                      ...prev,
+                      [activeFile]: {
+                        ...prev[activeFile],
+                        content: val
+                      }
+                    };
+                    setAllProjects(pPrev => ({
+                      ...pPrev,
+                      [projectName]: {
+                        ...pPrev[projectName],
+                        files: updated
+                      }
+                    }));
+                    return updated;
+                  });
+                }}
+                spellCheck={false}
+                style={{ 
+                  backgroundColor: colors.bgEditor, 
+                  color: colors.textPrimary,
+                  caretColor: colors.textCyan
+                }}
+                className="flex-1 overflow-x-auto whitespace-pre font-normal font-mono outline-hidden resize-none bg-transparent w-full h-full"
+              />
             </div>
           </div>
 
@@ -1495,43 +1538,83 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               </button>
             </div>
 
-            {/* Template List */}
-            <div className="p-4 space-y-2.5 overflow-y-auto max-h-[65vh]">
-              {Object.entries(initialProjectTemplates).map(([key, tpl]) => (
-                <div
-                  key={key}
-                  onClick={() => handleSelectTemplate(key)}
+            {/* Project Creation Form */}
+            <div className="p-5 space-y-4 overflow-y-auto max-h-[65vh]">
+              {/* 1. Project Name Input */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-wider" style={{ color: colors.textCyan }}>
+                  Project Name
+                </label>
+                <input 
+                  type="text"
+                  placeholder="e.g. quantum-portfolio-qaoa"
+                  value={customProjectInput}
+                  onChange={(e) => setCustomProjectInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleCreateCustomProject(); }}
                   style={{ 
                     backgroundColor: colors.bgEditor, 
-                    borderColor: colors.border 
+                    borderColor: colors.border, 
+                    color: colors.textPrimary 
                   }}
-                  className="p-4 rounded-xl border cursor-pointer transition-all shadow-2xs group flex flex-col gap-1.5 hover:border-sky-500"
-                >
-                  <div className="text-xs font-normal flex items-center justify-between" style={{ color: colors.textPrimary }}>
-                    <span className="group-hover:text-sky-400 transition-colors">{tpl.title}</span>
-                    <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" style={{ color: colors.textMuted }} />
-                  </div>
-                  <p className="text-[11px] leading-relaxed" style={{ color: colors.textMuted }}>
-                    {tpl.desc}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono">
-                    <span className="font-normal" style={{ color: colors.textCyan }}>Files:</span>
-                    {Object.keys(tpl.files).map(f => (
-                      <span 
-                        key={f} 
-                        style={{ 
-                          backgroundColor: colors.bgPill, 
-                          borderColor: colors.border,
-                          color: colors.textMuted
-                        }}
-                        className="px-1.5 py-0.5 rounded border font-normal"
-                      >
-                        {f}
-                      </span>
-                    ))}
-                  </div>
+                  className="w-full px-3 py-2 rounded-lg border text-xs font-mono outline-hidden focus:border-sky-500"
+                  autoFocus
+                />
+                <p className="text-[10px] font-mono" style={{ color: colors.textMuted }}>
+                  Will create an isolated workspace with main.py, quantum.config.json & MEMORY.md
+                </p>
+              </div>
+
+              {/* 2. Template Scaffold Selection */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-mono uppercase tracking-wider" style={{ color: colors.textCyan }}>
+                  Select Quantum Scaffold
+                </label>
+
+                <div className="space-y-2">
+                  {Object.entries(initialProjectTemplates).map(([key, tpl]) => (
+                    <div
+                      key={key}
+                      onClick={() => setSelectedTemplateKey(key)}
+                      style={{ 
+                        backgroundColor: selectedTemplateKey === key ? colors.bgPill : colors.bgEditor, 
+                        borderColor: selectedTemplateKey === key ? colors.textCyan : colors.border 
+                      }}
+                      className="p-3 rounded-lg border cursor-pointer transition-all flex items-start justify-between"
+                    >
+                      <div className="space-y-1">
+                        <div className="text-xs font-normal flex items-center gap-2" style={{ color: colors.textPrimary }}>
+                          <span style={{ color: selectedTemplateKey === key ? colors.textCyan : colors.textPrimary }}>{tpl.title}</span>
+                          {selectedTemplateKey === key && (
+                            <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono">[Selected]</span>
+                          )}
+                        </div>
+                        <p className="text-[11px] leading-relaxed" style={{ color: colors.textMuted }}>
+                          {tpl.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* 3. Action Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t" style={{ borderColor: colors.border }}>
+                <button
+                  onClick={() => setIsNewProjectOpen(false)}
+                  style={{ borderColor: colors.border, color: colors.textMuted }}
+                  className="px-3 py-1.5 rounded-lg border text-xs font-mono hover:bg-neutral-800/40 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateCustomProject}
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.textCyan, color: colors.textCyan }}
+                  className="px-4 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
+                  <span>Create & Open Project</span>
+                </button>
+              </div>
             </div>
 
           </div>

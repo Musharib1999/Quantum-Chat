@@ -785,10 +785,10 @@ from engine.orchestrator.quantum_orchestrator import orchestrator
 async def ide_agent_chat_endpoint(req: IDEAgentChatRequest):
     """
     Autonomous Quantum Orchestrator endpoint: plans workflows, chains 33 tools,
-    mutates code, updates continuous canvas, and delivers verified results.
+    calls Groq Llama-3.3-70B, mutates code, updates continuous canvas, and delivers verified results.
     """
     try:
-        res = orchestrator.plan_and_execute(
+        res = await orchestrator.plan_and_execute(
             project_id=req.project_id,
             user_message=req.user_message,
             active_file=req.active_file,
