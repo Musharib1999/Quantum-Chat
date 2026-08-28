@@ -55,15 +55,24 @@ export default function QuantumIDE() {
   const [copilotInput, setCopilotInput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
 
-  // Section 1 (Left Sidebar) state: Open/Closed & Width
+  // Section 1 (Left Sidebar) state: Open/Closed & Width (20% default ratio)
   const [isLeftOpen, setIsLeftOpen] = useState(true);
-  const [leftWidth, setLeftWidth] = useState(240);
+  const [leftWidth, setLeftWidth] = useState(288); // 20% of 1440px
   const isLeftDragging = useRef(false);
 
-  // Section 3 (Right Sidebar) state: Open/Closed & Width
+  // Section 3 (Right Sidebar) state: Open/Closed & Width (40% default ratio)
   const [isRightOpen, setIsRightOpen] = useState(true);
-  const [rightWidth, setRightWidth] = useState(340);
+  const [rightWidth, setRightWidth] = useState(576); // 40% of 1440px
   const isRightDragging = useRef(false);
+
+  // Configure initial 20% (Left) / 40% (Center) / 40% (Right) Ratio based on viewport
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const w = window.innerWidth;
+      setLeftWidth(Math.round(w * 0.20));
+      setRightWidth(Math.round(w * 0.40));
+    }
+  }, []);
 
   const isDark = theme === 'dark';
 
