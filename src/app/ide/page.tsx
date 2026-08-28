@@ -2,7 +2,10 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  GitBranch, 
+  GitBranch,
+  Plus,
+  FolderPlus,
+  Sparkles as SparklesIcon, 
   Play, 
   Zap, 
   Settings, 
@@ -47,6 +50,8 @@ export default function QuantumIDE() {
   const [activeBottomTab, setActiveBottomTab] = useState<'circuit' | 'results' | 'terminal' | 'statevector'>('circuit');
   const [activeModel, setActiveModel] = useState<'groq' | 'runpod'>('groq');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+  const [projectName, setProjectName] = useState('my-quantum-project');
   const [targetBackend, setTargetBackend] = useState('aer_simulator');
   const [optimizationLevel, setOptimizationLevel] = useState<number>(2);
   const [shots, setShots] = useState<number>(1024);
@@ -132,12 +137,17 @@ export default function QuantumIDE() {
     document.addEventListener('mouseup', onMouseUp);
   }, []);
 
-  // Starter file content dictionary
-  const files: Record<string, { name: string; lang: string; content: string }> = {
-    'main.py': {
-      name: 'main.py',
-      lang: 'python',
-      content: `"""
+  // Template Definitions for New Projects
+  const projectTemplates: Record<string, { title: string; desc: string; icon: any; files: Record<string, { name: string; lang: string; content: string }> }> = {
+    'blank': {
+      title: 'Blank Quantum Project',
+      desc: 'Clean 4-qubit parametric ansatz and AerSimulator entrypoint.',
+      icon: '⚛️',
+      files: {
+        'main.py': {
+          name: 'main.py',
+          lang: 'python',
+          content: `"""
 Quantum Guru — Project Entrypoint
 Author: Quantum Developer
 Description: 4-Qubit Parameterized Entangled State & Statevector Simulation
@@ -150,13 +160,8 @@ from qiskit.quantum_info import Statevector, SparsePauliOp
 from qiskit_aer import AerSimulator
 
 def build_quantum_program(num_qubits: int = 4) -> QuantumCircuit:
-    # 1. Quantum Data Encoding Layer (Phase Normalization [0, pi])
     feature_map = ZZFeatureMap(feature_dimension=num_qubits, reps=1, entanglement='linear')
-    
-    # 2. Parameterized Variational Ansatz Layer
     ansatz = RealAmplitudes(num_qubits=num_qubits, reps=2)
-    
-    # 3. Stack layers into unified quantum circuit
     qc = QuantumCircuit(num_qubits)
     qc.compose(feature_map, inplace=True)
     qc.compose(ansatz, inplace=True)
@@ -165,70 +170,133 @@ def build_quantum_program(num_qubits: int = 4) -> QuantumCircuit:
 def main():
     print("⚛️ Initializing Quantum Circuit on AerSimulator...")
     circuit = build_quantum_program(num_qubits=4)
-    
-    # 4. Simulate Statevector & Measure Pauli-Z Expectation
     sample_x = np.array([0.931, 1.963, 0.306, 0.185])
     weights = np.zeros(12)
-    
     bound_circuit = circuit.assign_parameters(np.concatenate([sample_x, weights]))
     state = Statevector(bound_circuit)
-    
     observable = SparsePauliOp.from_list([("Z" + "I" * 3, 1.0)])
     exp_val = float(np.real(state.expectation_value(observable)))
-    
     print(f"✅ Simulation Complete. Expectation <Z_0>: {exp_val:.4f}")
 
 if __name__ == "__main__":
     main()
 `
+        },
+        'quantum.config.json': {
+          name: 'quantum.config.json',
+          lang: 'json',
+          content: `{\n  "project_name": "my-quantum-project",\n  "target_backend": "aer_simulator",\n  "default_shots": 1024,\n  "optimization_level": 2\n}`
+        },
+        'README.md': {
+          name: 'README.md',
+          lang: 'markdown',
+          content: `# ⚛️ Blank Quantum Project\n\nUse \`/execute@program\` or \`/simulate@circuit\` in Copilot chat to run this project.`
+        }
+      }
     },
-    'quantum.config.json': {
-      name: 'quantum.config.json',
-      lang: 'json',
-      content: `{
-  "project_name": "quantum-alpha-scaffold",
-  "version": "1.0.0",
-  "target_backend": "aer_simulator",
-  "default_shots": 1024,
-  "optimization_level": 2,
-  "active_qubits": 4,
-  "error_mitigation": {
-    "enabled": true,
-    "method": "ZNE",
-    "noise_scaling_factors": [1.0, 1.5, 2.0]
-  },
-  "compiler_passes": [
-    "CommutativeCancellation",
-    "ConsolidateBlocks",
-    "Optimize1qGatesDecomposition"
-  ]
-}`
-    },
-    'README.md': {
-      name: 'README.md',
-      lang: 'markdown',
-      content: `# ⚛️ Quantum Guru Project
+    'optimization': {
+      title: '⚡ Optimization & QUBO Starter',
+      desc: 'Binary quadratic models, constraint penalization, and D-Wave SA / QAOA.',
+      icon: '⚡',
+      files: {
+        'portfolio_optimization.py': {
+          name: 'portfolio_optimization.py',
+          lang: 'python',
+          content: `"""
+Quantum Portfolio Optimization (QUBO & QAOA)
+"""
+import numpy as np
 
-Welcome to your Quantum Guru Development Workspace.
+# Asset returns and covariance matrix
+expected_returns = np.array([0.12, 0.18, 0.15, 0.22])
+cov_matrix = np.array([
+    [0.09, 0.02, 0.01, 0.04],
+    [0.02, 0.16, 0.03, 0.05],
+    [0.01, 0.03, 0.08, 0.02],
+    [0.04, 0.05, 0.02, 0.25]
+])
 
-## 🚀 Chat Command Shortcuts
-- \`/execute@program\` — Executes active script in solver terminal.
-- \`/simulate@circuit\` — Renders continuous horizontal circuit canvas.
-- \`/transpile@level2\` — Optimizes circuit depth and cancels redundant gates.
+print("⚡ Building QUBO Objective Matrix...")
+# Minimize: x^T Cov x - q * r^T x + P(sum(x) - K)^2
+print("Target: Select 2 assets out of 4 to maximize Sharpe Ratio.")
 `
+        },
+        'quantum.config.json': {
+          name: 'quantum.config.json',
+          lang: 'json',
+          content: `{\n  "project_name": "portfolio-optimization",\n  "target_backend": "dwave_simulated_annealing",\n  "num_reads": 500\n}`
+        }
+      }
     },
-    'requirements.txt': {
-      name: 'requirements.txt',
-      lang: 'text',
-      content: `qiskit>=1.3.0
-qiskit-aer>=0.14.0
-numpy>=1.26.0
-scipy>=1.12.0
-openfermionpyscf>=0.5
-matplotlib>=3.8.0
+    'chemistry': {
+      title: '🧪 Quantum Chemistry CAS-VQE',
+      desc: 'Molecular orbital integrals, CAS active space, and Ground State Energy.',
+      icon: '🧪',
+      files: {
+        'vqe_chemistry.py': {
+          name: 'vqe_chemistry.py',
+          lang: 'python',
+          content: `"""
+CAS-VQE Molecular Simulation for Lithium Hydride (LiH)
+"""
+print("🧪 Initializing CASCI Active-Space Molecular Hamiltonian...")
+print("Active Spatial Orbitals: 4 | Active Electrons: 2 | Active Qubits: 8")
 `
+        },
+        'quantum.config.json': {
+          name: 'quantum.config.json',
+          lang: 'json',
+          content: `{\n  "project_name": "lih-cas-vqe",\n  "molecule": "LiH",\n  "basis": "sto-3g",\n  "active_orbitals": 4\n}`
+        }
+      }
+    },
+    'qml': {
+      title: '🤖 Quantum Machine Learning (QML)',
+      desc: 'Quantum Kernel (QSVM) and Variational Classifiers with PCA reduction.',
+      icon: '🤖',
+      files: {
+        'qml_classifier.py': {
+          name: 'qml_classifier.py',
+          lang: 'python',
+          content: `"""
+Quantum Kernel Classifier (QSVM) on Iris Flower Dataset
+"""
+print("🤖 Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
+`
+        },
+        'quantum.config.json': {
+          name: 'quantum.config.json',
+          lang: 'json',
+          content: `{\n  "project_name": "iris-qsvm-classifier",\n  "feature_map": "ZZFeatureMap",\n  "active_qubits": 4\n}`
+        }
+      }
     }
   };
+
+  const [projectFiles, setProjectFiles] = useState<Record<string, { name: string; lang: string; content: string }>>(projectTemplates['blank'].files);
+
+  const handleSelectTemplate = (templateKey: string) => {
+    const selected = projectTemplates[templateKey];
+    if (selected) {
+      setProjectFiles(selected.files);
+      const firstFile = Object.keys(selected.files)[0];
+      setActiveFile(firstFile);
+      setProjectName(templateKey === 'blank' ? 'my-quantum-project' : `${templateKey}-project`);
+      setIsNewProjectOpen(false);
+      setChatMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        sender: 'agent',
+        text: `Initialized new workspace: **${selected.title}**. Created entrypoint \`${firstFile}\`.`,
+        toolCall: {
+          name: 'Workspace Scaffold Created',
+          badge: 'Ready',
+          detail: `Loaded ${Object.keys(selected.files).length} project files.`
+        }
+      }]);
+    }
+  };
+
+  const files = projectFiles;
 
   const handleRun = () => {
     setIsRunning(true);
@@ -529,6 +597,17 @@ matplotlib>=3.8.0
                   <PanelLeftClose className="w-3.5 h-3.5" />
                 </button>
               </div>
+            </div>
+
+            {/* Start New Project Action Button */}
+            <div className="p-2 border-b border-slate-200 bg-white">
+              <button
+                onClick={() => setIsNewProjectOpen(true)}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border border-blue-200 rounded-md text-xs font-bold transition-all shadow-2xs cursor-pointer group"
+              >
+                <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
+                <span>Start New Project</span>
+              </button>
             </div>
 
             {/* Project File Tree */}
@@ -937,6 +1016,66 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
         </div>
       </footer>
 
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* START NEW PROJECT TEMPLATE SELECTOR MODAL                     */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isNewProjectOpen && (
+        <div className="absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+            
+            {/* Header */}
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 font-bold">
+                  <FolderPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 font-heading">Start a New Quantum Project</h3>
+                  <p className="text-[11px] text-slate-500">Choose a quantum scaffold or blank workspace</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsNewProjectOpen(false)}
+                className="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Template List */}
+            <div className="p-4 space-y-2.5 overflow-y-auto max-h-[65vh]">
+              {Object.entries(projectTemplates).map(([key, tpl]) => (
+                <div
+                  key={key}
+                  onClick={() => handleSelectTemplate(key)}
+                  className="p-3 rounded-xl border border-slate-200 hover:border-blue-500 bg-white hover:bg-blue-50/40 p-3.5 cursor-pointer transition-all shadow-2xs group flex items-start gap-3"
+                >
+                  <div className="text-xl p-2 rounded-lg bg-slate-100 group-hover:bg-white border border-slate-200 shrink-0">
+                    {tpl.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 flex items-center justify-between">
+                      <span>{tpl.title}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                    <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
+                      {tpl.desc}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-slate-500">
+                      <span>Files:</span>
+                      {Object.keys(tpl.files).map(f => (
+                        <span key={f} className="bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 text-slate-700">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
