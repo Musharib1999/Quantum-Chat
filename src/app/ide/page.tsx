@@ -583,7 +583,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       {/* SETTINGS MODAL                                                */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && (
-        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden animate-in fade-in duration-150">
           <div 
             style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
             className="border rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
@@ -1323,7 +1323,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
       {/* START NEW PROJECT TEMPLATE SELECTOR MODAL                     */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isNewProjectOpen && (
-        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden animate-in fade-in duration-150">
           <div 
             style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
             className="border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
@@ -1396,15 +1396,15 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
       {/* 33 QUANTUM TOOLS: VERTICAL SCROLLABLE MODAL                   */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isToolPaletteOpen && (
-        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden animate-in fade-in duration-150">
           <div 
             style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
-            className="border rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150"
+            className="border rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-150"
           >
             {/* Modal Header */}
             <div 
               style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="px-5 py-3.5 border-b flex items-center justify-between"
+              className="px-5 py-3.5 border-b flex items-center justify-between shrink-0"
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
@@ -1440,7 +1440,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
             {/* Filter & Search Bar */}
             <div 
               style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="p-3 border-b space-y-2.5"
+              className="p-3 border-b space-y-2.5 shrink-0"
             >
               <input 
                 type="text"
@@ -1479,7 +1479,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
             </div>
 
             {/* Modal Body: Vertical Scrollable Tools List */}
-            <div className="p-4 space-y-2.5 overflow-y-auto flex-1 text-xs">
+            <div className="p-4 space-y-2.5 overflow-y-auto flex-1 min-h-0 text-xs">
               {allQuantumTools
                 .filter(t => selectedStudioFilter === 'all' || t.studio === selectedStudioFilter)
                 .filter(t => 
@@ -1540,7 +1540,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
             {/* Modal Footer */}
             <div 
               style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="px-5 py-3 border-t flex items-center justify-between text-xs font-mono"
+              className="px-5 py-3 border-t flex items-center justify-between text-xs font-mono shrink-0"
             >
               <span style={{ color: colors.textMuted }}>
                 Tip: Click any tool to insert its command directly into Copilot chat
@@ -1561,7 +1561,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
       {/* PROJECT MEMORY & AUDIT TRAIL MODAL                            */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isMemoryOpen && (
-        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden animate-in fade-in duration-150">
           <div 
             style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
             className="border rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150"
