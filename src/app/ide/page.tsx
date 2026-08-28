@@ -405,16 +405,24 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             <PanelLeft className="w-4 h-4" />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <img 
+              src="/qg-icon.png" 
+              alt="Quantum Guru Logo" 
+              className="w-6 h-6 rounded-md object-contain"
+            />
             <span className="font-extrabold text-sm tracking-tight font-heading" style={{ color: colors.textPrimary }}>
-              Quantum Guru <span 
-                style={{ 
-                  backgroundColor: colors.bgPill, 
-                  borderColor: colors.border,
-                  color: colors.textAccent 
-                }}
-                className="text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold"
-              >IDE</span>
+              Quantum Guru
+            </span>
+            <span 
+              style={{ 
+                backgroundColor: colors.bgPill, 
+                borderColor: colors.border,
+                color: colors.textMuted 
+              }}
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold"
+            >
+              IDE
             </span>
           </div>
 
