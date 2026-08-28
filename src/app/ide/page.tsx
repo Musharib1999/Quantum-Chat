@@ -699,30 +699,7 @@ print("🤖 Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             }}
             className="border-r flex flex-col shrink-0 relative transition-[width] duration-0"
           >
-            {/* Section 1 Header */}
-            <div 
-              style={{ backgroundColor: isDark ? '#161B22' : '#F1F5F9', borderColor: colors.border }}
-              className="px-3.5 py-2.5 border-b flex items-center justify-between font-heading"
-            >
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>Explorer</span>
-                <span 
-                  style={{ backgroundColor: isDark ? '#21262D' : '#E2E8F0', color: colors.textMain }}
-                  className="text-[9px] font-mono px-1 py-0.2 rounded font-semibold"
-                >
-                  {leftWidth}px
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setIsLeftOpen(false)}
-                  title="Hide Explorer"
-                  className="p-1 rounded-md hover:opacity-75 transition-opacity cursor-pointer"
-                >
-                  <PanelLeftClose className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+            {/* Section 1 Header (Hidden for Seamless Zen Canvas) */}
 
             {/* Start New Project Action Button */}
             <div style={{ backgroundColor: colors.bgSidebar, borderColor: colors.border }} className="p-2 border-b">
@@ -858,85 +835,7 @@ print("🤖 Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           {/* Upper Pane: Monaco Code Editor */}
           <div style={{ borderColor: colors.border }} className="flex-1 flex flex-col min-h-0 border-b">
             
-            {/* Editor Tab Bar */}
-            <div 
-              style={{ backgroundColor: isDark ? '#161B22' : '#F1F5F9', borderColor: colors.border }}
-              className="h-9 border-b flex items-center justify-between px-2 shrink-0"
-            >
-              <div className="flex items-center gap-1">
-                
-                {/* Expand Section 1 Button if Hidden */}
-                {!isLeftOpen && (
-                  <button
-                    onClick={() => setIsLeftOpen(true)}
-                    title="Show Explorer (Section 1)"
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textMain }}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded mr-1.5 border shadow-2xs cursor-pointer"
-                  >
-                    <PanelLeftOpen className="w-3.5 h-3.5" style={{ color: colors.accentBlue }} />
-                    <span>Explorer</span>
-                  </button>
-                )}
-
-                {Object.keys(files).map((fName) => (
-                  <button 
-                    key={fName}
-                    onClick={() => setActiveFile(fName)}
-                    style={{ 
-                      backgroundColor: activeFile === fName ? colors.bgEditor : 'transparent',
-                      borderTopColor: activeFile === fName ? colors.accentBlue : 'transparent',
-                      color: activeFile === fName ? colors.textMain : colors.textMuted
-                    }}
-                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono border-t-2 transition-colors font-bold"
-                  >
-                    <FileCode className="w-3.5 h-3.5" style={{ color: colors.accentBlue }} />
-                    <span>{fName}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-3 text-xs font-mono">
-                <button
-                  onClick={handleRun}
-                  disabled={isRunning}
-                  title="Run Program (Ctrl+Enter)"
-                  style={{ 
-                    backgroundColor: isDark ? '#1F2937' : '#EFF6FF', 
-                    color: colors.accentBlue, 
-                    borderColor: isDark ? '#374151' : '#BFDBFE' 
-                  }}
-                  className="flex items-center gap-1 text-[11px] font-sans font-bold px-2 py-0.5 rounded border transition-all cursor-pointer"
-                >
-                  {isRunning ? <RotateCw className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />}
-                  <span>Run</span>
-                  <span className="text-[9px] font-mono opacity-70">⌃↵</span>
-                </button>
-
-                {/* Expand Section 3 Button if Hidden */}
-                {!isRightOpen && (
-                  <button
-                    onClick={() => setIsRightOpen(true)}
-                    title="Show Copilot (Section 3)"
-                    style={{ 
-                      backgroundColor: isDark ? '#1F2937' : '#EFF6FF', 
-                      color: colors.accentBlue, 
-                      borderColor: isDark ? '#374151' : '#BFDBFE' 
-                    }}
-                    className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-sans font-bold rounded border shadow-2xs cursor-pointer"
-                  >
-                    <PanelRightOpen className="w-3.5 h-3.5" />
-                    <span>Copilot</span>
-                  </button>
-                )}
-
-                <span 
-                  style={{ backgroundColor: isDark ? '#21262D' : '#E2E8F0', color: colors.textMuted }}
-                  className="px-1.5 py-0.5 rounded text-[9px] font-bold"
-                >
-                  Block C
-                </span>
-              </div>
-            </div>
+            {/* Editor Tab Bar (Hidden for Seamless Zen Canvas) */}
 
             {/* Code Contents */}
             <div 
@@ -1109,47 +1008,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
             }}
             className="border-l flex flex-col shrink-0 relative transition-[width] duration-0"
           >
-            {/* Section 3 Header */}
-            <div 
-              style={{ backgroundColor: isDark ? '#161B22' : '#F1F5F9', borderColor: colors.border }}
-              className="px-3.5 py-2.5 border-b flex items-center justify-between font-heading"
-            >
-              <div className="flex items-center gap-2">
-                <div 
-                  style={{ backgroundColor: isDark ? '#1F2937' : '#EFF6FF', color: colors.accentBlue }}
-                  className="w-5 h-5 rounded border border-slate-700/50 flex items-center justify-center font-bold"
-                >
-                  <Bot className="w-3.5 h-3.5" />
-                </div>
-                <span className="text-xs font-bold">Quantum Copilot</span>
-                <span 
-                  style={{ backgroundColor: isDark ? '#21262D' : '#E2E8F0', color: colors.textMain }}
-                  className="text-[9px] font-mono px-1 py-0.2 rounded font-semibold"
-                >
-                  {rightWidth}px
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span 
-                  style={{ 
-                    backgroundColor: isDark ? '#064E3B' : '#ECFDF5', 
-                    color: colors.accentGreen,
-                    borderColor: isDark ? '#059669' : '#A7F3D0' 
-                  }}
-                  className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border"
-                >
-                  Live
-                </span>
-                
-                <button
-                  onClick={() => setIsRightOpen(false)}
-                  title="Hide Copilot"
-                  className="p-1 rounded-md hover:opacity-75 transition-opacity cursor-pointer"
-                >
-                  <PanelRightClose className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+            {/* Section 3 Header (Hidden for Seamless Zen Canvas) */}
 
             {/* Conversation Stream & Tool Execution Cards */}
             <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
