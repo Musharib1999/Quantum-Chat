@@ -241,6 +241,11 @@ if __name__ == "__main__":
           lang: 'json',
           content: `{\n  "project_name": "my-quantum-project",\n  "target_backend": "aer_simulator",\n  "default_shots": 1024,\n  "optimization_level": 2\n}`
         },
+        'MEMORY.md': {
+          name: 'MEMORY.md',
+          lang: 'markdown',
+          content: `# 🧠 Project Memory & Audit Ledger: my-quantum-project\n\n## Turn #1 — CNOT Depth Optimization\n- **User Prompt**: "Optimize the 2-qubit CNOT depth for the active circuit in main.py and explain the reduction."\n- **LLM Reasoning**: Inspected 4-qubit parameterized ansatz. Applied CommutativeCancellation & ConsolidateBlocks (Level 2).\n- **Agent Called**: Quantum Guru Transpiler Agent\n- **Tools Invoked**:\n  - [#19] tools.circuit.transpile_passes (Level 2) -> Depth: 6 to 4 (-33% Depth, 14.2ms)\n- **Code Changes Proposed**:\n  - [MODIFY] main.py (L12-16) -> Optimized commutative cancellation block\n- **Quantum State**:\n  - Target QPU: aer_simulator | Active Qubits: 4 | Depth: 4 | Fidelity: 99.82%`
+        },
         'README.md': {
           name: 'README.md',
           lang: 'markdown',
@@ -276,6 +281,11 @@ print("Target: Select 2 assets out of 4 to maximize Sharpe Ratio.")
           name: 'quantum.config.json',
           lang: 'json',
           content: `{\n  "project_name": "portfolio-optimization",\n  "target_backend": "dwave_simulated_annealing",\n  "num_reads": 500\n}`
+        },
+        'MEMORY.md': {
+          name: 'MEMORY.md',
+          lang: 'markdown',
+          content: `# 🧠 Project Memory & Audit Ledger: portfolio-optimization\n\n## Turn #1 — QUBO Formulation\n- **User Prompt**: "Formulate 4-asset portfolio optimization into QUBO matrix."\n- **Agent Called**: Quantum Guru Optimization Agent\n- **Tools Invoked**: [#01] tools.opt.formulate_problem, [#02] tools.opt.translate_to_qubo`
         }
       }
     },
