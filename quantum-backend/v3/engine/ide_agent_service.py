@@ -138,12 +138,12 @@ def process_ide_chat_request(
         ))
 
         response_text = (
-            f"Executed `{active_file}` on **{target_backend}** (1024 shots).\n\n"
-            f"- **Expectation Value**: $\\langle Z_0 \\rangle = {exp_val}$ Ha\n"
-            f"- **Simulator Fidelity**: **{fid_val}%**\n"
-            f"- **Ground Sample**: `{tool_res.get('optimal_bitstring', '1011')}`\n"
-            f"- **Execution Latency**: `{lat_sec}`\n\n"
-            f"Output streamed to the **Solver Terminal** below."
+            f"Executed `{active_file}` on {target_backend} (1024 shots).\n\n"
+            f"- Expectation Value: $\\langle Z_0 \\rangle = {exp_val}$ Ha\n"
+            f"- Simulator Fidelity: {fid_val}%\n"
+            f"- Ground Sample: `{tool_res.get('optimal_bitstring', '1011')}`\n"
+            f"- Execution Latency: `{lat_sec}`\n\n"
+            f"Output streamed to the Solver Terminal below."
         )
 
     elif "transpile" in msg_lower or "optimize" in msg_lower or "cnot" in msg_lower or "depth" in msg_lower:
@@ -189,12 +189,12 @@ def process_ide_chat_request(
         ))
 
         response_text = (
-            f"I optimized the active circuit in `{active_file}` using **Transpiler Pass Optimization (Level {optimization_level})**.\n\n"
-            f"**Optimization Results:**\n"
-            f"- **Depth**: `6` $\\longrightarrow$ `4` (**-33.3%**)\n"
-            f"- **2-Qubit CNOTs**: Reduced to 2 gates\n"
-            f"- **Editor Canvas**: Code in `{active_file}` has been **updated live**.\n"
-            f"- **Continuous Canvas**: Circuit track below updated with the condensed layout."
+            f"I optimized the active circuit in `{active_file}` using Transpiler Pass Optimization (Level {optimization_level}).\n\n"
+            f"Optimization Results:\n"
+            f"- Depth: `6` $\\longrightarrow$ `4` (-33.3%)\n"
+            f"- 2-Qubit CNOTs: Reduced to 2 gates\n"
+            f"- Editor Canvas: Code in `{active_file}` has been updated live.\n"
+            f"- Continuous Canvas: Circuit track below updated with the condensed layout."
         )
 
     elif "vqe" in msg_lower or "chem" in msg_lower or "molecule" in msg_lower:
@@ -232,10 +232,10 @@ def process_ide_chat_request(
         ))
 
         response_text = (
-            f"Executed **CAS-VQE Ground State Solver (Tool #27)** on H2 molecule.\n\n"
-            f"- **Ground State Energy**: `{tool_res.get('ground_state_energy_hartree', -1.1368)}` Hartree\n"
-            f"- **Hartree-Fock Baseline**: `{tool_res.get('hf_energy_hartree', -1.1167)}` Hartree\n"
-            f"- **Chemical Accuracy**: Reached ({tool_res.get('error_from_fci_mha', 0.5)} mHa error from FCI).\n\n"
+            f"Executed CAS-VQE Ground State Solver (Tool #27) on H2 molecule.\n\n"
+            f"- Ground State Energy: `{tool_res.get('ground_state_energy_hartree', -1.1368)}` Hartree\n"
+            f"- Hartree-Fock Baseline: `{tool_res.get('hf_energy_hartree', -1.1167)}` Hartree\n"
+            f"- Chemical Accuracy: Reached ({tool_res.get('error_from_fci_mha', 0.5)} mHa error from FCI).\n\n"
             f"Results and Hamiltonian convergence history streamed to the Metrics drawer."
         )
 
@@ -256,16 +256,16 @@ def process_ide_chat_request(
         response_text = (
             f"### ⚛️ Quantum Analysis & Live Workspace Inspection\n\n"
             f"Regarding: *\"{user_message}\"*\n\n"
-            f"**1. Active Program Context (`{active_file}`):**\n"
-            f"Your active program is structured with **{telemetry['active_qubits']} qubits** and depth **{telemetry['depth']}** targeting **{target_backend}**.\n"
+            f"1. Active Program Context (`{active_file}`):\n"
+            f"Your active program is structured with {telemetry['active_qubits']} qubits and depth {telemetry['depth']} targeting {target_backend}.\n"
             f"$$\\vert\\psi(\\theta)\\rangle = U_{{\\text{{ansatz}}}}(\\theta) U_{{\\Phi}}(\\mathbf{{x}})\\vert 0^{{\\otimes 4}}\\rangle$$\n\n"
-            f"**2. Mathematical State:**\n"
-            f"- **Expectation Value**: `{telemetry['expectation_val']}`\n"
-            f"- **Statevector Fidelity**: `{telemetry['fidelity']}`\n\n"
-            f"**3. Actions You Can Run Right Now:**\n"
-            f"- Type **`/execute@program`** to measure expectation values.\n"
-            f"- Type **`/transpile@level2`** to reduce depth and automatically rewrite the code in the editor.\n"
-            f"- Click **`+ Connect Tool`** to attach any of the 33 quantum primitives."
+            f"2. Mathematical State:\n"
+            f"- Expectation Value: `{telemetry['expectation_val']}`\n"
+            f"- Statevector Fidelity: `{telemetry['fidelity']}`\n\n"
+            f"3. Actions You Can Run Right Now:\n"
+            f"- Type `/execute@program` to measure expectation values.\n"
+            f"- Type `/transpile@level2` to reduce depth and automatically rewrite the code in the editor.\n"
+            f"- Click `+ Connect Tool` to attach any of the 33 quantum primitives."
         )
 
     try:
