@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { 
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import {
+  GitBranch, 
   Play, 
   Zap, 
   Settings, 
@@ -14,22 +15,20 @@ import {
   Activity, 
   Layers, 
   Cpu, 
-  Maximize2, 
-  Minimize2, 
   RotateCw, 
   Check, 
-  Copy, 
   Send,
-  Sliders,
-  Database,
-  GitBranch,
-  ShieldAlert,
   Bot,
   X,
-  SlidersHorizontal,
   Server,
   Wrench,
-  Command
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  GripVertical,
+  PanelLeft,
+  PanelRight
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -55,6 +54,16 @@ export default function QuantumIDE() {
   const [copilotInput, setCopilotInput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
 
+  // Section 1 (Left Sidebar) state: Open/Closed & Width
+  const [isLeftOpen, setIsLeftOpen] = useState(true);
+  const [leftWidth, setLeftWidth] = useState(240);
+  const isLeftDragging = useRef(false);
+
+  // Section 3 (Right Sidebar) state: Open/Closed & Width
+  const [isRightOpen, setIsRightOpen] = useState(true);
+  const [rightWidth, setRightWidth] = useState(340);
+  const isRightDragging = useRef(false);
+
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -72,6 +81,56 @@ export default function QuantumIDE() {
       }
     }
   ]);
+
+  // Handle Left Sidebar Drag Resize
+  const handleLeftMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isLeftDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isLeftDragging.current) return;
+      const newWidth = Math.max(160, Math.min(480, moveEvent.clientX));
+      setLeftWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      isLeftDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  // Handle Right Sidebar Drag Resize
+  const handleRightMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isRightDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isRightDragging.current) return;
+      const newWidth = Math.max(260, Math.min(650, window.innerWidth - moveEvent.clientX));
+      setRightWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      isRightDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
 
   // Starter file content dictionary
   const files: Record<string, { name: string; lang: string; content: string }> = {
@@ -239,12 +298,22 @@ matplotlib>=3.8.0
     <div className="h-screen w-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] font-sans select-none overflow-hidden relative">
       
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* BLOCK A: MINIMALIST UNCLUTTERED TOP COMMAND BAR               */}
+      {/* BLOCK A: MINIMALIST TOP COMMAND BAR WITH TOGGLE CONTROLS      */}
       {/* ───────────────────────────────────────────────────────────── */}
       <header className="h-12 bg-white border-b border-slate-200 px-4 flex items-center justify-between shrink-0 z-20 shadow-xs">
         
-        {/* Left: Clean Brand & Workspace Breadcrumb */}
-        <div className="flex items-center gap-3">
+        {/* Left: Brand & Toggle Explorer Button */}
+        <div className="flex items-center gap-2.5">
+          
+          {/* Section 1 Toggle Button in Top Bar */}
+          <button
+            onClick={() => setIsLeftOpen(!isLeftOpen)}
+            title={isLeftOpen ? "Hide Explorer (Section 1)" : "Show Explorer (Section 1)"}
+            className={`p-1.5 rounded-md border transition-colors cursor-pointer ${isLeftOpen ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200 hover:bg-slate-50'}`}
+          >
+            <PanelLeft className="w-4 h-4" />
+          </button>
+
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-black text-sm">
               ⚛
@@ -262,12 +331,19 @@ matplotlib>=3.8.0
           </div>
         </div>
 
-        {/* Center: Clean & Uncluttered */}
-        <div className="flex items-center gap-2">
-        </div>
-
-        {/* Right: Settings Modal Trigger & User Profile */}
+        {/* Right: Section 3 Toggle, Settings & User Profile */}
         <div className="flex items-center gap-2.5">
+          
+          {/* Section 3 Toggle Button in Top Bar */}
+          <button
+            onClick={() => setIsRightOpen(!isRightOpen)}
+            title={isRightOpen ? "Hide Copilot (Section 3)" : "Show Copilot (Section 3)"}
+            className={`p-1.5 rounded-md border transition-colors cursor-pointer ${isRightOpen ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200 hover:bg-slate-50'}`}
+          >
+            <PanelRight className="w-4 h-4" />
+          </button>
+
+          {/* Settings Modal Button */}
           <button 
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-md text-xs font-bold transition-all shadow-2xs cursor-pointer"
@@ -286,7 +362,7 @@ matplotlib>=3.8.0
       </header>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* SETTINGS MODAL (HOUSES TARGET QPU, AI ENGINES & COMPILER)     */}
+      {/* SETTINGS MODAL                                                */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && (
         <div className="absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -442,74 +518,112 @@ matplotlib>=3.8.0
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* MAIN WORKSPACE BODY (3-COLUMN SPLIT: EXPLORER / EDITOR / COPILOT) */}
+      {/* MAIN WORKSPACE (SECTION 1 / RESIZER / SECTION 2 / RESIZER / SECTION 3) */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden relative">
         
         {/* ─────────────────────────────────────────────────────────── */}
-        {/* BLOCK B: LEFT FILE EXPLORER & QUANTUM REPOSITORY          */}
+        {/* SECTION 1 (LEFT): FILE EXPLORER & SUB-ENGINES              */}
         {/* ─────────────────────────────────────────────────────────── */}
-        <aside className="w-60 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0">
-          
-          {/* Section Header */}
-          <div className="px-3.5 py-2.5 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700 uppercase tracking-wider bg-slate-100/60 font-heading">
-            <span>Explorer</span>
-            <span className="text-[9px] font-mono bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-bold">Block B</span>
-          </div>
-
-          {/* Project File Tree */}
-          <div className="p-2 space-y-0.5 text-xs flex-1 overflow-y-auto font-mono">
-            <div className="flex items-center gap-1.5 px-2 py-1 text-slate-800 font-bold">
-              <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
-              <span>MY-QUANTUM-PROJECT</span>
-            </div>
-
-            {Object.keys(files).map((fName) => (
-              <div 
-                key={fName}
-                onClick={() => setActiveFile(fName)}
-                className={`flex items-center gap-2 px-6 py-1.5 rounded-md cursor-pointer transition-colors ${activeFile === fName ? 'bg-blue-50 text-blue-800 border border-blue-200 font-bold' : 'text-slate-700 hover:bg-slate-200/60 hover:text-slate-900 font-medium'}`}
-              >
-                <FileCode className="w-3.5 h-3.5 text-slate-500" />
-                <span>{fName}</span>
+        {isLeftOpen ? (
+          <aside 
+            style={{ width: `${leftWidth}px` }}
+            className="bg-slate-50 border-r border-slate-200 flex flex-col shrink-0 relative transition-[width] duration-0"
+          >
+            {/* Section 1 Header with Hide Button & Width Controls */}
+            <div className="px-3.5 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-100/60 font-heading">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Explorer</span>
+                <span className="text-[9px] font-mono bg-slate-200 text-slate-700 px-1 py-0.2 rounded font-semibold">{leftWidth}px</span>
               </div>
-            ))}
-
-            <div className="pt-4 px-2">
-              <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2 font-heading">
-                Active Quantum Sub-Engines
-              </div>
-              <div className="space-y-1.5 text-[11px]">
-                <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-white text-slate-800 border border-slate-200 shadow-2xs font-medium">
-                  <span className="flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 text-blue-600" /> Optimization</span>
-                  <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
-                </div>
-                <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-white text-slate-800 border border-slate-200 shadow-2xs font-medium">
-                  <span className="flex items-center gap-1.5"><Layers className="w-3.5 h-3.5 text-teal-600" /> Chemistry CAS</span>
-                  <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
-                </div>
-                <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-white text-slate-800 border border-slate-200 shadow-2xs font-medium">
-                  <span className="flex items-center gap-1.5"><Cpu className="w-3.5 h-3.5 text-indigo-600" /> QML Engine</span>
-                  <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
-                </div>
+              <div className="flex items-center gap-1">
+                {/* Hide Section 1 Button */}
+                <button
+                  onClick={() => setIsLeftOpen(false)}
+                  title="Hide Explorer"
+                  className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                >
+                  <PanelLeftClose className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
+
+            {/* Project File Tree */}
+            <div className="p-2 space-y-0.5 text-xs flex-1 overflow-y-auto font-mono">
+              <div className="flex items-center gap-1.5 px-2 py-1 text-slate-800 font-bold">
+                <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
+                <span>MY-QUANTUM-PROJECT</span>
+              </div>
+
+              {Object.keys(files).map((fName) => (
+                <div 
+                  key={fName}
+                  onClick={() => setActiveFile(fName)}
+                  className={`flex items-center gap-2 px-6 py-1.5 rounded-md cursor-pointer transition-colors ${activeFile === fName ? 'bg-blue-50 text-blue-800 border border-blue-200 font-bold' : 'text-slate-700 hover:bg-slate-200/60 hover:text-slate-900 font-medium'}`}
+                >
+                  <FileCode className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="truncate">{fName}</span>
+                </div>
+              ))}
+
+              <div className="pt-4 px-2">
+                <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2 font-heading">
+                  Active Quantum Sub-Engines
+                </div>
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-white text-slate-800 border border-slate-200 shadow-2xs font-medium">
+                    <span className="flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 text-blue-600" /> Optimization</span>
+                    <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
+                  </div>
+                  <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-white text-slate-800 border border-slate-200 shadow-2xs font-medium">
+                    <span className="flex items-center gap-1.5"><Layers className="w-3.5 h-3.5 text-teal-600" /> Chemistry CAS</span>
+                    <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
+                  </div>
+                  <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-white text-slate-800 border border-slate-200 shadow-2xs font-medium">
+                    <span className="flex items-center gap-1.5"><Cpu className="w-3.5 h-3.5 text-indigo-600" /> QML Engine</span>
+                    <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">Ready</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        ) : null}
+
+        {/* ── DRAGGABLE RESIZER FOR SECTION 1 (LEFT) ── */}
+        {isLeftOpen && (
+          <div 
+            onMouseDown={handleLeftMouseDown}
+            className="w-1.5 hover:w-2 bg-transparent hover:bg-blue-500/30 active:bg-blue-500 cursor-col-resize z-30 transition-all shrink-0 flex items-center justify-center -ml-0.5 group"
+            title="Drag to resize Section 1 width"
+          >
+            <div className="w-0.5 h-6 bg-slate-300 group-hover:bg-blue-600 rounded" />
           </div>
-        </aside>
+        )}
 
         {/* ───────────────────────────────────────────────────────── */}
-        {/* CENTER COLUMN: CODE EDITOR (TOP) + RUNTIME CANVAS (BOTTOM)*/}
+        {/* SECTION 2 (CENTER): CODE EDITOR + CONTINUOUS CANVAS       */}
         {/* ───────────────────────────────────────────────────────── */}
         <div className="flex-1 flex flex-col min-w-0 bg-white">
           
-          {/* ─────────────────────────────────────────────────────── */}
-          {/* BLOCK C: CENTRAL QUANTUM CODE EDITOR                    */}
-          {/* ─────────────────────────────────────────────────────── */}
+          {/* Upper Pane: Monaco Code Editor */}
           <div className="flex-1 flex flex-col min-h-0 border-b border-slate-200">
             
             {/* Editor Tab Bar */}
             <div className="h-9 bg-slate-100/70 border-b border-slate-200 flex items-center justify-between px-2 shrink-0">
               <div className="flex items-center gap-1">
+                
+                {/* Expand Section 1 Button if Hidden */}
+                {!isLeftOpen && (
+                  <button
+                    onClick={() => setIsLeftOpen(true)}
+                    title="Show Explorer (Section 1)"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded mr-1.5 shadow-2xs cursor-pointer"
+                  >
+                    <PanelLeftOpen className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Explorer</span>
+                  </button>
+                )}
+
                 {Object.keys(files).map((fName) => (
                   <button 
                     key={fName}
@@ -533,30 +647,37 @@ matplotlib>=3.8.0
                   <span>Run</span>
                   <span className="text-[9px] text-slate-400 font-mono">⌃↵</span>
                 </button>
+
+                {/* Expand Section 3 Button if Hidden */}
+                {!isRightOpen && (
+                  <button
+                    onClick={() => setIsRightOpen(true)}
+                    title="Show Copilot (Section 3)"
+                    className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-sans font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded shadow-2xs cursor-pointer"
+                  >
+                    <PanelRightOpen className="w-3.5 h-3.5" />
+                    <span>Copilot</span>
+                  </button>
+                )}
+
                 <span className="bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded text-[9px] font-bold">Block C (Monaco Editor)</span>
-                <span className="font-semibold text-slate-800">Python 3.13</span>
               </div>
             </div>
 
-            {/* Code Editor Canvas */}
+            {/* Code Contents */}
             <div className="flex-1 overflow-auto p-4 font-mono text-xs text-slate-900 leading-relaxed bg-[#FAFAFA] flex">
-              {/* Line Numbers */}
               <div className="pr-4 text-slate-400 select-none text-right font-mono border-r border-slate-200 mr-4 space-y-0.5">
                 {files[activeFile].content.split('\n').map((_, idx) => (
                   <div key={idx}>{idx + 1}</div>
                 ))}
               </div>
-
-              {/* Code Contents */}
               <pre className="flex-1 overflow-x-auto text-slate-900 whitespace-pre font-medium font-mono">
                 {files[activeFile].content}
               </pre>
             </div>
           </div>
 
-          {/* ─────────────────────────────────────────────────────── */}
-          {/* BLOCK E: BOTTOM QUANTUM RUNTIME & CONTINUOUS CIRCUIT CANVAS*/}
-          {/* ─────────────────────────────────────────────────────── */}
+          {/* Lower Pane: Quantum Runtime & Continuous Circuit Canvas */}
           <div className="h-56 bg-slate-50 flex flex-col shrink-0">
             
             {/* Drawer Tabs & Metrics */}
@@ -587,7 +708,6 @@ matplotlib>=3.8.0
                 </button>
               </div>
 
-              {/* Circuit Telemetry */}
               <div className="flex items-center gap-3 text-[11px] font-mono text-slate-600">
                 <span>Active Qubits: <b className="text-slate-900">4</b></span>
                 <span>Depth: <b className="text-slate-900">6</b></span>
@@ -596,7 +716,7 @@ matplotlib>=3.8.0
               </div>
             </div>
 
-            {/* Bottom Panel Content View */}
+            {/* Bottom Content View */}
             <div className="flex-1 overflow-x-auto overflow-y-auto p-3 font-mono text-xs text-slate-900 bg-white">
               
               {activeBottomTab === 'circuit' && (
@@ -651,113 +771,136 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
           </div>
         </div>
 
-        {/* ─────────────────────────────────────────────────────── */}
-        {/* BLOCK D: RIGHT AGENTIC QUANTUM COPILOT                  */}
-        {/* ─────────────────────────────────────────────────────── */}
-        <aside className="w-80 bg-slate-50 border-l border-slate-200 flex flex-col shrink-0">
-          
-          {/* Copilot Header */}
-          <div className="px-3.5 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-100/60">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold">
-                <Bot className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-xs font-bold text-slate-900 font-heading">Quantum Copilot</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[9px] font-mono text-emerald-800 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">Live</span>
-              <span className="text-[9px] font-mono bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-bold">Block D</span>
-            </div>
+        {/* ── DRAGGABLE RESIZER FOR SECTION 3 (RIGHT) ── */}
+        {isRightOpen && (
+          <div 
+            onMouseDown={handleRightMouseDown}
+            className="w-1.5 hover:w-2 bg-transparent hover:bg-blue-500/30 active:bg-blue-500 cursor-col-resize z-30 transition-all shrink-0 flex items-center justify-center -mr-0.5 group"
+            title="Drag to resize Section 3 width"
+          >
+            <div className="w-0.5 h-6 bg-slate-300 group-hover:bg-blue-600 rounded" />
           </div>
+        )}
 
-          {/* Conversation Stream & Tool Execution Cards */}
-          <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
-            
-            {chatMessages.map((msg) => (
-              <div key={msg.id} className="space-y-2">
-                {msg.sender === 'user' ? (
-                  <div className="bg-white border border-slate-200 rounded-xl p-3 text-slate-900 shadow-2xs font-medium">
-                    <div className="text-[10px] font-bold text-slate-500 mb-1">You</div>
-                    <div>{msg.text}</div>
-                  </div>
-                ) : (
-                  <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 text-slate-800 shadow-2xs">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                      <span className="text-[10px] font-bold text-blue-700 flex items-center gap-1 font-heading">
-                        <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
-                      </span>
-                      <span className="text-[9px] font-mono text-slate-500 font-semibold">{activeModel === 'groq' ? 'Groq (118ms)' : 'RunPod (240ms)'}</span>
+        {/* ─────────────────────────────────────────────────────────── */}
+        {/* SECTION 3 (RIGHT): AGENTIC QUANTUM COPILOT                 */}
+        {/* ─────────────────────────────────────────────────────────── */}
+        {isRightOpen ? (
+          <aside 
+            style={{ width: `${rightWidth}px` }}
+            className="bg-slate-50 border-l border-slate-200 flex flex-col shrink-0 relative transition-[width] duration-0"
+          >
+            {/* Section 3 Header with Hide Button & Width Controls */}
+            <div className="px-3.5 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-100/60 font-heading">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold">
+                  <Bot className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-900">Quantum Copilot</span>
+                <span className="text-[9px] font-mono bg-slate-200 text-slate-700 px-1 py-0.2 rounded font-semibold">{rightWidth}px</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-mono text-emerald-800 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">Live</span>
+                
+                {/* Hide Section 3 Button */}
+                <button
+                  onClick={() => setIsRightOpen(false)}
+                  title="Hide Copilot"
+                  className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                >
+                  <PanelRightClose className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Conversation Stream & Tool Execution Cards */}
+            <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
+              
+              {chatMessages.map((msg) => (
+                <div key={msg.id} className="space-y-2">
+                  {msg.sender === 'user' ? (
+                    <div className="bg-white border border-slate-200 rounded-xl p-3 text-slate-900 shadow-2xs font-medium">
+                      <div className="text-[10px] font-bold text-slate-500 mb-1">You</div>
+                      <div>{msg.text}</div>
                     </div>
-
-                    <p className="leading-relaxed text-slate-800">
-                      {msg.text}
-                    </p>
-
-                    {/* Invoked Tool Badge if present */}
-                    {msg.toolCall && (
-                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 space-y-1">
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className="font-bold text-slate-900 flex items-center gap-1 font-heading">
-                            <Check className="w-3 h-3 text-emerald-600" /> {msg.toolCall.name}
-                          </span>
-                          <span className="font-mono text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded font-bold text-[9px]">{msg.toolCall.badge}</span>
-                        </div>
-                        <div className="text-[10px] text-slate-600 font-mono">
-                          {msg.toolCall.detail}
-                        </div>
+                  ) : (
+                    <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 text-slate-800 shadow-2xs">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                        <span className="text-[10px] font-bold text-blue-700 flex items-center gap-1 font-heading">
+                          <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-500 font-semibold">{activeModel === 'groq' ? 'Groq (118ms)' : 'RunPod (240ms)'}</span>
                       </div>
-                    )}
-                  </div>
-                )}
+
+                      <p className="leading-relaxed text-slate-800">
+                        {msg.text}
+                      </p>
+
+                      {msg.toolCall && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 space-y-1">
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-bold text-slate-900 flex items-center gap-1 font-heading">
+                              <Check className="w-3 h-3 text-emerald-600" /> {msg.toolCall.name}
+                            </span>
+                            <span className="font-mono text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded font-bold text-[9px]">{msg.toolCall.badge}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-600 font-mono">
+                            {msg.toolCall.detail}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+            </div>
+
+            {/* Copilot Input Box & Slash Shortcuts */}
+            <div className="p-3 border-t border-slate-200 bg-white space-y-2">
+              
+              {/* Interactive Slash Command Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] font-mono text-slate-700 font-bold">
+                <button 
+                  onClick={() => handleSendMessage('/execute@program')}
+                  className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer transition-colors shrink-0 flex items-center gap-1"
+                >
+                  <Play className="w-2.5 h-2.5 fill-current" /> /execute@program
+                </button>
+                <button 
+                  onClick={() => handleSendMessage('/simulate@circuit')}
+                  className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer transition-colors shrink-0 flex items-center gap-1"
+                >
+                  <Zap className="w-2.5 h-2.5" /> /simulate@circuit
+                </button>
+                <button 
+                  onClick={() => handleSendMessage('/transpile@level2')}
+                  className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer transition-colors shrink-0"
+                >
+                  /transpile@level2
+                </button>
               </div>
-            ))}
 
-          </div>
-
-          {/* Copilot Input Box & Slash Shortcuts */}
-          <div className="p-3 border-t border-slate-200 bg-white space-y-2">
-            
-            {/* Interactive Slash Command Chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] font-mono text-slate-700 font-bold">
-              <button 
-                onClick={() => handleSendMessage('/execute@program')}
-                className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer transition-colors shrink-0 flex items-center gap-1"
-              >
-                <Play className="w-2.5 h-2.5 fill-current" /> /execute@program
-              </button>
-              <button 
-                onClick={() => handleSendMessage('/simulate@circuit')}
-                className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer transition-colors shrink-0 flex items-center gap-1"
-              >
-                <Zap className="w-2.5 h-2.5" /> /simulate@circuit
-              </button>
-              <button 
-                onClick={() => handleSendMessage('/transpile@level2')}
-                className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer transition-colors shrink-0"
-              >
-                /transpile@level2
-              </button>
+              {/* Input form */}
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg p-1.5 focus-within:border-blue-500 focus-within:bg-white transition-all shadow-2xs">
+                <input 
+                  type="text"
+                  value={copilotInput}
+                  onChange={(e) => setCopilotInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                  placeholder="Ask Copilot or try /execute@program..."
+                  className="flex-1 bg-transparent border-none outline-hidden text-xs text-slate-900 font-medium placeholder:text-slate-400 px-1 font-sans"
+                />
+                <button 
+                  onClick={() => handleSendMessage()}
+                  className="w-6 h-6 rounded bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Send className="w-3 h-3" />
+                </button>
+              </div>
             </div>
-
-            {/* Input form */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg p-1.5 focus-within:border-blue-500 focus-within:bg-white transition-all shadow-2xs">
-              <input 
-                type="text"
-                value={copilotInput}
-                onChange={(e) => setCopilotInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
-                placeholder="Ask Copilot or try /execute@program..."
-                className="flex-1 bg-transparent border-none outline-hidden text-xs text-slate-900 font-medium placeholder:text-slate-400 px-1 font-sans"
-              />
-              <button 
-                onClick={() => handleSendMessage()}
-                className="w-6 h-6 rounded bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
-              >
-                <Send className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        </aside>
+          </aside>
+        ) : null}
 
       </div>
 
@@ -776,8 +919,9 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
 
         <div className="flex items-center gap-4">
           <span>Active File: <b className="text-slate-800">{activeFile}</b></span>
-          <span>Optimization: <b className="text-slate-800">Level {optimizationLevel}</b></span>
-          <span className="bg-slate-200 text-slate-800 px-1 py-0.5 rounded text-[8px] font-bold">Block F (Status Bar)</span>
+          <span>Section 1: <b className="text-slate-800">{isLeftOpen ? `${leftWidth}px` : 'Hidden'}</b></span>
+          <span>Section 3: <b className="text-slate-800">{isRightOpen ? `${rightWidth}px` : 'Hidden'}</b></span>
+          <span className="bg-slate-200 text-slate-800 px-1 py-0.5 rounded text-[8px] font-bold">Block F</span>
         </div>
       </footer>
 
