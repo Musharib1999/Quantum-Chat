@@ -1146,11 +1146,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
                   className="w-full bg-transparent border-none outline-hidden text-xs font-medium font-sans resize-none placeholder:opacity-40 leading-relaxed"
                 />
                 
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[10px] font-mono select-none" style={{ color: colors.textMuted }}>
-                    <span style={{ color: colors.textCyan }}>Enter</span> to send • <span style={{ color: colors.textCyan }}>Shift+Enter</span> for new line
-                  </span>
-
+                <div className="flex items-center justify-end pt-1">
                   <button 
                     onClick={() => handleSendMessage()}
                     style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
