@@ -916,13 +916,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         {/* ───────────────────────────────────────────────────────── */}
         {/* SECTION 2 (CENTER): CODE EDITOR + CONTINUOUS CANVAS       */}
         {/* ───────────────────────────────────────────────────────── */}
-        <div style={{ backgroundColor: colors.bgEditor }} className="flex-1 flex flex-col min-w-0">
+        <div style={{ backgroundColor: colors.bgEditor }} className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative">
           
           {/* Upper Pane: Interactive Monaco Code Canvas */}
-          <div style={{ borderColor: colors.border }} className="flex-1 flex flex-col min-h-0 border-b">
+          <div style={{ borderColor: colors.border }} className="flex-1 flex flex-col min-h-0 overflow-hidden border-b">
             <div 
               style={{ backgroundColor: colors.bgEditor, color: colors.textPrimary }}
-              className="flex-1 overflow-auto p-4 font-mono text-xs leading-relaxed flex"
+              className="flex-1 min-h-0 overflow-auto p-4 font-mono text-xs leading-relaxed flex"
             >
               {/* Line Numbers */}
               <div 
@@ -971,7 +971,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           {/* Lower Pane: Dynamic Runtime & Continuous Circuit Canvas */}
           <div 
             style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-            className="h-56 flex flex-col shrink-0 border-t"
+            className="h-60 max-h-[45vh] flex flex-col shrink-0 border-t min-h-0 overflow-hidden"
           >
             {/* Drawer Tabs & Dynamic Metrics */}
             <div 
@@ -1027,10 +1027,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               </div>
             </div>
 
-            {/* Bottom Content View (Dynamic) */}
+            {/* Bottom Content View (Dynamic Scroll Container) */}
             <div 
               style={{ backgroundColor: colors.bgEditor, color: colors.textPrimary }}
-              className="flex-1 overflow-x-auto overflow-y-auto p-3 font-mono text-xs"
+              className="flex-1 min-h-0 overflow-x-auto overflow-y-auto p-3 font-mono text-xs"
             >
               {activeBottomTab === 'circuit' && (
                 <div className="space-y-1">
@@ -1238,7 +1238,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       handleSendMessage(); 
                     } 
                   }}
-                  placeholder="Ask Copilot, describe a quantum algorithm, or connect a tool with '+'..."
+                  placeholder="Ask Quantum Copilot or describe a quantum objective (e.g. optimize portfolio)..."
                   style={{ color: colors.textPrimary }}
                   className="w-full bg-transparent border-none outline-hidden text-xs font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
                 />
@@ -1304,7 +1304,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             title="Click to switch AI Engine in Settings"
             className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
           >
-            <span>AI Engine: <span className="underline decoration-dotted underline-offset-2" style={{ color: colors.textAmber }}>{activeModel === 'groq' ? 'Groq (Llama-3.3)' : 'RunPod (Qwen-27B)'}</span></span>
+            <span>AI Engine: <span className="underline decoration-dotted underline-offset-2" style={{ color: colors.textAmber }}>{activeModel === 'groq' ? 'Qwen 3.6 27B (Groq)' : 'Qwen 3 32B (RunPod)'}</span></span>
           </button>
         </div>
 
