@@ -8,7 +8,8 @@ import {
   Zap, 
   Layers, 
   Compass, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronDown, 
   ArrowRight, 
   Check, 
   Terminal, 
@@ -1004,45 +1005,53 @@ export default function QuantumMarketplacePage() {
       </header>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* HERO & INTENT-FIRST SEARCH                                    */}
+      {/* 1ST FOLD: HERO & INTENT SEARCH (VERTICALLY CENTERED)          */}
       {/* ───────────────────────────────────────────────────────────── */}
       <section 
         style={{ 
           borderColor: colors.border,
           backgroundColor: colors.bgHeader
         }}
-        className="border-b py-10 px-6 shrink-0 transition-colors"
+        className="min-h-[calc(100vh-3.5rem)] flex flex-col items-center justify-between px-6 py-12 border-b shrink-0 transition-colors relative"
       >
-        <div className="max-w-4xl mx-auto text-center space-y-4">
-          <h1 className="text-3xl md:text-4xl font-normal font-heading tracking-tight" style={{ color: colors.textPrimary }}>
+        <div className="w-full" />
+
+        {/* Center Container */}
+        <div className="max-w-3xl w-full text-center space-y-6 my-auto">
+          <h1 className="text-3xl md:text-5xl font-normal font-heading tracking-tight leading-tight" style={{ color: colors.textPrimary }}>
             Explore 36 Autonomous Quantum Computing & Simulation Services
           </h1>
 
-          <p className="text-sm max-w-2xl mx-auto leading-relaxed" style={{ color: colors.textMuted }}>
+          <p className="text-sm md:text-base max-w-2xl mx-auto leading-relaxed" style={{ color: colors.textMuted }}>
             Select a specialized quantum capability, provide your problem constraints or molecular dataset, and let Quantum Guru plan and execute the workflow.
           </p>
 
           {/* Search Input Box */}
           <div className="pt-2 max-w-2xl mx-auto relative">
-            <div className="relative flex items-center">
-              <Search className="w-4 h-4 absolute left-3.5 pointer-events-none" style={{ color: colors.textMuted }} />
+            <div className="relative flex items-center shadow-lg rounded-2xl">
+              <Search className="w-4 h-4 absolute left-4 pointer-events-none" style={{ color: colors.textMuted }} />
               <input
                 type="text"
                 placeholder="What do you want to accomplish? (e.g. Optimize portfolio, CAS-VQE for H2, Grover Search)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
                 style={{ 
                   backgroundColor: colors.bgCard, 
                   borderColor: colors.border,
                   color: colors.textPrimary 
                 }}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-xs font-mono outline-hidden focus:border-sky-500 transition-all shadow-inner"
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl border text-sm font-mono outline-hidden focus:border-sky-500 transition-all"
               />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
                   style={{ color: colors.textMuted }}
-                  className="absolute right-3 hover:opacity-80 cursor-pointer"
+                  className="absolute right-4 hover:opacity-80 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1050,47 +1059,76 @@ export default function QuantumMarketplacePage() {
             </div>
 
             {/* Popular Goal Chips */}
-            <div className="flex items-center justify-center gap-1.5 flex-wrap pt-3 text-[11px] font-mono">
+            <div className="flex items-center justify-center gap-2 flex-wrap pt-4 text-xs font-mono">
               <span style={{ color: colors.textMuted }}>Popular goals:</span>
               <button 
-                onClick={() => { setSearchQuery('portfolio'); setSelectedCategory('optimization'); }}
+                onClick={() => { 
+                  setSearchQuery('portfolio'); 
+                  setSelectedCategory('optimization'); 
+                  document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
-                className="px-2 py-0.5 rounded border hover:border-sky-500 transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg border hover:border-sky-500 transition-colors cursor-pointer"
               >
                 Optimize a business problem
               </button>
               <button 
-                onClick={() => { setSearchQuery('vqe'); setSelectedCategory('chemistry'); }}
+                onClick={() => { 
+                  setSearchQuery('vqe'); 
+                  setSelectedCategory('chemistry'); 
+                  document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textEmerald }}
-                className="px-2 py-0.5 rounded border hover:border-emerald-500 transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg border hover:border-emerald-500 transition-colors cursor-pointer"
               >
                 Solve molecular chemistry
               </button>
               <button 
-                onClick={() => { setSearchQuery('grover'); setSelectedCategory('algorithms'); }}
+                onClick={() => { 
+                  setSearchQuery('grover'); 
+                  setSelectedCategory('algorithms'); 
+                  document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textAmber }}
-                className="px-2 py-0.5 rounded border hover:border-amber-500 transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg border hover:border-amber-500 transition-colors cursor-pointer"
               >
                 Design a quantum algorithm
               </button>
               <button 
-                onClick={() => { setSearchQuery('qsvm'); setSelectedCategory('qml'); }}
+                onClick={() => { 
+                  setSearchQuery('qsvm'); 
+                  setSelectedCategory('qml'); 
+                  document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textSkyBlue }}
-                className="px-2 py-0.5 rounded border hover:border-blue-500 transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg border hover:border-blue-500 transition-colors cursor-pointer"
               >
                 Train a QML model
               </button>
             </div>
           </div>
         </div>
+
+        {/* Bottom Fold Indicator */}
+        <div className="pt-8 flex flex-col items-center">
+          <button
+            onClick={() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ color: colors.textMuted }}
+            className="flex flex-col items-center gap-1.5 text-xs font-mono hover:text-sky-400 transition-colors cursor-pointer group"
+          >
+            <span>Explore 36 Capabilities Below</span>
+            <ChevronDown className="w-4 h-4 animate-bounce" style={{ color: colors.textCyan }} />
+          </button>
+        </div>
       </section>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* CATEGORY FILTER TABS                                          */}
+      {/* 2ND FOLD: STICKY CATEGORY FILTER BAR & CAPABILITY CATALOG     */}
       {/* ───────────────────────────────────────────────────────────── */}
+      <div id="catalog-section" className="scroll-mt-14" />
       <section 
         style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-        className="border-b px-6 py-3 shrink-0 transition-colors"
+        className="border-b px-6 py-3 sticky top-14 z-20 transition-colors shadow-xs backdrop-blur-md"
       >
         <div className="max-w-6xl mx-auto flex items-center justify-between overflow-x-auto gap-2">
           <div className="flex items-center gap-1.5 text-xs font-mono">
