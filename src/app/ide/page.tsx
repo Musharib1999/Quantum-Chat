@@ -1238,7 +1238,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               {/* Input Form with Integrated Slash Actions in Footer */}
               <div 
                 style={{ backgroundColor: colors.bgInput, borderColor: colors.border }}
-                className="flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs focus-within:border-sky-500 min-h-[82px] space-y-2"
+                className={`flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs min-h-[82px] space-y-2 ${
+                  isDark ? 'focus-within:border-[#444444]' : 'focus-within:border-[#CBD5E1]'
+                }`}
               >
                 <textarea 
                   rows={2}
@@ -1251,8 +1253,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     } 
                   }}
                   placeholder="Ask Quantum Copilot or describe a quantum objective (e.g. optimize portfolio)..."
-                  style={{ color: colors.textPrimary }}
-                  className="w-full bg-transparent border-none outline-hidden text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
+                  style={{ color: colors.textPrimary, outline: 'none', border: 'none', boxShadow: 'none' }}
+                  className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
                 />
                 
                 <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
