@@ -606,30 +606,50 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           toolCall: data.tool_call || undefined
         }]);
 
-        // 2. Dynamically Mutate Code in Monaco Editor & Persist to Workspace
-        if (data.updated_code) {
-          const newCode = data.updated_code;
-          const targetFileKey = projectFiles[activeFile] ? activeFile : (Object.keys(projectFiles).find(f => f.endsWith('.py')) || Object.keys(projectFiles)[0] || 'main.py');
-          if (targetFileKey !== activeFile) {
-            setActiveFile(targetFileKey);
-          }
+        // 2. Dynamically Mutate Code & MEMORY.md in Workspace
+        if (data.updated_code || data.memory_md) {
           setProjectFiles(prev => {
-            const updated = {
-              ...prev,
-              [targetFileKey]: {
-                ...(prev[targetFileKey] || { name: targetFileKey, language: 'python' }),
-                content: newCode
+            const updated = { ...prev };
+
+            if (data.updated_code) {
+              const newCode = data.updated_code;
+              const targetFileKey = updated[activeFile] && activeFile !== 'MEMORY.md' && activeFile !== 'quantum.config.json'
+                ? activeFile 
+                : (Object.keys(updated).find(f => f.endsWith('.py')) || Object.keys(updated)[0] || 'main.py');
+              
+              if (activeFile !== 'MEMORY.md' && targetFileKey !== activeFile) {
+                setActiveFile(targetFileKey);
               }
-            };
-            // Also sync into allProjects workspace store
+              updated[targetFileKey] = {
+                ...(updated[targetFileKey] || { name: targetFileKey, language: 'python' }),
+                content: newCode
+              };
+            }
+
+            if (data.memory_md) {
+              updated['MEMORY.md'] = {
+                name: 'MEMORY.md',
+                language: 'markdown',
+                content: data.memory_md
+              };
+            }
+
+            // Sync into allProjects workspace store
             setAllProjects(projPrev => ({
               ...projPrev,
               [projectName]: {
-                ...projPrev[projectName],
+                ...(projPrev[projectName] || {}),
                 files: updated
               }
             }));
-            saveProjectToDatabase(projectName, { title: projectName, desc: '', files: updated }, targetFileKey, data.runtime_telemetry || runtimeMetrics);
+
+            saveProjectToDatabase(
+              projectName, 
+              { title: projectName, desc: '', files: updated }, 
+              activeFile, 
+              data.runtime_telemetry || runtimeMetrics
+            );
+
             return updated;
           });
         }

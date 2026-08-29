@@ -160,6 +160,7 @@ class OrchestratorResult(BaseModel):
     workflow_steps: List[WorkflowStep] = Field(default_factory=list)
     response_text: str
     updated_code: Optional[str] = None
+    memory_md: Optional[str] = None
     runtime_telemetry: Dict[str, Any] = Field(default_factory=dict)
     scientific_verdict: Optional[str] = None
 
@@ -558,7 +559,7 @@ if __name__ == "__main__":
             ]
         }
 
-        self._record_memory(project_id, msg, response_text, steps, active_file, backend, num_q, depth_val)
+        mem_md = self._record_memory(project_id, msg, response_text, steps, active_file, backend, num_q, depth_val)
 
         return OrchestratorResult(
             success=True,
@@ -566,6 +567,7 @@ if __name__ == "__main__":
             workflow_steps=steps,
             response_text=response_text,
             updated_code=updated_code,
+            memory_md=mem_md,
             runtime_telemetry=telemetry,
             scientific_verdict=f"Chemical accuracy achieved for {mol['name']} (< 1.6 mHa error)."
         )
@@ -709,7 +711,7 @@ if __name__ == "__main__":
             ]
         }
 
-        self._record_memory(project_id, msg, response_text, steps, active_file, backend, num_q, d_val)
+        mem_md = self._record_memory(project_id, msg, response_text, steps, active_file, backend, num_q, d_val)
 
         return OrchestratorResult(
             success=True,
@@ -717,6 +719,7 @@ if __name__ == "__main__":
             workflow_steps=steps,
             response_text=response_text,
             updated_code=code,
+            memory_md=mem_md,
             runtime_telemetry=telemetry
         )
 
@@ -785,7 +788,7 @@ if __name__ == "__main__":
             ]
         }
 
-        self._record_memory(project_id, msg, response_text, steps, active_file, backend, 4, 4)
+        mem_md = self._record_memory(project_id, msg, response_text, steps, active_file, backend, 4, 4)
 
         return OrchestratorResult(
             success=True,
@@ -793,6 +796,7 @@ if __name__ == "__main__":
             workflow_steps=steps,
             response_text=response_text,
             updated_code=code,
+            memory_md=mem_md,
             runtime_telemetry=telemetry
         )
 
@@ -851,7 +855,7 @@ if __name__ == "__main__":
             ]
         }
 
-        self._record_memory(project_id, msg, response_text, steps, active_file, backend, 4, 6)
+        mem_md = self._record_memory(project_id, msg, response_text, steps, active_file, backend, 4, 6)
 
         return OrchestratorResult(
             success=True,
@@ -859,10 +863,11 @@ if __name__ == "__main__":
             workflow_steps=steps,
             response_text=response_text,
             updated_code=extracted_code,
+            memory_md=mem_md,
             runtime_telemetry=telemetry
         )
 
-    def _record_memory(self, project_id, msg, response_text, steps, active_file, backend, num_q, depth):
+    def _record_memory(self, project_id, msg, response_text, steps, active_file, backend, num_q, depth) -> str:
         try:
             tool_logs = [
                 ToolInvocationLog(
@@ -886,8 +891,10 @@ if __name__ == "__main__":
                     quantum_state=QuantumStateSnapshot(target_backend=backend, active_qubits=num_q, circuit_depth=depth, fidelity=0.9982)
                 )
             )
+            return memory_manager.render_markdown(project_id)
         except Exception as e:
             print(f"Error persisting memory: {e}")
+            return f"# 🧠 Project Memory: {project_id}\n\n## Turn\n- Prompt: {msg}" 
 
 # Global orchestrator singleton
 orchestrator = QuantumOrchestrator()
