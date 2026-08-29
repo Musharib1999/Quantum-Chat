@@ -1176,7 +1176,7 @@ export default function QuantumMarketplacePage() {
                       onClick={() => handleOpenSandbox(cap)}
                       className="px-3 py-1.5 rounded-lg border border-[#33A8DB]/50 bg-[#33A8DB]/10 text-[#33A8DB] text-xs font-mono hover:bg-[#33A8DB]/20 transition-colors flex items-center gap-1 cursor-pointer"
                     >
-                      <span>Try Service</span>
+                      <span>I need this service</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
