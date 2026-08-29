@@ -1303,7 +1303,11 @@ export default function QuantumMarketplacePage() {
                 <div
                   key={cap.id}
                   style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                  className="rounded-xl border p-5 flex flex-col justify-between space-y-4 hover:border-sky-500/60 transition-all duration-200 shadow-xs group relative"
+                  className={`rounded-xl border p-5 flex flex-col justify-between space-y-4 transition-all duration-200 ease-out hover:-translate-y-0.5 group relative ${
+                    isDark 
+                      ? 'hover:shadow-[0_12px_30px_-8px_rgba(51,168,219,0.18)] hover:border-sky-500/50' 
+                      : 'hover:shadow-[0_14px_28px_-6px_rgba(15,23,42,0.08),0_4px_10px_-2px_rgba(51,168,219,0.06)] hover:border-sky-400/50'
+                  }`}
                 >
                   {/* Top: Category Tag (Left) + I Need This Service Button (Right) */}
                   <div className="space-y-3">
@@ -1386,7 +1390,12 @@ export default function QuantumMarketplacePage() {
               {PREBUILT_WORKFLOWS.map((wf) => (
                 <div 
                   key={wf.id}
-                  className="rounded-xl border border-[#222222] bg-[#141414] p-6 space-y-4 shadow-sm hover:border-[#33A8DB]/60 transition-all"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                  className={`rounded-xl border p-6 space-y-4 transition-all duration-200 ease-out hover:-translate-y-0.5 ${
+                    isDark 
+                      ? 'hover:shadow-[0_12px_30px_-8px_rgba(51,168,219,0.18)] hover:border-sky-500/50' 
+                      : 'hover:shadow-[0_14px_28px_-6px_rgba(15,23,42,0.08),0_4px_10px_-2px_rgba(51,168,219,0.06)] hover:border-sky-400/50'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-[#33A8DB]/40 text-[#33A8DB] bg-[#33A8DB]/10">
