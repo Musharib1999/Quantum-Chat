@@ -1168,7 +1168,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             className="border-l flex flex-col shrink-0 relative transition-[width] duration-0"
           >
             {/* Conversation Stream & Tool Execution Cards */}
-            <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
+            <div className="flex-1 p-3 overflow-y-auto space-y-3 text-sm">
               {chatMessages.map((msg) => (
                 <div key={msg.id} className="space-y-2">
                   {msg.sender === 'user' ? (
@@ -1289,7 +1289,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   }}
                   placeholder="Ask Quantum Copilot or describe a quantum objective (e.g. optimize portfolio)..."
                   style={{ color: colors.textPrimary }}
-                  className="w-full bg-transparent border-none outline-hidden text-xs font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
+                  className="w-full bg-transparent border-none outline-hidden text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
                 />
                 
                 <div className="flex items-center justify-between pt-1">
