@@ -24,6 +24,18 @@ from ..memory.project_memory import (
 from ..groq_client import call_groq
 
 MOLECULE_DATABASE = {
+    "c3h6o": {
+        "name": "Acetone / Propanal (C3H6O)",
+        "formula": "C3H6O",
+        "electrons": 32,
+        "active_electrons": 4,
+        "active_spatial_orbitals": 4,
+        "active_qubits": 8,
+        "hf_energy": -191.8214,
+        "vqe_energy": -192.1482,
+        "fci_energy": -192.1490,
+        "geometry": "C 0.000 0.000 0.000\nC 1.520 0.000 0.000\nO 2.140 1.220 0.000\nC 2.310 -1.280 0.000\nH -0.520 0.940 0.000\nH -0.520 -0.470 0.890\nH -0.520 -0.470 -0.890\nH 3.380 -1.080 0.000\nH 2.050 -1.890 0.890\nH 2.050 -1.890 -0.890"
+    },
     "c2h5oh": {
         "name": "Ethanol (C2H5OH)",
         "formula": "C2H5OH",
@@ -112,23 +124,25 @@ MOLECULE_DATABASE = {
 
 def extract_molecule_info(user_msg: str):
     msg_l = user_msg.lower()
+    # Normalize spaces/punctuation for formula matching
+    clean_msg = re.sub(r'[^a-z0-9]', '', msg_l)
     for key, data in MOLECULE_DATABASE.items():
-        if key in msg_l or data["name"].lower() in msg_l:
+        if key in msg_l or key in clean_msg or data["name"].lower() in msg_l:
             return data
     
-    # Generic regex fallback for molecules
-    match = re.search(r'\b([A-Z][a-z]?[0-9]*[A-Z0-9a-z]*)\b', user_msg)
-    mol_name = match.group(1) if match else "Custom Molecular Target"
+    # Check for chemical formula patterns (e.g. c3h6o, ch3cooh, c6h6, etc.)
+    match = re.search(r'\b([cChHnNoOpPfsSiIbB][a-zA-Z0-9_]*)\b', user_msg)
+    mol_name = match.group(1).upper() if match else "Custom Molecular Target"
     return {
         "name": f"{mol_name} Molecule",
         "formula": mol_name,
-        "electrons": 14,
+        "electrons": 18,
         "active_electrons": 4,
         "active_spatial_orbitals": 4,
-        "active_qubits": 6,
-        "hf_energy": -98.4215,
-        "vqe_energy": -98.6542,
-        "fci_energy": -98.6550,
+        "active_qubits": 8,
+        "hf_energy": -120.4215,
+        "vqe_energy": -120.6542,
+        "fci_energy": -120.6550,
         "geometry": "C 0.0 0.0 0.0\nO 1.2 0.0 0.0\nH 1.8 0.8 0.0"
     }
 
@@ -173,7 +187,12 @@ class QuantumOrchestrator:
             return await self._execute_optimization_workflow(project_id, user_message, active_file, target_backend, optimization_level, model_engine, now_iso)
 
         # WORKFLOW B: CHEMISTRY (Dynamic Molecule Resolution)
-        elif any(k in msg_l for k in ["chem", "vqe", "molecule", "h2", "lih", "hartree", "casci", "orbitals", "c2h5oh", "ethanol", "h2o", "water", "ch4", "methane", "nh3", "ammonia", "beh2"]):
+        elif (
+            any(k in msg_l for k in ["chem", "vqe", "molecule", "molecular", "compound", "hartree", "casci", "orbitals", "uccsd", "sto-3g", "ansatz"]) or
+            any(k in msg_l for k in MOLECULE_DATABASE.keys()) or
+            bool(re.search(r'\b(c[0-9]*h[0-9]*[a-z0-9]*|h2o|h2|lih|ch4|nh3|beh2|co2|o2|n2|c3h6o)\b', msg_l)) or
+            "vqe_chem" in active_file or "vqe" in project_id or "chem" in project_id
+        ):
             return await self._execute_chemistry_workflow(project_id, user_message, active_file, target_backend, optimization_level, model_engine, now_iso)
 
         # WORKFLOW C: ALGORITHMS
@@ -811,6 +830,12 @@ if __name__ == "__main__":
                 f"- Type 'Create Bell state' to synthesize an entangled state."
             )
 
+        # Check if LLM response or user intent generated executable python code to mutate editor
+        extracted_code = None
+        code_match = re.search(r'```(?:python|py)?\n([\s\S]*?)```', response_text)
+        if code_match:
+            extracted_code = code_match.group(1).strip()
+
         telemetry = {
             "active_qubits": 4,
             "depth": 6,
@@ -833,6 +858,7 @@ if __name__ == "__main__":
             intent_category="Reasoning",
             workflow_steps=steps,
             response_text=response_text,
+            updated_code=extracted_code,
             runtime_telemetry=telemetry
         )
 

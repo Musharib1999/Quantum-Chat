@@ -502,15 +502,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }));
 
     // Switch active workspace
+    const primaryFile = Object.keys(newFiles).find(f => f.endsWith('.py')) || Object.keys(newFiles)[0] || 'main.py';
     setProjectName(finalName);
     setProjectFiles(newFiles);
-    setActiveFile('main.py');
+    setActiveFile(primaryFile);
     setCustomProjectInput('');
     setIsNewProjectOpen(false);
     setIsProjectsDropdownOpen(false);
 
     // Persist to MongoDB
-    saveProjectToDatabase(finalName, { title: finalName, desc: `Custom project scaffolded from ${templateData.title}`, files: newFiles }, 'main.py', runtimeMetrics);
+    saveProjectToDatabase(finalName, { title: finalName, desc: `Custom project scaffolded from ${templateData.title}`, files: newFiles }, primaryFile, runtimeMetrics);
 
     setChatMessages(prev => [...prev, {
       id: Date.now().toString(),
@@ -539,9 +540,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
     // 2. Load target project's files
     const target = allProjects[targetProject] || initialProjectTemplates[targetProject] || initialProjectTemplates['my-quantum-project'];
+    const targetPrimaryFile = Object.keys(target.files).find(f => f.endsWith('.py')) || Object.keys(target.files)[0] || 'main.py';
     setProjectName(targetProject);
     setProjectFiles(target.files);
-    setActiveFile('main.py');
+    setActiveFile(targetPrimaryFile);
     setIsProjectsDropdownOpen(false);
   };
 
@@ -607,11 +609,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         // 2. Dynamically Mutate Code in Monaco Editor & Persist to Workspace
         if (data.updated_code) {
           const newCode = data.updated_code;
+          const targetFileKey = projectFiles[activeFile] ? activeFile : (Object.keys(projectFiles).find(f => f.endsWith('.py')) || Object.keys(projectFiles)[0] || 'main.py');
+          if (targetFileKey !== activeFile) {
+            setActiveFile(targetFileKey);
+          }
           setProjectFiles(prev => {
             const updated = {
               ...prev,
-              [activeFile]: {
-                ...prev[activeFile],
+              [targetFileKey]: {
+                ...(prev[targetFileKey] || { name: targetFileKey, language: 'python' }),
                 content: newCode
               }
             };
@@ -623,6 +629,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 files: updated
               }
             }));
+            saveProjectToDatabase(projectName, { title: projectName, desc: '', files: updated }, targetFileKey, data.runtime_telemetry || runtimeMetrics);
             return updated;
           });
         }
