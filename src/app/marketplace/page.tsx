@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { 
   Search, 
@@ -31,7 +33,12 @@ import {
   Boxes,
   Sun,
   Moon,
-  Server
+  Server,
+  Lock,
+  User as UserIcon,
+  LogIn,
+  Key,
+  Mail
 } from 'lucide-react';
 
 interface QuantumCapability {
@@ -827,6 +834,73 @@ export default function QuantumMarketplacePage() {
     textSkyBlue: '#5390DD'
   };
 
+  const router = useRouter();
+  const { user, isAuthenticated, login, logout } = useAuth();
+
+  // Auth Modal state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authFirstName, setAuthFirstName] = useState('');
+  const [authLastName, setAuthLastName] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+  // Handle Open IDE Click
+  const handleOpenIDE = () => {
+    if (isAuthenticated || user) {
+      router.push('/ide');
+    } else {
+      setAuthError('');
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  // Handle Login / Sign Up submission
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setIsAuthLoading(true);
+
+    try {
+      if (authMode === 'login') {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: authEmail.trim(), password: authPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Invalid email or password');
+
+        login(data);
+        setIsAuthModalOpen(false);
+        router.push('/ide');
+      } else {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: authEmail.trim(),
+            password: authPassword,
+            firstName: authFirstName.trim(),
+            lastName: authLastName.trim()
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create account');
+
+        login(data);
+        setIsAuthModalOpen(false);
+        router.push('/ide');
+      }
+    } catch (err: any) {
+      setAuthError(err.message || 'Authentication failed');
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeViewTab, setActiveViewTab] = useState<'explore' | 'workflows' | 'topology'>('explore');
@@ -985,18 +1059,47 @@ export default function QuantumMarketplacePage() {
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          <Link
-            href="/ide"
-            style={{
-              backgroundColor: isDark ? 'rgba(51, 168, 219, 0.1)' : 'rgba(51, 168, 219, 0.08)',
-              borderColor: 'rgba(51, 168, 219, 0.4)',
-              color: colors.textCyan
-            }}
-            className="px-3.5 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <span>Open in IDE</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
+                {user.name || user.email}
+              </span>
+              <button
+                onClick={handleOpenIDE}
+                style={{
+                  backgroundColor: isDark ? 'rgba(51, 168, 219, 0.1)' : 'rgba(51, 168, 219, 0.08)',
+                  borderColor: 'rgba(51, 168, 219, 0.4)',
+                  color: colors.textCyan
+                }}
+                className="px-3.5 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <span>Open in IDE</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setAuthMode('login'); setIsAuthModalOpen(true); }}
+                style={{ color: colors.textMuted }}
+                className="px-2.5 py-1.5 text-xs font-mono hover:opacity-80 transition-opacity cursor-pointer"
+              >
+                Log In
+              </button>
+              <button
+                onClick={handleOpenIDE}
+                style={{
+                  backgroundColor: isDark ? 'rgba(51, 168, 219, 0.1)' : 'rgba(51, 168, 219, 0.08)',
+                  borderColor: 'rgba(51, 168, 219, 0.4)',
+                  color: colors.textCyan
+                }}
+                className="px-3.5 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <span>Open in IDE</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -1353,13 +1456,13 @@ export default function QuantumMarketplacePage() {
                   </div>
 
                   <div className="pt-2 flex items-center justify-between">
-                    <Link
-                      href="/ide"
+                    <button
+                      onClick={handleOpenIDE}
                       className="w-full py-2 rounded-lg border border-[#33A8DB]/50 bg-[#33A8DB]/10 text-[#33A8DB] text-xs font-mono hover:bg-[#33A8DB]/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-center"
                     >
                       <Play className="w-3.5 h-3.5 text-[#DEAA21]" />
                       <span>Run Composed Workflow in IDE</span>
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1527,13 +1630,13 @@ export default function QuantumMarketplacePage() {
 
             {/* Modal Footer Actions */}
             <div className="px-6 py-3.5 border-t border-[#222222] bg-[#181818] flex items-center justify-between shrink-0">
-              <Link
-                href="/ide"
-                className="px-3.5 py-1.5 rounded-lg border border-[#222222] text-[#808D9E] hover:text-[#DDE2E8] text-xs font-mono flex items-center gap-1"
+              <button
+                onClick={handleOpenIDE}
+                className="px-3.5 py-1.5 rounded-lg border border-[#222222] text-[#808D9E] hover:text-[#DDE2E8] text-xs font-mono flex items-center gap-1 cursor-pointer"
               >
                 <span>Open in IDE</span>
                 <ExternalLink className="w-3 h-3" />
-              </Link>
+              </button>
 
               <button
                 onClick={handleRunSandbox}
@@ -1554,6 +1657,163 @@ export default function QuantumMarketplacePage() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* AUTHENTICATION MODAL (LOGIN / REGISTER)                       */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div 
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+            className="w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+          >
+            {/* Modal Header */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="px-6 py-4 border-b flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <div 
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                  className="w-7 h-7 rounded-lg border flex items-center justify-center"
+                >
+                  <Lock className="w-3.5 h-3.5" style={{ color: colors.textCyan }} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-normal font-heading" style={{ color: colors.textPrimary }}>
+                    {authMode === 'login' ? 'Sign In to Quantum Guru' : 'Create Your Account'}
+                  </h3>
+                  <p className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
+                    Access Quantum Cursor IDE & 36 capabilities
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsAuthModalOpen(false)}
+                style={{ color: colors.textMuted }}
+                className="w-7 h-7 rounded-lg border flex items-center justify-center hover:opacity-80 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Auth Form */}
+            <form onSubmit={handleAuthSubmit} className="p-6 space-y-4 text-xs font-mono">
+              {authError && (
+                <div className="p-2.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-mono">
+                  {authError}
+                </div>
+              )}
+
+              {authMode === 'signup' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase" style={{ color: colors.textCyan }}>First Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Richard"
+                      value={authFirstName}
+                      onChange={(e) => setAuthFirstName(e.target.value)}
+                      style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
+                      className="w-full px-3 py-2 rounded-lg border text-xs font-mono outline-hidden focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase" style={{ color: colors.textCyan }}>Last Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Feynman"
+                      value={authLastName}
+                      onChange={(e) => setAuthLastName(e.target.value)}
+                      style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
+                      className="w-full px-3 py-2 rounded-lg border text-xs font-mono outline-hidden focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase" style={{ color: colors.textCyan }}>Email Address</label>
+                <div className="relative flex items-center">
+                  <Mail className="w-3.5 h-3.5 absolute left-3 pointer-events-none" style={{ color: colors.textMuted }} />
+                  <input
+                    type="email"
+                    required
+                    placeholder="name@quantum-corp.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border text-xs font-mono outline-hidden focus:border-sky-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase" style={{ color: colors.textCyan }}>Password</label>
+                <div className="relative flex items-center">
+                  <Key className="w-3.5 h-3.5 absolute left-3 pointer-events-none" style={{ color: colors.textMuted }} />
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••••••"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border text-xs font-mono outline-hidden focus:border-sky-500"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isAuthLoading}
+                style={{ backgroundColor: colors.textCyan, color: '#0D0D0D' }}
+                className="w-full py-2.5 rounded-lg text-xs font-mono font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer mt-2 disabled:opacity-50"
+              >
+                {isAuthLoading ? (
+                  <span>Authenticating...</span>
+                ) : (
+                  <>
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>{authMode === 'login' ? 'Sign In & Open IDE' : 'Create Account & Open IDE'}</span>
+                  </>
+                )}
+              </button>
+
+              <div className="text-center pt-2 border-t" style={{ borderColor: colors.border }}>
+                {authMode === 'login' ? (
+                  <p className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode('signup'); setAuthError(''); }}
+                      style={{ color: colors.textCyan }}
+                      className="underline hover:opacity-80 cursor-pointer"
+                    >
+                      Register now
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                      style={{ color: colors.textCyan }}
+                      className="underline hover:opacity-80 cursor-pointer"
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                )}
+              </div>
+            </form>
           </div>
         </div>
       )}
