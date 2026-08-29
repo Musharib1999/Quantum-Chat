@@ -925,10 +925,6 @@ export default function QuantumMarketplacePage() {
               Quantum Guru
             </span>
           </Link>
-          <span className="text-xs text-[#808D9E]">/</span>
-          <span className="text-xs font-mono px-2 py-0.5 rounded border border-[#222222] bg-[#181818] text-[#33A8DB] uppercase tracking-wider">
-            Marketplace
-          </span>
         </div>
 
         {/* Center: Main View Switcher */}
