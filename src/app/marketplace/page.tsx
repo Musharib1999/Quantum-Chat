@@ -1392,18 +1392,18 @@ export default function QuantumMarketplacePage() {
                         </span>
                       </div>
 
-                      {/* I Need This Service Button in Top Right */}
+                      {/* I Need This Service Button in Top Right (Green) */}
                       <button
                         onClick={() => handleOpenSandbox(cap)}
                         style={{ 
-                          backgroundColor: 'rgba(222, 170, 33, 0.1)', 
-                          borderColor: 'rgba(222, 170, 33, 0.4)', 
-                          color: colors.textAmber 
+                          backgroundColor: 'rgba(47, 184, 133, 0.1)', 
+                          borderColor: 'rgba(47, 184, 133, 0.4)', 
+                          color: colors.textEmerald 
                         }}
                         className="px-2.5 py-1 rounded-lg border text-[11px] font-mono hover:opacity-80 transition-all flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
                       >
                         <span>I need this service</span>
-                        <ChevronRight className="w-3 h-3" style={{ color: colors.textAmber }} />
+                        <ChevronRight className="w-3 h-3" style={{ color: colors.textEmerald }} />
                       </button>
                     </div>
 
