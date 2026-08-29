@@ -27,7 +27,9 @@ import {
   Clock, 
   Tag, 
   X,
-  Boxes
+  Boxes,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface QuantumCapability {
@@ -732,6 +734,41 @@ const PREBUILT_WORKFLOWS = [
 ];
 
 export default function QuantumMarketplacePage() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const isDark = theme === 'dark';
+
+  // Load theme preference on mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('qg_theme') as 'dark' | 'light' | null;
+      if (savedTheme) setTheme(savedTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = isDark ? 'light' : 'dark';
+    setTheme(nextTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('qg_theme', nextTheme);
+    }
+  };
+
+  // 10% Toned-Down Color System (Zero Bold, Clean Contrast)
+  const colors = {
+    bgMain: isDark ? '#0D0D0D' : '#F8FAFC',
+    bgHeader: isDark ? '#141414' : '#FFFFFF',
+    bgCard: isDark ? '#161616' : '#FFFFFF',
+    bgPill: isDark ? '#1C1C1C' : '#F1F5F9',
+    bgHover: isDark ? '#202020' : '#E2E8F0',
+    border: isDark ? '#222222' : '#E2E8F0',
+    textPrimary: isDark ? '#DDE2E8' : '#0F172A',
+    textMuted: isDark ? '#808D9E' : '#64748B',
+    textCyan: '#33A8DB',
+    textEmerald: '#2FB885',
+    textAmber: '#DEAA21',
+    textSkyBlue: '#5390DD'
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeViewTab, setActiveViewTab] = useState<'explore' | 'workflows' | 'topology'>('explore');
@@ -799,12 +836,18 @@ export default function QuantumMarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-[#DDE2E8] font-sans select-none antialiased flex flex-col">
+    <div 
+      style={{ backgroundColor: colors.bgMain, color: colors.textPrimary }}
+      className="min-h-screen font-sans select-none antialiased flex flex-col transition-colors duration-150"
+    >
       
       {/* ───────────────────────────────────────────────────────────── */}
       {/* TOP MARKETPLACE HEADER                                        */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <header className="h-14 border-b border-[#222222] bg-[#141414]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
+      <header 
+        style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+        className="h-14 border-b backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-xs"
+      >
         <div className="flex items-center gap-3">
           <Link href="/ide" className="flex items-center gap-2.5 group shrink-0">
             <div 
@@ -831,35 +874,71 @@ export default function QuantumMarketplacePage() {
         </div>
 
         {/* Center: Main View Switcher */}
-        <div className="hidden md:flex items-center gap-1 p-1 bg-[#181818] border border-[#222222] rounded-lg text-xs font-mono">
+        <div 
+          style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+          className="hidden md:flex items-center gap-1 p-1 border rounded-lg text-xs font-mono"
+        >
           <button
             onClick={() => setActiveViewTab('explore')}
-            className={`px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 ${activeViewTab === 'explore' ? 'bg-[#141414] text-[#33A8DB] border border-[#222222]' : 'text-[#808D9E] hover:text-[#DDE2E8]'}`}
+            style={{ 
+              backgroundColor: activeViewTab === 'explore' ? colors.bgHeader : 'transparent',
+              borderColor: activeViewTab === 'explore' ? colors.border : 'transparent',
+              color: activeViewTab === 'explore' ? colors.textCyan : colors.textMuted
+            }}
+            className="px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 border"
           >
             <Compass className="w-3.5 h-3.5" />
             <span>Explore Capabilities (33)</span>
           </button>
           <button
             onClick={() => setActiveViewTab('workflows')}
-            className={`px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 ${activeViewTab === 'workflows' ? 'bg-[#141414] text-[#33A8DB] border border-[#222222]' : 'text-[#808D9E] hover:text-[#DDE2E8]'}`}
+            style={{ 
+              backgroundColor: activeViewTab === 'workflows' ? colors.bgHeader : 'transparent',
+              borderColor: activeViewTab === 'workflows' ? colors.border : 'transparent',
+              color: activeViewTab === 'workflows' ? colors.textCyan : colors.textMuted
+            }}
+            className="px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 border"
           >
             <Workflow className="w-3.5 h-3.5" />
             <span>Prebuilt Workflows (6)</span>
           </button>
           <button
             onClick={() => setActiveViewTab('topology')}
-            className={`px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 ${activeViewTab === 'topology' ? 'bg-[#141414] text-[#33A8DB] border border-[#222222]' : 'text-[#808D9E] hover:text-[#DDE2E8]'}`}
+            style={{ 
+              backgroundColor: activeViewTab === 'topology' ? colors.bgHeader : 'transparent',
+              borderColor: activeViewTab === 'topology' ? colors.border : 'transparent',
+              color: activeViewTab === 'topology' ? colors.textCyan : colors.textMuted
+            }}
+            className="px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 border"
           >
             <Layers className="w-3.5 h-3.5" />
             <span>Capability Topology</span>
           </button>
         </div>
 
-        {/* Right: Link back to IDE */}
-        <div className="flex items-center gap-3">
+        {/* Right: Theme Toggle & Link back to IDE */}
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={toggleTheme}
+            title={`Switch to ${isDark ? 'Light' : 'Dark'} Theme`}
+            style={{ 
+              backgroundColor: colors.bgPill, 
+              borderColor: colors.border,
+              color: colors.textAmber
+            }}
+            className="p-1.5 rounded-lg border transition-colors cursor-pointer hover:border-amber-400"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
           <Link
             href="/ide"
-            className="px-3.5 py-1.5 rounded-lg border border-[#33A8DB]/50 bg-[#33A8DB]/10 text-[#33A8DB] text-xs font-mono hover:bg-[#33A8DB]/20 transition-all flex items-center gap-1.5 shadow-sm"
+            style={{
+              backgroundColor: isDark ? 'rgba(51, 168, 219, 0.1)' : 'rgba(51, 168, 219, 0.08)',
+              borderColor: 'rgba(51, 168, 219, 0.4)',
+              color: colors.textCyan
+            }}
+            className="px-3.5 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <span>Open in IDE</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -870,36 +949,51 @@ export default function QuantumMarketplacePage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {/* HERO & INTENT-FIRST SEARCH                                    */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <section className="border-b border-[#222222] bg-gradient-to-b from-[#141414] to-[#0D0D0D] py-10 px-6 shrink-0">
+      <section 
+        style={{ 
+          borderColor: colors.border,
+          backgroundColor: colors.bgHeader
+        }}
+        className="border-b py-10 px-6 shrink-0 transition-colors"
+      >
         <div className="max-w-4xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#222222] bg-[#181818] text-xs font-mono text-[#33A8DB]">
-            <Sparkles className="w-3.5 h-3.5 text-[#DEAA21]" />
+          <div 
+            style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono"
+          >
+            <Sparkles className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
             <span>Quantum capabilities, on demand</span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-normal font-heading tracking-tight text-[#DDE2E8]">
+          <h1 className="text-3xl md:text-4xl font-normal font-heading tracking-tight" style={{ color: colors.textPrimary }}>
             Explore 33 Autonomous Quantum Computing Services
           </h1>
 
-          <p className="text-sm text-[#808D9E] max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm max-w-2xl mx-auto leading-relaxed" style={{ color: colors.textMuted }}>
             Select a specialized quantum capability, provide your problem constraints or molecular dataset, and let Quantum Guru plan and execute the workflow.
           </p>
 
           {/* Search Input Box */}
           <div className="pt-2 max-w-2xl mx-auto relative">
             <div className="relative flex items-center">
-              <Search className="w-4 h-4 text-[#808D9E] absolute left-3.5 pointer-events-none" />
+              <Search className="w-4 h-4 absolute left-3.5 pointer-events-none" style={{ color: colors.textMuted }} />
               <input
                 type="text"
                 placeholder="What do you want to accomplish? (e.g. Optimize portfolio, CAS-VQE for H2, Grover Search)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#222222] bg-[#141414] text-xs font-mono text-[#DDE2E8] placeholder:text-[#808D9E]/60 outline-hidden focus:border-[#33A8DB] transition-all shadow-inner"
+                style={{ 
+                  backgroundColor: colors.bgCard, 
+                  borderColor: colors.border,
+                  color: colors.textPrimary 
+                }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-xs font-mono outline-hidden focus:border-sky-500 transition-all shadow-inner"
               />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 text-[#808D9E] hover:text-[#DDE2E8] cursor-pointer"
+                  style={{ color: colors.textMuted }}
+                  className="absolute right-3 hover:opacity-80 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -908,28 +1002,32 @@ export default function QuantumMarketplacePage() {
 
             {/* Popular Goal Chips */}
             <div className="flex items-center justify-center gap-1.5 flex-wrap pt-3 text-[11px] font-mono">
-              <span className="text-[#808D9E]">Popular goals:</span>
+              <span style={{ color: colors.textMuted }}>Popular goals:</span>
               <button 
                 onClick={() => { setSearchQuery('portfolio'); setSelectedCategory('optimization'); }}
-                className="px-2 py-0.5 rounded border border-[#222222] bg-[#181818] text-[#33A8DB] hover:border-[#33A8DB] transition-colors cursor-pointer"
+                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+                className="px-2 py-0.5 rounded border hover:border-sky-500 transition-colors cursor-pointer"
               >
                 Optimize a business problem
               </button>
               <button 
                 onClick={() => { setSearchQuery('vqe'); setSelectedCategory('chemistry'); }}
-                className="px-2 py-0.5 rounded border border-[#222222] bg-[#181818] text-[#2FB885] hover:border-[#2FB885] transition-colors cursor-pointer"
+                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textEmerald }}
+                className="px-2 py-0.5 rounded border hover:border-emerald-500 transition-colors cursor-pointer"
               >
                 Solve molecular chemistry
               </button>
               <button 
                 onClick={() => { setSearchQuery('grover'); setSelectedCategory('algorithms'); }}
-                className="px-2 py-0.5 rounded border border-[#222222] bg-[#181818] text-[#DEAA21] hover:border-[#DEAA21] transition-colors cursor-pointer"
+                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textAmber }}
+                className="px-2 py-0.5 rounded border hover:border-amber-500 transition-colors cursor-pointer"
               >
                 Design a quantum algorithm
               </button>
               <button 
                 onClick={() => { setSearchQuery('qsvm'); setSelectedCategory('qml'); }}
-                className="px-2 py-0.5 rounded border border-[#222222] bg-[#181818] text-[#5390DD] hover:border-[#5390DD] transition-colors cursor-pointer"
+                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textSkyBlue }}
+                className="px-2 py-0.5 rounded border hover:border-blue-500 transition-colors cursor-pointer"
               >
                 Train a QML model
               </button>
@@ -941,7 +1039,10 @@ export default function QuantumMarketplacePage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {/* CATEGORY FILTER TABS                                          */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <section className="border-b border-[#222222] bg-[#141414] px-6 py-3 shrink-0">
+      <section 
+        style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+        className="border-b px-6 py-3 shrink-0 transition-colors"
+      >
         <div className="max-w-6xl mx-auto flex items-center justify-between overflow-x-auto gap-2">
           <div className="flex items-center gap-1.5 text-xs font-mono">
             <button
@@ -1012,7 +1113,8 @@ export default function QuantumMarketplacePage() {
               {filteredCapabilities.map((cap) => (
                 <div
                   key={cap.id}
-                  className="rounded-xl border border-[#222222] bg-[#141414] p-5 flex flex-col justify-between space-y-4 hover:border-[#33A8DB]/60 transition-all duration-200 shadow-sm group relative"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                  className="rounded-xl border p-5 flex flex-col justify-between space-y-4 hover:border-sky-500/60 transition-all duration-200 shadow-xs group relative"
                 >
                   {/* Top: Category & Level Badge */}
                   <div className="space-y-2">
@@ -1361,7 +1463,10 @@ export default function QuantumMarketplacePage() {
       {/* ───────────────────────────────────────────────────────────── */}
       {/* FOOTER                                                        */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <footer className="h-10 border-t border-[#222222] bg-[#141414] px-6 flex items-center justify-between text-[11px] font-mono text-[#808D9E] shrink-0">
+      <footer 
+        style={{ backgroundColor: colors.bgHeader, borderColor: colors.border, color: colors.textMuted }}
+        className="h-10 border-t px-6 flex items-center justify-between text-[11px] font-mono shrink-0 transition-colors"
+      >
         <div>
           <span>Quantum Guru Marketplace • 33 Autonomous Capabilities</span>
         </div>
