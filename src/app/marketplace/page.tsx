@@ -1022,10 +1022,6 @@ export default function QuantumMarketplacePage() {
             Explore Autonomous Quantum Computing & Simulation Services
           </h1>
 
-          <p className="text-sm md:text-base max-w-2xl mx-auto leading-relaxed" style={{ color: colors.textMuted }}>
-            Select a specialized quantum capability, provide your problem constraints or molecular dataset, and let Quantum Guru plan and execute the workflow.
-          </p>
-
           {/* Search Input Box */}
           <div className="pt-2 max-w-2xl mx-auto relative">
             <div className="relative flex items-center shadow-lg rounded-2xl">
