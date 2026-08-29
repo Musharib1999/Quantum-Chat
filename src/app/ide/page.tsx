@@ -444,6 +444,67 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   }, []);
 
+  // Load all user projects from localStorage & MongoDB database on mount
+  useEffect(() => {
+    const loadUserProjects = async () => {
+      try {
+        let mergedProjects: Record<string, any> = { ...initialProjectTemplates };
+
+        // 1. Instant hydration from localStorage
+        if (typeof window !== 'undefined') {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('quantum_ide_proj_')) {
+              try {
+                const stored = JSON.parse(localStorage.getItem(key) || '{}');
+                if (stored.id && stored.files && Object.keys(stored.files).length > 0) {
+                  mergedProjects[stored.id] = {
+                    title: stored.title || stored.id,
+                    desc: stored.desc || '',
+                    files: stored.files
+                  };
+                }
+              } catch (e) {}
+            }
+          }
+        }
+
+        // 2. Hydration from MongoDB database
+        const res = await fetch('/api/ide/projects');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.projects && Array.isArray(data.projects)) {
+            data.projects.forEach((proj: any) => {
+              if (proj.projectId && proj.files && Object.keys(proj.files).length > 0) {
+                mergedProjects[proj.projectId] = {
+                  title: proj.title || proj.projectId,
+                  desc: proj.desc || '',
+                  files: proj.files
+                };
+              }
+            });
+          }
+        }
+
+        setAllProjects(mergedProjects);
+
+        // 3. Restore last active project if exists
+        const lastActiveProjId = typeof window !== 'undefined' ? localStorage.getItem('quantum_ide_active_project') : null;
+        if (lastActiveProjId && mergedProjects[lastActiveProjId]) {
+          const targetProj = mergedProjects[lastActiveProjId];
+          const primaryFile = Object.keys(targetProj.files).find(f => f.endsWith('.py')) || Object.keys(targetProj.files)[0] || 'main.py';
+          setProjectName(lastActiveProjId);
+          setProjectFiles(targetProj.files);
+          setActiveFile(primaryFile);
+        }
+      } catch (err) {
+        console.warn('Failed to load projects from DB:', err);
+      }
+    };
+
+    loadUserProjects();
+  }, []);
+
   // Synchronize project workspace to localStorage and MongoDB backend
   const saveProjectToDatabase = useCallback(async (
     projId: string, 
