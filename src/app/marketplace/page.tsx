@@ -1014,14 +1014,6 @@ export default function QuantumMarketplacePage() {
         className="border-b py-10 px-6 shrink-0 transition-colors"
       >
         <div className="max-w-4xl mx-auto text-center space-y-4">
-          <div 
-            style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono"
-          >
-            <Sparkles className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
-            <span>Quantum capabilities, on demand</span>
-          </div>
-
           <h1 className="text-3xl md:text-4xl font-normal font-heading tracking-tight" style={{ color: colors.textPrimary }}>
             Explore 36 Autonomous Quantum Computing & Simulation Services
           </h1>
