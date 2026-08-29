@@ -1333,52 +1333,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
       </div>
 
-      {/* ───────────────────────────────────────────────────────── */}
-      {/* BLOCK F: BOTTOM GLOBAL STATUS BAR (CLEAN & INTERACTIVE)   */}
-      {/* ───────────────────────────────────────────────────────── */}
-      <footer 
-        style={{ backgroundColor: colors.bgHeader, borderColor: colors.border, color: colors.textMuted }}
-        className="h-6 border-t px-3 flex items-center justify-between text-[10px] font-mono shrink-0 z-20 font-normal"
-      >
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1 font-normal" style={{ color: colors.textCyan }}>
-            <GitBranch className="w-3 h-3" style={{ color: colors.textMuted }} /> feature/quantum-cursor-ide
-          </span>
-          
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-            <span>Workspace: <span style={{ color: colors.textEmerald }}>Ready</span></span>
-          </span>
 
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            title="Click to configure Target QPU in Settings"
-            className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
-          >
-            <span>Target QPU: <span className="underline decoration-dotted underline-offset-2" style={{ color: colors.textSkyBlue }}>{targetBackend}</span></span>
-          </button>
-
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            title="Click to switch AI Engine in Settings"
-            className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1"
-          >
-            <span>AI Engine: <span className="underline decoration-dotted underline-offset-2" style={{ color: colors.textAmber }}>{activeModel === 'groq' ? 'Qwen 3.6 27B (Groq)' : 'Qwen 3 32B (RunPod)'}</span></span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <span>Active File: <span style={{ color: colors.textPrimary }}>{activeFile}</span></span>
-          
-          <button
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            title="Click to toggle Theme"
-            className="hover:opacity-80 transition-opacity cursor-pointer"
-          >
-            <span>Theme: <span className="underline decoration-dotted underline-offset-2" style={{ color: colors.textCyan }}>{isDark ? 'Dark' : 'Light'}</span></span>
-          </button>
-        </div>
-      </footer>
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* SETTINGS MODAL                                                */}
