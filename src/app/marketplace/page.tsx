@@ -1339,13 +1339,10 @@ export default function QuantumMarketplacePage() {
                       <h3 className="text-sm font-normal font-heading" style={{ color: colors.textPrimary }}>
                         <span className="group-hover:text-sky-400 transition-colors">{cap.name}</span>
                       </h3>
-                      <p className="text-[11px] font-mono pt-0.5" style={{ color: colors.textMuted }}>
-                        {cap.serviceName}
-                      </p>
                     </div>
 
                     {/* Tagline / What it does */}
-                    <p className="text-xs leading-relaxed pt-1" style={{ color: colors.textMuted }}>
+                    <p className="text-xs leading-relaxed" style={{ color: colors.textMuted }}>
                       {cap.tagline}
                     </p>
                   </div>
