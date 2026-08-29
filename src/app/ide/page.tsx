@@ -1058,9 +1058,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 style={{ 
                   backgroundColor: colors.bgEditor, 
                   color: colors.textPrimary,
-                  caretColor: colors.textCyan
+                  caretColor: colors.textCyan,
+                  outline: 'none',
+                  border: 'none',
+                  boxShadow: 'none'
                 }}
-                className="flex-1 overflow-x-auto whitespace-pre font-normal font-mono outline-hidden resize-none bg-transparent w-full h-full"
+                className="flex-1 overflow-x-auto whitespace-pre font-normal font-mono outline-none focus:outline-none focus:ring-0 border-none shadow-none resize-none bg-transparent w-full h-full"
               />
             </div>
           </div>
