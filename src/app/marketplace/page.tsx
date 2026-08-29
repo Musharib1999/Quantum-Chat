@@ -1010,7 +1010,7 @@ export default function QuantumMarketplacePage() {
       style={{ backgroundColor: colors.bgMain, color: colors.textPrimary }}
       className="min-h-screen font-sans select-none antialiased flex flex-col transition-colors duration-150"
     >
-      {/* Global CSS for crisp, visible hover lift & glow */}
+      {/* Global CSS for crisp, visible hover lift & glow & button micro-interactions */}
       <style jsx global>{`
         .qg-card-hover {
           transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
@@ -1026,6 +1026,25 @@ export default function QuantumMarketplacePage() {
         .qg-card-light:hover {
           box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.12), 0 4px 14px -2px rgba(51, 168, 219, 0.14) !important;
           border-color: rgba(51, 168, 219, 0.5) !important;
+        }
+
+        /* Option 3: Button Micro-Scale & Emerald Radial Halo */
+        .qg-service-btn {
+          transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease !important;
+          will-change: transform, box-shadow;
+          position: relative;
+        }
+        .qg-service-btn:hover {
+          transform: scale(1.03) !important;
+          background-color: rgba(47, 184, 133, 0.22) !important;
+          border-color: rgba(47, 184, 133, 0.75) !important;
+          box-shadow: 0 0 18px 3px rgba(47, 184, 133, 0.38), 0 2px 8px rgba(47, 184, 133, 0.2) !important;
+        }
+        .qg-service-btn:hover .qg-btn-chevron {
+          transform: translateX(3px);
+        }
+        .qg-btn-chevron {
+          transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
         }
       `}</style>
       
@@ -1392,7 +1411,7 @@ export default function QuantumMarketplacePage() {
                         </span>
                       </div>
 
-                      {/* I Need This Service Button in Top Right (Green) */}
+                      {/* I Need This Service Button in Top Right (Option 3: Scale + Radial Halo) */}
                       <button
                         onClick={() => handleOpenSandbox(cap)}
                         style={{ 
@@ -1400,10 +1419,10 @@ export default function QuantumMarketplacePage() {
                           borderColor: 'rgba(47, 184, 133, 0.4)', 
                           color: colors.textEmerald 
                         }}
-                        className="px-2.5 py-1 rounded-lg border text-[11px] font-mono hover:opacity-80 transition-all flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
+                        className="qg-service-btn px-2.5 py-1 rounded-lg border text-[11px] font-mono flex items-center gap-1 cursor-pointer shrink-0"
                       >
                         <span>I need this service</span>
-                        <ChevronRight className="w-3 h-3" style={{ color: colors.textEmerald }} />
+                        <ChevronRight className="w-3 h-3 qg-btn-chevron" style={{ color: colors.textEmerald }} />
                       </button>
                     </div>
 
