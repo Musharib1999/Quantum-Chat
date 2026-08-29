@@ -946,7 +946,7 @@ export default function QuantumMarketplacePage() {
             className="px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 border"
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Explore Capabilities (36)</span>
+            <span>Explore Capabilities</span>
           </button>
           <button
             onClick={() => setActiveViewTab('workflows')}
@@ -1019,7 +1019,7 @@ export default function QuantumMarketplacePage() {
         {/* Center Container */}
         <div className="max-w-3xl w-full text-center space-y-6 my-auto">
           <h1 className="text-3xl md:text-5xl font-normal font-heading tracking-tight leading-tight" style={{ color: colors.textPrimary }}>
-            Explore 36 Autonomous Quantum Computing & Simulation Services
+            Explore Autonomous Quantum Computing & Simulation Services
           </h1>
 
           <p className="text-sm md:text-base max-w-2xl mx-auto leading-relaxed" style={{ color: colors.textMuted }}>
@@ -1116,7 +1116,7 @@ export default function QuantumMarketplacePage() {
             style={{ color: colors.textMuted }}
             className="flex flex-col items-center gap-1.5 text-xs font-mono hover:text-sky-400 transition-colors cursor-pointer group"
           >
-            <span>Explore 36 Capabilities Below</span>
+            <span>Explore Capabilities Below</span>
             <ChevronDown className="w-4 h-4 animate-bounce" style={{ color: colors.textCyan }} />
           </button>
         </div>
@@ -1136,7 +1136,7 @@ export default function QuantumMarketplacePage() {
               onClick={() => setSelectedCategory('all')}
               className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${selectedCategory === 'all' ? 'bg-[#181818] border-[#33A8DB] text-[#33A8DB]' : 'border-transparent text-[#808D9E] hover:text-[#DDE2E8]'}`}
             >
-              All Capabilities (36)
+              All Capabilities
             </button>
             <button
               onClick={() => setSelectedCategory('optimization')}
@@ -1383,7 +1383,7 @@ export default function QuantumMarketplacePage() {
                 Quantum Guru Ecosystem Topology
               </h2>
               <p className="text-xs text-[#808D9E] leading-relaxed font-mono">
-                36 deterministic and probabilistic quantum primitives mapped across 7 scientific domains.
+                Deterministic and probabilistic quantum primitives mapped across 7 scientific domains.
               </p>
             </div>
 
@@ -1574,7 +1574,7 @@ export default function QuantumMarketplacePage() {
         className="h-10 border-t px-6 flex items-center justify-between text-[11px] font-mono shrink-0 transition-colors"
       >
         <div>
-          <span>Quantum Guru Marketplace • 36 Autonomous Capabilities</span>
+          <span>Quantum Guru Marketplace • Autonomous Capabilities</span>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/ide" className="text-[#33A8DB] hover:underline">Quantum Cursor IDE</Link>
