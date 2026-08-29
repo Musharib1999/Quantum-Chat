@@ -1181,10 +1181,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     </div>
                   ) : (
                     <div 
-                      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                      className="border rounded-xl p-3 space-y-2 shadow-2xs"
+                      style={{ backgroundColor: 'transparent' }}
+                      className="p-3 space-y-2.5 font-normal"
                     >
-                      <div style={{ borderColor: colors.border }} className="flex items-center justify-between border-b pb-1.5">
+                      <div style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)' }} className="flex items-center justify-between border-b pb-1.5">
                         <span className="text-[10px] font-normal flex items-center gap-1 font-heading uppercase tracking-wider" style={{ color: colors.textCyan }}>
                           <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
                         </span>
@@ -1229,8 +1229,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
               {isCopilotThinking && (
                 <div 
-                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                  className="border rounded-xl p-3 space-y-1.5 shadow-2xs animate-pulse"
+                  style={{ backgroundColor: 'transparent' }}
+                  className="p-3 space-y-1.5 animate-pulse font-normal"
                 >
                   <div className="flex items-center gap-2 text-[10px] font-normal" style={{ color: colors.textCyan }}>
                     <Sparkles className="w-3.5 h-3.5 animate-spin" />
