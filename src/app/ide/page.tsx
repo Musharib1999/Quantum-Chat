@@ -1230,52 +1230,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               )}
             </div>
 
-            {/* Copilot Input Box & Slash Shortcuts */}
+            {/* Copilot Input Box & Integrated Slash Shortcuts */}
             <div 
               style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="p-3 border-t space-y-2"
+              className="p-3 border-t"
             >
-              {/* Interactive Slash Command Chips with Semantic Colors */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] font-mono font-normal">
-                <button 
-                  onClick={() => handleSendMessage('/execute@program')}
-                  style={{ 
-                    backgroundColor: colors.bgPill, 
-                    borderColor: colors.border,
-                    color: colors.textAmber 
-                  }}
-                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-amber-400"
-                >
-                  <Play className="w-2.5 h-2.5 fill-current" style={{ color: colors.textAmber }} /> /execute@program
-                </button>
-                <button 
-                  onClick={() => handleSendMessage('/simulate@circuit')}
-                  style={{ 
-                    backgroundColor: colors.bgPill, 
-                    borderColor: colors.border,
-                    color: colors.textCyan 
-                  }}
-                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-sky-400"
-                >
-                  <Zap className="w-2.5 h-2.5" style={{ color: colors.textCyan }} /> /simulate@circuit
-                </button>
-                <button 
-                  onClick={() => handleSendMessage('/transpile@level2')}
-                  style={{ 
-                    backgroundColor: colors.bgPill, 
-                    borderColor: colors.border,
-                    color: colors.textEmerald 
-                  }}
-                  className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 hover:border-emerald-400"
-                >
-                  /transpile@level2
-                </button>
-              </div>
-
-              {/* Input Form with '+' Tool Connect Button */}
+              {/* Input Form with Integrated Slash Actions in Footer */}
               <div 
                 style={{ backgroundColor: colors.bgInput, borderColor: colors.border }}
-                className="flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs focus-within:border-sky-500 min-h-[76px]"
+                className="flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs focus-within:border-sky-500 min-h-[82px] space-y-2"
               >
                 <textarea 
                   rows={2}
@@ -1292,25 +1255,49 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   className="w-full bg-transparent border-none outline-hidden text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
                 />
                 
-                <div className="flex items-center justify-between pt-1">
-                  {/* Left: Agent Autonomous Mode Status Pill */}
-                  <div 
-                    style={{ 
-                      backgroundColor: colors.bgPill, 
-                      color: colors.textMuted, 
-                      borderColor: colors.border 
-                    }}
-                    className="px-2 py-0.5 rounded-md flex items-center gap-1.5 border text-[10px] font-mono select-none"
-                  >
-                    <Zap className="w-2.5 h-2.5" style={{ color: colors.textAmber }} />
-                    <span>Autonomous Orchestrator: <span style={{ color: colors.textEmerald }}>Active</span></span>
+                <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
+                  {/* Left: Quick Slash Action Chips */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto text-[10px] font-mono font-normal">
+                    <button 
+                      onClick={() => handleSendMessage('/execute@program')}
+                      style={{ 
+                        backgroundColor: colors.bgPill, 
+                        borderColor: colors.border,
+                        color: colors.textAmber 
+                      }}
+                      className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-amber-400"
+                    >
+                      <Play className="w-2.5 h-2.5 fill-current" style={{ color: colors.textAmber }} /> /execute@program
+                    </button>
+                    <button 
+                      onClick={() => handleSendMessage('/simulate@circuit')}
+                      style={{ 
+                        backgroundColor: colors.bgPill, 
+                        borderColor: colors.border,
+                        color: colors.textCyan 
+                      }}
+                      className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-sky-400"
+                    >
+                      <Zap className="w-2.5 h-2.5" style={{ color: colors.textCyan }} /> /simulate@circuit
+                    </button>
+                    <button 
+                      onClick={() => handleSendMessage('/transpile@level2')}
+                      style={{ 
+                        backgroundColor: colors.bgPill, 
+                        borderColor: colors.border,
+                        color: colors.textEmerald 
+                      }}
+                      className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 hover:border-emerald-400"
+                    >
+                      /transpile@level2
+                    </button>
                   </div>
 
                   {/* Right: Send Button */}
                   <button 
                     onClick={() => handleSendMessage()}
                     style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
-                    className="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border text-[11px] font-normal"
+                    className="px-3 py-1 rounded-md flex items-center gap-1.5 transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border text-xs font-normal shrink-0"
                   >
                     <span>Send</span>
                     <Send className="w-3 h-3" />
