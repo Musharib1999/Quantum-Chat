@@ -882,6 +882,72 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 </div>
               ))}
 
+              {/* Quantum Telemetry & Runtime Solvers Cards */}
+              <div className="pt-4 px-1 space-y-2">
+                <div className="text-[10px] font-normal uppercase tracking-wider mb-1 font-heading" style={{ color: colors.textCyan }}>
+                  Runtime Solvers & Telemetry
+                </div>
+
+                {/* Card 1: Continuous Circuit Canvas */}
+                <div 
+                  onClick={() => setTelemetryModalTab('circuit')}
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                  className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
+                >
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="flex items-center gap-1.5 font-heading text-xs" style={{ color: colors.textPrimary }}>
+                      <Zap className="w-3.5 h-3.5" style={{ color: colors.textCyan }} /> Circuit Canvas
+                    </span>
+                    <span style={{ color: colors.textCyan }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                      View →
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                    <span>Qubits: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.activeQubits}</span></span>
+                    <span>Depth: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.depth}</span></span>
+                    <span>CNOTs: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.cnots}</span></span>
+                  </div>
+                </div>
+
+                {/* Card 2: Simulation Results & Metrics */}
+                <div 
+                  onClick={() => setTelemetryModalTab('results')}
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                  className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
+                >
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="flex items-center gap-1.5 font-heading text-xs" style={{ color: colors.textPrimary }}>
+                      <Activity className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} /> Results & Metrics
+                    </span>
+                    <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                      View →
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                    <span>Fidelity: <span style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</span></span>
+                    <span>Latency: <span style={{ color: colors.textAmber }}>{runtimeMetrics.latencySec}</span></span>
+                  </div>
+                </div>
+
+                {/* Card 3: Solver Terminal */}
+                <div 
+                  onClick={() => setTelemetryModalTab('terminal')}
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                  className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-amber-500/60 transition-all group"
+                >
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="flex items-center gap-1.5 font-heading text-xs" style={{ color: colors.textPrimary }}>
+                      <TerminalIcon className="w-3.5 h-3.5" style={{ color: colors.textAmber }} /> Solver Terminal
+                    </span>
+                    <span style={{ color: colors.textAmber }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                      Logs →
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono truncate" style={{ color: colors.textMuted }}>
+                    Target: <span style={{ color: colors.textAmber }}>{targetBackend}</span> (1024 shots)
+                  </div>
+                </div>
+              </div>
 
             </div>
 
@@ -999,121 +1065,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             </div>
           </div>
 
-          {/* Lower Pane: Dynamic Runtime & Continuous Circuit Canvas */}
-          <div 
-            style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-            className="h-60 max-h-[45vh] flex flex-col shrink-0 border-t min-h-0 overflow-hidden"
-          >
-            {/* Drawer Tabs & Dynamic Metrics */}
-            <div 
-              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="h-8 border-b px-3 flex items-center justify-between shrink-0"
-            >
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setActiveBottomTab('circuit')}
-                  style={{ 
-                    backgroundColor: activeBottomTab === 'circuit' ? colors.bgPill : 'transparent',
-                    borderColor: activeBottomTab === 'circuit' ? colors.border : 'transparent',
-                    color: activeBottomTab === 'circuit' ? colors.textCyan : colors.textMuted
-                  }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-normal rounded border transition-colors cursor-pointer"
-                >
-                  <Zap className="w-3 h-3" style={{ color: colors.textCyan }} />
-                  <span>Continuous Circuit (fold=-1)</span>
-                </button>
 
-                <button 
-                  onClick={() => setActiveBottomTab('results')}
-                  style={{ 
-                    backgroundColor: activeBottomTab === 'results' ? colors.bgPill : 'transparent',
-                    borderColor: activeBottomTab === 'results' ? colors.border : 'transparent',
-                    color: activeBottomTab === 'results' ? colors.textCyan : colors.textMuted
-                  }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-normal rounded border transition-colors cursor-pointer"
-                >
-                  <Activity className="w-3 h-3" style={{ color: colors.textMuted }} />
-                  <span>Simulation Results & Metrics</span>
-                </button>
-
-                <button 
-                  onClick={() => setActiveBottomTab('terminal')}
-                  style={{ 
-                    backgroundColor: activeBottomTab === 'terminal' ? colors.bgPill : 'transparent',
-                    borderColor: activeBottomTab === 'terminal' ? colors.border : 'transparent',
-                    color: activeBottomTab === 'terminal' ? colors.textAmber : colors.textMuted
-                  }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-normal rounded border transition-colors cursor-pointer"
-                >
-                  <TerminalIcon className="w-3 h-3" style={{ color: colors.textAmber }} />
-                  <span>Solver Terminal</span>
-                </button>
-              </div>
-
-              {/* Dynamic Live Telemetry Counters */}
-              <div className="flex items-center gap-3 text-[11px] font-mono" style={{ color: colors.textMuted }}>
-                <span>Active Qubits: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.activeQubits}</span></span>
-                <span>Depth: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.depth}</span></span>
-                <span>CNOTs: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.cnots}</span></span>
-              </div>
-            </div>
-
-            {/* Bottom Content View (Dynamic Scroll Container) */}
-            <div 
-              style={{ backgroundColor: colors.bgEditor, color: colors.textPrimary }}
-              className="flex-1 min-h-0 overflow-x-auto overflow-y-auto p-3 font-mono text-xs"
-            >
-              {activeBottomTab === 'circuit' && (
-                <div className="space-y-1">
-                  <div className="text-[10px] font-normal mb-1" style={{ color: colors.textCyan }}>
-                    Continuous Horizontal Circuit Canvas (Zero vertical wrapping — scroll horizontally):
-                  </div>
-                  <pre className="font-mono text-[11px] font-normal leading-tight select-text" style={{ color: colors.textPrimary }}>
-                    {runtimeMetrics.circuitText}
-                  </pre>
-                </div>
-              )}
-
-              {activeBottomTab === 'results' && (
-                <div className="grid grid-cols-3 gap-3">
-                  <div 
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="border rounded-lg p-3 space-y-1 shadow-2xs"
-                  >
-                    <div className="text-[10px] font-normal uppercase" style={{ color: colors.textCyan }}>Expectation Value</div>
-                    <div className="text-xl font-normal font-mono" style={{ color: colors.textSkyBlue }}>{runtimeMetrics.expectationVal}</div>
-                    <div className="text-[10px] font-normal" style={{ color: colors.textMuted }}>Target: Z ⊗ I ⊗ I ⊗ I</div>
-                  </div>
-                  <div 
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="border rounded-lg p-3 space-y-1 shadow-2xs"
-                  >
-                    <div className="text-[10px] font-normal uppercase" style={{ color: colors.textCyan }}>Simulator Fidelity</div>
-                    <div className="text-xl font-normal font-mono" style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</div>
-                    <div className="text-[10px] font-normal" style={{ color: colors.textMuted }}>Statevector exact match</div>
-                  </div>
-                  <div 
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="border rounded-lg p-3 space-y-1 shadow-2xs"
-                  >
-                    <div className="text-[10px] font-normal uppercase" style={{ color: colors.textCyan }}>Execution Latency</div>
-                    <div className="text-xl font-normal font-mono" style={{ color: colors.textAmber }}>{runtimeMetrics.latencySec}</div>
-                    <div className="text-[10px] font-normal" style={{ color: colors.textMuted }}>Target: {targetBackend}</div>
-                  </div>
-                </div>
-              )}
-
-              {activeBottomTab === 'terminal' && (
-                <div className="space-y-1 font-mono text-xs">
-                  {runtimeMetrics.terminalLog.map((line, lIdx) => (
-                    <div key={lIdx} style={{ color: line.startsWith('➜') ? colors.textAmber : (line.includes('exit code 0') ? colors.textEmerald : colors.textPrimary) }}>
-                      {line}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* ── DRAGGABLE RESIZER FOR SECTION 3 (RIGHT) ── */}
