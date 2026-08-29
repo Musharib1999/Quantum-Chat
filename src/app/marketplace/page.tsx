@@ -806,11 +806,21 @@ export default function QuantumMarketplacePage() {
       {/* ───────────────────────────────────────────────────────────── */}
       <header className="h-14 border-b border-[#222222] bg-[#141414]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/ide" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center p-0.5 shadow-xs transition-transform group-hover:scale-105">
-              <img src="/qg-icon.png" alt="Quantum Guru" className="w-full h-full object-contain" />
+          <Link href="/ide" className="flex items-center gap-2.5 group shrink-0">
+            <div 
+              style={{ width: '26px', height: '26px', minWidth: '26px', minHeight: '26px' }}
+              className="rounded-full bg-white flex items-center justify-center p-0.5 shadow-xs overflow-hidden shrink-0"
+            >
+              <img 
+                src="/qg-icon.png" 
+                alt="Quantum Guru" 
+                width={22}
+                height={22}
+                style={{ width: '22px', height: '22px', objectFit: 'contain', display: 'block' }}
+                className="pointer-events-none"
+              />
             </div>
-            <span className="font-normal text-sm tracking-tight font-heading text-[#DDE2E8]">
+            <span className="font-normal text-sm tracking-tight font-heading text-[#DDE2E8] shrink-0">
               Quantum Guru
             </span>
           </Link>
