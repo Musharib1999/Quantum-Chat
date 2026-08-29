@@ -731,8 +731,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           </div>
         </div>
 
-        {/* Right: Theme Switcher & Section 3 Toggle */}
+        {/* Right: Marketplace Link, Theme Switcher & Section 3 Toggle */}
         <div className="flex items-center gap-2">
+          <Link
+            href="/marketplace"
+            title="Browse 33 Quantum Capabilities Marketplace"
+            style={{ 
+              backgroundColor: colors.bgPill, 
+              borderColor: colors.border,
+              color: colors.textCyan 
+            }}
+            className="px-2.5 py-1.5 rounded-md border text-xs font-mono transition-all hover:border-sky-400 flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Zap className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
+            <span>Marketplace</span>
+          </Link>
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             title={`Switch to ${isDark ? 'Light' : 'Dark'} Theme`}
