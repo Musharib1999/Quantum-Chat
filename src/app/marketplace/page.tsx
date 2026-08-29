@@ -29,7 +29,8 @@ import {
   X,
   Boxes,
   Sun,
-  Moon
+  Moon,
+  Server
 } from 'lucide-react';
 
 interface QuantumCapability {
@@ -37,7 +38,7 @@ interface QuantumCapability {
   tag: string;
   name: string;
   serviceName: string;
-  category: 'optimization' | 'algorithms' | 'circuit' | 'chemistry' | 'qml' | 'academy';
+  category: 'optimization' | 'algorithms' | 'circuit' | 'chemistry' | 'qml' | 'academy' | 'qpu_simulators';
   categoryLabel: string;
   tagline: string;
   whatItDoes: string;
@@ -661,6 +662,62 @@ const CAPABILITIES: QuantumCapability[] = [
     workflowChain: ['Tutorial Circuit Synthesizer', 'Misconception Debugger'],
     sampleInput: 'Why cannot we clone an unknown quantum state |psi> using CNOT?',
     sampleOutput: 'Identified: No-Cloning Theorem violation. CNOT only copies basis states {|0>, |1>}, for superposition |+> it creates entangled pair (|00>+|11>)/sqrt(2).'
+  },
+
+  // ── QPU / SIMULATORS (3) ──────────────────────────────────────
+  {
+    id: 'sim-1',
+    tag: 'tools.sim.dwave_sampler',
+    name: 'D-Wave Annealing Simulator',
+    serviceName: 'Quantum Annealing & SA Sampler',
+    category: 'qpu_simulators',
+    categoryLabel: 'QPU / Simulators',
+    tagline: 'Simulate quantum annealing and transverse-field Ising dynamics for QUBO & binary optimization.',
+    whatItDoes: 'Executes Simulated Annealing (dimod.SimulatedAnnealingSampler) and Quantum Annealing emulations to sample ground state spin configurations in complex energy landscapes.',
+    youProvide: ['Ising Hamiltonian / QUBO matrix', 'Number of reads / sweeps (e.g. 1000)', 'Beta schedule / Annealing time'],
+    youReceive: ['Low-energy sample bitstrings', 'Sample frequency distribution', 'Energy histogram', 'Execution latency breakdown'],
+    level: 'Intermediate',
+    pricing: 'Included in Pro',
+    executionTime: '~18ms',
+    workflowChain: ['QUBO Matrix Synthesizer', 'Ising Spin Mapper', 'D-Wave Annealing Simulator', 'Solution Decoder'],
+    sampleInput: 'Run D-Wave Simulated Annealing on 50-variable portfolio QUBO with num_reads=1000',
+    sampleOutput: 'Sampled optimal bitstring in 14.2ms. Minimum energy: -11.42. Ground state probability: 48.6%.'
+  },
+  {
+    id: 'sim-2',
+    tag: 'tools.sim.qiskit_aer',
+    name: 'Qiskit Aer Simulator',
+    serviceName: 'Gate-Based Quantum Circuit Simulator',
+    category: 'qpu_simulators',
+    categoryLabel: 'QPU / Simulators',
+    tagline: 'High-performance C++ gate-based statevector, stabilizer, and unitary matrix simulation.',
+    whatItDoes: 'Simulates exact unitary evolution, shot-based sampling with AerSimulator, and optional noise model injections (T1/T2 relaxation, gate depolarization).',
+    youProvide: ['Qiskit QuantumCircuit / OpenQASM 3.0 code', 'Simulation method (statevector / stabilizer / matrix_product_state)', 'Shots count (e.g. 1024)'],
+    youReceive: ['Exact statevector / measurement counts', 'Expectation values <Z>', 'Simulation fidelity (100%)', 'State purity & fidelity metrics'],
+    level: 'Foundational',
+    pricing: 'Free',
+    executionTime: '~8ms',
+    workflowChain: ['Quantum Register Architect', 'Transpiler Pass Optimizer', 'Qiskit Aer Simulator', 'Continuous Circuit Drawer'],
+    sampleInput: 'Simulate 8-qubit CAS-VQE circuit on AerSimulator with 1024 shots',
+    sampleOutput: 'Aer simulation complete. 1024 shots sampled across 8 qubits. Expectation value <Z>: -154.3812 Ha in 6.4ms.'
+  },
+  {
+    id: 'sim-3',
+    tag: 'tools.sim.google_ortools',
+    name: 'Google OR-Tools Solver',
+    serviceName: 'Classical CP-SAT & MILP Engine',
+    category: 'qpu_simulators',
+    categoryLabel: 'QPU / Simulators',
+    tagline: 'Exact classical constraint programming and mixed-integer linear programming baseline solver.',
+    whatItDoes: 'Solves mathematical optimization problems to exact global optimality using Google OR-Tools CP-SAT and CBC/SCIP engines for baseline benchmarking.',
+    youProvide: ['Objective function & variable bounds', 'Linear / quadratic constraints', 'Solver timeout limit (seconds)'],
+    youReceive: ['Proven global optimal solution', 'Optimality gap (0.00%)', 'Search tree node count', 'Exact classical solve time'],
+    level: 'Foundational',
+    pricing: 'Free',
+    executionTime: '~4ms',
+    workflowChain: ['Problem Formulator', 'Google OR-Tools Solver', 'Classical Benchmarker'],
+    sampleInput: 'Solve 4-asset portfolio MILP with cardinality constraint k=2 using OR-Tools CP-SAT',
+    sampleOutput: 'Optimal solution found: x0=1, x2=1. Global objective: -11.42 Ha. Optimality gap: 0.00% in 2.8ms.'
   }
 ];
 
@@ -888,7 +945,7 @@ export default function QuantumMarketplacePage() {
             className="px-3 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 border"
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Explore Capabilities (33)</span>
+            <span>Explore Capabilities (36)</span>
           </button>
           <button
             onClick={() => setActiveViewTab('workflows')}
@@ -966,7 +1023,7 @@ export default function QuantumMarketplacePage() {
           </div>
 
           <h1 className="text-3xl md:text-4xl font-normal font-heading tracking-tight" style={{ color: colors.textPrimary }}>
-            Explore 33 Autonomous Quantum Computing Services
+            Explore 36 Autonomous Quantum Computing & Simulation Services
           </h1>
 
           <p className="text-sm max-w-2xl mx-auto leading-relaxed" style={{ color: colors.textMuted }}>
@@ -1049,7 +1106,7 @@ export default function QuantumMarketplacePage() {
               onClick={() => setSelectedCategory('all')}
               className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${selectedCategory === 'all' ? 'bg-[#181818] border-[#33A8DB] text-[#33A8DB]' : 'border-transparent text-[#808D9E] hover:text-[#DDE2E8]'}`}
             >
-              All Capabilities (33)
+              All Capabilities (36)
             </button>
             <button
               onClick={() => setSelectedCategory('optimization')}
@@ -1093,10 +1150,17 @@ export default function QuantumMarketplacePage() {
               <BookOpen className="w-3.5 h-3.5 text-[#DEAA21]" />
               <span>Academy (5)</span>
             </button>
+            <button
+              onClick={() => setSelectedCategory('qpu_simulators')}
+              className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${selectedCategory === 'qpu_simulators' ? 'bg-[#181818] border-[#33A8DB] text-[#33A8DB]' : 'border-transparent text-[#808D9E] hover:text-[#DDE2E8]'}`}
+            >
+              <Server className="w-3.5 h-3.5 text-[#33A8DB]" />
+              <span>QPU / Simulators (3)</span>
+            </button>
           </div>
 
           <div className="text-[11px] font-mono text-[#808D9E] shrink-0">
-            Showing <span className="text-[#33A8DB]">{filteredCapabilities.length}</span> of 33 services
+            Showing <span className="text-[#33A8DB]">{filteredCapabilities.length}</span> of 36 services
           </div>
         </div>
       </section>
@@ -1126,6 +1190,7 @@ export default function QuantumMarketplacePage() {
                           cap.category === 'algorithms' ? 'border-[#33A8DB]/40 text-[#33A8DB] bg-[#33A8DB]/10' :
                           cap.category === 'circuit' ? 'border-[#5390DD]/40 text-[#5390DD] bg-[#5390DD]/10' :
                           cap.category === 'qml' ? 'border-[#33A8DB]/40 text-[#33A8DB] bg-[#33A8DB]/10' :
+                          cap.category === 'qpu_simulators' ? 'border-[#33A8DB]/40 text-[#33A8DB] bg-[#33A8DB]/10' :
                           'border-[#DEAA21]/40 text-[#DEAA21] bg-[#DEAA21]/10'
                         }`}
                       >
@@ -1278,14 +1343,15 @@ export default function QuantumMarketplacePage() {
                 Quantum Guru Ecosystem Topology
               </h2>
               <p className="text-xs text-[#808D9E] leading-relaxed font-mono">
-                33 deterministic and probabilistic quantum primitives mapped across 6 scientific domains.
+                36 deterministic and probabilistic quantum primitives mapped across 7 scientific domains.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 pt-4">
-              {['optimization', 'algorithms', 'circuit', 'chemistry', 'qml', 'academy'].map((domainKey) => {
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-3 pt-4">
+              {['optimization', 'algorithms', 'circuit', 'chemistry', 'qml', 'academy', 'qpu_simulators'].map((domainKey) => {
+                const title = domainKey === 'qpu_simulators' ? 'QPU / Simulators' : domainKey.charAt(0).toUpperCase() + domainKey.slice(1);
                 const domainCaps = CAPABILITIES.filter(c => c.category === domainKey);
-                const title = domainKey.charAt(0).toUpperCase() + domainKey.slice(1);
+                
                 return (
                   <div key={domainKey} className="rounded-lg border border-[#222222] bg-[#181818] p-3 space-y-3">
                     <div className="flex items-center justify-between pb-2 border-b border-[#222222]">
@@ -1468,7 +1534,7 @@ export default function QuantumMarketplacePage() {
         className="h-10 border-t px-6 flex items-center justify-between text-[11px] font-mono shrink-0 transition-colors"
       >
         <div>
-          <span>Quantum Guru Marketplace • 33 Autonomous Capabilities</span>
+          <span>Quantum Guru Marketplace • 36 Autonomous Capabilities</span>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/ide" className="text-[#33A8DB] hover:underline">Quantum Cursor IDE</Link>
