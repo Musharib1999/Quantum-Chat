@@ -71,6 +71,7 @@ export default function QuantumIDE() {
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [customProjectInput, setCustomProjectInput] = useState('');
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('optimization');
+  const [telemetryModalTab, setTelemetryModalTab] = useState<'circuit' | 'results' | 'terminal' | null>(null);
   const [isProjectsDropdownOpen, setIsProjectsDropdownOpen] = useState(false);
   const [targetBackend, setTargetBackend] = useState('aer_simulator');
   const [optimizationLevel, setOptimizationLevel] = useState<number>(2);
