@@ -443,6 +443,44 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   }, []);
 
+  // Synchronize project workspace to localStorage and MongoDB backend
+  const saveProjectToDatabase = useCallback(async (
+    projId: string, 
+    projData: { title: string; desc: string; files: Record<string, { name: string; content: string; language: string }> },
+    currActiveFile: string,
+    metrics: typeof runtimeMetrics
+  ) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('quantum_ide_active_project', projId);
+        localStorage.setItem(`quantum_ide_proj_${projId}`, JSON.stringify({
+          id: projId,
+          title: projData.title,
+          desc: projData.desc,
+          files: projData.files,
+          activeFile: currActiveFile,
+          runtimeMetrics: metrics,
+          updatedAt: new Date().toISOString()
+        }));
+      }
+
+      await fetch('/api/ide/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: projId,
+          title: projData.title,
+          desc: projData.desc,
+          files: projData.files,
+          activeFile: currActiveFile,
+          runtimeMetrics: metrics
+        })
+      });
+    } catch (err) {
+      console.warn('Failed to sync project to MongoDB:', err);
+    }
+  }, []);
+
   // Create a new project with custom name and chosen scaffold template
   const handleCreateCustomProject = () => {
     const rawName = customProjectInput.trim();
