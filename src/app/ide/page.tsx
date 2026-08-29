@@ -951,15 +951,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
             </div>
 
-            {/* Pinned Bottom Controls: Settings & Profile */}
+            {/* Pinned Bottom Controls: Settings */}
             <div 
               style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="p-2 border-t space-y-1 shrink-0"
+              className="p-2 border-t shrink-0"
             >
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 style={{ borderColor: colors.border, color: colors.textPrimary }}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md border text-xs font-normal transition-all cursor-pointer group hover:opacity-80"
+                className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg border text-xs font-normal transition-all cursor-pointer group hover:opacity-80 shadow-2xs"
               >
                 <div className="flex items-center gap-2">
                   <Settings className="w-4 h-4 group-hover:rotate-45 transition-all" style={{ color: colors.textMuted }} />
@@ -971,27 +971,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     color: colors.textAmber, 
                     borderColor: colors.border 
                   }}
-                  className="text-[9px] font-mono px-1.5 py-0.2 rounded font-normal border"
+                  className="text-[9px] font-mono px-2 py-0.5 rounded font-normal border"
                 >
                   {activeModel === 'groq' ? 'Qwen 3.6 (Groq)' : 'RunPod'}
                 </span>
               </button>
-
-              <div 
-                style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-md border transition-all cursor-pointer"
-              >
-                <div 
-                  style={{ backgroundColor: colors.bgPill, color: colors.textCyan }}
-                  className="w-6 h-6 rounded-full border border-slate-700/50 flex items-center justify-center text-[10px] font-normal font-heading shrink-0"
-                >
-                  QD
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-normal truncate" style={{ color: colors.textPrimary }}>Quantum Dev</div>
-                  <div className="text-[9px] truncate font-mono" style={{ color: colors.textMuted }}>ms@qc.guru</div>
-                </div>
-              </div>
             </div>
 
           </aside>
@@ -1274,6 +1258,36 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             {/* Body */}
             <div className="p-5 space-y-5 overflow-y-auto max-h-[75vh] text-xs">
               
+              {/* User Profile & Account */}
+              <div className="space-y-2.5">
+                <div className="text-xs font-normal uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
+                  User Profile & Account
+                </div>
+                <div 
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                  className="p-3.5 rounded-xl border flex items-center justify-between shadow-2xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <div 
+                      style={{ backgroundColor: colors.bgCard, color: colors.textCyan, borderColor: 'rgba(51, 168, 219, 0.4)' }}
+                      className="w-10 h-10 rounded-full border flex items-center justify-center text-sm font-normal font-heading shrink-0"
+                    >
+                      QD
+                    </div>
+                    <div>
+                      <div className="text-sm font-normal" style={{ color: colors.textPrimary }}>Quantum Dev</div>
+                      <div className="text-xs font-mono" style={{ color: colors.textMuted }}>ms@qc.guru</div>
+                    </div>
+                  </div>
+                  <span 
+                    style={{ backgroundColor: colors.bgCard, color: colors.textEmerald, borderColor: colors.border }}
+                    className="text-[10px] font-mono px-2.5 py-1 rounded-md border font-normal"
+                  >
+                    Pro Developer
+                  </span>
+                </div>
+              </div>
+
               {/* Theme */}
               <div className="space-y-2.5">
                 <div className="text-xs font-normal uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
