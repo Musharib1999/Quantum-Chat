@@ -1176,23 +1176,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                       className="border rounded-xl p-3 shadow-2xs font-normal"
                     >
-                      <div className="text-[10px] font-normal mb-1 uppercase tracking-wider" style={{ color: colors.textCyan }}>You</div>
-                      <div style={{ color: colors.textPrimary }}>{msg.text}</div>
+                      <div className="leading-relaxed" style={{ color: colors.textPrimary }}>{msg.text}</div>
                     </div>
                   ) : (
                     <div 
                       style={{ backgroundColor: 'transparent' }}
-                      className="p-3 space-y-2.5 font-normal"
+                      className="px-1 py-1.5 space-y-2.5 font-normal"
                     >
-                      <div style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)' }} className="flex items-center justify-between border-b pb-1.5">
-                        <span className="text-[10px] font-normal flex items-center gap-1 font-heading uppercase tracking-wider" style={{ color: colors.textCyan }}>
-                          <Sparkles className="w-3 h-3" /> Quantum Guru Copilot
-                        </span>
-                        <span className="text-[9px] font-mono font-normal" style={{ color: colors.textMuted }}>
-                          {activeModel === 'groq' ? 'Qwen 3.6 27B (Groq 118ms)' : 'RunPod (240ms)'}
-                        </span>
-                      </div>
-
                       <div className="leading-relaxed font-normal whitespace-pre-wrap font-sans" style={{ color: colors.textPrimary }}>
                         {msg.text}
                       </div>
