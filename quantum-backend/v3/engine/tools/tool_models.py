@@ -387,3 +387,46 @@ class QMLPredictSampleResponse(BaseModel):
     vqc_prediction: int
     classical_prediction: int
     confidence_margin: float
+
+
+# ── QPU / Simulator Models (Tools 34 - 36) ──────────────────────────────────
+class SimDwaveSamplerRequest(BaseModel):
+    qubo_matrix: List[List[float]] = Field(..., description="Upper-triangular QUBO Q-matrix")
+    var_names: Optional[List[str]] = Field(default_factory=list)
+    num_reads: int = Field(1000, description="Number of annealing reads")
+
+class SimDwaveSamplerResponse(BaseModel):
+    optimal_bitstring: str
+    ground_energy: float
+    sample_distribution: Dict[str, int]
+    num_reads: int
+    execution_time_ms: float
+    annealing_schedule: str
+
+class SimQiskitAerRequest(BaseModel):
+    num_qubits: int = Field(4, description="Number of qubits")
+    shots: int = Field(1024, description="Number of measurement shots")
+    method: str = Field("statevector", description="Simulation method")
+
+class SimQiskitAerResponse(BaseModel):
+    num_qubits: int
+    shots_sampled: int
+    expectation_val_z: float
+    fidelity: float
+    probabilities: Dict[str, float]
+    execution_time_ms: float
+    simulation_method: str
+
+class SimGoogleORToolsRequest(BaseModel):
+    variables: List[str] = Field(default_factory=lambda: ["x0", "x1", "x2", "x3"])
+    constraints: List[str] = Field(default_factory=lambda: ["x0 + x1 + x2 + x3 == 2"])
+    timeout_sec: float = Field(5.0)
+
+class SimGoogleORToolsResponse(BaseModel):
+    status: str
+    optimal_objective: float
+    optimality_gap: float
+    solution_assignments: Dict[str, int]
+    search_nodes_explored: int
+    solve_time_ms: float
+    solver_engine: str

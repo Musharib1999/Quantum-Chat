@@ -26,6 +26,9 @@ from .qml_tools import (
     normalize_features, build_feature_map, build_variational_ansatz,
     train_classifier, benchmark_classical as qml_benchmark, predict_sample
 )
+from .simulator_tools import (
+    execute_dwave_sampler, execute_qiskit_aer, execute_google_ortools
+)
 
 TOOL_DISPATCH_TABLE: dict[str, tuple[Any, Callable]] = {
     # 1. Optimization Studio (1-6)
@@ -72,6 +75,11 @@ TOOL_DISPATCH_TABLE: dict[str, tuple[Any, Callable]] = {
     "tools.qml.train_classifier": (QMLTrainClassifierRequest, train_classifier),
     "tools.qml.benchmark_classical": (QMLBenchmarkClassicalRequest, qml_benchmark),
     "tools.qml.predict_sample": (QMLPredictSampleRequest, predict_sample),
+
+    # 7. QPU / Simulators Studio (34-36)
+    "tools.sim.dwave_sampler": (SimDwaveSamplerRequest, execute_dwave_sampler),
+    "tools.sim.qiskit_aer": (SimQiskitAerRequest, execute_qiskit_aer),
+    "tools.sim.google_ortools": (SimGoogleORToolsRequest, execute_google_ortools),
 }
 
 def invoke_quantum_tool(tool_name: str, params: dict[str, Any]) -> dict[str, Any]:
