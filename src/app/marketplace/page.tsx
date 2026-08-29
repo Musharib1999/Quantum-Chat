@@ -1305,9 +1305,9 @@ export default function QuantumMarketplacePage() {
                   style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                   className="rounded-xl border p-5 flex flex-col justify-between space-y-4 hover:border-sky-500/60 transition-all duration-200 shadow-xs group relative"
                 >
-                  {/* Top: Category & Level Badge */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[10px] font-mono">
+                  {/* Top: Category Tag (Left) + I Need This Service Button (Right) */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
                       <span 
                         style={{ 
                           color: colors.textCyan, 
@@ -1318,67 +1318,51 @@ export default function QuantumMarketplacePage() {
                       >
                         {cap.categoryLabel}
                       </span>
-                      <div className="flex items-center gap-1.5 text-[#808D9E]">
-                        <span>Level:</span>
-                        <span className="text-[#DDE2E8]">{cap.level}</span>
-                      </div>
+
+                      {/* I Need This Service Button in Top Right */}
+                      <button
+                        onClick={() => handleOpenSandbox(cap)}
+                        style={{ 
+                          backgroundColor: 'rgba(222, 170, 33, 0.1)', 
+                          borderColor: 'rgba(222, 170, 33, 0.4)', 
+                          color: colors.textAmber 
+                        }}
+                        className="px-2.5 py-1 rounded-lg border text-[11px] font-mono hover:opacity-80 transition-all flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
+                      >
+                        <span>I need this service</span>
+                        <ChevronRight className="w-3 h-3" style={{ color: colors.textAmber }} />
+                      </button>
                     </div>
 
                     {/* Service Title */}
                     <div>
-                      <h3 className="text-sm font-normal font-heading text-[#DDE2E8] group-hover:text-[#33A8DB] transition-colors">
-                        {cap.name}
+                      <h3 className="text-sm font-normal font-heading" style={{ color: colors.textPrimary }}>
+                        <span className="group-hover:text-sky-400 transition-colors">{cap.name}</span>
                       </h3>
-                      <p className="text-[11px] text-[#808D9E] font-mono pt-0.5">
+                      <p className="text-[11px] font-mono pt-0.5" style={{ color: colors.textMuted }}>
                         {cap.serviceName}
                       </p>
                     </div>
 
                     {/* Tagline / What it does */}
-                    <p className="text-xs text-[#808D9E] leading-relaxed pt-1">
+                    <p className="text-xs leading-relaxed pt-1" style={{ color: colors.textMuted }}>
                       {cap.tagline}
                     </p>
                   </div>
 
                   {/* Input / Output Specs */}
-                  <div className="space-y-2 pt-2 border-t border-[#222222] text-[11px] font-mono">
-                    <div>
-                      <span className="text-[#33A8DB] text-[10px] uppercase">Input: </span>
-                      <span className="text-[#808D9E]">{cap.youProvide[0]}</span>
-                    </div>
-                    <div>
-                      <span className="text-[#2FB885] text-[10px] uppercase">Output: </span>
-                      <span className="text-[#808D9E]">{cap.youReceive[0]}</span>
-                    </div>
-                  </div>
-
-                  {/* Bottom: Pricing & Action Button */}
                   <div 
                     style={{ borderColor: colors.border }}
-                    className="flex items-center justify-between pt-3 border-t"
+                    className="space-y-2 pt-3 border-t text-[11px] font-mono"
                   >
-                    {/* Time / Latency in Green */}
-                    <div 
-                      style={{ color: colors.textEmerald }}
-                      className="text-[10px] font-mono flex items-center gap-1.5"
-                    >
-                      <Clock className="w-3 h-3" style={{ color: colors.textEmerald }} />
-                      <span>{cap.executionTime}</span>
+                    <div>
+                      <span style={{ color: colors.textCyan }} className="text-[10px] uppercase">Input: </span>
+                      <span style={{ color: colors.textMuted }}>{cap.youProvide[0]}</span>
                     </div>
-
-                    {/* I Need This Service Button in Yellow / Amber */}
-                    <button
-                      onClick={() => handleOpenSandbox(cap)}
-                      style={{ 
-                        backgroundColor: 'rgba(222, 170, 33, 0.1)', 
-                        borderColor: 'rgba(222, 170, 33, 0.4)', 
-                        color: colors.textAmber 
-                      }}
-                      className="px-3 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 transition-all flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>I need this service</span>
-                      <ChevronRight className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
-                    </button>
+                    <div>
+                      <span style={{ color: colors.textEmerald }} className="text-[10px] uppercase">Output: </span>
+                      <span style={{ color: colors.textMuted }}>{cap.youReceive[0]}</span>
+                    </div>
                   </div>
                 </div>
               ))}
