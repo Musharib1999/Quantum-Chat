@@ -896,8 +896,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
                 >
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="flex items-center gap-1.5 font-heading text-xs" style={{ color: colors.textPrimary }}>
-                      <Zap className="w-3.5 h-3.5" style={{ color: colors.textCyan }} /> Circuit Canvas
+                    <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                      Circuit Canvas
                     </span>
                     <span style={{ color: colors.textCyan }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
                       View →
@@ -917,8 +917,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
                 >
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="flex items-center gap-1.5 font-heading text-xs" style={{ color: colors.textPrimary }}>
-                      <Activity className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} /> Results & Metrics
+                    <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                      Results & Metrics
                     </span>
                     <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
                       View →
@@ -937,8 +937,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-amber-500/60 transition-all group"
                 >
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="flex items-center gap-1.5 font-heading text-xs" style={{ color: colors.textPrimary }}>
-                      <TerminalIcon className="w-3.5 h-3.5" style={{ color: colors.textAmber }} /> Solver Terminal
+                    <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                      Solver Terminal
                     </span>
                     <span style={{ color: colors.textAmber }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
                       Logs →
