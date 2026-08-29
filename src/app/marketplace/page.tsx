@@ -972,6 +972,24 @@ export default function QuantumMarketplacePage() {
       style={{ backgroundColor: colors.bgMain, color: colors.textPrimary }}
       className="min-h-screen font-sans select-none antialiased flex flex-col transition-colors duration-150"
     >
+      {/* Global CSS for crisp, visible hover lift & glow */}
+      <style jsx global>{`
+        .qg-card-hover {
+          transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+          will-change: transform, box-shadow;
+        }
+        .qg-card-hover:hover {
+          transform: translateY(-3px) !important;
+        }
+        .qg-card-dark:hover {
+          box-shadow: 0 16px 36px -6px rgba(51, 168, 219, 0.28), 0 0 12px 1px rgba(51, 168, 219, 0.2) !important;
+          border-color: rgba(51, 168, 219, 0.6) !important;
+        }
+        .qg-card-light:hover {
+          box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.12), 0 4px 14px -2px rgba(51, 168, 219, 0.14) !important;
+          border-color: rgba(51, 168, 219, 0.5) !important;
+        }
+      `}</style>
       
       {/* ───────────────────────────────────────────────────────────── */}
       {/* TOP MARKETPLACE HEADER                                        */}
@@ -1303,10 +1321,8 @@ export default function QuantumMarketplacePage() {
                 <div
                   key={cap.id}
                   style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                  className={`rounded-xl border p-5 flex flex-col justify-between space-y-4 transition-all duration-200 ease-out hover:-translate-y-0.5 group relative ${
-                    isDark 
-                      ? 'hover:shadow-[0_12px_30px_-8px_rgba(51,168,219,0.18)] hover:border-sky-500/50' 
-                      : 'hover:shadow-[0_14px_28px_-6px_rgba(15,23,42,0.08),0_4px_10px_-2px_rgba(51,168,219,0.06)] hover:border-sky-400/50'
+                  className={`rounded-xl border p-5 flex flex-col justify-between space-y-4 qg-card-hover group relative cursor-pointer ${
+                    isDark ? 'qg-card-dark' : 'qg-card-light'
                   }`}
                 >
                   {/* Top: Category Tag (Left) + I Need This Service Button (Right) */}
@@ -1391,10 +1407,8 @@ export default function QuantumMarketplacePage() {
                 <div 
                   key={wf.id}
                   style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                  className={`rounded-xl border p-6 space-y-4 transition-all duration-200 ease-out hover:-translate-y-0.5 ${
-                    isDark 
-                      ? 'hover:shadow-[0_12px_30px_-8px_rgba(51,168,219,0.18)] hover:border-sky-500/50' 
-                      : 'hover:shadow-[0_14px_28px_-6px_rgba(15,23,42,0.08),0_4px_10px_-2px_rgba(51,168,219,0.06)] hover:border-sky-400/50'
+                  className={`rounded-xl border p-6 space-y-4 qg-card-hover cursor-pointer ${
+                    isDark ? 'qg-card-dark' : 'qg-card-light'
                   }`}
                 >
                   <div className="flex items-center justify-between">
