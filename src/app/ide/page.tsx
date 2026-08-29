@@ -1469,6 +1469,182 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
+      {/* QUANTUM RUNTIME TELEMETRY & SOLVERS DETAILS MODAL              */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {telemetryModalTab !== null && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setTelemetryModalTab(null); }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+        >
+          <div 
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
+            className="w-full max-w-4xl rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150"
+          >
+            {/* Modal Header with View Switcher Tabs & Close Button */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="p-4 border-b flex items-center justify-between shrink-0"
+            >
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <button 
+                  onClick={() => setTelemetryModalTab('circuit')}
+                  style={{ 
+                    backgroundColor: telemetryModalTab === 'circuit' ? colors.bgPill : 'transparent',
+                    borderColor: telemetryModalTab === 'circuit' ? colors.textCyan : 'transparent',
+                    color: telemetryModalTab === 'circuit' ? colors.textCyan : colors.textMuted 
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors cursor-pointer"
+                >
+                  <Zap className="w-3.5 h-3.5" style={{ color: colors.textCyan }} />
+                  <span>Circuit Canvas</span>
+                </button>
+
+                <button 
+                  onClick={() => setTelemetryModalTab('results')}
+                  style={{ 
+                    backgroundColor: telemetryModalTab === 'results' ? colors.bgPill : 'transparent',
+                    borderColor: telemetryModalTab === 'results' ? colors.textEmerald : 'transparent',
+                    color: telemetryModalTab === 'results' ? colors.textEmerald : colors.textMuted 
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors cursor-pointer"
+                >
+                  <Activity className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} />
+                  <span>Results & Metrics</span>
+                </button>
+
+                <button 
+                  onClick={() => setTelemetryModalTab('terminal')}
+                  style={{ 
+                    backgroundColor: telemetryModalTab === 'terminal' ? colors.bgPill : 'transparent',
+                    borderColor: telemetryModalTab === 'terminal' ? colors.textAmber : 'transparent',
+                    color: telemetryModalTab === 'terminal' ? colors.textAmber : colors.textMuted 
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors cursor-pointer"
+                >
+                  <TerminalIcon className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
+                  <span>Solver Terminal</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-4">
+                {/* Real-Time Telemetry Counters */}
+                <div className="hidden sm:flex items-center gap-3 text-[11px] font-mono" style={{ color: colors.textMuted }}>
+                  <span>Qubits: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.activeQubits}</span></span>
+                  <span>Depth: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.depth}</span></span>
+                  <span>CNOTs: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.cnots}</span></span>
+                </div>
+
+                <button 
+                  onClick={() => setTelemetryModalTab(null)}
+                  style={{ borderColor: colors.border, color: colors.textMuted }}
+                  className="p-1 rounded-md border hover:bg-neutral-800/40 cursor-pointer"
+                  title="Close Modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body Content */}
+            <div 
+              style={{ backgroundColor: colors.bgEditor }}
+              className="p-5 flex-1 min-h-0 overflow-y-auto overflow-x-auto font-mono"
+            >
+              {telemetryModalTab === 'circuit' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b" style={{ borderColor: colors.border }}>
+                    <div className="text-xs font-normal" style={{ color: colors.textCyan }}>
+                      Continuous Horizontal Circuit Canvas (Zero vertical wrapping — scroll horizontally):
+                    </div>
+                    <div className="text-[10px] font-mono" style={{ color: colors.textMuted }}>
+                      Backend: <span style={{ color: colors.textSkyBlue }}>{targetBackend}</span>
+                    </div>
+                  </div>
+                  <pre className="font-mono text-xs font-normal leading-normal select-text p-4 rounded-xl border bg-black/40 overflow-x-auto whitespace-pre" style={{ borderColor: colors.border, color: colors.textPrimary }}>
+                    {runtimeMetrics.circuitText}
+                  </pre>
+                </div>
+              )}
+
+              {telemetryModalTab === 'results' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div 
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                      className="border rounded-xl p-4 space-y-2 shadow-2xs"
+                    >
+                      <div className="text-[11px] font-normal uppercase" style={{ color: colors.textCyan }}>Expectation Value</div>
+                      <div className="text-2xl font-normal font-mono" style={{ color: colors.textSkyBlue }}>{runtimeMetrics.expectationVal}</div>
+                      <div className="text-xs font-normal" style={{ color: colors.textMuted }}>Target: Z ⊗ I ⊗ I ⊗ I</div>
+                    </div>
+                    <div 
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                      className="border rounded-xl p-4 space-y-2 shadow-2xs"
+                    >
+                      <div className="text-[11px] font-normal uppercase" style={{ color: colors.textCyan }}>Simulator Fidelity</div>
+                      <div className="text-2xl font-normal font-mono" style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</div>
+                      <div className="text-xs font-normal" style={{ color: colors.textMuted }}>Statevector exact match</div>
+                    </div>
+                    <div 
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                      className="border rounded-xl p-4 space-y-2 shadow-2xs"
+                    >
+                      <div className="text-[11px] font-normal uppercase" style={{ color: colors.textCyan }}>Execution Latency</div>
+                      <div className="text-2xl font-normal font-mono" style={{ color: colors.textAmber }}>{runtimeMetrics.latencySec}</div>
+                      <div className="text-xs font-normal" style={{ color: colors.textMuted }}>Target: {targetBackend}</div>
+                    </div>
+                  </div>
+
+                  <div 
+                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                    className="border rounded-xl p-4 space-y-2"
+                  >
+                    <div className="text-xs font-normal uppercase" style={{ color: colors.textCyan }}>Quantum Execution Parameters</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div><span style={{ color: colors.textMuted }}>Optimization Level:</span> <span style={{ color: colors.textPrimary }}>Level {optimizationLevel}</span></div>
+                      <div><span style={{ color: colors.textMuted }}>Shot Count:</span> <span style={{ color: colors.textPrimary }}>{shots} shots</span></div>
+                      <div><span style={{ color: colors.textMuted }}>Allocated Qubits:</span> <span style={{ color: colors.textPrimary }}>{runtimeMetrics.activeQubits} Q</span></div>
+                      <div><span style={{ color: colors.textMuted }}>Circuit Depth:</span> <span style={{ color: colors.textPrimary }}>{runtimeMetrics.depth} layers</span></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {telemetryModalTab === 'terminal' && (
+                <div className="space-y-2 font-mono text-xs">
+                  <div className="flex items-center justify-between pb-2 border-b" style={{ borderColor: colors.border }}>
+                    <span className="text-xs font-normal" style={{ color: colors.textAmber }}>Live QPU Simulation & Solver Console Output:</span>
+                    <span className="text-[10px]" style={{ color: colors.textEmerald }}>• Process Exited Cleanly (code 0)</span>
+                  </div>
+                  <div className="p-4 rounded-xl border bg-black/40 space-y-1 overflow-x-auto" style={{ borderColor: colors.border }}>
+                    {runtimeMetrics.terminalLog.map((line, lIdx) => (
+                      <div key={lIdx} style={{ color: line.startsWith('➜') ? colors.textAmber : (line.includes('exit code 0') ? colors.textEmerald : colors.textPrimary) }}>
+                        {line}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="p-3 border-t flex items-center justify-end"
+            >
+              <button
+                onClick={() => setTelemetryModalTab(null)}
+                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
+                className="px-4 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
       {/* START NEW PROJECT TEMPLATE SELECTOR MODAL                     */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isNewProjectOpen && (
