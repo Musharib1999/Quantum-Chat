@@ -882,35 +882,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 </div>
               ))}
 
-              {/* Active Sub-Engines */}
-              <div className="pt-4 px-2">
-                <div className="text-[10px] font-normal uppercase tracking-wider mb-2 font-heading" style={{ color: colors.textCyan }}>
-                  Active Quantum Sub-Engines
-                </div>
-                <div className="space-y-1.5 text-[11px]">
-                  <div 
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-normal"
-                  >
-                    <span style={{ color: colors.textPrimary }}>Optimization</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal">READY</span>
-                  </div>
-                  <div 
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-normal"
-                  >
-                    <span style={{ color: colors.textPrimary }}>Chemistry CAS</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal">READY</span>
-                  </div>
-                  <div 
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-md border shadow-2xs font-normal"
-                  >
-                    <span style={{ color: colors.textPrimary }}>QML Engine</span>
-                    <span style={{ backgroundColor: colors.bgPill, color: colors.textEmerald }} className="text-[9px] px-1.5 py-0.5 rounded font-mono font-normal">READY</span>
-                  </div>
-                </div>
-              </div>
+
             </div>
 
             {/* Pinned Bottom Controls: Settings & Profile */}
