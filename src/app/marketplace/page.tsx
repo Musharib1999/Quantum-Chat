@@ -31,6 +31,7 @@ import {
   Tag, 
   X,
   Boxes,
+  Coins,
   Sun,
   Moon,
   Server,
@@ -54,6 +55,7 @@ interface QuantumCapability {
   youReceive: string[];
   level: 'Foundational' | 'Intermediate' | 'Advanced';
   pricing: 'Free' | 'Included in Pro' | 'Pay-per-use';
+  credits: number;
   executionTime: string;
   workflowChain: string[];
   sampleInput: string;
@@ -69,6 +71,7 @@ const CAPABILITIES: QuantumCapability[] = [
   // ── OPTIMIZATION (6) ──────────────────────────────────────────
   {
     id: 'opt-1',
+    credits: 2,
     tag: 'tools.opt.formulate_problem',
     name: 'Problem Formulator',
     serviceName: 'Problem Formulation Service',
@@ -87,6 +90,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'opt-2',
+    credits: 3,
     tag: 'tools.opt.translate_to_qubo',
     name: 'QUBO Matrix Synthesizer',
     serviceName: 'QUBO Synthesis Service',
@@ -105,6 +109,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'opt-3',
+    credits: 3,
     tag: 'tools.opt.map_quantum_solver',
     name: 'Ising Spin Mapper',
     serviceName: 'Ising Hamiltonian Mapping',
@@ -123,6 +128,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'opt-4',
+    credits: 8,
     tag: 'tools.opt.execute_solver',
     name: 'QAOA & Annealing Solver',
     serviceName: 'Quantum Ground State Sampling',
@@ -141,6 +147,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'opt-5',
+    credits: 2,
     tag: 'tools.opt.decode_solution',
     name: 'Solution Decoder',
     serviceName: 'Domain Assignment Decoder',
@@ -159,6 +166,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'opt-6',
+    credits: 4,
     tag: 'tools.opt.benchmark_classical',
     name: 'Classical Benchmarker',
     serviceName: 'Quantum vs Classical Validation',
@@ -179,6 +187,7 @@ const CAPABILITIES: QuantumCapability[] = [
   // ── CHEMISTRY (6) ─────────────────────────────────────────────
   {
     id: 'chem-1',
+    credits: 2,
     tag: 'tools.chem.ingest_geometry',
     name: 'Molecular Geometry Ingester',
     serviceName: 'Molecular Geometry Ingestion',
@@ -197,6 +206,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'chem-2',
+    credits: 5,
     tag: 'tools.chem.compute_scf',
     name: 'Hartree-Fock Integral Engine',
     serviceName: 'Mean-Field Electronic Integrals',
@@ -215,6 +225,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'chem-3',
+    credits: 5,
     tag: 'tools.chem.select_active_space',
     name: 'CASCI Active Space Reducer',
     serviceName: 'Active Space Orbital Reduction',
@@ -233,6 +244,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'chem-4',
+    credits: 3,
     tag: 'tools.chem.fermion_to_qubit_mapping',
     name: 'Fermion-to-Pauli Mapper',
     serviceName: 'Second-Quantization Spin Transform',
@@ -251,6 +263,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'chem-5',
+    credits: 6,
     tag: 'tools.chem.build_ansatz',
     name: 'UCCSD Chemistry Ansatz',
     serviceName: 'Unitary Coupled Cluster Circuit',
@@ -269,6 +282,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'chem-6',
+    credits: 12,
     tag: 'tools.chem.solve_ground_state_vqe',
     name: 'VQE Ground State Solver',
     serviceName: 'Molecular Ground State Minimizer',
@@ -289,6 +303,7 @@ const CAPABILITIES: QuantumCapability[] = [
   // ── ALGORITHMS (5) ────────────────────────────────────────────
   {
     id: 'algo-1',
+    credits: 1,
     tag: 'tools.algo.classify_algorithm',
     name: 'Algorithm Classifier',
     serviceName: 'Quantum Algorithm Routing',
@@ -307,6 +322,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'algo-2',
+    credits: 4,
     tag: 'tools.algo.synthesize_oracle',
     name: 'Phase Oracle Synthesizer',
     serviceName: 'Unitary Phase Oracle Builder',
@@ -325,6 +341,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'algo-3',
+    credits: 4,
     tag: 'tools.algo.build_diffusion',
     name: 'Grover Diffusion Architect',
     serviceName: 'Inversion-About-Mean Operator',
@@ -343,6 +360,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'algo-4',
+    credits: 6,
     tag: 'tools.algo.simulate_statevector',
     name: 'Statevector Amplitude Analyzer',
     serviceName: 'Exact Quantum Statevector Simulator',
@@ -361,6 +379,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'algo-5',
+    credits: 2,
     tag: 'tools.algo.analyze_speedup',
     name: 'Quantum Speedup Evaluator',
     serviceName: 'Computational Complexity Analyzer',
@@ -381,6 +400,7 @@ const CAPABILITIES: QuantumCapability[] = [
   // ── CIRCUITS (5) ──────────────────────────────────────────────
   {
     id: 'circ-1',
+    credits: 2,
     tag: 'tools.circuit.build_register',
     name: 'Quantum Register Architect',
     serviceName: 'Circuit Initialization & Register Layout',
@@ -399,6 +419,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'circ-2',
+    credits: 2,
     tag: 'tools.circuit.bind_parameters',
     name: 'Parameter Symbol Binder',
     serviceName: 'Variational Parameter Binder',
@@ -417,6 +438,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'circ-3',
+    credits: 5,
     tag: 'tools.circuit.transpile_passes',
     name: 'Transpiler Pass Optimizer',
     serviceName: 'Compiler Pass Optimization',
@@ -435,6 +457,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'circ-4',
+    credits: 6,
     tag: 'tools.circuit.simulate_noisy',
     name: 'Noise & Decoherence Simulator',
     serviceName: 'Noisy Quantum Hardware Simulator',
@@ -453,6 +476,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'circ-5',
+    credits: 1,
     tag: 'tools.circuit.render_continuous',
     name: 'Continuous Circuit Drawer',
     serviceName: 'Continuous Horizontal Canvas Drawer',
@@ -473,6 +497,7 @@ const CAPABILITIES: QuantumCapability[] = [
   // ── QUANTUM ML (6) ────────────────────────────────────────────
   {
     id: 'qml-1',
+    credits: 2,
     tag: 'tools.qml.normalize_features',
     name: 'Bloch Feature Normalizer',
     serviceName: 'Feature Scaling & Angle Normalization',
@@ -491,6 +516,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'qml-2',
+    credits: 4,
     tag: 'tools.qml.build_feature_map',
     name: 'Quantum Feature Map Generator',
     serviceName: 'Hilbert Space Quantum Feature Map',
@@ -509,6 +535,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'qml-3',
+    credits: 4,
     tag: 'tools.qml.build_ansatz',
     name: 'Variational QML Architect',
     serviceName: 'Trainable QML Variational Ansatz',
@@ -527,6 +554,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'qml-4',
+    credits: 10,
     tag: 'tools.qml.train_classifier',
     name: 'QSVM & VQC Classifier Trainer',
     serviceName: 'Quantum Classifier Training Service',
@@ -545,6 +573,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'qml-5',
+    credits: 4,
     tag: 'tools.qml.benchmark_classical',
     name: 'Classical ML Benchmarker',
     serviceName: 'Dual Quantum-Classical ML Comparison',
@@ -563,6 +592,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'qml-6',
+    credits: 2,
     tag: 'tools.qml.predict_sample',
     name: 'Quantum Inference Predictor',
     serviceName: 'Live Quantum Sample Inference',
@@ -583,6 +613,7 @@ const CAPABILITIES: QuantumCapability[] = [
   // ── ACADEMY (5) ───────────────────────────────────────────────
   {
     id: 'acad-1',
+    credits: 1,
     tag: 'tools.academy.concept_explainer',
     name: 'Concept Decomposer',
     serviceName: 'Socratic Physics Explanation',
@@ -601,6 +632,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'acad-2',
+    credits: 2,
     tag: 'tools.academy.math_derivation',
     name: 'Dirac Mathematics Proof Engine',
     serviceName: 'Dirac Notation Step-by-Step Proofs',
@@ -619,6 +651,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'acad-3',
+    credits: 3,
     tag: 'tools.academy.generate_tutorial_circuit',
     name: 'Tutorial Circuit Synthesizer',
     serviceName: 'Educational Circuit Synthesizer',
@@ -637,6 +670,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'acad-4',
+    credits: 1,
     tag: 'tools.academy.socratic_assessment',
     name: 'Socratic Diagnostic Assessment',
     serviceName: 'Quantum Diagnostic Assessment',
@@ -655,6 +689,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'acad-5',
+    credits: 2,
     tag: 'tools.academy.misconception_debugger',
     name: 'Misconception Debugger',
     serviceName: 'Quantum Misconception Diagnostic',
@@ -675,6 +710,7 @@ const CAPABILITIES: QuantumCapability[] = [
   // ── QPU / SIMULATORS (3) ──────────────────────────────────────
   {
     id: 'sim-1',
+    credits: 10,
     tag: 'tools.sim.dwave_sampler',
     name: 'D-Wave Annealing Simulator',
     serviceName: 'Quantum Annealing & SA Sampler',
@@ -693,6 +729,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'sim-2',
+    credits: 8,
     tag: 'tools.sim.qiskit_aer',
     name: 'Qiskit Aer Simulator',
     serviceName: 'Gate-Based Quantum Circuit Simulator',
@@ -711,6 +748,7 @@ const CAPABILITIES: QuantumCapability[] = [
   },
   {
     id: 'sim-3',
+    credits: 4,
     tag: 'tools.sim.google_ortools',
     name: 'Google OR-Tools Solver',
     serviceName: 'Classical CP-SAT & MILP Engine',
@@ -1325,19 +1363,34 @@ export default function QuantumMarketplacePage() {
                     isDark ? 'qg-card-dark' : 'qg-card-light'
                   }`}
                 >
-                  {/* Top: Category Tag (Left) + I Need This Service Button (Right) */}
+                  {/* Top: Category Tag & Credits (Left) + I Need This Service Button (Right) */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span 
-                        style={{ 
-                          color: colors.textCyan, 
-                          borderColor: 'rgba(51, 168, 219, 0.35)', 
-                          backgroundColor: 'rgba(51, 168, 219, 0.08)' 
-                        }}
-                        className="px-2 py-0.5 rounded border font-mono text-[10px]"
-                      >
-                        {cap.categoryLabel}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span 
+                          style={{ 
+                            color: colors.textCyan, 
+                            borderColor: 'rgba(51, 168, 219, 0.35)', 
+                            backgroundColor: 'rgba(51, 168, 219, 0.08)' 
+                          }}
+                          className="px-2 py-0.5 rounded border font-mono text-[10px]"
+                        >
+                          {cap.categoryLabel}
+                        </span>
+
+                        {/* Credits Cost Pill */}
+                        <span 
+                          style={{ 
+                            color: colors.textAmber, 
+                            borderColor: 'rgba(222, 170, 33, 0.35)', 
+                            backgroundColor: 'rgba(222, 170, 33, 0.08)' 
+                          }}
+                          className="px-2 py-0.5 rounded border font-mono text-[10px] flex items-center gap-1"
+                        >
+                          <Coins className="w-2.5 h-2.5" style={{ color: colors.textAmber }} />
+                          <span>{cap.credits} Credits</span>
+                        </span>
+                      </div>
 
                       {/* I Need This Service Button in Top Right */}
                       <button
