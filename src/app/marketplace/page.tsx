@@ -1231,18 +1231,31 @@ export default function QuantumMarketplacePage() {
                   </div>
 
                   {/* Bottom: Pricing & Action Button */}
-                  <div className="flex items-center justify-between pt-3 border-t border-[#222222]">
-                    <div className="text-[10px] font-mono text-[#808D9E] flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#DEAA21]" />
+                  <div 
+                    style={{ borderColor: colors.border }}
+                    className="flex items-center justify-between pt-3 border-t"
+                  >
+                    {/* Time / Latency in Green */}
+                    <div 
+                      style={{ color: colors.textEmerald }}
+                      className="text-[10px] font-mono flex items-center gap-1.5"
+                    >
+                      <Clock className="w-3 h-3" style={{ color: colors.textEmerald }} />
                       <span>{cap.executionTime}</span>
                     </div>
 
+                    {/* I Need This Service Button in Yellow / Amber */}
                     <button
                       onClick={() => handleOpenSandbox(cap)}
-                      className="px-3 py-1.5 rounded-lg border border-[#33A8DB]/50 bg-[#33A8DB]/10 text-[#33A8DB] text-xs font-mono hover:bg-[#33A8DB]/20 transition-colors flex items-center gap-1 cursor-pointer"
+                      style={{ 
+                        backgroundColor: 'rgba(222, 170, 33, 0.1)', 
+                        borderColor: 'rgba(222, 170, 33, 0.4)', 
+                        color: colors.textAmber 
+                      }}
+                      className="px-3 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <span>I need this service</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      <ChevronRight className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
                     </button>
                   </div>
                 </div>
