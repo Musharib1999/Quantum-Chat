@@ -1184,15 +1184,12 @@ export default function QuantumMarketplacePage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[10px] font-mono">
                       <span 
-                        className={`px-2 py-0.5 rounded border ${
-                          cap.category === 'optimization' ? 'border-[#DEAA21]/40 text-[#DEAA21] bg-[#DEAA21]/10' :
-                          cap.category === 'chemistry' ? 'border-[#2FB885]/40 text-[#2FB885] bg-[#2FB885]/10' :
-                          cap.category === 'algorithms' ? 'border-[#33A8DB]/40 text-[#33A8DB] bg-[#33A8DB]/10' :
-                          cap.category === 'circuit' ? 'border-[#5390DD]/40 text-[#5390DD] bg-[#5390DD]/10' :
-                          cap.category === 'qml' ? 'border-[#33A8DB]/40 text-[#33A8DB] bg-[#33A8DB]/10' :
-                          cap.category === 'qpu_simulators' ? 'border-[#33A8DB]/40 text-[#33A8DB] bg-[#33A8DB]/10' :
-                          'border-[#DEAA21]/40 text-[#DEAA21] bg-[#DEAA21]/10'
-                        }`}
+                        style={{ 
+                          color: colors.textCyan, 
+                          borderColor: 'rgba(51, 168, 219, 0.35)', 
+                          backgroundColor: 'rgba(51, 168, 219, 0.08)' 
+                        }}
+                        className="px-2 py-0.5 rounded border font-mono text-[10px]"
                       >
                         {cap.categoryLabel}
                       </span>
