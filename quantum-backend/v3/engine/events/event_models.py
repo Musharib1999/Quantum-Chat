@@ -72,6 +72,7 @@ class FinalResponseAction(Event):
     response_text: str
     scientific_verdict: Optional[str] = None
     clarification: Optional[Dict[str, Any]] = None
+    custom_payload: Optional[Dict[str, Any]] = None
 
 
 # =====================================================================
@@ -102,6 +103,7 @@ class QuantumExecutionObservation(Event):
     execution_time_ms: float = 0.0
     converged: bool = True
     error_mHa: Optional[float] = None
+    qubo_telemetry: Optional[Dict[str, Any]] = None
 
 
 class CodeEditObservation(Event):
