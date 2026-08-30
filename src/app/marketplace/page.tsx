@@ -183,6 +183,44 @@ const CAPABILITIES: QuantumCapability[] = [
     sampleInput: 'Quantum QAOA energy: -11.42 Ha, Execution time: 0.142s',
     sampleOutput: 'PuLP exact optimum: -11.42 Ha (3.4ms). Approximation Ratio: 96.4%. Verdict: Classical recommended for N<30.'
   },
+  {
+    id: 'opt-7',
+    credits: 3,
+    tag: 'tools.opt.dimod_cqm_to_qubo',
+    name: 'D-Wave Dimod CQM Converter',
+    serviceName: 'D-Wave Ocean SDK (dimod.cqm_to_bqm)',
+    category: 'optimization',
+    categoryLabel: 'Optimization',
+    tagline: 'Compiles Constrained Quadratic Models (CQM) to binary QUBO via D-Wave Ocean SDK.',
+    whatItDoes: 'Transforms mixed integer and binary optimization problems into native Binary Quadratic Models (BQM) via dimod.cqm_to_bqm() using Lagrange penalty multipliers, generating ready-to-run D-Wave SimulatedAnnealingSampler Python code.',
+    youProvide: ['Variable registry (Binary/Integer)', 'Quadratic objective terms', 'Constraint list (<=, >=, ==)', 'Lagrange multiplier'],
+    youReceive: ['Upper-triangular QUBO dictionary', 'Quadratic offset scalar', 'Total physical qubit requirement', 'Executable SimulatedAnnealingSampler code'],
+    level: 'Intermediate',
+    pricing: 'Free',
+    executionTime: '~85ms',
+    workflowChain: ['Problem Formulator', 'D-Wave Dimod CQM Converter', 'QAOA & Annealing Solver', 'Solution Decoder'],
+    sampleInput: 'CQM with 4 binary assets, $22M budget constraint (Lagrange = 10.0)',
+    sampleOutput: 'BQM with 4 variables, offset: 0.0, Q-dict: {("Solar_A", "Solar_A"): -40.0, ...}'
+  },
+  {
+    id: 'opt-8',
+    credits: 3,
+    tag: 'tools.opt.algebraic_slack_qubo',
+    name: 'Algebraic & Slack AutoQUBO Engine',
+    serviceName: 'Deterministic Polynomial Expander',
+    category: 'optimization',
+    categoryLabel: 'Optimization',
+    tagline: 'Deterministic polynomial expansion with zero-slack templates and logarithmic slacks.',
+    whatItDoes: 'Deterministically expands polynomial objectives and inequality constraints into exact N x N symmetric Q-matrices using closed-form zero-slack templates for mutual exclusion (xi*xj) and dependency (xj*(1-xi)), with minimal logarithmic slack bits for budget constraints.',
+    youProvide: ['Decision variables', 'Linear objective weights', 'Inequality constraints', 'Mutual exclusions', 'Dependencies', 'Penalty lambda'],
+    youReceive: ['Dense N x N Q-matrix array', 'Logarithmic slack variable mapping', 'Cell-by-cell algebraic derivation map', 'Standalone Python script'],
+    level: 'Advanced',
+    pricing: 'Free',
+    executionTime: '< 10ms',
+    workflowChain: ['Problem Formulator', 'Algebraic & Slack AutoQUBO Engine', 'QAOA & Annealing Solver', 'Solution Decoder'],
+    sampleInput: '4 variables, budget $22M, mutual exclusion (Solar A, Wind D), dependency (Wind C -> Battery E)',
+    sampleOutput: 'Dense 7x7 Q-matrix with 3 logarithmic slacks, zero-slack mutual exclusion couplings'
+  },
 
   // ── CHEMISTRY (6) ─────────────────────────────────────────────
   {
@@ -948,17 +986,28 @@ export default function QuantumMarketplacePage() {
   const [sandboxOutput, setSandboxOutput] = useState<string | null>(null);
   const [isExecutingSandbox, setIsExecutingSandbox] = useState(false);
 
-  // Filter capabilities based on search & category
+  // Filter capabilities based on search & category (with hyphen/space normalization)
   const filteredCapabilities = useMemo(() => {
     return CAPABILITIES.filter(cap => {
       const matchesCat = selectedCategory === 'all' || cap.category === selectedCategory;
-      const q = searchQuery.toLowerCase();
-      const matchesSearch = !q || 
-        cap.name.toLowerCase().includes(q) || 
-        cap.serviceName.toLowerCase().includes(q) || 
-        cap.tagline.toLowerCase().includes(q) || 
-        cap.whatItDoes.toLowerCase().includes(q) || 
-        cap.categoryLabel.toLowerCase().includes(q);
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return matchesCat;
+
+      const qNormalized = q.replace(/[-_\s]/g, '');
+      const searchFields = [
+        cap.name,
+        cap.tag,
+        cap.serviceName,
+        cap.tagline,
+        cap.whatItDoes,
+        cap.categoryLabel,
+        ...(cap.workflowChain || [])
+      ].map(s => (s || '').toLowerCase());
+
+      const matchesSearch = searchFields.some(field => 
+        field.includes(q) || field.replace(/[-_\s]/g, '').includes(qNormalized)
+      );
+
       return matchesCat && matchesSearch;
     });
   }, [selectedCategory, searchQuery]);
@@ -1313,7 +1362,7 @@ export default function QuantumMarketplacePage() {
               className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${selectedCategory === 'optimization' ? 'bg-[#181818] border-[#DEAA21] text-[#DEAA21]' : 'border-transparent text-[#808D9E] hover:text-[#DDE2E8]'}`}
             >
               <Zap className="w-3.5 h-3.5 text-[#DEAA21]" />
-              <span>Optimization (6)</span>
+              <span>Optimization ({CAPABILITIES.filter(c => c.category === 'optimization').length})</span>
             </button>
             <button
               onClick={() => setSelectedCategory('algorithms')}
