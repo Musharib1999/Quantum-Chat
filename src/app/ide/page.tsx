@@ -1641,6 +1641,56 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       style={{ backgroundColor: 'transparent' }}
                       className="px-1 py-1.5 space-y-2.5 font-normal"
                     >
+                      {/* Intermediate Derivation & Tool Workflow Steps Card */}
+                      {msg.workflowSteps && msg.workflowSteps.length > 0 && (
+                        <div 
+                          style={{ 
+                            backgroundColor: colors.bgPill, 
+                            borderColor: colors.border 
+                          }}
+                          className="border rounded-xl p-3 space-y-2 shadow-2xs font-normal text-xs"
+                        >
+                          <div 
+                            onClick={() => setExpandedTraces(prev => ({ ...prev, [msg.id]: !prev[msg.id] }))}
+                            className="flex items-center justify-between cursor-pointer select-none group"
+                          >
+                            <div className="flex items-center gap-2 font-mono text-[11px]" style={{ color: colors.textCyan }}>
+                              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: colors.textEmerald }} />
+                              <span className="font-semibold">Pipeline Derivation Trace ({msg.workflowSteps.length} Steps)</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] font-mono" style={{ color: colors.textMuted }}>
+                              <span>{expandedTraces[msg.id] !== false ? 'Hide' : 'Show'}</span>
+                              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedTraces[msg.id] !== false ? 'rotate-180' : ''}`} />
+                            </div>
+                          </div>
+
+                          {expandedTraces[msg.id] !== false && (
+                            <div className="space-y-1.5 pt-1.5 border-t font-mono text-[11px]" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
+                              {msg.workflowSteps.map((step, sIdx) => (
+                                <div key={sIdx} className="flex items-start gap-2 p-1.5 rounded-lg bg-black/20 border" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' }}>
+                                  <span style={{ color: colors.textEmerald }} className="mt-0.5 font-bold">✓</span>
+                                  <div className="flex-1 space-y-0.5 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="font-semibold text-[11px]" style={{ color: colors.textPrimary }}>
+                                        {step.step_num}. {step.name}
+                                      </span>
+                                      {step.execution_time_ms > 0 && (
+                                        <span className="text-[10px]" style={{ color: colors.textMuted }}>
+                                          {step.execution_time_ms}ms
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] leading-relaxed font-sans" style={{ color: colors.textMuted }}>
+                                      {step.summary}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="leading-relaxed font-normal whitespace-pre-wrap font-sans" style={{ color: colors.textPrimary }}>
                         {msg.text}
                       </div>
