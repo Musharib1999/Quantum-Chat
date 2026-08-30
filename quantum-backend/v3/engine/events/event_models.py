@@ -56,11 +56,22 @@ class CodeEditAction(Event):
     rationale: str = ""
 
 
+class ClarificationPromptAction(Event):
+    source: Literal["agent"] = "agent"
+    event_type: Literal["clarification_prompt"] = "clarification_prompt"
+    question: str
+    domain: str
+    scenario_id: str
+    options: List[Dict[str, Any]] = Field(default_factory=list)
+    default_value: Optional[str] = None
+
+
 class FinalResponseAction(Event):
     source: Literal["agent"] = "agent"
     event_type: Literal["final_response"] = "final_response"
     response_text: str
     scientific_verdict: Optional[str] = None
+    clarification: Optional[Dict[str, Any]] = None
 
 
 # =====================================================================

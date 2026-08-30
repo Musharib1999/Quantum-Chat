@@ -59,6 +59,21 @@ interface CodeMutation {
   summary: string;
 }
 
+interface ClarificationOptionItem {
+  label: string;
+  value: string;
+  is_recommended?: boolean;
+  description?: string;
+}
+
+interface ClarificationQuestionPayload {
+  question: string;
+  domain: string;
+  scenario_id: string;
+  options: ClarificationOptionItem[];
+  default_value?: string;
+}
+
 interface ChatMessage {
   id: string;
   sender: 'user' | 'agent';
@@ -66,6 +81,7 @@ interface ChatMessage {
   workflowSteps?: WorkflowStepItem[];
   scientificVerdict?: string;
   codeMutation?: CodeMutation;
+  clarification?: ClarificationQuestionPayload;
   toolCall?: {
     name: string;
     badge: string;
@@ -1628,6 +1644,74 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       <div className="leading-relaxed font-normal whitespace-pre-wrap font-sans" style={{ color: colors.textPrimary }}>
                         {msg.text}
                       </div>
+
+                      {/* Interactive Domain Clarification Question Card */}
+                      {msg.clarification && (
+                        <div 
+                          style={{ 
+                            backgroundColor: colors.bgPill, 
+                            borderColor: isDark ? 'rgba(51, 168, 219, 0.4)' : 'rgba(51, 168, 219, 0.5)' 
+                          }}
+                          className="border rounded-xl p-3.5 space-y-3 shadow-2xs font-normal animate-in fade-in zoom-in-95 duration-100"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider font-semibold" style={{ color: colors.textCyan }}>
+                              <HelpCircle className="w-3.5 h-3.5" style={{ color: colors.textCyan }} />
+                              <span>Decision Required: {msg.clarification.domain} Configuration</span>
+                            </div>
+                            {msg.clarification.default_value && (
+                              <span className="text-[10px] font-mono" style={{ color: colors.textMuted }}>
+                                Default: <span style={{ color: colors.textSkyBlue }}>{msg.clarification.default_value}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-xs font-semibold leading-relaxed font-sans" style={{ color: colors.textPrimary }}>
+                            {msg.clarification.question}
+                          </div>
+
+                          {/* Selectable Option Pills */}
+                          <div className="space-y-1.5 pt-1">
+                            {msg.clarification.options.map((opt, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleSendMessage(opt.label)}
+                                style={{ 
+                                  backgroundColor: colors.bgCard, 
+                                  borderColor: opt.is_recommended 
+                                    ? (isDark ? 'rgba(47, 184, 133, 0.45)' : 'rgba(47, 184, 133, 0.6)') 
+                                    : colors.border,
+                                  color: colors.textPrimary 
+                                }}
+                                className="w-full text-left p-2.5 rounded-lg border hover:border-sky-500 transition-all cursor-pointer group flex flex-col gap-0.5 shadow-2xs"
+                              >
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-normal font-sans group-hover:text-sky-400 transition-colors">
+                                    {opt.label}
+                                  </span>
+                                  {opt.is_recommended && (
+                                    <span 
+                                      style={{ 
+                                        backgroundColor: isDark ? 'rgba(47, 184, 133, 0.15)' : 'rgba(47, 184, 133, 0.2)',
+                                        color: colors.textEmerald,
+                                        borderColor: 'rgba(47, 184, 133, 0.3)' 
+                                      }}
+                                      className="text-[10px] font-mono px-1.5 py-0.2 rounded border font-normal"
+                                    >
+                                      ★ Recommended
+                                    </span>
+                                  )}
+                                </div>
+                                {opt.description && (
+                                  <div className="text-[11px] font-normal leading-relaxed" style={{ color: colors.textMuted }}>
+                                    {opt.description}
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Code Mutation Summary Card */}
                       {msg.codeMutation && (

@@ -16,10 +16,12 @@ from ..events.event_models import (
     ToolCallAction,
     CodeEditAction,
     FinalResponseAction,
+    ClarificationPromptAction,
     ToolObservation,
     QuantumExecutionObservation,
     CodeEditObservation
 )
+from .clarification_questions import find_clarification_question, CLARIFICATION_QUESTION_CATALOGUE
 from ..events.event_stream import EventStream, global_event_stream
 from ..runtime.quantum_runtime import QuantumRuntime, global_quantum_runtime
 from ..tools.registry import invoke_quantum_tool, CAPABILITY_CATALOGUE
@@ -107,6 +109,19 @@ class QuantumAgent:
 
         memory_md = memory_manager.render_markdown(project_id)
 
+        clarif_act = next((e for e in reversed(events_emitted) if isinstance(e, ClarificationPromptAction)), None)
+        clarification_data = None
+        if clarif_act:
+            clarification_data = {
+                "question": clarif_act.question,
+                "domain": clarif_act.domain,
+                "scenario_id": clarif_act.scenario_id,
+                "options": clarif_act.options,
+                "default_value": clarif_act.default_value
+            }
+        elif final_resp and final_resp.clarification:
+            clarification_data = final_resp.clarification
+
         return {
             "success": True,
             "intent_category": thought.intent_domain.title() if thought else "General",
@@ -116,7 +131,8 @@ class QuantumAgent:
             "code_mutation": code_mutation,
             "memory_md": memory_md,
             "runtime_telemetry": runtime_telemetry,
-            "scientific_verdict": final_resp.scientific_verdict if final_resp else None
+            "scientific_verdict": final_resp.scientific_verdict if final_resp else None,
+            "clarification": clarification_data
         }
 
     async def run_stream(
@@ -158,6 +174,33 @@ class QuantumAgent:
             intent_domain=domain
         )
         yield await self.stream.publish(thought)
+
+        # Check if user query matches any clarification question trigger
+        matched_q = find_clarification_question(domain, user_message)
+        if matched_q and any(k in msg_l for k in ["which", "what should", "choose", "options", "how to choose", "recommend", "select", "config", "strategy", "help me decide"]):
+            clarif_act = ClarificationPromptAction(
+                project_id=project_id,
+                question=matched_q.question,
+                domain=matched_q.domain,
+                scenario_id=matched_q.id,
+                options=[opt.model_dump() for opt in matched_q.options],
+                default_value=matched_q.default_value
+            )
+            yield await self.stream.publish(clarif_act)
+
+            resp_text = f"### ❓ Decision Required: {matched_q.domain.title()} Configuration\n\n{matched_q.question}\n\n"
+            for opt in matched_q.options:
+                rec_badge = " **(Recommended)**" if opt.is_recommended else ""
+                resp_text += f"- **{opt.label}**{rec_badge}\n  *{opt.description or ''}*\n"
+            resp_text += f"\n*Defaulting to **{matched_q.default_value}** if no preference specified.*"
+
+            yield await self.stream.publish(FinalResponseAction(
+                project_id=project_id,
+                response_text=resp_text,
+                scientific_verdict="Awaiting configuration decision.",
+                clarification=clarif_act.model_dump()
+            ))
+            return
 
         geom_default = "C 0.0 0.0 0.0\nO 1.2 0.0 0.0"
 
