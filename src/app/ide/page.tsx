@@ -207,7 +207,24 @@ if __name__ == "__main__":
         'quantum.config.json': {
           name: 'quantum.config.json',
           lang: 'json',
-          content: `{\n  "project_name": "my-quantum-project",\n  "target_backend": "aer_simulator",\n  "default_shots": 1024,\n  "optimization_level": 2\n}`
+          content: JSON.stringify({
+            project_name: "my-quantum-project",
+            archetype: "circuit_engineering",
+            pipeline_hints: [
+              "tools.circuit.build_quantum_circuit",
+              "tools.circuit.bind_parameters",
+              "tools.circuit.transpile_passes",
+              "tools.sim.qiskit_aer",
+              "tools.circuit.render_continuous"
+            ],
+            default_backend: "aer_simulator",
+            default_shots: 1024,
+            optimization_level: 2,
+            verification_contract: {
+              fidelity_threshold: 0.998,
+              normalization: 1.0
+            }
+          }, null, 2)
         },
         'MEMORY.md': {
           name: 'MEMORY.md',
@@ -248,7 +265,24 @@ print("Target: Select 2 assets out of 4 to maximize Sharpe Ratio.")
         'quantum.config.json': {
           name: 'quantum.config.json',
           lang: 'json',
-          content: `{\n  "project_name": "portfolio-optimization",\n  "target_backend": "dwave_simulated_annealing",\n  "num_reads": 500\n}`
+          content: JSON.stringify({
+            project_name: "portfolio-optimization",
+            archetype: "portfolio_optimization",
+            pipeline_hints: [
+              "tools.opt.formulate_problem",
+              "tools.opt.translate_to_qubo",
+              "tools.opt.map_quantum_solver",
+              "tools.opt.execute_solver",
+              "tools.opt.decode_solution",
+              "tools.opt.benchmark_classical"
+            ],
+            default_backend: "dwave_simulated_annealing",
+            num_reads: 1024,
+            verification_contract: {
+              cardinality_constraint: "feasible",
+              energy_gap_percent: 0.05
+            }
+          }, null, 2)
         },
         'MEMORY.md': {
           name: 'MEMORY.md',
@@ -274,7 +308,23 @@ print("Active Spatial Orbitals: 4 | Active Electrons: 2 | Active Qubits: 8")
         'quantum.config.json': {
           name: 'quantum.config.json',
           lang: 'json',
-          content: `{\n  "project_name": "lih-cas-vqe",\n  "molecule": "LiH",\n  "basis": "sto-3g",\n  "active_orbitals": 4\n}`
+          content: JSON.stringify({
+            project_name: "lih-cas-vqe",
+            archetype: "quantum_chemistry",
+            pipeline_hints: [
+              "tools.chem.ingest_geometry",
+              "tools.chem.compute_scf_integrals",
+              "tools.chem.select_active_space",
+              "tools.chem.fermion_to_qubit_mapping",
+              "tools.chem.build_chemistry_ansatz",
+              "tools.chem.solve_ground_state_vqe"
+            ],
+            default_backend: "statevector",
+            basis_set: "sto-3g",
+            verification_contract: {
+              chemical_accuracy_mHa: 1.6
+            }
+          }, null, 2)
         },
         'MEMORY.md': {
           name: 'MEMORY.md',
@@ -299,7 +349,23 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         'quantum.config.json': {
           name: 'quantum.config.json',
           lang: 'json',
-          content: `{\n  "project_name": "iris-qsvm-classifier",\n  "feature_map": "ZZFeatureMap",\n  "active_qubits": 4\n}`
+          content: JSON.stringify({
+            project_name: "iris-qsvm-classifier",
+            archetype: "quantum_machine_learning",
+            pipeline_hints: [
+              "tools.qml.normalize_features",
+              "tools.qml.build_feature_map",
+              "tools.qml.build_variational_ansatz",
+              "tools.qml.train_classifier",
+              "tools.qml.predict_sample",
+              "tools.qml.benchmark_classical"
+            ],
+            default_backend: "aer_simulator",
+            verification_contract: {
+              min_train_accuracy: 0.90,
+              generalization_gap_evaluated: true
+            }
+          }, null, 2)
         },
         'MEMORY.md': {
           name: 'MEMORY.md',
