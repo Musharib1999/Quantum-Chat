@@ -2500,9 +2500,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                   {/* 3. Decision Variables & Constraints List */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl border space-y-2" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
-                      <div className="text-xs font-mono font-semibold uppercase" style={{ color: colors.textCyan }}>
-                        Decision Variables ({runtimeMetrics.qubo_telemetry?.variables?.length || 4})
+                    <div className="p-4 rounded-xl border space-y-2.5 font-sans" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
+                      <div className="text-xs font-sans font-semibold" style={{ color: colors.textCyan }}>
+                        Decision variables ({runtimeMetrics.qubo_telemetry?.variables?.length || 4})
                       </div>
                       <div className="space-y-1.5 text-xs font-mono">
                         {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v, idx) => {
@@ -2519,19 +2519,19 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-xl border space-y-2" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
-                      <div className="text-xs font-mono font-semibold uppercase" style={{ color: colors.textCyan }}>
-                        Constraints Modelled ({runtimeMetrics.qubo_telemetry?.constraints_count || 4})
+                    <div className="p-4 rounded-xl border space-y-2.5 font-sans" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
+                      <div className="text-xs font-sans font-semibold" style={{ color: colors.textCyan }}>
+                        Constraints modelled ({runtimeMetrics.qubo_telemetry?.constraints_count || 3})
                       </div>
                       <div className="space-y-1.5 text-xs leading-relaxed font-sans" style={{ color: colors.textMuted }}>
-                        <div className="p-1.5 rounded-md bg-black/20 border" style={{ borderColor: colors.border }}>
-                          • <strong style={{ color: colors.textPrimary }}>Investment Limit:</strong> Total cost \le \$22M (100% Feasible)
+                        <div className="p-2 rounded-lg bg-black/20 border font-sans" style={{ borderColor: colors.border }}>
+                          • <strong style={{ color: colors.textPrimary }}>Investment limit:</strong> Total cost &le; ${runtimeMetrics.qubo_telemetry?.budget || 22}M (100% feasible)
                         </div>
-                        <div className="p-1.5 rounded-md bg-black/20 border" style={{ borderColor: colors.border }}>
-                          • <strong style={{ color: colors.textPrimary }}>Transmission Conflict:</strong> Solar A & Wind D mutual exclusion
+                        <div className="p-2 rounded-lg bg-black/20 border font-sans" style={{ borderColor: colors.border }}>
+                          • <strong style={{ color: colors.textPrimary }}>Transmission conflict:</strong> Solar A & Wind D mutual exclusion
                         </div>
-                        <div className="p-1.5 rounded-md bg-black/20 border" style={{ borderColor: colors.border }}>
-                          • <strong style={{ color: colors.textPrimary }}>Grid Balancing:</strong> Wind C requires Battery E
+                        <div className="p-2 rounded-lg bg-black/20 border font-sans" style={{ borderColor: colors.border }}>
+                          • <strong style={{ color: colors.textPrimary }}>Grid balancing:</strong> Wind C requires Battery Storage E
                         </div>
                       </div>
                     </div>
@@ -2562,7 +2562,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                       className="border rounded-xl p-4 space-y-2 shadow-2xs"
                     >
-                      <div className="text-[11px] font-normal uppercase" style={{ color: colors.textCyan }}>Expectation Value</div>
+                      <div className="text-[11px] font-normal font-sans" style={{ color: colors.textCyan }}>Expectation value</div>
                       <div className="text-2xl font-normal font-mono" style={{ color: colors.textSkyBlue }}>{runtimeMetrics.expectationVal}</div>
                       <div className="text-xs font-normal" style={{ color: colors.textMuted }}>Target: Z ⊗ I ⊗ I ⊗ I</div>
                     </div>
@@ -2570,7 +2570,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                       className="border rounded-xl p-4 space-y-2 shadow-2xs"
                     >
-                      <div className="text-[11px] font-normal uppercase" style={{ color: colors.textCyan }}>Simulator Fidelity</div>
+                      <div className="text-[11px] font-normal font-sans" style={{ color: colors.textCyan }}>Simulator fidelity</div>
                       <div className="text-2xl font-normal font-mono" style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</div>
                       <div className="text-xs font-normal" style={{ color: colors.textMuted }}>Statevector exact match</div>
                     </div>
@@ -2578,7 +2578,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                       className="border rounded-xl p-4 space-y-2 shadow-2xs"
                     >
-                      <div className="text-[11px] font-normal uppercase" style={{ color: colors.textCyan }}>Execution Latency</div>
+                      <div className="text-[11px] font-normal font-sans" style={{ color: colors.textCyan }}>Execution latency</div>
                       <div className="text-2xl font-normal font-mono" style={{ color: colors.textAmber }}>{runtimeMetrics.latencySec}</div>
                       <div className="text-xs font-normal" style={{ color: colors.textMuted }}>Target: {targetBackend}</div>
                     </div>
@@ -2588,7 +2588,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                     className="border rounded-xl p-4 space-y-2"
                   >
-                    <div className="text-xs font-normal uppercase" style={{ color: colors.textCyan }}>Quantum Execution Parameters</div>
+                    <div className="text-xs font-normal font-sans" style={{ color: colors.textCyan }}>Quantum execution parameters</div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                       <div><span style={{ color: colors.textMuted }}>Optimization Level:</span> <span style={{ color: colors.textPrimary }}>Level {optimizationLevel}</span></div>
                       <div><span style={{ color: colors.textMuted }}>Shot Count:</span> <span style={{ color: colors.textPrimary }}>{shots} shots</span></div>
