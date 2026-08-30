@@ -881,7 +881,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         }]);
 
         // 2. Dynamically Mutate Code & MEMORY.md in Workspace
-        if (data.updated_code || data.memory_md) {
+        if (data.updated_code || data.qubo_matrix_code || data.updated_files || data.memory_md) {
           setProjectFiles(prev => {
             const updated = { ...prev };
 
@@ -906,6 +906,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 language: 'python',
                 content: data.qubo_matrix_code
               };
+            }
+
+            if (data.updated_files) {
+              for (const [fName, fContent] of Object.entries(data.updated_files)) {
+                updated[fName] = {
+                  name: fName,
+                  language: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
+                  content: fContent as string
+                };
+              }
             }
 
             if (data.memory_md) {
