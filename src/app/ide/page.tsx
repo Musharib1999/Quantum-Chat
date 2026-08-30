@@ -2352,7 +2352,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             {/* Modal Body Content */}
             <div 
               style={{ backgroundColor: colors.bgEditor }}
-              className="p-5 flex-1 min-h-0 overflow-y-auto overflow-x-auto font-mono"
+              className="p-5 flex-1 min-h-0 overflow-y-auto overflow-x-auto font-sans"
             >
               {/* 1. DYNAMIC QUBO MATRIX & PENALTY HEATMAP TAB */}
               {(telemetryModalTab === 'qubo_matrix' || telemetryModalTab === 'annealing' || telemetryModalTab === 'benchmark') && (
@@ -2361,22 +2361,22 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   <div className="p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono px-2 py-0.5 rounded border uppercase" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}>
-                          AutoQUBO Formulator
+                        <span className="text-xs font-sans px-2.5 py-0.5 rounded-md border" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}>
+                          AutoQUBO formulator
                         </span>
-                        <span className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
-                          {runtimeMetrics.qubo_telemetry?.problem_name || 'Clean Energy / Portfolio QUBO Model'}
+                        <span className="text-sm font-semibold font-sans" style={{ color: colors.textPrimary }}>
+                          {runtimeMetrics.qubo_telemetry?.problem_name || 'Clean energy portfolio optimization'}
                         </span>
                       </div>
-                      <p className="text-xs leading-relaxed" style={{ color: colors.textMuted }}>
-                        Symmetric Upper-Triangular Q-Matrix with exact Lagrange constraint expansions: L(x) = -Score + &lambda; &middot; (&sum; C_i x_i - B)&sup2;.
+                      <p className="text-xs leading-relaxed font-sans" style={{ color: colors.textMuted }}>
+                        Symmetric upper-triangular Q-matrix with exact Lagrange constraint expansions: <span className="font-mono">L(x) = -Score + &lambda; &middot; (&sum; C_i x_i - B)&sup2;</span>.
                       </p>
                     </div>
 
                     {/* Interactive Penalty Multiplier λ Slider */}
-                    <div className="flex items-center gap-3 shrink-0 p-2.5 rounded-lg border bg-black/20" style={{ borderColor: colors.border }}>
+                    <div className="flex items-center gap-3 shrink-0 p-2.5 rounded-lg border bg-black/20 font-sans" style={{ borderColor: colors.border }}>
                       <div className="space-y-0.5 text-right">
-                        <div className="text-[10px] font-mono uppercase" style={{ color: colors.textMuted }}>Penalty Multiplier (λ)</div>
+                        <div className="text-[10px] font-sans" style={{ color: colors.textMuted }}>Penalty multiplier (&lambda;)</div>
                         <div className="text-xs font-mono font-bold" style={{ color: colors.textCyan }}>{quboLambda.toFixed(1)}</div>
                       </div>
                       <input 
@@ -2394,8 +2394,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                           handleSendMessage(`/execute@program with penalty_lambda=${quboLambda}`);
                         }}
                         style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
-                        className="px-2.5 py-1 rounded border text-[11px] font-mono hover:border-sky-400 cursor-pointer"
-                        title="Re-synthesize Q-Matrix with new penalty"
+                        className="px-2.5 py-1 rounded-md border text-[11px] font-sans hover:border-sky-400 cursor-pointer"
+                        title="Re-synthesize Q-matrix with new penalty"
                       >
                         Re-synthesize
                       </button>
@@ -2405,10 +2405,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   {/* 2. Interactive N x N Numerical Q-Matrix Grid */}
                   <div className="p-4 rounded-xl border space-y-3" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
                     <div className="flex items-center justify-between">
-                      <div className="text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: colors.textCyan }}>
-                        Numerical $Q$-Matrix Heatmap ({runtimeMetrics.qubo_telemetry?.variables?.length || 4}x{runtimeMetrics.qubo_telemetry?.variables?.length || 4})
+                      <div className="text-xs font-sans font-semibold" style={{ color: colors.textCyan }}>
+                        Numerical Q-matrix heatmap ({runtimeMetrics.qubo_telemetry?.variables?.length || 4}&times;{runtimeMetrics.qubo_telemetry?.variables?.length || 4})
                       </div>
-                      <div className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
+                      <div className="text-[11px] font-sans" style={{ color: colors.textMuted }}>
                         Click any cell to inspect mathematical derivation
                       </div>
                     </div>
