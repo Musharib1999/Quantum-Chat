@@ -444,3 +444,39 @@ class ToolCapabilitySchema(BaseModel):
     qubit_constraints: Optional[str] = "1 to 32 qubits"
     cost_tier: str = "Free (Local Runtime)"
     alternatives: List[str] = Field(default_factory=list)
+
+# ── Specialized QUBO Compiler Tools ──────────────────────────────────────────
+
+class OptDimodCQMToQUBORequest(BaseModel):
+    variables: list[dict[str, Any]] = Field(default_factory=list, description="Variable definitions with name, type (BINARY, INTEGER), lb, ub")
+    objective_terms: dict[str, float] = Field(default_factory=dict, description="Objective weights per variable or variable pair")
+    objective_sense: str = Field(default="MAXIMIZE", description="MAXIMIZE or MINIMIZE")
+    constraints: list[dict[str, Any]] = Field(default_factory=list, description="Constraint expressions with left, op (<=, >=, ==), right, label")
+    lagrange_multiplier: float = Field(default=10.0, description="Penalty multiplier lambda for constraint enforcement")
+
+class OptDimodCQMToQUBOResponse(BaseModel):
+    qubo_dict: dict[str, float] = Field(default_factory=dict, description="Upper-triangular QUBO dictionary {(var_i, var_j): coeff}")
+    offset: float = Field(default=0.0, description="Scalar energy offset from quadratic penalty expansion")
+    variable_names: list[str] = Field(default_factory=list, description="List of all variable names including auto-generated slacks")
+    n_qubits: int = Field(default=0, description="Total qubit count required on D-Wave QPU")
+    sampler_code: str = Field(default="", description="Ready-to-run D-Wave SimulatedAnnealingSampler Python code")
+    execution_time_ms: float = Field(default=0.0, description="Compilation latency in milliseconds")
+
+
+class OptAlgebraicSlackQUBORequest(BaseModel):
+    decision_variables: list[str] = Field(default_factory=list, description="List of binary decision variable names")
+    objective_weights: dict[str, float] = Field(default_factory=dict, description="Linear objective value/benefit for each variable")
+    objective_sense: str = Field(default="MAXIMIZE", description="MAXIMIZE or MINIMIZE")
+    inequality_constraints: list[dict[str, Any]] = Field(default_factory=list, description="Inequality constraints with coefficients, op (<=, >=), rhs, name")
+    mutual_exclusions: list[tuple[str, str]] = Field(default_factory=list, description="Pairs of mutually exclusive variables (x_i + x_j <= 1)")
+    dependencies: list[tuple[str, str]] = Field(default_factory=list, description="Variable implications (x_j <= x_i: target requires dependency)")
+    penalty_lambda: float = Field(default=10.0, description="Lagrange penalty stiffness multiplier")
+
+class OptAlgebraicSlackQUBOResponse(BaseModel):
+    qubo_matrix: list[list[float]] = Field(default_factory=list, description="Exact N x N numerical symmetric/upper-triangular Q-matrix")
+    variable_names: list[str] = Field(default_factory=list, description="Combined decision and logarithmic slack variable labels")
+    slack_variables: list[str] = Field(default_factory=list, description="Allocated binary logarithmic slack variables")
+    total_qubits: int = Field(default=0, description="Total qubit requirement")
+    cell_derivations: dict[str, str] = Field(default_factory=dict, description="Human-readable mathematical expansion formula per matrix cell")
+    python_script: str = Field(default="", description="Standalone executable Python solver script with exact closures")
+    execution_time_ms: float = Field(default=0.0, description="Compilation latency in milliseconds")

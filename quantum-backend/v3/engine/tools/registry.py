@@ -5,7 +5,8 @@ from typing import Dict, Any, Callable
 from .tool_models import *
 from .optimization_tools import (
     formulate_problem, translate_to_qubo, map_quantum_solver,
-    execute_solver, decode_solution, benchmark_classical as opt_benchmark
+    execute_solver, decode_solution, benchmark_classical as opt_benchmark,
+    compile_dimod_cqm_to_qubo, compile_algebraic_slack_qubo
 )
 from .academy_tools import (
     concept_explainer, math_derivation, generate_tutorial_circuit,
@@ -38,6 +39,8 @@ TOOL_DISPATCH_TABLE: dict[str, tuple[Any, Callable]] = {
     "tools.opt.execute_solver": (OptExecuteSolverRequest, execute_solver),
     "tools.opt.decode_solution": (OptDecodeSolutionRequest, decode_solution),
     "tools.opt.benchmark_classical": (OptBenchmarkClassicalRequest, opt_benchmark),
+    "tools.opt.dimod_cqm_to_qubo": (OptDimodCQMToQUBORequest, compile_dimod_cqm_to_qubo),
+    "tools.opt.algebraic_slack_qubo": (OptAlgebraicSlackQUBORequest, compile_algebraic_slack_qubo),
 
     # 2. Quantum Academy (7-11)
     "tools.academy.concept_explainer": (AcademyConceptExplainerRequest, concept_explainer),
