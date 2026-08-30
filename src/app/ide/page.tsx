@@ -28,7 +28,9 @@ import {
   Sun,
   Moon,
   GitBranch,
-  Brain
+  Brain,
+  CheckCircle2,
+  HelpCircle
 } from 'lucide-react';
 
 type AgentPhase = 
