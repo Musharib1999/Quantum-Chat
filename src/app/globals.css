@@ -189,7 +189,7 @@ body {
 /* Typography Rules for Quantum Guru */
 :root {
   --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-manrope: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-manrope: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-jetbrains-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
@@ -198,7 +198,7 @@ body, .font-sans {
 }
 
 h1, h2, h3, h4, h5, h6, .font-heading {
-  font-family: var(--font-manrope), sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
 code, pre, kbd, samp, .font-mono {
