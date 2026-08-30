@@ -536,6 +536,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     { id: 4, studio: 'Optimization', name: 'QAOA & Annealing Solver', tag: 'tools.opt.execute_solver', desc: 'Executes QAOA parameter optimization or D-Wave Simulated Annealing for lowest energy samples.', nature: 'Probabilistic' },
     { id: 5, studio: 'Optimization', name: 'Bitstring Solution Decoder', tag: 'tools.opt.decode_solution', desc: 'Decodes measured binary bitstrings into business decisions and validates constraint feasibility.', nature: 'Deterministic' },
     { id: 6, studio: 'Optimization', name: 'Optimization Benchmarker', tag: 'tools.opt.benchmark_classical', desc: 'Evaluates quantum optimization performance against exact classical solvers (PuLP, Gurobi, SimAn).', nature: 'Deterministic' },
+    { id: 7, studio: 'Optimization', name: 'D-Wave Dimod CQM Converter', tag: 'tools.opt.dimod_cqm_to_qubo', desc: 'Compiles Constrained Quadratic Models (CQM) to binary QUBO via D-Wave Ocean SDK dimod.cqm_to_bqm().', nature: 'Deterministic' },
+    { id: 8, studio: 'Optimization', name: 'Algebraic & Slack AutoQUBO Engine', tag: 'tools.opt.algebraic_slack_qubo', desc: 'Deterministic polynomial expansion with zero-slack templates (dependency/exclusion) and logarithmic slacks.', nature: 'Deterministic' },
 
     // 2. Quantum Academy (5)
     { id: 7, studio: 'Academy', name: 'Concept Decomposer', tag: 'tools.academy.concept_explainer', desc: 'Decomposes deep quantum mechanics concepts using physical and computational analogies.', nature: 'Deterministic' },
