@@ -430,3 +430,17 @@ class SimGoogleORToolsResponse(BaseModel):
     search_nodes_explored: int
     solve_time_ms: float
     solver_engine: str
+
+# ==========================================
+# DECLARATIVE TOOL CAPABILITY SCHEMA (PHASE 3)
+# ==========================================
+class ToolCapabilitySchema(BaseModel):
+    id: str
+    name: str
+    domain: str  # optimization, chemistry, algorithms, circuits, qml, academy, simulators
+    description: str
+    accepts: List[str] = Field(default_factory=list)
+    produces: List[str] = Field(default_factory=list)
+    qubit_constraints: Optional[str] = "1 to 32 qubits"
+    cost_tier: str = "Free (Local Runtime)"
+    alternatives: List[str] = Field(default_factory=list)

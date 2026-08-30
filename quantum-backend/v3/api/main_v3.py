@@ -779,16 +779,18 @@ class IDEAgentChatRequest(BaseModel):
     model_engine: str = "groq"
     history: list[dict[str, str]] = Field(default_factory=list)
 
-from engine.orchestrator.quantum_orchestrator import orchestrator
+from engine.agent import global_quantum_agent
+from fastapi.responses import StreamingResponse
+import json
 
 @app.post("/v3/enterprise/ide/agent/chat")
 async def ide_agent_chat_endpoint(req: IDEAgentChatRequest):
     """
-    Autonomous Quantum Orchestrator endpoint: plans workflows, chains 33 tools,
-    calls Groq Llama-3.3-70B, mutates code, updates continuous canvas, and delivers verified results.
+    Quantum Guru V4 Stateless Agent Endpoint (OpenHands V1 Pattern):
+    Executes actions, catches observations, mutates code AST, syncs project memory, and returns verified payload.
     """
     try:
-        res = await orchestrator.plan_and_execute(
+        res = await global_quantum_agent.run_turn(
             project_id=req.project_id,
             user_message=req.user_message,
             active_file=req.active_file,
@@ -797,7 +799,32 @@ async def ide_agent_chat_endpoint(req: IDEAgentChatRequest):
             optimization_level=req.optimization_level,
             model_engine=req.model_engine
         )
-        return res.model_dump()
+        return res
     except Exception as e:
-        print(f"Error in QuantumOrchestrator: {e}")
+        print(f"Error in QuantumAgent: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/v3/enterprise/ide/agent/stream")
+async def ide_agent_stream_endpoint(req: IDEAgentChatRequest):
+    """
+    Real-Time SSE EventStream for Quantum Guru IDE:
+    Streams Actions, Tool Observations, AST Mutations, and Quantum Telemetry live over SSE.
+    """
+    async def event_generator():
+        try:
+            async for event in global_quantum_agent.run_stream(
+                project_id=req.project_id,
+                user_message=req.user_message,
+                active_file=req.active_file,
+                file_content=req.file_content,
+                target_backend=req.target_backend,
+                optimization_level=req.optimization_level,
+                model_engine=req.model_engine
+            ):
+                data = json.dumps(event.model_dump())
+                yield f"data: {data}\n\n"
+        except Exception as e:
+            err_data = json.dumps({"event_type": "error", "error": str(e)})
+            yield f"data: {err_data}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
