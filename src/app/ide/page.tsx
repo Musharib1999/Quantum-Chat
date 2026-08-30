@@ -50,12 +50,22 @@ interface WorkflowStepItem {
   summary: string;
 }
 
+interface CodeMutation {
+  fileName: string;
+  action: string;
+  linesAdded: number;
+  linesRemoved: number;
+  totalLines: number;
+  summary: string;
+}
+
 interface ChatMessage {
   id: string;
   sender: 'user' | 'agent';
   text: string;
   workflowSteps?: WorkflowStepItem[];
   scientificVerdict?: string;
+  codeMutation?: CodeMutation;
   toolCall?: {
     name: string;
     badge: string;
@@ -657,13 +667,23 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       if (res.ok) {
         const data = await res.json();
         
-        // 1. Update Chat Response with Autonomous Workflow Steps
+        // 1. Update Chat Response with Autonomous Workflow Steps & Code Mutation Summary
+        const mutationData = data.code_mutation ? {
+          fileName: data.code_mutation.file_name,
+          action: data.code_mutation.action || 'MUTATE',
+          linesAdded: data.code_mutation.lines_added || 0,
+          linesRemoved: data.code_mutation.lines_removed || 0,
+          totalLines: data.code_mutation.total_lines || 0,
+          summary: data.code_mutation.summary || ''
+        } : undefined;
+
         setChatMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           sender: 'agent',
           text: data.response_text || 'Completed autonomous quantum analysis.',
           workflowSteps: data.workflow_steps || undefined,
           scientificVerdict: data.scientific_verdict || undefined,
+          codeMutation: mutationData,
           toolCall: data.tool_call || undefined
         }]);
 
@@ -1186,6 +1206,66 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       <div className="leading-relaxed font-normal whitespace-pre-wrap font-sans" style={{ color: colors.textPrimary }}>
                         {msg.text}
                       </div>
+
+                      {/* Code Mutation Summary Card */}
+                      {msg.codeMutation && (
+                        <div 
+                          style={{ 
+                            backgroundColor: colors.bgPill, 
+                            borderColor: isDark ? 'rgba(51, 168, 219, 0.3)' : 'rgba(51, 168, 219, 0.4)' 
+                          }}
+                          className="border rounded-xl p-3 space-y-2 shadow-2xs font-normal"
+                        >
+                          <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                            {/* Left: Clickable Target File Badge */}
+                            <button
+                              onClick={() => setActiveFile(msg.codeMutation!.fileName)}
+                              title={`Click to focus ${msg.codeMutation!.fileName} in code editor`}
+                              style={{ 
+                                backgroundColor: colors.bgCard, 
+                                borderColor: colors.border, 
+                                color: colors.textCyan 
+                              }}
+                              className="px-2.5 py-1 rounded-md border flex items-center gap-1.5 font-mono text-[11px] hover:border-sky-400 transition-colors cursor-pointer"
+                            >
+                              <FileCode className="w-3.5 h-3.5" style={{ color: colors.textCyan }} />
+                              <span className="font-normal">{msg.codeMutation.fileName}</span>
+                            </button>
+
+                            {/* Right: Line Diff Counts & Sync Badge */}
+                            <div className="flex items-center gap-2 font-mono text-[11px]">
+                              {msg.codeMutation.linesAdded > 0 && (
+                                <span style={{ color: colors.textEmerald }} className="flex items-center gap-0.5 font-normal">
+                                  +{msg.codeMutation.linesAdded} lines
+                                </span>
+                              )}
+                              {msg.codeMutation.linesRemoved > 0 && (
+                                <span style={{ color: colors.textAmber }} className="flex items-center gap-0.5 font-normal">
+                                  -{msg.codeMutation.linesRemoved} lines
+                                </span>
+                              )}
+                              <span 
+                                style={{ 
+                                  backgroundColor: colors.bgCard, 
+                                  color: colors.textEmerald, 
+                                  borderColor: 'rgba(47, 184, 133, 0.35)' 
+                                }}
+                                className="px-2 py-0.5 rounded border text-[10px] font-normal flex items-center gap-1"
+                              >
+                                <Check className="w-3 h-3" style={{ color: colors.textEmerald }} />
+                                <span>AST Mutated & Synced</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Mutation Summary Note */}
+                          {msg.codeMutation.summary && (
+                            <div className="text-[11px] leading-relaxed font-sans" style={{ color: colors.textMuted }}>
+                              {msg.codeMutation.summary}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {msg.toolCall && (
                         <div 

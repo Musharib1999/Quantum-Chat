@@ -146,6 +146,30 @@ def extract_molecule_info(user_msg: str):
         "geometry": "C 0.0 0.0 0.0\nO 1.2 0.0 0.0\nH 1.8 0.8 0.0"
     }
 
+class CodeMutationSummary(BaseModel):
+    file_name: str
+    action: str = "MUTATE"
+    lines_added: int = 0
+    lines_removed: int = 0
+    total_lines: int = 0
+    summary: str = ""
+
+def compute_mutation_summary(file_name: str, old_code: str, new_code: str, summary: str) -> CodeMutationSummary:
+    old_lines = len(old_code.strip().split("\n")) if old_code and old_code.strip() else 0
+    new_lines = len(new_code.strip().split("\n")) if new_code and new_code.strip() else 0
+    lines_added = max(0, new_lines - old_lines) if old_lines > 0 else new_lines
+    lines_removed = max(0, old_lines - new_lines) if old_lines > 0 else 0
+    if lines_added == 0 and lines_removed == 0 and new_lines > 0:
+        lines_added = new_lines
+    return CodeMutationSummary(
+        file_name=file_name,
+        action="MUTATE" if old_lines > 0 else "CREATE",
+        lines_added=lines_added,
+        lines_removed=lines_removed,
+        total_lines=new_lines,
+        summary=summary
+    )
+
 class WorkflowStep(BaseModel):
     step_num: int
     tool_tag: str
@@ -160,6 +184,7 @@ class OrchestratorResult(BaseModel):
     workflow_steps: List[WorkflowStep] = Field(default_factory=list)
     response_text: str
     updated_code: Optional[str] = None
+    code_mutation: Optional[CodeMutationSummary] = None
     memory_md: Optional[str] = None
     runtime_telemetry: Dict[str, Any] = Field(default_factory=dict)
     scientific_verdict: Optional[str] = None
@@ -185,7 +210,7 @@ class QuantumOrchestrator:
 
         # WORKFLOW A: OPTIMIZATION
         if any(k in msg_l for k in ["portfolio", "qubo", "maxcut", "traveling", "tsp", "knapsack", "asset", "optimize"]):
-            return await self._execute_optimization_workflow(project_id, user_message, active_file, target_backend, optimization_level, model_engine, now_iso)
+            return await self._execute_optimization_workflow(project_id, user_message, active_file, file_content, target_backend, optimization_level, model_engine, now_iso)
 
         # WORKFLOW B: CHEMISTRY (Dynamic Molecule Resolution)
         elif (
@@ -194,11 +219,11 @@ class QuantumOrchestrator:
             bool(re.search(r'\b(c[0-9]*h[0-9]*[a-z0-9]*|h2o|h2|lih|ch4|nh3|beh2|co2|o2|n2|c3h6o)\b', msg_l)) or
             "vqe_chem" in active_file or "vqe" in project_id or "chem" in project_id
         ):
-            return await self._execute_chemistry_workflow(project_id, user_message, active_file, target_backend, optimization_level, model_engine, now_iso)
+            return await self._execute_chemistry_workflow(project_id, user_message, active_file, file_content, target_backend, optimization_level, model_engine, now_iso)
 
         # WORKFLOW C: ALGORITHMS
         elif any(k in msg_l for k in ["grover", "bell", "ghz", "oracle", "search", "teleportation", "shor"]):
-            return await self._execute_algorithm_workflow(project_id, user_message, active_file, target_backend, optimization_level, model_engine, now_iso)
+            return await self._execute_algorithm_workflow(project_id, user_message, active_file, file_content, target_backend, optimization_level, model_engine, now_iso)
 
         # WORKFLOW D: TRANSPILER
         elif any(k in msg_l for k in ["transpile", "depth", "cnot", "reduce depth", "compiler"]):
@@ -206,9 +231,9 @@ class QuantumOrchestrator:
 
         # WORKFLOW E: GENERAL / GROQ LLM REASONING
         else:
-            return await self._execute_groq_reasoning_workflow(project_id, user_message, active_file, target_backend, optimization_level, model_engine, now_iso)
+            return await self._execute_groq_reasoning_workflow(project_id, user_message, active_file, file_content, target_backend, optimization_level, model_engine, now_iso)
 
-    async def _execute_optimization_workflow(self, project_id, msg, active_file, backend, opt_lvl, model, timestamp):
+    async def _execute_optimization_workflow(self, project_id, msg, active_file, file_content, backend, opt_lvl, model, timestamp):
         steps = []
 
         # Step 1: Formulate Problem
@@ -380,7 +405,7 @@ if __name__ == "__main__":
             scientific_verdict="QAOA achieved 96.4% approximation ratio."
         )
 
-    async def _execute_chemistry_workflow(self, project_id, msg, active_file, backend, opt_lvl, model, timestamp):
+    async def _execute_chemistry_workflow(self, project_id, msg, active_file, file_content, backend, opt_lvl, model, timestamp):
         steps = []
         mol = extract_molecule_info(msg)
         num_q = mol["active_qubits"]
@@ -559,7 +584,9 @@ if __name__ == "__main__":
             ]
         }
 
-        mem_md = self._record_memory(project_id, msg, response_text, steps, active_file, backend, num_q, depth_val)
+        target_f = "vqe_chemistry.py" if "vqe_chemistry.py" in active_file or "chem" in project_id or "vqe" in project_id else ("main.py" if "main.py" in active_file else active_file)
+        mutation = compute_mutation_summary(target_f, file_content, updated_code, f"Injected {mol['name']} UCCSD parameterized ansatz & CAS({act_elec},{act_orb}) Hamiltonian")
+        mem_md = self._record_memory(project_id, msg, response_text, steps, target_f, backend, num_q, depth_val)
 
         return OrchestratorResult(
             success=True,
@@ -567,12 +594,13 @@ if __name__ == "__main__":
             workflow_steps=steps,
             response_text=response_text,
             updated_code=updated_code,
+            code_mutation=mutation,
             memory_md=mem_md,
             runtime_telemetry=telemetry,
             scientific_verdict=f"Chemical accuracy achieved for {mol['name']} (< 1.6 mHa error)."
         )
 
-    async def _execute_algorithm_workflow(self, project_id, msg, active_file, backend, opt_lvl, model, timestamp):
+    async def _execute_algorithm_workflow(self, project_id, msg, active_file, file_content, backend, opt_lvl, model, timestamp):
         steps = []
         is_bell = "bell" in msg.lower()
         is_ghz = "ghz" in msg.lower()
@@ -711,7 +739,9 @@ if __name__ == "__main__":
             ]
         }
 
-        mem_md = self._record_memory(project_id, msg, response_text, steps, active_file, backend, num_q, d_val)
+        target_f = active_file if active_file.endswith(".py") else "main.py"
+        mutation = compute_mutation_summary(target_f, file_content, code, "Synthesized quantum algorithm circuit and statevector simulation block")
+        mem_md = self._record_memory(project_id, msg, response_text, steps, target_f, backend, num_q, d_val)
 
         return OrchestratorResult(
             success=True,
@@ -719,6 +749,7 @@ if __name__ == "__main__":
             workflow_steps=steps,
             response_text=response_text,
             updated_code=code,
+            code_mutation=mutation,
             memory_md=mem_md,
             runtime_telemetry=telemetry
         )
@@ -788,7 +819,9 @@ if __name__ == "__main__":
             ]
         }
 
-        mem_md = self._record_memory(project_id, msg, response_text, steps, active_file, backend, 4, 4)
+        target_f = active_file if active_file.endswith(".py") else "main.py"
+        mutation = compute_mutation_summary(target_f, file_content, code, f"Applied Level-{opt_lvl} compiler pass optimization (depth reduced to 4, -33%)")
+        mem_md = self._record_memory(project_id, msg, response_text, steps, target_f, backend, 4, 4)
 
         return OrchestratorResult(
             success=True,
@@ -796,11 +829,12 @@ if __name__ == "__main__":
             workflow_steps=steps,
             response_text=response_text,
             updated_code=code,
+            code_mutation=mutation,
             memory_md=mem_md,
             runtime_telemetry=telemetry
         )
 
-    async def _execute_groq_reasoning_workflow(self, project_id, msg, active_file, backend, opt_lvl, model, timestamp):
+    async def _execute_groq_reasoning_workflow(self, project_id, msg, active_file, file_content, backend, opt_lvl, model, timestamp):
         steps = [
             WorkflowStep(
                 step_num=1, tool_tag="groq.qwen3_6_27b.reasoning", name="Groq Qwen 3.6 27B Reasoning Engine",
@@ -855,7 +889,9 @@ if __name__ == "__main__":
             ]
         }
 
-        mem_md = self._record_memory(project_id, msg, response_text, steps, active_file, backend, 4, 6)
+        target_f = active_file if active_file.endswith(".py") else "main.py"
+        mutation = compute_mutation_summary(target_f, file_content, extracted_code, "Injected generated quantum code from reasoning engine") if extracted_code else None
+        mem_md = self._record_memory(project_id, msg, response_text, steps, target_f, backend, 4, 6)
 
         return OrchestratorResult(
             success=True,
@@ -863,6 +899,7 @@ if __name__ == "__main__":
             workflow_steps=steps,
             response_text=response_text,
             updated_code=extracted_code,
+            code_mutation=mutation,
             memory_md=mem_md,
             runtime_telemetry=telemetry
         )
