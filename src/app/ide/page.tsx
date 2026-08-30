@@ -2367,7 +2367,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                         </span>
                       </div>
                       <p className="text-xs leading-relaxed" style={{ color: colors.textMuted }}>
-                        Symmetric Upper-Triangular $Q$-Matrix with exact Lagrange constraint expansions: $\mathcal{L}(x) = -\text{Score} + \lambda \cdot (\sum C_i x_i - B)^2$.
+                      <p className="text-xs leading-relaxed" style={{ color: colors.textMuted }}>
+                        Symmetric Upper-Triangular Q-Matrix with exact Lagrange constraint expansions: L(x) = -Score + &lambda; &middot; (&sum; C_i x_i - B)&sup2;.
+                      </p>
                       </p>
                     </div>
 
