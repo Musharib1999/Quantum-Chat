@@ -315,20 +315,79 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   const [projectFiles, setProjectFiles] = useState(initialProjectTemplates['my-quantum-project'].files);
   const [activeFile, setActiveFile] = useState('main.py');
 
-  // Switch to an existing project or create new
-  const switchProject = (pName: string) => {
-    if (allProjects[pName]) {
-      setProjectName(pName);
-      setProjectFiles(allProjects[pName].files);
-      const firstF = Object.keys(allProjects[pName].files)[0];
-      setActiveFile(firstF);
+  // Unified Project Switcher with Full Workspace & Chat State Synchronization
+  const handleSwitchProject = (targetProject: string) => {
+    if (targetProject === projectName) {
       setIsProjectsDropdownOpen(false);
-      
-      // Update dynamic target backend depending on project
-      if (pName.includes('optimization')) setTargetBackend('dwave_simulated_annealing');
-      else if (pName.includes('vqe')) setTargetBackend('statevector');
-      else setTargetBackend('aer_simulator');
+      return;
     }
+
+    // 1. Save CURRENT project's full state (Files, Active File, Telemetry, Chat History)
+    if (typeof window !== 'undefined') {
+      const currentProjData = {
+        ...(allProjects[projectName] || {}),
+        files: projectFiles
+      };
+      setAllProjects(prev => ({
+        ...prev,
+        [projectName]: currentProjData
+      }));
+      saveProjectToDatabase(projectName, currentProjData, activeFile, runtimeMetrics);
+      try {
+        localStorage.setItem(`quantum_chat_${projectName}`, JSON.stringify(chatMessages));
+      } catch (e) {}
+    }
+
+    // 2. Load TARGET project's full workspace
+    const target = allProjects[targetProject] || initialProjectTemplates[targetProject] || initialProjectTemplates['my-quantum-project'];
+    const targetPrimaryFile = Object.keys(target.files).find(f => f.endsWith('.py')) || Object.keys(target.files)[0] || 'main.py';
+    
+    setProjectName(targetProject);
+    setProjectFiles(target.files);
+    setActiveFile(targetPrimaryFile);
+    setIsProjectsDropdownOpen(false);
+
+    // 3. Restore Target Project's Stored Telemetry
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('quantum_ide_active_project', targetProject);
+      try {
+        const storedProjStr = localStorage.getItem(`quantum_ide_proj_${targetProject}`);
+        if (storedProjStr) {
+          const storedProj = JSON.parse(storedProjStr);
+          if (storedProj.runtimeMetrics) {
+            setRuntimeMetrics(storedProj.runtimeMetrics);
+          }
+        }
+      } catch (e) {}
+
+      // 4. Restore Target Project's Chat History
+      try {
+        const storedChat = localStorage.getItem(`quantum_chat_${targetProject}`);
+        if (storedChat) {
+          const parsedChat = JSON.parse(storedChat);
+          if (Array.isArray(parsedChat) && parsedChat.length > 0) {
+            setChatMessages(parsedChat);
+          } else {
+            setChatMessages([{
+              id: Date.now().toString(),
+              sender: 'agent',
+              text: `Switched workspace to **${targetProject}**. Active file: \`${targetPrimaryFile}\`. All telemetry and memory synchronized.`
+            }]);
+          }
+        } else {
+          setChatMessages([{
+            id: Date.now().toString(),
+            sender: 'agent',
+            text: `Switched workspace to **${targetProject}**. Active file: \`${targetPrimaryFile}\`. All telemetry and memory synchronized.`
+          }]);
+        }
+      } catch (e) {}
+    }
+
+    // 5. Update Dynamic Target Backend depending on project type
+    if (targetProject.includes('optimization') || targetProject.includes('opt')) setTargetBackend('dwave_simulated_annealing');
+    else if (targetProject.includes('vqe') || targetProject.includes('chem')) setTargetBackend('statevector');
+    else setTargetBackend('aer_simulator');
   };
 
   // The 33 Quantum AI Tools Registry for the Connect Palette
@@ -506,6 +565,28 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           setProjectName(lastActiveProjId);
           setProjectFiles(targetProj.files);
           setActiveFile(primaryFile);
+
+          // Restore Telemetry
+          try {
+            const storedProjStr = localStorage.getItem(`quantum_ide_proj_${lastActiveProjId}`);
+            if (storedProjStr) {
+              const storedProj = JSON.parse(storedProjStr);
+              if (storedProj.runtimeMetrics) {
+                setRuntimeMetrics(storedProj.runtimeMetrics);
+              }
+            }
+          } catch (e) {}
+
+          // Restore Chat Messages
+          try {
+            const storedChat = localStorage.getItem(`quantum_chat_${lastActiveProjId}`);
+            if (storedChat) {
+              const parsed = JSON.parse(storedChat);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setChatMessages(parsed);
+              }
+            }
+          } catch (e) {}
         }
       } catch (err) {
         console.warn('Failed to load projects from DB:', err);
@@ -591,32 +672,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }]);
   };
 
-  // Switch between existing projects while preserving file edits
-  const handleSwitchProject = (targetProject: string) => {
-    if (targetProject === projectName) {
-      setIsProjectsDropdownOpen(false);
-      return;
-    }
 
-    // 1. Save current project's files before switching (local + MongoDB)
-    const currentProjData = {
-      ...(allProjects[projectName] || {}),
-      files: projectFiles
-    };
-    setAllProjects(prev => ({
-      ...prev,
-      [projectName]: currentProjData
-    }));
-    saveProjectToDatabase(projectName, currentProjData, activeFile, runtimeMetrics);
-
-    // 2. Load target project's files
-    const target = allProjects[targetProject] || initialProjectTemplates[targetProject] || initialProjectTemplates['my-quantum-project'];
-    const targetPrimaryFile = Object.keys(target.files).find(f => f.endsWith('.py')) || Object.keys(target.files)[0] || 'main.py';
-    setProjectName(targetProject);
-    setProjectFiles(target.files);
-    setActiveFile(targetPrimaryFile);
-    setIsProjectsDropdownOpen(false);
-  };
 
   const handleRun = () => {
     setIsRunning(true);
@@ -851,7 +907,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   {Object.keys(allProjects).map((pKey) => (
                     <div
                       key={pKey}
-                      onClick={() => switchProject(pKey)}
+                      onClick={() => handleSwitchProject(pKey)}
                       style={{ 
                         backgroundColor: projectName === pKey ? colors.bgPill : 'transparent',
                         borderColor: projectName === pKey ? colors.textCyan : 'transparent',
