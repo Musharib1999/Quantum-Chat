@@ -175,9 +175,29 @@ class QuantumAgent:
         )
         yield await self.stream.publish(thought)
 
-        # Check if user query matches any clarification question trigger
-        matched_q = find_clarification_question(domain, user_message)
-        if matched_q and any(k in msg_l for k in ["which", "what should", "choose", "options", "how to choose", "recommend", "select", "config", "strategy", "help me decide"]):
+        # ─────────────────────────────────────────────────────────────────
+        # ⚡ AUTONOMOUS BIAS-TO-ACTION POLICY (Zero User Interruption)
+        # ─────────────────────────────────────────────────────────────────
+        # The agent defaults to immediate, end-to-end execution with canonical
+        # recommended defaults. It ONLY asks a clarification question if:
+        # 1. The user explicitly asks for options/recommendations (consultative mode)
+        # 2. AND the user did not give a direct execution command (e.g. build, create, solve, run, transpile, optimize, train).
+        is_action_command = any(k in msg_l for k in [
+            "create", "build", "solve", "run", "execute", "transpile", "synthesize", 
+            "optimize", "train", "generate", "simulate", "evaluate", "implement", "make", "do", "fix"
+        ])
+
+        is_explicit_consultation = (
+            not is_action_command and
+            (
+                any(k in msg_l for k in ["which ", "what should ", "how should ", "recommend ", "options for ", "help me decide", "suggest ", "what are my choices"]) or
+                (msg_l.endswith("?") and any(k in msg_l for k in ["choose", "pick", "select", "better"]))
+            )
+        )
+
+        matched_q = find_clarification_question(domain, user_message) if is_explicit_consultation else None
+
+        if is_explicit_consultation and matched_q:
             clarif_act = ClarificationPromptAction(
                 project_id=project_id,
                 question=matched_q.question,
@@ -188,16 +208,16 @@ class QuantumAgent:
             )
             yield await self.stream.publish(clarif_act)
 
-            resp_text = f"### ❓ Decision Required: {matched_q.domain.title()} Configuration\n\n{matched_q.question}\n\n"
+            resp_text = f"### 💡 Architectural Recommendation: {matched_q.domain.title()}\n\n{matched_q.question}\n\n"
             for opt in matched_q.options:
-                rec_badge = " **(Recommended)**" if opt.is_recommended else ""
+                rec_badge = " **(Recommended Default)**" if opt.is_recommended else ""
                 resp_text += f"- **{opt.label}**{rec_badge}\n  *{opt.description or ''}*\n"
-            resp_text += f"\n*Defaulting to **{matched_q.default_value}** if no preference specified.*"
+            resp_text += f"\n*Feel free to select one of the options above, or simply instruct me to proceed with the recommended default.*"
 
             yield await self.stream.publish(FinalResponseAction(
                 project_id=project_id,
                 response_text=resp_text,
-                scientific_verdict="Awaiting configuration decision.",
+                scientific_verdict="Consultation options presented.",
                 clarification=clarif_act.model_dump()
             ))
             return
