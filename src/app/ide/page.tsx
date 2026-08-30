@@ -798,7 +798,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           target_backend: targetBackend,
           optimization_level: optimizationLevel,
           model_engine: activeModel,
-          history: chatMessages.slice(-6).map(m => ({ sender: m.sender, text: m.text }))
+          history: (chatMessages || []).slice(-6).map(m => ({ sender: m.sender, text: m.text }))
         })
       });
 
@@ -986,7 +986,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   Switch Workspace Project
                 </div>
                 <div className="space-y-1">
-                  {Object.keys(allProjects).map((pKey) => (
+                  {Object.keys(allProjects || {}).map((pKey) => (
                     <div
                       key={pKey}
                       onClick={() => handleSwitchProject(pKey)}
@@ -1113,7 +1113,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 <span>{projectName.toUpperCase()}</span>
               </div>
 
-              {Object.keys(files).map((fName) => (
+              {Object.keys(files || {}).map((fName) => (
                 <div 
                   key={fName}
                   onClick={() => setActiveFile(fName)}
@@ -1672,7 +1672,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                           {/* Selectable Option Pills */}
                           <div className="space-y-1.5 pt-1">
-                            {msg.clarification.options.map((opt, idx) => (
+                            {(msg.clarification.options || []).map((opt, idx) => (
                               <button
                                 key={idx}
                                 onClick={() => handleSendMessage(opt.label)}
@@ -2307,7 +2307,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     <span className="text-[10px]" style={{ color: colors.textEmerald }}>• Process Exited Cleanly (code 0)</span>
                   </div>
                   <div className="p-4 rounded-xl border bg-black/40 space-y-1 overflow-x-auto" style={{ borderColor: colors.border }}>
-                    {runtimeMetrics.terminalLog.map((line, lIdx) => (
+                    {(runtimeMetrics?.terminalLog || []).map((line, lIdx) => (
                       <div key={lIdx} style={{ color: line.startsWith('➜') ? colors.textAmber : (line.includes('exit code 0') ? colors.textEmerald : colors.textPrimary) }}>
                         {line}
                       </div>
