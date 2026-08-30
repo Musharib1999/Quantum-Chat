@@ -97,7 +97,7 @@ export default function QuantumIDE() {
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [customProjectInput, setCustomProjectInput] = useState('');
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('optimization');
-  const [telemetryModalTab, setTelemetryModalTab] = useState<'circuit' | 'results' | 'terminal' | null>(null);
+  const [telemetryModalTab, setTelemetryModalTab] = useState<string | null>(null);
   const [isProjectsDropdownOpen, setIsProjectsDropdownOpen] = useState(false);
   const [targetBackend, setTargetBackend] = useState('aer_simulator');
   const [optimizationLevel, setOptimizationLevel] = useState<number>(2);
@@ -1144,7 +1144,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                       {/* Card 1: Active Space CAS(4,4) */}
                       <div 
-                        onClick={() => setTelemetryModalTab('circuit')}
+                        onClick={() => setTelemetryModalTab('active_space')}
                         style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                         className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
                       >
@@ -1165,7 +1165,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                       {/* Card 2: VQE Ground State Energy */}
                       <div 
-                        onClick={() => setTelemetryModalTab('results')}
+                        onClick={() => setTelemetryModalTab('vqe_energy')}
                         style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                         className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
                       >
@@ -1235,7 +1235,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                       {/* Card 1: QUBO Matrix & Penalty */}
                       <div 
-                        onClick={() => setTelemetryModalTab('circuit')}
+                        onClick={() => setTelemetryModalTab('qubo_matrix')}
                         style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                         className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
                       >
@@ -1256,7 +1256,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                       {/* Card 2: Annealing Energy Min */}
                       <div 
-                        onClick={() => setTelemetryModalTab('results')}
+                        onClick={() => setTelemetryModalTab('annealing')}
                         style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                         className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
                       >
@@ -1276,7 +1276,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                       {/* Card 3: Classical Benchmark Gap */}
                       <div 
-                        onClick={() => setTelemetryModalTab('results')}
+                        onClick={() => setTelemetryModalTab('benchmark')}
                         style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                         className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-purple-500/60 transition-all group"
                       >
@@ -1325,7 +1325,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                       {/* Card 1: ZZFeatureMap & Ansatz */}
                       <div 
-                        onClick={() => setTelemetryModalTab('circuit')}
+                        onClick={() => setTelemetryModalTab('feature_map')}
                         style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                         className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
                       >
@@ -1346,7 +1346,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                       {/* Card 2: Classifier Accuracy */}
                       <div 
-                        onClick={() => setTelemetryModalTab('results')}
+                        onClick={() => setTelemetryModalTab('accuracy')}
                         style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                         className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
                       >
@@ -1366,7 +1366,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                       {/* Card 3: Quantum Kernel Gram Matrix */}
                       <div 
-                        onClick={() => setTelemetryModalTab('results')}
+                        onClick={() => setTelemetryModalTab('kernel')}
                         style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                         className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-purple-500/60 transition-all group"
                       >
@@ -1456,7 +1456,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                     {/* Card 3: Transpiler Pass Optimizer */}
                     <div 
-                      onClick={() => setTelemetryModalTab('circuit')}
+                      onClick={() => setTelemetryModalTab('transpile')}
                       style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
                       className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-purple-500/60 transition-all group"
                     >
