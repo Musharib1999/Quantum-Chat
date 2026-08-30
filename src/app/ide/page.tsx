@@ -1113,72 +1113,372 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 </div>
               ))}
 
-              {/* Quantum Telemetry & Runtime Solvers Cards */}
-              <div className="pt-4 px-1 space-y-2">
-                <div className="text-[10px] font-normal uppercase tracking-wider mb-1 font-heading" style={{ color: colors.textCyan }}>
-                  Runtime Solvers & Telemetry
-                </div>
+              {/* Dynamic Domain-Aware Telemetry & Runtime Solvers Cards */}
+              {(() => {
+                const isChem = projectName.includes('chem') || projectName.includes('vqe') || projectName.includes('lih') || Object.keys(projectFiles).some(f => f.includes('vqe'));
+                const isOpt = projectName.includes('opt') || projectName.includes('portfolio') || Object.keys(projectFiles).some(f => f.includes('portfolio'));
+                const isQML = projectName.includes('qml') || projectName.includes('iris') || projectName.includes('classifier') || Object.keys(projectFiles).some(f => f.includes('qml'));
 
-                {/* Card 1: Continuous Circuit Canvas */}
-                <div 
-                  onClick={() => setTelemetryModalTab('circuit')}
-                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                  className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
-                >
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
-                      Circuit Canvas
-                    </span>
-                    <span style={{ color: colors.textCyan }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
-                      View →
-                    </span>
-                  </div>
-                  <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
-                    <span>Qubits: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.activeQubits}</span></span>
-                    <span>Depth: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.depth}</span></span>
-                    <span>CNOTs: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.cnots}</span></span>
-                  </div>
-                </div>
+                if (isChem) {
+                  return (
+                    <div className="pt-4 px-1 space-y-2">
+                      <div className="text-[10px] font-normal uppercase tracking-wider mb-1 font-heading" style={{ color: colors.textCyan }}>
+                        Chemistry Solvers & Telemetry
+                      </div>
 
-                {/* Card 2: Simulation Results & Metrics */}
-                <div 
-                  onClick={() => setTelemetryModalTab('results')}
-                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                  className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
-                >
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
-                      Results & Metrics
-                    </span>
-                    <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
-                      View →
-                    </span>
-                  </div>
-                  <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
-                    <span>Fidelity: <span style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</span></span>
-                    <span>Latency: <span style={{ color: colors.textAmber }}>{runtimeMetrics.latencySec}</span></span>
-                  </div>
-                </div>
+                      {/* Card 1: Active Space CAS(4,4) */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('circuit')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            Active Space CAS(4,4)
+                          </span>
+                          <span style={{ color: colors.textCyan }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>Electrons: <span style={{ color: colors.textSkyBlue }}>4</span></span>
+                          <span>Orbitals: <span style={{ color: colors.textSkyBlue }}>4</span></span>
+                          <span>Qubits: <span style={{ color: colors.textSkyBlue }}>8</span></span>
+                        </div>
+                      </div>
 
-                {/* Card 3: Solver Terminal */}
-                <div 
-                  onClick={() => setTelemetryModalTab('terminal')}
-                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-                  className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-amber-500/60 transition-all group"
-                >
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
-                      Solver Terminal
-                    </span>
-                    <span style={{ color: colors.textAmber }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
-                      Logs →
-                    </span>
+                      {/* Card 2: VQE Ground State Energy */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('results')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            VQE Ground State Energy
+                          </span>
+                          <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>Energy: <span style={{ color: colors.textEmerald }}>-192.1482 Ha</span></span>
+                          <span>Error: <span style={{ color: colors.textAmber }}>0.80 mHa (&lt;1.6)</span></span>
+                        </div>
+                      </div>
+
+                      {/* Card 3: UCCSD Electronic Circuit */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('circuit')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-purple-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            UCCSD Electronic Circuit
+                          </span>
+                          <span style={{ color: colors.textPurple }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>Depth: <span style={{ color: colors.textPurple }}>{runtimeMetrics.depth}</span></span>
+                          <span>CNOTs: <span style={{ color: colors.textPurple }}>{runtimeMetrics.cnots}</span></span>
+                          <span>Fidelity: <span style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</span></span>
+                        </div>
+                      </div>
+
+                      {/* Card 4: PySCF & QPU Console */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('terminal')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-amber-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            PySCF &amp; QPU Console
+                          </span>
+                          <span style={{ color: colors.textAmber }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            Logs →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono truncate" style={{ color: colors.textMuted }}>
+                          Target: <span style={{ color: colors.textAmber }}>{targetBackend}</span> (Aer 1.0+ Simulator)
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (isOpt) {
+                  return (
+                    <div className="pt-4 px-1 space-y-2">
+                      <div className="text-[10px] font-normal uppercase tracking-wider mb-1 font-heading" style={{ color: colors.textCyan }}>
+                        Optimization Solvers & Telemetry
+                      </div>
+
+                      {/* Card 1: QUBO Matrix & Penalty */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('circuit')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            QUBO Matrix &amp; Penalty
+                          </span>
+                          <span style={{ color: colors.textCyan }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>Decision Vars: <span style={{ color: colors.textSkyBlue }}>4</span></span>
+                          <span>Constraints: <span style={{ color: colors.textSkyBlue }}>1</span></span>
+                          <span>Penalty λ: <span style={{ color: colors.textSkyBlue }}>5.0</span></span>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Annealing Energy Min */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('results')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            Annealing Energy Min
+                          </span>
+                          <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>Best Energy: <span style={{ color: colors.textEmerald }}>-1.4280</span></span>
+                          <span>Feasible: <span style={{ color: colors.textEmerald }}>100% Pass</span></span>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Classical Benchmark Gap */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('results')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-purple-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            Classical Benchmark Gap
+                          </span>
+                          <span style={{ color: colors.textPurple }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>PuLP Gap: <span style={{ color: colors.textEmerald }}>0.00%</span></span>
+                          <span>Speedup: <span style={{ color: colors.textPurple }}>2.4x</span></span>
+                        </div>
+                      </div>
+
+                      {/* Card 4: D-Wave & QAOA Console */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('terminal')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-amber-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            D-Wave &amp; QAOA Console
+                          </span>
+                          <span style={{ color: colors.textAmber }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            Logs →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono truncate" style={{ color: colors.textMuted }}>
+                          Target: <span style={{ color: colors.textAmber }}>{targetBackend}</span> (1024 reads)
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (isQML) {
+                  return (
+                    <div className="pt-4 px-1 space-y-2">
+                      <div className="text-[10px] font-normal uppercase tracking-wider mb-1 font-heading" style={{ color: colors.textCyan }}>
+                        QML Solvers & Telemetry
+                      </div>
+
+                      {/* Card 1: ZZFeatureMap & Ansatz */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('circuit')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            ZZFeatureMap &amp; Ansatz
+                          </span>
+                          <span style={{ color: colors.textCyan }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>Features: <span style={{ color: colors.textSkyBlue }}>4</span></span>
+                          <span>Ansatz: <span style={{ color: colors.textSkyBlue }}>RealAmps</span></span>
+                          <span>Weights: <span style={{ color: colors.textSkyBlue }}>8</span></span>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Classifier Accuracy */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('results')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            Classifier Accuracy
+                          </span>
+                          <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>Train Acc: <span style={{ color: colors.textEmerald }}>96.5%</span></span>
+                          <span>Gen Gap: <span style={{ color: colors.textAmber }}>+1.8%</span></span>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Quantum Kernel Gram Matrix */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('results')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-purple-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            Quantum Kernel Gram Matrix
+                          </span>
+                          <span style={{ color: colors.textPurple }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            View →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                          <span>Fidelity: <span style={{ color: colors.textEmerald }}>98.40%</span></span>
+                          <span>Dim: <span style={{ color: colors.textPurple }}>4x4</span></span>
+                        </div>
+                      </div>
+
+                      {/* Card 4: SPSA Optimizer Console */}
+                      <div 
+                        onClick={() => setTelemetryModalTab('terminal')}
+                        style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                        className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-amber-500/60 transition-all group"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                            SPSA Optimizer Console
+                          </span>
+                          <span style={{ color: colors.textAmber }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                            Logs →
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono truncate" style={{ color: colors.textMuted }}>
+                          Loss: <span style={{ color: colors.textAmber }}>0.042</span> (Epoch 50/50, 1024 shots)
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Default: Circuit Engineering
+                return (
+                  <div className="pt-4 px-1 space-y-2">
+                    <div className="text-[10px] font-normal uppercase tracking-wider mb-1 font-heading" style={{ color: colors.textCyan }}>
+                      Runtime Solvers & Telemetry
+                    </div>
+
+                    {/* Card 1: Continuous Circuit Canvas */}
+                    <div 
+                      onClick={() => setTelemetryModalTab('circuit')}
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                      className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-sky-500/60 transition-all group"
+                    >
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                          Circuit Canvas
+                        </span>
+                        <span style={{ color: colors.textCyan }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                          View →
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                        <span>Qubits: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.activeQubits}</span></span>
+                        <span>Depth: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.depth}</span></span>
+                        <span>CNOTs: <span style={{ color: colors.textSkyBlue }}>{runtimeMetrics.cnots}</span></span>
+                      </div>
+                    </div>
+
+                    {/* Card 2: Simulation Results & Metrics */}
+                    <div 
+                      onClick={() => setTelemetryModalTab('results')}
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                      className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-emerald-500/60 transition-all group"
+                    >
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                          Results &amp; Metrics
+                        </span>
+                        <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                          View →
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                        <span>Fidelity: <span style={{ color: colors.textEmerald }}>{runtimeMetrics.fidelity}</span></span>
+                        <span>Latency: <span style={{ color: colors.textAmber }}>{runtimeMetrics.latencySec}</span></span>
+                      </div>
+                    </div>
+
+                    {/* Card 3: Transpiler Pass Optimizer */}
+                    <div 
+                      onClick={() => setTelemetryModalTab('circuit')}
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                      className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-purple-500/60 transition-all group"
+                    >
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                          Transpiler Pass Optimizer
+                        </span>
+                        <span style={{ color: colors.textPurple }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                          View →
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-mono flex items-center justify-between" style={{ color: colors.textMuted }}>
+                        <span>Level: <span style={{ color: colors.textPurple }}>{optimizationLevel}</span></span>
+                        <span>Depth Red: <span style={{ color: colors.textEmerald }}>-33%</span></span>
+                      </div>
+                    </div>
+
+                    {/* Card 4: Solver Terminal */}
+                    <div 
+                      onClick={() => setTelemetryModalTab('terminal')}
+                      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+                      className="p-2.5 rounded-lg border shadow-2xs font-normal cursor-pointer hover:border-amber-500/60 transition-all group"
+                    >
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-heading text-xs" style={{ color: colors.textPrimary }}>
+                          Qiskit Aer Console
+                        </span>
+                        <span style={{ color: colors.textAmber }} className="text-[10px] font-mono group-hover:translate-x-0.5 transition-transform">
+                          Logs →
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-mono truncate" style={{ color: colors.textMuted }}>
+                        Target: <span style={{ color: colors.textAmber }}>{targetBackend}</span> (1024 shots)
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[10px] font-mono truncate" style={{ color: colors.textMuted }}>
-                    Target: <span style={{ color: colors.textAmber }}>{targetBackend}</span> (1024 shots)
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
             </div>
 
