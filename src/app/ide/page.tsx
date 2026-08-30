@@ -1770,6 +1770,22 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                               {msg.codeMutation.summary}
                             </div>
                           )}
+
+                          {/* Quick Execute Button */}
+                          <div className="pt-1.5 flex items-center justify-end border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)' }}>
+                            <button
+                              onClick={() => handleSendMessage('/execute@program')}
+                              style={{ 
+                                backgroundColor: isDark ? 'rgba(222, 170, 33, 0.15)' : 'rgba(222, 170, 33, 0.2)',
+                                borderColor: 'rgba(222, 170, 33, 0.4)',
+                                color: colors.textAmber
+                              }}
+                              className="px-3 py-1 rounded-md border text-[11px] font-mono flex items-center gap-1.5 hover:border-amber-400 cursor-pointer transition-all shadow-2xs font-normal"
+                            >
+                              <Play className="w-3 h-3 fill-current" style={{ color: colors.textAmber }} />
+                              <span>Run Program on {targetBackend}</span>
+                            </button>
+                          </div>
                         </div>
                       )}
 
