@@ -1409,7 +1409,7 @@ export default function QuantumMarketplacePage() {
           </div>
 
           <div className="text-[11px] font-mono text-[#808D9E] shrink-0">
-            Showing <span className="text-[#33A8DB]">{filteredCapabilities.length}</span> of 36 services
+            Showing <span className="text-[#33A8DB]">{filteredCapabilities.length}</span> of {CAPABILITIES.length} services
           </div>
         </div>
       </section>
@@ -1813,7 +1813,7 @@ export default function QuantumMarketplacePage() {
                     {authMode === 'login' ? 'Sign In to Quantum Guru' : 'Create Your Account'}
                   </h3>
                   <p className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
-                    Access Quantum Cursor IDE & 36 capabilities
+                    Access Quantum Cursor IDE & {CAPABILITIES.length} capabilities
                   </p>
                 </div>
               </div>
