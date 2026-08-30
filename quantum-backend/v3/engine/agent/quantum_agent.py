@@ -162,7 +162,7 @@ async def solve_dynamic_optimization_problem(user_msg: str) -> Dict[str, Any]:
     ]
 
     # Dedicated qubo_matrix.py code
-    qubo_matrix_code = f"""# Quantum Guru — AutoQUBO Generated Q-Matrix Module
+    qubo_matrix_code = f"""# Quantum Guru — Generated Q-Matrix Module
 # Variables: {var_names}
 import numpy as np
 

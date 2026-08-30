@@ -292,7 +292,7 @@ if __name__ == "__main__":
         'qubo_matrix.py': {
           name: 'qubo_matrix.py',
           lang: 'python',
-          content: `# Quantum Guru — AutoQUBO Generated Q-Matrix Module
+          content: `# Quantum Guru — Generated Q-Matrix Module
 # Variables: ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']
 import numpy as np
 
@@ -2361,9 +2361,6 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   <div className="p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-sans px-2.5 py-0.5 rounded-md border" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}>
-                          AutoQUBO formulator
-                        </span>
                         <span className="text-sm font-semibold font-sans" style={{ color: colors.textPrimary }}>
                           {runtimeMetrics.qubo_telemetry?.problem_name || 'Clean energy portfolio optimization'}
                         </span>
