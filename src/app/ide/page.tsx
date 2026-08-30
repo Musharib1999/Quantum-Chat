@@ -113,6 +113,8 @@ export default function QuantumIDE() {
   const [isToolPaletteOpen, setIsToolPaletteOpen] = useState(false);
   const [toolSearchQuery, setToolSearchQuery] = useState('');
   const [selectedStudioFilter, setSelectedStudioFilter] = useState<string>('all');
+  const [quboLambda, setQuboLambda] = useState<number>(5.0);
+  const [selectedQuboCell, setSelectedQuboCell] = useState<{ row: number; col: number } | null>(null);
 
   // Section 1 (Left Sidebar) state: Open/Closed & Width (20% default)
   const [isLeftOpen, setIsLeftOpen] = useState(true);
