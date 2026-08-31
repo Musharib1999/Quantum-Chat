@@ -1012,6 +1012,28 @@ export default function QuantumMarketplacePage() {
     });
   }, [selectedCategory, searchQuery]);
 
+  // Category Icon Helper
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'optimization':
+        return <Zap className="w-5 h-5 text-amber-400" />;
+      case 'chemistry':
+        return <Atom className="w-5 h-5 text-emerald-400" />;
+      case 'algorithms':
+        return <Cpu className="w-5 h-5 text-sky-400" />;
+      case 'circuit':
+        return <Code2 className="w-5 h-5 text-purple-400" />;
+      case 'qml':
+        return <Activity className="w-5 h-5 text-indigo-400" />;
+      case 'academy':
+        return <BookOpen className="w-5 h-5 text-blue-400" />;
+      case 'qpu_simulators':
+        return <Server className="w-5 h-5 text-teal-400" />;
+      default:
+        return <Sparkles className="w-5 h-5 text-sky-400" />;
+    }
+  };
+
   // Open Live Sandbox Modal for a capability
   const handleOpenSandbox = (cap: QuantumCapability) => {
     setSelectedCapability(cap);
@@ -1642,65 +1664,110 @@ export default function QuantumMarketplacePage() {
       {/* INTERACTIVE CAPABILITY DETAIL & LIVE SANDBOX RUNNER MODAL     */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isSandboxModalOpen && selectedCapability && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-[#222222] bg-[#141414] shadow-2xl flex flex-col overflow-hidden max-h-[85vh]">
-            
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div 
+            style={{ 
+              backgroundColor: colors.bgCard, 
+              borderColor: colors.border,
+              color: colors.textPrimary 
+            }}
+            className="w-full max-w-2xl rounded-2xl border shadow-2xl flex flex-col overflow-hidden max-h-[88vh] font-sans animate-in fade-in zoom-in-95 duration-150"
+          >
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-[#222222] bg-[#181818] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg border border-[#222222] bg-[#141414]">
-                  <Zap className="w-4 h-4 text-[#33A8DB]" />
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="px-6 py-4 border-b flex items-center justify-between shrink-0"
+            >
+              <div className="flex items-center gap-3.5">
+                <div 
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                  className="w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 shadow-xs"
+                >
+                  {getCategoryIcon(selectedCapability.category)}
                 </div>
-                <div>
-                  <h3 className="text-sm font-normal font-heading text-[#DDE2E8]">
-                    {selectedCapability.name}
-                  </h3>
-                  <p className="text-[11px] font-mono text-[#808D9E]">
-                    {selectedCapability.serviceName} • {selectedCapability.categoryLabel}
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-semibold tracking-tight" style={{ color: colors.textPrimary }}>
+                      {selectedCapability.name}
+                    </h3>
+                    <span 
+                      style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+                      className="text-[11px] font-sans px-2.5 py-0.5 rounded-md border font-medium"
+                    >
+                      {selectedCapability.categoryLabel}
+                    </span>
+                  </div>
+                  <p className="text-xs" style={{ color: colors.textMuted }}>
+                    {selectedCapability.serviceName}
                   </p>
                 </div>
               </div>
 
-              <button
-                onClick={() => setIsSandboxModalOpen(false)}
-                className="w-7 h-7 rounded-lg border border-[#222222] flex items-center justify-center text-[#808D9E] hover:text-[#DDE2E8] cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2.5">
+                <div 
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textMuted }}
+                  className="hidden sm:flex items-center gap-1.5 text-[11px] font-sans px-2.5 py-1 rounded-lg border font-medium"
+                >
+                  <Clock className="w-3 h-3 text-emerald-400" />
+                  <span>{selectedCapability.executionTime}</span>
+                </div>
+                <button
+                  onClick={() => setIsSandboxModalOpen(false)}
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textMuted }}
+                  className="w-8 h-8 rounded-lg border flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                  title="Close modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Scrollable Content */}
-            <div className="p-6 overflow-y-auto space-y-5 text-xs font-mono">
+            <div className="p-6 overflow-y-auto space-y-5 text-xs font-sans">
               
-              {/* Service Description */}
+              {/* What it does */}
               <div className="space-y-1.5">
-                <span className="text-[10px] uppercase text-[#33A8DB] tracking-wider">What it does:</span>
-                <p className="text-[#DDE2E8] leading-relaxed font-sans text-xs">
+                <div className="text-xs font-semibold" style={{ color: colors.textCyan }}>
+                  What it does
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: colors.textPrimary }}>
                   {selectedCapability.whatItDoes}
                 </p>
               </div>
 
-              {/* Provide & Receive Spec Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg border border-[#222222] bg-[#181818] space-y-1.5">
-                  <span className="text-[10px] text-[#33A8DB] uppercase">You Provide:</span>
-                  <ul className="space-y-1 text-[11px] text-[#808D9E]">
+              {/* Provide & Receive Specs Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* You Provide */}
+                <div 
+                  style={{ backgroundColor: colors.bgMain, borderColor: colors.border }}
+                  className="p-4 rounded-xl border space-y-2.5"
+                >
+                  <div className="text-xs font-semibold flex items-center gap-1.5" style={{ color: colors.textCyan }}>
+                    <span>You provide</span>
+                  </div>
+                  <ul className="space-y-1.5 text-xs" style={{ color: colors.textMuted }}>
                     {selectedCapability.youProvide.map((item, i) => (
-                      <li key={i} className="flex items-center gap-1.5">
-                        <Check className="w-3 h-3 text-[#2FB885] shrink-0" />
-                        <span>{item}</span>
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5 shrink-0" />
+                        <span className="leading-snug">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="p-3 rounded-lg border border-[#222222] bg-[#181818] space-y-1.5">
-                  <span className="text-[10px] text-[#2FB885] uppercase">You Receive:</span>
-                  <ul className="space-y-1 text-[11px] text-[#808D9E]">
+                {/* You Receive */}
+                <div 
+                  style={{ backgroundColor: colors.bgMain, borderColor: colors.border }}
+                  className="p-4 rounded-xl border space-y-2.5"
+                >
+                  <div className="text-xs font-semibold flex items-center gap-1.5" style={{ color: colors.textEmerald }}>
+                    <span>You receive</span>
+                  </div>
+                  <ul className="space-y-1.5 text-xs" style={{ color: colors.textMuted }}>
                     {selectedCapability.youReceive.map((item, i) => (
-                      <li key={i} className="flex items-center gap-1.5">
-                        <Check className="w-3 h-3 text-[#2FB885] shrink-0" />
-                        <span>{item}</span>
+                      <li key={i} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                        <span className="leading-snug">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -1708,44 +1775,64 @@ export default function QuantumMarketplacePage() {
               </div>
 
               {/* Composable Workflow DAG Node Chain */}
-              <div className="space-y-1.5 pt-2 border-t border-[#222222]">
-                <span className="text-[10px] uppercase text-[#DEAA21] tracking-wider">
-                  Composable Workflow Connection:
-                </span>
-                <div className="flex items-center flex-wrap gap-1 pt-1">
-                  {selectedCapability.workflowChain.map((node, i) => (
-                    <React.Fragment key={i}>
-                      <span className={`px-2 py-0.5 rounded text-[10px] border ${node === selectedCapability.name ? 'border-[#33A8DB] bg-[#33A8DB]/10 text-[#33A8DB]' : 'border-[#222222] bg-[#181818] text-[#808D9E]'}`}>
-                        {node}
-                      </span>
-                      {i < selectedCapability.workflowChain.length - 1 && (
-                        <ChevronRight className="w-3 h-3 text-[#808D9E]" />
-                      )}
-                    </React.Fragment>
-                  ))}
+              <div className="space-y-2 pt-2 border-t" style={{ borderColor: colors.border }}>
+                <div className="text-xs font-semibold" style={{ color: colors.textAmber }}>
+                  Composable workflow pipeline
+                </div>
+                <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
+                  {selectedCapability.workflowChain.map((node, i) => {
+                    const isCurrent = node === selectedCapability.name;
+                    return (
+                      <React.Fragment key={i}>
+                        <span 
+                          style={{
+                            backgroundColor: isCurrent ? 'rgba(51, 168, 219, 0.15)' : colors.bgPill,
+                            borderColor: isCurrent ? colors.textCyan : colors.border,
+                            color: isCurrent ? colors.textCyan : colors.textMuted
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] border font-sans font-medium transition-colors ${isCurrent ? 'ring-1 ring-sky-400/50' : ''}`}
+                        >
+                          {node}
+                        </span>
+                        {i < selectedCapability.workflowChain.length - 1 && (
+                          <ChevronRight className="w-3.5 h-3.5" style={{ color: colors.textMuted }} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Live Interactive Sandbox Execution Input */}
-              <div className="space-y-2 pt-2 border-t border-[#222222]">
+              <div className="space-y-2 pt-2 border-t" style={{ borderColor: colors.border }}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase text-[#33A8DB]">Live Sandbox Input:</span>
-                  <span className="text-[10px] text-[#808D9E]">API Gateway: 8002</span>
+                  <span className="text-xs font-semibold" style={{ color: colors.textCyan }}>
+                    Live sandbox input
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded border" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textMuted }}>
+                    API Gateway: 8002
+                  </span>
                 </div>
                 <textarea
                   rows={3}
                   value={sandboxInput}
                   onChange={(e) => setSandboxInput(e.target.value)}
-                  className="w-full p-3 rounded-lg border border-[#222222] bg-[#181818] text-xs font-mono text-[#DDE2E8] outline-hidden focus:border-[#33A8DB] resize-none"
+                  style={{ backgroundColor: colors.bgMain, borderColor: colors.border, color: colors.textPrimary }}
+                  className="w-full p-3 rounded-xl border text-xs font-mono outline-hidden focus:border-sky-400 resize-none transition-colors"
                   placeholder="Enter problem or dataset parameters..."
                 />
               </div>
 
               {/* Output Preview */}
               {sandboxOutput && (
-                <div className="space-y-1.5 pt-2 border-t border-[#222222]">
-                  <span className="text-[10px] uppercase text-[#2FB885]">Service Output Result:</span>
-                  <pre className="p-3 rounded-lg border border-[#222222] bg-[#181818] text-xs font-mono text-[#DDE2E8] whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+                <div className="space-y-2 pt-2 border-t" style={{ borderColor: colors.border }}>
+                  <span className="text-xs font-semibold" style={{ color: colors.textEmerald }}>
+                    Execution output
+                  </span>
+                  <pre 
+                    style={{ backgroundColor: colors.bgMain, borderColor: colors.border, color: colors.textPrimary }}
+                    className="p-3.5 rounded-xl border text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed shadow-inner"
+                  >
                     {sandboxOutput}
                   </pre>
                 </div>
@@ -1754,38 +1841,50 @@ export default function QuantumMarketplacePage() {
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="px-6 py-3.5 border-t border-[#222222] bg-[#181818] flex items-center justify-between shrink-0">
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="px-6 py-4 border-t flex items-center justify-between shrink-0"
+            >
               <button
                 onClick={handleOpenIDE}
-                className="px-3.5 py-1.5 rounded-lg border border-[#222222] text-[#808D9E] hover:text-[#DDE2E8] text-xs font-mono flex items-center gap-1 cursor-pointer"
+                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
+                className="px-3.5 py-2 rounded-xl border hover:opacity-80 transition-opacity text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <span>Open in IDE</span>
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-3.5 h-3.5" />
               </button>
 
-              <button
-                onClick={handleRunSandbox}
-                disabled={isExecutingSandbox}
-                className="px-4 py-1.5 rounded-lg border border-[#33A8DB] bg-[#33A8DB] text-[#0D0D0D] text-xs font-mono hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer font-medium disabled:opacity-50"
-              >
-                {isExecutingSandbox ? (
-                  <>
-                    <Zap className="w-3.5 h-3.5 animate-spin" />
-                    <span>Executing Service...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5" />
-                    <span>Run Service Now</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={() => setIsSandboxModalOpen(false)}
+                  style={{ backgroundColor: 'transparent', borderColor: colors.border, color: colors.textMuted }}
+                  className="px-3.5 py-2 rounded-xl border hover:opacity-80 transition-opacity text-xs font-sans font-medium cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleRunSandbox}
+                  disabled={isExecutingSandbox}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-400 hover:to-cyan-400 text-white text-xs font-sans font-medium shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isExecutingSandbox ? (
+                    <>
+                      <Zap className="w-3.5 h-3.5 animate-spin" />
+                      <span>Executing service...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-white" />
+                      <span>Run service now</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
           </div>
         </div>
       )}
-
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* AUTHENTICATION MODAL (LOGIN / REGISTER)                       */}
