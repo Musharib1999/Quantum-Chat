@@ -1664,14 +1664,14 @@ export default function QuantumMarketplacePage() {
       {/* INTERACTIVE CAPABILITY DETAIL & LIVE SANDBOX RUNNER MODAL     */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isSandboxModalOpen && selectedCapability && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
           <div 
             style={{ 
               backgroundColor: colors.bgCard, 
               borderColor: colors.border,
               color: colors.textPrimary 
             }}
-            className="w-full max-w-2xl rounded-2xl border shadow-2xl flex flex-col overflow-hidden max-h-[88vh] font-sans animate-in fade-in zoom-in-95 duration-150"
+            className="w-full max-w-2xl rounded-2xl border shadow-2xl flex flex-col overflow-hidden max-h-[85vh] h-auto my-auto font-sans animate-in fade-in zoom-in-95 duration-150"
           >
             {/* Modal Header */}
             <div 
@@ -1723,7 +1723,7 @@ export default function QuantumMarketplacePage() {
             </div>
 
             {/* Modal Scrollable Content */}
-            <div className="p-6 overflow-y-auto space-y-5 text-xs font-sans">
+            <div className="p-5 sm:p-6 flex-1 min-h-0 overflow-y-auto space-y-4 text-xs font-sans">
               
               {/* What it does */}
               <div className="space-y-1.5">
@@ -1831,7 +1831,7 @@ export default function QuantumMarketplacePage() {
                   </span>
                   <pre 
                     style={{ backgroundColor: colors.bgMain, borderColor: colors.border, color: colors.textPrimary }}
-                    className="p-3.5 rounded-xl border text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed shadow-inner"
+                    className="p-3.5 rounded-xl border text-xs font-mono whitespace-pre-wrap max-h-36 overflow-y-auto leading-relaxed shadow-inner"
                   >
                     {sandboxOutput}
                   </pre>
