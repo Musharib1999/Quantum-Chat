@@ -1664,19 +1664,21 @@ export default function QuantumMarketplacePage() {
       {/* INTERACTIVE CAPABILITY DETAIL & LIVE SANDBOX RUNNER MODAL     */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isSandboxModalOpen && selectedCapability && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5 overflow-hidden">
           <div 
             style={{ 
               backgroundColor: colors.bgCard, 
               borderColor: colors.border,
-              color: colors.textPrimary 
+              color: colors.textPrimary,
+              maxHeight: 'calc(100vh - 2.5rem)',
+              height: 'auto'
             }}
-            className="w-full max-w-2xl rounded-2xl border shadow-2xl flex flex-col overflow-hidden max-h-[85vh] h-auto my-auto font-sans animate-in fade-in zoom-in-95 duration-150"
+            className="w-full max-w-2xl rounded-2xl border shadow-2xl flex flex-col overflow-hidden font-sans relative"
           >
             {/* Modal Header */}
             <div 
               style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="px-6 py-4 border-b flex items-center justify-between shrink-0"
+              className="px-5 py-3.5 border-b flex items-center justify-between shrink-0"
             >
               <div className="flex items-center gap-3.5">
                 <div 
@@ -1723,7 +1725,7 @@ export default function QuantumMarketplacePage() {
             </div>
 
             {/* Modal Scrollable Content */}
-            <div className="p-5 sm:p-6 flex-1 min-h-0 overflow-y-auto space-y-4 text-xs font-sans">
+            <div className="p-4 sm:p-5 flex-1 min-h-0 overflow-y-auto space-y-3.5 text-xs font-sans overscroll-contain">
               
               {/* What it does */}
               <div className="space-y-1.5">
@@ -1831,7 +1833,7 @@ export default function QuantumMarketplacePage() {
                   </span>
                   <pre 
                     style={{ backgroundColor: colors.bgMain, borderColor: colors.border, color: colors.textPrimary }}
-                    className="p-3.5 rounded-xl border text-xs font-mono whitespace-pre-wrap max-h-36 overflow-y-auto leading-relaxed shadow-inner"
+                    className="p-3 rounded-xl border text-xs font-mono whitespace-pre-wrap max-h-28 overflow-y-auto leading-relaxed shadow-inner"
                   >
                     {sandboxOutput}
                   </pre>
@@ -1843,7 +1845,7 @@ export default function QuantumMarketplacePage() {
             {/* Modal Footer Actions */}
             <div 
               style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="px-6 py-4 border-t flex items-center justify-between shrink-0"
+              className="px-5 py-3.5 border-t flex items-center justify-between shrink-0 mt-auto"
             >
               <button
                 onClick={handleOpenIDE}
