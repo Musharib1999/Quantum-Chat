@@ -1,36 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check } from 'lucide-react';
 
-// Hydration-safe native KaTeX Component
-function KaTeXMath({ math, displayMode = false }: { math: string; displayMode?: boolean }) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (isMounted && typeof window !== 'undefined') {
-    const win = window as any;
-    if (win.katex) {
-      try {
-        const rendered = win.katex.renderToString(math.trim(), {
-          displayMode,
-          throwOnError: false
-        });
-        return (
-          <span 
-            dangerouslySetInnerHTML={{ __html: rendered }} 
-            className={displayMode ? "block my-2 overflow-x-auto text-center p-2 rounded-lg bg-zinc-950/60 border border-zinc-800/60" : "inline-block align-middle px-0.5"} 
-            suppressHydrationWarning 
-          />
-        );
-      } catch (err) {
-        console.error("KaTeX render error:", err);
-      }
+// Synchronous, zero-flicker native KaTeX Component
+function KaTeXMathInner({ math, displayMode = false }: { math: string; displayMode?: boolean }) {
+  if (typeof window !== 'undefined' && (window as any).katex) {
+    try {
+      const rendered = (window as any).katex.renderToString(math.trim(), {
+        displayMode,
+        throwOnError: false
+      });
+      return (
+        <span 
+          dangerouslySetInnerHTML={{ __html: rendered }} 
+          className={displayMode ? "block my-2 overflow-x-auto text-center p-2 rounded-lg bg-zinc-950/60 border border-zinc-800/60" : "inline-block align-middle px-0.5"} 
+          suppressHydrationWarning 
+        />
+      );
+    } catch (err) {
+      console.error("KaTeX render error:", err);
     }
   }
 
@@ -43,6 +34,8 @@ function KaTeXMath({ math, displayMode = false }: { math: string; displayMode?: 
     </span>
   );
 }
+
+const KaTeXMath = React.memo(KaTeXMathInner);
 
 // Splits string by LaTeX patterns ($$...$$ or $...$ or \[...\] or \(...\))
 function parseMathString(str: string): React.ReactNode[] {
@@ -133,11 +126,11 @@ interface IdeMarkdownRendererProps {
   isDark?: boolean;
 }
 
-export default function IdeMarkdownRenderer({ content, isDark = true }: IdeMarkdownRendererProps) {
+function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendererProps) {
   if (!content) return null;
 
   return (
-    <div className="text-xs leading-relaxed font-sans space-y-2">
+    <div className="text-xs leading-relaxed font-sans space-y-2 select-text">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -221,3 +214,9 @@ export default function IdeMarkdownRenderer({ content, isDark = true }: IdeMarkd
     </div>
   );
 }
+
+const IdeMarkdownRenderer = React.memo(IdeMarkdownRendererInner, (prev, next) => {
+  return prev.content === next.content && prev.isDark === next.isDark;
+});
+
+export default IdeMarkdownRenderer;

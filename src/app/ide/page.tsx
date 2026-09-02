@@ -99,6 +99,116 @@ interface ChatMessage {
   };
 }
 
+// ── 🚀 ISOLATED COPILOT CHAT INPUT COMPONENT (ZERO ROOT RE-RENDERS ON KEYSTROKES) ──
+interface CopilotChatInputProps {
+  onSend: (text: string) => void;
+  isThinking: boolean;
+  colors: any;
+  isDark: boolean;
+  activeFile: string;
+}
+
+const CopilotChatInput = React.memo(function CopilotChatInput({
+  onSend,
+  isThinking,
+  colors,
+  isDark,
+  activeFile
+}: CopilotChatInputProps) {
+  const [input, setInput] = useState('');
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (input.trim() && !isThinking) {
+        onSend(input.trim());
+        setInput('');
+      }
+    }
+  };
+
+  const handleSendClick = () => {
+    if (input.trim() && !isThinking) {
+      onSend(input.trim());
+      setInput('');
+    }
+  };
+
+  return (
+    <div 
+      style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+      className="p-3 border-t"
+    >
+      <div 
+        style={{ backgroundColor: colors.bgInput, borderColor: colors.border }}
+        className={`flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs min-h-[82px] space-y-2 ${
+          isDark ? 'focus-within:border-[#444444]' : 'focus-within:border-[#CBD5E1]'
+        }`}
+      >
+        <textarea 
+          rows={2}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask a quantum question about your code or concepts (e.g. explain main.py)..."
+          style={{ color: colors.textPrimary, outline: 'none', border: 'none', boxShadow: 'none' }}
+          className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
+        />
+        
+        <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
+          {/* Pedagogical Q&A Quick Question Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto text-[10px] font-sans font-normal">
+            <button 
+              onClick={() => onSend(`Explain the physics and operations in ${activeFile}`)}
+              style={{ 
+                backgroundColor: colors.bgPill, 
+                borderColor: colors.border,
+                color: colors.textCyan 
+              }}
+              className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-sky-400"
+            >
+              <Sparkles className="w-2.5 h-2.5" style={{ color: colors.textCyan }} /> Explain active code
+            </button>
+            <button 
+              onClick={() => onSend('What is quantum entanglement and how do gates create it?')}
+              style={{ 
+                backgroundColor: colors.bgPill, 
+                borderColor: colors.border,
+                color: colors.textAmber 
+              }}
+              className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-amber-400"
+            >
+              <HelpCircle className="w-2.5 h-2.5" style={{ color: colors.textAmber }} /> Entanglement
+            </button>
+            <button 
+              onClick={() => onSend('Show the Dirac bra-ket statevector representation of my circuit')}
+              style={{ 
+                backgroundColor: colors.bgPill, 
+                borderColor: colors.border,
+                color: colors.textEmerald 
+              }}
+              className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-emerald-400"
+            >
+              <Activity className="w-2.5 h-2.5" style={{ color: colors.textEmerald }} /> Dirac Notation
+            </button>
+          </div>
+
+          {/* Right: Send Button */}
+          <button 
+            onClick={handleSendClick}
+            disabled={isThinking || !input.trim()}
+            style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
+            className="px-3 py-1 rounded-md flex items-center gap-1.5 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs cursor-pointer border text-xs font-normal shrink-0"
+          >
+            <span>Ask</span>
+            <Send className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function QuantumIDE() {
   const { logout } = useAuth();
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -113,7 +223,6 @@ export default function QuantumIDE() {
   const [targetBackend, setTargetBackend] = useState('aer_simulator');
   const [optimizationLevel, setOptimizationLevel] = useState<number>(2);
   const [shots, setShots] = useState<number>(1024);
-  const [copilotInput, setCopilotInput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isCopilotThinking, setIsCopilotThinking] = useState(false);
   const [agentPhase, setAgentPhase] = useState<AgentPhase>('idle');
@@ -1139,8 +1248,8 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
   // ─────────────────────────────────────────────────────────────
   // 🧠 LIVE CONTEXT-AWARE AGENT REASONING + LIVE CODE & TELEMETRY MUTATION
   // ─────────────────────────────────────────────────────────────
-  const handleSendMessage = async (textToSend?: string) => {
-    const text = (textToSend || copilotInput).trim();
+  const handleSendMessage = async (textToSend: string) => {
+    const text = (textToSend || '').trim();
     if (!text || isCopilotThinking) return;
 
     const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text };
@@ -2188,83 +2297,14 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
               )}
             </div>
 
-            {/* Copilot Input Box & Integrated Slash Shortcuts */}
-            <div 
-              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="p-3 border-t"
-            >
-              {/* Input Form with Integrated Slash Actions in Footer */}
-              <div 
-                style={{ backgroundColor: colors.bgInput, borderColor: colors.border }}
-                className={`flex flex-col justify-between border rounded-xl p-2.5 transition-all shadow-2xs min-h-[82px] space-y-2 ${
-                  isDark ? 'focus-within:border-[#444444]' : 'focus-within:border-[#CBD5E1]'
-                }`}
-              >
-                <textarea 
-                  rows={2}
-                  value={copilotInput}
-                  onChange={(e) => setCopilotInput(e.target.value)}
-                  onKeyDown={(e) => { 
-                    if (e.key === 'Enter' && !e.shiftKey) { 
-                      e.preventDefault(); 
-                      handleSendMessage(); 
-                    } 
-                  }}
-                  placeholder="Ask a quantum question about your code or concepts (e.g. explain main.py)..."
-                  style={{ color: colors.textPrimary, outline: 'none', border: 'none', boxShadow: 'none' }}
-                  className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
-                />
-                
-                <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
-                  {/* Left: Quick Slash Action Chips */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto text-[10px] font-mono font-normal">
-                    <button 
-                      onClick={() => handleSendMessage('/execute@program')}
-                      style={{ 
-                        backgroundColor: colors.bgPill, 
-                        borderColor: colors.border,
-                        color: colors.textAmber 
-                      }}
-                      className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-amber-400"
-                    >
-                      <Play className="w-2.5 h-2.5 fill-current" style={{ color: colors.textAmber }} /> /execute@program
-                    </button>
-                    <button 
-                      onClick={() => handleSendMessage('/simulate@circuit')}
-                      style={{ 
-                        backgroundColor: colors.bgPill, 
-                        borderColor: colors.border,
-                        color: colors.textCyan 
-                      }}
-                      className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-sky-400"
-                    >
-                      <Zap className="w-2.5 h-2.5" style={{ color: colors.textCyan }} /> /simulate@circuit
-                    </button>
-                    <button 
-                      onClick={() => handleSendMessage('/transpile@level2')}
-                      style={{ 
-                        backgroundColor: colors.bgPill, 
-                        borderColor: colors.border,
-                        color: colors.textEmerald 
-                      }}
-                      className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 hover:border-emerald-400"
-                    >
-                      /transpile@level2
-                    </button>
-                  </div>
-
-                  {/* Right: Send Button */}
-                  <button 
-                    onClick={() => handleSendMessage()}
-                    style={{ backgroundColor: colors.bgPill, color: colors.textCyan, borderColor: colors.border }}
-                    className="px-3 py-1 rounded-md flex items-center gap-1.5 transition-opacity hover:opacity-80 shadow-2xs cursor-pointer border text-xs font-normal shrink-0"
-                  >
-                    <span>Send</span>
-                    <Send className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            {/* Copilot Input Box (Isolated Component: Zero Root Re-renders on Keystrokes) */}
+            <CopilotChatInput 
+              onSend={handleSendMessage}
+              isThinking={isCopilotThinking}
+              colors={colors}
+              isDark={isDark}
+              activeFile={activeFile}
+            />
           </aside>
         ) : null}
 
