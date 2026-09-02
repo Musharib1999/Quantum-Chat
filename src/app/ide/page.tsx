@@ -139,7 +139,7 @@ export default function QuantumIDE() {
 
   // Section 1 (Left Sidebar) state: Open/Closed & Width (20% default)
   const [isLeftOpen, setIsLeftOpen] = useState(true);
-  const [leftWidth, setLeftWidth] = useState(140);
+  const [leftWidth, setLeftWidth] = useState(68);
   const isLeftDragging = useRef(false);
 
   // Section 3 (Right Sidebar) state: Open/Closed & Width (Same as Section 1: 288px default)
@@ -573,7 +573,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       if (!isLeftDragging.current) return;
-      const newWidth = Math.max(180, Math.min(480, moveEvent.clientX));
+      const newWidth = Math.max(52, Math.min(360, moveEvent.clientX));
       setLeftWidth(newWidth);
     };
 
@@ -616,9 +616,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const w = window.innerWidth;
-      // Section 1 (Left): Exactly 10% of screen size (e.g. 140px on 1440px)
-      const tenPercentWidth = Math.max(100, Math.min(180, Math.round(w * 0.10)));
-      setLeftWidth(tenPercentWidth);
+      // Section 1 (Left): Exactly 5% of screen size (e.g. ~64px-72px)
+      const fivePercentWidth = Math.max(56, Math.min(80, Math.round(w * 0.05)));
+      setLeftWidth(fivePercentWidth);
       // Section 3 (Right Copilot): Open and active with clean balanced width (~22%)
       setIsRightOpen(true);
       setRightWidth(Math.max(260, Math.min(360, Math.round(w * 0.22))));
@@ -1304,7 +1304,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       <div className="flex-1 flex min-h-0 overflow-hidden relative">
         
         {/* ─────────────────────────────────────────────────────────── */}
-        {/* SECTION 1 (LEFT): 10% ICONIC ACTIVITY DOCK                   */}
+        {/* SECTION 1 (LEFT): 5% COMPACT ACTIVITY DOCK                    */}
         {/* ─────────────────────────────────────────────────────────── */}
         {isLeftOpen ? (
           <aside 
@@ -1313,17 +1313,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               backgroundColor: colors.bgSidebar, 
               borderColor: colors.border 
             }}
-            className="border-r flex flex-col shrink-0 relative select-none py-3 px-2 justify-between"
+            className="border-r flex flex-col shrink-0 relative select-none py-3 px-1.5 justify-between overflow-hidden"
           >
-            {/* ── TOP ICON ACTIONS: NEW PROJECT & MAIN.PY ── */}
-            <div className="space-y-2.5">
-              {/* Project Badge Header */}
-              <div className="flex items-center justify-center px-1 pb-2 border-b text-center" style={{ borderColor: colors.border }}>
-                <span className="text-[10px] font-mono truncate font-semibold tracking-wider" style={{ color: colors.textCyan }}>
-                  {projectName.toUpperCase()}
-                </span>
-              </div>
-
+            {/* ── TOP ACTIONS: NEW PROJECT & MAIN.PY ── */}
+            <div className="space-y-2 flex flex-col items-center w-full">
               {/* 1. New Project Icon Button */}
               <button
                 onClick={() => setIsNewProjectOpen(true)}
@@ -1332,19 +1325,20 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   borderColor: colors.border,
                   color: colors.textAmber
                 }}
-                className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all cursor-pointer hover:border-amber-400/80 hover:scale-[1.02] shadow-xs group"
+                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-amber-400/80 hover:scale-[1.04] shadow-xs group"
                 title="Create New Quantum Project"
               >
-                <FolderPlus className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-1" />
-                <span className="text-[11px] font-medium font-sans text-center">New project</span>
+                <FolderPlus className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-0.5" />
+                <span className="text-[9px] font-medium font-sans text-center leading-tight">New</span>
               </button>
 
               {/* 2. main.py (and Python scripts) Icon Button */}
-              <div className="space-y-1.5 pt-1">
+              <div className="space-y-1.5 w-full pt-1">
                 {Object.keys(files || {})
                   .filter(f => f.endsWith('.py'))
                   .map(fName => {
                     const isActive = activeFile === fName;
+                    const shortName = fName.replace('.py', '');
                     return (
                       <button
                         key={fName}
@@ -1354,19 +1348,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                           borderColor: isActive ? colors.border : 'transparent',
                           color: isActive ? colors.textPrimary : colors.textMuted
                         }}
-                        className={`w-full flex flex-col items-center justify-center p-2 rounded-xl border transition-all cursor-pointer hover:border-sky-400/60 ${isActive ? 'ring-1 ring-sky-400/50 shadow-xs' : ''}`}
+                        className={`w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-sky-400/60 ${isActive ? 'ring-1 ring-sky-400/50 shadow-xs' : ''}`}
                         title={`Open ${fName}`}
                       >
-                        <FileCode className={`w-5 h-5 mb-1 transition-colors ${isActive ? 'text-sky-400' : 'text-zinc-400'}`} />
-                        <span className="text-[11px] font-mono truncate max-w-full px-1">{fName}</span>
+                        <FileCode className={`w-5 h-5 mb-0.5 transition-colors ${isActive ? 'text-sky-400' : 'text-zinc-400'}`} />
+                        <span className="text-[9px] font-mono truncate max-w-full px-0.5 text-center leading-tight">
+                          {shortName === 'main' ? 'main.py' : fName}
+                        </span>
                       </button>
                     );
                   })}
               </div>
             </div>
 
-            {/* ── BOTTOM ICON ACTIONS: SETTING & LOGOUT ── */}
-            <div className="space-y-2 pt-3 border-t" style={{ borderColor: colors.border }}>
+            {/* ── BOTTOM ACTIONS: SETTING & LOGOUT ── */}
+            <div className="space-y-2 pt-2 border-t w-full flex flex-col items-center" style={{ borderColor: colors.border }}>
               {/* 3. Setting Icon Button */}
               <button
                 onClick={() => setIsSettingsOpen(true)}
@@ -1375,11 +1371,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   borderColor: colors.border,
                   color: colors.textPrimary 
                 }}
-                className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 hover:scale-[1.02] shadow-xs group"
+                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 hover:scale-[1.04] shadow-xs group"
                 title="IDE Settings"
               >
-                <Settings className="w-5 h-5 text-zinc-400 group-hover:rotate-45 transition-transform mb-1" />
-                <span className="text-[11px] font-sans">Setting</span>
+                <Settings className="w-5 h-5 text-zinc-400 group-hover:rotate-45 transition-transform mb-0.5" />
+                <span className="text-[9px] font-sans leading-tight">Settings</span>
               </button>
 
               {/* 4. Logout Icon Button */}
@@ -1395,11 +1391,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   borderColor: 'rgba(244, 63, 94, 0.25)',
                   color: '#fb7185' 
                 }}
-                className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all cursor-pointer hover:bg-rose-500/20 hover:border-rose-500/50 hover:scale-[1.02] shadow-xs group"
+                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:bg-rose-500/20 hover:border-rose-500/50 hover:scale-[1.04] shadow-xs group"
                 title="Logout of Quantum Guru"
               >
-                <LogOut className="w-5 h-5 text-rose-400 group-hover:-translate-x-0.5 transition-transform mb-1" />
-                <span className="text-[11px] font-sans">Logout</span>
+                <LogOut className="w-5 h-5 text-rose-400 group-hover:-translate-x-0.5 transition-transform mb-0.5" />
+                <span className="text-[9px] font-sans leading-tight">Logout</span>
               </button>
             </div>
           </aside>
