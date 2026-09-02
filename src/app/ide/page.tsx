@@ -1439,7 +1439,7 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
             }}
             className="border-r flex flex-col shrink-0 relative select-none py-3 px-1.5 justify-between overflow-hidden"
           >
-            {/* ── TOP ACTIONS: NEW PROJECT & MAIN.PY ── */}
+            {/* ── TOP ACTIONS: NEW PROJECT & MAIN.PY (UNIFIED MUTED ZINC THEME) ── */}
             <div className="space-y-2 flex flex-col items-center w-full">
               {/* 1. New Project Icon Button */}
               <button
@@ -1447,13 +1447,13 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                 style={{ 
                   backgroundColor: colors.bgCard,
                   borderColor: colors.border,
-                  color: colors.textAmber
+                  color: colors.textPrimary
                 }}
-                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-amber-400/80 hover:scale-[1.04] shadow-xs group"
+                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 hover:scale-[1.04] shadow-xs group"
                 title="Create New Quantum Project"
               >
-                <FolderPlus className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform mb-0.5" />
-                <span className="text-[9px] font-medium font-sans text-center leading-tight">New</span>
+                <FolderPlus className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 group-hover:scale-110 transition-transform mb-0.5" />
+                <span className="text-[9px] font-medium font-sans text-center leading-tight text-zinc-400 group-hover:text-zinc-200">New</span>
               </button>
 
               {/* 2. main.py (and Python scripts) Icon Button */}
@@ -1470,13 +1470,13 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                         style={{
                           backgroundColor: isActive ? colors.bgPill : 'transparent',
                           borderColor: isActive ? colors.border : 'transparent',
-                          color: isActive ? colors.textPrimary : colors.textMuted
+                          color: colors.textPrimary
                         }}
-                        className={`w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-sky-400/60 ${isActive ? 'ring-1 ring-sky-400/50 shadow-xs' : ''}`}
+                        className={`w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 group ${isActive ? 'ring-1 ring-zinc-500/70 shadow-xs' : ''}`}
                         title={`Open ${fName}`}
                       >
-                        <FileCode className={`w-5 h-5 mb-0.5 transition-colors ${isActive ? 'text-sky-400' : 'text-zinc-400'}`} />
-                        <span className="text-[9px] font-mono truncate max-w-full px-0.5 text-center leading-tight">
+                        <FileCode className={`w-5 h-5 mb-0.5 transition-colors ${isActive ? 'text-zinc-300' : 'text-zinc-400'} group-hover:text-zinc-200`} />
+                        <span className={`text-[9px] font-mono truncate max-w-full px-0.5 text-center leading-tight transition-colors ${isActive ? 'text-zinc-200' : 'text-zinc-400'} group-hover:text-zinc-200`}>
                           {shortName === 'main' ? 'main.py' : fName}
                         </span>
                       </button>
@@ -1485,7 +1485,7 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
               </div>
             </div>
 
-            {/* ── BOTTOM ACTIONS: SETTING & LOGOUT ── */}
+            {/* ── BOTTOM ACTIONS: SETTING & LOGOUT (UNIFIED MUTED ZINC THEME) ── */}
             <div className="space-y-2 pt-2 border-t w-full flex flex-col items-center" style={{ borderColor: colors.border }}>
               {/* 3. Setting Icon Button */}
               <button
@@ -1498,8 +1498,8 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                 className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 hover:scale-[1.04] shadow-xs group"
                 title="IDE Settings"
               >
-                <Settings className="w-5 h-5 text-zinc-400 group-hover:rotate-45 transition-transform mb-0.5" />
-                <span className="text-[9px] font-sans leading-tight">Settings</span>
+                <Settings className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 group-hover:rotate-45 transition-transform mb-0.5" />
+                <span className="text-[9px] font-sans leading-tight text-zinc-400 group-hover:text-zinc-200">Settings</span>
               </button>
 
               {/* 4. Logout Icon Button */}
@@ -1511,15 +1511,15 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                   window.location.href = '/login';
                 }}
                 style={{ 
-                  backgroundColor: 'rgba(244, 63, 94, 0.08)',
-                  borderColor: 'rgba(244, 63, 94, 0.25)',
-                  color: '#fb7185' 
+                  backgroundColor: colors.bgCard,
+                  borderColor: colors.border,
+                  color: colors.textPrimary 
                 }}
-                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:bg-rose-500/20 hover:border-rose-500/50 hover:scale-[1.04] shadow-xs group"
+                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 hover:scale-[1.04] shadow-xs group"
                 title="Logout of Quantum Guru"
               >
-                <LogOut className="w-5 h-5 text-rose-400 group-hover:-translate-x-0.5 transition-transform mb-0.5" />
-                <span className="text-[9px] font-sans leading-tight">Logout</span>
+                <LogOut className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 group-hover:-translate-x-0.5 transition-transform mb-0.5" />
+                <span className="text-[9px] font-sans leading-tight text-zinc-400 group-hover:text-zinc-200">Logout</span>
               </button>
             </div>
           </aside>
