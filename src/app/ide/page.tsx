@@ -1970,9 +1970,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                         {/* Timeline Steps Header */}
                         <div className="flex items-center gap-2.5 text-[10px] font-mono text-zinc-500 select-none pb-0.5">
                           <div className="w-12 text-center shrink-0">Wire</div>
-                          <div className="flex-1 grid grid-cols-10 gap-2 text-center">
+                          <div 
+                            style={{ display: 'grid', gridTemplateColumns: 'repeat(10, minmax(0, 1fr))', gap: '8px' }}
+                            className="flex-1 text-center"
+                          >
                             {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(s => (
-                              <div key={s} className="opacity-70">t{s}</div>
+                              <div key={s} className="text-zinc-400 font-medium">t{s}</div>
                             ))}
                           </div>
                         </div>
@@ -1996,7 +1999,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                               />
 
                               {/* 10 Time Step Slots on this Qubit */}
-                              <div className="grid grid-cols-10 gap-2 w-full relative z-10">
+                              <div 
+                                style={{ display: 'grid', gridTemplateColumns: 'repeat(10, minmax(0, 1fr))', gap: '8px' }}
+                                className="w-full relative z-10"
+                              >
                                 {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(stepIdx => {
                                   const gateOnSlot = circuitGates.find(g => g.qubit === qIdx && g.step === stepIdx);
                                   return (
