@@ -1254,7 +1254,6 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
 
     const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text };
     setChatMessages(prev => [...prev, userMsg]);
-    setCopilotInput('');
     setIsCopilotThinking(true);
 
     if (text === '/execute@program' || text.toLowerCase().includes('run program') || text.toLowerCase().includes('/run')) {
