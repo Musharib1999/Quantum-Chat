@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import IdeMarkdownRenderer from '@/components/IdeMarkdownRenderer';
 import { 
   Play, 
   Zap, 
@@ -1996,8 +1997,8 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                         </div>
                       )}
 
-                      <div className="leading-relaxed font-normal whitespace-pre-wrap font-sans" style={{ color: colors.textPrimary }}>
-                        {msg.text}
+                      <div className="leading-relaxed font-normal font-sans overflow-hidden" style={{ color: colors.textPrimary }}>
+                        <IdeMarkdownRenderer content={msg.text} isDark={isDark} />
                       </div>
 
                       {/* Interactive Domain Clarification Question Card */}
