@@ -460,14 +460,14 @@ INSTRUCTIONS:
 1. Provide a direct, pedagogical, and mathematically rigorous response to the user's inquiry.
 2. Directly reference the user's active code in `{active_file}` if relevant to what they are asking.
 3. Formulate all quantum mathematics using clean KaTeX LaTeX syntax (e.g. $|\\psi\\rangle = \\alpha |0\\rangle + \\beta |1\\rangle$, unitary matrices, inner products, tensor products, Dirac bra-ket notation).
-4. If the user asks how to improve, extend, or fix their circuit, explain the physics and provide reference markdown code snippets with explanations for them to study.
-5. Your role is purely consultative Q&A. Answer engagingly with structured markdown headers.'''
+4. If the user asks how to improve, extend, or fix their circuit, explain the physics and provide brief reference markdown code snippets.
+5. STRICT TOKEN CAP: Keep your entire response under 300 tokens. Deliver dense, high-impact, concise scientific explanations without fluff or filler introductory text.'''
 
         try:
             qa_response = await call_groq(
-                system="You are an expert quantum computing professor, researcher, and pedagogical assistant. You help developers understand quantum mechanics, circuits, and algorithms with rigorous LaTeX math and clear pedagogical explanations.",
+                system="You are an expert quantum computing professor and researcher. You explain quantum mechanics, circuits, and algorithms with rigorous LaTeX math. You always deliver clear, high-density explanations strictly capped within 300 tokens.",
                 user=qa_prompt,
-                max_tokens=1500
+                max_tokens=300
             )
         except Exception as e:
             qa_response = f"### Quantum Computing Assistant\n\n**Question:** {user_message}\n\nIn your active file `{active_file}`, the quantum state is formulated as: $|\\psi\\rangle = \\alpha |0\\rangle + \\beta |1\\rangle$ normalized to $|\\alpha|^2 + |\\beta|^2 = 1$."
