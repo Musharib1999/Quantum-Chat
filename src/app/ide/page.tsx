@@ -740,6 +740,33 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   }, []);
 
+  // Helper to render gate symbols with official Quantum Measurement Gauge
+  const renderGateSlotContent = (gateName: string) => {
+    if (gateName === 'measure') {
+      return (
+        <svg 
+          className="w-4 h-4 text-cyan-300 transition-transform group-hover:scale-110" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2.2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          {/* Semicircular Gauge Arc */}
+          <path d="M4 16a8 8 0 0 1 16 0" />
+          {/* Dial Needle */}
+          <line x1="12" y1="16" x2="16" y2="9" />
+          {/* Pivot Dot */}
+          <circle cx="12" cy="16" r="1.5" fill="currentColor" />
+        </svg>
+      );
+    }
+    if (gateName === 'rz') return 'Rz';
+    if (gateName === 'cx') return 'CX';
+    return gateName.toUpperCase();
+  };
+
   // Create a new Python file in active project
   const handleCreateNewFile = () => {
     const pyFiles = Object.keys(projectFiles).filter(f => f.endsWith('.py'));
@@ -1930,19 +1957,30 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[11px] font-sans font-medium mr-1.5" style={{ color: colors.textMuted }}>Gate Palette:</span>
                         {[
-                          { id: 'h', label: 'H (Hadamard)', color: 'border-sky-500/50 bg-sky-500/15 text-sky-400' },
-                          { id: 'x', label: 'X (NOT)', color: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400' },
-                          { id: 'z', label: 'Z (Phase)', color: 'border-amber-500/50 bg-amber-500/15 text-amber-400' },
-                          { id: 'cx', label: 'CX (CNOT)', color: 'border-purple-500/50 bg-purple-500/15 text-purple-400' },
-                          { id: 'rz', label: 'Rz(θ)', color: 'border-pink-500/50 bg-pink-500/15 text-pink-400' },
-                          { id: 'measure', label: 'Measure', color: 'border-cyan-500/50 bg-cyan-500/15 text-cyan-400' }
+                          { id: 'h', label: 'H (Hadamard)', isMeasure: false, color: 'border-sky-500/50 bg-sky-500/15 text-sky-400' },
+                          { id: 'x', label: 'X (NOT)', isMeasure: false, color: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400' },
+                          { id: 'z', label: 'Z (Phase)', isMeasure: false, color: 'border-amber-500/50 bg-amber-500/15 text-amber-400' },
+                          { id: 'cx', label: 'CX (CNOT)', isMeasure: false, color: 'border-purple-500/50 bg-purple-500/15 text-purple-400' },
+                          { id: 'rz', label: 'Rz(θ)', isMeasure: false, color: 'border-pink-500/50 bg-pink-500/15 text-pink-400' },
+                          { id: 'measure', label: 'Measure', isMeasure: true, color: 'border-cyan-500/50 bg-cyan-500/15 text-cyan-400' }
                         ].map(g => (
                           <button
                             key={g.id}
                             onClick={() => setSelectedGateTool(g.id)}
-                            className={`px-2.5 py-0.5 rounded-lg border text-xs font-mono font-medium transition-all cursor-pointer ${selectedGateTool === g.id ? `${g.color} ring-1 ring-sky-400` : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200'}`}
+                            className={`px-2.5 py-0.5 rounded-lg border text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${selectedGateTool === g.id ? `${g.color} ring-1 ring-sky-400` : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200'}`}
                           >
-                            {g.label}
+                            {g.isMeasure ? (
+                              <>
+                                <svg className="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4 16a8 8 0 0 1 16 0" />
+                                  <line x1="12" y1="16" x2="16" y2="9" />
+                                  <circle cx="12" cy="16" r="1.5" fill="currentColor" />
+                                </svg>
+                                <span>Measure</span>
+                              </>
+                            ) : (
+                              g.label
+                            )}
                           </button>
                         ))}
                       </div>
@@ -2016,7 +2054,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                       className={`h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer hover:border-sky-400 shadow-xs ${gateOnSlot ? 'text-sky-300 ring-1 ring-sky-400/40 bg-sky-950/30' : 'text-zinc-600 hover:text-zinc-300'}`}
                                       title={gateOnSlot ? `Slot t${stepIdx}: Click to remove ${gateOnSlot.name.toUpperCase()}` : `Slot t${stepIdx}: Click to place ${selectedGateTool.toUpperCase()}`}
                                     >
-                                      {gateOnSlot ? gateOnSlot.name.toUpperCase() : '+'}
+                                      {gateOnSlot ? renderGateSlotContent(gateOnSlot.name) : '+'}
                                     </button>
                                   );
                                 })}
