@@ -202,6 +202,7 @@ def root():
     }
 
 
+@app.get("/health")
 @app.get("/v3/health")
 def health():
     return {
