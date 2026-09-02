@@ -36,7 +36,8 @@ import {
   CheckCircle2,
   HelpCircle,
   FolderPlus,
-  LogOut
+  LogOut,
+  Trash2
 } from 'lucide-react';
 
 type AgentPhase = 
@@ -126,10 +127,7 @@ export default function QuantumIDE() {
   // Phase 1: Collapsible Bottom Drawer & Interactive Circuit Canvas States
   const [isBottomOpen, setIsBottomOpen] = useState(true);
   const [bottomHeight, setBottomHeight] = useState(260);
-  const [terminalLogs, setTerminalLogs] = useState<string[]>([
-    "➜ Quantum Guru Environment Ready (Python 3.13, Qiskit 2.3, Aer 0.17, Dimod 0.12)",
-    "➜ Ready for simulator dispatch or interactive circuit synthesis."
-  ]);
+  const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const [simulationCounts, setSimulationCounts] = useState<Record<string, number> | null>({ '00': 512, '11': 512 });
   const [circuitAscii, setCircuitAscii] = useState<string>('');
   const [circuitGates, setCircuitGates] = useState<Array<{ name: string; qubit: number; step: number }>>([
@@ -854,8 +852,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     const currentCode = projectFiles[activeFile]?.content || '';
     setTerminalLogs(prev => [
       ...prev,
-      `➜ [Quantum Guru Runner] Dispatching ${activeFile} (${projectName})...`,
-      `➜ Target Backend: ${targetBackend} | Shots: ${shots}`
+      `➜ python3 ${activeFile} (${targetBackend}, ${shots} shots)`
     ]);
 
     try {
@@ -878,7 +875,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           setTerminalLogs(prev => [
             ...prev,
             ...outLines,
-            `✔ Simulation completed successfully on ${data.backend_used} (${data.execution_time_ms}ms)`
+            `✔ Execution completed on ${data.backend_used} in ${data.execution_time_ms}ms`
           ]);
 
           if (data.measurement_counts) {
@@ -1673,15 +1670,37 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                 {/* TAB 2: QPU TERMINAL */}
                 {activeBottomTab === 'terminal' && (
-                  <div className="p-3.5 font-mono text-xs space-y-1 h-full overflow-y-auto">
-                    {terminalLogs.map((log, i) => (
-                      <div 
-                        key={i} 
-                        className={log.startsWith('✔') ? 'text-emerald-400' : (log.startsWith('✖') ? 'text-rose-400' : (log.startsWith('➜') ? 'text-sky-400' : 'text-zinc-300'))}
+                  <div className="p-3.5 font-mono text-xs h-full flex flex-col min-h-0">
+                    {/* Terminal Action Bar */}
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b shrink-0 text-[11px] font-sans" style={{ borderColor: colors.border }}>
+                      <span className="text-zinc-500 font-mono">QPU Runtime Output</span>
+                      <button
+                        onClick={() => setTerminalLogs([])}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors cursor-pointer text-xs"
+                        title="Clear terminal output"
                       >
-                        {log}
-                      </div>
-                    ))}
+                        <Trash2 className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Clear</span>
+                      </button>
+                    </div>
+
+                    {/* Output Lines Stream */}
+                    <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
+                      {terminalLogs.length === 0 ? (
+                        <div className="text-zinc-500 py-6 text-center font-mono text-xs">
+                          Terminal is ready. Click "Simulate on Aer" or "Run" to execute your circuit.
+                        </div>
+                      ) : (
+                        terminalLogs.map((log, i) => (
+                          <div 
+                            key={i} 
+                            className={log.startsWith('✔') ? 'text-emerald-400' : (log.startsWith('✖') ? 'text-rose-400' : (log.startsWith('➜') ? 'text-sky-400' : 'text-zinc-300'))}
+                          >
+                            {log}
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 )}
 
