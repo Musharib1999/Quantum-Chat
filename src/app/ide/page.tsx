@@ -140,9 +140,9 @@ export default function QuantumIDE() {
   const [leftWidth, setLeftWidth] = useState(288);
   const isLeftDragging = useRef(false);
 
-  // Section 3 (Right Sidebar) state: Open/Closed & Width (40% default)
+  // Section 3 (Right Sidebar) state: Open/Closed & Width (Same as Section 1: 288px default)
   const [isRightOpen, setIsRightOpen] = useState(true);
-  const [rightWidth, setRightWidth] = useState(576);
+  const [rightWidth, setRightWidth] = useState(288);
   const isRightDragging = useRef(false);
 
   const isDark = theme === 'dark';
@@ -595,7 +595,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       if (!isRightDragging.current) return;
-      const newWidth = Math.max(280, Math.min(750, window.innerWidth - moveEvent.clientX));
+      const newWidth = Math.max(200, Math.min(750, window.innerWidth - moveEvent.clientX));
       setRightWidth(newWidth);
     };
 
@@ -1319,7 +1319,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       </header>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* MAIN WORKSPACE (20% Left / 40% Center / 40% Right)            */}
+      {/* MAIN WORKSPACE (20% Left / 60% Center / 20% Right)            */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex min-h-0 overflow-hidden relative">
         
