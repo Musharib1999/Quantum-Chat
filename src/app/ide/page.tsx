@@ -145,7 +145,7 @@ export default function QuantumIDE() {
   const isLeftDragging = useRef(false);
 
   // Section 3 (Right Sidebar) state: Open/Closed & Width (Same as Section 1: 288px default)
-  const [isRightOpen, setIsRightOpen] = useState(false);
+  const [isRightOpen, setIsRightOpen] = useState(true);
   const [rightWidth, setRightWidth] = useState(288);
   const isRightDragging = useRef(false);
 
@@ -618,11 +618,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const w = window.innerWidth;
-      // Section 1: Exactly 10% of screen size (e.g. 144px on 1440px)
+      // Section 1 (Left): Exactly 10% of screen size (e.g. 140px on 1440px)
       const tenPercentWidth = Math.max(100, Math.min(180, Math.round(w * 0.10)));
       setLeftWidth(tenPercentWidth);
-      // Right sidebar collapsed by default
-      setIsRightOpen(false);
+      // Section 3 (Right Copilot): Open and active with clean balanced width (~22%)
+      setIsRightOpen(true);
+      setRightWidth(Math.max(260, Math.min(360, Math.round(w * 0.22))));
     }
   }, []);
 
