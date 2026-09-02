@@ -768,6 +768,17 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('.')) continue;
 
+      // Check for explicit coordinate specification in comment (e.g., # t=3, # t3, # step: 4, # col 2)
+      const coordMatch = trimmed.match(/#\s*(?:t\s*=?\s*|step\s*:?\s*|col\s*:?\s*|coord\s*:?\s*|\(\s*\d+\s*,\s*)(\d+)/i);
+      const explicitStep = coordMatch ? parseInt(coordMatch[1], 10) : null;
+
+      // Advance time slices on Qiskit barriers
+      if (/\b\w+\.barrier\b/i.test(trimmed)) {
+        const maxS = Math.max(...Object.values(stepTrack));
+        for (let q = 0; q < 4; q++) stepTrack[q] = Math.min(9, maxS + 1);
+        continue;
+      }
+
       // Match Qiskit method calls: qc.h(0), circuit.cx(0, 1), etc.
       const match = trimmed.match(/\b\w+\.(h|x|y|z|s|t|rx|ry|rz|cx|cz|swap|ccx|measure)\s*\(([^)]*)\)/i);
       if (!match) continue;
@@ -781,11 +792,14 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
         if (!isNaN(q1) && q1 >= 0 && q1 < 4) {
           const s1 = stepTrack[q1] || 0;
           const s2 = !isNaN(q2) && q2 >= 0 && q2 < 4 ? (stepTrack[q2] || 0) : s1;
-          const maxStep = Math.max(s1, s2);
-          if (maxStep < 10) {
-            gates.push({ name: gateName, qubit: q1, step: maxStep });
-            stepTrack[q1] = maxStep + 1;
-            if (!isNaN(q2) && q2 >= 0 && q2 < 4) stepTrack[q2] = maxStep + 1;
+          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) 
+            ? explicitStep 
+            : Math.max(s1, s2);
+
+          if (targetStep < 10) {
+            gates.push({ name: gateName, qubit: q1, step: targetStep });
+            stepTrack[q1] = targetStep + 1;
+            if (!isNaN(q2) && q2 >= 0 && q2 < 4) stepTrack[q2] = targetStep + 1;
           }
         }
       } else if (gateName === 'ccx') {
@@ -793,29 +807,33 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
         const q2 = parseInt(rawArgs[1], 10);
         const q3 = parseInt(rawArgs[2], 10);
         const validQ = [q1, q2, q3].filter(q => !isNaN(q) && q >= 0 && q < 4);
-        const maxStep = Math.max(...validQ.map(q => stepTrack[q] || 0), 0);
-        if (maxStep < 10 && validQ.length > 0) {
-          gates.push({ name: 'ccx', qubit: validQ[0], step: maxStep });
-          validQ.forEach(q => stepTrack[q] = maxStep + 1);
+        const autoStep = Math.max(...validQ.map(q => stepTrack[q] || 0), 0);
+        const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
+
+        if (targetStep < 10 && validQ.length > 0) {
+          gates.push({ name: 'ccx', qubit: validQ[0], step: targetStep });
+          validQ.forEach(q => stepTrack[q] = targetStep + 1);
         }
       } else if (gateName === 'rx' || gateName === 'ry' || gateName === 'rz') {
         // Rotation: qc.rx(angle, qubit) or qc.rz(0.7854, 0)
         const q = parseInt(rawArgs[rawArgs.length - 1], 10);
         if (!isNaN(q) && q >= 0 && q < 4) {
-          const s = stepTrack[q] || 0;
-          if (s < 10) {
-            gates.push({ name: gateName, qubit: q, step: s });
-            stepTrack[q] = s + 1;
+          const autoStep = stepTrack[q] || 0;
+          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
+          if (targetStep < 10) {
+            gates.push({ name: gateName, qubit: q, step: targetStep });
+            stepTrack[q] = targetStep + 1;
           }
         }
       } else {
         // Single qubit: h, x, y, z, s, t, measure
         const q = parseInt(rawArgs[0], 10);
         if (!isNaN(q) && q >= 0 && q < 4) {
-          const s = stepTrack[q] || 0;
-          if (s < 10) {
-            gates.push({ name: gateName, qubit: q, step: s });
-            stepTrack[q] = s + 1;
+          const autoStep = stepTrack[q] || 0;
+          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
+          if (targetStep < 10) {
+            gates.push({ name: gateName, qubit: q, step: targetStep });
+            stepTrack[q] = targetStep + 1;
           }
         }
       }
@@ -1019,34 +1037,39 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
 
     const sorted = [...updatedGates].sort((a, b) => a.step - b.step || a.qubit - b.qubit);
     sorted.forEach(g => {
-      if (g.name === 'h') newCodeLines.push(`qc.h(${g.qubit})`);
-      else if (g.name === 'x') newCodeLines.push(`qc.x(${g.qubit})`);
-      else if (g.name === 'y') newCodeLines.push(`qc.y(${g.qubit})`);
-      else if (g.name === 'z') newCodeLines.push(`qc.z(${g.qubit})`);
-      else if (g.name === 's') newCodeLines.push(`qc.s(${g.qubit})`);
-      else if (g.name === 't') newCodeLines.push(`qc.t(${g.qubit})`);
-      else if (g.name === 'rx') newCodeLines.push(`qc.rx(0.7854, ${g.qubit})`);
-      else if (g.name === 'ry') newCodeLines.push(`qc.ry(0.7854, ${g.qubit})`);
-      else if (g.name === 'rz') newCodeLines.push(`qc.rz(0.7854, ${g.qubit})`);
+      let code = '';
+      if (g.name === 'h') code = `qc.h(${g.qubit})`;
+      else if (g.name === 'x') code = `qc.x(${g.qubit})`;
+      else if (g.name === 'y') code = `qc.y(${g.qubit})`;
+      else if (g.name === 'z') code = `qc.z(${g.qubit})`;
+      else if (g.name === 's') code = `qc.s(${g.qubit})`;
+      else if (g.name === 't') code = `qc.t(${g.qubit})`;
+      else if (g.name === 'rx') code = `qc.rx(0.7854, ${g.qubit})`;
+      else if (g.name === 'ry') code = `qc.ry(0.7854, ${g.qubit})`;
+      else if (g.name === 'rz') code = `qc.rz(0.7854, ${g.qubit})`;
       else if (g.name === 'cx') {
         const targetQ = (g.qubit + 1) % numQubits;
-        newCodeLines.push(`qc.cx(${g.qubit}, ${targetQ})`);
+        code = `qc.cx(${g.qubit}, ${targetQ})`;
       }
       else if (g.name === 'cz') {
         const targetQ = (g.qubit + 1) % numQubits;
-        newCodeLines.push(`qc.cz(${g.qubit}, ${targetQ})`);
+        code = `qc.cz(${g.qubit}, ${targetQ})`;
       }
       else if (g.name === 'swap') {
         const targetQ = (g.qubit + 1) % numQubits;
-        newCodeLines.push(`qc.swap(${g.qubit}, ${targetQ})`);
+        code = `qc.swap(${g.qubit}, ${targetQ})`;
       }
       else if (g.name === 'ccx') {
         const q1 = g.qubit;
         const q2 = (g.qubit + 1) % numQubits;
         const q3 = (g.qubit + 2) % numQubits;
-        newCodeLines.push(`qc.ccx(${q1}, ${q2}, ${q3})`);
+        code = `qc.ccx(${q1}, ${q2}, ${q3})`;
       }
-      else if (g.name === 'measure') newCodeLines.push(`qc.measure(${g.qubit}, ${g.qubit})`);
+      else if (g.name === 'measure') code = `qc.measure(${g.qubit}, ${g.qubit})`;
+
+      if (code) {
+        newCodeLines.push(`${code}  # t=${g.step}`);
+      }
     });
 
     newCodeLines.push('');
@@ -1693,6 +1716,16 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
+                        {/* Coordinate Awareness Indicator */}
+                        <div 
+                          style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                          className="flex items-center gap-1 text-[11px] font-mono px-2 py-1 rounded-lg border text-zinc-400 select-none shadow-2xs"
+                          title="Gates preserve explicit 2D grid coordinates (qubit, time-step). Gate order directly dictates quantum operator matrix products."
+                        >
+                          <span style={{ color: colors.textMuted }}>Grid:</span>
+                          <span style={{ color: colors.textCyan }} className="font-semibold">(q[0..3], t0..t9)</span>
+                        </div>
+
                         <button
                           onClick={() => handleRun()}
                           className="px-2.5 py-1 rounded-lg bg-sky-500/20 border border-sky-500/50 text-sky-400 hover:bg-sky-500/30 text-xs font-sans font-medium flex items-center gap-1 cursor-pointer transition-colors"
