@@ -11,7 +11,10 @@ import {
   ChevronRight, 
   ChevronDown, 
   Sparkles, 
-  Terminal as TerminalIcon, 
+  Terminal,
+  Terminal as TerminalIcon,
+  BarChart3,
+  ChevronUp, 
   Activity, 
   Layers, 
   Cpu, 
@@ -115,6 +118,22 @@ export default function QuantumIDE() {
   const [selectedStudioFilter, setSelectedStudioFilter] = useState<string>('all');
   const [quboLambda, setQuboLambda] = useState<number>(5.0);
   const [selectedQuboCell, setSelectedQuboCell] = useState<{ row: number; col: number } | null>(null);
+
+  // Phase 1: Collapsible Bottom Drawer & Interactive Circuit Canvas States
+  const [isBottomOpen, setIsBottomOpen] = useState(true);
+  const [bottomHeight, setBottomHeight] = useState(260);
+  const [terminalLogs, setTerminalLogs] = useState<string[]>([
+    "➜ Quantum Guru Environment Ready (Python 3.13, Qiskit 2.3, Aer 0.17, Dimod 0.12)",
+    "➜ Ready for simulator dispatch or interactive circuit synthesis."
+  ]);
+  const [simulationCounts, setSimulationCounts] = useState<Record<string, number> | null>({ '00': 512, '11': 512 });
+  const [circuitAscii, setCircuitAscii] = useState<string>('');
+  const [circuitGates, setCircuitGates] = useState<Array<{ name: string; qubit: number; step: number }>>([
+    { name: 'h', qubit: 0, step: 0 },
+    { name: 'cx', qubit: 0, step: 1 }
+  ]);
+  const [selectedGateTool, setSelectedGateTool] = useState<string>('h');
+  const [copilotMode, setCopilotMode] = useState<'coding' | 'qa'>('coding');
 
   // Section 1 (Left Sidebar) state: Open/Closed & Width (20% default)
   const [isLeftOpen, setIsLeftOpen] = useState(true);
@@ -813,12 +832,169 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
 
 
-  const handleRun = () => {
+  const handleRun = async () => {
     setIsRunning(true);
-    setTimeout(() => {
+    setIsBottomOpen(true);
+    setActiveBottomTab('terminal');
+
+    const currentCode = projectFiles[activeFile]?.content || '';
+    setTerminalLogs(prev => [
+      ...prev,
+      `➜ [Quantum Guru Runner] Dispatching ${activeFile} (${projectName})...`,
+      `➜ Target Backend: ${targetBackend} | Shots: ${shots}`
+    ]);
+
+    try {
+      const res = await fetch('http://localhost:8002/v3/enterprise/ide/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: projectName,
+          file_name: activeFile,
+          code: currentCode,
+          target_backend: targetBackend,
+          shots: Number(shots) || 1024
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          const outLines = (data.stdout || '').split('\n').filter(Boolean);
+          setTerminalLogs(prev => [
+            ...prev,
+            ...outLines,
+            `✔ Simulation completed successfully on ${data.backend_used} (${data.execution_time_ms}ms)`
+          ]);
+
+          if (data.measurement_counts) {
+            setSimulationCounts(data.measurement_counts);
+          }
+          if (data.circuit_ascii) {
+            setCircuitAscii(data.circuit_ascii);
+          }
+          if (data.circuit_gates && Array.isArray(data.circuit_gates)) {
+            const mapped = data.circuit_gates.map((g: any) => ({
+              name: g.name,
+              qubit: g.qubits ? g.qubits[0] : 0,
+              step: g.step || 0
+            }));
+            setCircuitGates(mapped);
+          }
+        } else {
+          setTerminalLogs(prev => [
+            ...prev,
+            `✖ Error executing ${activeFile}:`,
+            data.stderr || data.error || 'Unknown execution error'
+          ]);
+        }
+      } else {
+        setTerminalLogs(prev => [
+          ...prev,
+          `✖ Runner HTTP Error ${res.status}: Failed to reach simulator backend.`
+        ]);
+      }
+    } catch (err: any) {
+      setTerminalLogs(prev => [
+        ...prev,
+        `✖ Connection Error: ${err.message || err}`
+      ]);
+    } finally {
       setIsRunning(false);
-      setActiveBottomTab('terminal');
-    }, 600);
+    }
+  };
+
+  // Interactive Circuit Canvas Gate Placement & Bi-directional Code Synthesis
+  const handleToggleGateSlot = (qubit: number, step: number) => {
+    const existingIndex = circuitGates.findIndex(g => g.qubit === qubit && g.step === step);
+    let updatedGates = [...circuitGates];
+
+    if (existingIndex >= 0) {
+      updatedGates.splice(existingIndex, 1);
+    } else {
+      updatedGates.push({
+        name: selectedGateTool,
+        qubit: qubit,
+        step: step
+      });
+    }
+
+    setCircuitGates(updatedGates);
+
+    const numQubits = Math.max(2, ...updatedGates.map(g => g.qubit + 1));
+    let newCodeLines = [
+      'from qiskit import QuantumCircuit',
+      'from qiskit_aer import AerSimulator',
+      '',
+      `# ⚛️ Synthesized Interactive Circuit (${numQubits} Qubits)`,
+      `qc = QuantumCircuit(${numQubits})`
+    ];
+
+    const sorted = [...updatedGates].sort((a, b) => a.step - b.step || a.qubit - b.qubit);
+    sorted.forEach(g => {
+      if (g.name === 'h') newCodeLines.push(`qc.h(${g.qubit})`);
+      else if (g.name === 'x') newCodeLines.push(`qc.x(${g.qubit})`);
+      else if (g.name === 'z') newCodeLines.push(`qc.z(${g.qubit})`);
+      else if (g.name === 'cx') {
+        const targetQ = (g.qubit + 1) % numQubits;
+        newCodeLines.push(`qc.cx(${g.qubit}, ${targetQ})`);
+      }
+      else if (g.name === 'rz') newCodeLines.push(`qc.rz(0.7854, ${g.qubit})`);
+      else if (g.name === 'measure') newCodeLines.push(`qc.measure_all()`);
+    });
+
+    newCodeLines.push('');
+    newCodeLines.push('# Execute on AerSimulator');
+    newCodeLines.push('sim = AerSimulator()');
+    newCodeLines.push('job = sim.run(qc, shots=1024)');
+    newCodeLines.push('result = job.result()');
+    newCodeLines.push("print('Measurement Counts:', result.get_counts())");
+
+    const newCode = newCodeLines.join('\n');
+
+    setProjectFiles(prev => {
+      const updated = {
+        ...prev,
+        [activeFile]: {
+          ...prev[activeFile],
+          content: newCode
+        }
+      };
+      const updatedProj = {
+        ...(allProjects[projectName] || {}),
+        files: updated
+      };
+      setAllProjects(pPrev => ({
+        ...pPrev,
+        [projectName]: updatedProj
+      }));
+      saveProjectToDatabase(projectName, updatedProj, activeFile, runtimeMetrics);
+      return updated;
+    });
+  };
+
+  const handleClearCircuitGates = () => {
+    setCircuitGates([]);
+    const clearedCode = `from qiskit import QuantumCircuit\n\nqc = QuantumCircuit(2)\n# Wire cleared. Click slots in Circuit Canvas to add gates.\n`;
+    setProjectFiles(prev => {
+      const updated = {
+        ...prev,
+        [activeFile]: {
+          ...prev[activeFile],
+          content: clearedCode
+        }
+      };
+      const updatedProj = {
+        ...(allProjects[projectName] || {}),
+        files: updated
+      };
+      setAllProjects(pPrev => ({
+        ...pPrev,
+        [projectName]: updatedProj
+      }));
+      saveProjectToDatabase(projectName, updatedProj, activeFile, runtimeMetrics);
+      return updated;
+    });
   };
 
   const handleSimulate = () => {
@@ -1673,6 +1849,232 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 className="flex-1 overflow-x-auto whitespace-pre font-normal font-mono outline-none focus:outline-none focus:ring-0 border-none shadow-none resize-none bg-transparent w-full h-full"
               />
             </div>
+          </div>
+
+          {/* ── LOWER PANE: COLLAPSIBLE MULTI-TAB BOTTOM DRAWER ── */}
+          <div 
+            style={{ 
+              borderColor: colors.border,
+              height: isBottomOpen ? `${bottomHeight}px` : '36px',
+              backgroundColor: colors.bgCard
+            }} 
+            className="shrink-0 flex flex-col transition-all duration-150 overflow-hidden border-t"
+          >
+            {/* Drawer Tab Header Bar */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="h-9 px-4 border-b flex items-center justify-between shrink-0 select-none"
+            >
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => { setActiveBottomTab('circuit'); setIsBottomOpen(true); }}
+                  style={{
+                    backgroundColor: activeBottomTab === 'circuit' && isBottomOpen ? colors.bgPill : 'transparent',
+                    color: activeBottomTab === 'circuit' && isBottomOpen ? colors.textCyan : colors.textMuted,
+                    borderColor: activeBottomTab === 'circuit' && isBottomOpen ? colors.border : 'transparent'
+                  }}
+                  className="px-2.5 py-1 rounded-md text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
+                >
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>Interactive Circuit Canvas</span>
+                </button>
+
+                <button
+                  onClick={() => { setActiveBottomTab('terminal'); setIsBottomOpen(true); }}
+                  style={{
+                    backgroundColor: activeBottomTab === 'terminal' && isBottomOpen ? colors.bgPill : 'transparent',
+                    color: activeBottomTab === 'terminal' && isBottomOpen ? colors.textEmerald : colors.textMuted,
+                    borderColor: activeBottomTab === 'terminal' && isBottomOpen ? colors.border : 'transparent'
+                  }}
+                  className="px-2.5 py-1 rounded-md text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
+                >
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span>QPU Terminal</span>
+                  {isRunning && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                </button>
+
+                <button
+                  onClick={() => { setActiveBottomTab('results'); setIsBottomOpen(true); }}
+                  style={{
+                    backgroundColor: activeBottomTab === 'results' && isBottomOpen ? colors.bgPill : 'transparent',
+                    color: activeBottomTab === 'results' && isBottomOpen ? colors.textAmber : colors.textMuted,
+                    borderColor: activeBottomTab === 'results' && isBottomOpen ? colors.border : 'transparent'
+                  }}
+                  className="px-2.5 py-1 rounded-md text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
+                >
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  <span>Measurement Results</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsBottomOpen(!isBottomOpen)}
+                  style={{ color: colors.textMuted }}
+                  className="p-1 rounded hover:opacity-80 transition-opacity cursor-pointer"
+                  title={isBottomOpen ? "Collapse drawer" : "Expand drawer"}
+                >
+                  {isBottomOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Drawer Body */}
+            {isBottomOpen && (
+              <div className="flex-1 min-h-0 overflow-auto">
+                {/* TAB 1: INTERACTIVE CIRCUIT CANVAS */}
+                {activeBottomTab === 'circuit' && (
+                  <div className="p-3.5 space-y-3 font-sans h-full flex flex-col">
+                    {/* Gate Palette Toolbar */}
+                    <div className="flex items-center justify-between pb-2 border-b shrink-0" style={{ borderColor: colors.border }}>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-sans font-medium mr-1.5" style={{ color: colors.textMuted }}>Gate Palette:</span>
+                        {[
+                          { id: 'h', label: 'H (Hadamard)', color: 'border-sky-500/50 bg-sky-500/15 text-sky-400' },
+                          { id: 'x', label: 'X (NOT)', color: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400' },
+                          { id: 'z', label: 'Z (Phase)', color: 'border-amber-500/50 bg-amber-500/15 text-amber-400' },
+                          { id: 'cx', label: 'CX (CNOT)', color: 'border-purple-500/50 bg-purple-500/15 text-purple-400' },
+                          { id: 'rz', label: 'Rz(θ)', color: 'border-pink-500/50 bg-pink-500/15 text-pink-400' },
+                          { id: 'measure', label: 'Measure', color: 'border-cyan-500/50 bg-cyan-500/15 text-cyan-400' }
+                        ].map(g => (
+                          <button
+                            key={g.id}
+                            onClick={() => setSelectedGateTool(g.id)}
+                            className={`px-2.5 py-0.5 rounded-lg border text-xs font-mono font-medium transition-all cursor-pointer ${selectedGateTool === g.id ? `${g.color} ring-1 ring-sky-400` : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200'}`}
+                          >
+                            {g.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => handleRun()}
+                          className="px-2.5 py-1 rounded-lg bg-sky-500/20 border border-sky-500/50 text-sky-400 hover:bg-sky-500/30 text-xs font-sans font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Play className="w-3 h-3" />
+                          <span>Simulate on Aer</span>
+                        </button>
+                        <button
+                          onClick={handleClearCircuitGates}
+                          className="px-2 py-1 rounded-lg border border-zinc-800 text-zinc-500 hover:text-red-400 text-xs font-sans cursor-pointer transition-colors"
+                        >
+                          Clear Wire
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Interactive Qubit Wires Grid */}
+                    <div className="flex-1 overflow-x-auto min-h-0 py-1">
+                      <div className="min-w-[580px] space-y-2.5">
+                        {[0, 1, 2, 3].map(qIdx => (
+                          <div key={qIdx} className="flex items-center gap-2.5">
+                            {/* Qubit Label */}
+                            <div 
+                              style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+                              className="w-12 h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-semibold shrink-0 shadow-xs"
+                            >
+                              q[{qIdx}]
+                            </div>
+
+                            {/* Wire Slots */}
+                            <div className="flex-1 flex items-center relative h-8">
+                              {/* Horizontal Wire Line */}
+                              <div 
+                                style={{ backgroundColor: colors.border }} 
+                                className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] z-0" 
+                              />
+
+                              {/* 8 Step Slots */}
+                              <div className="grid grid-cols-8 gap-2 w-full relative z-10">
+                                {[0, 1, 2, 3, 4, 5, 6, 7].map(stepIdx => {
+                                  const gateOnSlot = circuitGates.find(g => g.qubit === qIdx && g.step === stepIdx);
+                                  return (
+                                    <button
+                                      key={stepIdx}
+                                      onClick={() => handleToggleGateSlot(qIdx, stepIdx)}
+                                      style={{
+                                        backgroundColor: gateOnSlot ? '#18181b' : 'rgba(24, 24, 27, 0.5)',
+                                        borderColor: gateOnSlot ? '#38bdf8' : colors.border
+                                      }}
+                                      className={`h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer hover:border-sky-400 shadow-xs ${gateOnSlot ? 'text-sky-300 ring-1 ring-sky-400/40' : 'text-zinc-600 hover:text-zinc-300'}`}
+                                      title={gateOnSlot ? `Click to remove ${gateOnSlot.name.toUpperCase()} gate` : `Click to place ${selectedGateTool.toUpperCase()}`}
+                                    >
+                                      {gateOnSlot ? gateOnSlot.name.toUpperCase() : '+'}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Continuous ASCII Circuit Trace */}
+                    {circuitAscii && (
+                      <div className="pt-2 border-t shrink-0" style={{ borderColor: colors.border }}>
+                        <pre className="text-[10px] font-mono leading-relaxed overflow-x-auto p-2 rounded-lg bg-zinc-950/80 border border-zinc-800 text-zinc-300 max-h-20">
+                          {circuitAscii}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 2: QPU TERMINAL */}
+                {activeBottomTab === 'terminal' && (
+                  <div className="p-3.5 font-mono text-xs space-y-1 h-full overflow-y-auto">
+                    {terminalLogs.map((log, i) => (
+                      <div 
+                        key={i} 
+                        className={log.startsWith('✔') ? 'text-emerald-400' : (log.startsWith('✖') ? 'text-rose-400' : (log.startsWith('➜') ? 'text-sky-400' : 'text-zinc-300'))}
+                      >
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* TAB 3: MEASUREMENT RESULTS */}
+                {activeBottomTab === 'results' && (
+                  <div className="p-4 space-y-3 font-sans h-full overflow-y-auto">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold" style={{ color: colors.textAmber }}>Measurement Statevector Probability Distribution</span>
+                      <span className="text-[11px] font-mono" style={{ color: colors.textMuted }}>Total Shots: {shots}</span>
+                    </div>
+
+                    {simulationCounts ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                        {Object.entries(simulationCounts).map(([state, cnt]) => {
+                          const pct = Math.round((cnt / (shots || 1024)) * 100);
+                          return (
+                            <div 
+                              key={state}
+                              style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                              className="p-3 rounded-xl border space-y-1.5 shadow-xs"
+                            >
+                              <div className="flex items-center justify-between text-xs font-mono">
+                                <span className="font-semibold text-sky-400">|{state}⟩</span>
+                                <span style={{ color: colors.textMuted }}>{cnt} shots</span>
+                              </div>
+                              <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+                                <div className="bg-sky-400 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
+                              </div>
+                              <div className="text-right text-[10px] font-mono text-zinc-400">{pct}% probability</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 text-xs text-zinc-500 font-mono">
+                        No simulation results yet. Click "Run" or "Simulate on Aer" above.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
 

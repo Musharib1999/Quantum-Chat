@@ -828,3 +828,28 @@ async def ide_agent_stream_endpoint(req: IDEAgentChatRequest):
             yield f"data: {err_data}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+# =========================================================================
+# PHASE 1: DIRECT SANDBOX SIMULATOR EXECUTOR (QISKIT AER & D-WAVE ANNEALER)
+# =========================================================================
+try:
+    from engine.runtime.execution_runner import run_code_sandbox, CodeExecutionRequest, CodeExecutionResponse
+except ImportError:
+    from v3.engine.runtime.execution_runner import run_code_sandbox, CodeExecutionRequest, CodeExecutionResponse
+
+@app.post("/v3/enterprise/ide/execute", response_model=CodeExecutionResponse)
+async def ide_code_execute_endpoint(req: CodeExecutionRequest):
+    """
+    Direct high-performance execution of Qiskit circuits and D-Wave BQM/CQM models.
+    Returns stdout/stderr, counts, ASCII diagram, and interactive canvas gate list.
+    """
+    try:
+        return run_code_sandbox(req)
+    except Exception as e:
+        print(f"Error executing code in sandbox: {e}")
+        return CodeExecutionResponse(
+            success=False,
+            error=str(e),
+            stderr=str(e)
+        )

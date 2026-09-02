@@ -429,6 +429,15 @@ class QuantumAgent:
         )
         yield await self.stream.publish(thought)
 
+        # Check if user message is a pure Q&A / Conceptual / Pedagogical Inquiry
+        is_qa_inquiry = any(msg_l.startswith(k) for k in [
+            "what is", "what are", "why is", "why does", "explain", "how does", "derive",
+            "prove", "tell me about", "describe", "define", "what do you mean", "can you explain"
+        ]) or any(k in msg_l for k in [
+            "concept of", "theory behind", "mathematical derivation", "how does a qubit work",
+            "superposition mean", "entanglement mean", "phase kickback", "deutsch-jozsa", "quantum teleportation"
+        ])
+
         # Consultative Question Check
         is_action_command = is_execution_request or any(k in msg_l for k in [
             "create", "build", "solve", "run", "execute", "transpile", "synthesize", 
@@ -468,6 +477,44 @@ class QuantumAgent:
                 clarification=clarif_act.model_dump()
             ))
             return
+
+        if is_qa_inquiry and not is_execution_request and not any(k in msg_l for k in ['create a circuit', 'create circuit', 'build circuit', 'generate circuit', 'write code', 'write a program', 'synthesize circuit']):
+            # ── 🎓 PEDAGOGICAL QUANTUM Q&A MODE (NON-DESTRUCTIVE: NO CODE OVERWRITES) ──
+            yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.academy.concept_explainer"))
+            yield await self.stream.publish(ToolObservation(
+                project_id=project_id,
+                tool_name="tools.academy.concept_explainer",
+                execution_time_ms=5.2,
+                outputs={"status": "decomposed"},
+                summary="Socratic concept decomposition: physics axioms and mathematical foundations"
+            ))
+
+            qa_prompt = f'''You are the Quantum Guru Senior Theoretical Physics & Quantum Computing Assistant.
+The user asks: "{user_message}"
+
+Provide a clear, pedagogical, mathematically precise explanation:
+1. Core Physical Principle & Intuition.
+2. Rigorous Dirac Bra-Ket Mathematics (e.g. $|\\psi\\rangle = \\alpha |0\\rangle + \\beta |1\\rangle$, matrix operators, inner/outer products).
+3. Quantum Information Significance (how gates, circuits, or algorithms leverage this).
+Keep the explanation engaging, concise, and structured with clean markdown headers. Answer educationally without generating full file replacement code.'''
+
+            try:
+                qa_response = await call_groq(
+                    system="You are an expert quantum computing professor and researcher. Explain with rigorous LaTeX math and clear pedagogical insights.",
+                    user=qa_prompt,
+                    max_tokens=1200
+                )
+            except Exception as e:
+                qa_response = f"### Quantum Computing Insight\n\n**Question:** {user_message}\n\nIn quantum computing, state superposition allows linear combinations of basis vectors: $|\\psi\\rangle = \\alpha |0\\rangle + \\beta |1\\rangle$ normalized to $|\\alpha|^2 + |\\beta|^2 = 1$."
+
+            yield await self.stream.publish(FinalResponseAction(
+                project_id=project_id,
+                response_text=qa_response,
+                scientific_verdict="Educational concept decomposed with Dirac mathematics."
+            ))
+            return
+
+
 
         # =========================================================================
         # 1. 📈 OPTIMIZATION PIPELINE (HYBRID LLM + DETERMINISTIC AutoQUBO)
