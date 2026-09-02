@@ -884,14 +884,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           if (data.circuit_ascii) {
             setCircuitAscii(data.circuit_ascii);
           }
-          if (data.circuit_gates && Array.isArray(data.circuit_gates)) {
-            const mapped = data.circuit_gates.map((g: any) => ({
-              name: g.name,
-              qubit: g.qubits ? g.qubits[0] : 0,
-              step: g.step || 0
-            }));
-            setCircuitGates(mapped);
-          }
+          // Keep user's manual canvas intact; do not overwrite with simulator internal gates
         } else {
           setTerminalLogs(prev => [
             ...prev,
@@ -933,12 +926,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setCircuitGates(updatedGates);
 
     const numQubits = Math.max(2, ...updatedGates.map(g => g.qubit + 1));
+    const hasManualMeasure = updatedGates.some(g => g.name === 'measure');
     let newCodeLines = [
       'from qiskit import QuantumCircuit',
       'from qiskit_aer import AerSimulator',
       '',
       `# ⚛️ Synthesized Interactive Circuit (${numQubits} Qubits)`,
-      `qc = QuantumCircuit(${numQubits})`
+      hasManualMeasure ? `qc = QuantumCircuit(${numQubits}, ${numQubits})` : `qc = QuantumCircuit(${numQubits})`
     ];
 
     const sorted = [...updatedGates].sort((a, b) => a.step - b.step || a.qubit - b.qubit);
@@ -951,14 +945,19 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         newCodeLines.push(`qc.cx(${g.qubit}, ${targetQ})`);
       }
       else if (g.name === 'rz') newCodeLines.push(`qc.rz(0.7854, ${g.qubit})`);
-      else if (g.name === 'measure') newCodeLines.push(`qc.measure_all()`);
+      else if (g.name === 'measure') newCodeLines.push(`qc.measure(${g.qubit}, ${g.qubit})`);
     });
 
     newCodeLines.push('');
     newCodeLines.push('# Execute on AerSimulator');
     newCodeLines.push('sim = AerSimulator()');
-    newCodeLines.push('job = sim.run(qc, shots=1024)');
-    newCodeLines.push('result = job.result()');
+    if (!hasManualMeasure) {
+      newCodeLines.push('meas_qc = qc.copy()');
+      newCodeLines.push('meas_qc.measure_all()');
+      newCodeLines.push('result = sim.run(meas_qc, shots=1024).result()');
+    } else {
+      newCodeLines.push('result = sim.run(qc, shots=1024).result()');
+    }
     newCodeLines.push("print('Measurement Counts:', result.get_counts())");
 
     const newCode = newCodeLines.join('\n');
