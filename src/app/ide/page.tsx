@@ -625,6 +625,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   }, []);
 
+    // Live sync active file code to canvas gates on file switch or mount
+  useEffect(() => {
+    if (projectFiles[activeFile]?.content) {
+      const parsed = parseQiskitCodeToGates(projectFiles[activeFile].content);
+      if (parsed.length > 0) {
+        setCircuitGates(parsed);
+      }
+    }
+  }, [activeFile]);
+
   // Load all user projects from localStorage & MongoDB database on mount
   useEffect(() => {
     const loadUserProjects = async () => {
@@ -746,7 +756,77 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   }, []);
 
-  // Helper to render gate symbols with official Quantum Measurement Gauge
+  // ── ⚛️ ROBUST CLIENT-SIDE QUANTUM AST/TOKEN PARSER (CODE -> CANVAS SYNC) ──
+function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: number; step: number }> {
+  if (!code) return [];
+  const gates: Array<{ name: string; qubit: number; step: number }> = [];
+  const stepTrack: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0 };
+
+  try {
+    const lines = code.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('.')) continue;
+
+      // Match Qiskit method calls: qc.h(0), circuit.cx(0, 1), etc.
+      const match = trimmed.match(/\b\w+\.(h|x|y|z|s|t|rx|ry|rz|cx|cz|swap|ccx|measure)\s*\(([^)]*)\)/i);
+      if (!match) continue;
+
+      const gateName = match[1].toLowerCase();
+      const rawArgs = match[2].split(',').map(s => s.trim()).filter(Boolean);
+
+      if (gateName === 'cx' || gateName === 'cz' || gateName === 'swap') {
+        const q1 = parseInt(rawArgs[0], 10);
+        const q2 = parseInt(rawArgs[1], 10);
+        if (!isNaN(q1) && q1 >= 0 && q1 < 4) {
+          const s1 = stepTrack[q1] || 0;
+          const s2 = !isNaN(q2) && q2 >= 0 && q2 < 4 ? (stepTrack[q2] || 0) : s1;
+          const maxStep = Math.max(s1, s2);
+          if (maxStep < 10) {
+            gates.push({ name: gateName, qubit: q1, step: maxStep });
+            stepTrack[q1] = maxStep + 1;
+            if (!isNaN(q2) && q2 >= 0 && q2 < 4) stepTrack[q2] = maxStep + 1;
+          }
+        }
+      } else if (gateName === 'ccx') {
+        const q1 = parseInt(rawArgs[0], 10);
+        const q2 = parseInt(rawArgs[1], 10);
+        const q3 = parseInt(rawArgs[2], 10);
+        const validQ = [q1, q2, q3].filter(q => !isNaN(q) && q >= 0 && q < 4);
+        const maxStep = Math.max(...validQ.map(q => stepTrack[q] || 0), 0);
+        if (maxStep < 10 && validQ.length > 0) {
+          gates.push({ name: 'ccx', qubit: validQ[0], step: maxStep });
+          validQ.forEach(q => stepTrack[q] = maxStep + 1);
+        }
+      } else if (gateName === 'rx' || gateName === 'ry' || gateName === 'rz') {
+        // Rotation: qc.rx(angle, qubit) or qc.rz(0.7854, 0)
+        const q = parseInt(rawArgs[rawArgs.length - 1], 10);
+        if (!isNaN(q) && q >= 0 && q < 4) {
+          const s = stepTrack[q] || 0;
+          if (s < 10) {
+            gates.push({ name: gateName, qubit: q, step: s });
+            stepTrack[q] = s + 1;
+          }
+        }
+      } else {
+        // Single qubit: h, x, y, z, s, t, measure
+        const q = parseInt(rawArgs[0], 10);
+        if (!isNaN(q) && q >= 0 && q < 4) {
+          const s = stepTrack[q] || 0;
+          if (s < 10) {
+            gates.push({ name: gateName, qubit: q, step: s });
+            stepTrack[q] = s + 1;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    // Non-blocking defensive parse
+  }
+  return gates;
+}
+
+// Helper to render gate symbols with official Quantum Measurement Gauge
   const renderGateSlotContent = (gateName: string) => {
     if (gateName === 'measure') {
       return (
@@ -759,17 +839,19 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           strokeLinecap="round" 
           strokeLinejoin="round"
         >
-          {/* Semicircular Gauge Arc */}
           <path d="M4 16a8 8 0 0 1 16 0" />
-          {/* Dial Needle */}
           <line x1="12" y1="16" x2="16" y2="9" />
-          {/* Pivot Dot */}
           <circle cx="12" cy="16" r="1.5" fill="currentColor" />
         </svg>
       );
     }
+    if (gateName === 'rx') return 'Rx';
+    if (gateName === 'ry') return 'Ry';
     if (gateName === 'rz') return 'Rz';
     if (gateName === 'cx') return 'CX';
+    if (gateName === 'cz') return 'CZ';
+    if (gateName === 'swap') return 'SWAP';
+    if (gateName === 'ccx') return 'CCX';
     return gateName.toUpperCase();
   };
 
@@ -939,12 +1021,31 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     sorted.forEach(g => {
       if (g.name === 'h') newCodeLines.push(`qc.h(${g.qubit})`);
       else if (g.name === 'x') newCodeLines.push(`qc.x(${g.qubit})`);
+      else if (g.name === 'y') newCodeLines.push(`qc.y(${g.qubit})`);
       else if (g.name === 'z') newCodeLines.push(`qc.z(${g.qubit})`);
+      else if (g.name === 's') newCodeLines.push(`qc.s(${g.qubit})`);
+      else if (g.name === 't') newCodeLines.push(`qc.t(${g.qubit})`);
+      else if (g.name === 'rx') newCodeLines.push(`qc.rx(0.7854, ${g.qubit})`);
+      else if (g.name === 'ry') newCodeLines.push(`qc.ry(0.7854, ${g.qubit})`);
+      else if (g.name === 'rz') newCodeLines.push(`qc.rz(0.7854, ${g.qubit})`);
       else if (g.name === 'cx') {
         const targetQ = (g.qubit + 1) % numQubits;
         newCodeLines.push(`qc.cx(${g.qubit}, ${targetQ})`);
       }
-      else if (g.name === 'rz') newCodeLines.push(`qc.rz(0.7854, ${g.qubit})`);
+      else if (g.name === 'cz') {
+        const targetQ = (g.qubit + 1) % numQubits;
+        newCodeLines.push(`qc.cz(${g.qubit}, ${targetQ})`);
+      }
+      else if (g.name === 'swap') {
+        const targetQ = (g.qubit + 1) % numQubits;
+        newCodeLines.push(`qc.swap(${g.qubit}, ${targetQ})`);
+      }
+      else if (g.name === 'ccx') {
+        const q1 = g.qubit;
+        const q2 = (g.qubit + 1) % numQubits;
+        const q3 = (g.qubit + 2) % numQubits;
+        newCodeLines.push(`qc.ccx(${q1}, ${q2}, ${q3})`);
+      }
       else if (g.name === 'measure') newCodeLines.push(`qc.measure(${g.qubit}, ${g.qubit})`);
     });
 
@@ -1457,6 +1558,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     saveProjectToDatabase(projectName, updatedProj, activeFile, runtimeMetrics);
                     return updated;
                   });
+
+                  // 🔄 LIVE CODE -> CANVAS SYNCHRONIZATION!
+                  const parsedGates = parseQiskitCodeToGates(val);
+                  setCircuitGates(parsedGates);
                 }}
                 spellCheck={false}
                 style={{ 
@@ -1551,12 +1656,20 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[11px] font-sans font-medium mr-1.5" style={{ color: colors.textMuted }}>Gate Palette:</span>
                         {[
-                          { id: 'h', label: 'H (Hadamard)', isMeasure: false, color: 'border-sky-500/50 bg-sky-500/15 text-sky-400' },
-                          { id: 'x', label: 'X (NOT)', isMeasure: false, color: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400' },
-                          { id: 'z', label: 'Z (Phase)', isMeasure: false, color: 'border-amber-500/50 bg-amber-500/15 text-amber-400' },
-                          { id: 'cx', label: 'CX (CNOT)', isMeasure: false, color: 'border-purple-500/50 bg-purple-500/15 text-purple-400' },
-                          { id: 'rz', label: 'Rz(θ)', isMeasure: false, color: 'border-pink-500/50 bg-pink-500/15 text-pink-400' },
-                          { id: 'measure', label: 'Measure', isMeasure: true, color: 'border-cyan-500/50 bg-cyan-500/15 text-cyan-400' }
+                          { id: 'h', label: 'H', desc: 'Hadamard', color: 'border-sky-500/50 bg-sky-500/15 text-sky-400' },
+                          { id: 'x', label: 'X', desc: 'NOT / Pauli-X', color: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400' },
+                          { id: 'y', label: 'Y', desc: 'Pauli-Y', color: 'border-teal-500/50 bg-teal-500/15 text-teal-400' },
+                          { id: 'z', label: 'Z', desc: 'Phase-Flip / Pauli-Z', color: 'border-amber-500/50 bg-amber-500/15 text-amber-400' },
+                          { id: 's', label: 'S', desc: 'Phase π/2', color: 'border-blue-500/50 bg-blue-500/15 text-blue-400' },
+                          { id: 't', label: 'T', desc: 'T Gate (π/4)', color: 'border-indigo-500/50 bg-indigo-500/15 text-indigo-400' },
+                          { id: 'rx', label: 'Rx(θ)', desc: 'X-Rotation', color: 'border-rose-500/50 bg-rose-500/15 text-rose-400' },
+                          { id: 'ry', label: 'Ry(θ)', desc: 'Y-Rotation', color: 'border-orange-500/50 bg-orange-500/15 text-orange-400' },
+                          { id: 'rz', label: 'Rz(θ)', desc: 'Z-Rotation', color: 'border-pink-500/50 bg-pink-500/15 text-pink-400' },
+                          { id: 'cx', label: 'CX', desc: 'CNOT Entangler', color: 'border-purple-500/50 bg-purple-500/15 text-purple-400' },
+                          { id: 'cz', label: 'CZ', desc: 'Controlled-Z', color: 'border-violet-500/50 bg-violet-500/15 text-violet-400' },
+                          { id: 'swap', label: 'SWAP', desc: 'Qubit State Swap', color: 'border-fuchsia-500/50 bg-fuchsia-500/15 text-fuchsia-400' },
+                          { id: 'ccx', label: 'CCX', desc: 'Toffoli 3-Qubit', color: 'border-indigo-400/50 bg-indigo-500/15 text-indigo-300' },
+                          { id: 'measure', label: 'Measure', isMeasure: true, desc: 'Measurement Meter', color: 'border-cyan-400/60 bg-cyan-500/20 text-cyan-300' }
                         ].map(g => (
                           <button
                             key={g.id}
