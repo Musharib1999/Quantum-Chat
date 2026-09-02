@@ -1766,6 +1766,24 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             }}
             className="border-l flex flex-col shrink-0 relative transition-[width] duration-0"
           >
+            {/* Section 3 Header: Dedicated Context-Aware Q&A Assistant */}
+            <div 
+              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              className="h-9 px-3 border-b flex items-center justify-between shrink-0 select-none"
+            >
+              <div className="flex items-center gap-2">
+                <Brain className="w-3.5 h-3.5 text-sky-400" />
+                <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>Quantum Q&A Assistant</span>
+              </div>
+              <span 
+                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+                className="text-[10px] font-mono px-2 py-0.5 rounded border"
+                title={`Active workspace context: ${activeFile}`}
+              >
+                {activeFile}
+              </span>
+            </div>
+
             {/* Conversation Stream & Tool Execution Cards */}
             <div className="flex-1 p-3 overflow-y-auto space-y-3 text-sm">
               {chatMessages.map((msg) => (
@@ -2045,7 +2063,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       handleSendMessage(); 
                     } 
                   }}
-                  placeholder="Ask Quantum Copilot or describe a quantum objective (e.g. optimize portfolio)..."
+                  placeholder="Ask a quantum question about your code or concepts (e.g. explain main.py)..."
                   style={{ color: colors.textPrimary, outline: 'none', border: 'none', boxShadow: 'none' }}
                   className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
                 />

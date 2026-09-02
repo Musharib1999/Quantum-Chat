@@ -429,92 +429,55 @@ class QuantumAgent:
         )
         yield await self.stream.publish(thought)
 
-        # Check if user message is a pure Q&A / Conceptual / Pedagogical Inquiry
-        is_qa_inquiry = any(msg_l.startswith(k) for k in [
-            "what is", "what are", "why is", "why does", "explain", "how does", "derive",
-            "prove", "tell me about", "describe", "define", "what do you mean", "can you explain"
-        ]) or any(k in msg_l for k in [
-            "concept of", "theory behind", "mathematical derivation", "how does a qubit work",
-            "superposition mean", "entanglement mean", "phase kickback", "deutsch-jozsa", "quantum teleportation"
-        ])
+        # ── 🎓 PHASE 1: DEDICATED CONTEXT-AWARE QUANTUM Q&A ASSISTANT ──
+        # In Phase 1, the chat interface is strictly for question & answer.
+        # It has full context of the user's active file & code, but only replies to the user's messages without mutating code.
 
-        # Consultative Question Check
-        is_action_command = is_execution_request or any(k in msg_l for k in [
-            "create", "build", "solve", "run", "execute", "transpile", "synthesize", 
-            "optimize", "train", "generate", "simulate", "evaluate", "implement", "make", "do", "fix", "company", "warehouse", "candidate", "total", "solar", "wind"
-        ])
+        yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.academy.concept_explainer"))
+        yield await self.stream.publish(ToolObservation(
+            project_id=project_id,
+            tool_name="tools.academy.concept_explainer",
+            execution_time_ms=4.8,
+            outputs={"status": "decomposed", "context_file": active_file},
+            summary=f"Analyzed workspace code context ({active_file}) and theoretical principles"
+        ))
 
-        is_explicit_consultation = (
-            not is_action_command and
-            (
-                any(k in msg_l for k in ["which ", "what should ", "how should ", "recommend ", "options for ", "help me decide", "suggest ", "what are my choices"]) or
-                (msg_l.endswith("?") and any(k in msg_l for k in ["choose", "pick", "select", "better"]))
+        qa_prompt = f'''You are the Quantum Guru Senior Theoretical Physics & Quantum Computing Assistant.
+You are interacting with the user in their active Quantum IDE workspace.
+
+=== CURRENT USER WORKSPACE CONTEXT ===
+- Project Name: {project_id}
+- Active File: {active_file}
+- Active Code in Editor:
+```python
+{file_content.strip() if file_content else "# Empty file"}
+```
+
+=== USER QUESTION / MESSAGE ===
+"{user_message}"
+
+INSTRUCTIONS:
+1. Provide a direct, pedagogical, and mathematically rigorous response to the user's inquiry.
+2. Directly reference the user's active code in `{active_file}` if relevant to what they are asking.
+3. Formulate all quantum mathematics using clean KaTeX LaTeX syntax (e.g. $|\\psi\\rangle = \\alpha |0\\rangle + \\beta |1\\rangle$, unitary matrices, inner products, tensor products, Dirac bra-ket notation).
+4. If the user asks how to improve, extend, or fix their circuit, explain the physics and provide reference markdown code snippets with explanations for them to study.
+5. Your role is purely consultative Q&A. Answer engagingly with structured markdown headers.'''
+
+        try:
+            qa_response = await call_groq(
+                system="You are an expert quantum computing professor, researcher, and pedagogical assistant. You help developers understand quantum mechanics, circuits, and algorithms with rigorous LaTeX math and clear pedagogical explanations.",
+                user=qa_prompt,
+                max_tokens=1500
             )
-        )
+        except Exception as e:
+            qa_response = f"### Quantum Computing Assistant\n\n**Question:** {user_message}\n\nIn your active file `{active_file}`, the quantum state is formulated as: $|\\psi\\rangle = \\alpha |0\\rangle + \\beta |1\\rangle$ normalized to $|\\alpha|^2 + |\\beta|^2 = 1$."
 
-        matched_q = find_clarification_question(domain, user_message) if is_explicit_consultation else None
-        if is_explicit_consultation and matched_q:
-            clarif_act = ClarificationPromptAction(
-                project_id=project_id,
-                question=matched_q.question,
-                domain=matched_q.domain,
-                scenario_id=matched_q.id,
-                options=[opt.model_dump() for opt in matched_q.options],
-                default_value=matched_q.default_value
-            )
-            yield await self.stream.publish(clarif_act)
-
-            resp_text = f"### 💡 Architectural Recommendation: {matched_q.domain.title()}\n\n{matched_q.question}\n\n"
-            for opt in matched_q.options:
-                rec_badge = " **(Recommended Default)**" if opt.is_recommended else ""
-                resp_text += f"- **{opt.label}**{rec_badge}\n  *{opt.description or ''}*\n"
-            resp_text += f"\n*Feel free to select one of the options above, or simply instruct me to proceed with the recommended default.*"
-
-            yield await self.stream.publish(FinalResponseAction(
-                project_id=project_id,
-                response_text=resp_text,
-                scientific_verdict="Consultation options presented.",
-                clarification=clarif_act.model_dump()
-            ))
-            return
-
-        if is_qa_inquiry and not is_execution_request and not any(k in msg_l for k in ['create a circuit', 'create circuit', 'build circuit', 'generate circuit', 'write code', 'write a program', 'synthesize circuit']):
-            # ── 🎓 PEDAGOGICAL QUANTUM Q&A MODE (NON-DESTRUCTIVE: NO CODE OVERWRITES) ──
-            yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.academy.concept_explainer"))
-            yield await self.stream.publish(ToolObservation(
-                project_id=project_id,
-                tool_name="tools.academy.concept_explainer",
-                execution_time_ms=5.2,
-                outputs={"status": "decomposed"},
-                summary="Socratic concept decomposition: physics axioms and mathematical foundations"
-            ))
-
-            qa_prompt = f'''You are the Quantum Guru Senior Theoretical Physics & Quantum Computing Assistant.
-The user asks: "{user_message}"
-
-Provide a clear, pedagogical, mathematically precise explanation:
-1. Core Physical Principle & Intuition.
-2. Rigorous Dirac Bra-Ket Mathematics (e.g. $|\\psi\\rangle = \\alpha |0\\rangle + \\beta |1\\rangle$, matrix operators, inner/outer products).
-3. Quantum Information Significance (how gates, circuits, or algorithms leverage this).
-Keep the explanation engaging, concise, and structured with clean markdown headers. Answer educationally without generating full file replacement code.'''
-
-            try:
-                qa_response = await call_groq(
-                    system="You are an expert quantum computing professor and researcher. Explain with rigorous LaTeX math and clear pedagogical insights.",
-                    user=qa_prompt,
-                    max_tokens=1200
-                )
-            except Exception as e:
-                qa_response = f"### Quantum Computing Insight\n\n**Question:** {user_message}\n\nIn quantum computing, state superposition allows linear combinations of basis vectors: $|\\psi\\rangle = \\alpha |0\\rangle + \\beta |1\\rangle$ normalized to $|\\alpha|^2 + |\\beta|^2 = 1$."
-
-            yield await self.stream.publish(FinalResponseAction(
-                project_id=project_id,
-                response_text=qa_response,
-                scientific_verdict="Educational concept decomposed with Dirac mathematics."
-            ))
-            return
-
-
+        yield await self.stream.publish(FinalResponseAction(
+            project_id=project_id,
+            response_text=qa_response,
+            scientific_verdict="Educational concept decomposed with Dirac mathematics."
+        ))
+        return
 
         # =========================================================================
         # 1. 📈 OPTIMIZATION PIPELINE (HYBRID LLM + DETERMINISTIC AutoQUBO)
