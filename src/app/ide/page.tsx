@@ -2475,10 +2475,11 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                     Active: {targetBackend}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 font-mono">
+                <div className="grid grid-cols-4 gap-2 font-mono">
                   {[
-                    { id: 'aer_simulator', label: 'AerSimulator', desc: 'Local C++ Simulator (4Q)' },
-                    { id: 'statevector', label: 'Statevector', desc: 'Exact Ideal Simulation' },
+                    { id: 'aer_simulator', label: 'AerSimulator', desc: 'Local C++ Simulator' },
+                    { id: 'statevector', label: 'Statevector', desc: 'Exact Statevector' },
+                    { id: 'dwave_simulated_annealing', label: 'D-Wave Annealer', desc: 'QUBO & Ising Sampler' },
                     { id: 'ibm_heron', label: 'IBM Heron QPU', desc: 'Cloud QPU Bridge' }
                   ].map((b) => (
                     <div 
