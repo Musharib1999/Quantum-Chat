@@ -1667,14 +1667,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       </div>
                     </div>
 
-                    {/* Continuous ASCII Circuit Trace */}
-                    {circuitAscii && (
-                      <div className="pt-2 border-t shrink-0" style={{ borderColor: colors.border }}>
-                        <pre className="text-[10px] font-mono leading-relaxed overflow-x-auto p-2 rounded-lg bg-zinc-950/80 border border-zinc-800 text-zinc-300 max-h-20">
-                          {circuitAscii}
-                        </pre>
-                      </div>
-                    )}
+
                   </div>
                 )}
 
