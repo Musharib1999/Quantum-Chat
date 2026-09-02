@@ -1190,20 +1190,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       >
         {/* Left: Brand & Project Breadcrumb Dropdown */}
         <div className="flex items-center gap-2.5">
-          {!isLeftOpen && (
-            <button
-              onClick={() => setIsLeftOpen(true)}
-              title="Show Explorer Sidebar"
-              style={{ 
-                backgroundColor: colors.bgPill,
-                borderColor: colors.border,
-                color: colors.textCyan 
-              }}
-              className="p-1.5 rounded-md border transition-colors cursor-pointer hover:border-slate-400 mr-0.5"
-            >
-              <PanelLeft className="w-4 h-4" />
-            </button>
-          )}
+
 
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-0.5 shrink-0 shadow-xs">
@@ -1311,18 +1298,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          <button
-            onClick={() => setIsRightOpen(!isRightOpen)}
-            title={isRightOpen ? "Hide Copilot" : "Show Copilot"}
-            style={{ 
-              backgroundColor: isRightOpen ? colors.bgPill : 'transparent',
-              borderColor: colors.border,
-              color: colors.textCyan 
-            }}
-            className="p-1.5 rounded-md border transition-colors cursor-pointer hover:border-sky-500"
-          >
-            <PanelRight className="w-4 h-4" />
-          </button>
+
         </div>
       </header>
 
@@ -1345,19 +1321,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           >
             {/* ── TOP ICON ACTIONS: NEW PROJECT & MAIN.PY ── */}
             <div className="space-y-2.5">
-              {/* Project Badge & Collapse button */}
-              <div className="flex items-center justify-between px-1 pb-2 border-b" style={{ borderColor: colors.border }}>
-                <span className="text-[10px] font-mono truncate font-semibold" style={{ color: colors.textCyan }}>
+              {/* Project Badge Header */}
+              <div className="flex items-center justify-center px-1 pb-2 border-b text-center" style={{ borderColor: colors.border }}>
+                <span className="text-[10px] font-mono truncate font-semibold tracking-wider" style={{ color: colors.textCyan }}>
                   {projectName.toUpperCase()}
                 </span>
-                <button
-                  onClick={() => setIsLeftOpen(false)}
-                  title="Hide Sidebar"
-                  style={{ color: colors.textMuted }}
-                  className="hover:opacity-80 p-0.5 cursor-pointer"
-                >
-                  <PanelLeft className="w-3.5 h-3.5" />
-                </button>
               </div>
 
               {/* 1. New Project Icon Button */}
