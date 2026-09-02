@@ -85,10 +85,66 @@ def extract_circuit_gates(qc: QuantumCircuit) -> List[Dict[str, Any]]:
     return gates
 
 
+import ast
+
+DISALLOWED_MODULES = {
+    'os', 'sys', 'subprocess', 'shutil', 'socket', 'urllib', 'requests',
+    'pty', 'ctypes', 'builtin', 'builtins', 'pathlib', 'importlib', 'commands',
+    'multiprocessing', 'threading', 'signal', 'tempfile', 'http', 'ftplib'
+}
+DISALLOWED_CALLS = {
+    'eval', 'exec', 'compile', 'open', '__import__', 'getattr', 'setattr', 'delattr'
+}
+
+class SandboxSecurityError(Exception):
+    pass
+
+
+def validate_code_security(code_str: str) -> None:
+    """Pre-execution AST static analysis to prevent RCE, network exfiltration, and host escapes."""
+    if not code_str:
+        return
+    try:
+        tree = ast.parse(code_str)
+    except SyntaxError:
+        # Standard execution will catch and format syntax errors
+        return
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                root = alias.name.split('.')[0]
+                if root in DISALLOWED_MODULES:
+                    raise SandboxSecurityError(f"Security Violation: Import of '{root}' is prohibited in the quantum execution sandbox.")
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                root = node.module.split('.')[0]
+                if root in DISALLOWED_MODULES:
+                    raise SandboxSecurityError(f"Security Violation: Import from '{root}' is prohibited in the quantum execution sandbox.")
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in DISALLOWED_CALLS:
+                raise SandboxSecurityError(f"Security Violation: Direct invocation of '{node.func.id}()' is prohibited.")
+
+
 def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
     """Execute code string and introspect quantum objects and simulator output."""
     t0 = time.time()
     code = req.code or ""
+    backend_used = req.target_backend or "local"
+
+    # 🛡️ Defense-in-Depth Layer 1: AST Static Security Validation
+    try:
+        validate_code_security(code)
+    except SandboxSecurityError as sec_err:
+        return CodeExecutionResponse(
+            success=False,
+            stdout="",
+            stderr=str(sec_err),
+            execution_time_ms=round((time.time() - t0) * 1000, 2),
+            backend_used=backend_used,
+            error=str(sec_err)
+        )
+
     stdout_capture = io.StringIO()
     stderr_capture = io.StringIO()
 
