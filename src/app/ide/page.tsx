@@ -614,8 +614,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const w = window.innerWidth;
-      setLeftWidth(Math.round(w * 0.20));
-      setRightWidth(Math.round(w * 0.40));
+      // Guarantee Section 1 (Left) and Section 3 (Right) are EXACTLY the same width (~18-20%)
+      const targetSidebarWidth = Math.max(240, Math.min(300, Math.round(w * 0.18)));
+      setLeftWidth(targetSidebarWidth);
+      setRightWidth(targetSidebarWidth);
     }
   }, []);
 
