@@ -203,77 +203,25 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
   const initialProjectTemplates: Record<string, { title: string; desc: string; files: Record<string, { name: string; lang: string; content: string }> }> = {
     'my-quantum-project': {
       title: 'Blank Quantum Project',
-      desc: 'Clean 4-qubit parametric ansatz and AerSimulator entrypoint.',
+      desc: 'Clean 2-qubit Bell state and Qiskit AerSimulator entrypoint.',
       files: {
         'main.py': {
           name: 'main.py',
           lang: 'python',
-          content: `"""
-Quantum Guru — Project Entrypoint
-Author: Quantum Developer
-Description: 4-Qubit Parameterized Entangled State & Statevector Simulation
-"""
-
-import numpy as np
-from qiskit import QuantumCircuit
-from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
-from qiskit.quantum_info import Statevector, SparsePauliOp
+          content: `from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 
-def build_quantum_program(num_qubits: int = 4) -> QuantumCircuit:
-    feature_map = ZZFeatureMap(feature_dimension=num_qubits, reps=1, entanglement='linear')
-    ansatz = RealAmplitudes(num_qubits=num_qubits, reps=2)
-    qc = QuantumCircuit(num_qubits)
-    qc.compose(feature_map, inplace=True)
-    qc.compose(ansatz, inplace=True)
-    return qc
+# ⚛️ Bell State Entanglement Circuit
+qc = QuantumCircuit(2)
+qc.h(0)
+qc.cx(0, 1)
 
-def main():
-    print("Initializing Quantum Circuit on AerSimulator...")
-    circuit = build_quantum_program(num_qubits=4)
-    sample_x = np.array([0.931, 1.963, 0.306, 0.185])
-    weights = np.zeros(12)
-    bound_circuit = circuit.assign_parameters(np.concatenate([sample_x, weights]))
-    state = Statevector(bound_circuit)
-    observable = SparsePauliOp.from_list([("Z" + "I" * 3, 1.0)])
-    exp_val = float(np.real(state.expectation_value(observable)))
-    print(f"Simulation Complete. Expectation <Z_0>: {exp_val:.4f}")
-
-if __name__ == "__main__":
-    main()
+# Execute on Qiskit Aer Simulator
+sim = AerSimulator()
+result = sim.run(qc, shots=1024).result()
+print("Bell State Prepared!")
+print("Measurement Counts:", result.get_counts())
 `
-        },
-        'quantum.config.json': {
-          name: 'quantum.config.json',
-          lang: 'json',
-          content: JSON.stringify({
-            project_name: "my-quantum-project",
-            archetype: "circuit_engineering",
-            pipeline_hints: [
-              "tools.circuit.build_quantum_circuit",
-              "tools.circuit.bind_parameters",
-              "tools.circuit.transpile_passes",
-              "tools.sim.qiskit_aer",
-              "tools.circuit.render_continuous"
-            ],
-            default_backend: "aer_simulator",
-            default_shots: 1024,
-            optimization_level: 2,
-            verification_contract: {
-              fidelity_threshold: 0.998,
-              normalization: 1.0
-            }
-          }, null, 2)
-        },
-        'MEMORY.md': {
-          name: 'MEMORY.md',
-          lang: 'markdown',
-          content: `# 🧠 Project Memory: my-quantum-project\n\n## Turn #1 — CNOT Depth Optimization\n- User Prompt: "Optimize CNOT depth in main.py"\n- Agent: Quantum Guru Transpiler Agent\n- Tool: [#19] tools.circuit.transpile_passes (Level 2) -> Depth: 6 to 4 (-33%)\n- State: aer_simulator | Active Qubits: 4 | Fidelity: 99.82%`
-        },
-        'README.md': {
-          name: 'README.md',
-          lang: 'markdown',
-          content: `# Quantum Project\n\nUse \`/execute@program\` or \`/transpile@level2\` in Copilot chat.`
         }
       }
     },
@@ -791,6 +739,37 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       console.warn('Failed to sync project to MongoDB:', err);
     }
   }, []);
+
+  // Create a new Python file in active project
+  const handleCreateNewFile = () => {
+    const pyFiles = Object.keys(projectFiles).filter(f => f.endsWith('.py'));
+    const nextNum = pyFiles.length + 1;
+    const newFileName = `circuit_${nextNum}.py`;
+    const starterContent = `from qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\n\nqc = QuantumCircuit(2)\nqc.h(0)\nqc.cx(0, 1)\n\nsim = AerSimulator()\nresult = sim.run(qc, shots=1024).result()\nprint('Counts:', result.get_counts())\n`;
+
+    setProjectFiles(prev => {
+      const updated = {
+        ...prev,
+        [newFileName]: {
+          name: newFileName,
+          lang: 'python',
+          content: starterContent
+        }
+      };
+      const updatedProj = {
+        ...(allProjects[projectName] || {}),
+        files: updated
+      };
+      setAllProjects(pPrev => ({
+        ...pPrev,
+        [projectName]: updatedProj
+      }));
+      saveProjectToDatabase(projectName, updatedProj, newFileName, runtimeMetrics);
+      return updated;
+    });
+
+    setActiveFile(newFileName);
+  };
 
   // Create a new project with custom name and chosen scaffold template
   const handleCreateCustomProject = () => {
@@ -1365,20 +1344,41 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 <span>{projectName.toUpperCase()}</span>
               </div>
 
-              {Object.keys(files || {}).map((fName) => (
-                <div 
-                  key={fName}
-                  onClick={() => setActiveFile(fName)}
-                  style={{ 
-                    backgroundColor: activeFile === fName ? colors.bgPill : 'transparent',
-                    borderColor: activeFile === fName ? colors.border : 'transparent',
-                    color: activeFile === fName ? colors.textPrimary : colors.textMuted
-                  }}
-                  className="flex items-center gap-2 px-6 py-1.5 rounded-md cursor-pointer transition-colors border font-normal"
+              {/* Phase 1 Clean File Tree: Show Python code files only */}
+              <div className="flex items-center justify-between px-2 py-1 text-[11px] font-sans" style={{ color: colors.textMuted }}>
+                <span className="font-semibold uppercase tracking-wider text-[10px]" style={{ color: colors.textCyan }}>Files</span>
+                <button
+                  onClick={handleCreateNewFile}
+                  style={{ color: colors.textCyan }}
+                  className="p-1 hover:bg-sky-500/10 rounded cursor-pointer transition-colors flex items-center gap-1 text-[10px]"
+                  title="Add new python script"
                 >
-                  <FileCode className="w-3.5 h-3.5" style={{ color: activeFile === fName ? colors.textCyan : colors.textMuted }} />
-                  <span className="truncate font-normal">{fName}</span>
-                </div>
+                  <Plus className="w-3 h-3" />
+                  <span>New Script</span>
+                </button>
+              </div>
+
+              {Object.keys(files || {})
+                .filter(fName => fName.endsWith('.py'))
+                .map((fName) => (
+                  <div 
+                    key={fName}
+                    onClick={() => setActiveFile(fName)}
+                    style={{ 
+                      backgroundColor: activeFile === fName ? colors.bgPill : 'transparent',
+                      borderColor: activeFile === fName ? colors.border : 'transparent',
+                      color: activeFile === fName ? colors.textPrimary : colors.textMuted
+                    }}
+                    className="flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer transition-colors border font-mono text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileCode className="w-3.5 h-3.5 shrink-0" style={{ color: activeFile === fName ? colors.textCyan : colors.textMuted }} />
+                      <span className="truncate">{fName}</span>
+                    </div>
+                    {activeFile === fName && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+                    )}
+                  </div>
               ))}
 
               {/* Dynamic Domain-Aware Telemetry & Runtime Solvers Cards */}
