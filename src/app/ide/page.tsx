@@ -1964,12 +1964,22 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       </div>
                     </div>
 
-                    {/* Interactive Qubit Wires Grid */}
+                    {/* Interactive Qubit Wires Grid (Supports Multiple Sequential Gates per Qubit) */}
                     <div className="flex-1 overflow-x-auto min-h-0 py-1">
-                      <div className="min-w-[580px] space-y-2.5">
+                      <div className="min-w-[640px] space-y-2">
+                        {/* Timeline Steps Header */}
+                        <div className="flex items-center gap-2.5 text-[10px] font-mono text-zinc-500 select-none pb-0.5">
+                          <div className="w-12 text-center shrink-0">Wire</div>
+                          <div className="flex-1 grid grid-cols-10 gap-2 text-center">
+                            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(s => (
+                              <div key={s} className="opacity-70">t{s}</div>
+                            ))}
+                          </div>
+                        </div>
+
                         {[0, 1, 2, 3].map(qIdx => (
                           <div key={qIdx} className="flex items-center gap-2.5">
-                            {/* Qubit Label */}
+                            {/* Qubit Wire Label */}
                             <div 
                               style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
                               className="w-12 h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-semibold shrink-0 shadow-xs"
@@ -1977,17 +1987,17 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                               q[{qIdx}]
                             </div>
 
-                            {/* Wire Slots */}
+                            {/* Wire Line with 10 Sequential Time Step Slots */}
                             <div className="flex-1 flex items-center relative h-8">
-                              {/* Horizontal Wire Line */}
+                              {/* Continuous Horizontal Quantum Wire */}
                               <div 
                                 style={{ backgroundColor: colors.border }} 
                                 className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] z-0" 
                               />
 
-                              {/* 8 Step Slots */}
-                              <div className="grid grid-cols-8 gap-2 w-full relative z-10">
-                                {[0, 1, 2, 3, 4, 5, 6, 7].map(stepIdx => {
+                              {/* 10 Time Step Slots on this Qubit */}
+                              <div className="grid grid-cols-10 gap-2 w-full relative z-10">
+                                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(stepIdx => {
                                   const gateOnSlot = circuitGates.find(g => g.qubit === qIdx && g.step === stepIdx);
                                   return (
                                     <button
@@ -1997,8 +2007,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                         backgroundColor: gateOnSlot ? '#18181b' : 'rgba(24, 24, 27, 0.5)',
                                         borderColor: gateOnSlot ? '#38bdf8' : colors.border
                                       }}
-                                      className={`h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer hover:border-sky-400 shadow-xs ${gateOnSlot ? 'text-sky-300 ring-1 ring-sky-400/40' : 'text-zinc-600 hover:text-zinc-300'}`}
-                                      title={gateOnSlot ? `Click to remove ${gateOnSlot.name.toUpperCase()} gate` : `Click to place ${selectedGateTool.toUpperCase()}`}
+                                      className={`h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer hover:border-sky-400 shadow-xs ${gateOnSlot ? 'text-sky-300 ring-1 ring-sky-400/40 bg-sky-950/30' : 'text-zinc-600 hover:text-zinc-300'}`}
+                                      title={gateOnSlot ? `Slot t${stepIdx}: Click to remove ${gateOnSlot.name.toUpperCase()}` : `Slot t${stepIdx}: Click to place ${selectedGateTool.toUpperCase()}`}
                                     >
                                       {gateOnSlot ? gateOnSlot.name.toUpperCase() : '+'}
                                     </button>
