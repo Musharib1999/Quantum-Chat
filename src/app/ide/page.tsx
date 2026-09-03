@@ -1847,11 +1847,12 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
             }} 
             className="shrink-0 flex flex-col transition-all duration-150 overflow-hidden border-t"
           >
-            {/* Drawer Tab Header Bar */}
+            {/* ── UNIFIED SINGLE-ROW DRAWER HEADER (TABS + ACTIONS + CONTROLS) ── */}
             <div 
               style={{ backgroundColor: colors.bgBottomDrawerHeader, borderColor: colors.border }}
-              className="h-9 px-4 border-b flex items-center justify-between shrink-0 select-none"
+              className="h-10 px-3.5 border-b flex items-center justify-between shrink-0 select-none"
             >
+              {/* ZONE 1 (LEFT): Navigation Mode Tabs */}
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => { setActiveBottomTab('circuit'); setIsBottomOpen(true); }}
@@ -1860,7 +1861,7 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                     color: activeBottomTab === 'circuit' && isBottomOpen ? colors.textCyan : colors.textMuted,
                     borderColor: activeBottomTab === 'circuit' && isBottomOpen ? colors.border : 'transparent'
                   }}
-                  className="px-2.5 py-1 rounded-md text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
+                  className="px-2.5 py-1 rounded-lg text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
                 >
                   <Cpu className="w-3.5 h-3.5" />
                   <span>Interactive Circuit Canvas</span>
@@ -1873,7 +1874,7 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                     color: activeBottomTab === 'terminal' && isBottomOpen ? colors.textEmerald : colors.textMuted,
                     borderColor: activeBottomTab === 'terminal' && isBottomOpen ? colors.border : 'transparent'
                   }}
-                  className="px-2.5 py-1 rounded-md text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
+                  className="px-2.5 py-1 rounded-lg text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
                 >
                   <Terminal className="w-3.5 h-3.5" />
                   <span>QPU Terminal</span>
@@ -1887,18 +1888,67 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                     color: activeBottomTab === 'results' && isBottomOpen ? colors.textAmber : colors.textMuted,
                     borderColor: activeBottomTab === 'results' && isBottomOpen ? colors.border : 'transparent'
                   }}
-                  className="px-2.5 py-1 rounded-md text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
+                  className="px-2.5 py-1 rounded-lg text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
                 >
                   <BarChart3 className="w-3.5 h-3.5" />
                   <span>Measurement Results</span>
                 </button>
               </div>
 
+              {/* ZONE 2 & 3 (RIGHT): Context-Aware Actions & Window Controls */}
               <div className="flex items-center gap-2">
+                {/* Circuit Canvas Actions */}
+                {activeBottomTab === 'circuit' && isBottomOpen && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleClearCircuitGates}
+                      className="px-2.5 py-1 rounded-lg border border-transparent text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 text-xs font-sans cursor-pointer transition-all"
+                      title="Clear all gates from wires"
+                    >
+                      Clear Wire
+                    </button>
+                    <button
+                      onClick={() => handleRun()}
+                      className="px-3 py-1 rounded-lg bg-sky-500/20 border border-sky-500/50 text-sky-400 hover:bg-sky-500/30 text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                      title="Simulate active circuit on AerSimulator"
+                    >
+                      <Play className="w-3 h-3" />
+                      <span>Simulate on Aer</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Terminal Actions */}
+                {activeBottomTab === 'terminal' && isBottomOpen && (
+                  <button
+                    onClick={() => setTerminalLogs([])}
+                    className="px-2.5 py-1 rounded-lg border border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 text-xs font-sans cursor-pointer transition-all"
+                    title="Clear terminal output"
+                  >
+                    Clear Output
+                  </button>
+                )}
+
+                {/* Measurement Results Actions */}
+                {activeBottomTab === 'results' && isBottomOpen && (
+                  <button
+                    onClick={() => handleRun()}
+                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30 text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                    title="Re-run simulation for fresh shots"
+                  >
+                    <RotateCw className="w-3 h-3" />
+                    <span>Re-run Shots</span>
+                  </button>
+                )}
+
+                {/* Subtle Hairline Divider */}
+                <div className="h-4 w-px bg-zinc-700/50 my-auto" />
+
+                {/* ZONE 3: Drawer Toggle Chevron */}
                 <button
                   onClick={() => setIsBottomOpen(!isBottomOpen)}
                   style={{ color: colors.textMuted }}
-                  className="p-1 rounded hover:opacity-80 transition-opacity cursor-pointer"
+                  className="p-1 rounded-lg hover:bg-zinc-800/50 transition-colors cursor-pointer"
                   title={isBottomOpen ? "Collapse drawer" : "Expand drawer"}
                 >
                   {isBottomOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
@@ -1911,130 +1961,8 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
               <div className="flex-1 min-h-0 overflow-auto">
                 {/* TAB 1: INTERACTIVE CIRCUIT CANVAS */}
                 {activeBottomTab === 'circuit' && (
-                  <div className="p-3.5 space-y-3 font-sans h-full flex flex-col">
-                    {/* ── CLEAN 1-ROW CANVAS TOOLBAR WITH DROPDOWN ── */}
-                    <div className="flex items-center justify-between pb-2 border-b shrink-0 select-none relative z-30" style={{ borderColor: colors.border }}>
-                      {/* Left: Compact Gate Dropdown Trigger */}
-                      <div className="relative toolbar-gate-dropdown">
-                        <button
-                          onClick={() => setIsToolbarDropdownOpen(!isToolbarDropdownOpen)}
-                          style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
-                          className="px-3 py-1 rounded-lg border text-xs font-sans flex items-center gap-2 cursor-pointer hover:border-sky-500 transition-colors shadow-2xs"
-                          title="Click to choose active quantum gate tool"
-                        >
-                          <span style={{ color: colors.textMuted }} className="text-[11px]">Active Tool:</span>
-                          <span className="font-mono font-bold uppercase px-1.5 py-0.5 rounded text-[11px] bg-sky-500/20 text-sky-400 border border-sky-500/30">
-                            {selectedGateTool.toUpperCase()}
-                          </span>
-                          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isToolbarDropdownOpen ? 'rotate-180' : ''}`} style={{ color: colors.textMuted }} />
-                        </button>
-
-                        {/* Dropdown Menu (Opens Above the Box) */}
-                        {isToolbarDropdownOpen && (
-                          <div 
-                            style={{ 
-                              backgroundColor: colors.bgCard, 
-                              borderColor: isDark ? '#38bdf8' : '#0284c7', 
-                              color: colors.textPrimary 
-                            }}
-                            className="absolute top-full left-0 mt-1.5 z-50 p-2.5 rounded-xl border shadow-2xl min-w-[290px] animate-in fade-in zoom-in-95 duration-100 select-none"
-                          >
-                            <div className="text-[10px] font-semibold uppercase tracking-wider mb-2 font-heading" style={{ color: colors.textCyan }}>
-                              Choose Quantum Gate Tool
-                            </div>
-                            <div className="space-y-2 text-[10px]">
-                              <div className="flex items-center gap-1">
-                                <span className="w-12 text-zinc-500 font-sans text-[9px]">Pauli:</span>
-                                {['h', 'x', 'y', 'z', 's', 't'].map(gId => (
-                                  <button
-                                    key={gId}
-                                    onClick={() => { setSelectedGateTool(gId); setIsToolbarDropdownOpen(false); }}
-                                    className={`w-7 h-6 rounded border font-mono font-bold flex items-center justify-center transition-all cursor-pointer ${
-                                      selectedGateTool === gId 
-                                        ? 'bg-sky-500 border-sky-400 text-white' 
-                                        : (isDark ? 'border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:border-sky-400' : 'border-slate-200 bg-white text-slate-700 hover:border-sky-500 shadow-2xs')
-                                    }`}
-                                  >
-                                    {gId.toUpperCase()}
-                                  </button>
-                                ))}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="w-12 text-zinc-500 font-sans text-[9px]">Rotate:</span>
-                                {['rx', 'ry', 'rz'].map(gId => (
-                                  <button
-                                    key={gId}
-                                    onClick={() => { setSelectedGateTool(gId); setIsToolbarDropdownOpen(false); }}
-                                    className={`px-2 h-6 rounded border font-mono text-[10px] font-semibold flex items-center justify-center transition-all cursor-pointer ${
-                                      selectedGateTool === gId 
-                                        ? 'bg-sky-500 border-sky-400 text-white' 
-                                        : (isDark ? 'border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:border-sky-400' : 'border-slate-200 bg-white text-slate-700 hover:border-sky-500 shadow-2xs')
-                                    }`}
-                                  >
-                                    {gId === 'rx' ? 'Rx' : (gId === 'ry' ? 'Ry' : 'Rz')}
-                                  </button>
-                                ))}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="w-12 text-zinc-500 font-sans text-[9px]">Entangle:</span>
-                                {['cx', 'cz', 'swap', 'ccx'].map(gId => (
-                                  <button
-                                    key={gId}
-                                    onClick={() => { setSelectedGateTool(gId); setIsToolbarDropdownOpen(false); }}
-                                    className={`px-1.5 h-6 rounded border font-mono text-[10px] font-bold flex items-center justify-center transition-all cursor-pointer ${
-                                      selectedGateTool === gId 
-                                        ? 'bg-purple-600 border-purple-400 text-white' 
-                                        : (isDark ? 'border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:border-purple-400' : 'border-slate-200 bg-white text-slate-700 hover:border-purple-500 shadow-2xs')
-                                    }`}
-                                  >
-                                    {gId.toUpperCase()}
-                                  </button>
-                                ))}
-                                <button
-                                  onClick={() => { setSelectedGateTool('measure'); setIsToolbarDropdownOpen(false); }}
-                                  className={`px-2 h-6 rounded border font-mono text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ml-auto ${
-                                    selectedGateTool === 'measure' 
-                                      ? 'bg-cyan-600 border-cyan-400 text-white' 
-                                      : (isDark ? 'border-cyan-500/40 bg-cyan-950/40 text-cyan-300' : 'border-cyan-300 bg-cyan-50 text-cyan-700')
-                                  }`}
-                                >
-                                  Meter
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        {/* Coordinate Awareness Indicator */}
-                        <div 
-                          style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
-                          className="flex items-center gap-1 text-[11px] font-mono px-2 py-1 rounded-lg border text-zinc-400 select-none shadow-2xs"
-                          title="Gates preserve explicit 2D grid coordinates (qubit, time-step). Gate order directly dictates quantum operator matrix products."
-                        >
-                          <span style={{ color: colors.textMuted }}>Grid:</span>
-                          <span style={{ color: colors.textCyan }} className="font-semibold">(q[0..3], t0..t9)</span>
-                        </div>
-
-                        <button
-                          onClick={() => handleRun()}
-                          className="px-2.5 py-1 rounded-lg bg-sky-500/20 border border-sky-500/50 text-sky-400 hover:bg-sky-500/30 text-xs font-sans font-medium flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <Play className="w-3 h-3" />
-                          <span>Simulate on Aer</span>
-                        </button>
-                        <button
-                          onClick={handleClearCircuitGates}
-                          className="px-2 py-1 rounded-lg border border-zinc-800 text-zinc-500 hover:text-red-400 text-xs font-sans cursor-pointer transition-colors"
-                        >
-                          Clear Wire
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Interactive Qubit Wires Grid (Supports Multiple Sequential Gates per Qubit) */}
+                  <div className="p-3.5 font-sans h-full flex flex-col">
+                    {/* Interactive Qubit Wires Grid (Starts immediately below unified header) */}
                     <div className="flex-1 overflow-x-auto min-h-0 py-1">
                       <div className="min-w-[640px] space-y-2">
                         {/* Timeline Steps Header */}
