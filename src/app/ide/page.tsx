@@ -264,33 +264,33 @@ export default function QuantumIDE() {
   // ─────────────────────────────────────────────────────────────
   const colors = {
     // 🎨 3-TIER SURFACE SHADE ELEVATION (SECTION 2 IN FOCUS)
-    bgSection1: isDark ? '#09090B' : '#F4F4F5',     // Tier 1: Section 1 Left Dock (Recessed Obsidian)
-    bgSection2: isDark ? '#141417' : '#FFFFFF',     // Tier 2: Section 2 Center Stage (ELEVATED HERO FOCUS)
-    bgSection3: isDark ? '#0E0E11' : '#F8FAFC',     // Tier 3: Section 3 Right Copilot (Balanced Midnight)
+    bgSection1: isDark ? '#09090B' : '#F1F3F6',     // Tier 1: Section 1 Left Dock (Cool Mist Gray)
+    bgSection2: isDark ? '#141417' : '#FFFFFF',     // Tier 2: Section 2 Center Stage (Crisp White Canvas IN FOCUS)
+    bgSection3: isDark ? '#0E0E11' : '#F6F8FA',     // Tier 3: Section 3 Right Copilot (Soft Studio Gray)
 
     // Structural backgrounds
-    bgMain: isDark ? '#09090B' : '#FAFAFA',
-    bgHeader: isDark ? '#09090B' : '#FFFFFF',       // Flush with Section 1
-    bgSidebar: isDark ? '#09090B' : '#FAFAFA',
+    bgMain: isDark ? '#09090B' : '#F1F3F6',
+    bgHeader: isDark ? '#09090B' : '#F1F3F6',       // Flush with Section 1
+    bgSidebar: isDark ? '#09090B' : '#F1F3F6',
     bgEditor: isDark ? '#141417' : '#FFFFFF',       // Center Monaco Editor
     bgBottomDrawer: isDark ? '#111114' : '#F8FAFC', // Nested canvas & terminal
-    bgBottomDrawerHeader: isDark ? '#111114' : '#F1F5F9',
+    bgBottomDrawerHeader: isDark ? '#111114' : '#F1F3F6',
     bgCard: isDark ? '#18181D' : '#FFFFFF',
-    bgInput: isDark ? '#09090C' : '#F5F5F5',
-    bgPill: isDark ? '#19191E' : '#F0F0F0',
+    bgInput: isDark ? '#09090C' : '#FFFFFF',
+    bgPill: isDark ? '#19191E' : '#E2E8F0',
 
     // Tiered Borders for Depth & Elevation Contrast
-    border: isDark ? '#1E1E24' : '#E5E5E5',
+    border: isDark ? '#1E1E24' : '#E2E8F0',
     borderSection2: isDark ? '#262630' : '#CBD5E1', // Elevated border framing Hero Section 2
-    borderSubtle: isDark ? '#15151A' : '#F5F5F5',
+    borderSubtle: isDark ? '#15151A' : '#F1F5F9',
     
-    // Semantic Text Roles (Soft, Non-Glare)
-    textPrimary: isDark ? '#E2E8F0' : '#1E293B',
-    textMuted: isDark ? '#828E9E' : '#64748B',
-    textCyan: isDark ? '#33A8DB' : '#0376AD',
-    textEmerald: isDark ? '#2FB885' : '#0A8760',
-    textAmber: isDark ? '#DEAA21' : '#BF6C08',
-    textSkyBlue: isDark ? '#5390DD' : '#2A5BC7',
+    // Semantic Text Roles (Soft, Non-Glare in Dark; Deep Ink in Light)
+    textPrimary: isDark ? '#E2E8F0' : '#0F172A',   // Deep Slate 900 in light mode!
+    textMuted: isDark ? '#828E9E' : '#475569',     // Slate 600 in light mode!
+    textCyan: isDark ? '#33A8DB' : '#0284C7',      // Sky 600 in light mode
+    textEmerald: isDark ? '#2FB885' : '#059669',   // Emerald 600
+    textAmber: isDark ? '#DEAA21' : '#D97706',     // Amber 600
+    textSkyBlue: isDark ? '#5390DD' : '#2563EB',   // Blue 600
   };
 
   // ─────────────────────────────────────────────────────────────
@@ -1799,25 +1799,29 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[11px] font-sans font-medium mr-1.5" style={{ color: colors.textMuted }}>Gate Palette:</span>
                         {[
-                          { id: 'h', label: 'H', desc: 'Hadamard', color: 'border-sky-500/50 bg-sky-500/15 text-sky-400' },
-                          { id: 'x', label: 'X', desc: 'NOT / Pauli-X', color: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400' },
-                          { id: 'y', label: 'Y', desc: 'Pauli-Y', color: 'border-teal-500/50 bg-teal-500/15 text-teal-400' },
-                          { id: 'z', label: 'Z', desc: 'Phase-Flip / Pauli-Z', color: 'border-amber-500/50 bg-amber-500/15 text-amber-400' },
-                          { id: 's', label: 'S', desc: 'Phase π/2', color: 'border-blue-500/50 bg-blue-500/15 text-blue-400' },
-                          { id: 't', label: 'T', desc: 'T Gate (π/4)', color: 'border-indigo-500/50 bg-indigo-500/15 text-indigo-400' },
-                          { id: 'rx', label: 'Rx(θ)', desc: 'X-Rotation', color: 'border-rose-500/50 bg-rose-500/15 text-rose-400' },
-                          { id: 'ry', label: 'Ry(θ)', desc: 'Y-Rotation', color: 'border-orange-500/50 bg-orange-500/15 text-orange-400' },
-                          { id: 'rz', label: 'Rz(θ)', desc: 'Z-Rotation', color: 'border-pink-500/50 bg-pink-500/15 text-pink-400' },
-                          { id: 'cx', label: 'CX', desc: 'CNOT Entangler', color: 'border-purple-500/50 bg-purple-500/15 text-purple-400' },
-                          { id: 'cz', label: 'CZ', desc: 'Controlled-Z', color: 'border-violet-500/50 bg-violet-500/15 text-violet-400' },
-                          { id: 'swap', label: 'SWAP', desc: 'Qubit State Swap', color: 'border-fuchsia-500/50 bg-fuchsia-500/15 text-fuchsia-400' },
-                          { id: 'ccx', label: 'CCX', desc: 'Toffoli 3-Qubit', color: 'border-indigo-400/50 bg-indigo-500/15 text-indigo-300' },
-                          { id: 'measure', label: 'Measure', isMeasure: true, desc: 'Measurement Meter', color: 'border-cyan-400/60 bg-cyan-500/20 text-cyan-300' }
+                          { id: 'h', label: 'H', desc: 'Hadamard', color: isDark ? 'border-sky-500/50 bg-sky-500/15 text-sky-400' : 'border-sky-300 bg-sky-50 text-sky-700 font-semibold' },
+                          { id: 'x', label: 'X', desc: 'NOT / Pauli-X', color: isDark ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400' : 'border-emerald-300 bg-emerald-50 text-emerald-700 font-semibold' },
+                          { id: 'y', label: 'Y', desc: 'Pauli-Y', color: isDark ? 'border-teal-500/50 bg-teal-500/15 text-teal-400' : 'border-teal-300 bg-teal-50 text-teal-700 font-semibold' },
+                          { id: 'z', label: 'Z', desc: 'Phase-Flip / Pauli-Z', color: isDark ? 'border-amber-500/50 bg-amber-500/15 text-amber-400' : 'border-amber-300 bg-amber-50 text-amber-700 font-semibold' },
+                          { id: 's', label: 'S', desc: 'Phase π/2', color: isDark ? 'border-blue-500/50 bg-blue-500/15 text-blue-400' : 'border-blue-300 bg-blue-50 text-blue-700 font-semibold' },
+                          { id: 't', label: 'T', desc: 'T Gate (π/4)', color: isDark ? 'border-indigo-500/50 bg-indigo-500/15 text-indigo-400' : 'border-indigo-300 bg-indigo-50 text-indigo-700 font-semibold' },
+                          { id: 'rx', label: 'Rx(θ)', desc: 'X-Rotation', color: isDark ? 'border-rose-500/50 bg-rose-500/15 text-rose-400' : 'border-rose-300 bg-rose-50 text-rose-700 font-semibold' },
+                          { id: 'ry', label: 'Ry(θ)', desc: 'Y-Rotation', color: isDark ? 'border-orange-500/50 bg-orange-500/15 text-orange-400' : 'border-orange-300 bg-orange-50 text-orange-700 font-semibold' },
+                          { id: 'rz', label: 'Rz(θ)', desc: 'Z-Rotation', color: isDark ? 'border-pink-500/50 bg-pink-500/15 text-pink-400' : 'border-pink-300 bg-pink-50 text-pink-700 font-semibold' },
+                          { id: 'cx', label: 'CX', desc: 'CNOT Entangler', color: isDark ? 'border-purple-500/50 bg-purple-500/15 text-purple-400' : 'border-purple-300 bg-purple-50 text-purple-700 font-semibold' },
+                          { id: 'cz', label: 'CZ', desc: 'Controlled-Z', color: isDark ? 'border-violet-500/50 bg-violet-500/15 text-violet-400' : 'border-violet-300 bg-violet-50 text-violet-700 font-semibold' },
+                          { id: 'swap', label: 'SWAP', desc: 'Qubit State Swap', color: isDark ? 'border-fuchsia-500/50 bg-fuchsia-500/15 text-fuchsia-400' : 'border-fuchsia-300 bg-fuchsia-50 text-fuchsia-700 font-semibold' },
+                          { id: 'ccx', label: 'CCX', desc: 'Toffoli 3-Qubit', color: isDark ? 'border-indigo-400/50 bg-indigo-500/15 text-indigo-300' : 'border-indigo-300 bg-indigo-50 text-indigo-700 font-semibold' },
+                          { id: 'measure', label: 'Measure', isMeasure: true, desc: 'Measurement Meter', color: isDark ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-300' : 'border-cyan-400 bg-cyan-50 text-cyan-700 font-semibold' }
                         ].map(g => (
                           <button
                             key={g.id}
                             onClick={() => setSelectedGateTool(g.id)}
-                            className={`px-2.5 py-0.5 rounded-lg border text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${selectedGateTool === g.id ? `${g.color} ring-1 ring-sky-400` : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200'}`}
+                            className={`px-2.5 py-0.5 rounded-lg border text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                              selectedGateTool === g.id 
+                                ? `${g.color} ring-1 ring-sky-400` 
+                                : (isDark ? 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200' : 'border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-2xs')
+                            }`}
                           >
                             {g.isMeasure ? (
                               <>
