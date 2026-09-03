@@ -2050,196 +2050,208 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                           </div>
                         </div>
 
-                        {[0, 1, 2, 3].map(qIdx => (
-                          <div key={qIdx} className="flex items-center gap-2.5">
-                            {/* Qubit Wire Label */}
-                            <div 
-                              style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
-                              className="w-12 h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-semibold shrink-0 shadow-xs"
-                            >
-                              q[{qIdx}]
-                            </div>
+                        {[0, 1, 2, 3].map(qIdx => {
+                          const isRowActive = activeSlotPopover?.qubit === qIdx;
 
-                            {/* Wire Line with 10 Sequential Time Step Slots */}
-                            <div className="flex-1 flex items-center relative h-8">
-                              {/* Continuous Horizontal Quantum Wire */}
+                          return (
+                            <div key={qIdx} className={`flex items-center gap-2.5 relative ${isRowActive ? 'z-40' : 'z-0'}`}>
+                              {/* Qubit Wire Label */}
                               <div 
-                                style={{ backgroundColor: colors.border }} 
-                                className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] z-0" 
-                              />
-
-                              {/* 10 Time Step Slots on this Qubit */}
-                              <div 
-                                style={{ display: 'grid', gridTemplateColumns: 'repeat(10, minmax(0, 1fr))', gap: '8px' }}
-                                className="w-full relative z-10"
+                                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+                                className="w-12 h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-semibold shrink-0 shadow-xs"
                               >
-                                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(stepIdx => {
-                                  const gateOnSlot = circuitGates.find(g => g.qubit === qIdx && g.step === stepIdx);
-                                  const isPopoverOpen = activeSlotPopover?.qubit === qIdx && activeSlotPopover?.step === stepIdx;
-                                  const isTopWire = qIdx === 0;
+                                q[{qIdx}]
+                              </div>
 
-                                  return (
-                                    <div key={stepIdx} className="relative w-full h-8">
-                                      {/* Wire Slot Button */}
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (isPopoverOpen) {
-                                            setActiveSlotPopover(null);
-                                          } else {
-                                            setActiveSlotPopover({ qubit: qIdx, step: stepIdx });
-                                          }
-                                        }}
-                                        style={{
-                                          backgroundColor: gateOnSlot 
-                                            ? (isDark ? '#0c4a6e' : '#e0f2fe') 
-                                            : (isDark ? 'rgba(24, 24, 27, 0.6)' : '#ffffff'),
-                                          borderColor: gateOnSlot 
-                                            ? (isDark ? '#38bdf8' : '#0284c7') 
-                                            : (isDark ? colors.border : '#e2e8f0'),
-                                          color: gateOnSlot 
-                                            ? (isDark ? '#7dd3fc' : '#0369a1') 
-                                            : (isDark ? '#71717a' : '#94a3b8')
-                                        }}
-                                        className={`wire-slot-btn w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer shadow-2xs ${
-                                          gateOnSlot 
-                                            ? (isDark ? 'ring-1 ring-sky-400/50' : 'ring-1 ring-sky-500/50 shadow-xs') 
-                                            : (isDark ? 'hover:border-sky-400 hover:text-zinc-300' : 'hover:border-sky-500 hover:text-slate-800 hover:bg-slate-50')
-                                        }`}
-                                        title={gateOnSlot ? `Slot (q[${qIdx}], t${stepIdx}): ${gateOnSlot.name.toUpperCase()} (Click to change or remove)` : `Slot (q[${qIdx}], t${stepIdx}): Click to choose gate`}
-                                      >
-                                        {gateOnSlot ? renderGateSlotContent(gateOnSlot.name) : '+'}
-                                      </button>
+                              {/* Wire Line with 10 Sequential Time Step Slots */}
+                              <div className={`flex-1 flex items-center relative h-8 ${isRowActive ? 'z-40' : 'z-0'}`}>
+                                {/* Continuous Horizontal Quantum Wire */}
+                                <div 
+                                  style={{ backgroundColor: colors.border }} 
+                                  className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] z-0" 
+                                />
 
-                                      {/* Floating Gate Picker Popover Directly Above/Below this Box */}
-                                      {isPopoverOpen && (
-                                        <div 
-                                          style={{ 
-                                            backgroundColor: colors.bgCard, 
-                                            borderColor: isDark ? '#38bdf8' : '#0284c7',
-                                            color: colors.textPrimary 
+                                {/* 10 Time Step Slots on this Qubit */}
+                                <div 
+                                  style={{ display: 'grid', gridTemplateColumns: 'repeat(10, minmax(0, 1fr))', gap: '8px' }}
+                                  className={`w-full relative ${isRowActive ? 'z-40' : 'z-0'}`}
+                                >
+                                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(stepIdx => {
+                                    const gateOnSlot = circuitGates.find(g => g.qubit === qIdx && g.step === stepIdx);
+                                    const isPopoverOpen = activeSlotPopover?.qubit === qIdx && activeSlotPopover?.step === stepIdx;
+                                    const isTopWire = qIdx === 0;
+
+                                    return (
+                                      <div key={stepIdx} className={`relative w-full h-8 ${isPopoverOpen ? 'z-50' : 'z-0'}`}>
+                                        {/* Wire Slot Button */}
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (isPopoverOpen) {
+                                              setActiveSlotPopover(null);
+                                            } else {
+                                              setActiveSlotPopover({ qubit: qIdx, step: stepIdx });
+                                            }
                                           }}
-                                          className={`slot-popover-container absolute z-50 p-2.5 rounded-xl border shadow-2xl animate-in fade-in zoom-in-95 duration-100 min-w-[290px] select-none ${
-                                            isTopWire ? 'top-full mt-2.5' : 'bottom-full mb-2.5'
-                                          } ${
-                                            stepIdx <= 1 ? 'left-0' : (stepIdx >= 8 ? 'right-0' : 'left-1/2 -translate-x-1/2')
+                                          style={{
+                                            backgroundColor: gateOnSlot 
+                                              ? (isDark ? '#0c4a6e' : '#e0f2fe') 
+                                              : (isDark ? '#141418' : '#ffffff'),
+                                            borderColor: gateOnSlot 
+                                              ? (isDark ? '#38bdf8' : '#0284c7') 
+                                              : (isDark ? colors.border : '#e2e8f0'),
+                                            color: gateOnSlot 
+                                              ? (isDark ? '#7dd3fc' : '#0369a1') 
+                                              : (isDark ? '#71717a' : '#94a3b8')
+                                          }}
+                                          className={`wire-slot-btn w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                                            gateOnSlot 
+                                              ? (isDark ? 'ring-1 ring-sky-400/50' : 'ring-1 ring-sky-500/50 shadow-xs') 
+                                              : (isDark ? 'hover:border-sky-400 hover:text-zinc-300' : 'hover:border-sky-500 hover:text-slate-800 hover:bg-slate-50')
                                           }`}
+                                          title={gateOnSlot ? `Slot (q[${qIdx}], t${stepIdx}): ${gateOnSlot.name.toUpperCase()} (Click to change or remove)` : `Slot (q[${qIdx}], t${stepIdx}): Click to choose gate`}
                                         >
-                                          {/* Caret Arrow pointing to the box */}
+                                          {gateOnSlot ? renderGateSlotContent(gateOnSlot.name) : '+'}
+                                        </button>
+
+                                        {/* ── 🛡️ 100% SOLID OPAQUE GATE PICKER POPOVER (ZERO BLEED) ── */}
+                                        {isPopoverOpen && (
                                           <div 
                                             style={{ 
-                                              borderTopColor: !isTopWire ? (isDark ? '#38bdf8' : '#0284c7') : 'transparent',
-                                              borderBottomColor: isTopWire ? (isDark ? '#38bdf8' : '#0284c7') : 'transparent'
-                                            }} 
-                                            className={`absolute w-0 h-0 border-x-4 border-x-transparent ${
-                                              isTopWire ? 'bottom-full -mb-[1px] border-b-6' : 'top-full -mt-[1px] border-t-6'
+                                              backgroundColor: isDark ? '#18181c' : '#ffffff',
+                                              borderColor: isDark ? '#38bdf8' : '#0284c7',
+                                              color: isDark ? '#f4f4f5' : '#0f172a',
+                                              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(56, 189, 248, 0.35)'
+                                            }}
+                                            className={`slot-popover-container absolute z-50 p-3 rounded-xl border shadow-2xl animate-in fade-in zoom-in-95 duration-100 min-w-[310px] select-none ${
+                                              isTopWire ? 'top-full mt-2.5' : 'bottom-full mb-2.5'
                                             } ${
-                                              stepIdx <= 1 ? 'left-4' : (stepIdx >= 8 ? 'right-4' : 'left-1/2 -translate-x-1/2')
+                                              stepIdx <= 1 ? 'left-0' : (stepIdx >= 8 ? 'right-0' : 'left-1/2 -translate-x-1/2')
                                             }`}
-                                          />
+                                          >
+                                            {/* Caret Arrow pointing to the box */}
+                                            <div 
+                                              style={{ 
+                                                borderTopColor: !isTopWire ? (isDark ? '#38bdf8' : '#0284c7') : 'transparent',
+                                                borderBottomColor: isTopWire ? (isDark ? '#38bdf8' : '#0284c7') : 'transparent'
+                                              }} 
+                                              className={`absolute w-0 h-0 border-x-4 border-x-transparent ${
+                                                isTopWire ? 'bottom-full -mb-[1px] border-b-6' : 'top-full -mt-[1px] border-t-6'
+                                              } ${
+                                                stepIdx <= 1 ? 'left-4' : (stepIdx >= 8 ? 'right-4' : 'left-1/2 -translate-x-1/2')
+                                              }`}
+                                            />
 
-                                          {/* Popover Header */}
-                                          <div className="flex items-center justify-between pb-1.5 mb-2 border-b text-[10px] font-mono" style={{ borderColor: colors.border }}>
-                                            <div className="flex items-center gap-1.5">
-                                              <span className="font-semibold" style={{ color: colors.textCyan }}>Slot q[{qIdx}] · t{stepIdx}</span>
-                                              {gateOnSlot && (
-                                                <span className="px-1.5 py-0.2 rounded text-[9px] bg-sky-500/20 text-sky-400 border border-sky-500/30">
-                                                  {gateOnSlot.name.toUpperCase()}
-                                                </span>
+                                            {/* Popover Header Bar */}
+                                            <div className="flex items-center justify-between pb-2 mb-2.5 border-b text-[11px] font-mono" style={{ borderColor: isDark ? '#27272a' : '#e2e8f0' }}>
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="font-bold text-sky-400">Slot q[{qIdx}] · t{stepIdx}</span>
+                                                {gateOnSlot && (
+                                                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-sky-500/20 text-sky-400 border border-sky-500/30 font-bold">
+                                                    {gateOnSlot.name.toUpperCase()}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              {gateOnSlot ? (
+                                                <button
+                                                  onClick={(e) => { e.stopPropagation(); handleRemoveGateFromSlot(qIdx, stepIdx); }}
+                                                  className="text-rose-400 hover:text-rose-300 font-sans font-medium flex items-center gap-1 cursor-pointer text-xs px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                                                >
+                                                  <Trash2 className="w-3 h-3" /> Remove
+                                                </button>
+                                              ) : (
+                                                <span className="text-zinc-400 text-[10px] font-sans">Choose gate</span>
                                               )}
                                             </div>
-                                            {gateOnSlot ? (
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); handleRemoveGateFromSlot(qIdx, stepIdx); }}
-                                                className="text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-0.5 cursor-pointer text-[10px] font-sans"
-                                              >
-                                                <Trash2 className="w-3 h-3" /> Remove
-                                              </button>
-                                            ) : (
-                                              <span className="text-zinc-500 text-[9px]">Select Gate</span>
-                                            )}
-                                          </div>
 
-                                          {/* Categorized Gate Options */}
-                                          <div className="space-y-1.5 text-[10px]">
-                                            {/* Row 1: Single Qubit Pauli */}
-                                            <div className="flex items-center gap-1">
-                                              <span className="w-11 text-zinc-500 font-sans text-[9px] shrink-0">Pauli:</span>
-                                              {['h', 'x', 'y', 'z', 's', 't'].map(gId => (
-                                                <button
-                                                  key={gId}
-                                                  onClick={(e) => { e.stopPropagation(); handlePlaceGateOnSlot(gId, qIdx, stepIdx); }}
-                                                  className={`w-7 h-6 rounded border font-mono font-bold flex items-center justify-center transition-all cursor-pointer ${
-                                                    gateOnSlot?.name === gId 
-                                                      ? 'bg-sky-500 border-sky-400 text-white shadow-xs' 
-                                                      : (isDark ? 'border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:border-sky-400 hover:text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-sky-500 hover:text-sky-700 shadow-2xs')
-                                                  }`}
-                                                >
-                                                  {gId.toUpperCase()}
-                                                </button>
-                                              ))}
-                                            </div>
+                                            {/* Categorized Gate Grid with Spacious 7h Buttons */}
+                                            <div className="space-y-2 text-xs">
+                                              {/* Row 1: Single Qubit Pauli */}
+                                              <div>
+                                                <div className="text-[10px] text-zinc-400 font-sans mb-1 font-medium">Single Qubit (Pauli & Clifford):</div>
+                                                <div className="grid grid-cols-6 gap-1.5">
+                                                  {['h', 'x', 'y', 'z', 's', 't'].map(gId => (
+                                                    <button
+                                                      key={gId}
+                                                      onClick={(e) => { e.stopPropagation(); handlePlaceGateOnSlot(gId, qIdx, stepIdx); }}
+                                                      className={`h-7 rounded-lg border font-mono font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                                        gateOnSlot?.name === gId 
+                                                          ? 'bg-sky-500 border-sky-400 text-white shadow-xs' 
+                                                          : (isDark ? 'border-zinc-700/80 bg-zinc-800/90 text-zinc-100 hover:border-sky-400 hover:text-sky-300 hover:bg-zinc-700/90' : 'border-slate-300 bg-slate-50 text-slate-800 hover:border-sky-500 hover:text-sky-700 hover:bg-white shadow-2xs')
+                                                      }`}
+                                                    >
+                                                      {gId.toUpperCase()}
+                                                    </button>
+                                                  ))}
+                                                </div>
+                                              </div>
 
-                                            {/* Row 2: Rotations */}
-                                            <div className="flex items-center gap-1">
-                                              <span className="w-11 text-zinc-500 font-sans text-[9px] shrink-0">Rotate:</span>
-                                              {['rx', 'ry', 'rz'].map(gId => (
-                                                <button
-                                                  key={gId}
-                                                  onClick={(e) => { e.stopPropagation(); handlePlaceGateOnSlot(gId, qIdx, stepIdx); }}
-                                                  className={`px-2 h-6 rounded border font-mono text-[10px] font-semibold flex items-center justify-center transition-all cursor-pointer ${
-                                                    gateOnSlot?.name === gId 
-                                                      ? 'bg-sky-500 border-sky-400 text-white shadow-xs' 
-                                                      : (isDark ? 'border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:border-sky-400 hover:text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-sky-500 hover:text-sky-700 shadow-2xs')
-                                                  }`}
-                                                >
-                                                  {gId === 'rx' ? 'Rx' : (gId === 'ry' ? 'Ry' : 'Rz')}
-                                                </button>
-                                              ))}
-                                            </div>
+                                              {/* Row 2: Rotations */}
+                                              <div>
+                                                <div className="text-[10px] text-zinc-400 font-sans mb-1 font-medium">Parametric Rotations:</div>
+                                                <div className="grid grid-cols-3 gap-1.5">
+                                                  {['rx', 'ry', 'rz'].map(gId => (
+                                                    <button
+                                                      key={gId}
+                                                      onClick={(e) => { e.stopPropagation(); handlePlaceGateOnSlot(gId, qIdx, stepIdx); }}
+                                                      className={`h-7 rounded-lg border font-mono font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                                        gateOnSlot?.name === gId 
+                                                          ? 'bg-sky-500 border-sky-400 text-white shadow-xs' 
+                                                          : (isDark ? 'border-zinc-700/80 bg-zinc-800/90 text-zinc-100 hover:border-sky-400 hover:text-sky-300 hover:bg-zinc-700/90' : 'border-slate-300 bg-slate-50 text-slate-800 hover:border-sky-500 hover:text-sky-700 hover:bg-white shadow-2xs')
+                                                      }`}
+                                                    >
+                                                      {gId === 'rx' ? 'Rx(θ)' : (gId === 'ry' ? 'Ry(θ)' : 'Rz(θ)')}
+                                                    </button>
+                                                  ))}
+                                                </div>
+                                              </div>
 
-                                            {/* Row 3: Multi-Qubit Entanglers & Measurement */}
-                                            <div className="flex items-center gap-1">
-                                              <span className="w-11 text-zinc-500 font-sans text-[9px] shrink-0">Entangle:</span>
-                                              {['cx', 'cz', 'swap', 'ccx'].map(gId => (
-                                                <button
-                                                  key={gId}
-                                                  onClick={(e) => { e.stopPropagation(); handlePlaceGateOnSlot(gId, qIdx, stepIdx); }}
-                                                  className={`px-1.5 h-6 rounded border font-mono text-[10px] font-bold flex items-center justify-center transition-all cursor-pointer ${
-                                                    gateOnSlot?.name === gId 
-                                                      ? 'bg-purple-600 border-purple-400 text-white shadow-xs' 
-                                                      : (isDark ? 'border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:border-purple-400 hover:text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-purple-500 hover:text-purple-700 shadow-2xs')
-                                                  }`}
-                                                >
-                                                  {gId.toUpperCase()}
-                                                </button>
-                                              ))}
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); handlePlaceGateOnSlot('measure', qIdx, stepIdx); }}
-                                                className={`px-2 h-6 rounded border font-mono text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ml-auto ${
-                                                  gateOnSlot?.name === 'measure' 
-                                                    ? 'bg-cyan-600 border-cyan-400 text-white shadow-xs' 
-                                                    : (isDark ? 'border-cyan-500/40 bg-cyan-950/40 text-cyan-300 hover:border-cyan-400' : 'border-cyan-300 bg-cyan-50 text-cyan-700 hover:border-cyan-500')
-                                                }`}
-                                              >
-                                                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                                  <path d="M4 16a8 8 0 0 1 16 0" />
-                                                  <line x1="12" y1="16" x2="16" y2="9" />
-                                                  <circle cx="12" cy="16" r="1.5" fill="currentColor" />
-                                                </svg>
-                                                <span>Meter</span>
-                                              </button>
+                                              {/* Row 3: Multi-Qubit Entanglers & Measurement */}
+                                              <div>
+                                                <div className="text-[10px] text-zinc-400 font-sans mb-1 font-medium">Entanglement & Measurement:</div>
+                                                <div className="grid grid-cols-5 gap-1.5">
+                                                  {['cx', 'cz', 'swap', 'ccx'].map(gId => (
+                                                    <button
+                                                      key={gId}
+                                                      onClick={(e) => { e.stopPropagation(); handlePlaceGateOnSlot(gId, qIdx, stepIdx); }}
+                                                      className={`h-7 rounded-lg border font-mono font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                                        gateOnSlot?.name === gId 
+                                                          ? 'bg-purple-600 border-purple-400 text-white shadow-xs' 
+                                                          : (isDark ? 'border-zinc-700/80 bg-zinc-800/90 text-zinc-100 hover:border-purple-400 hover:text-purple-300' : 'border-slate-300 bg-slate-50 text-slate-800 hover:border-purple-500 hover:text-purple-700 hover:bg-white shadow-2xs')
+                                                      }`}
+                                                    >
+                                                      {gId.toUpperCase()}
+                                                    </button>
+                                                  ))}
+                                                  <button
+                                                    onClick={(e) => { e.stopPropagation(); handlePlaceGateOnSlot('measure', qIdx, stepIdx); }}
+                                                    className={`h-7 rounded-lg border font-mono font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                                                      gateOnSlot?.name === 'measure' 
+                                                        ? 'bg-cyan-600 border-cyan-400 text-white shadow-xs' 
+                                                        : (isDark ? 'border-cyan-500/60 bg-cyan-950/60 text-cyan-300 hover:border-cyan-400' : 'border-cyan-400 bg-cyan-50 text-cyan-800 hover:border-cyan-500')
+                                                    }`}
+                                                    title="Measurement Meter"
+                                                  >
+                                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                                      <path d="M4 16a8 8 0 0 1 16 0" />
+                                                      <line x1="12" y1="16" x2="16" y2="9" />
+                                                      <circle cx="12" cy="16" r="1.5" fill="currentColor" />
+                                                    </svg>
+                                                    <span className="text-[10px]">Meter</span>
+                                                  </button>
+                                                </div>
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
