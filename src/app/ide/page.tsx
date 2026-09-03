@@ -136,7 +136,7 @@ const CopilotChatInput = React.memo(function CopilotChatInput({
 
   return (
     <div 
-      style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+      style={{ backgroundColor: colors.bgSection3, borderColor: colors.border }}
       className="p-3 border-t"
     >
       <div 
@@ -263,19 +263,30 @@ export default function QuantumIDE() {
   // 🎯 4 CLEAR SEMANTIC TEXT ROLES (DARK & LIGHT THEMES)
   // ─────────────────────────────────────────────────────────────
   const colors = {
-    bgMain: isDark ? '#0D0D0D' : '#FAFAFA',
-    bgHeader: isDark ? '#141414' : '#FFFFFF',
-    bgSidebar: isDark ? '#101010' : '#FAFAFA',
-    bgCard: isDark ? '#181818' : '#FFFFFF',
-    bgEditor: isDark ? '#0D0D0D' : '#FFFFFF',
-    bgInput: isDark ? '#141414' : '#F5F5F5',
-    bgPill: isDark ? '#1E1E1E' : '#F0F0F0',
-    border: isDark ? '#262626' : '#E5E5E5',
-    borderSubtle: isDark ? '#1A1A1A' : '#F5F5F5',
+    // 🎨 3-TIER SURFACE SHADE ELEVATION (SECTION 2 IN FOCUS)
+    bgSection1: isDark ? '#09090B' : '#F4F4F5',     // Tier 1: Section 1 Left Dock (Recessed Obsidian)
+    bgSection2: isDark ? '#141417' : '#FFFFFF',     // Tier 2: Section 2 Center Stage (ELEVATED HERO FOCUS)
+    bgSection3: isDark ? '#0E0E11' : '#F8FAFC',     // Tier 3: Section 3 Right Copilot (Balanced Midnight)
+
+    // Structural backgrounds
+    bgMain: isDark ? '#09090B' : '#FAFAFA',
+    bgHeader: isDark ? '#09090B' : '#FFFFFF',       // Flush with Section 1
+    bgSidebar: isDark ? '#09090B' : '#FAFAFA',
+    bgEditor: isDark ? '#141417' : '#FFFFFF',       // Center Monaco Editor
+    bgBottomDrawer: isDark ? '#111114' : '#F8FAFC', // Nested canvas & terminal
+    bgBottomDrawerHeader: isDark ? '#111114' : '#F1F5F9',
+    bgCard: isDark ? '#18181D' : '#FFFFFF',
+    bgInput: isDark ? '#09090C' : '#F5F5F5',
+    bgPill: isDark ? '#19191E' : '#F0F0F0',
+
+    // Tiered Borders for Depth & Elevation Contrast
+    border: isDark ? '#1E1E24' : '#E5E5E5',
+    borderSection2: isDark ? '#262630' : '#CBD5E1', // Elevated border framing Hero Section 2
+    borderSubtle: isDark ? '#15151A' : '#F5F5F5',
     
-    // 10% Toned Down Semantic Text Roles (Soft, Non-Glare)
-    textPrimary: isDark ? '#DDE2E8' : '#1E293B',
-    textMuted: isDark ? '#808D9E' : '#64748B',
+    // Semantic Text Roles (Soft, Non-Glare)
+    textPrimary: isDark ? '#E2E8F0' : '#1E293B',
+    textMuted: isDark ? '#828E9E' : '#64748B',
     textCyan: isDark ? '#33A8DB' : '#0376AD',
     textEmerald: isDark ? '#2FB885' : '#0A8760',
     textAmber: isDark ? '#DEAA21' : '#BF6C08',
@@ -1543,7 +1554,7 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
           <aside 
             style={{ 
               width: `${leftWidth}px`, 
-              backgroundColor: colors.bgSidebar, 
+              backgroundColor: colors.bgSection1, 
               borderColor: colors.border 
             }}
             className="border-r flex flex-col shrink-0 relative select-none py-3 px-1.5 justify-between overflow-hidden"
@@ -1646,9 +1657,9 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
         )}
 
         {/* ───────────────────────────────────────────────────────── */}
-        {/* SECTION 2 (CENTER): CODE EDITOR + CONTINUOUS CANVAS       */}
+        {/* SECTION 2 (CENTER - IN FOCUS): CODE EDITOR + CANVAS       */}
         {/* ───────────────────────────────────────────────────────── */}
-        <div style={{ backgroundColor: colors.bgEditor }} className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative">
+        <div style={{ backgroundColor: colors.bgSection2, borderColor: colors.borderSection2 }} className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative shadow-2xl">
           
           {/* Upper Pane: Interactive Monaco Code Canvas */}
           <div style={{ borderColor: colors.border }} className="flex-1 flex flex-col min-h-0 overflow-hidden border-b">
@@ -1712,15 +1723,15 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
           {/* ── LOWER PANE: COLLAPSIBLE MULTI-TAB BOTTOM DRAWER ── */}
           <div 
             style={{ 
-              borderColor: colors.border,
+              borderColor: colors.borderSection2,
               height: isBottomOpen ? `${bottomHeight}px` : '36px',
-              backgroundColor: colors.bgCard
+              backgroundColor: colors.bgBottomDrawer
             }} 
             className="shrink-0 flex flex-col transition-all duration-150 overflow-hidden border-t"
           >
             {/* Drawer Tab Header Bar */}
             <div 
-              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              style={{ backgroundColor: colors.bgBottomDrawerHeader, borderColor: colors.border }}
               className="h-9 px-4 border-b flex items-center justify-between shrink-0 select-none"
             >
               <div className="flex items-center gap-1.5">
@@ -2016,14 +2027,14 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
           <aside 
             style={{ 
               width: `${rightWidth}px`, 
-              backgroundColor: colors.bgSidebar, 
+              backgroundColor: colors.bgSection3, 
               borderColor: colors.border 
             }}
             className="border-l flex flex-col shrink-0 relative transition-[width] duration-0"
           >
             {/* Section 3 Header: Dedicated Context-Aware Q&A Assistant */}
             <div 
-              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
+              style={{ backgroundColor: colors.bgSection3, borderColor: colors.border }}
               className="h-9 px-3 border-b flex items-center justify-between shrink-0 select-none"
             >
               <div className="flex items-center gap-2">
