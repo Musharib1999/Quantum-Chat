@@ -240,6 +240,7 @@ export default function QuantumIDE() {
   const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const [simulationCounts, setSimulationCounts] = useState<Record<string, number> | null>({ '00': 512, '11': 512 });
   const [circuitAscii, setCircuitAscii] = useState<string>('');
+  const [canvasQubits, setCanvasQubits] = useState<number>(4);
   const [circuitGates, setCircuitGates] = useState<Array<{ name: string; qubit: number; step: number }>>([
     { name: 'h', qubit: 0, step: 0 },
     { name: 'cx', qubit: 0, step: 1 }
@@ -766,10 +767,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     // Live sync active file code to canvas gates on file switch or mount
   useEffect(() => {
     if (projectFiles[activeFile]?.content) {
-      const parsed = parseQiskitCodeToGates(projectFiles[activeFile].content);
-      if (parsed.length > 0) {
-        setCircuitGates(parsed);
-      }
+      const code = projectFiles[activeFile].content;
+      const declaredQubits = parseQiskitQubitCount(code);
+      const parsed = parseQiskitCodeToGates(code, declaredQubits);
+      const maxGateQubit = parsed.length > 0 ? Math.max(...parsed.map(g => g.qubit + 1)) : 2;
+      const finalQubits = Math.max(declaredQubits, maxGateQubit);
+      setCanvasQubits(finalQubits);
+      setCircuitGates(parsed);
     }
   }, [activeFile]);
 
@@ -1148,7 +1152,7 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
 
   // Helper: Synchronize placed gates to Python code with 2D coordinates (# t=...)
   const synchronizeGatesToCode = (gates: Array<{ name: string; qubit: number; step: number }>) => {
-    const numQubits = Math.max(2, ...gates.map(g => g.qubit + 1));
+    const numQubits = Math.max(canvasQubits, ...gates.map(g => g.qubit + 1));
     const hasManualMeasure = gates.some(g => g.name === 'measure');
     let newCodeLines = [
       'from qiskit import QuantumCircuit',
@@ -1348,7 +1352,7 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
 
   const handleClearCircuitGates = () => {
     setCircuitGates([]);
-    const clearedCode = `from qiskit import QuantumCircuit\n\nqc = QuantumCircuit(2)\n# Wire cleared. Click slots in Circuit Canvas to add gates.\n`;
+    const clearedCode = `from qiskit import QuantumCircuit\n\nqc = QuantumCircuit(${canvasQubits})\n# Wire cleared. Click slots in Circuit Canvas to add gates.\n`;
     setProjectFiles(prev => {
       const updated = {
         ...prev,
@@ -1834,8 +1838,12 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                     return updated;
                   });
 
-                  // 🔄 LIVE CODE -> CANVAS SYNCHRONIZATION!
-                  const parsedGates = parseQiskitCodeToGates(val);
+                  // 🔄 LIVE CODE -> CANVAS SYNCHRONIZATION (DYNAMIC QUBIT COUNT & GATES)!
+                  const declaredQubits = parseQiskitQubitCount(val);
+                  const parsedGates = parseQiskitCodeToGates(val, declaredQubits);
+                  const maxGateQubit = parsedGates.length > 0 ? Math.max(...parsedGates.map(g => g.qubit + 1)) : 2;
+                  const finalQubits = Math.max(declaredQubits, maxGateQubit);
+                  setCanvasQubits(finalQubits);
                   setCircuitGates(parsedGates);
                 }}
                 spellCheck={false}
@@ -1992,7 +2000,7 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                           </div>
                         </div>
 
-                        {[0, 1, 2, 3].map(qIdx => (
+                        {Array.from({ length: canvasQubits }, (_, i) => i).map(qIdx => (
                           <div key={qIdx} className="flex items-center gap-2.5">
                             {/* Qubit Wire Label */}
                             <div 
