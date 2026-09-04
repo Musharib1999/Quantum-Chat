@@ -321,7 +321,7 @@ export default function QuantumIDE() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [customProjectInput, setCustomProjectInput] = useState('');
-  const [selectedTemplateKey, setSelectedTemplateKey] = useState('optimization');
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState('qiskit-circuit');
   const [telemetryModalTab, setTelemetryModalTab] = useState<string | null>(null);
   const [isProjectsDropdownOpen, setIsProjectsDropdownOpen] = useState(false);
   const [targetBackend, setTargetBackend] = useState('aer_simulator');
@@ -445,10 +445,67 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
   // ─────────────────────────────────────────────────────────────
   // 📂 MULTI-PROJECT WORKSPACE SYSTEM (SWITCH & CREATE AT WILL)
   // ─────────────────────────────────────────────────────────────
-  const initialProjectTemplates: Record<string, { title: string; desc: string; files: Record<string, { name: string; lang: string; content: string }> }> = {
+  const initialProjectTemplates: Record<string, { title: string; desc: string; backend: string; defaultTab: 'circuit' | 'terminal'; files: Record<string, { name: string; lang: string; content: string }> }> = {
+    'qiskit-circuit': {
+      title: 'Gate Circuit (Qiskit)',
+      desc: 'Clean 2-qubit Bell state, superposition, and Qiskit AerSimulator.',
+      backend: 'aer_simulator',
+      defaultTab: 'circuit',
+      files: {
+        'main.py': {
+          name: 'main.py',
+          lang: 'python',
+          content: `from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+# ⚛️ Bell State Entanglement Circuit
+qc = QuantumCircuit(2)
+qc.h(0)
+qc.cx(0, 1)
+
+# Execute on Qiskit Aer Simulator
+sim = AerSimulator()
+result = sim.run(qc, shots=1024).result()
+print("Bell State Prepared!")
+print("Measurement Counts:", result.get_counts())
+`
+        }
+      }
+    },
+    'dwave-annealing': {
+      title: 'Quantum Annealing (D-Wave)',
+      desc: 'Binary Quadratic Model (BQM), QUBO optimization, and SimulatedAnnealingSampler.',
+      backend: 'dwave_simulated_annealing',
+      defaultTab: 'terminal',
+      files: {
+        'main.py': {
+          name: 'main.py',
+          lang: 'python',
+          content: `import dimod
+from dwave.samplers import SimulatedAnnealingSampler
+
+# ⚡ Binary Quadratic Model (QUBO Optimization)
+# Objective: Minimize Energy E(x0, x1) = -x0 - x1 + 2*(x0 * x1)
+linear = {'x0': -1.0, 'x1': -1.0}
+quadratic = {('x0', 'x1'): 2.0}
+bqm = dimod.BinaryQuadraticModel(linear, quadratic, 0.0, dimod.BINARY)
+
+# Sample on Local Simulated Annealer
+sampler = SimulatedAnnealingSampler()
+sampleset = sampler.sample(bqm, num_reads=100)
+
+best = sampleset.first
+print(f"Optimal Energy: {best.energy}")
+print(f"Best Configuration: {best.sample}")
+`
+        }
+      }
+    },
     'my-quantum-project': {
-      title: 'Blank Quantum Project',
-      desc: 'Clean 2-qubit Bell state and Qiskit AerSimulator entrypoint.',
+      title: 'Gate Circuit (Qiskit)',
+      desc: 'Clean 2-qubit Bell state, superposition, and Qiskit AerSimulator.',
+      backend: 'aer_simulator',
+      defaultTab: 'circuit',
       files: {
         'main.py': {
           name: 'main.py',
@@ -473,6 +530,8 @@ print("Measurement Counts:", result.get_counts())
     'portfolio-optimization': {
       title: 'Portfolio Optimization & QUBO',
       desc: 'Binary quadratic models, constraint penalization, and D-Wave SA / QAOA.',
+      backend: 'dwave_simulated_annealing',
+      defaultTab: 'terminal',
       files: {
         'portfolio_optimization.py': {
           name: 'portfolio_optimization.py',
@@ -1091,6 +1150,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setCustomProjectInput('');
     setIsNewProjectOpen(false);
     setIsProjectsDropdownOpen(false);
+
+    // ⚡ Auto-configure Target Backend & Active Bottom Tab based on Architecture
+    const targetB = templateData.backend || (selectedTemplateKey.includes('dwave') || selectedTemplateKey.includes('portfolio') ? 'dwave_simulated_annealing' : 'aer_simulator');
+    setTargetBackend(targetB);
+    const targetTab = templateData.defaultTab || (targetB.includes('dwave') ? 'terminal' : 'circuit');
+    setActiveBottomTab(targetTab);
+    setIsBottomOpen(true);
+
+    if (newFiles[primaryFile]?.content) {
+      const code = newFiles[primaryFile].content;
+      const qCount = parseQiskitQubitCount(code);
+      const gates = parseQiskitCodeToGates(code, qCount);
+      setCanvasQubits(qCount);
+      setCircuitGates(gates);
+    }
 
     // Persist to MongoDB
     saveProjectToDatabase(finalName, { title: finalName, desc: `Custom project scaffolded from ${templateData.title}`, files: newFiles }, primaryFile, runtimeMetrics);
@@ -3333,36 +3407,74 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 </p>
               </div>
 
-              {/* 2. Template Scaffold Selection */}
+              {/* 2. Quantum Architecture & Paradigm Selection */}
               <div className="space-y-2">
                 <label className="text-[11px] font-mono uppercase tracking-wider" style={{ color: colors.textCyan }}>
-                  Select Quantum Scaffold
+                  Select Quantum Architecture
                 </label>
 
-                <div className="space-y-2">
-                  {Object.entries(initialProjectTemplates).map(([key, tpl]) => (
-                    <div
-                      key={key}
-                      onClick={() => setSelectedTemplateKey(key)}
-                      style={{ 
-                        backgroundColor: selectedTemplateKey === key ? colors.bgPill : colors.bgEditor, 
-                        borderColor: selectedTemplateKey === key ? colors.textCyan : colors.border 
-                      }}
-                      className="p-3 rounded-lg border cursor-pointer transition-all flex items-start justify-between"
-                    >
-                      <div className="space-y-1">
-                        <div className="text-xs font-normal flex items-center gap-2" style={{ color: colors.textPrimary }}>
-                          <span style={{ color: selectedTemplateKey === key ? colors.textCyan : colors.textPrimary }}>{tpl.title}</span>
-                          {selectedTemplateKey === key && (
-                            <span style={{ color: colors.textEmerald }} className="text-[10px] font-mono">[Selected]</span>
-                          )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Card A: Qiskit Gate-Based Circuit */}
+                  <div
+                    onClick={() => setSelectedTemplateKey('qiskit-circuit')}
+                    style={{
+                      backgroundColor: (selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project') ? (isDark ? '#0c2d48' : '#e0f2fe') : (isDark ? '#141418' : '#ffffff'),
+                      borderColor: (selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project') ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#27272a' : '#e2e8f0'),
+                    }}
+                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between group shadow-2xs ${
+                      (selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project') ? 'ring-1 ring-sky-400' : 'hover:border-slate-400 dark:hover:border-zinc-600'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Cpu className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                          <span className="font-semibold text-xs text-sky-600 dark:text-sky-400">Gate Circuit</span>
                         </div>
-                        <p className="text-[11px] leading-relaxed" style={{ color: colors.textMuted }}>
-                          {tpl.desc}
-                        </p>
+                        {(selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project') && (
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30">Active</span>
+                        )}
                       </div>
+                      <div className="text-[11px] font-medium text-slate-900 dark:text-zinc-100 mb-1">Qiskit Aer Simulator</div>
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                        Gate-model circuits with wires, timesteps, and interactive gate canvas (H, X, CX).
+                      </p>
                     </div>
-                  ))}
+                    <div className="mt-3 pt-2 border-t text-[9px] font-mono text-sky-600 dark:text-sky-400" style={{ borderColor: isDark ? '#1e3a8a30' : '#bae6fd' }}>
+                      Backend: aer_simulator
+                    </div>
+                  </div>
+
+                  {/* Card B: D-Wave Annealer / QUBO */}
+                  <div
+                    onClick={() => setSelectedTemplateKey('dwave-annealing')}
+                    style={{
+                      backgroundColor: (selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization') ? (isDark ? '#2e1065' : '#f5f3ff') : (isDark ? '#141418' : '#ffffff'),
+                      borderColor: (selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization') ? (isDark ? '#c084fc' : '#9333ea') : (isDark ? '#27272a' : '#e2e8f0'),
+                    }}
+                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between group shadow-2xs ${
+                      (selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization') ? 'ring-1 ring-purple-400' : 'hover:border-slate-400 dark:hover:border-zinc-600'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Activity className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                          <span className="font-semibold text-xs text-purple-600 dark:text-purple-400">Annealing (QUBO)</span>
+                        </div>
+                        {(selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization') && (
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">Active</span>
+                        )}
+                      </div>
+                      <div className="text-[11px] font-medium text-slate-900 dark:text-zinc-100 mb-1">D-Wave Annealer</div>
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                        Binary Quadratic Models (BQM), energy minimization & combinatorial optimization.
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t text-[9px] font-mono text-purple-600 dark:text-purple-400" style={{ borderColor: isDark ? '#581c8730' : '#ddd6fe' }}>
+                      Backend: dwave_annealer
+                    </div>
+                  </div>
                 </div>
               </div>
 
