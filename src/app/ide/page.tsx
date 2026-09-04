@@ -1677,25 +1677,24 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
             }}
             className="border-r flex flex-col shrink-0 relative select-none py-3 px-1.5 justify-between overflow-hidden"
           >
-            {/* ── TOP ACTIONS: NEW PROJECT & MAIN.PY (UNIFIED MUTED ZINC THEME) ── */}
-            <div className="space-y-2 flex flex-col items-center w-full">
-              {/* 1. New Project Icon Button */}
+            {/* ── TOP ACTIONS: NEW PROJECT & ACTIVE FILES (HIGH-END ERGONOMIC DOCK) ── */}
+            <div className="space-y-2.5 flex flex-col items-center w-full">
+              {/* 1. New Project Action Button */}
               <button
                 onClick={() => setIsNewProjectOpen(true)}
-                style={{ 
-                  backgroundColor: colors.bgCard,
-                  borderColor: colors.border,
-                  color: colors.textPrimary
-                }}
-                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 hover:scale-[1.04] shadow-xs group"
+                className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
+                  isDark
+                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-sky-400 hover:scale-[1.04]'
+                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-sky-600 hover:shadow-xs hover:scale-[1.04]'
+                }`}
                 title="Create New Quantum Project"
               >
-                <FolderPlus className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 group-hover:scale-110 transition-transform mb-0.5" />
-                <span className="text-[9px] font-medium font-sans text-center leading-tight text-zinc-400 group-hover:text-zinc-200">New</span>
+                <FolderPlus className="w-4.5 h-4.5 mb-1 group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-medium font-sans text-center leading-none">New</span>
               </button>
 
-              {/* 2. main.py (and Python scripts) Icon Button */}
-              <div className="space-y-1.5 w-full pt-1">
+              {/* 2. Active Python Files (e.g. main.py) */}
+              <div className="space-y-2 w-full flex flex-col items-center pt-0.5">
                 {Object.keys(files || {})
                   .filter(f => f.endsWith('.py'))
                   .map(fName => {
@@ -1705,16 +1704,33 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                       <button
                         key={fName}
                         onClick={() => setActiveFile(fName)}
-                        style={{
-                          backgroundColor: isActive ? colors.bgPill : 'transparent',
-                          borderColor: isActive ? colors.border : 'transparent',
-                          color: colors.textPrimary
-                        }}
-                        className={`w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 group ${isActive ? 'ring-1 ring-zinc-500/70 shadow-xs' : ''}`}
+                        className={`w-[52px] h-[52px] relative flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
+                          isActive
+                            ? isDark
+                              ? 'bg-[#18181D] border-sky-500/40 text-zinc-100 shadow-xs shadow-sky-500/10'
+                              : 'bg-white border-slate-300 text-slate-900 shadow-xs'
+                            : isDark
+                              ? 'border-transparent text-zinc-400 hover:border-zinc-800 hover:bg-zinc-850 hover:text-zinc-200'
+                              : 'border-transparent text-slate-500 hover:border-slate-200 hover:bg-white/70 hover:text-slate-800'
+                        }`}
                         title={`Open ${fName}`}
                       >
-                        <FileCode className={`w-5 h-5 mb-0.5 transition-colors ${isActive ? 'text-zinc-300' : 'text-zinc-400'} group-hover:text-zinc-200`} />
-                        <span className={`text-[9px] font-mono truncate max-w-full px-0.5 text-center leading-tight transition-colors ${isActive ? 'text-zinc-200' : 'text-zinc-400'} group-hover:text-zinc-200`}>
+                        {/* Subtle Active Indicator Pill on Left Edge */}
+                        {isActive && (
+                          <div 
+                            className={`absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full ${
+                              isDark ? 'bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]' : 'bg-sky-500'
+                            }`} 
+                          />
+                        )}
+                        <FileCode className={`w-4.5 h-4.5 mb-1 transition-colors ${
+                          isActive 
+                            ? (isDark ? 'text-sky-400' : 'text-sky-600') 
+                            : (isDark ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-slate-500 group-hover:text-slate-800')
+                        }`} />
+                        <span className={`text-[10px] font-mono truncate max-w-[46px] px-0.5 text-center leading-none ${
+                          isActive ? 'font-semibold' : 'font-medium'
+                        }`}>
                           {shortName === 'main' ? 'main.py' : fName}
                         </span>
                       </button>
@@ -1723,24 +1739,23 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
               </div>
             </div>
 
-            {/* ── BOTTOM ACTIONS: SETTING & LOGOUT (UNIFIED MUTED ZINC THEME) ── */}
-            <div className="space-y-2 pt-2 border-t w-full flex flex-col items-center" style={{ borderColor: colors.border }}>
-              {/* 3. Setting Icon Button */}
+            {/* ── BOTTOM ACTIONS: SETTINGS & LOGOUT ── */}
+            <div className="space-y-2.5 pt-3 border-t w-full flex flex-col items-center" style={{ borderColor: colors.border }}>
+              {/* 3. Settings Action Button */}
               <button
                 onClick={() => setIsSettingsOpen(true)}
-                style={{ 
-                  backgroundColor: colors.bgCard,
-                  borderColor: colors.border,
-                  color: colors.textPrimary 
-                }}
-                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 hover:scale-[1.04] shadow-xs group"
+                className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
+                  isDark
+                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-zinc-100 hover:scale-[1.04]'
+                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-xs hover:scale-[1.04]'
+                }`}
                 title="IDE Settings"
               >
-                <Settings className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 group-hover:rotate-45 transition-transform mb-0.5" />
-                <span className="text-[9px] font-sans leading-tight text-zinc-400 group-hover:text-zinc-200">Settings</span>
+                <Settings className="w-4.5 h-4.5 mb-1 group-hover:rotate-45 transition-transform duration-300" />
+                <span className="text-[10px] font-medium font-sans text-center leading-none">Settings</span>
               </button>
 
-              {/* 4. Logout Icon Button */}
+              {/* 4. Logout Action Button */}
               <button
                 onClick={() => {
                   try {
@@ -1748,16 +1763,15 @@ function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: numb
                   } catch (e) {}
                   window.location.href = '/login';
                 }}
-                style={{ 
-                  backgroundColor: colors.bgCard,
-                  borderColor: colors.border,
-                  color: colors.textPrimary 
-                }}
-                className="w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all cursor-pointer hover:border-zinc-500 hover:scale-[1.04] shadow-xs group"
+                className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
+                  isDark
+                    ? 'border-transparent text-zinc-400 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-400 hover:scale-[1.04]'
+                    : 'border-transparent text-slate-600 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 hover:shadow-xs hover:scale-[1.04]'
+                }`}
                 title="Logout of Quantum Guru"
               >
-                <LogOut className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 group-hover:-translate-x-0.5 transition-transform mb-0.5" />
-                <span className="text-[9px] font-sans leading-tight text-zinc-400 group-hover:text-zinc-200">Logout</span>
+                <LogOut className="w-4.5 h-4.5 mb-1 group-hover:-translate-x-0.5 transition-transform" />
+                <span className="text-[10px] font-medium font-sans text-center leading-none">Logout</span>
               </button>
             </div>
           </aside>
