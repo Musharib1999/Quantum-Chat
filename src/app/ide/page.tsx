@@ -209,6 +209,110 @@ const CopilotChatInput = React.memo(function CopilotChatInput({
   );
 });
 
+// ── ⚛️ ROBUST QUANTUM AST & QUBIT PARSERS (ACCESSIBLE TO ALL COMPONENTS) ──
+function parseQiskitQubitCount(code: string): number {
+  if (!code) return 4;
+  const lines = code.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('#')) continue;
+    const match = trimmed.match(/\bQuantumCircuit\s*\(\s*(\d+)/i);
+    if (match) {
+      const parsed = parseInt(match[1], 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        return Math.max(1, Math.min(16, parsed));
+      }
+    }
+  }
+  return 4;
+}
+
+function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ name: string; qubit: number; step: number }> {
+  if (!code) return [];
+  const gates: Array<{ name: string; qubit: number; step: number }> = [];
+  const stepTrack: Record<number, number> = {};
+  for (let q = 0; q < numQubits; q++) stepTrack[q] = 0;
+
+  try {
+    const lines = code.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('.')) continue;
+
+      // Check for explicit coordinate specification in comment (e.g., # t=3, # t3, # step: 4, # col 2)
+      const coordMatch = trimmed.match(/#\s*(?:t\s*=?\s*|step\s*:?\s*|col\s*:?\s*|coord\s*:?\s*|\(\s*\d+\s*,\s*)(\d+)/i);
+      const explicitStep = coordMatch ? parseInt(coordMatch[1], 10) : null;
+
+      // Advance time slices on Qiskit barriers
+      if (/\b\w+\.barrier\b/i.test(trimmed)) {
+        const maxS = Math.max(0, ...Object.values(stepTrack));
+        for (let q = 0; q < numQubits; q++) stepTrack[q] = Math.min(9, maxS + 1);
+        continue;
+      }
+
+      // Match Qiskit method calls: qc.h(0), circuit.cx(0, 1), etc.
+      const match = trimmed.match(/\b\w+\.(h|x|y|z|s|t|rx|ry|rz|cx|cz|swap|ccx|measure)\s*\(([^)]*)\)/i);
+      if (!match) continue;
+
+      const gateName = match[1].toLowerCase();
+      const rawArgs = match[2].split(',').map(s => s.trim()).filter(Boolean);
+
+      if (gateName === 'cx' || gateName === 'cz' || gateName === 'swap') {
+        const q1 = parseInt(rawArgs[0], 10);
+        const q2 = parseInt(rawArgs[1], 10);
+        if (!isNaN(q1) && q1 >= 0 && q1 < numQubits) {
+          const s1 = stepTrack[q1] || 0;
+          const s2 = !isNaN(q2) && q2 >= 0 && q2 < numQubits ? (stepTrack[q2] || 0) : s1;
+          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) 
+            ? explicitStep 
+            : Math.max(s1, s2);
+
+          if (targetStep < 10) {
+            gates.push({ name: gateName, qubit: q1, step: targetStep });
+            stepTrack[q1] = targetStep + 1;
+            if (!isNaN(q2) && q2 >= 0 && q2 < numQubits) stepTrack[q2] = targetStep + 1;
+          }
+        }
+      } else if (gateName === 'ccx') {
+        const q1 = parseInt(rawArgs[0], 10);
+        const q2 = parseInt(rawArgs[1], 10);
+        const q3 = parseInt(rawArgs[2], 10);
+        const validQ = [q1, q2, q3].filter(q => !isNaN(q) && q >= 0 && q < numQubits);
+        const autoStep = Math.max(...validQ.map(q => stepTrack[q] || 0), 0);
+        const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
+
+        if (targetStep < 10 && validQ.length > 0) {
+          gates.push({ name: 'ccx', qubit: validQ[0], step: targetStep });
+          validQ.forEach(q => stepTrack[q] = targetStep + 1);
+        }
+      } else if (gateName === 'rx' || gateName === 'ry' || gateName === 'rz') {
+        // Rotation: qc.rx(angle, qubit) or qc.rz(0.7854, 0)
+        const q = parseInt(rawArgs[rawArgs.length - 1], 10);
+        if (!isNaN(q) && q >= 0 && q < numQubits) {
+          const autoStep = stepTrack[q] || 0;
+          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
+          if (targetStep < 10) {
+            gates.push({ name: gateName, qubit: q, step: targetStep });
+            stepTrack[q] = targetStep + 1;
+          }
+        }
+      } else {
+        // Single qubit: h, x, y, z, s, t, measure
+        const q = parseInt(rawArgs[0], 10);
+        if (!isNaN(q) && q >= 0 && q < numQubits) {
+          const autoStep = stepTrack[q] || 0;
+          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
+          if (targetStep < 10) {
+            gates.push({ name: gateName, qubit: q, step: targetStep });
+            stepTrack[q] = targetStep + 1;
+          }
+        }
+      }
+    }
+  } catch (err) {}
+  return gates;
+}
+
 export default function QuantumIDE() {
   const { logout } = useAuth();
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -898,93 +1002,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   }, []);
 
-  // ── ⚛️ ROBUST CLIENT-SIDE QUANTUM AST/TOKEN PARSER (CODE -> CANVAS SYNC) ──
-function parseQiskitCodeToGates(code: string): Array<{ name: string; qubit: number; step: number }> {
-  if (!code) return [];
-  const gates: Array<{ name: string; qubit: number; step: number }> = [];
-  const stepTrack: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0 };
 
-  try {
-    const lines = code.split('\n');
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('.')) continue;
-
-      // Check for explicit coordinate specification in comment (e.g., # t=3, # t3, # step: 4, # col 2)
-      const coordMatch = trimmed.match(/#\s*(?:t\s*=?\s*|step\s*:?\s*|col\s*:?\s*|coord\s*:?\s*|\(\s*\d+\s*,\s*)(\d+)/i);
-      const explicitStep = coordMatch ? parseInt(coordMatch[1], 10) : null;
-
-      // Advance time slices on Qiskit barriers
-      if (/\b\w+\.barrier\b/i.test(trimmed)) {
-        const maxS = Math.max(...Object.values(stepTrack));
-        for (let q = 0; q < 4; q++) stepTrack[q] = Math.min(9, maxS + 1);
-        continue;
-      }
-
-      // Match Qiskit method calls: qc.h(0), circuit.cx(0, 1), etc.
-      const match = trimmed.match(/\b\w+\.(h|x|y|z|s|t|rx|ry|rz|cx|cz|swap|ccx|measure)\s*\(([^)]*)\)/i);
-      if (!match) continue;
-
-      const gateName = match[1].toLowerCase();
-      const rawArgs = match[2].split(',').map(s => s.trim()).filter(Boolean);
-
-      if (gateName === 'cx' || gateName === 'cz' || gateName === 'swap') {
-        const q1 = parseInt(rawArgs[0], 10);
-        const q2 = parseInt(rawArgs[1], 10);
-        if (!isNaN(q1) && q1 >= 0 && q1 < 4) {
-          const s1 = stepTrack[q1] || 0;
-          const s2 = !isNaN(q2) && q2 >= 0 && q2 < 4 ? (stepTrack[q2] || 0) : s1;
-          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) 
-            ? explicitStep 
-            : Math.max(s1, s2);
-
-          if (targetStep < 10) {
-            gates.push({ name: gateName, qubit: q1, step: targetStep });
-            stepTrack[q1] = targetStep + 1;
-            if (!isNaN(q2) && q2 >= 0 && q2 < 4) stepTrack[q2] = targetStep + 1;
-          }
-        }
-      } else if (gateName === 'ccx') {
-        const q1 = parseInt(rawArgs[0], 10);
-        const q2 = parseInt(rawArgs[1], 10);
-        const q3 = parseInt(rawArgs[2], 10);
-        const validQ = [q1, q2, q3].filter(q => !isNaN(q) && q >= 0 && q < 4);
-        const autoStep = Math.max(...validQ.map(q => stepTrack[q] || 0), 0);
-        const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
-
-        if (targetStep < 10 && validQ.length > 0) {
-          gates.push({ name: 'ccx', qubit: validQ[0], step: targetStep });
-          validQ.forEach(q => stepTrack[q] = targetStep + 1);
-        }
-      } else if (gateName === 'rx' || gateName === 'ry' || gateName === 'rz') {
-        // Rotation: qc.rx(angle, qubit) or qc.rz(0.7854, 0)
-        const q = parseInt(rawArgs[rawArgs.length - 1], 10);
-        if (!isNaN(q) && q >= 0 && q < 4) {
-          const autoStep = stepTrack[q] || 0;
-          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
-          if (targetStep < 10) {
-            gates.push({ name: gateName, qubit: q, step: targetStep });
-            stepTrack[q] = targetStep + 1;
-          }
-        }
-      } else {
-        // Single qubit: h, x, y, z, s, t, measure
-        const q = parseInt(rawArgs[0], 10);
-        if (!isNaN(q) && q >= 0 && q < 4) {
-          const autoStep = stepTrack[q] || 0;
-          const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
-          if (targetStep < 10) {
-            gates.push({ name: gateName, qubit: q, step: targetStep });
-            stepTrack[q] = targetStep + 1;
-          }
-        }
-      }
-    }
-  } catch (err) {
-    // Non-blocking defensive parse
-  }
-  return gates;
-}
 
 // Helper to render gate symbols with official Quantum Measurement Gauge
   const renderGateSlotContent = (gateName: string) => {
