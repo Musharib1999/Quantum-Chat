@@ -152,7 +152,7 @@ const CopilotChatInput = React.memo(function CopilotChatInput({
           onKeyDown={handleKeyDown}
           placeholder="Ask a quantum question about your code or concepts (e.g. explain main.py)..."
           style={{ color: colors.textPrimary, outline: 'none', border: 'none', boxShadow: 'none' }}
-          className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
+          className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:text-slate-400 dark:placeholder:text-zinc-500 placeholder-slate-400 dark:placeholder-zinc-500 leading-relaxed"
         />
         
         <div className="flex items-center justify-end gap-2 pt-1.5 border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
