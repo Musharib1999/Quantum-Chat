@@ -15,7 +15,16 @@ from qiskit import QuantumCircuit
 from qiskit.visualization import circuit_drawer
 
 try:
+    import qiskit_aer
     from qiskit_aer import AerSimulator
+    _orig_aer_run = AerSimulator.run
+    def _safe_aer_run(self, circuits, **kwargs):
+        if isinstance(circuits, QuantumCircuit) and getattr(circuits, "num_clbits", 0) == 0:
+            c = circuits.copy()
+            c.measure_all()
+            return _orig_aer_run(self, c, **kwargs)
+        return _orig_aer_run(self, circuits, **kwargs)
+    AerSimulator.run = _safe_aer_run
     HAS_AER = True
 except ImportError:
     HAS_AER = False
@@ -172,7 +181,16 @@ from qiskit import QuantumCircuit
 from qiskit.visualization import circuit_drawer
 
 try:
+    import qiskit_aer
     from qiskit_aer import AerSimulator
+    _orig_aer_run = AerSimulator.run
+    def _safe_aer_run(self, circuits, **kwargs):
+        if isinstance(circuits, QuantumCircuit) and getattr(circuits, "num_clbits", 0) == 0:
+            c = circuits.copy()
+            c.measure_all()
+            return _orig_aer_run(self, c, **kwargs)
+        return _orig_aer_run(self, circuits, **kwargs)
+    AerSimulator.run = _safe_aer_run
     HAS_AER = True
 except ImportError:
     HAS_AER = False
@@ -213,7 +231,15 @@ exec_globals = {
     "qiskit": qiskit, "QuantumCircuit": QuantumCircuit,
 }
 if HAS_AER:
-    exec_globals["AerSimulator"] = AerSimulator
+    class SafeAerSimulator(AerSimulator):
+        def run(self, circuits, **kwargs):
+            if isinstance(circuits, QuantumCircuit):
+                if circuits.num_clbits == 0:
+                    c = circuits.copy()
+                    c.measure_all()
+                    return super().run(c, **kwargs)
+            return super().run(circuits, **kwargs)
+    exec_globals["AerSimulator"] = SafeAerSimulator
 if HAS_DWAVE:
     exec_globals["dimod"] = dimod
     exec_globals["SimulatedAnnealingSampler"] = SimulatedAnnealingSampler

@@ -426,11 +426,10 @@ qc = QuantumCircuit(2)
 qc.h(0)
 qc.cx(0, 1)
 
-# Execute on Qiskit Aer Simulator
+# Execute on AerSimulator
 sim = AerSimulator()
 result = sim.run(qc, shots=1024).result()
-print("Bell State Prepared!")
-print("Measurement Counts:", result.get_counts())
+print('Measurement Counts:', result.get_counts())
 `
         }
       }
@@ -481,11 +480,10 @@ qc = QuantumCircuit(2)
 qc.h(0)
 qc.cx(0, 1)
 
-# Execute on Qiskit Aer Simulator
+# Execute on AerSimulator
 sim = AerSimulator()
 result = sim.run(qc, shots=1024).result()
-print("Bell State Prepared!")
-print("Measurement Counts:", result.get_counts())
+print('Measurement Counts:', result.get_counts())
 `
         }
       }
@@ -1060,7 +1058,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     const pyFiles = Object.keys(projectFiles).filter(f => f.endsWith('.py'));
     const nextNum = pyFiles.length + 1;
     const newFileName = `circuit_${nextNum}.py`;
-    const starterContent = `from qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\n\nqc = QuantumCircuit(2)\nqc.h(0)\nqc.cx(0, 1)\n\nsim = AerSimulator()\nresult = sim.run(qc, shots=1024).result()\nprint('Counts:', result.get_counts())\n`;
+    const starterContent = `from qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\n\n# ⚛️ Bell State Entanglement Circuit\nqc = QuantumCircuit(2)\nqc.h(0)\nqc.cx(0, 1)\n\n# Execute on AerSimulator\nsim = AerSimulator()\nresult = sim.run(qc, shots=1024).result()\nprint('Measurement Counts:', result.get_counts())\n`;
 
     setProjectFiles(prev => {
       const updated = {
@@ -1257,13 +1255,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     newCodeLines.push('');
     newCodeLines.push('# Execute on AerSimulator');
     newCodeLines.push('sim = AerSimulator()');
-    if (!hasManualMeasure) {
-      newCodeLines.push('meas_qc = qc.copy()');
-      newCodeLines.push('meas_qc.measure_all()');
-      newCodeLines.push(`result = sim.run(meas_qc, shots=${shots || 1024}).result()`);
-    } else {
-      newCodeLines.push(`result = sim.run(qc, shots=${shots || 1024}).result()`);
-    }
+    newCodeLines.push(`result = sim.run(qc, shots=${shots || 1024}).result()`);
     newCodeLines.push("print('Measurement Counts:', result.get_counts())");
 
     const newCode = newCodeLines.join('\n');
@@ -1322,92 +1314,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
 
     setCircuitGates(updatedGates);
-
-    const numQubits = Math.max(2, ...updatedGates.map(g => g.qubit + 1));
-    const hasManualMeasure = updatedGates.some(g => g.name === 'measure');
-    let newCodeLines = [
-      'from qiskit import QuantumCircuit',
-      'from qiskit_aer import AerSimulator',
-      '',
-      `# ⚛️ Synthesized Interactive Circuit (${numQubits} Qubits)`,
-      hasManualMeasure ? `qc = QuantumCircuit(${numQubits}, ${numQubits})` : `qc = QuantumCircuit(${numQubits})`
-    ];
-
-    const sorted = [...updatedGates].sort((a, b) => a.step - b.step || a.qubit - b.qubit);
-    sorted.forEach(g => {
-      let code = '';
-      if (g.name === 'h') code = `qc.h(${g.qubit})`;
-      else if (g.name === 'x') code = `qc.x(${g.qubit})`;
-      else if (g.name === 'y') code = `qc.y(${g.qubit})`;
-      else if (g.name === 'z') code = `qc.z(${g.qubit})`;
-      else if (g.name === 's') code = `qc.s(${g.qubit})`;
-      else if (g.name === 't') code = `qc.t(${g.qubit})`;
-      else if (g.name === 'rx') code = `qc.rx(0.7854, ${g.qubit})`;
-      else if (g.name === 'ry') code = `qc.ry(0.7854, ${g.qubit})`;
-      else if (g.name === 'rz') code = `qc.rz(0.7854, ${g.qubit})`;
-      else if (g.name === 'cx') {
-        const targetQ = (g.qubit + 1) % numQubits;
-        code = `qc.cx(${g.qubit}, ${targetQ})`;
-      }
-      else if (g.name === 'cz') {
-        const targetQ = (g.qubit + 1) % numQubits;
-        code = `qc.cz(${g.qubit}, ${targetQ})`;
-      }
-      else if (g.name === 'swap') {
-        const targetQ = (g.qubit + 1) % numQubits;
-        code = `qc.swap(${g.qubit}, ${targetQ})`;
-      }
-      else if (g.name === 'ccx') {
-        const q1 = g.qubit;
-        const q2 = (g.qubit + 1) % numQubits;
-        const q3 = (g.qubit + 2) % numQubits;
-        code = `qc.ccx(${q1}, ${q2}, ${q3})`;
-      }
-      else if (g.name === 'measure') code = `qc.measure(${g.qubit}, ${g.qubit})`;
-
-      if (code) {
-        newCodeLines.push(`${code}  # t=${g.step}`);
-      }
-    });
-
-    newCodeLines.push('');
-    newCodeLines.push('# Execute on AerSimulator');
-    newCodeLines.push('sim = AerSimulator()');
-    if (!hasManualMeasure) {
-      newCodeLines.push('meas_qc = qc.copy()');
-      newCodeLines.push('meas_qc.measure_all()');
-      newCodeLines.push('result = sim.run(meas_qc, shots=1024).result()');
-    } else {
-      newCodeLines.push('result = sim.run(qc, shots=1024).result()');
-    }
-    newCodeLines.push("print('Measurement Counts:', result.get_counts())");
-
-    const newCode = newCodeLines.join('\n');
-
-    setProjectFiles(prev => {
-      const updated = {
-        ...prev,
-        [activeFile]: {
-          ...prev[activeFile],
-          content: newCode
-        }
-      };
-      const updatedProj = {
-        ...(allProjects[projectName] || {}),
-        files: updated
-      };
-      setAllProjects(pPrev => ({
-        ...pPrev,
-        [projectName]: updatedProj
-      }));
-      saveProjectToDatabase(projectName, updatedProj, activeFile, runtimeMetrics);
-      return updated;
-    });
+    synchronizeGatesToCode(updatedGates);
   };
 
   const handleClearCircuitGates = () => {
     setCircuitGates([]);
-    const clearedCode = `from qiskit import QuantumCircuit\n\nqc = QuantumCircuit(${canvasQubits})\n# Wire cleared. Click slots in Circuit Canvas to add gates.\n`;
+    const clearedCode = `from qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\n\n# ⚛️ Synthesized Interactive Circuit (${canvasQubits} Qubits)\nqc = QuantumCircuit(${canvasQubits})\n# Wire cleared. Click slots in Circuit Canvas to add gates.\n\n# Execute on AerSimulator\nsim = AerSimulator()\nresult = sim.run(qc, shots=1024).result()\nprint('Measurement Counts:', result.get_counts())\n`;
     setProjectFiles(prev => {
       const updated = {
         ...prev,
