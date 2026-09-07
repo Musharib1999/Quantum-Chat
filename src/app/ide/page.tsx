@@ -413,6 +413,19 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
 export default function QuantumIDE() {
   const { logout } = useAuth();
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  // Synchronize theme to document.documentElement for global Tailwind dark: mode compatibility
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    }
+  }, [theme]);
   const [activeBottomTab, setActiveBottomTab] = useState<'circuit' | 'results' | 'terminal'>('circuit');
   const [activeModel, setActiveModel] = useState<'groq' | 'runpod'>('groq');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -3534,7 +3547,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-hidden animate-in fade-in duration-150"
         >
           <div 
-            style={{ backgroundColor: isDark ? '#121216' : '#ffffff', borderColor: isDark ? '#27272a' : '#e2e8f0', color: colors.textPrimary }}
+            style={{ 
+              backgroundColor: isDark ? '#121216' : '#ffffff', 
+              borderColor: isDark ? '#27272a' : '#e2e8f0', 
+              color: colors.textPrimary 
+            }}
             className="border rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
           >
             {/* Header */}
@@ -3543,16 +3560,17 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               className="px-5 py-4 border-b flex items-center justify-between"
             >
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+                <h3 className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
                   New Quantum Project
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
                   Scaffold an isolated workspace with runtime configs
                 </p>
               </div>
               <button 
                 onClick={() => setIsNewProjectOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                style={{ color: colors.textMuted }}
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-80 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -3562,7 +3580,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             <div className="p-5 space-y-4">
               {/* 1. Project Name Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">
+                <label className="text-xs font-medium" style={{ color: isDark ? '#e4e4e7' : '#334155' }}>
                   Project Name
                 </label>
                 <input 
@@ -3583,7 +3601,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
               {/* 2. Quantum Architecture & Paradigm Selection */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">
+                <label className="text-xs font-medium" style={{ color: isDark ? '#e4e4e7' : '#334155' }}>
                   Architecture & Paradigm
                 </label>
 
@@ -3599,38 +3617,49 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                           borderColor: isQiskit ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#27272a' : '#e2e8f0'),
                         }}
                         className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 group ${
-                          isQiskit ? 'shadow-xs' : 'hover:border-slate-300 dark:hover:border-zinc-700'
+                          isQiskit ? 'shadow-xs' : 'hover:opacity-90'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className={`p-2 rounded-lg shrink-0 transition-colors ${
-                            isQiskit 
-                              ? (isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-600') 
-                              : (isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-slate-100 text-slate-500')
-                          }`}>
+                          <div 
+                            style={{
+                              backgroundColor: isQiskit ? (isDark ? 'rgba(56, 189, 248, 0.2)' : '#e0f2fe') : (isDark ? '#27272a' : '#f1f5f9'),
+                              color: isQiskit ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#a1a1aa' : '#64748b')
+                            }}
+                            className="p-2 rounded-lg shrink-0 transition-colors"
+                          >
                             <Cpu className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className={`text-xs font-medium ${isQiskit ? (isDark ? 'text-zinc-100' : 'text-slate-900') : (isDark ? 'text-zinc-300' : 'text-slate-700')}`}>
+                              <span className="text-xs font-medium" style={{ color: colors.textPrimary }}>
                                 Gate Circuit (Qiskit)
                               </span>
-                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                              <span 
+                                style={{
+                                  backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(2, 132, 199, 0.1)',
+                                  color: isDark ? '#38bdf8' : '#0284c7',
+                                  borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(2, 132, 199, 0.3)'
+                                }}
+                                className="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                              >
                                 aer_simulator
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5">
+                            <p className="text-[11px] truncate mt-0.5" style={{ color: colors.textMuted }}>
                               Wires, timesteps & interactive gate canvas
                             </p>
                           </div>
                         </div>
 
                         {/* Radio Indicator */}
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
-                          isQiskit
-                            ? 'border-sky-500 bg-sky-500'
-                            : (isDark ? 'border-zinc-600 bg-transparent' : 'border-slate-300 bg-transparent')
-                        }`}>
+                        <div 
+                          style={{
+                            borderColor: isQiskit ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#52525b' : '#cbd5e1'),
+                            backgroundColor: isQiskit ? (isDark ? '#38bdf8' : '#0284c7') : 'transparent'
+                          }}
+                          className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all"
+                        >
                           {isQiskit && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
                       </div>
@@ -3648,38 +3677,49 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                           borderColor: isDwave ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#27272a' : '#e2e8f0'),
                         }}
                         className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 group ${
-                          isDwave ? 'shadow-xs' : 'hover:border-slate-300 dark:hover:border-zinc-700'
+                          isDwave ? 'shadow-xs' : 'hover:opacity-90'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className={`p-2 rounded-lg shrink-0 transition-colors ${
-                            isDwave 
-                              ? (isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-600') 
-                              : (isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-slate-100 text-slate-500')
-                          }`}>
+                          <div 
+                            style={{
+                              backgroundColor: isDwave ? (isDark ? 'rgba(56, 189, 248, 0.2)' : '#e0f2fe') : (isDark ? '#27272a' : '#f1f5f9'),
+                              color: isDwave ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#a1a1aa' : '#64748b')
+                            }}
+                            className="p-2 rounded-lg shrink-0 transition-colors"
+                          >
                             <Activity className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className={`text-xs font-medium ${isDwave ? (isDark ? 'text-zinc-100' : 'text-slate-900') : (isDark ? 'text-zinc-300' : 'text-slate-700')}`}>
+                              <span className="text-xs font-medium" style={{ color: colors.textPrimary }}>
                                 Quantum Annealing (D-Wave)
                               </span>
-                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                              <span 
+                                style={{
+                                  backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(2, 132, 199, 0.1)',
+                                  color: isDark ? '#38bdf8' : '#0284c7',
+                                  borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(2, 132, 199, 0.3)'
+                                }}
+                                className="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                              >
                                 dwave_annealer
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5">
+                            <p className="text-[11px] truncate mt-0.5" style={{ color: colors.textMuted }}>
                               Binary Quadratic Models (BQM) & energy minimization
                             </p>
                           </div>
                         </div>
 
                         {/* Radio Indicator */}
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
-                          isDwave
-                            ? 'border-sky-500 bg-sky-500'
-                            : (isDark ? 'border-zinc-600 bg-transparent' : 'border-slate-300 bg-transparent')
-                        }`}>
+                        <div 
+                          style={{
+                            borderColor: isDwave ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#52525b' : '#cbd5e1'),
+                            backgroundColor: isDwave ? (isDark ? '#38bdf8' : '#0284c7') : 'transparent'
+                          }}
+                          className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all"
+                        >
                           {isDwave && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
                       </div>
@@ -3689,18 +3729,27 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               </div>
 
               {/* 3. Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t" style={{ borderColor: isDark ? '#222226' : '#f1f5f9' }}>
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t" style={{ borderColor: isDark ? '#222226' : '#f1f5f9' }}>
                 <button
                   onClick={() => setIsNewProjectOpen(false)}
-                  className="px-3.5 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  style={{ 
+                    color: colors.textMuted, 
+                    backgroundColor: isDark ? '#1a1a22' : '#f1f5f9',
+                    borderColor: isDark ? '#2e2e36' : '#e2e8f0'
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-medium border hover:opacity-80 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateCustomProject}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-zinc-950 shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98"
+                  style={{ 
+                    backgroundColor: isDark ? '#38bdf8' : '#0284c7', 
+                    color: isDark ? '#02121f' : '#ffffff' 
+                  }}
+                  className="px-4.5 py-2 rounded-xl text-xs font-bold shadow-md hover:opacity-90 transition-all cursor-pointer flex items-center gap-1.5 active:scale-98"
                 >
-                  <Plus className="w-4 h-4 text-zinc-950" />
+                  <Plus className="w-4 h-4" style={{ color: isDark ? '#02121f' : '#ffffff' }} />
                   <span>Create Project</span>
                 </button>
               </div>
@@ -3708,8 +3757,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
           </div>
         </div>
-      )}
-
+      )}\n
     </div>
   );
 }
