@@ -1419,6 +1419,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 ...(updated[targetFileKey] || { name: targetFileKey, language: 'python' }),
                 content: newCode
               };
+
+              // ⚛️ Phase 2: Instant Bi-Directional Circuit Canvas & Qubit Synchronization
+              const declaredQubits = parseQiskitQubitCount(newCode);
+              const parsedGates = parseQiskitCodeToGates(newCode, declaredQubits);
+              const maxGateQubit = parsedGates.length > 0 ? Math.max(...parsedGates.map(g => g.qubit + 1)) : 2;
+              const finalQubits = Math.max(declaredQubits, maxGateQubit);
+              setCanvasQubits(finalQubits);
+              setCircuitGates(parsedGates);
             }
 
             if (data.qubo_matrix_code) {

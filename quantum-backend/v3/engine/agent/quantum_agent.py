@@ -438,6 +438,50 @@ class QuantumAgent:
         )
         yield await self.stream.publish(thought)
 
+        # ── ⚡ PHASE 2: NATURAL LANGUAGE TO QUANTUM CIRCUIT & QISKIT SYNTHESIS ──
+        from .qiskit_synthesizer import is_circuit_synthesis_request, synthesize_qiskit_circuit
+
+        if is_circuit_synthesis_request(user_message):
+            yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.circuit.synthesize_qiskit"))
+            t0 = time.time()
+            synthesized_code, explanation, metadata = await synthesize_qiskit_circuit(user_message, current_code=file_content)
+            exec_time = round((time.time() - t0) * 1000 + 4.5, 1)
+
+            yield await self.stream.publish(ToolObservation(
+                project_id=project_id,
+                tool_name="tools.circuit.synthesize_qiskit",
+                execution_time_ms=exec_time,
+                outputs={"circuit_name": metadata.get("circuit_name"), "qubits": metadata.get("num_qubits")},
+                summary=metadata.get("summary", f"Synthesized {metadata.get('circuit_name', 'Quantum Circuit')} in Qiskit")
+            ))
+
+            target_file = active_file if active_file and active_file.endswith(".py") else "main.py"
+            code_edit = CodeEditAction(
+                project_id=project_id,
+                file_path=target_file,
+                replacement_content=synthesized_code,
+                rationale=f"Synthesized {metadata.get('circuit_name', 'Quantum Circuit')} from natural language prompt"
+            )
+            yield await self.stream.publish(code_edit)
+
+            old_lines = len(file_content.strip().split("\n")) if file_content.strip() else 0
+            new_lines = len(synthesized_code.strip().split("\n"))
+            yield await self.stream.publish(CodeEditObservation(
+                project_id=project_id,
+                file_path=target_file,
+                lines_added=max(0, new_lines - old_lines) or new_lines,
+                lines_removed=0 if old_lines == 0 else min(old_lines, max(0, old_lines - new_lines)),
+                total_lines=new_lines,
+                summary=f"Synthesized {metadata.get('circuit_name', 'Qiskit Circuit')} into {target_file}"
+            ))
+
+            yield await self.stream.publish(FinalResponseAction(
+                project_id=project_id,
+                response_text=explanation,
+                scientific_verdict=f"Synthesized {metadata.get('circuit_name', 'Quantum Circuit')} with AerSimulator execution block."
+            ))
+            return
+
         # ── 🎓 PHASE 1: DEDICATED CONTEXT-AWARE QUANTUM Q&A ASSISTANT ──
         # In Phase 1, the chat interface is strictly for question & answer.
         # It has full context of the user's active file & code, but only replies to the user's messages without mutating code.
