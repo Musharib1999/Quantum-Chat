@@ -20,6 +20,7 @@ interface User {
     apiKey?: string;
     apiEnabled?: boolean;
     createdAt: string;
+    demoExpiresAt?: string;
 }
 
 export default function UserManager() {
@@ -44,7 +45,7 @@ export default function UserManager() {
     const [simMinutesUsed, setSimMinutesUsed] = useState<number>(0);
     const [apiKey, setApiKey] = useState("");
     const [apiEnabled, setApiEnabled] = useState(false);
-    const [role, setRole] = useState<'user' | 'admin' | 'enterprise' | 'builder' | 'student'>('user');
+    const [role, setRole] = useState<'user' | 'admin' | 'enterprise' | 'builder' | 'student' | 'demo'>('user');
     const [demoDuration, setDemoDuration] = useState("2");
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);

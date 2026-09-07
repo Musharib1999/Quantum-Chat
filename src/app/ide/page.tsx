@@ -250,10 +250,10 @@ function unrollQiskitLoops(code: string, numQubits: number = 4): string[] {
 
       let vals: number[] = [];
       if (listArg !== undefined) {
-        vals = listArg.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+        vals = listArg.split(',').map((s: string) => parseInt(s.trim(), 10)).filter((n: number) => !isNaN(n));
       } else if (rangeArg !== undefined) {
-        const rawArgs = rangeArg.split(',').map(s => s.trim());
-        const resolved = rawArgs.map(arg => {
+        const rawArgs = rangeArg.split(',').map((s: string) => s.trim());
+        const resolved = rawArgs.map((arg: string) => {
           if (variables[arg] !== undefined) return variables[arg];
           const n = parseInt(arg, 10);
           return isNaN(n) ? numQubits : n;
@@ -290,8 +290,8 @@ function unrollQiskitLoops(code: string, numQubits: number = 4): string[] {
 
       for (const val of vals) {
         for (const bLine of loopBody) {
-          const unrolledLine = bLine.replace(/(\b\w+\.\w+)\s*\(([^)]*)\)/g, (call, func, rawArgsStr) => {
-            const args = rawArgsStr.split(',').map(a => evaluateSimpleExpr(a, varName, val));
+          const unrolledLine = bLine.replace(/(\b\w+\.\w+)\s*\(([^)]*)\)/g, (_call: string, func: string, rawArgsStr: string) => {
+            const args = rawArgsStr.split(',').map((a: string) => evaluateSimpleExpr(a, varName, val));
             return `${func}(${args.join(', ')})`;
           });
           unrolled.push(unrolledLine);
@@ -529,7 +529,7 @@ export default function QuantumIDE() {
   // ─────────────────────────────────────────────────────────────
   // ⚡ DYNAMIC QUANTUM RUNTIME STATE (UPDATED BY AGENT & TOOLS)
   // ─────────────────────────────────────────────────────────────
-  const [runtimeMetrics, setRuntimeMetrics] = useState({
+  const [runtimeMetrics, setRuntimeMetrics] = useState<any>({
     activeQubits: 4,
     depth: 6,
     cnots: 3,
@@ -745,6 +745,8 @@ constraints = [
     'lih-cas-vqe': {
       title: 'Quantum Chemistry CAS-VQE',
       desc: 'Molecular orbital integrals, CAS active space, and Ground State Energy.',
+      backend: 'aer_simulator',
+      defaultTab: 'terminal',
       files: {
         'vqe_chemistry.py': {
           name: 'vqe_chemistry.py',
@@ -787,6 +789,8 @@ print("Active Spatial Orbitals: 4 | Active Electrons: 2 | Active Qubits: 8")
     'iris-qsvm-classifier': {
       title: 'Quantum Machine Learning (QML)',
       desc: 'Quantum Kernel (QSVM) and Variational Classifiers with PCA reduction.',
+      backend: 'aer_simulator',
+      defaultTab: 'terminal',
       files: {
         'qml_classifier.py': {
           name: 'qml_classifier.py',
@@ -827,7 +831,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   };
 
-  const [allProjects, setAllProjects] = useState(initialProjectTemplates);
+  const [allProjects, setAllProjects] = useState<Record<string, any>>(initialProjectTemplates);
   const [projectName, setProjectName] = useState('my-quantum-project');
   const [projectFiles, setProjectFiles] = useState(initialProjectTemplates['my-quantum-project'].files);
   const [activeFile, setActiveFile] = useState('main.py');
@@ -1135,7 +1139,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   // Synchronize project workspace to localStorage and MongoDB backend
   const saveProjectToDatabase = useCallback(async (
     projId: string, 
-    projData: { title: string; desc: string; files: Record<string, { name: string; content: string; language: string }> },
+    projData: any,
     currActiveFile: string,
     metrics: typeof runtimeMetrics
   ) => {
@@ -1304,12 +1308,17 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     const templateData = initialProjectTemplates[selectedTemplateKey] || initialProjectTemplates['my-quantum-project'];
     const newFiles = { ...templateData.files };
 
+    const targetB = (templateData as any).backend || (selectedTemplateKey.includes('dwave') || selectedTemplateKey.includes('portfolio') ? 'dwave_simulated_annealing' : 'aer_simulator');
+    const targetTab = (templateData as any).defaultTab || (targetB.includes('dwave') ? 'terminal' : 'circuit');
+
     // Update allProjects dictionary
     setAllProjects(prev => ({
       ...prev,
       [finalName]: {
         title: finalName,
         desc: `Custom project scaffolded from ${templateData.title}`,
+        backend: targetB,
+        defaultTab: targetTab,
         files: newFiles
       }
     }));
@@ -1324,9 +1333,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setIsProjectsDropdownOpen(false);
 
     // ⚡ Auto-configure Target Backend & Active Bottom Tab based on Architecture
-    const targetB = templateData.backend || (selectedTemplateKey.includes('dwave') || selectedTemplateKey.includes('portfolio') ? 'dwave_simulated_annealing' : 'aer_simulator');
     setTargetBackend(targetB);
-    const targetTab = templateData.defaultTab || (targetB.includes('dwave') ? 'terminal' : 'circuit');
+    setActiveBottomTab(targetTab);
     setActiveBottomTab(targetTab);
     setIsBottomOpen(true);
 
@@ -1362,7 +1370,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     ]);
 
     try {
-      const res = await fetch('http://localhost:8002/v3/enterprise/ide/execute', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002';
+      const res = await fetch(`${backendUrl}/v3/enterprise/ide/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1615,7 +1624,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
 
     try {
-      const res = await fetch('http://localhost:8002/v3/enterprise/ide/agent/chat', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002';
+      const res = await fetch(`${backendUrl}/v3/enterprise/ide/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1684,7 +1694,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             if (data.qubo_matrix_code) {
               updated['qubo_matrix.py'] = {
                 name: 'qubo_matrix.py',
-                language: 'python',
+                lang: 'python',
                 content: data.qubo_matrix_code
               };
             }
@@ -1693,7 +1703,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               for (const [fName, fContent] of Object.entries(data.updated_files)) {
                 updated[fName] = {
                   name: fName,
-                  language: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
+                  lang: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
                   content: fContent as string
                 };
               }
@@ -1702,7 +1712,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             if (data.memory_md) {
               updated['MEMORY.md'] = {
                 name: 'MEMORY.md',
-                language: 'markdown',
+                lang: 'markdown',
                 content: data.memory_md
               };
             }
@@ -3323,7 +3333,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                             <th className="p-2 text-left font-mono text-[11px] border-b" style={{ borderColor: colors.border, color: colors.textMuted }}>
                               Variables
                             </th>
-                            {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v, idx) => (
+                            {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v: string, idx: number) => (
                               <th key={idx} className="p-2 font-mono text-[11px] border-b font-semibold" style={{ borderColor: colors.border, color: colors.textPrimary }}>
                                 x_{idx} ({v.replace('Project_', '').replace('_Farm', '').replace('_Storage', '')})
                               </th>
@@ -3336,14 +3346,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                             [0.0, -43.41, 1.0, -10.0],
                             [0.0, 0.0, -28.86, 1.0],
                             [0.0, 0.0, 0.0, -33.64]
-                          ]).map((row, rIdx) => {
+                          ]).map((row: any, rIdx: number) => {
                             const varName = (runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E'])[rIdx];
                             return (
                               <tr key={rIdx} className="hover:bg-sky-500/5 transition-colors">
                                 <td className="p-2.5 text-left font-mono font-semibold border-r" style={{ borderColor: colors.border, color: colors.textSkyBlue }}>
                                   x_{rIdx} ({varName})
                                 </td>
-                                {row.map((val, cIdx) => {
+                                {row.map((val: any, cIdx: number) => {
                                   const isSelected = selectedQuboCell?.row === rIdx && selectedQuboCell?.col === cIdx;
                                   const isDiag = rIdx === cIdx;
                                   const isPositive = val > 0;
@@ -3410,7 +3420,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                         Decision variables ({runtimeMetrics.qubo_telemetry?.variables?.length || 4})
                       </div>
                       <div className="space-y-1.5 text-xs font-mono">
-                        {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v, idx) => {
+                        {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v: string, idx: number) => {
                           const isPicked = (runtimeMetrics.qubo_telemetry?.selected_items || ['Solar_Farm_A', 'Wind_Farm_C', 'Battery_Storage_E']).includes(v);
                           return (
                             <div key={idx} className="flex items-center justify-between p-1.5 rounded-md bg-black/20 border" style={{ borderColor: colors.border }}>
@@ -3511,7 +3521,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     <span className="text-[10px]" style={{ color: colors.textEmerald }}>• Process Exited Cleanly (code 0)</span>
                   </div>
                   <div className="p-4 rounded-xl border bg-black/40 space-y-1 overflow-x-auto" style={{ borderColor: colors.border }}>
-                    {(runtimeMetrics?.terminalLog || []).map((line, lIdx) => (
+                    {(runtimeMetrics?.terminalLog || []).map((line: string, lIdx: number) => (
                       <div key={lIdx} style={{ color: line.startsWith('➜') ? colors.textAmber : (line.includes('exit code 0') ? colors.textEmerald : colors.textPrimary) }}>
                         {line}
                       </div>

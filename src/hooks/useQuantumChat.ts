@@ -8,7 +8,7 @@ export interface Message {
     sender: 'user' | 'bot' | 'system';
     timestamp: string;
     isStreaming?: boolean;
-    executionResult?: { success: boolean; output?: string; error?: string };
+    executionResult?: any;
     isCodeExecuting?: boolean;
     chartData?: any;
     portfolioMetrics?: any;
