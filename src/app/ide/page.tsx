@@ -2639,7 +2639,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             style={{ backgroundColor: colors.bgSection3, borderColor: colors.border }}
             className="h-12 px-3.5 border-b flex items-center justify-between shrink-0 select-none shadow-xs"
           >
-            <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>
+            <span className="font-normal text-sm tracking-tight font-heading" style={{ color: colors.textPrimary }}>
               Quantum Copilot
             </span>
             <span 
