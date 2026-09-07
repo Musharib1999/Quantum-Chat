@@ -2235,8 +2235,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                             <div className="flex-1 flex items-center relative h-8">
                               {/* Continuous Horizontal Quantum Wire (Crisp contrast across entire timeline) */}
                               <div 
-                                style={{ backgroundColor: isDark ? '#3f3f46' : '#cbd5e1' }} 
-                                className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] z-0" 
+                                style={{ 
+                                  backgroundColor: isDark ? '#475569' : '#94a3b8',
+                                  boxShadow: isDark ? '0 0 6px rgba(56, 189, 248, 0.25)' : 'none'
+                                }} 
+                                className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2.5px] z-0" 
                               />
 
                               {/* 10 Time Step Slots on this Qubit */}
@@ -2288,20 +2291,22 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                         style={{
                                           backgroundColor: gateOnSlot 
                                             ? (isDark ? '#0c4a6e' : '#e0f2fe') 
-                                            : (isDark ? 'rgba(20, 20, 24, 0.45)' : 'rgba(255, 255, 255, 0.6)'),
+                                            : (isSelected ? (isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(2, 132, 199, 0.1)') : 'transparent'),
                                           borderColor: gateOnSlot 
                                             ? (isDark ? '#38bdf8' : '#0284c7') 
-                                            : (isSelected ? '#38bdf8' : (isDark ? 'rgba(63, 63, 70, 0.4)' : '#e2e8f0')),
+                                            : (isSelected ? '#38bdf8' : 'transparent'),
                                           color: gateOnSlot 
                                             ? (isDark ? '#7dd3fc' : '#0369a1') 
-                                            : (isDark ? '#71717a' : '#94a3b8')
+                                            : (isDark ? '#64748b' : '#94a3b8')
                                         }}
-                                        className={`wire-slot-btn relative z-10 w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer shadow-2xs backdrop-blur-[1px] ${
+                                        className={`wire-slot-btn relative z-10 w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer ${
                                           isSelected
                                             ? 'ring-2 ring-sky-400 scale-[1.05]'
                                             : gateOnSlot 
-                                              ? (isDark ? 'ring-1 ring-sky-400/50' : 'ring-1 ring-sky-500/50 shadow-xs') 
-                                              : (isDark ? 'hover:border-sky-400 hover:text-zinc-300' : 'hover:border-sky-500 hover:text-slate-800 hover:bg-slate-50')
+                                              ? (isDark ? 'ring-1 ring-sky-400/50 shadow-xs' : 'ring-1 ring-sky-500/50 shadow-xs') 
+                                              : (isDark 
+                                                  ? 'hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-sky-300' 
+                                                  : 'hover:border-sky-400 hover:bg-sky-50 hover:text-sky-600')
                                         }`}
                                         title={gateOnSlot ? `Slot (q[${qIdx}], t${stepIdx}): ${gateOnSlot.name.toUpperCase()}${gateOnSlot.target !== undefined ? ` (${gateOnSlot.role === 'control' ? 'Ctrl -> q' + gateOnSlot.target : 'Target <- q' + gateOnSlot.target})` : ''}` : `Slot (q[${qIdx}], t${stepIdx}): Click to choose gate`}
                                       >
