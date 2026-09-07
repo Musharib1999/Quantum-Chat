@@ -1534,16 +1534,6 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             <span className="font-normal text-sm tracking-tight font-heading" style={{ color: colors.textPrimary }}>
               Quantum Guru
             </span>
-            <span 
-              style={{ 
-                backgroundColor: colors.bgPill, 
-                borderColor: colors.border,
-                color: colors.textCyan 
-              }}
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded border font-normal uppercase tracking-wider"
-            >
-              IDE
-            </span>
           </div>
 
           <div style={{ backgroundColor: colors.border }} className="h-4 w-px mx-1" />
