@@ -1685,15 +1685,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
                 className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
                   isDark
-                    ? 'border-transparent text-zinc-400 hover:border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-300 hover:scale-[1.04]'
-                    : 'border-transparent text-slate-600 hover:border-amber-400/50 hover:bg-amber-50 hover:text-amber-600 hover:shadow-xs hover:scale-[1.04]'
+                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-zinc-100 hover:scale-[1.04]'
+                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-xs hover:scale-[1.04]'
                 }`}
                 title={`Switch to ${isDark ? 'Light' : 'Dark'} Theme`}
               >
                 {isDark ? (
-                  <Sun className="w-4.5 h-4.5 mb-1 text-amber-400 group-hover:rotate-90 transition-transform duration-300" />
+                  <Sun className="w-4.5 h-4.5 mb-1 group-hover:rotate-90 transition-transform duration-300" />
                 ) : (
-                  <Moon className="w-4.5 h-4.5 mb-1 text-amber-600 group-hover:-rotate-12 transition-transform duration-300" />
+                  <Moon className="w-4.5 h-4.5 mb-1 group-hover:-rotate-12 transition-transform duration-300" />
                 )}
                 <span className="text-[10px] font-medium font-sans text-center leading-none">Theme</span>
               </button>
@@ -1703,12 +1703,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 href="/marketplace"
                 className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
                   isDark
-                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-sky-400 hover:scale-[1.04]'
-                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-sky-600 hover:shadow-xs hover:scale-[1.04]'
+                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-zinc-100 hover:scale-[1.04]'
+                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-xs hover:scale-[1.04]'
                 }`}
                 title="Browse 33 Quantum Capabilities Marketplace"
               >
-                <Zap className="w-4.5 h-4.5 mb-1 group-hover:scale-110 transition-transform text-amber-400" />
+                <Zap className="w-4.5 h-4.5 mb-1 group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] font-medium font-sans text-center leading-none">Market</span>
               </Link>
 
