@@ -1857,7 +1857,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               backgroundColor: colors.bgSection1, 
               borderColor: colors.border 
             }}
-            className="border-r flex flex-col shrink-0 relative select-none py-3 px-1.5 justify-between overflow-hidden"
+            className="border-r flex flex-col shrink-0 relative select-none pt-3 pb-0 px-1.5 justify-between overflow-hidden"
           >
             {/* ── TOP ACTIONS: NEW PROJECT & ACTIVE FILES (HIGH-END ERGONOMIC DOCK) ── */}
             <div className="space-y-2.5 flex flex-col items-center w-full">
@@ -1917,15 +1917,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
             {/* ── BOTTOM ACTIONS: THEME, MARKETPLACE, SETTINGS & LOGOUT ── */}
             <div 
-              className="border-t w-full" 
+              className="border-t w-full shrink-0 transition-all duration-150" 
               style={{ 
+                height: isBottomOpen ? `${bottomHeight}px` : 'auto',
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center', 
-                gap: '22px', 
-                paddingTop: '20px', 
-                paddingBottom: '16px', 
-                borderColor: colors.border 
+                justifyContent: 'space-evenly',
+                paddingTop: '8px', 
+                paddingBottom: '8px', 
+                borderColor: colors.borderSection2 
               }}
             >
               {/* 3. Theme Toggle Action Button */}
