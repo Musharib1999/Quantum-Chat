@@ -1595,12 +1595,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   return (
     <div 
       style={{ backgroundColor: colors.bgMain, color: colors.textPrimary }}
-      className="h-screen w-screen flex flex-col font-sans select-none overflow-hidden relative"
+      className="h-screen w-screen flex flex-row font-sans select-none overflow-hidden relative"
     >
+      {/* ── LEFT & CENTER REGION: HEADER + WORKSPACE (FLEX-1) ── */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 h-full overflow-hidden relative">
       
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* BLOCK A: TOP GLOBAL COMMAND BAR                               */}
-      {/* ───────────────────────────────────────────────────────────── */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* BLOCK A: TOP GLOBAL COMMAND BAR                               */}
+        {/* ───────────────────────────────────────────────────────────── */}
       <header 
         style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
         className="h-12 border-b px-4 flex items-center justify-between shrink-0 z-20 shadow-xs"
@@ -2412,46 +2414,49 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
         </div>
 
-        {/* ── DRAGGABLE RESIZER FOR SECTION 3 (RIGHT) ── */}
-        {isRightOpen && (
-          <div 
-            onMouseDown={handleRightMouseDown}
-            className="w-1.5 hover:w-2 bg-transparent hover:bg-sky-500/30 active:bg-sky-500 cursor-col-resize z-30 transition-all shrink-0 flex items-center justify-center -mr-0.5 group"
-            title="Drag to resize Section 3 width"
-          >
-            <div style={{ backgroundColor: colors.border }} className="w-0.5 h-6 rounded group-hover:bg-sky-500" />
-          </div>
-        )}
+        </div>
+      </div>
 
-        {/* ─────────────────────────────────────────────────────────── */}
-        {/* SECTION 3 (RIGHT): AGENTIC QUANTUM COPILOT                 */}
-        {/* ─────────────────────────────────────────────────────────── */}
-        {isRightOpen ? (
-          <aside 
-            style={{ 
-              width: `${rightWidth}px`, 
-              backgroundColor: colors.bgSection3, 
-              borderColor: colors.border 
-            }}
-            className="border-l flex flex-col shrink-0 relative transition-[width] duration-0"
+      {/* ── DRAGGABLE RESIZER FOR SECTION 3 (RIGHT) ── */}
+      {isRightOpen && (
+        <div 
+          onMouseDown={handleRightMouseDown}
+          className="w-1.5 hover:w-2 bg-transparent hover:bg-sky-500/30 active:bg-sky-500 cursor-col-resize z-30 transition-all shrink-0 flex items-center justify-center -mr-0.5 group"
+          title="Drag to resize Section 3 width"
+        >
+          <div style={{ backgroundColor: colors.border }} className="w-0.5 h-6 rounded group-hover:bg-sky-500" />
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────── */}
+      {/* SECTION 3 (RIGHT): AGENTIC QUANTUM COPILOT (FULL HEIGHT)     */}
+      {/* ─────────────────────────────────────────────────────────── */}
+      {isRightOpen ? (
+        <aside 
+          style={{ 
+            width: `${rightWidth}px`, 
+            backgroundColor: colors.bgSection3, 
+            borderColor: colors.border 
+          }}
+          className="border-l flex flex-col shrink-0 h-full relative transition-[width] duration-0 z-20"
+        >
+          {/* Section 3 Header: Full-Height Header Flush with Top Nav (h-12) */}
+          <div 
+            style={{ backgroundColor: colors.bgSection3, borderColor: colors.border }}
+            className="h-12 px-3.5 border-b flex items-center justify-between shrink-0 select-none shadow-xs"
           >
-            {/* Section 3 Header: Dedicated Context-Aware Q&A Assistant */}
-            <div 
-              style={{ backgroundColor: colors.bgSection3, borderColor: colors.border }}
-              className="h-9 px-3 border-b flex items-center justify-between shrink-0 select-none"
-            >
-              <div className="flex items-center gap-2">
-                <Brain className="w-3.5 h-3.5 text-sky-400" />
-                <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>Quantum Q&A Assistant</span>
-              </div>
-              <span 
-                style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
-                className="text-[10px] font-mono px-2 py-0.5 rounded border"
-                title={`Active workspace context: ${activeFile}`}
-              >
-                {activeFile}
-              </span>
+            <div className="flex items-center gap-2">
+              <Brain className="w-4 h-4 text-sky-400" />
+              <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>Quantum Q&A Assistant</span>
             </div>
+            <span 
+              style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+              className="text-[10px] font-mono px-2 py-0.5 rounded border"
+              title={`Active workspace context: ${activeFile}`}
+            >
+              {activeFile}
+            </span>
+          </div>
 
             {/* Conversation Stream & Tool Execution Cards */}
             <div className="flex-1 p-3 overflow-y-auto space-y-3 text-sm">
@@ -2719,9 +2724,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               activeFile={activeFile}
             />
           </aside>
-        ) : null}
-
-      </div>
+      ) : null}
 
 
 
