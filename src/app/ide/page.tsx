@@ -1687,36 +1687,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           </div>
         </div>
 
-        {/* Right: Marketplace Link, Theme Switcher & Section 3 Toggle */}
-        <div className="flex items-center gap-2">
-          <Link
-            href="/marketplace"
-            title="Browse 33 Quantum Capabilities Marketplace"
-            style={{ 
-              backgroundColor: colors.bgPill, 
-              borderColor: colors.border,
-              color: colors.textCyan 
-            }}
-            className="px-2.5 py-1.5 rounded-md border text-xs font-mono transition-all hover:border-sky-400 flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <Zap className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
-            <span>Marketplace</span>
-          </Link>
-          <button
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            title={`Switch to ${isDark ? 'Light' : 'Dark'} Theme`}
-            style={{ 
-              backgroundColor: colors.bgPill, 
-              borderColor: colors.border,
-              color: colors.textAmber
-            }}
-            className="p-1.5 rounded-md border transition-colors cursor-pointer hover:border-amber-400"
-          >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
-
-        </div>
+        {/* Right: Header Right Spacer */}
+        <div className="flex items-center gap-2" />
       </header>
 
       {/* ───────────────────────────────────────────────────────────── */}
@@ -1792,9 +1764,41 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               </div>
             </div>
 
-            {/* ── BOTTOM ACTIONS: SETTINGS & LOGOUT ── */}
-            <div className="space-y-2.5 pt-3 border-t w-full flex flex-col items-center" style={{ borderColor: colors.border }}>
-              {/* 3. Settings Action Button */}
+            {/* ── BOTTOM ACTIONS: THEME, MARKETPLACE, SETTINGS & LOGOUT ── */}
+            <div className="space-y-2 pt-2.5 border-t w-full flex flex-col items-center" style={{ borderColor: colors.border }}>
+              {/* 3. Theme Toggle Action Button */}
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
+                  isDark
+                    ? 'border-transparent text-zinc-400 hover:border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-300 hover:scale-[1.04]'
+                    : 'border-transparent text-slate-600 hover:border-amber-400/50 hover:bg-amber-50 hover:text-amber-600 hover:shadow-xs hover:scale-[1.04]'
+                }`}
+                title={`Switch to ${isDark ? 'Light' : 'Dark'} Theme`}
+              >
+                {isDark ? (
+                  <Sun className="w-4.5 h-4.5 mb-1 text-amber-400 group-hover:rotate-90 transition-transform duration-300" />
+                ) : (
+                  <Moon className="w-4.5 h-4.5 mb-1 text-amber-600 group-hover:-rotate-12 transition-transform duration-300" />
+                )}
+                <span className="text-[10px] font-medium font-sans text-center leading-none">Theme</span>
+              </button>
+
+              {/* 4. Marketplace Action Button */}
+              <Link
+                href="/marketplace"
+                className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
+                  isDark
+                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-sky-400 hover:scale-[1.04]'
+                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-sky-600 hover:shadow-xs hover:scale-[1.04]'
+                }`}
+                title="Browse 33 Quantum Capabilities Marketplace"
+              >
+                <Zap className="w-4.5 h-4.5 mb-1 group-hover:scale-110 transition-transform text-amber-400" />
+                <span className="text-[10px] font-medium font-sans text-center leading-none">Market</span>
+              </Link>
+
+              {/* 5. Settings Action Button */}
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
@@ -1808,7 +1812,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 <span className="text-[10px] font-medium font-sans text-center leading-none">Settings</span>
               </button>
 
-              {/* 4. Logout Action Button */}
+              {/* 6. Logout Action Button */}
               <button
                 onClick={() => {
                   try {
