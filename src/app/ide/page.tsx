@@ -1180,7 +1180,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
     if (gateName === 'cx') {
       if (role === 'control') {
-        return <div className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-md ring-2 ring-cyan-400/40" />;
+        return (
+          <svg className="w-3.5 h-3.5 text-cyan-300" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="12" r="7" />
+          </svg>
+        );
       }
       if (role === 'target') {
         return (
@@ -1195,7 +1199,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
     if (gateName === 'cz') {
       if (role === 'control') {
-        return <div className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-md ring-2 ring-cyan-400/40" />;
+        return (
+          <svg className="w-3.5 h-3.5 text-cyan-300" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="12" r="7" />
+          </svg>
+        );
       }
       if (role === 'target') {
         return 'Z';
@@ -1207,7 +1215,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
     if (gateName === 'ccx') {
       if (role === 'control') {
-        return <div className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-md ring-2 ring-cyan-400/40" />;
+        return (
+          <svg className="w-3.5 h-3.5 text-cyan-300" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="12" r="7" />
+          </svg>
+        );
       }
       if (role === 'target') {
         return (
