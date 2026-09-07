@@ -3464,8 +3464,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       <div
                         onClick={() => setSelectedTemplateKey('dwave-annealing')}
                         style={{
-                          backgroundColor: isDwave ? (isDark ? '#221133' : '#faf5ff') : (isDark ? '#16161B' : '#ffffff'),
-                          borderColor: isDwave ? (isDark ? '#c084fc' : '#9333ea') : (isDark ? '#27272a' : '#e2e8f0'),
+                          backgroundColor: isDwave ? (isDark ? '#0c2233' : '#f0f9ff') : (isDark ? '#16161B' : '#ffffff'),
+                          borderColor: isDwave ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#27272a' : '#e2e8f0'),
                         }}
                         className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 group ${
                           isDwave ? 'shadow-xs' : 'hover:border-slate-300 dark:hover:border-zinc-700'
@@ -3474,7 +3474,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                         <div className="flex items-center gap-3 min-w-0">
                           <div className={`p-2 rounded-lg shrink-0 transition-colors ${
                             isDwave 
-                              ? (isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600') 
+                              ? (isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-600') 
                               : (isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-slate-100 text-slate-500')
                           }`}>
                             <Activity className="w-4 h-4" />
@@ -3484,7 +3484,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                               <span className={`text-xs font-medium ${isDwave ? (isDark ? 'text-zinc-100' : 'text-slate-900') : (isDark ? 'text-zinc-300' : 'text-slate-700')}`}>
                                 Quantum Annealing (D-Wave)
                               </span>
-                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/20">
                                 dwave_annealer
                               </span>
                             </div>
@@ -3497,7 +3497,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                         {/* Radio Indicator */}
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                           isDwave
-                            ? 'border-purple-500 bg-purple-500'
+                            ? 'border-sky-500 bg-sky-500'
                             : (isDark ? 'border-zinc-600 bg-transparent' : 'border-slate-300 bg-transparent')
                         }`}>
                           {isDwave && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
