@@ -205,12 +205,14 @@ def generate_grover_circuit(target_state: str = "101") -> Tuple[str, str, Dict[s
         f"qc = QuantumCircuit({n})",
         "",
         "# 1. State Initialization: Uniform Superposition",
-        f"for i in range({n}):",
-        "    qc.h(i)",
+    ]
+    for i in range(n):
+        code_lines.append(f"qc.h({i})")
+    code_lines.extend([
         "qc.barrier()",
         "",
         f"# 2. Phase Oracle for |{target}>",
-    ]
+    ])
 
     # Bit flips to map target state to |11...1>
     for i, bit in enumerate(target):
@@ -239,12 +241,12 @@ def generate_grover_circuit(target_state: str = "101") -> Tuple[str, str, Dict[s
     code_lines.extend([
         "",
         "# 3. Grover Diffusion Operator (Amplification around mean)",
-        f"for i in range({n}):",
-        "    qc.h(i)",
-        f"for i in range({n}):",
-        "    qc.x(i)",
-        "",
     ])
+    for i in range(n):
+        code_lines.append(f"qc.h({i})")
+    for i in range(n):
+        code_lines.append(f"qc.x({i})")
+    code_lines.append("")
 
     if n == 2:
         code_lines.append("qc.cz(0, 1)")
@@ -258,12 +260,12 @@ def generate_grover_circuit(target_state: str = "101") -> Tuple[str, str, Dict[s
         code_lines.append(f"qc.mcx({ctrls}, {n-1})")
         code_lines.append(f"qc.h({n-1})")
 
+    code_lines.append("")
+    for i in range(n):
+        code_lines.append(f"qc.x({i})")
+    for i in range(n):
+        code_lines.append(f"qc.h({i})")
     code_lines.extend([
-        "",
-        f"for i in range({n}):",
-        "    qc.x(i)",
-        f"for i in range({n}):",
-        "    qc.h(i)",
         "qc.barrier()",
         "",
         "# 4. Measurement",
@@ -359,13 +361,16 @@ def generate_qrng_circuit(num_qubits: int = 2) -> Tuple[str, str, Dict[str, Any]
         f"qc = QuantumCircuit({n})",
         "",
         "# Apply Hadamard gates to create maximally unbiased superpositions",
-        f"for i in range({n}):",
-        "    qc.h(i)",
+    ]
+    for i in range(n):
+        code_lines.append(f"qc.h({i})")
+
+    code_lines.extend([
         "",
         "qc.measure_all()",
         "",
         CANONICAL_AER_BLOCK
-    ]
+    ])
     code = "\n".join(code_lines)
 
     explanation = (

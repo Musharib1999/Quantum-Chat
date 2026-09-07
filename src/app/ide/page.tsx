@@ -176,18 +176,134 @@ const CopilotChatInput = React.memo(function CopilotChatInput({
 function parseQiskitQubitCount(code: string): number {
   if (!code) return 4;
   const lines = code.split('\n');
+  const variables: Record<string, number> = {};
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith('#')) continue;
-    const match = trimmed.match(/\bQuantumCircuit\s*\(\s*(\d+)/i);
+    const vMatch = trimmed.match(/^([a-zA-Z_]\w*)\s*=\s*(\d+)$/);
+    if (vMatch) {
+      variables[vMatch[1]] = parseInt(vMatch[2], 10);
+    }
+    const match = trimmed.match(/\bQuantumCircuit\s*\(\s*([a-zA-Z_]\w*|\d+)/i);
     if (match) {
-      const parsed = parseInt(match[1], 10);
+      const raw = match[1];
+      const parsed = variables[raw] !== undefined ? variables[raw] : parseInt(raw, 10);
       if (!isNaN(parsed) && parsed > 0) {
         return Math.max(1, Math.min(16, parsed));
       }
     }
   }
   return 4;
+}
+
+function evaluateSimpleExpr(expr: string, varName: string, val: number): any {
+  const trimmed = expr.trim();
+  if (trimmed === varName) return val;
+  const num = parseInt(trimmed, 10);
+  if (!isNaN(num) && String(num) === trimmed) return num;
+
+  const match1 = trimmed.match(new RegExp('^' + varName + '\\s*([+\\-*])\\s*(\\d+)$'));
+  if (match1) {
+    const op = match1[1];
+    const n = parseInt(match1[2], 10);
+    if (op === '+') return val + n;
+    if (op === '-') return val - n;
+    if (op === '*') return val * n;
+  }
+
+  const match2 = trimmed.match(new RegExp('^(\\d+)\\s*([+\\-*])\\s*' + varName + '$'));
+  if (match2) {
+    const n = parseInt(match2[1], 10);
+    const op = match2[2];
+    if (op === '+') return n + val;
+    if (op === '-') return n - val;
+    if (op === '*') return n * val;
+  }
+  return trimmed;
+}
+
+function unrollQiskitLoops(code: string, numQubits: number = 4): string[] {
+  if (!code) return [];
+  const lines = code.split('\n');
+  const variables: Record<string, number> = { n: numQubits, num_qubits: numQubits, qubits: numQubits, N: numQubits };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('#')) continue;
+    const vMatch = trimmed.match(/^([a-zA-Z_]\w*)\s*=\s*(\d+)$/);
+    if (vMatch) {
+      variables[vMatch[1]] = parseInt(vMatch[2], 10);
+    }
+  }
+
+  const unrolled: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    const loopMatch = trimmed.match(/^for\s+([a-zA-Z_]\w*)\s+in\s+(?:range\s*\(([^)]+)\)|\[([^\]]+)\])\s*:/);
+    if (loopMatch) {
+      const varName = loopMatch[1];
+      const rangeArg = loopMatch[2];
+      const listArg = loopMatch[3];
+
+      let vals: number[] = [];
+      if (listArg !== undefined) {
+        vals = listArg.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+      } else if (rangeArg !== undefined) {
+        const rawArgs = rangeArg.split(',').map(s => s.trim());
+        const resolved = rawArgs.map(arg => {
+          if (variables[arg] !== undefined) return variables[arg];
+          const n = parseInt(arg, 10);
+          return isNaN(n) ? numQubits : n;
+        });
+
+        if (resolved.length === 1) {
+          for (let v = 0; v < resolved[0]; v++) vals.push(v);
+        } else if (resolved.length === 2) {
+          for (let v = resolved[0]; v < resolved[1]; v++) vals.push(v);
+        } else if (resolved.length >= 3) {
+          const step = resolved[2] !== 0 ? resolved[2] : 1;
+          for (let v = resolved[0]; v < resolved[1]; v += step) vals.push(v);
+        }
+      }
+
+      const loopBody: string[] = [];
+      const colonIdx = trimmed.indexOf(':');
+      const afterColon = trimmed.slice(colonIdx + 1).trim();
+      if (afterColon) {
+        loopBody.push(afterColon);
+        i++;
+      } else {
+        i++;
+        while (i < lines.length) {
+          const subLine = lines[i];
+          const subTrimmed = subLine.trim();
+          if (subTrimmed && !subLine.startsWith(' ') && !subLine.startsWith('\t')) {
+            break;
+          }
+          if (subTrimmed) loopBody.push(subTrimmed);
+          i++;
+        }
+      }
+
+      for (const val of vals) {
+        for (const bLine of loopBody) {
+          const unrolledLine = bLine.replace(/(\b\w+\.\w+)\s*\(([^)]*)\)/g, (call, func, rawArgsStr) => {
+            const args = rawArgsStr.split(',').map(a => evaluateSimpleExpr(a, varName, val));
+            return `${func}(${args.join(', ')})`;
+          });
+          unrolled.push(unrolledLine);
+        }
+      }
+      continue;
+    }
+
+    unrolled.push(line);
+    i++;
+  }
+  return unrolled;
 }
 
 function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ name: string; qubit: number; step: number }> {
@@ -197,7 +313,7 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
   for (let q = 0; q < numQubits; q++) stepTrack[q] = 0;
 
   try {
-    const lines = code.split('\n');
+    const lines = unrollQiskitLoops(code, numQubits);
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('.')) continue;
