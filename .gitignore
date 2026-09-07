@@ -99,3 +99,5 @@ models--*/
 # Simulator logs
 quantum-backend/simulator_log.txt
 quantum-backend/deploy_hf/
+*.hdf5
+.quantum_projects/
