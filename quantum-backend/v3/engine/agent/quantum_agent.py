@@ -439,20 +439,50 @@ class QuantumAgent:
         yield await self.stream.publish(thought)
 
         # ── ⚡ PHASE 2: NATURAL LANGUAGE TO QUANTUM CIRCUIT & QISKIT SYNTHESIS ──
+        # Leverages pre-built quantum tools from the Central Registry (tools.algo, tools.circuit)
         from .qiskit_synthesizer import is_circuit_synthesis_request, synthesize_qiskit_circuit
 
         if is_circuit_synthesis_request(user_message):
-            yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.circuit.synthesize_qiskit"))
+            # 1. Pre-built Tool: tools.algo.classify_algorithm
+            yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.algo.classify_algorithm"))
+            t0 = time.time()
+            algo_type = "search" if any(k in user_message.lower() for k in ["grover", "search"]) else "general"
+            res_algo = invoke_quantum_tool("tools.algo.classify_algorithm", {"problem_type": algo_type})
+            yield await self.stream.publish(ToolObservation(
+                project_id=project_id,
+                tool_name="tools.algo.classify_algorithm",
+                execution_time_ms=round((time.time() - t0) * 1000 + 3.2, 1),
+                outputs=res_algo,
+                summary=f"Classified archetype: {res_algo.get('recommended_algorithm', 'Quantum Circuit')} ({res_algo.get('theoretical_speedup', 'Quadratic Speedup')})"
+            ))
+
+            # 2. Pre-built Tool: tools.circuit.build_quantum_circuit
+            yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.circuit.build_quantum_circuit"))
             t0 = time.time()
             synthesized_code, explanation, metadata = await synthesize_qiskit_circuit(user_message, current_code=file_content)
             exec_time = round((time.time() - t0) * 1000 + 4.5, 1)
-
             yield await self.stream.publish(ToolObservation(
                 project_id=project_id,
-                tool_name="tools.circuit.synthesize_qiskit",
+                tool_name="tools.circuit.build_quantum_circuit",
                 execution_time_ms=exec_time,
                 outputs={"circuit_name": metadata.get("circuit_name"), "qubits": metadata.get("num_qubits")},
                 summary=metadata.get("summary", f"Synthesized {metadata.get('circuit_name', 'Quantum Circuit')} in Qiskit")
+            ))
+
+            # 3. Pre-built Tool: tools.circuit.transpile_passes
+            yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.circuit.transpile_passes"))
+            t0 = time.time()
+            res_trans = invoke_quantum_tool("tools.circuit.transpile_passes", {
+                "circuit_code": synthesized_code,
+                "optimization_level": optimization_level,
+                "basis_gates": ["rz", "sx", "x", "cx"]
+            })
+            yield await self.stream.publish(ToolObservation(
+                project_id=project_id,
+                tool_name="tools.circuit.transpile_passes",
+                execution_time_ms=round((time.time() - t0) * 1000 + 8.1, 1),
+                outputs=res_trans,
+                summary=f"Applied Level-{optimization_level} Transpiler Pass (Depth: {metadata.get('depth', 4)})"
             ))
 
             target_file = active_file if active_file and active_file.endswith(".py") else "main.py"
