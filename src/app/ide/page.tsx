@@ -1916,7 +1916,18 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             </div>
 
             {/* ── BOTTOM ACTIONS: THEME, MARKETPLACE, SETTINGS & LOGOUT ── */}
-            <div className="flex flex-col items-center gap-3.5 pt-3.5 pb-2 border-t w-full" style={{ borderColor: colors.border }}>
+            <div 
+              className="border-t w-full" 
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                gap: '22px', 
+                paddingTop: '20px', 
+                paddingBottom: '16px', 
+                borderColor: colors.border 
+              }}
+            >
               {/* 3. Theme Toggle Action Button */}
               <button
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
