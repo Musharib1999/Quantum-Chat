@@ -448,12 +448,33 @@ class QuantumAgent:
             t0 = time.time()
             algo_type = "search" if any(k in user_message.lower() for k in ["grover", "search"]) else "general"
             res_algo = invoke_quantum_tool("tools.algo.classify_algorithm", {"problem_type": algo_type})
+
+            u_low = user_message.lower()
+            if any(k in u_low for k in ["entangle", "entanglement", "bell", "ghz", "epr"]):
+                archetype_label = "Quantum Entanglement & State Preparation"
+                speedup_label = "Macroscopic Correlation"
+            elif any(k in u_low for k in ["qft", "fourier"]):
+                archetype_label = "Quantum Fourier Transform (QFT)"
+                speedup_label = "Exponential Speedup O(n^2)"
+            elif any(k in u_low for k in ["qrng", "random"]):
+                archetype_label = "Quantum Random Number Generator (QRNG)"
+                speedup_label = "True Quantum Stochasticity"
+            elif any(k in u_low for k in ["teleport"]):
+                archetype_label = "Quantum Teleportation Protocol"
+                speedup_label = "Exact Quantum State Transfer"
+            elif any(k in u_low for k in ["grover", "search"]):
+                archetype_label = "Grover Oracular Search"
+                speedup_label = "Quadratic Speedup O(sqrt(N))"
+            else:
+                archetype_label = res_algo.get('recommended_algorithm', 'Quantum Circuit')
+                speedup_label = res_algo.get('theoretical_speedup', 'Quadratic Speedup')
+
             yield await self.stream.publish(ToolObservation(
                 project_id=project_id,
                 tool_name="tools.algo.classify_algorithm",
                 execution_time_ms=round((time.time() - t0) * 1000 + 3.2, 1),
                 outputs=res_algo,
-                summary=f"Classified archetype: {res_algo.get('recommended_algorithm', 'Quantum Circuit')} ({res_algo.get('theoretical_speedup', 'Quadratic Speedup')})"
+                summary=f"Classified archetype: {archetype_label} ({speedup_label})"
             ))
 
             # 2. Pre-built Tool: tools.circuit.build_quantum_circuit

@@ -26,15 +26,24 @@ print('Measurement Counts:', result.get_counts())"""
 
 QUANTUM_DOMAINS = [
     "circuit", "qubit", "qubits", "gate", "gates", "ghz", "grover",
-    "bell state", "bell pair", "teleport", "qft", "fourier", "qrng",
-    "random number", "superposition", "entangle", "entanglement",
-    "deutsch", "bernstein", "vazirani", "ansatz", "qaoa", "cnot",
-    "hadamard", "pauli", "toffoli", "phase oracle", "statevector"
+    "bell", "bell state", "bell pair", "epr", "teleport", "teleportation",
+    "qft", "fourier", "qrng", "random number", "superposition",
+    "entangle", "entangled", "entanglement", "deutsch", "bernstein",
+    "vazirani", "ansatz", "qaoa", "cnot", "hadamard", "pauli", "toffoli",
+    "phase oracle", "statevector", "measure", "measurement", "measurements"
 ]
 
 BUILD_VERBS = [
     "build", "create", "generate", "synthesize", "make", "construct",
-    "implement", "add ", "prepare", "setup"
+    "implement", "prepare", "setup", "set up", "modify", "update",
+    "change", "edit", "replace", "add", "apply", "insert", "write",
+    "code", "entangle", "measure", "put", "append", "transform",
+    "convert", "adjust", "include", "wire", "connect"
+]
+
+FILE_TARGETS = [
+    "main.py", ".py", "in the file", "in file", "active file",
+    "in code", "circuit canvas", "workspace"
 ]
 
 PURE_QA_KEYWORDS = [
@@ -57,29 +66,44 @@ def is_circuit_synthesis_request(message: str) -> bool:
     if any(k in msg_l for k in MALICIOUS_KEYWORDS):
         return False
 
-    # 2. Must involve a recognized quantum computing concept or named algorithm
+    # 2. Must involve a recognized quantum computing concept, named algorithm, or file reference
     has_quantum = any(k in msg_l for k in QUANTUM_DOMAINS)
-    is_named = any(k in msg_l for k in ["ghz", "grover", "bell state", "qft", "qrng", "teleport"])
-    if not has_quantum and not is_named:
+    is_named = any(k in msg_l for k in ["ghz", "grover", "bell", "epr", "qft", "qrng", "teleport", "entangle", "entanglement"])
+    has_file = any(k in msg_l for k in FILE_TARGETS)
+
+    if not has_quantum and not is_named and not has_file:
         return False
 
-    # 3. Check for pure Q&A inquiry
-    has_qa_prefix = any(msg_l.startswith(k) or f" {k} " in msg_l for k in PURE_QA_KEYWORDS)
-    has_build = any(k in msg_l for k in BUILD_VERBS)
+    # 3. Check for build/modify action verbs (word-boundary matched)
+    has_build = any(re.search(r'\b' + re.escape(v) + r'\b', msg_l) for v in BUILD_VERBS)
 
-    if has_qa_prefix and not has_build:
+    # 4. Check for pure Q&A inquiry
+    has_qa_start = any(msg_l.startswith(k) for k in PURE_QA_KEYWORDS)
+
+    if has_qa_start and not has_build:
+        return False
+
+    # If the user says 'explain how to build ...' or 'tell me how to create ...'
+    if has_qa_start and any(msg_l.startswith(f"{k} how to") or msg_l.startswith(f"{k} how") for k in ["explain", "tell me"]):
         return False
 
     return has_build or is_named
 
 
-def _extract_qubit_count(prompt: str, default: int = 3, max_qubits: int = 28) -> int:
-    """Extract requested qubit count from natural language (e.g., '5-qubit', 'on 4 qubits', '3 qubits')."""
-    match = re.search(r'(\d+)\s*[- ]*(?:qubit|qubits|q)', prompt, re.IGNORECASE)
-    if match:
+def _extract_qubit_count(text: str, default: int = 3, max_qubits: int = 28) -> int:
+    """Extract requested qubit count from natural language or code (e.g., '5-qubit', 'QuantumCircuit(4)')."""
+    if not text:
+        return default
+    m1 = re.search(r'QuantumCircuit\s*\(\s*(\d+)', text, re.IGNORECASE)
+    if m1:
         try:
-            val = int(match.group(1))
-            return max(1, min(val, max_qubits))
+            return max(1, min(int(m1.group(1)), max_qubits))
+        except ValueError:
+            pass
+    m2 = re.search(r'(\d+)\s*[- ]*(?:qubit|qubits|q)', text, re.IGNORECASE)
+    if m2:
+        try:
+            return max(1, min(int(m2.group(1)), max_qubits))
         except ValueError:
             pass
     return default
@@ -425,10 +449,10 @@ qc.measure_all()
 
     explanation = (
         r"### Quantum Teleportation Protocol (3 Qubits)\n\n"
-        "Synthesized the classic **Quantum Teleportation Protocol** transferring an unknown quantum state $|\psi\\rangle$ from Alice to Bob using an EPR pair and classical feedforward.\n\n"
-        "1. **EPR Pair Distribution:** Alice and Bob share entangled pair $\\frac{1}{\\sqrt{2}}(|00\\rangle + |11\\rangle)_{12}$.\n"
-        "2. **Bell Basis Measurement:** Alice interacts her state $|\psi\\rangle_0$ with wire 1 ($CX_{01} + H_0$).\n"
-        "3. **Unitary Recovery:** Bob applies conditional Pauli corrections ($X$ and $Z$), reconstructing state $|\psi\\rangle$ onto qubit 2 with $100\\%$ theoretical fidelity."
+        r"Synthesized the classic **Quantum Teleportation Protocol** transferring an unknown quantum state $|\psi\rangle$ from Alice to Bob using an EPR pair and classical feedforward.\n\n"
+        r"1. **EPR Pair Distribution:** Alice and Bob share entangled pair $\frac{1}{\sqrt{2}}(|00\rangle + |11\rangle)_{12}.\n"
+        r"2. **Bell Basis Measurement:** Alice interacts her state $|\psi\rangle_0$ with wire 1 ($CX_{01} + H_0$).\n"
+        r"3. **Unitary Recovery:** Bob applies conditional Pauli corrections ($X$ and $Z$), reconstructing state $|\psi\rangle$ onto qubit 2 with $100\%$ theoretical fidelity."
     )
 
     metadata = {
@@ -526,8 +550,19 @@ async def synthesize_qiskit_circuit(prompt: str, current_code: str = "") -> Tupl
         n = _extract_qubit_count(prompt, default=3)
         return generate_ghz_circuit(num_qubits=n)
 
-    # 2. Bell State Request
-    if "bell" in p_lower or "epr" in p_lower:
+    # 2. Bell State / Entanglement Request
+    if any(k in p_lower for k in ["bell", "epr", "entangle", "entanglement"]):
+        q_prompt = re.search(r'(\d+)\s*[- ]*(?:qubit|qubits|q)', prompt, re.IGNORECASE)
+        if q_prompt:
+            n = max(2, min(int(q_prompt.group(1)), 28))
+        elif current_code:
+            n = _extract_qubit_count(current_code, default=2)
+        else:
+            n = 2
+
+        if n > 2:
+            return generate_ghz_circuit(num_qubits=n)
+
         if "phi-" in p_lower or "phi minus" in p_lower:
             return generate_bell_circuit("phi_minus")
         elif "psi+" in p_lower or "psi plus" in p_lower:
