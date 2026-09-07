@@ -2236,10 +2236,17 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                               {/* Continuous Horizontal Quantum Wire (Crisp contrast across entire timeline) */}
                               <div 
                                 style={{ 
-                                  backgroundColor: isDark ? '#475569' : '#94a3b8',
-                                  boxShadow: isDark ? '0 0 6px rgba(56, 189, 248, 0.25)' : 'none'
+                                  position: 'absolute',
+                                  left: 0,
+                                  right: 0,
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
+                                  height: '2.5px',
+                                  backgroundColor: isDark ? '#64748b' : '#94a3b8',
+                                  boxShadow: isDark ? '0 0 6px rgba(56, 189, 248, 0.35)' : 'none',
+                                  zIndex: 1,
+                                  pointerEvents: 'none'
                                 }} 
-                                className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2.5px] z-0" 
                               />
 
                               {/* 10 Time Step Slots on this Qubit */}
