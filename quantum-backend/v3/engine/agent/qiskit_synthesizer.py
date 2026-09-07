@@ -414,53 +414,81 @@ def generate_qrng_circuit(num_qubits: int = 2) -> Tuple[str, str, Dict[str, Any]
     return code, explanation, metadata
 
 
-def generate_teleportation_circuit() -> Tuple[str, str, Dict[str, Any]]:
-    """Synthesize 3-qubit Quantum Teleportation Protocol circuit."""
-    code = f"""from qiskit import QuantumCircuit
+def generate_teleportation_circuit(num_qubits: int = 3) -> Tuple[str, str, Dict[str, Any]]:
+    """Synthesize Quantum Teleportation Protocol circuit for specified qubit count (>= 3)."""
+    n = max(3, min(num_qubits, 28))
+    bob_q = 2 if n == 3 else (n - 1)
+
+    if n == 3:
+        code = f"""from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 
 # Quantum Teleportation Protocol (3 Qubits)
-# q0: State to teleport (|psi>) | q1, q2: Entangled EPR pair
+# q0: State to teleport (|psi>) | q1: Alice transmission qubit | q2: Bob receiver qubit
 qc = QuantumCircuit(3)
 
 # 1. Prepare arbitrary state on Q0 (e.g. state |+> via Hadamard)
 qc.h(0)
-qc.barrier()
 
 # 2. Create EPR Bell pair between Q1 (Alice) and Q2 (Bob)
 qc.h(1)
 qc.cx(1, 2)
-qc.barrier()
 
 # 3. Alice performs Bell Measurement on Q0 and Q1
 qc.cx(0, 1)
 qc.h(0)
-qc.barrier()
 
 # 4. Bob applies feedforward Pauli corrections based on Alice's outcome
 qc.cx(1, 2)
 qc.cz(0, 2)
-qc.barrier()
 
 # Measure final reconstructed state on Bob's qubit (Q2)
 qc.measure_all()
 
 {CANONICAL_AER_BLOCK}"""
+    else:
+        code = f"""from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+# Quantum Teleportation Protocol ({n} Qubits)
+# q0: State to teleport (|psi>) | q1: Alice transmission qubit | q{bob_q}: Bob receiver qubit | Ancilla: q2..q{bob_q-1}
+qc = QuantumCircuit({n})
+
+# 1. Prepare arbitrary state on Q0 (e.g. state |+> via Hadamard)
+qc.h(0)
+
+# 2. Create EPR Bell pair between Q1 (Alice) and Q{bob_q} (Bob)
+qc.h(1)
+qc.cx(1, {bob_q})
+
+# 3. Alice performs Bell Measurement on Q0 and Q1
+qc.cx(0, 1)
+qc.h(0)
+
+# 4. Bob applies feedforward Pauli corrections based on Alice's outcome
+qc.cx(1, {bob_q})
+qc.cz(0, {bob_q})
+
+# Measure all qubits across the {n}-qubit register
+qc.measure_all()
+
+{CANONICAL_AER_BLOCK}"""
 
     explanation = (
-        r"### Quantum Teleportation Protocol (3 Qubits)\n\n"
-        r"Synthesized the classic **Quantum Teleportation Protocol** transferring an unknown quantum state $|\psi\rangle$ from Alice to Bob using an EPR pair and classical feedforward.\n\n"
-        r"1. **EPR Pair Distribution:** Alice and Bob share entangled pair $\frac{1}{\sqrt{2}}(|00\rangle + |11\rangle)_{12}.\n"
-        r"2. **Bell Basis Measurement:** Alice interacts her state $|\psi\rangle_0$ with wire 1 ($CX_{01} + H_0$).\n"
-        r"3. **Unitary Recovery:** Bob applies conditional Pauli corrections ($X$ and $Z$), reconstructing state $|\psi\rangle$ onto qubit 2 with $100\%$ theoretical fidelity."
+        fr"### Quantum Teleportation Protocol ({n} Qubits)\n\n"
+        fr"Synthesized the classic **Quantum Teleportation Protocol** transferring an unknown quantum state $|\psi\rangle$ from Alice ($q_0$) to Bob ($q_{bob_q}$) using an EPR pair and feedforward Pauli corrections.\n\n"
+        fr"1. **State Preparation:** Prepared state $|\psi\rangle$ on $q_0$ using Hadamard superposition.\n"
+        fr"2. **EPR Pair Distribution:** Alice and Bob share entangled pair on channels $q_1$ and $q_{bob_q}.\n"
+        fr"3. **Bell Basis Measurement:** Alice interacts her state with the transmission channel ($CX_{{01}} + H_0$).\n"
+        fr"4. **Unitary Recovery:** Bob applies conditional Pauli corrections ($CX$ and $CZ$), reconstructing $|\psi\rangle$ with 100% theoretical fidelity."
     )
 
     metadata = {
-        "circuit_name": "Quantum Teleportation Protocol",
-        "num_qubits": 3,
-        "depth": 8,
+        "circuit_name": f"Quantum Teleportation Protocol ({n} Qubits)",
+        "num_qubits": n,
+        "depth": 7,
         "gates": 7,
-        "summary": "Synthesized 3-qubit Quantum Teleportation with EPR distribution and Bell measurement"
+        "summary": f"Synthesized {n}-qubit Quantum Teleportation with EPR distribution and Bell measurement"
     }
     return code, explanation, metadata
 
@@ -588,7 +616,8 @@ async def synthesize_qiskit_circuit(prompt: str, current_code: str = "") -> Tupl
 
     # 6. Quantum Teleportation Protocol
     if "teleport" in p_lower:
-        return generate_teleportation_circuit()
+        n = _extract_qubit_count(prompt, default=3)
+        return generate_teleportation_circuit(num_qubits=n)
 
     # 7. General Custom Quantum Circuit
     return await synthesize_custom_qiskit_circuit(prompt, current_code)

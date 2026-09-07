@@ -322,17 +322,20 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
       const coordMatch = trimmed.match(/#\s*(?:t\s*=?\s*|step\s*:?\s*|col\s*:?\s*|coord\s*:?\s*|\(\s*\d+\s*,\s*)(\d+)/i);
       const explicitStep = coordMatch ? parseInt(coordMatch[1], 10) : null;
 
-      // Advance time slices on Qiskit barriers
+      // Advance time slices on Qiskit barriers (synchronizes timeline without empty wasted columns)
       if (/\b\w+\.barrier\b/i.test(trimmed)) {
         const maxS = Math.max(0, ...Object.values(stepTrack));
-        for (let q = 0; q < numQubits; q++) stepTrack[q] = Math.min(9, maxS + 1);
+        for (let q = 0; q < numQubits; q++) stepTrack[q] = Math.min(9, maxS);
         continue;
       }
 
-      // ⚛️ Handle measure_all(): places measurement on all qubits at current max step
+      // ⚛️ Handle measure_all(): places measurement on all qubits in dedicated readout column
       if (/\b\w+\.measure_all\s*\(/i.test(trimmed)) {
         const maxS = Math.max(0, ...Object.values(stepTrack));
-        const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : Math.min(9, maxS);
+        const stepHasGates = gates.some(g => g.step === maxS);
+        const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) 
+          ? explicitStep 
+          : Math.min(9, stepHasGates ? maxS + 1 : maxS);
         for (let q = 0; q < numQubits; q++) {
           gates.push({ name: 'measure', qubit: q, step: targetStep, role: 'single' });
           stepTrack[q] = Math.min(9, targetStep + 1);
@@ -1181,18 +1184,22 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     if (gateName === 'cx') {
       if (role === 'control') {
         return (
-          <svg className="w-3.5 h-3.5 text-cyan-300" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="7" />
-          </svg>
+          <div className="relative flex items-center justify-center">
+            <svg className="w-4 h-4 text-sky-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="7.5" />
+            </svg>
+          </div>
         );
       }
       if (role === 'target') {
         return (
-          <svg className="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="8" />
-            <line x1="12" y1="4" x2="12" y2="20" />
-            <line x1="4" y1="12" x2="20" y2="12" />
-          </svg>
+          <div className="relative flex items-center justify-center">
+            <svg className="w-4.5 h-4.5 text-sky-300 drop-shadow-[0_0_4px_rgba(56,189,248,0.5)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="8.5" fill={isDark ? '#0c4a6e' : '#e0f2fe'} />
+              <line x1="12" y1="3" x2="12" y2="21" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+            </svg>
+          </div>
         );
       }
       return 'CX';
@@ -1200,34 +1207,40 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     if (gateName === 'cz') {
       if (role === 'control') {
         return (
-          <svg className="w-3.5 h-3.5 text-cyan-300" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="7" />
-          </svg>
+          <div className="relative flex items-center justify-center">
+            <svg className="w-4 h-4 text-sky-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="7.5" />
+            </svg>
+          </div>
         );
       }
       if (role === 'target') {
-        return 'Z';
+        return <span className="font-bold text-sky-300">Z</span>;
       }
       return 'CZ';
     }
     if (gateName === 'swap') {
-      return <span className="text-sm font-bold text-cyan-300">✕</span>;
+      return <span className="text-sm font-bold text-sky-300">✕</span>;
     }
     if (gateName === 'ccx') {
       if (role === 'control') {
         return (
-          <svg className="w-3.5 h-3.5 text-cyan-300" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="7" />
-          </svg>
+          <div className="relative flex items-center justify-center">
+            <svg className="w-4 h-4 text-sky-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="7.5" />
+            </svg>
+          </div>
         );
       }
       if (role === 'target') {
         return (
-          <svg className="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="8" />
-            <line x1="12" y1="4" x2="12" y2="20" />
-            <line x1="4" y1="12" x2="20" y2="12" />
-          </svg>
+          <div className="relative flex items-center justify-center">
+            <svg className="w-4.5 h-4.5 text-sky-300 drop-shadow-[0_0_4px_rgba(56,189,248,0.5)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="8.5" fill={isDark ? '#0c4a6e' : '#e0f2fe'} />
+              <line x1="12" y1="3" x2="12" y2="21" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+            </svg>
+          </div>
         );
       }
       return 'CCX';
@@ -2220,9 +2233,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                             {/* Wire Line with 10 Sequential Time Step Slots */}
                             <div className="flex-1 flex items-center relative h-8">
-                              {/* Continuous Horizontal Quantum Wire */}
+                              {/* Continuous Horizontal Quantum Wire (Crisp contrast across entire timeline) */}
                               <div 
-                                style={{ backgroundColor: colors.border }} 
+                                style={{ backgroundColor: isDark ? '#3f3f46' : '#cbd5e1' }} 
                                 className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] z-0" 
                               />
 
@@ -2237,26 +2250,26 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
                                   return (
                                     <div key={stepIdx} className="relative w-full h-8 flex items-center justify-center">
-                                      {/* ⚛️ Multi-Qubit Vertical Connecting Line for CNOT / CZ / SWAP */}
+                                      {/* ⚛️ Multi-Qubit Vertical Connecting Line (Continuous junction link, z-20 sits in front of button background) */}
                                       {gateOnSlot && gateOnSlot.role === 'control' && gateOnSlot.target !== undefined && (
                                         <div 
                                           style={{
                                             position: 'absolute',
                                             left: '50%',
                                             transform: 'translateX(-50%)',
-                                            width: '2.5px',
+                                            width: '3px',
                                             height: `${Math.abs(gateOnSlot.target - qIdx) * 40}px`,
                                             top: gateOnSlot.target > qIdx ? '50%' : undefined,
                                             bottom: gateOnSlot.target < qIdx ? '50%' : undefined,
                                             backgroundColor: isDark ? '#38bdf8' : '#0284c7',
-                                            zIndex: 5,
+                                            zIndex: 20,
                                             pointerEvents: 'none',
-                                            boxShadow: isDark ? '0 0 6px rgba(56, 189, 248, 0.4)' : 'none'
+                                            boxShadow: isDark ? '0 0 8px rgba(56, 189, 248, 0.7)' : '0 0 4px rgba(2, 132, 199, 0.4)'
                                           }}
                                         />
                                       )}
 
-                                      {/* Wire Slot Button */}
+                                      {/* Wire Slot Button (Semi-transparent empty slots reveal continuous horizontal wire) */}
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -2275,15 +2288,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                         style={{
                                           backgroundColor: gateOnSlot 
                                             ? (isDark ? '#0c4a6e' : '#e0f2fe') 
-                                            : (isDark ? '#141418' : '#ffffff'),
+                                            : (isDark ? 'rgba(20, 20, 24, 0.45)' : 'rgba(255, 255, 255, 0.6)'),
                                           borderColor: gateOnSlot 
                                             ? (isDark ? '#38bdf8' : '#0284c7') 
-                                            : (isSelected ? '#38bdf8' : (isDark ? colors.border : '#e2e8f0')),
+                                            : (isSelected ? '#38bdf8' : (isDark ? 'rgba(63, 63, 70, 0.4)' : '#e2e8f0')),
                                           color: gateOnSlot 
                                             ? (isDark ? '#7dd3fc' : '#0369a1') 
                                             : (isDark ? '#71717a' : '#94a3b8')
                                         }}
-                                        className={`wire-slot-btn relative z-10 w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                                        className={`wire-slot-btn relative z-10 w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer shadow-2xs backdrop-blur-[1px] ${
                                           isSelected
                                             ? 'ring-2 ring-sky-400 scale-[1.05]'
                                             : gateOnSlot 
@@ -2292,7 +2305,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                         }`}
                                         title={gateOnSlot ? `Slot (q[${qIdx}], t${stepIdx}): ${gateOnSlot.name.toUpperCase()}${gateOnSlot.target !== undefined ? ` (${gateOnSlot.role === 'control' ? 'Ctrl -> q' + gateOnSlot.target : 'Target <- q' + gateOnSlot.target})` : ''}` : `Slot (q[${qIdx}], t${stepIdx}): Click to choose gate`}
                                       >
-                                        {gateOnSlot ? renderGateSlotContent(gateOnSlot) : '+'}
+                                        <span className="relative z-30 flex items-center justify-center">
+                                          {gateOnSlot ? renderGateSlotContent(gateOnSlot) : '+'}
+                                        </span>
                                       </button>
                                     </div>
                                   );
