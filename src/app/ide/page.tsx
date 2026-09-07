@@ -306,9 +306,9 @@ function unrollQiskitLoops(code: string, numQubits: number = 4): string[] {
   return unrolled;
 }
 
-function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ name: string; qubit: number; step: number }> {
+function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ name: string; qubit: number; step: number; target?: number; role?: 'control' | 'target' | 'single' }> {
   if (!code) return [];
-  const gates: Array<{ name: string; qubit: number; step: number }> = [];
+  const gates: Array<{ name: string; qubit: number; step: number; target?: number; role?: 'control' | 'target' | 'single' }> = [];
   const stepTrack: Record<number, number> = {};
   for (let q = 0; q < numQubits; q++) stepTrack[q] = 0;
 
@@ -329,6 +329,17 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
         continue;
       }
 
+      // ⚛️ Handle measure_all(): places measurement on all qubits at current max step
+      if (/\b\w+\.measure_all\s*\(/i.test(trimmed)) {
+        const maxS = Math.max(0, ...Object.values(stepTrack));
+        const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : Math.min(9, maxS);
+        for (let q = 0; q < numQubits; q++) {
+          gates.push({ name: 'measure', qubit: q, step: targetStep, role: 'single' });
+          stepTrack[q] = Math.min(9, targetStep + 1);
+        }
+        continue;
+      }
+
       // Match Qiskit method calls: qc.h(0), circuit.cx(0, 1), etc.
       const match = trimmed.match(/\b\w+\.(h|x|y|z|s|t|rx|ry|rz|cx|cz|swap|ccx|measure)\s*\(([^)]*)\)/i);
       if (!match) continue;
@@ -339,17 +350,19 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
       if (gateName === 'cx' || gateName === 'cz' || gateName === 'swap') {
         const q1 = parseInt(rawArgs[0], 10);
         const q2 = parseInt(rawArgs[1], 10);
-        if (!isNaN(q1) && q1 >= 0 && q1 < numQubits) {
+        if (!isNaN(q1) && q1 >= 0 && q1 < numQubits && !isNaN(q2) && q2 >= 0 && q2 < numQubits) {
           const s1 = stepTrack[q1] || 0;
-          const s2 = !isNaN(q2) && q2 >= 0 && q2 < numQubits ? (stepTrack[q2] || 0) : s1;
+          const s2 = stepTrack[q2] || 0;
           const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) 
             ? explicitStep 
             : Math.max(s1, s2);
 
           if (targetStep < 10) {
-            gates.push({ name: gateName, qubit: q1, step: targetStep });
+            // Pair control and target node at identical time step with visual link
+            gates.push({ name: gateName, qubit: q1, step: targetStep, target: q2, role: 'control' });
+            gates.push({ name: gateName, qubit: q2, step: targetStep, target: q1, role: 'target' });
             stepTrack[q1] = targetStep + 1;
-            if (!isNaN(q2) && q2 >= 0 && q2 < numQubits) stepTrack[q2] = targetStep + 1;
+            stepTrack[q2] = targetStep + 1;
           }
         }
       } else if (gateName === 'ccx') {
@@ -360,8 +373,10 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
         const autoStep = Math.max(...validQ.map(q => stepTrack[q] || 0), 0);
         const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
 
-        if (targetStep < 10 && validQ.length > 0) {
-          gates.push({ name: 'ccx', qubit: validQ[0], step: targetStep });
+        if (targetStep < 10 && validQ.length === 3) {
+          gates.push({ name: 'ccx', qubit: q1, step: targetStep, target: q3, role: 'control' });
+          gates.push({ name: 'ccx', qubit: q2, step: targetStep, target: q3, role: 'control' });
+          gates.push({ name: 'ccx', qubit: q3, step: targetStep, target: q1, role: 'target' });
           validQ.forEach(q => stepTrack[q] = targetStep + 1);
         }
       } else if (gateName === 'rx' || gateName === 'ry' || gateName === 'rz') {
@@ -371,7 +386,7 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
           const autoStep = stepTrack[q] || 0;
           const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
           if (targetStep < 10) {
-            gates.push({ name: gateName, qubit: q, step: targetStep });
+            gates.push({ name: gateName, qubit: q, step: targetStep, role: 'single' });
             stepTrack[q] = targetStep + 1;
           }
         }
@@ -382,7 +397,7 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
           const autoStep = stepTrack[q] || 0;
           const targetStep = (explicitStep !== null && explicitStep >= 0 && explicitStep < 10) ? explicitStep : autoStep;
           if (targetStep < 10) {
-            gates.push({ name: gateName, qubit: q, step: targetStep });
+            gates.push({ name: gateName, qubit: q, step: targetStep, role: 'single' });
             stepTrack[q] = targetStep + 1;
           }
         }
@@ -424,9 +439,10 @@ export default function QuantumIDE() {
   const [simulationCounts, setSimulationCounts] = useState<Record<string, number> | null>({ '00': 512, '11': 512 });
   const [circuitAscii, setCircuitAscii] = useState<string>('');
   const [canvasQubits, setCanvasQubits] = useState<number>(4);
-  const [circuitGates, setCircuitGates] = useState<Array<{ name: string; qubit: number; step: number }>>([
-    { name: 'h', qubit: 0, step: 0 },
-    { name: 'cx', qubit: 0, step: 1 }
+  const [circuitGates, setCircuitGates] = useState<Array<{ name: string; qubit: number; step: number; target?: number; role?: 'control' | 'target' | 'single' }>>([
+    { name: 'h', qubit: 0, step: 0, role: 'single' },
+    { name: 'cx', qubit: 0, step: 1, target: 1, role: 'control' },
+    { name: 'cx', qubit: 1, step: 1, target: 0, role: 'target' }
   ]);
   const [selectedGateTool, setSelectedGateTool] = useState<string>('h');
   const [activeSlotPopover, setActiveSlotPopover] = useState<{ qubit: number; step: number; x: number; y: number } | null>(null);
@@ -1140,8 +1156,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
 
 
-// Helper to render gate symbols with official Quantum Measurement Gauge
-  const renderGateSlotContent = (gateName: string) => {
+// Helper to render gate symbols with official Quantum Measurement Gauge & CNOT Control/Target nodes
+  const renderGateSlotContent = (gateInput: string | { name: string; role?: string; target?: number }) => {
+    const gateName = typeof gateInput === 'string' ? gateInput : gateInput.name;
+    const role = typeof gateInput === 'object' ? gateInput.role : undefined;
+
     if (gateName === 'measure') {
       return (
         <svg 
@@ -1159,13 +1178,51 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         </svg>
       );
     }
+    if (gateName === 'cx') {
+      if (role === 'control') {
+        return <div className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-md ring-2 ring-cyan-400/40" />;
+      }
+      if (role === 'target') {
+        return (
+          <svg className="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="8" />
+            <line x1="12" y1="4" x2="12" y2="20" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+          </svg>
+        );
+      }
+      return 'CX';
+    }
+    if (gateName === 'cz') {
+      if (role === 'control') {
+        return <div className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-md ring-2 ring-cyan-400/40" />;
+      }
+      if (role === 'target') {
+        return 'Z';
+      }
+      return 'CZ';
+    }
+    if (gateName === 'swap') {
+      return <span className="text-sm font-bold text-cyan-300">✕</span>;
+    }
+    if (gateName === 'ccx') {
+      if (role === 'control') {
+        return <div className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-md ring-2 ring-cyan-400/40" />;
+      }
+      if (role === 'target') {
+        return (
+          <svg className="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="8" />
+            <line x1="12" y1="4" x2="12" y2="20" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+          </svg>
+        );
+      }
+      return 'CCX';
+    }
     if (gateName === 'rx') return 'Rx';
     if (gateName === 'ry') return 'Ry';
     if (gateName === 'rz') return 'Rz';
-    if (gateName === 'cx') return 'CX';
-    if (gateName === 'cz') return 'CZ';
-    if (gateName === 'swap') return 'SWAP';
-    if (gateName === 'ccx') return 'CCX';
     return gateName.toUpperCase();
   };
 
@@ -1320,18 +1377,24 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   };
 
   // Helper: Synchronize placed gates to Python code with 2D coordinates (# t=...)
-  const synchronizeGatesToCode = (gates: Array<{ name: string; qubit: number; step: number }>) => {
+  const synchronizeGatesToCode = (gates: Array<{ name: string; qubit: number; step: number; target?: number; role?: string }>) => {
     const numQubits = Math.max(canvasQubits, ...gates.map(g => g.qubit + 1));
-    const hasManualMeasure = gates.some(g => g.name === 'measure');
+    const measureGates = gates.filter(g => g.name === 'measure');
+    const allMeasured = measureGates.length >= numQubits && new Set(measureGates.map(g => g.qubit)).size === numQubits;
+    const hasManualMeasure = measureGates.length > 0;
+
     let newCodeLines = [
       'from qiskit import QuantumCircuit',
       'from qiskit_aer import AerSimulator',
       '',
       `# ⚛️ Synthesized Interactive Circuit (${numQubits} Qubits)`,
-      hasManualMeasure ? `qc = QuantumCircuit(${numQubits}, ${numQubits})` : `qc = QuantumCircuit(${numQubits})`
+      hasManualMeasure && !allMeasured ? `qc = QuantumCircuit(${numQubits}, ${numQubits})` : `qc = QuantumCircuit(${numQubits})`
     ];
 
-    const sorted = [...gates].sort((a, b) => a.step - b.step || a.qubit - b.qubit);
+    const sorted = [...gates]
+      .filter(g => g.role !== 'target')
+      .sort((a, b) => a.step - b.step || a.qubit - b.qubit);
+
     sorted.forEach(g => {
       let code = '';
       if (g.name === 'h') code = `qc.h(${g.qubit})`;
@@ -1344,29 +1407,35 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       else if (g.name === 'ry') code = `qc.ry(0.7854, ${g.qubit})`;
       else if (g.name === 'rz') code = `qc.rz(0.7854, ${g.qubit})`;
       else if (g.name === 'cx') {
-        const targetQ = (g.qubit + 1) % numQubits;
+        const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
         code = `qc.cx(${g.qubit}, ${targetQ})`;
       }
       else if (g.name === 'cz') {
-        const targetQ = (g.qubit + 1) % numQubits;
+        const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
         code = `qc.cz(${g.qubit}, ${targetQ})`;
       }
       else if (g.name === 'swap') {
-        const targetQ = (g.qubit + 1) % numQubits;
+        const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
         code = `qc.swap(${g.qubit}, ${targetQ})`;
       }
       else if (g.name === 'ccx') {
         const q1 = g.qubit;
         const q2 = (g.qubit + 1) % numQubits;
-        const q3 = (g.qubit + 2) % numQubits;
+        const q3 = g.target !== undefined ? g.target : ((g.qubit + 2) % numQubits);
         code = `qc.ccx(${q1}, ${q2}, ${q3})`;
       }
-      else if (g.name === 'measure') code = `qc.measure(${g.qubit}, ${g.qubit})`;
+      else if (g.name === 'measure' && !allMeasured) {
+        code = `qc.measure(${g.qubit}, ${g.qubit})`;
+      }
 
       if (code) {
         newCodeLines.push(`${code}  # t=${g.step}`);
       }
     });
+
+    if (allMeasured) {
+      newCodeLines.push('qc.measure_all()');
+    }
 
     newCodeLines.push('');
     newCodeLines.push('# Execute on AerSimulator');
@@ -1391,13 +1460,26 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
   // Direct In-Place Slot Placement
   const handlePlaceGateOnSlot = (gateName: string, qubit: number, step: number) => {
-    const existingIndex = circuitGates.findIndex(g => g.qubit === qubit && g.step === step);
     let updatedGates = [...circuitGates];
 
-    if (existingIndex >= 0) {
-      updatedGates[existingIndex] = { name: gateName, qubit, step };
+    if (gateName === 'cx' || gateName === 'cz' || gateName === 'swap') {
+      const targetQ = (qubit + 1) % canvasQubits;
+      // remove any previous gate on both slots at this step
+      updatedGates = updatedGates.filter(g => !(g.step === step && (g.qubit === qubit || g.qubit === targetQ)));
+      updatedGates.push({ name: gateName, qubit, step, target: targetQ, role: 'control' });
+      updatedGates.push({ name: gateName, qubit: targetQ, step, target: qubit, role: 'target' });
     } else {
-      updatedGates.push({ name: gateName, qubit, step });
+      const existingIndex = updatedGates.findIndex(g => g.qubit === qubit && g.step === step);
+      const gateObj = { name: gateName, qubit, step, role: 'single' as const };
+      if (existingIndex >= 0) {
+        const prev = updatedGates[existingIndex];
+        if (prev.target !== undefined) {
+          updatedGates = updatedGates.filter(g => !(g.qubit === prev.target && g.step === step));
+        }
+        updatedGates[existingIndex] = gateObj;
+      } else {
+        updatedGates.push(gateObj);
+      }
     }
 
     setCircuitGates(updatedGates);
@@ -1408,7 +1490,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
   // Direct In-Place Slot Removal
   const handleRemoveGateFromSlot = (qubit: number, step: number) => {
-    const updatedGates = circuitGates.filter(g => !(g.qubit === qubit && g.step === step));
+    const gateToRemove = circuitGates.find(g => g.qubit === qubit && g.step === step);
+    let updatedGates = circuitGates.filter(g => !(g.qubit === qubit && g.step === step));
+    if (gateToRemove && gateToRemove.target !== undefined) {
+      updatedGates = updatedGates.filter(g => !(g.qubit === gateToRemove.target && g.step === step));
+    }
     setCircuitGates(updatedGates);
     setActiveSlotPopover(null);
     synchronizeGatesToCode(updatedGates);
@@ -1420,13 +1506,25 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     let updatedGates = [...circuitGates];
 
     if (existingIndex >= 0) {
+      const prev = updatedGates[existingIndex];
       updatedGates.splice(existingIndex, 1);
+      if (prev.target !== undefined) {
+        updatedGates = updatedGates.filter(g => !(g.qubit === prev.target && g.step === step));
+      }
     } else {
-      updatedGates.push({
-        name: selectedGateTool,
-        qubit: qubit,
-        step: step
-      });
+      if (selectedGateTool === 'cx' || selectedGateTool === 'cz' || selectedGateTool === 'swap') {
+        const targetQ = (qubit + 1) % canvasQubits;
+        updatedGates = updatedGates.filter(g => !(g.step === step && (g.qubit === qubit || g.qubit === targetQ)));
+        updatedGates.push({ name: selectedGateTool, qubit, step, target: targetQ, role: 'control' });
+        updatedGates.push({ name: selectedGateTool, qubit: targetQ, step, target: qubit, role: 'target' });
+      } else {
+        updatedGates.push({
+          name: selectedGateTool,
+          qubit: qubit,
+          step: step,
+          role: 'single'
+        });
+      }
     }
 
     setCircuitGates(updatedGates);
@@ -2126,7 +2224,26 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                   const isSelected = activeSlotPopover?.qubit === qIdx && activeSlotPopover?.step === stepIdx;
 
                                   return (
-                                    <div key={stepIdx} className="relative w-full h-8">
+                                    <div key={stepIdx} className="relative w-full h-8 flex items-center justify-center">
+                                      {/* ⚛️ Multi-Qubit Vertical Connecting Line for CNOT / CZ / SWAP */}
+                                      {gateOnSlot && gateOnSlot.role === 'control' && gateOnSlot.target !== undefined && (
+                                        <div 
+                                          style={{
+                                            position: 'absolute',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            width: '2.5px',
+                                            height: `${Math.abs(gateOnSlot.target - qIdx) * 40}px`,
+                                            top: gateOnSlot.target > qIdx ? '50%' : undefined,
+                                            bottom: gateOnSlot.target < qIdx ? '50%' : undefined,
+                                            backgroundColor: isDark ? '#38bdf8' : '#0284c7',
+                                            zIndex: 5,
+                                            pointerEvents: 'none',
+                                            boxShadow: isDark ? '0 0 6px rgba(56, 189, 248, 0.4)' : 'none'
+                                          }}
+                                        />
+                                      )}
+
                                       {/* Wire Slot Button */}
                                       <button
                                         onClick={(e) => {
@@ -2154,16 +2271,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                             ? (isDark ? '#7dd3fc' : '#0369a1') 
                                             : (isDark ? '#71717a' : '#94a3b8')
                                         }}
-                                        className={`wire-slot-btn w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                                        className={`wire-slot-btn relative z-10 w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                                           isSelected
                                             ? 'ring-2 ring-sky-400 scale-[1.05]'
                                             : gateOnSlot 
                                               ? (isDark ? 'ring-1 ring-sky-400/50' : 'ring-1 ring-sky-500/50 shadow-xs') 
                                               : (isDark ? 'hover:border-sky-400 hover:text-zinc-300' : 'hover:border-sky-500 hover:text-slate-800 hover:bg-slate-50')
                                         }`}
-                                        title={gateOnSlot ? `Slot (q[${qIdx}], t${stepIdx}): ${gateOnSlot.name.toUpperCase()} (Click to change or remove)` : `Slot (q[${qIdx}], t${stepIdx}): Click to choose gate`}
+                                        title={gateOnSlot ? `Slot (q[${qIdx}], t${stepIdx}): ${gateOnSlot.name.toUpperCase()}${gateOnSlot.target !== undefined ? ` (${gateOnSlot.role === 'control' ? 'Ctrl -> q' + gateOnSlot.target : 'Target <- q' + gateOnSlot.target})` : ''}` : `Slot (q[${qIdx}], t${stepIdx}): Click to choose gate`}
                                       >
-                                        {gateOnSlot ? renderGateSlotContent(gateOnSlot.name) : '+'}
+                                        {gateOnSlot ? renderGateSlotContent(gateOnSlot) : '+'}
                                       </button>
                                     </div>
                                   );
