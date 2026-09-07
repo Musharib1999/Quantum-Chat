@@ -4,8 +4,6 @@ pydantic
 python-multipart
 httpx
 numpy
-faiss-cpu
-sentence-transformers
 dimod
 dwave-neal
 ortools

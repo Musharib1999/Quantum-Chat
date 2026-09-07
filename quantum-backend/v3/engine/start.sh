@@ -26,18 +26,7 @@ else
     echo "[start.sh] Warning: .env not found at $ENV_FILE"
 fi
 
-# ── Download FAISS database files if missing ──────────────
-cd "$SCRIPT_DIR"
-
-if [ ! -f "knowledge_index.faiss" ] && [ -n "${FAISS_INDEX_URL:-}" ]; then
-    echo "[start.sh] Downloading vector retrieval index from ${FAISS_INDEX_URL}..."
-    wget -q -O knowledge_index.faiss "${FAISS_INDEX_URL}"
-fi
-
-if [ ! -f "knowledge_metadata.json" ] && [ -n "${FAISS_METADATA_URL:-}" ]; then
-    echo "[start.sh] Downloading vector retrieval metadata from ${FAISS_METADATA_URL}..."
-    wget -q -O knowledge_metadata.json "${FAISS_METADATA_URL}"
-fi
+cd ""
 
 # ── Validate gunicorn is installed ────────────────────────
 if ! command -v gunicorn &>/dev/null; then

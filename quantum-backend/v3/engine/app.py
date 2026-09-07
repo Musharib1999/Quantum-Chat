@@ -12,7 +12,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine.pipelines.optimization import run_optimization_pipeline, run_optimization_pipeline_stream
 from engine.pipelines.direct_model_pipeline import run_direct_model_pipeline_stream
-from engine.retriever import VectorRetriever
 from engine.prompts import nlp_parser as nlp_prompt
 from engine.prompts import reasoner as reasoner_prompt
 from engine.validators.json_schema import parse_and_validate, validate_nlp_parser, validate_reasoner
@@ -27,10 +26,7 @@ app = FastAPI(
     description="Computational core executing multi-agent pipelines, RAG, and AST compiles."
 )
 
-# Initialize Vector Retriever globally
-print("Initializing Vector Retriever inside AI Engine...")
-retriever = VectorRetriever()
-print("Retriever initialization complete inside AI Engine.")
+
 
 # Initialize and seed Quantum Algorithm Library globally
 try:
@@ -79,7 +75,8 @@ def health():
         "status": "ok",
         "service": "quantum-ai-engine",
         "mode": config.get_mode(),
-        "retriever_loaded": retriever.is_loaded
+        "inference_provider": config.INFERENCE_PROVIDER,
+        "primary_model": config.GROQ_PRIMARY_MODEL
     }
 
 @app.post("/engine/run")
@@ -136,49 +133,28 @@ async def engine_stream(request: PipelineRequest):
 @app.post("/engine/assistant/chat")
 async def engine_assistant_chat(request: AssistantChatRequest):
     """
-    Query the local FAISS retriever.
+    Query the primary reasoning engine (Groq) with the Quantum Guru system prompt.
     """
     try:
-        if not retriever.is_loaded:
-            return {
-                "response": "❌ **Retriever Error**: FAISS database or embedding model is not loaded.",
-                "success": False,
-                "score": 0.0
-            }
-            
-        hits = retriever.retrieve(request.message, k=3)
-        if "error" in hits:
-            return {
-                "response": f"❌ **Retriever Error**: {hits['error']}",
-                "success": False,
-                "score": 0.0
-            }
-            
-        if not hits:
-            return {
-                "response": "❌ No matching concepts or identity entries found in the database.",
-                "success": False,
-                "score": 0.0
-            }
-            
-        top_hit = hits[0]
-        similarity = top_hit['score']
-        if similarity < 0.85:
-            return {
-                "response": f"❌ No high-confidence match found in the local database (similarity: {similarity*100:.1f}%).",
-                "success": False,
-                "score": similarity
-            }
-            
+        system_prompt = (
+            "You are Quantum Guru, an expert quantum computing assistant and scientist. "
+            "Provide clear, mathematically rigorous, and accurate explanations for quantum computing, "
+            "Qiskit circuits, D-Wave annealing, and optimization problems."
+        )
+        response_text = await call_primary(
+            system=system_prompt,
+            user=request.message,
+            temperature=0.3
+        )
         return {
-            "response": top_hit['response'],
+            "response": response_text,
             "success": True,
-            "score": similarity,
-            "matched_prompt": top_hit['prompt']
+            "score": 1.0,
+            "matched_prompt": request.message
         }
     except Exception as e:
         return {
-            "response": f"❌ **FAISS Error**: {e}",
+            "response": f"❌ Error: {str(e)}",
             "success": False,
             "score": 0.0
         }
