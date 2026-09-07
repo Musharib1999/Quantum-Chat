@@ -2445,10 +2445,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             style={{ backgroundColor: colors.bgSection3, borderColor: colors.border }}
             className="h-12 px-3.5 border-b flex items-center justify-between shrink-0 select-none shadow-xs"
           >
-            <div className="flex items-center gap-2">
-              <Brain className="w-4 h-4 text-sky-400" />
-              <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>Quantum Q&A Assistant</span>
-            </div>
+            <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>
+              Quantum Copilot
+            </span>
             <span 
               style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
               className="text-[10px] font-mono px-2 py-0.5 rounded border"
