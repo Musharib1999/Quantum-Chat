@@ -155,44 +155,7 @@ const CopilotChatInput = React.memo(function CopilotChatInput({
           className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:opacity-40 leading-relaxed"
         />
         
-        <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
-          {/* Pedagogical Q&A Quick Question Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto text-[10px] font-sans font-normal">
-            <button 
-              onClick={() => onSend(`Explain the physics and operations in ${activeFile}`)}
-              style={{ 
-                backgroundColor: colors.bgPill, 
-                borderColor: colors.border,
-                color: colors.textCyan 
-              }}
-              className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-sky-400"
-            >
-              <Sparkles className="w-2.5 h-2.5" style={{ color: colors.textCyan }} /> Explain active code
-            </button>
-            <button 
-              onClick={() => onSend('What is quantum entanglement and how do gates create it?')}
-              style={{ 
-                backgroundColor: colors.bgPill, 
-                borderColor: colors.border,
-                color: colors.textAmber 
-              }}
-              className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-amber-400"
-            >
-              <HelpCircle className="w-2.5 h-2.5" style={{ color: colors.textAmber }} /> Entanglement
-            </button>
-            <button 
-              onClick={() => onSend('Show the Dirac bra-ket statevector representation of my circuit')}
-              style={{ 
-                backgroundColor: colors.bgPill, 
-                borderColor: colors.border,
-                color: colors.textEmerald 
-              }}
-              className="px-2 py-0.5 rounded border cursor-pointer transition-colors shrink-0 flex items-center gap-1 hover:border-emerald-400"
-            >
-              <Activity className="w-2.5 h-2.5" style={{ color: colors.textEmerald }} /> Dirac Notation
-            </button>
-          </div>
-
+        <div className="flex items-center justify-end gap-2 pt-1.5 border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
           {/* Right: Send Button */}
           <button 
             onClick={handleSendClick}
