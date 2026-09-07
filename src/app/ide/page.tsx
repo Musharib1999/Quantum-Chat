@@ -1629,8 +1629,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 onClick={() => setIsNewProjectOpen(true)}
                 className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
                   isDark
-                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-sky-400 hover:scale-[1.04]'
-                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-sky-600 hover:shadow-xs hover:scale-[1.04]'
+                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-zinc-100 hover:scale-[1.04]'
+                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-xs hover:scale-[1.04]'
                 }`}
                 title="Create New Quantum Project"
               >
@@ -1649,27 +1649,27 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       <button
                         key={fName}
                         onClick={() => setActiveFile(fName)}
-                        className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border border-transparent bg-transparent transition-all cursor-pointer group ${
+                        className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
                           isActive
                             ? isDark
-                              ? 'text-sky-400 hover:bg-zinc-800/40'
-                              : 'text-sky-600 hover:bg-slate-100/60'
+                              ? 'border-transparent hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:scale-[1.04]'
+                              : 'border-transparent hover:border-slate-300 hover:bg-white hover:shadow-xs hover:scale-[1.04]'
                             : isDark
-                              ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
-                              : 'text-slate-500 hover:bg-slate-100/80 hover:text-slate-800'
+                              ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-zinc-100 hover:scale-[1.04]'
+                              : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-xs hover:scale-[1.04]'
                         }`}
                         title={`Open ${fName}`}
                       >
-                        <FileCode className={`w-4.5 h-4.5 mb-1 transition-colors ${
-                          isActive 
-                            ? (isDark ? 'text-sky-400' : 'text-sky-600') 
-                            : (isDark ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-slate-500 group-hover:text-slate-800')
-                        }`} />
-                        <span className={`text-[10px] font-mono truncate max-w-[46px] px-0.5 text-center leading-none ${
-                          isActive 
-                            ? (isDark ? 'text-sky-400 font-semibold' : 'text-sky-600 font-semibold') 
-                            : (isDark ? 'text-zinc-400 group-hover:text-zinc-200 font-medium' : 'text-slate-500 group-hover:text-slate-800 font-medium')
-                        }`}>
+                        <FileCode 
+                          className="w-4.5 h-4.5 mb-1 transition-colors" 
+                          style={isActive ? { color: colors.textCyan } : undefined}
+                        />
+                        <span 
+                          className={`text-[10px] font-mono truncate max-w-[46px] px-0.5 text-center leading-none ${
+                            isActive ? 'font-semibold' : 'font-medium'
+                          }`}
+                          style={isActive ? { color: colors.textCyan } : undefined}
+                        >
                           {shortName === 'main' ? 'main.py' : fName}
                         </span>
                       </button>
