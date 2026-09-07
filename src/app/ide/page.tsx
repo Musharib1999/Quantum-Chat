@@ -3351,35 +3351,38 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       {isNewProjectOpen && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) setIsNewProjectOpen(false); }}
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-hidden animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-hidden animate-in fade-in duration-150"
         >
           <div 
-            style={{ backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }}
-            className="border rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+            style={{ backgroundColor: isDark ? '#121216' : '#ffffff', borderColor: isDark ? '#27272a' : '#e2e8f0', color: colors.textPrimary }}
+            className="border rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
           >
             {/* Header */}
             <div 
-              style={{ backgroundColor: colors.bgHeader, borderColor: colors.border }}
-              className="px-5 py-3.5 border-b flex items-center justify-between"
+              style={{ borderColor: isDark ? '#222226' : '#f1f5f9' }}
+              className="px-5 py-4 border-b flex items-center justify-between"
             >
               <div>
-                <h3 className="text-sm font-normal font-heading" style={{ color: colors.textCyan }}>Start a New Quantum Project</h3>
-                <p className="text-[11px]" style={{ color: colors.textMuted }}>Choose a quantum scaffold or create a blank workspace</p>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+                  New Quantum Project
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                  Scaffold an isolated workspace with runtime configs
+                </p>
               </div>
               <button 
                 onClick={() => setIsNewProjectOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-75 transition-opacity cursor-pointer"
-                style={{ color: colors.textMuted }}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Project Creation Form */}
-            <div className="p-5 space-y-4 overflow-y-auto max-h-[65vh]">
+            <div className="p-5 space-y-4">
               {/* 1. Project Name Input */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-mono uppercase tracking-wider" style={{ color: colors.textCyan }}>
+                <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">
                   Project Name
                 </label>
                 <input 
@@ -3389,105 +3392,136 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   onChange={(e) => setCustomProjectInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleCreateCustomProject(); }}
                   style={{ 
-                    backgroundColor: colors.bgEditor, 
-                    borderColor: colors.border, 
+                    backgroundColor: isDark ? '#18181D' : '#f8fafc', 
+                    borderColor: isDark ? '#2e2e36' : '#e2e8f0', 
                     color: colors.textPrimary 
                   }}
-                  className="w-full px-3 py-2 rounded-lg border text-xs font-mono outline-hidden focus:border-sky-500"
+                  className="w-full px-3.5 py-2 rounded-xl border text-xs font-mono transition-all outline-hidden focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                   autoFocus
                 />
-                <p className="text-[10px] font-mono" style={{ color: colors.textMuted }}>
-                  Will create an isolated workspace with main.py, quantum.config.json & MEMORY.md
-                </p>
               </div>
 
               {/* 2. Quantum Architecture & Paradigm Selection */}
               <div className="space-y-2">
-                <label className="text-[11px] font-mono uppercase tracking-wider" style={{ color: colors.textCyan }}>
-                  Select Quantum Architecture
+                <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">
+                  Architecture & Paradigm
                 </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Card A: Qiskit Gate-Based Circuit */}
-                  <div
-                    onClick={() => setSelectedTemplateKey('qiskit-circuit')}
-                    style={{
-                      backgroundColor: (selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project') ? (isDark ? '#0c2d48' : '#e0f2fe') : (isDark ? '#141418' : '#ffffff'),
-                      borderColor: (selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project') ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#27272a' : '#e2e8f0'),
-                    }}
-                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between group shadow-2xs ${
-                      (selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project') ? 'ring-1 ring-sky-400' : 'hover:border-slate-400 dark:hover:border-zinc-600'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <Cpu className="w-4 h-4 text-sky-500 dark:text-sky-400" />
-                          <span className="font-semibold text-xs text-sky-600 dark:text-sky-400">Gate Circuit</span>
+                <div className="space-y-2">
+                  {/* Row A: Qiskit Gate-Based Circuit */}
+                  {(() => {
+                    const isQiskit = selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project';
+                    return (
+                      <div
+                        onClick={() => setSelectedTemplateKey('qiskit-circuit')}
+                        style={{
+                          backgroundColor: isQiskit ? (isDark ? '#0c2233' : '#f0f9ff') : (isDark ? '#16161B' : '#ffffff'),
+                          borderColor: isQiskit ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#27272a' : '#e2e8f0'),
+                        }}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 group ${
+                          isQiskit ? 'shadow-xs' : 'hover:border-slate-300 dark:hover:border-zinc-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`p-2 rounded-lg shrink-0 transition-colors ${
+                            isQiskit 
+                              ? (isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-100 text-sky-600') 
+                              : (isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-slate-100 text-slate-500')
+                          }`}>
+                            <Cpu className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-medium ${isQiskit ? (isDark ? 'text-zinc-100' : 'text-slate-900') : (isDark ? 'text-zinc-300' : 'text-slate-700')}`}>
+                                Gate Circuit (Qiskit)
+                              </span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                                aer_simulator
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5">
+                              Wires, timesteps & interactive gate canvas
+                            </p>
+                          </div>
                         </div>
-                        {(selectedTemplateKey === 'qiskit-circuit' || selectedTemplateKey === 'my-quantum-project') && (
-                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30">Active</span>
-                        )}
-                      </div>
-                      <div className="text-[11px] font-medium text-slate-900 dark:text-zinc-100 mb-1">Qiskit Aer Simulator</div>
-                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                        Gate-model circuits with wires, timesteps, and interactive gate canvas (H, X, CX).
-                      </p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t text-[9px] font-mono text-sky-600 dark:text-sky-400" style={{ borderColor: isDark ? '#1e3a8a30' : '#bae6fd' }}>
-                      Backend: aer_simulator
-                    </div>
-                  </div>
 
-                  {/* Card B: D-Wave Annealer / QUBO */}
-                  <div
-                    onClick={() => setSelectedTemplateKey('dwave-annealing')}
-                    style={{
-                      backgroundColor: (selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization') ? (isDark ? '#2e1065' : '#f5f3ff') : (isDark ? '#141418' : '#ffffff'),
-                      borderColor: (selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization') ? (isDark ? '#c084fc' : '#9333ea') : (isDark ? '#27272a' : '#e2e8f0'),
-                    }}
-                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between group shadow-2xs ${
-                      (selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization') ? 'ring-1 ring-purple-400' : 'hover:border-slate-400 dark:hover:border-zinc-600'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <Activity className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-                          <span className="font-semibold text-xs text-purple-600 dark:text-purple-400">Annealing (QUBO)</span>
+                        {/* Radio Indicator */}
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                          isQiskit
+                            ? 'border-sky-500 bg-sky-500'
+                            : (isDark ? 'border-zinc-600 bg-transparent' : 'border-slate-300 bg-transparent')
+                        }`}>
+                          {isQiskit && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
-                        {(selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization') && (
-                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">Active</span>
-                        )}
                       </div>
-                      <div className="text-[11px] font-medium text-slate-900 dark:text-zinc-100 mb-1">D-Wave Annealer</div>
-                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                        Binary Quadratic Models (BQM), energy minimization & combinatorial optimization.
-                      </p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t text-[9px] font-mono text-purple-600 dark:text-purple-400" style={{ borderColor: isDark ? '#581c8730' : '#ddd6fe' }}>
-                      Backend: dwave_annealer
-                    </div>
-                  </div>
+                    );
+                  })()}
+
+                  {/* Row B: D-Wave Annealer / QUBO */}
+                  {(() => {
+                    const isDwave = selectedTemplateKey === 'dwave-annealing' || selectedTemplateKey === 'portfolio-optimization';
+                    return (
+                      <div
+                        onClick={() => setSelectedTemplateKey('dwave-annealing')}
+                        style={{
+                          backgroundColor: isDwave ? (isDark ? '#221133' : '#faf5ff') : (isDark ? '#16161B' : '#ffffff'),
+                          borderColor: isDwave ? (isDark ? '#c084fc' : '#9333ea') : (isDark ? '#27272a' : '#e2e8f0'),
+                        }}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 group ${
+                          isDwave ? 'shadow-xs' : 'hover:border-slate-300 dark:hover:border-zinc-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`p-2 rounded-lg shrink-0 transition-colors ${
+                            isDwave 
+                              ? (isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600') 
+                              : (isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-slate-100 text-slate-500')
+                          }`}>
+                            <Activity className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-medium ${isDwave ? (isDark ? 'text-zinc-100' : 'text-slate-900') : (isDark ? 'text-zinc-300' : 'text-slate-700')}`}>
+                                Quantum Annealing (D-Wave)
+                              </span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                dwave_annealer
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5">
+                              Binary Quadratic Models (BQM) & energy minimization
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Radio Indicator */}
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                          isDwave
+                            ? 'border-purple-500 bg-purple-500'
+                            : (isDark ? 'border-zinc-600 bg-transparent' : 'border-slate-300 bg-transparent')
+                        }`}>
+                          {isDwave && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
               {/* 3. Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-2 border-t" style={{ borderColor: colors.border }}>
+              <div className="flex items-center justify-end gap-2 pt-3 border-t" style={{ borderColor: isDark ? '#222226' : '#f1f5f9' }}>
                 <button
                   onClick={() => setIsNewProjectOpen(false)}
-                  style={{ borderColor: colors.border, color: colors.textMuted }}
-                  className="px-3 py-1.5 rounded-lg border text-xs font-mono hover:bg-neutral-800/40 cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateCustomProject}
-                  style={{ backgroundColor: colors.bgPill, borderColor: colors.textCyan, color: colors.textCyan }}
-                  className="px-4 py-1.5 rounded-lg border text-xs font-mono hover:opacity-80 cursor-pointer flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-zinc-950 shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98"
                 >
-                  <Plus className="w-3.5 h-3.5" style={{ color: colors.textAmber }} />
-                  <span>Create & Open Project</span>
+                  <Plus className="w-4 h-4 text-zinc-950" />
+                  <span>Create Project</span>
                 </button>
               </div>
             </div>
