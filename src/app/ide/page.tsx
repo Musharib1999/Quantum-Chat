@@ -1800,32 +1800,26 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                       <button
                         key={fName}
                         onClick={() => setActiveFile(fName)}
-                        className={`w-[52px] h-[52px] relative flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
+                        className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border border-transparent bg-transparent transition-all cursor-pointer group ${
                           isActive
                             ? isDark
-                              ? 'bg-[#18181D] border-sky-500/40 text-zinc-100 shadow-xs shadow-sky-500/10'
-                              : 'bg-white border-slate-300 text-slate-900 shadow-xs'
+                              ? 'text-sky-400 hover:bg-zinc-800/40'
+                              : 'text-sky-600 hover:bg-slate-100/60'
                             : isDark
-                              ? 'border-transparent text-zinc-400 hover:border-zinc-800 hover:bg-zinc-850 hover:text-zinc-200'
-                              : 'border-transparent text-slate-500 hover:border-slate-200 hover:bg-white/70 hover:text-slate-800'
+                              ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
+                              : 'text-slate-500 hover:bg-slate-100/80 hover:text-slate-800'
                         }`}
                         title={`Open ${fName}`}
                       >
-                        {/* Subtle Active Indicator Pill on Left Edge */}
-                        {isActive && (
-                          <div 
-                            className={`absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full ${
-                              isDark ? 'bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]' : 'bg-sky-500'
-                            }`} 
-                          />
-                        )}
                         <FileCode className={`w-4.5 h-4.5 mb-1 transition-colors ${
                           isActive 
                             ? (isDark ? 'text-sky-400' : 'text-sky-600') 
                             : (isDark ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-slate-500 group-hover:text-slate-800')
                         }`} />
                         <span className={`text-[10px] font-mono truncate max-w-[46px] px-0.5 text-center leading-none ${
-                          isActive ? 'font-semibold' : 'font-medium'
+                          isActive 
+                            ? (isDark ? 'text-sky-400 font-semibold' : 'text-sky-600 font-semibold') 
+                            : (isDark ? 'text-zinc-400 group-hover:text-zinc-200 font-medium' : 'text-slate-500 group-hover:text-slate-800 font-medium')
                         }`}>
                           {shortName === 'main' ? 'main.py' : fName}
                         </span>
