@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Cpu, ArrowRight, Bot, Lock as LockIcon, Unlock as UnlockIcon, Menu, X } from 'lucide-react';
+import { Cpu, ArrowRight, Bot, Lock as LockIcon, Unlock as UnlockIcon, Menu, X, ShieldCheck } from 'lucide-react';
 
 export default function LandingPage() {
   const { isAuthenticated, logout } = useAuth();
@@ -45,6 +45,13 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-4">
+              <Link
+                href="/test-suite"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-[#3066bb] border border-slate-300 hover:border-[#3066bb] rounded transition-all bg-white shadow-sm"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                Test Suite
+              </Link>
               {isAuthenticated ? (
                 <button
                   onClick={() => logout()}
