@@ -14,19 +14,16 @@ import {
   Boxes,
   GraduationCap,
   Clock,
-  X
+  X,
+  Sparkles
 } from 'lucide-react';
 
-interface StudioCard {
+interface UpcomingStudio {
   id: string;
   title: string;
   description: string;
-  href: string;
   icon: React.ReactNode;
-  accentColor: 'electric' | 'indigo' | 'emerald' | 'violet' | 'amber' | 'rose';
-  adminOnly: boolean;
-  badgeText: string;
-  actionText: string;
+  accentColor: 'indigo' | 'emerald' | 'violet' | 'amber' | 'rose';
 }
 
 export default function LandingPage() {
@@ -34,95 +31,57 @@ export default function LandingPage() {
   const router = useRouter();
   const [restrictedModalInfo, setRestrictedModalInfo] = useState<{ title: string; description: string } | null>(null);
 
-  const studioCards: StudioCard[] = [
-    {
-      id: 'ide',
-      title: 'Quantum IDE & Playground',
-      description: 'Interactive quantum code editor, live multi-qubit visual circuit canvas, and dual Qiskit & D-Wave simulation backends.',
-      href: '/ide',
-      icon: <Code2 size={28} />,
-      accentColor: 'electric',
-      adminOnly: false,
-      badgeText: isAuthenticated ? 'Available with login' : 'Unlock with free account',
-      actionText: 'Launch IDE'
-    },
+  const upcomingStudios: UpcomingStudio[] = [
     {
       id: 'optimization',
       title: 'Optimization Studio',
-      description: 'Industry specific guided problem solving wizards based on hardware, use case, and mathematical formulation.',
-      href: '/quantum-assistant',
-      icon: <Bot size={28} />,
-      accentColor: 'indigo',
-      adminOnly: true,
-      badgeText: 'Will be available soon',
-      actionText: 'Will be available soon'
+      description: 'Solve real-world combinatorial optimization problems with guided formulation wizards.',
+      icon: <Bot size={24} />,
+      accentColor: 'indigo'
     },
     {
       id: 'circuits',
       title: 'Quantum Circuit Studio',
-      description: 'Deep visual circuit synthesis, multi-pass transpiler optimization passes, noise modeling, and unitary analysis.',
-      href: '/ide?tab=circuit',
-      icon: <Cpu size={28} />,
-      accentColor: 'emerald',
-      adminOnly: true,
-      badgeText: 'Will be available soon',
-      actionText: 'Will be available soon'
+      description: 'Deep visual circuit synthesis, multi-pass transpiler optimization, and noise modeling.',
+      icon: <Cpu size={24} />,
+      accentColor: 'emerald'
     },
     {
       id: 'algorithms',
       title: 'Quantum Algorithm Studio',
-      description: 'Algorithmic archetypes including Grover search, QFT, VQE chemistry, and variational quantum classification.',
-      href: '/ide',
-      icon: <Workflow size={28} />,
-      accentColor: 'violet',
-      adminOnly: true,
-      badgeText: 'Will be available soon',
-      actionText: 'Will be available soon'
+      description: 'Explore quantum algorithms and archetypes including Grover search, QFT, and VQE chemistry.',
+      icon: <Workflow size={24} />,
+      accentColor: 'violet'
     },
     {
       id: 'marketplace',
       title: 'Quantum Capability Exchange',
-      description: 'Enterprise catalog of 38 pre-built quantum microservices across optimization, chemistry, circuits, and machine learning.',
-      href: '/marketplace',
-      icon: <Boxes size={28} />,
-      accentColor: 'amber',
-      adminOnly: true,
-      badgeText: 'Will be available soon',
-      actionText: 'Will be available soon'
+      description: 'Enterprise catalog of 38 pre-built quantum microservices, solvers, and reusable capabilities.',
+      icon: <Boxes size={24} />,
+      accentColor: 'amber'
     },
     {
       id: 'academy',
       title: 'Quantum Academy',
-      description: 'Interactive educational environment with step-by-step Dirac mathematical breakdowns and algorithmic derivations.',
-      href: '/ide',
-      icon: <GraduationCap size={28} />,
-      accentColor: 'rose',
-      adminOnly: true,
-      badgeText: 'Will be available soon',
-      actionText: 'Will be available soon'
+      description: 'Learn quantum computing interactively with step-by-step Dirac mathematical breakdowns.',
+      icon: <GraduationCap size={24} />,
+      accentColor: 'rose'
     }
   ];
 
-  const handleCardClick = (e: React.MouseEvent, card: StudioCard) => {
-    e.preventDefault();
-
-    // 1. None of the 5 coming-soon studios can be accessed by users -> always open modal
-    if (card.id !== 'ide') {
-      setRestrictedModalInfo({
-        title: card.title,
-        description: card.description
-      });
-      return;
-    }
-
-    // 2. Quantum IDE & Playground requires login
+  const handleLaunchIde = () => {
     if (!isAuthenticated) {
-      router.push(`/login?redirect=${encodeURIComponent(card.href)}`);
+      router.push('/login?redirect=%2Fide');
       return;
     }
+    router.push('/ide');
+  };
 
-    // 3. User is authenticated -> navigate to IDE
-    router.push(card.href);
+  const handleUpcomingClick = (studio: UpcomingStudio) => {
+    setRestrictedModalInfo({
+      title: studio.title,
+      description: studio.description
+    });
   };
 
   return (
@@ -139,29 +98,102 @@ export default function LandingPage() {
         />
       </div>
 
-      
-
-      {/* Hero Section */}
-      <main style={{ paddingTop: "84px", paddingBottom: "72px" }} className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center">
-        <div className="text-center mb-10 md:mb-12 animate-fade-in-up">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-3 leading-tight">
+      {/* Main Content */}
+      <main
+        style={{ paddingTop: '56px', paddingBottom: '72px' }}
+        className="relative z-10 max-w-6xl mx-auto px-6 flex flex-col items-center"
+      >
+        {/* Hero Section */}
+        <div className="text-center mb-10 animate-fade-in-up max-w-3xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-3 leading-tight text-slate-900">
             The Future of <br />
             <span className="text-[rgb(48,102,187)]">
               Quantum Analysis
             </span>
           </h1>
-          <p className="text-sm md:text-base mb-4 leading-relaxed text-slate-600 max-w-2xl mx-auto">
-            Select your specialized interface below to begin your journey of respective quantum domain
+          <h2 className="text-base sm:text-lg md:text-xl font-medium text-slate-800 mb-2">
+            One platform. Every quantum workflow.
+          </h2>
+          <p className="text-xs sm:text-sm md:text-base text-slate-500 max-w-xl mx-auto">
+            Choose the workspace built for the way you want to work with quantum computing.
           </p>
         </div>
 
-        {/* 6 Studio Cards Grid (Responsive 3x2 on desktop, 2x3 on tablet, 1 col on mobile) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full">
-          {studioCards.map((card) => (
-            <FeatureCard
-              key={card.id}
-              card={card}
-              onClick={(e) => handleCardClick(e, card)}
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* FEATURED HERO CARD: QUANTUM IDE & PLAYGROUND (START HERE)   */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <div
+          onClick={handleLaunchIde}
+          className="group relative p-7 sm:p-9 md:p-10 rounded-3xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/40 hover:border-blue-400 hover:shadow-2xl hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer overflow-hidden max-w-5xl w-full"
+        >
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex-1">
+              {/* Top Status & Capabilities Pills */}
+              <div className="flex flex-wrap items-center gap-2.5 mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-[#3066bb] text-white shadow-xs uppercase">
+                  <Sparkles size={12} />
+                  Available Now
+                </span>
+                <span className="text-xs font-medium text-blue-800 bg-blue-50/80 border border-blue-200/70 px-3 py-1 rounded-full">
+                  Build • Visualize • Simulate
+                </span>
+              </div>
+
+              {/* Title & Description */}
+              <div className="flex items-center gap-3.5 mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#3066bb] text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Code2 size={26} />
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight group-hover:text-[#3066bb] transition-colors">
+                  Quantum IDE & Playground
+                </h3>
+              </div>
+
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
+                Your interactive environment for writing quantum code, visualizing multi-qubit circuits in real-time, and running simulations across dual Qiskit &amp; D-Wave backends.
+              </p>
+            </div>
+
+            {/* Launch Action Button */}
+            <div className="flex items-center">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLaunchIde();
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 bg-[#3066bb] hover:bg-[#255299] text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all transform group-hover:translate-x-0.5 cursor-pointer"
+              >
+                <span>Launch IDE</span>
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* SECTION DIVIDER: COMING SOON                                  */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-center gap-4 my-10 max-w-5xl w-full">
+          <div className="h-px bg-slate-200 flex-1" />
+          <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] font-semibold text-slate-400 tracking-wider uppercase">
+            <Clock size={12} className="text-slate-400" />
+            <span>Coming Soon</span>
+          </div>
+          <div className="h-px bg-slate-200 flex-1" />
+        </div>
+
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* 5 UPCOMING STUDIOS: STANDARDIZED QUIET CARDS                 */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl w-full">
+          {upcomingStudios.map((studio) => (
+            <UpcomingStudioCard
+              key={studio.id}
+              studio={studio}
+              onClick={() => handleUpcomingClick(studio)}
             />
           ))}
         </div>
@@ -215,7 +247,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="py-10 border-t border-slate-100 text-slate-400">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-col items-start gap-1">
             <p className="text-xs opacity-60">© 2026 Quantum Guru Inc. All rights reserved.</p>
           </div>
@@ -233,83 +265,51 @@ export default function LandingPage() {
   );
 }
 
-interface FeatureCardProps {
-  card: StudioCard;
-  onClick: (e: React.MouseEvent) => void;
+interface UpcomingStudioCardProps {
+  studio: UpcomingStudio;
+  onClick: () => void;
 }
 
-const FeatureCard = ({ card, onClick }: FeatureCardProps) => {
+const UpcomingStudioCard = ({ studio, onClick }: UpcomingStudioCardProps) => {
   const colorMap = {
-    electric: {
-      light: 'bg-[rgb(27,176,206)]/10 text-[rgb(27,176,206)] group-hover:bg-[rgb(27,176,206)] group-hover:text-white',
-      glow: 'bg-[rgb(27,176,206)]'
-    },
-    indigo: {
-      light: 'bg-[rgb(48,102,187)]/10 text-[rgb(48,102,187)] group-hover:bg-[rgb(48,102,187)] group-hover:text-white',
-      glow: 'bg-[rgb(48,102,187)]'
-    },
-    emerald: {
-      light: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white',
-      glow: 'bg-emerald-500'
-    },
-    violet: {
-      light: 'bg-violet-50 text-violet-600 group-hover:bg-violet-600 group-hover:text-white',
-      glow: 'bg-violet-500'
-    },
-    amber: {
-      light: 'bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white',
-      glow: 'bg-amber-500'
-    },
-    rose: {
-      light: 'bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white',
-      glow: 'bg-rose-500'
-    }
+    indigo: 'bg-[rgb(48,102,187)]/10 text-[rgb(48,102,187)]',
+    emerald: 'bg-emerald-50 text-emerald-600',
+    violet: 'bg-violet-50 text-violet-600',
+    amber: 'bg-amber-50 text-amber-600',
+    rose: 'bg-rose-50 text-rose-600'
   };
-
-  const colors = colorMap[card.accentColor];
-  const isAvailableSoon = card.id !== 'ide';
 
   return (
     <div
       onClick={onClick}
-      className="group relative p-6 md:p-7 rounded-3xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-[0.99] overflow-hidden flex flex-col justify-between bg-white border-slate-100 hover:border-slate-200 cursor-pointer"
+      className="group relative p-6 rounded-3xl border border-slate-200/70 bg-white hover:border-slate-300 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 cursor-pointer flex flex-col justify-between"
     >
-      {/* Glow Effect on Hover */}
-      <div className={`absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${colors.glow}`} />
-
-      {/* Status Badge */}
-      <div
-        className={`absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide border shadow-2xs transition-all ${
-          isAvailableSoon
-            ? 'bg-amber-50/80 text-amber-700 border-amber-200/60'
-            : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-        }`}
-      >
-        {isAvailableSoon ? <Clock size={10} /> : <UnlockIcon size={10} />}
-        <span>{card.badgeText}</span>
-      </div>
-
       <div>
-        {/* Icon Pill */}
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-300 ${colors.light}`}>
-          {card.icon}
+        {/* Header: Icon + Quiet Muted Badge */}
+        <div className="flex items-center justify-between mb-4">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${colorMap[studio.accentColor]}`}>
+            {studio.icon}
+          </div>
+          <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/60">
+            Coming soon
+          </span>
         </div>
 
-        <h3 className="text-xl font-semibold mb-2.5 text-slate-900 tracking-tight">
-          {card.title}
-        </h3>
-        <p className="text-xs md:text-sm leading-relaxed mb-6 text-slate-500">
-          {card.description}
+        {/* Title */}
+        <h4 className="text-lg font-semibold text-slate-900 mb-2 tracking-tight group-hover:text-slate-700 transition-colors">
+          {studio.title}
+        </h4>
+
+        {/* Standardized Fixed Height Description */}
+        <p className="text-xs text-slate-500 leading-relaxed min-h-[44px]">
+          {studio.description}
         </p>
       </div>
 
-      <div className="flex items-center gap-2 text-xs md:text-sm font-semibold transition-colors duration-300 text-slate-800 group-hover:text-[#3066bb] pt-2 border-t border-slate-50">
-        <span>{card.actionText}</span>
-        {isAvailableSoon ? (
-          <Clock size={14} className="text-amber-600" />
-        ) : (
-          <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
-        )}
+      {/* Card Footer: Quiet Action */}
+      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 group-hover:text-[#3066bb] transition-colors mt-2">
+        <span>Explore Studio</span>
+        <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-1" />
       </div>
     </div>
   );
