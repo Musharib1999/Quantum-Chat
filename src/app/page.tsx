@@ -103,7 +103,7 @@ export default function LandingPage() {
           <img
             src="/logo.png"
             alt="Quantum Guru"
-            style={{ height: '44px', width: 'auto' }}
+            style={{ height: '62px', width: 'auto' }}
             className="w-auto object-contain cursor-pointer drop-shadow-xs"
           />
         </a>
