@@ -143,13 +143,14 @@ export default function LandingPage() {
       <nav className="sticky top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 border-slate-200 bg-white/80">
         <div className="w-full px-6 md:px-10 h-20 flex items-center justify-between">
 
-          {/* Logo Section - prominent and properly sized */}
+          {/* Logo Section */}
           <div className="flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
-            <a href="https://www.quantumcomputers.guru/">
+            <a href="https://www.quantumcomputers.guru/" className="flex items-center">
               <img
                 src="/logo.png"
                 alt="Quantum Guru"
-                className="h-[52px] sm:h-[60px] md:h-[66px] w-auto object-contain cursor-pointer drop-shadow-sm"
+                style={{ height: '46px', width: 'auto', maxHeight: '50px' }}
+                className="w-auto object-contain cursor-pointer drop-shadow-sm"
               />
             </a>
           </div>
