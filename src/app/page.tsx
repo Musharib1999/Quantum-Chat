@@ -102,86 +102,109 @@ export default function LandingPage() {
 
       {/* Main Content */}
       <main
-        style={{ paddingTop: '80px', paddingBottom: '120px' }}
-        className="relative z-10 max-w-5xl mx-auto px-6 flex flex-col items-center"
+        style={{ paddingTop: '72px', paddingBottom: '120px' }}
+        className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 flex flex-col items-center"
       >
-        {/* Hero Section */}
-        <div style={{ marginBottom: '52px' }} className="text-center animate-fade-in-up max-w-2xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-4 leading-tight text-slate-900">
-            The Future of <br />
-            <span className="text-[rgb(48,102,187)]">
-              Quantum Analysis
-            </span>
-          </h1>
-          <h2 className="text-base sm:text-lg md:text-xl font-medium text-slate-800 mb-2">
-            One platform. Every quantum workflow.
-          </h2>
-          <p className="text-xs sm:text-sm md:text-base text-slate-500 max-w-xl mx-auto">
-            Choose the workspace built for the way you want to work with quantum computing.
-          </p>
-        </div>
-
-        {/* ───────────────────────────────────────────────────────────── */}
-        {/* FEATURED HERO CARD: NO OUTLINES, SOFT ELEVATION              */}
-        {/* ───────────────────────────────────────────────────────────── */}
-        <div
-          onClick={handleLaunchIde}
-          className="group relative p-8 sm:p-10 md:p-11 rounded-3xl bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer overflow-hidden w-full"
-        >
-          {/* Subtle Ambient Glow */}
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500" />
-
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex-1">
-              {/* Top Status & Capabilities Pills (No outlines) */}
-              <div className="flex flex-wrap items-center gap-2.5 mb-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-[#3066bb] text-white shadow-xs uppercase">
-                  <Sparkles size={12} />
-                  Available Now
+        {/* Hero Section: 2-Column Responsive Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center w-full mb-10">
+          
+          {/* Left Column: Heading + Featured Card */}
+          <div className="lg:col-span-7 flex flex-col justify-center">
+            
+            {/* Hero Text */}
+            <div className="text-left mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-bold tracking-tight mb-3 leading-[1.1] text-slate-900">
+                The Future of <br />
+                <span className="text-[#3066bb]">
+                  Quantum Analysis
                 </span>
-                <span className="text-xs font-medium text-[#3066bb] bg-blue-100/70 px-3 py-1 rounded-full">
-                  Build • Visualize • Simulate
-                </span>
-              </div>
-
-              {/* Title & Icon */}
-              <div className="flex items-center gap-3.5 mb-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#3066bb] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                  <Code2 size={24} />
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight group-hover:text-[#3066bb] transition-colors">
-                  Quantum IDE & Playground
-                </h3>
-              </div>
-
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
-                Your interactive environment for writing quantum code, visualizing multi-qubit circuits in real-time, and running simulations across dual Qiskit &amp; D-Wave backends.
+              </h1>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-1.5">
+                One platform. Every quantum workflow.
+              </h2>
+              <p className="text-xs sm:text-sm md:text-base text-slate-500 max-w-xl">
+                Choose the workspace built for the way you want to work with quantum computing.
               </p>
             </div>
 
-            {/* Launch Action Button */}
-            <div className="flex items-center">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLaunchIde();
-                }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#3066bb] hover:bg-[#255299] text-white text-sm font-semibold rounded-2xl shadow-md hover:shadow-lg transition-all transform group-hover:translate-x-0.5 cursor-pointer"
-              >
-                <span>Launch IDE</span>
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-              </button>
+            {/* Featured Hero Card */}
+            <div
+              onClick={handleLaunchIde}
+              className="group relative p-6 sm:p-8 rounded-3xl bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer overflow-hidden border border-slate-200/70"
+            >
+              <div className="relative z-10">
+                {/* Status Pills */}
+                <div className="flex flex-wrap items-center gap-2 mb-3.5">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider bg-[#3066bb] text-white shadow-xs uppercase">
+                    <Sparkles size={11} />
+                    Available Now
+                  </span>
+                  <span className="text-[11px] font-medium text-[#3066bb] bg-blue-50 px-2.5 py-1 rounded-full">
+                    Build • Visualize • Simulate
+                  </span>
+                </div>
+
+                {/* Title & Icon */}
+                <div className="flex items-center gap-3 mb-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#3066bb] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                    <Code2 size={20} />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight group-hover:text-[#3066bb] transition-colors">
+                    Quantum IDE & Playground
+                  </h3>
+                </div>
+
+                {/* Description & Action Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-md">
+                    Your interactive environment for writing quantum code, visualizing multi-qubit circuits in real-time, and running simulations across dual Qiskit &amp; D-Wave backends.
+                  </p>
+                  <div className="shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLaunchIde();
+                      }}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#3066bb] hover:bg-[#255299] text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer whitespace-nowrap"
+                    >
+                      <span>Launch IDE</span>
+                      <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Column: Quantum Chandelier Floating Visual */}
+          <div className="lg:col-span-5 flex items-center justify-center relative py-4 lg:py-0">
+            {/* Soft Luminescent Ambient Glow */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-72 h-72 rounded-full bg-blue-400/10 blur-3xl" />
+            </div>
+
+            {/* Chandelier Image */}
+            <div className="relative z-10 flex items-center justify-center transition-transform duration-700 hover:scale-[1.03]">
+              <img
+                src="/quantum-computer.png"
+                alt="Quantum Computer Chandelier"
+                className="w-full max-w-[340px] sm:max-w-[400px] lg:max-w-[450px] h-auto object-contain drop-shadow-xl"
+              />
             </div>
           </div>
+
         </div>
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* SECTION HEADER: CLEAN SPACED TYPOGRAPHIC LABEL (NO BARS)     */}
+        {/* SECTION DIVIDER: COMING SOON WITH SUBTLE HORIZONTAL LINES    */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div style={{ marginTop: '72px', marginBottom: '36px' }} className="text-center">
-          <span className="text-xs font-bold tracking-[0.2em] text-slate-400 uppercase">
+        <div className="w-full flex items-center justify-center gap-4 my-10">
+          <div className="h-px bg-slate-200/80 flex-1 max-w-[120px]" />
+          <span className="text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
             Coming Soon
           </span>
+          <div className="h-px bg-slate-200/80 flex-1 max-w-[120px]" />
         </div>
 
         {/* ───────────────────────────────────────────────────────────── */}
