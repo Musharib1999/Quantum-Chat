@@ -2375,6 +2375,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 >
                   <Cpu className="w-3.5 h-3.5" />
                   <span>Interactive Circuit Canvas</span>
+                  {optimizationResults?.qaoa_dual_compiled && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-400 border border-cyan-800/40 font-medium">
+                      QAOA Dual
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -2410,6 +2415,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 {/* Circuit Canvas Actions */}
                 {activeBottomTab === 'circuit' && isBottomOpen && (
                   <div className="flex items-center gap-2">
+                    {optimizationResults?.qaoa_dual_compiled && (
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-mono border bg-zinc-900/80 text-zinc-400 border-zinc-800 select-none">
+                        <Activity className="w-3 h-3 text-cyan-400" />
+                        <span>Auto-compiled QAOA (p=1)</span>
+                      </div>
+                    )}
                     {/* Live Real-Time Code Sync Indicator */}
                     <div 
                       className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium border select-none transition-all"
@@ -2489,16 +2500,6 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 {/* TAB 1: INTERACTIVE CIRCUIT CANVAS */}
                 {activeBottomTab === 'circuit' && (
                   <div className="p-3.5 font-sans h-full flex flex-col">
-                    {optimizationResults?.qaoa_dual_compiled && (
-                      <div className="mb-2 flex items-center justify-between px-3 py-1.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs font-mono shrink-0">
-                        <div className="flex items-center gap-2">
-                          <Activity className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                          <span className="font-semibold">Dual QAOA Circuit Synthesized</span>
-                          <span className="text-zinc-400 text-[11px] hidden sm:inline">• Auto-compiled from D-Wave QUBO Hamiltonian (p=1, {canvasQubits} Qubits)</span>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">Phase 2 Gate Bridge</span>
-                      </div>
-                    )}
                     {/* Interactive Qubit Wires Grid (Starts immediately below unified header) */}
                     <div className="flex-1 overflow-x-auto min-h-0 py-1">
                       <div className="min-w-[640px] space-y-2">
