@@ -103,13 +103,13 @@ export default function LandingPage() {
       {/* Main Content */}
       <main
         style={{
-          paddingTop: '64px',
-          paddingBottom: '120px',
-          maxWidth: '1200px',
+          paddingTop: '110px',
+          paddingBottom: '140px',
+          maxWidth: '1280px',
           width: '100%',
           margin: '0 auto',
-          paddingLeft: '24px',
-          paddingRight: '24px',
+          paddingLeft: '28px',
+          paddingRight: '28px',
           boxSizing: 'border-box'
         }}
         className="relative z-10 flex flex-col items-center"
@@ -127,21 +127,21 @@ export default function LandingPage() {
             marginBottom: '40px'
           }}
         >
-          {/* Left Column: Heading + Featured Card */}
+          {/* Left Column: Heading + Featured Card (Expanded Breadth) */}
           <div
             style={{
-              flex: '1 1 540px',
-              maxWidth: '680px',
+              flex: '1 1 620px',
+              maxWidth: '780px',
               minWidth: '320px'
             }}
           >
-            {/* Hero Text */}
-            <div style={{ textAlign: 'left', marginBottom: '28px' }}>
+            {/* Hero Text with Generous Top Spacing */}
+            <div style={{ textAlign: 'left', marginBottom: '32px', paddingTop: '12px' }}>
               <h1
                 style={{
-                  fontSize: 'clamp(2.5rem, 4.5vw, 3.5rem)',
+                  fontSize: 'clamp(2.5rem, 4.5vw, 3.6rem)',
                   fontWeight: 800,
-                  lineHeight: 1.1,
+                  lineHeight: 1.12,
                   letterSpacing: '-0.025em',
                   color: '#0F172A',
                   marginBottom: '16px'
@@ -166,34 +166,34 @@ export default function LandingPage() {
                 style={{
                   fontSize: '0.95rem',
                   color: '#64748B',
-                  maxWidth: '520px',
-                  lineHeight: 1.55
+                  maxWidth: '560px',
+                  lineHeight: 1.6
                 }}
               >
                 Choose the workspace built for the way you want to work with quantum computing.
               </p>
             </div>
 
-            {/* Featured Hero Card (No Outlines, Pure White Elevation) */}
+            {/* Featured Hero Card (Increased Breadth, Pure White Elevation, No Outlines) */}
             <div
               onClick={handleLaunchIde}
               className="group relative bg-white hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer"
               style={{
                 borderRadius: '24px',
-                padding: '28px 32px',
+                padding: '32px 38px',
                 boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.06), 0 0 1px 0 rgba(0, 0, 0, 0.08)',
                 width: '100%',
                 boxSizing: 'border-box'
               }}
             >
               {/* Status Pills */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                 <span
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '4px 12px',
+                    padding: '5px 14px',
                     borderRadius: '9999px',
                     fontSize: '11px',
                     fontWeight: 600,
@@ -212,7 +212,7 @@ export default function LandingPage() {
                     fontWeight: 500,
                     color: '#2E65BF',
                     backgroundColor: '#EFF6FF',
-                    padding: '4px 12px',
+                    padding: '5px 14px',
                     borderRadius: '9999px'
                   }}
                 >
@@ -221,11 +221,11 @@ export default function LandingPage() {
               </div>
 
               {/* Title & Icon */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
                 <div
                   style={{
-                    width: '42px',
-                    height: '42px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '12px',
                     backgroundColor: '#2E65BF',
                     color: '#ffffff',
@@ -235,11 +235,11 @@ export default function LandingPage() {
                     flexShrink: 0
                   }}
                 >
-                  <Code2 size={20} />
+                  <Code2 size={22} />
                 </div>
                 <h3
                   style={{
-                    fontSize: '1.45rem',
+                    fontSize: '1.5rem',
                     fontWeight: 700,
                     color: '#0F172A',
                     letterSpacing: '-0.02em'
@@ -256,16 +256,16 @@ export default function LandingPage() {
                   flexWrap: 'wrap',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '18px',
-                  marginTop: '12px'
+                  gap: '20px',
+                  marginTop: '14px'
                 }}
               >
                 <p
                   style={{
-                    fontSize: '0.85rem',
+                    fontSize: '0.875rem',
                     color: '#475569',
-                    lineHeight: 1.55,
-                    maxWidth: '380px',
+                    lineHeight: 1.6,
+                    maxWidth: '470px',
                     margin: 0
                   }}
                 >
@@ -282,7 +282,7 @@ export default function LandingPage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
-                      padding: '12px 24px',
+                      padding: '13px 26px',
                       backgroundColor: '#2E65BF',
                       color: '#ffffff',
                       fontSize: '13px',
@@ -302,11 +302,11 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right Column: Quantum Chandelier Sized & Positioned */}
+          {/* Right Column: Quantum Chandelier */}
           <div
             style={{
-              flex: '0 1 420px',
-              width: '420px',
+              flex: '0 1 400px',
+              width: '400px',
               maxWidth: '100%',
               display: 'flex',
               justifyContent: 'center',
@@ -334,7 +334,7 @@ export default function LandingPage() {
                 position: 'relative',
                 zIndex: 1,
                 width: '100%',
-                maxWidth: '400px',
+                maxWidth: '390px',
                 height: 'auto',
                 maxHeight: '480px',
                 objectFit: 'contain',
@@ -345,20 +345,40 @@ export default function LandingPage() {
         </div>
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* SECTION DIVIDER: COMING SOON WITH SUBTLE HORIZONTAL LINES    */}
+        {/* FULL-WIDTH SECTION DIVIDER: LINE FROM LEFT TO COMING SOON TO RIGHT */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="w-full flex items-center justify-center gap-4 my-10">
-          <div className="h-px bg-slate-200/80 flex-1 max-w-[120px]" />
-          <span className="text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '24px',
+            marginTop: '80px',
+            marginBottom: '56px'
+          }}
+        >
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.22em',
+              color: '#94A3B8',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              padding: '0 8px'
+            }}
+          >
             Coming Soon
           </span>
-          <div className="h-px bg-slate-200/80 flex-1 max-w-[120px]" />
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
         </div>
 
         {/* ───────────────────────────────────────────────────────────── */}
         {/* 5 UPCOMING STUDIOS: SOFT, BORDERLESS CARDS                   */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full" style={{ rowGap: "32px", columnGap: "28px" }}>
           {upcomingStudios.map((studio) => (
             <UpcomingStudioCard
               key={studio.id}
