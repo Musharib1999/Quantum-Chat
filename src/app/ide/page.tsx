@@ -2375,11 +2375,6 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 >
                   <Cpu className="w-3.5 h-3.5" />
                   <span>Interactive Circuit Canvas</span>
-                  {optimizationResults?.qaoa_dual_compiled && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-400 border border-cyan-800/40 font-medium">
-                      QAOA Dual
-                    </span>
-                  )}
                 </button>
 
                 <button
@@ -2415,12 +2410,6 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 {/* Circuit Canvas Actions */}
                 {activeBottomTab === 'circuit' && isBottomOpen && (
                   <div className="flex items-center gap-2">
-                    {optimizationResults?.qaoa_dual_compiled && (
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-mono border bg-zinc-900/80 text-zinc-400 border-zinc-800 select-none">
-                        <Activity className="w-3 h-3 text-cyan-400" />
-                        <span>Auto-compiled QAOA (p=1)</span>
-                      </div>
-                    )}
                     {/* Live Real-Time Code Sync Indicator */}
                     <div 
                       className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium border select-none transition-all"
