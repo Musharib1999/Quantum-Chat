@@ -290,7 +290,7 @@ function unrollQiskitLoops(code: string, numQubits: number = 4): string[] {
 
       for (const val of vals) {
         for (const bLine of loopBody) {
-          const unrolledLine = bLine.replace(/(\b\w+\.\w+)\s*\(([^)]*)\)/g, (_call: string, func: string, rawArgsStr: string) => {
+          const unrolledLine = bLine.replace(/(\b\w+\.\w+)\s*\(([^)]*)\)/g, (call, func, rawArgsStr) => {
             const args = rawArgsStr.split(',').map((a: string) => evaluateSimpleExpr(a, varName, val));
             return `${func}(${args.join(', ')})`;
           });
@@ -599,6 +599,221 @@ sim = AerSimulator()
 result = sim.run(qc, shots=1024).result()
 print('Measurement Counts:', result.get_counts())
 `
+        }
+      }
+    },
+    'enterprise-service': {
+      title: 'Enterprise Quantum Service',
+      desc: 'Modular Ingress, Algorithm, Classical Baseline, and Egress pipeline ready for Phase 5 deployment.',
+      backend: 'dwave_simulated_annealing',
+      defaultTab: 'terminal',
+      files: {
+        'main.py': {
+          name: 'main.py',
+          lang: 'python',
+          content: `"""Local Execution Pipeline: Ingress -> Quantum & Classical -> Egress."""
+import json
+from ingress import load_local_sample
+from algorithm import solve_quantum
+from classical_baseline import solve_classical_baseline
+from egress import format_egress
+
+print("=" * 60)
+print("  QUANTUM GURU ENTERPRISE SERVICE (PHASE 2 LOCAL PIPELINE)")
+print("=" * 60)
+
+# 1. Ingress
+print("\n[1/3] Parsing Data Ingress (data/input.sample.json)...")
+model = load_local_sample("data/input.sample.json")
+print(f"      Variables: \{model['variables']\}")
+print(f"      Budget:    \${model['budget']}M")
+
+# 2. Parallel Solve: Quantum + Classical Baseline
+print("\n[2/3] Executing Quantum Annealer & Classical Baseline...")
+quantum_res = solve_quantum(model, shots=200)
+classical_res = solve_classical_baseline(model)
+bqm = quantum_res["bqm"]  # Expose to IDE introspection
+
+# 3. Egress
+print("\n[3/3] Decoding Egress Solution & Benchmark...")
+result = format_egress(quantum_res, classical_res, model)
+print(json.dumps(result, indent=2))
+print("\n✔ Pipeline finished successfully.")
+`
+        },
+        'ingress.py': {
+          name: 'ingress.py',
+          lang: 'python',
+          content: `"""Data Ingress Adapter: Validates enterprise input and maps to mathematical model."""
+import json
+from typing import Dict, Any
+
+def parse_ingress(raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    items = raw_data.get("items", [])
+    if not items:
+        raise ValueError("Ingress Error: 'items' cannot be empty.")
+    
+    budget = float(raw_data.get("budget_limit", 15.0))
+    variables = [item["name"] for item in items]
+    costs = {item["name"]: float(item["cost"]) for item in items}
+    scores = {item["name"]: float(item["score"]) for item in items}
+    
+    return {
+        "variables": variables,
+        "costs": costs,
+        "scores": scores,
+        "budget": budget
+    }
+
+def load_local_sample(filepath: str = "data/input.sample.json") -> Dict[str, Any]:
+    with open(filepath, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+    return parse_ingress(raw)
+`
+        },
+        'algorithm.py': {
+          name: 'algorithm.py',
+          lang: 'python',
+          content: `"""Quantum Algorithm Engine: Formulation & Annealing execution."""
+import dimod
+from dwave.samplers import SimulatedAnnealingSampler
+
+def solve_quantum(model: dict, shots: int = 100) -> dict:
+    variables = model["variables"]
+    scores = model["scores"]
+    costs = model["costs"]
+    budget = model["budget"]
+    
+    penalty_lambda = max(scores.values()) * 1.5
+    bqm = dimod.BinaryQuadraticModel(dimod.BINARY)
+    for v in variables:
+        linear_bias = -scores[v] + penalty_lambda * (costs[v]**2 - 2 * budget * costs[v])
+        bqm.add_variable(v, linear_bias)
+        
+    for i in range(len(variables)):
+        for j in range(i + 1, len(variables)):
+            u, v = variables[i], variables[j]
+            coupling = 2.0 * penalty_lambda * costs[u] * costs[v]
+            bqm.add_interaction(u, v, coupling)
+            
+    sampler = SimulatedAnnealingSampler()
+    sampleset = sampler.sample(bqm, num_reads=shots)
+    best = sampleset.first
+    
+    return {
+        "raw_sample": {str(k): int(v) for k, v in best.sample.items()},
+        "energy": float(best.energy),
+        "num_reads": len(sampleset),
+        "bqm": bqm
+    }
+`
+        },
+        'classical_baseline.py': {
+          name: 'classical_baseline.py',
+          lang: 'python',
+          content: `"""Classical Reference Baseline: Exact optimization comparison."""
+import itertools
+
+def solve_classical_baseline(model: dict) -> dict:
+    variables = model["variables"]
+    scores = model["scores"]
+    costs = model["costs"]
+    budget = model["budget"]
+    
+    best_score = -1.0
+    best_config = None
+    
+    for combo in itertools.product([0, 1], repeat=len(variables)):
+        curr_cost = sum(costs[variables[i]] * combo[i] for i in range(len(variables)))
+        curr_score = sum(scores[variables[i]] * combo[i] for i in range(len(variables)))
+        if curr_cost <= budget and curr_score > best_score:
+            best_score = curr_score
+            best_config = {variables[i]: combo[i] for i in range(len(variables))}
+            
+    return {
+        "classical_sample": best_config or {v: 0 for v in variables},
+        "optimal_score": best_score if best_score >= 0 else 0.0,
+        "solver": "classical_exact_search"
+    }
+`
+        },
+        'egress.py': {
+          name: 'egress.py',
+          lang: 'python',
+          content: `"""Data Egress Adapter: Decodes solution into enterprise decisions & calculates benchmark ROI."""
+from typing import Dict, Any
+
+def format_egress(quantum_res: dict, classical_res: dict, model: dict) -> Dict[str, Any]:
+    sample = quantum_res["raw_sample"]
+    costs = model["costs"]
+    scores = model["scores"]
+    budget = model["budget"]
+    
+    selected = [v for v, val in sample.items() if val == 1]
+    total_cost = sum(costs[v] for v in selected)
+    total_score = sum(scores[v] for v in selected)
+    feasible = total_cost <= budget
+    
+    classical_opt = classical_res["optimal_score"]
+    approx_ratio = round(total_score / classical_opt, 4) if classical_opt > 0 else 1.0
+    
+    return {
+        "status": "SUCCESS" if feasible else "FEASIBILITY_WARNING",
+        "decision": {
+            "selected_items": selected,
+            "total_score": total_score,
+            "total_cost": total_cost,
+            "budget_limit": budget,
+            "is_feasible": feasible
+        },
+        "benchmark_metrics": {
+            "quantum_score": total_score,
+            "classical_optimal_score": classical_opt,
+            "approximation_ratio": approx_ratio,
+            "ground_energy": quantum_res["energy"]
+        }
+    }
+`
+        },
+        'data/input.sample.json': {
+          name: 'data/input.sample.json',
+          lang: 'json',
+          content: JSON.stringify({
+            problem_name: "Clean Energy Asset Selection",
+            budget_limit: 15.0,
+            items: [
+              { name: "Solar_Farm_A", cost: 8.0, score: 40.0 },
+              { name: "Wind_Farm_B", cost: 7.0, score: 42.0 },
+              { name: "Battery_Storage_C", cost: 6.0, score: 35.0 },
+              { name: "Hydro_Plant_D", cost: 9.0, score: 45.0 }
+            ]
+          }, null, 2)
+        },
+        'quantum.config.json': {
+          name: 'quantum.config.json',
+          lang: 'json',
+          content: JSON.stringify({
+            $schema: "https://quantumguru.ai/schemas/v1/deployment.json",
+            service_name: "clean-energy-portfolio",
+            version: "1.0.0",
+            runtime: {
+              phase_2_local_backend: "dwave_simulated_annealing",
+              phase_5_server_backend: "dwave_advantage_qpu",
+              fallback_solver: "classical_baseline.py"
+            },
+            ingress: {
+              handler: "ingress.py:parse_ingress",
+              required_fields: ["items", "budget_limit"]
+            },
+            egress: {
+              handler: "egress.py:format_egress"
+            },
+            sla_contract: {
+              min_approximation_ratio: 0.90,
+              max_qpu_wait_seconds: 60,
+              auto_classical_fallback: true
+            }
+          }, null, 2)
         }
       }
     },
@@ -1147,7 +1362,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   // Synchronize project workspace to localStorage and MongoDB backend
   const saveProjectToDatabase = useCallback(async (
     projId: string, 
-    projData: any,
+    projData: { title?: string; desc?: string; files: Record<string, any> },
     currActiveFile: string,
     metrics: typeof runtimeMetrics
   ) => {
@@ -1387,7 +1602,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           file_name: activeFile,
           code: currentCode,
           target_backend: targetBackend,
-          shots: Number(shots) || 1024
+          shots: Number(shots) || 1024,
+          project_files: Object.fromEntries(
+            Object.entries(projectFiles).map(([name, f]) => [name, f.content])
+          )
         })
       });
 
@@ -1521,7 +1739,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         files: { ...(pPrev[projectName]?.files || {}), [activeFile]: { content: newCode } }
       }
     }));
-    saveProjectToDatabase(projectName, { files: { [activeFile]: { content: newCode } } }, activeFile, runtimeMetrics);
+    saveProjectToDatabase(projectName, { files: { [activeFile]: { name: activeFile, content: newCode, language: 'python' } } }, activeFile, runtimeMetrics);
   };
 
   // Direct In-Place Slot Placement
@@ -2069,7 +2287,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 style={{ borderColor: colors.border, color: colors.textMuted }}
                 className="pr-4 select-none text-right font-mono border-r mr-4 space-y-0.5 opacity-50"
               >
-                {(projectFiles[activeFile]?.content || '# Empty file').split('\n').map((_, idx) => (
+                {(projectFiles[activeFile]?.content || '# Empty file').split('\n').map((_: string, idx: number) => (
                   <div key={idx}>{idx + 1}</div>
                 ))}
               </div>
@@ -3945,6 +4163,66 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                           className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all"
                         >
                           {isDwave && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Row C: Enterprise Quantum Service (Phase 5 Forward-Compatible) */}
+                  {(() => {
+                    const isEnterprise = selectedTemplateKey === 'enterprise-service';
+                    return (
+                      <div
+                        onClick={() => setSelectedTemplateKey('enterprise-service')}
+                        style={{
+                          backgroundColor: isEnterprise ? (isDark ? '#0c2233' : '#f0f9ff') : (isDark ? '#16161B' : '#ffffff'),
+                          borderColor: isEnterprise ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#27272a' : '#e2e8f0'),
+                        }}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 group ${
+                          isEnterprise ? 'shadow-xs' : 'hover:opacity-90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            style={{
+                              backgroundColor: isEnterprise ? (isDark ? 'rgba(56, 189, 248, 0.2)' : '#e0f2fe') : (isDark ? '#27272a' : '#f1f5f9'),
+                              color: isEnterprise ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#a1a1aa' : '#64748b')
+                            }}
+                            className="p-2 rounded-lg shrink-0 transition-colors"
+                          >
+                            <Layers className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium" style={{ color: colors.textPrimary }}>
+                                Enterprise Quantum Service
+                              </span>
+                              <span
+                                style={{
+                                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+                                  color: isDark ? '#34d399' : '#059669',
+                                  borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.3)'
+                                }}
+                                className="text-[10px] font-mono px-1.5 py-0.5 rounded border font-semibold"
+                              >
+                                phase_5_ready
+                              </span>
+                            </div>
+                            <p className="text-[11px] truncate mt-0.5" style={{ color: colors.textMuted }}>
+                              Modular Ingress, Algorithm, Classical Baseline & Egress architecture
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Radio Indicator */}
+                        <div
+                          style={{
+                            borderColor: isEnterprise ? (isDark ? '#38bdf8' : '#0284c7') : (isDark ? '#52525b' : '#cbd5e1'),
+                            backgroundColor: isEnterprise ? (isDark ? '#38bdf8' : '#0284c7') : 'transparent'
+                          }}
+                          className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all"
+                        >
+                          {isEnterprise && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
                       </div>
                     );
