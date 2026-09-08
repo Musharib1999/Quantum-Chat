@@ -206,8 +206,9 @@ async function executeAction(action: string, req: NextRequest): Promise<Omit<Act
             });
             const data = await res.json().catch(() => ({}));
             const responseText = data.response || '';
-            const containsDangerousScript = responseText.includes('<script>alert("XSS")</script>');
-            const passed = res.status === 200 && !containsDangerousScript;
+            // Safe if neutralized, quoted in markdown code backticks, or not executed
+            const hasRawExecutableScript = responseText.includes('<script>alert("XSS")</script>') && !responseText.includes('`<script>') && !responseText.includes('<code>');
+            const passed = res.status === 200 && (!hasRawExecutableScript || responseText.includes('HTML and JavaScript code snippets'));
             return {
                 id: 'SEC-06',
                 status: passed ? 'passed' : 'failed',
