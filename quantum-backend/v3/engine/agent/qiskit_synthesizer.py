@@ -514,7 +514,7 @@ async def synthesize_custom_qiskit_circuit(prompt: str, current_code: str = "") 
     user_query = f"User Request: {prompt}\n\nCurrent Workspace Code:\n{current_code[:1000] if current_code else '# Empty'}\n\nSynthesize the complete Qiskit program."
 
     try:
-        raw_res = await call_groq(system=system_prompt, user=user_query, max_tokens=1500, temperature=0.1)
+        raw_res = await call_groq(system=system_prompt, user=user_query, max_tokens=4096, temperature=0.1)
     except Exception as e:
         # Fallback to GHZ or Bell state if LLM fails
         return generate_ghz_circuit(num_qubits=3)
