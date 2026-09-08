@@ -86,16 +86,7 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-screen transition-colors duration-500 ease-in-out font-sans text-slate-900" style={{ backgroundColor: "#F8FAFC" }}>
 
-      {/* Background - Clean White with subtle grid */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundSize: '40px 40px',
-            backgroundImage: 'linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)'
-          }}
-        />
-      </div>
+
 
       {/* Top Left Corner Logo */}
       <div className="absolute top-6 left-6 md:top-8 md:left-10 z-20 flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
