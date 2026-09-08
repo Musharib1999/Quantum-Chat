@@ -142,8 +142,8 @@ export default function LandingPage() {
       
 
       {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-16 md:pt-20 pb-20 flex flex-col items-center">
-        <div className="text-center mb-8 animate-fade-in-up">
+      <main style={{ paddingTop: "84px", paddingBottom: "72px" }} className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center">
+        <div className="text-center mb-10 md:mb-12 animate-fade-in-up">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-3 leading-tight">
             The Future of <br />
             <span className="text-[rgb(48,102,187)]">
