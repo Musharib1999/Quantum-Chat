@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import IdeMarkdownRenderer from '@/components/IdeMarkdownRenderer';
 import { 
@@ -551,7 +552,29 @@ function normalizeCircuitGates(rawGates: any[]): Array<{ name: string; qubit: nu
 }
 
 export default function QuantumIDE() {
-  const { logout } = useAuth();
+  const { logout, isAuthenticated, isInitializing } = useAuth();
+  const router = useRouter();
+
+  // 1. Client-Side Auth Guard: redirect to login if unauthenticated
+  useEffect(() => {
+    if (!isInitializing && !isAuthenticated) {
+      router.replace('/login?redirect=%2Fide');
+    }
+  }, [isAuthenticated, isInitializing, router]);
+
+  // 2. BFCache (Back/Forward Cache) Protection: re-verify session on browser back/forward navigation
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        const stored = localStorage.getItem('quantum_session');
+        if (!stored) {
+          window.location.replace('/login?redirect=%2Fide');
+        }
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   // Synchronize theme to document.documentElement for global Tailwind dark: mode compatibility
@@ -2248,6 +2271,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
   const files = projectFiles;
 
+  // Prevent flashing private IDE interface or circuit data if unauthenticated
+  if (isInitializing || !isAuthenticated) {
+    return (
+      <div 
+        style={{ backgroundColor: colors.bgMain }}
+        className="h-screen w-screen flex flex-col items-center justify-center font-sans select-none"
+      >
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#3066bb] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-mono text-slate-400">Verifying session...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       style={{ backgroundColor: colors.bgMain, color: colors.textPrimary }}
@@ -2478,7 +2516,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   try {
                     logout();
                   } catch (e) {}
-                  window.location.href = '/login';
+                  window.location.replace('/login');
                 }}
                 className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
                   isDark

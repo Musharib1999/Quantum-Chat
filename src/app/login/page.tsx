@@ -70,7 +70,7 @@ function LoginForm() {
                 if (activeRedirect === '/' || activeRedirect === '/industry') {
                     if (data.user?.role === 'admin') targetRedirect = '/admin';
                     else if (data.user?.role === 'enterprise') targetRedirect = '/enterprise/dashboard';
-                    else targetRedirect = '/quantum-assistant'; // Standard user default
+                    else targetRedirect = '/ide'; // Standard user default
                 }
                 
                 router.push(targetRedirect);
