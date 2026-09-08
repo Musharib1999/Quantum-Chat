@@ -1590,10 +1590,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
 
 
-  const handleRun = async () => {
+  const handleRun = async (targetTab?: 'circuit' | 'terminal' | 'results') => {
     setIsRunning(true);
     setIsBottomOpen(true);
-    setActiveBottomTab('terminal');
+    if (targetTab) {
+      setActiveBottomTab(targetTab);
+    } else {
+      setActiveBottomTab('terminal');
+    }
 
     const currentCode = projectFiles[activeFile]?.content || '';
     setTerminalLogs(prev => [
@@ -1830,13 +1834,23 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setIsSyncing(true);
     try {
       const currentCode = projectFiles[activeFile]?.content || '';
-      if (currentCode.includes('QuantumCircuit') || targetBackend.includes('aer')) {
+      const isDwave = currentCode.includes('dimod') ||
+                      currentCode.includes('neal') ||
+                      currentCode.includes('SimulatedAnnealingSampler') ||
+                      currentCode.includes('DWaveSampler') ||
+                      currentCode.includes('BinaryQuadraticModel') ||
+                      targetBackend.includes('dwave');
+
+      if (isDwave) {
+        // D-Wave code: Execute sandbox to synthesize dual QAOA circuit and stay on circuit canvas
+        await handleRun('circuit');
+      } else if (currentCode.includes('QuantumCircuit')) {
         const declaredQubits = parseQiskitQubitCount(currentCode);
         const parsedGates = parseQiskitCodeToGates(currentCode, declaredQubits);
         setCanvasQubits(declaredQubits);
         setCircuitGates(parsedGates);
       } else {
-        await handleRun();
+        await handleRun('circuit');
       }
     } catch (e) {
       console.error('Error during manual sync:', e);
