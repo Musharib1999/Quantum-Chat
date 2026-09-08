@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -10,12 +10,10 @@ import {
   Bot,
   Code2,
   Workflow,
-  Boxes,
-  GraduationCap,
   Clock,
   X,
   Sparkles,
-  ChevronDown
+  ArrowDown
 } from 'lucide-react';
 
 interface UpcomingStudio {
@@ -23,70 +21,44 @@ interface UpcomingStudio {
   title: string;
   description: string;
   icon: React.ReactNode;
-  accentColor: 'indigo' | 'emerald' | 'violet' | 'amber' | 'rose';
+  accentColor: 'indigo' | 'emerald' | 'violet';
 }
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const [restrictedModalInfo, setRestrictedModalInfo] = useState<{ title: string; description: string } | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const upcomingStudios: UpcomingStudio[] = [
     {
       id: 'optimization',
       title: 'Optimization Studio',
       description: 'Solve real-world combinatorial optimization problems with guided formulation wizards.',
-      icon: <Bot size={22} />,
+      icon: <Bot size={20} />,
       accentColor: 'indigo'
     },
     {
       id: 'circuits',
       title: 'Quantum Circuit Studio',
       description: 'Deep visual circuit synthesis, multi-pass transpiler optimization, and noise modeling.',
-      icon: <Cpu size={22} />,
+      icon: <Cpu size={20} />,
       accentColor: 'emerald'
     },
     {
       id: 'algorithms',
       title: 'Quantum Algorithm Studio',
       description: 'Explore quantum algorithms and archetypes including Grover search, QFT, and VQE chemistry.',
-      icon: <Workflow size={22} />,
+      icon: <Workflow size={20} />,
       accentColor: 'violet'
-    },
-    {
-      id: 'marketplace',
-      title: 'Quantum Capability Exchange',
-      description: 'Enterprise catalog of 38 pre-built quantum microservices, solvers, and reusable capabilities.',
-      icon: <Boxes size={22} />,
-      accentColor: 'amber'
-    },
-    {
-      id: 'academy',
-      title: 'Quantum Academy',
-      description: 'Learn quantum computing interactively with step-by-step Dirac mathematical breakdowns.',
-      icon: <GraduationCap size={22} />,
-      accentColor: 'rose'
     }
   ];
 
   const handleLaunchIde = () => {
     if (!isAuthenticated) {
       router.push('/login?redirect=%2Fide');
-      return;
+    } else {
+      router.push('/ide');
     }
-    router.push('/ide');
   };
 
   const handleUpcomingClick = (studio: UpcomingStudio) => {
@@ -96,10 +68,15 @@ export default function LandingPage() {
     });
   };
 
+  const scrollToExplore = () => {
+    const el = document.getElementById('explore-next');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="relative min-h-screen transition-colors duration-500 ease-in-out font-sans text-slate-900" style={{ backgroundColor: "#F8FAFC" }}>
-
-
 
       {/* Top Left Corner Logo */}
       <div className="absolute top-6 left-6 md:top-8 md:left-10 z-20 flex items-center">
@@ -107,16 +84,16 @@ export default function LandingPage() {
           <img
             src="/logo.png"
             alt="Quantum Guru"
-            style={{ height: '58px', width: 'auto' }}
+            style={{ height: '56px', width: 'auto' }}
             className="w-auto object-contain cursor-pointer drop-shadow-xs"
           />
         </a>
       </div>
 
-      {/* Top Right Corner 'See what's coming next' Dropdown */}
-      <div className="absolute top-6 right-6 md:top-8 md:right-10 z-30" ref={dropdownRef}>
+      {/* Top Right Corner 'Explore what's next' Anchor */}
+      <div className="absolute top-6 right-6 md:top-8 md:right-10 z-30">
         <button
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          onClick={scrollToExplore}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -132,100 +109,30 @@ export default function LandingPage() {
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             transition: 'all 0.2s'
           }}
-          className="hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
+          className="hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] group"
         >
-          <span>See what's coming next</span>
-          <ChevronDown size={14} className={`text-slate-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          <span>Explore what's next</span>
+          <ArrowDown size={14} className="text-slate-400 group-hover:text-[#2E65BF] group-hover:translate-y-0.5 transition-all" />
         </button>
-
-        {/* Dropdown Card (Right-aligned) */}
-        {isDropdownOpen && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 8px)',
-              right: 0,
-              width: '360px',
-              maxWidth: '90vw',
-              backgroundColor: '#ffffff',
-              borderRadius: '18px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)',
-              padding: '10px',
-              zIndex: 100
-            }}
-            className="animate-in fade-in zoom-in-95 duration-150"
-          >
-            <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Upcoming Studios &amp; Tools
-              </span>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: '#2E65BF', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '9999px' }}>
-                Roadmap
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {upcomingStudios.map((studio) => (
-                <button
-                  key={studio.id}
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    handleUpcomingClick(studio);
-                  }}
-                  style={{
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '10px 12px',
-                    borderRadius: '12px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    transition: 'background-color 0.15s'
-                  }}
-                  className="hover:bg-slate-50 group"
-                >
-                  <div style={{ width: '34px', height: '34px', borderRadius: '10px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', flexShrink: 0 }} className="group-hover:bg-blue-50 group-hover:text-[#2E65BF] transition-colors">
-                    {studio.icon}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B', margin: 0 }} className="group-hover:text-[#2E65BF] transition-colors truncate">
-                        {studio.title}
-                      </p>
-                      <span style={{ fontSize: '10px', fontWeight: 500, color: '#94A3B8', backgroundColor: '#F8FAFC', padding: '2px 6px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
-                        Coming Soon
-                      </span>
-                    </div>
-                    <p style={{ fontSize: '11px', color: '#64748B', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {studio.description}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
       <main
         style={{
-          paddingTop: '110px',
-          paddingBottom: '48px',
-          maxWidth: '1280px',
+          paddingTop: '104px',
+          paddingBottom: '56px',
+          maxWidth: '1240px',
           width: '100%',
           margin: '0 auto',
-          paddingLeft: '28px',
-          paddingRight: '28px',
+          paddingLeft: '24px',
+          paddingRight: '24px',
           boxSizing: 'border-box'
         }}
         className="relative z-10 flex flex-col items-center"
       >
-        {/* Hero Section: 2-Column Side-by-Side Layout */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* HERO SECTION: TRUE 2-COLUMN HARMONIC COMPOSITION             */}
+        {/* ───────────────────────────────────────────────────────────── */}
         <div
           style={{
             display: 'flex',
@@ -233,29 +140,29 @@ export default function LandingPage() {
             flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '36px',
+            gap: '32px',
             width: '100%',
-            marginBottom: '40px'
+            marginBottom: '64px'
           }}
         >
-          {/* Left Column: Heading + Featured Card (Expanded Breadth) */}
+          {/* Left Column: Headline + Tagline + Featured IDE Card */}
           <div
             style={{
-              flex: '1 1 620px',
-              maxWidth: '780px',
+              flex: '1 1 580px',
+              maxWidth: '700px',
               minWidth: '320px'
             }}
           >
-            {/* Hero Text with Generous Top Spacing */}
-            <div style={{ textAlign: 'left', marginBottom: '32px', paddingTop: '12px' }}>
+            {/* Hero Text */}
+            <div style={{ textAlign: 'left', marginBottom: '28px', paddingTop: '4px' }}>
               <h1
                 style={{
-                  fontSize: 'clamp(2.5rem, 4.5vw, 3.6rem)',
+                  fontSize: 'clamp(2.5rem, 4.2vw, 3.5rem)',
                   fontWeight: 800,
                   lineHeight: 1.12,
                   letterSpacing: '-0.025em',
                   color: '#0F172A',
-                  marginBottom: '16px'
+                  marginBottom: '14px'
                 }}
               >
                 The Future of <br />
@@ -265,7 +172,7 @@ export default function LandingPage() {
               </h1>
               <h2
                 style={{
-                  fontSize: '1.25rem',
+                  fontSize: '1.2rem',
                   fontWeight: 600,
                   color: '#1E293B',
                   marginBottom: '0px'
@@ -273,29 +180,28 @@ export default function LandingPage() {
               >
                 One platform. Every quantum workflow.
               </h2>
-
             </div>
 
-            {/* Featured Hero Card (Increased Breadth, Pure White Elevation, No Outlines) */}
+            {/* Featured Hero Card (Pure White Soft Elevation, No Outlines) */}
             <div
               onClick={handleLaunchIde}
               className="group relative bg-white hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer"
               style={{
                 borderRadius: '24px',
-                padding: '32px 38px',
-                boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.06), 0 0 1px 0 rgba(0, 0, 0, 0.08)',
+                padding: '30px 34px',
+                boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 0 1px 0 rgba(0, 0, 0, 0.08)',
                 width: '100%',
                 boxSizing: 'border-box'
               }}
             >
               {/* Status Pill */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                 <span
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '5px 14px',
+                    padding: '4px 12px',
                     borderRadius: '9999px',
                     fontSize: '11px',
                     fontWeight: 600,
@@ -311,11 +217,11 @@ export default function LandingPage() {
               </div>
 
               {/* Title & Icon */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                 <div
                   style={{
-                    width: '44px',
-                    height: '44px',
+                    width: '42px',
+                    height: '42px',
                     borderRadius: '12px',
                     backgroundColor: '#2E65BF',
                     color: '#ffffff',
@@ -329,7 +235,7 @@ export default function LandingPage() {
                 </div>
                 <h3
                   style={{
-                    fontSize: '1.5rem',
+                    fontSize: '1.45rem',
                     fontWeight: 700,
                     color: '#0F172A',
                     letterSpacing: '-0.02em'
@@ -339,28 +245,39 @@ export default function LandingPage() {
                 </h3>
               </div>
 
-              {/* Description & Action Button */}
+              {/* Description */}
+              <p
+                style={{
+                  fontSize: '0.875rem',
+                  color: '#475569',
+                  lineHeight: 1.6,
+                  maxWidth: '560px',
+                  margin: '0 0 18px 0'
+                }}
+              >
+                Your interactive environment for writing quantum code, visualizing multi-qubit circuits in real-time, and running simulations across dual Qiskit &amp; D-Wave backends.
+              </p>
+
+              {/* Bottom Row Inside Card: Workflow Capability Statement + CTA */}
               <div
                 style={{
                   display: 'flex',
                   flexWrap: 'wrap',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '20px',
-                  marginTop: '14px'
+                  gap: '16px',
+                  paddingTop: '14px',
+                  borderTop: '1px solid #F1F5F9'
                 }}
               >
-                <p
-                  style={{
-                    fontSize: '0.875rem',
-                    color: '#475569',
-                    lineHeight: 1.6,
-                    maxWidth: '470px',
-                    margin: 0
-                  }}
-                >
-                  Your interactive environment for writing quantum code, visualizing multi-qubit circuits in real-time, and running simulations across dual Qiskit &amp; D-Wave backends.
-                </p>
+                {/* Embedded Capability Statement */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#2E65BF' }}>
+                    Code → Visualize → Simulate → Explore
+                  </span>
+                </div>
+
+                {/* Launch Button */}
                 <div style={{ flexShrink: 0 }}>
                   <button
                     onClick={(e) => {
@@ -372,17 +289,18 @@ export default function LandingPage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
-                      padding: '13px 26px',
+                      padding: '11px 22px',
                       backgroundColor: '#2E65BF',
                       color: '#ffffff',
                       fontSize: '13px',
                       fontWeight: 600,
-                      borderRadius: '14px',
+                      borderRadius: '12px',
                       border: 'none',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(46, 101, 191, 0.25)',
+                      boxShadow: '0 4px 12px rgba(46, 101, 191, 0.22)',
                       whiteSpace: 'nowrap'
                     }}
+                    className="hover:bg-[#255299] transition-all"
                   >
                     <span>Launch IDE</span>
                     <ArrowRight size={14} />
@@ -390,45 +308,13 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-
-            {/* Feature Tag Matching Card Width (Clean, No Background) */}
-            <div
-              style={{
-                width: '100%',
-                marginTop: '14px',
-                boxSizing: 'border-box'
-              }}
-            >
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 28px',
-                  color: '#2E65BF',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  letterSpacing: '0.03em',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <span>Understand</span>
-                <span style={{ color: '#94A3B8', fontSize: '11px' }}>•</span>
-                <span>Build</span>
-                <span style={{ color: '#94A3B8', fontSize: '11px' }}>•</span>
-                <span>Visualize</span>
-                <span style={{ color: '#94A3B8', fontSize: '11px' }}>•</span>
-                <span>Simulate</span>
-              </div>
-            </div>
           </div>
 
-          {/* Right Column: Quantum Chandelier */}
+          {/* Right Column: Quantum Chandelier (~25% Larger, Vertically Centered Across Hero) */}
           <div
             style={{
-              flex: '0 1 400px',
-              width: '400px',
+              flex: '0 1 480px',
+              width: '480px',
               maxWidth: '100%',
               display: 'flex',
               justifyContent: 'center',
@@ -441,11 +327,11 @@ export default function LandingPage() {
             <div
               style={{
                 position: 'absolute',
-                width: '320px',
-                height: '320px',
+                width: '380px',
+                height: '380px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(46, 101, 191, 0.12)',
-                filter: 'blur(50px)',
+                backgroundColor: 'rgba(46, 101, 191, 0.14)',
+                filter: 'blur(60px)',
                 pointerEvents: 'none'
               }}
             />
@@ -456,17 +342,131 @@ export default function LandingPage() {
                 position: 'relative',
                 zIndex: 1,
                 width: '100%',
-                maxWidth: '390px',
+                maxWidth: '470px',
                 height: 'auto',
-                maxHeight: '480px',
+                maxHeight: '520px',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 15px 25px rgba(46, 101, 191, 0.15))'
+                filter: 'drop-shadow(0 20px 35px rgba(46, 101, 191, 0.16))'
               }}
             />
           </div>
         </div>
 
+        {/* ───────────────────────────────────────────────────────────── */}
+        {/* EXPLORE WHAT'S NEXT SECTION (ELIMINATES DEAD SPACE)          */}
+        {/* ───────────────────────────────────────────────────────────── */}
+        <div id="explore-next" style={{ width: '100%', scrollMarginTop: '40px' }}>
+          {/* Section Divider Line with Label */}
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '24px',
+              marginBottom: '32px'
+            }}
+          >
+            <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.22em',
+                color: '#94A3B8',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+                padding: '0 8px'
+              }}
+            >
+              Explore What's Next
+            </span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
+          </div>
 
+          {/* 3 Compact Teaser Cards */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '22px',
+              width: '100%'
+            }}
+          >
+            {upcomingStudios.map((studio) => (
+              <div
+                key={studio.id}
+                onClick={() => handleUpcomingClick(studio)}
+                className="group relative bg-white hover:-translate-y-1 active:scale-[0.99] transition-all duration-300 cursor-pointer flex flex-col justify-between"
+                style={{
+                  borderRadius: '20px',
+                  padding: '24px 26px',
+                  boxShadow: '0 4px 18px -4px rgba(0, 0, 0, 0.04), 0 0 1px 0 rgba(0, 0, 0, 0.06)',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div>
+                  {/* Card Header: Icon + Coming Soon Pill */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                    <div
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: studio.accentColor === 'indigo' ? 'rgba(46, 101, 191, 0.1)' : studio.accentColor === 'emerald' ? '#ECFDF5' : '#F5F3FF',
+                        color: studio.accentColor === 'indigo' ? '#2E65BF' : studio.accentColor === 'emerald' ? '#059669' : '#7C3AED'
+                      }}
+                    >
+                      {studio.icon}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: '#94A3B8',
+                        backgroundColor: '#F8FAFC',
+                        padding: '3px 9px',
+                        borderRadius: '9999px',
+                        letterSpacing: '0.02em'
+                      }}
+                    >
+                      Coming soon
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h4
+                    style={{
+                      fontSize: '1.05rem',
+                      fontWeight: 700,
+                      color: '#0F172A',
+                      marginBottom: '8px',
+                      letterSpacing: '-0.015em'
+                    }}
+                    className="group-hover:text-[#2E65BF] transition-colors"
+                  >
+                    {studio.title}
+                  </h4>
+
+                  {/* Compact Description */}
+                  <p
+                    style={{
+                      fontSize: '0.825rem',
+                      color: '#64748B',
+                      lineHeight: 1.55,
+                      margin: 0
+                    }}
+                  >
+                    {studio.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </main>
 
       {/* Restricted / Available Soon Dialog Modal */}
@@ -516,9 +516,9 @@ export default function LandingPage() {
       )}
 
       {/* Footer */}
-      <footer style={{ marginTop: '48px', paddingTop: '40px', paddingBottom: '48px' }} className="border-t border-slate-200/50">
+      <footer style={{ marginTop: '56px', paddingTop: '32px', paddingBottom: '40px' }} className="border-t border-slate-200/50">
         <div className="max-w-5xl mx-auto px-6 text-center">
-          <p className="text-xs font-medium text-slate-700">
+          <p className="text-xs font-medium text-slate-600">
             © 2026 Quantum Guru Inc. All rights reserved.
           </p>
         </div>
@@ -527,5 +527,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-
