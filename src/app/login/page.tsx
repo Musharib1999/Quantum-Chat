@@ -27,11 +27,13 @@ function LoginForm() {
     const [successMsg, setSuccessMsg] = useState('');
     const [showPassword, setShowPassword] = useState(false);
 
-    // Strictly enforce Light Theme on Login Page (never dark theme)
+    // Strictly enforce clean White Theme on Login Page (never dark theme)
     useEffect(() => {
         if (typeof document !== 'undefined') {
             document.documentElement.classList.remove('dark');
             document.documentElement.setAttribute('data-theme', 'light');
+            document.documentElement.style.backgroundColor = '#ffffff';
+            document.body.style.backgroundColor = '#ffffff';
         }
     }, []);
 
@@ -93,35 +95,32 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-[#F8FAFC] text-slate-900 relative overflow-hidden font-sans">
-
-            {/* Subtle technical background grid */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div
-                    className="absolute inset-0 bg-grid-pattern opacity-[0.03] bg-black"
-                    style={{
-                        backgroundSize: '40px 40px',
-                        backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)'
-                    }}
-                />
-            </div>
-
+        <div 
+            className="min-h-screen w-full flex items-center justify-center text-slate-900 relative overflow-hidden font-sans"
+            style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}
+        >
             {/* Top-Left Corner Logo */}
             <div className="absolute top-6 left-6 md:top-8 md:left-10 z-20">
                 <a href="https://www.quantumcomputers.guru/" className="flex items-center">
                     <img
                         src="/logo.png"
                         alt="Quantum Guru"
-                        style={{ height: '48px', width: 'auto' }}
+                        style={{ height: '56px', width: 'auto' }}
                         className="w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-xs"
                     />
                 </a>
             </div>
 
-            {/* Main Auth Card (Strictly Light Theme, Pure White) */}
+            {/* Main Auth Card (Pure White with Subtle Border & Depth) */}
             <div className="relative z-10 w-full max-w-md p-6 sm:p-8">
-                <div className="bg-white border border-slate-200/70 shadow-xl rounded-3xl p-7 sm:p-9 space-y-6">
-
+                <div 
+                    className="bg-white rounded-3xl p-7 sm:p-9 space-y-6"
+                    style={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #E2E8F0',
+                        boxShadow: '0 20px 45px -12px rgba(0, 0, 0, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.04)'
+                    }}
+                >
                     {/* Header */}
                     <div className="text-center space-y-2">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50/80 border border-blue-100 mb-2 shadow-2xs overflow-hidden">

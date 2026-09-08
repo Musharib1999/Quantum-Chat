@@ -84,15 +84,15 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative min-h-screen transition-colors duration-500 ease-in-out font-sans bg-[#F8FAFC] text-slate-900">
+    <div className="relative min-h-screen transition-colors duration-500 ease-in-out font-sans text-slate-900" style={{ backgroundColor: "#F8FAFC" }}>
 
       {/* Background - Clean White with subtle grid */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div
-          className="absolute inset-0 bg-grid-pattern opacity-[0.02] bg-black"
+          className="absolute inset-0"
           style={{
             backgroundSize: '40px 40px',
-            backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)'
+            backgroundImage: 'linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)'
           }}
         />
       </div>
