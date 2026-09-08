@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
-import { Mail, Lock, Atom, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -26,6 +26,14 @@ function LoginForm() {
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+
+    // Strictly enforce Light Theme on Login Page (never dark theme)
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,19 +68,17 @@ function LoginForm() {
             if (mode === 'login') {
                 login(data);
                 showToast('Login Successful', 'success');
-                
-                // Bulletproof check of search params directly from window to avoid Next.js client hydration delays
+
                 const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
                 const activeRedirect = params?.get('redirect') || redirect;
-                
-                // Determine default redirect based on role if no specific redirect is requested
+
                 let targetRedirect = activeRedirect;
                 if (activeRedirect === '/' || activeRedirect === '/industry') {
                     if (data.user?.role === 'admin') targetRedirect = '/admin';
                     else if (data.user?.role === 'enterprise') targetRedirect = '/enterprise/dashboard';
-                    else targetRedirect = '/ide'; // Standard user default
+                    else targetRedirect = '/ide';
                 }
-                
+
                 router.push(targetRedirect);
             } else {
                 setSuccessMsg(data.message || 'Registration successful. Your account is pending admin approval');
@@ -80,53 +86,68 @@ function LoginForm() {
                 setPassword('');
             }
         } catch (err: any) {
-            setError(err.message || 'Authentication failed Please check your connection');
+            setError(err.message || 'Authentication failed. Please check your connection');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden">
-            {/* Logo */}
-            <div className="absolute top-6 left-6 z-20">
-                <a href="https://www.quantumcomputers.guru/">
-                    <img src="/logo.png" alt="Quantum Guru" className="h-[40px] md:h-[62px] w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity" />
+        <div className="min-h-screen w-full flex items-center justify-center bg-[#F8FAFC] text-slate-900 relative overflow-hidden font-sans">
+
+            {/* Subtle technical background grid */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div
+                    className="absolute inset-0 bg-grid-pattern opacity-[0.03] bg-black"
+                    style={{
+                        backgroundSize: '40px 40px',
+                        backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)'
+                    }}
+                />
+            </div>
+
+            {/* Top-Left Corner Logo */}
+            <div className="absolute top-6 left-6 md:top-8 md:left-10 z-20">
+                <a href="https://www.quantumcomputers.guru/" className="flex items-center">
+                    <img
+                        src="/logo.png"
+                        alt="Quantum Guru"
+                        style={{ height: '48px', width: 'auto' }}
+                        className="w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-xs"
+                    />
                 </a>
             </div>
 
-            {/* Background glow effects */}
-            <div className="absolute inset-0 z-0">
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] animate-pulse delay-1000" />
-            </div>
-
-            <div className="relative z-10 w-full max-w-md p-8">
-                <div className="bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 space-y-6 animate-in zoom-in-95 fade-in duration-700">
+            {/* Main Auth Card (Strictly Light Theme, Pure White) */}
+            <div className="relative z-10 w-full max-w-md p-6 sm:p-8">
+                <div className="bg-white border border-slate-200/70 shadow-xl rounded-3xl p-7 sm:p-9 space-y-6">
 
                     {/* Header */}
                     <div className="text-center space-y-2">
-                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-secondary/30 border border-white/10 mb-2 shadow-inner overflow-hidden">
-                            <img src="/qg-icon.png" alt="Quantum Guru" className="w-14 h-14 object-contain" />
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50/80 border border-blue-100 mb-2 shadow-2xs overflow-hidden">
+                            <img src="/qg-icon.png" alt="Quantum Guru" className="w-10 h-10 object-contain" />
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            {mode === 'login' ? 'Enter your credentials to access the workspace' : 'Request approval from administrator'}
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500">
+                            {mode === 'login' ? 'Enter your credentials to access the workspace' : 'Request access to the Quantum Workspace'}
                         </p>
                     </div>
 
-                    {/* Mode Toggle */}
-                    <div className="flex p-1 bg-secondary/50 rounded-xl">
+                    {/* Mode Toggle (Login / Register) */}
+                    <div className="flex p-1 bg-slate-100 rounded-xl">
                         <button
                             type="button"
                             onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }}
-                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-[#3066bb] text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${mode === 'login' ? 'bg-[#3066bb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             Login
                         </button>
                         <button
                             type="button"
                             onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); }}
-                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'signup' ? 'bg-[#3066bb] text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${mode === 'signup' ? 'bg-[#3066bb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             Register
                         </button>
@@ -136,95 +157,95 @@ function LoginForm() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {mode === 'signup' && (
                             <>
-                                <div className="space-y-2 p-3 bg-secondary/30 rounded-xl border border-white/5 mb-4">
-                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">I am registering as a:</label>
+                                <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200/60 mb-3">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">I am registering as a:</label>
                                     <div className="flex gap-2">
                                         <button 
                                             type="button"
                                             onClick={() => setIsStudent(false)}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isStudent ? 'bg-primary text-white shadow-lg' : 'bg-secondary/50 text-muted-foreground'}`}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${!isStudent ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'}`}
                                         >
                                             Professional
                                         </button>
                                         <button 
                                             type="button"
                                             onClick={() => setIsStudent(true)}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isStudent ? 'bg-emerald-500 text-white shadow-lg' : 'bg-secondary/50 text-muted-foreground'}`}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${isStudent ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'}`}
                                         >
                                             Student
                                         </button>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">First Name</label>
+                                        <label className="text-xs font-semibold text-slate-700 pl-1">First Name</label>
                                         <input
                                             type="text"
                                             value={firstName}
                                             onChange={(e) => setFirstName(e.target.value)}
-                                            className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                            placeholder=""
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
+                                            placeholder="Jane"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">Last Name</label>
+                                        <label className="text-xs font-semibold text-slate-700 pl-1">Last Name</label>
                                         <input
                                             type="text"
                                             value={lastName}
                                             onChange={(e) => setLastName(e.target.value)}
-                                            className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                            placeholder=""
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
+                                            placeholder="Doe"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-muted-foreground tracking-widest pl-1">
-                                        {isStudent ? 'University / Institute' : 'Company / Institution'}
+                                    <label className="text-xs font-semibold text-slate-700 pl-1">
+                                        {isStudent ? 'University / Institute' : 'Company / Organization'}
                                     </label>
                                     <input
                                         type="text"
                                         value={company}
                                         onChange={(e) => setCompany(e.target.value)}
-                                        className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                        placeholder=""
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
+                                        placeholder="Institution name"
                                     />
                                 </div>
                             </>
                         )}
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Email</label>
+                            <label className="text-xs font-semibold text-slate-700 pl-1">Email</label>
                             <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <Mail size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-[#3066bb] transition-colors">
+                                    <Mail size={16} />
                                 </div>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                    placeholder=""
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
+                                    placeholder="name@example.com"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-muted-foreground tracking-widest pl-1">Password</label>
+                            <label className="text-xs font-semibold text-slate-700 pl-1">Password</label>
                             <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <Lock size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-[#3066bb] transition-colors">
+                                    <Lock size={16} />
                                 </div>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-white/5 rounded-xl py-3 pl-11 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-secondary/80 transition-all"
-                                    placeholder=""
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-11 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
+                                    placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                                 >
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
@@ -232,13 +253,13 @@ function LoginForm() {
                         </div>
 
                         {error && (
-                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold text-center animate-in slide-in-from-top-2">
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium text-center animate-in slide-in-from-top-2">
                                 {error}
                             </div>
                         )}
 
                         {successMsg && (
-                            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-xs font-bold text-center animate-in slide-in-from-top-2">
+                            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-medium text-center animate-in slide-in-from-top-2">
                                 {successMsg}
                             </div>
                         )}
@@ -246,7 +267,7 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-[#3066bb] hover:bg-[#3066bb]/90 text-white py-3.5 mt-2 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-[#3066bb]/20 flex items-center justify-center gap-2 group border border-[#3066bb]/50"
+                            className="w-full bg-[#3066bb] hover:bg-[#255299] text-white py-3 mt-2 rounded-xl font-semibold tracking-wide transition-all active:scale-[0.98] shadow-md hover:shadow-lg flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70"
                         >
                             {loading ? (
                                 <span className="flex items-center gap-2">
@@ -254,7 +275,7 @@ function LoginForm() {
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    {mode === 'login' ? 'Login' : 'Register'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    {mode === 'login' ? 'Login' : 'Register'} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                 </span>
                             )}
                         </button>
