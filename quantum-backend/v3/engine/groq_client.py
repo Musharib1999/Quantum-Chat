@@ -32,8 +32,8 @@ async def call_groq(
     temperature: float = 0.1,
     model: str = None,
 ) -> str:
-    # Floor token budget to at least 2048 for generative tasks to prevent mid-sentence cutoffs
-    effective_max_tokens = max(max_tokens, 2048) if max_tokens > 100 else max_tokens
+    # For Groq on-demand free tier, OTPM limit is 1,000. Clamp max_tokens to 850 to prevent 429 rate limit.
+    effective_max_tokens = min(max_tokens, 850) if max_tokens > 100 else max_tokens
     """
     Call Groq completions API with OpenAI-compatible payload.
 
