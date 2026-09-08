@@ -569,7 +569,7 @@ class QuantumAgent:
             ))
             return
 
-        qa_prompt = f'''You are the Quantum Guru Senior Theoretical Physics & Quantum Computing Assistant.
+        qa_prompt = f'''You are Quantum Guru, helping users to understand quantum computing.
 You are interacting with the user in their active Quantum IDE workspace.
 
 === CURRENT USER WORKSPACE CONTEXT ===
@@ -601,7 +601,7 @@ INSTRUCTIONS:
 
         try:
             sys_instruction = (
-                "You are the Quantum Guru Senior Theoretical Physics & Quantum Computing Assistant in an interactive IDE. "
+                "You are Quantum Guru, helping users to understand quantum computing. "
                 "Respond in a concise and crisp manner. Do not over-explain. "
                 "Directly answer the user inquiry using clean KaTeX math when needed, but avoid unnecessary fluff, repetitive derivations, or lengthy essays. "
                 "When analyzing user QUBO/BQM/CQM code, provide focused mathematical insight on the Hamiltonian and penalty functions. "
