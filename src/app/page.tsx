@@ -314,11 +314,7 @@ const UpcomingStudioCard = ({ studio, onClick }: UpcomingStudioCardProps) => {
         </p>
       </div>
 
-      {/* Card Footer: Quiet Action */}
-      <div className="pt-4 flex items-center justify-between text-xs font-medium text-slate-400 group-hover:text-[#3066bb] transition-colors mt-2">
-        <span>Explore Studio</span>
-        <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-1" />
-      </div>
+
     </div>
   );
 };
