@@ -201,7 +201,7 @@ async def engine_enterprise_analyze(request: PipelineRequest):
         nlp_raw = await call_primary(
             system=nlp_prompt.SYSTEM_PROMPT,
             user=nlp_user,
-            max_tokens=512,
+            max_tokens=4096,
             temperature=0.1,
         )
         ir = await parse_and_validate(
@@ -224,7 +224,7 @@ async def engine_enterprise_analyze(request: PipelineRequest):
         rsn_raw = await call_primary(
             system=reasoner_prompt.SYSTEM_PROMPT,
             user=rsn_user,
-            max_tokens=512,
+            max_tokens=4096,
             temperature=0.1,
         )
         feasibility = await parse_and_validate(
@@ -329,7 +329,7 @@ async def engine_v3_finalize(request: FinalizeRequest):
         raw_output = await call_primary(
             system=system_prompt,
             user=user_prompt,
-            max_tokens=600,
+            max_tokens=2048,
             temperature=0.1
         )
         

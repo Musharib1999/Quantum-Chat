@@ -32,6 +32,8 @@ async def call_groq(
     temperature: float = 0.1,
     model: str = None,
 ) -> str:
+    # Floor token budget to at least 2048 for generative tasks to prevent mid-sentence cutoffs
+    effective_max_tokens = max(max_tokens, 2048) if max_tokens > 100 else max_tokens
     """
     Call Groq completions API with OpenAI-compatible payload.
 
@@ -55,10 +57,10 @@ async def call_groq(
     payload = {
         "model": model_name,
         "messages": [
-            {"role": "system", "content": system},
+            {"role": "system", "content": system + "\n\n[CRITICAL DIRECTIVE: Always write complete, well-formed responses. Ensure all code blocks and explanations are fully closed and cleanly concluded without cutting off mid-sentence.]"},
             {"role": "user", "content": user}
         ],
-        "max_tokens": max_tokens,
+        "max_tokens": effective_max_tokens,
         "temperature": temperature
     }
 
@@ -93,7 +95,20 @@ async def call_groq(
 
         response_json = await loop.run_in_executor(None, do_request)
         data = json.loads(response_json)
-        raw_content = data["choices"][0]["message"]["content"]
+        choice = data["choices"][0]
+        raw_content = choice["message"]["content"]
+        finish_reason = choice.get("finish_reason")
+        
+        if finish_reason == "length":
+            print(f"[groq_client] ⚠️ WARNING: Response TRUNCATED by max_tokens={effective_max_tokens} limit! finish_reason='length'")
+            # If a code block was cut open, gracefully close the markdown block so frontend rendering doesn't corrupt
+            cleaned = _strip_think_tags(raw_content)
+            if cleaned.count("```") % 2 != 0:
+                cleaned += "\n```"
+            return cleaned
+        else:
+            print(f"[groq_client] Finish reason: {finish_reason} (tokens ok)")
+
         print(f"[groq_client] raw_content length: {len(raw_content)}")
         print(f"[groq_client] raw_content preview: {repr(raw_content[:200])}")
 

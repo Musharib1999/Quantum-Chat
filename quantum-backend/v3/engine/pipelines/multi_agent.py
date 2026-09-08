@@ -81,7 +81,7 @@ class UnderstandingAgent(Agent):
             comp_raw = await call_primary(
                 system=comp_prompt.SYSTEM_PROMPT,
                 user=comp_user,
-                max_tokens=1500,
+                max_tokens=4096,
                 temperature=0.1,
             )
             comp_ir = await parse_and_validate(
@@ -371,7 +371,7 @@ class CodeGenerationAgent(Agent):
             final_code = await call_fast(
                 adapter_name=adapter_name,
                 prompt=code_prompt,
-                max_tokens=800,
+                max_tokens=4096,
                 temperature=0.1,
                 mlx_adapter_path=adapter_path,
             )
@@ -462,7 +462,7 @@ class RepairAgent(Agent):
             repaired_code = await call_fast(
                 adapter_name=config.ADAPTER_QA_DEBUGGER,
                 prompt=f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{fixer_system}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{fixer_user}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
-                max_tokens=850,
+                max_tokens=2048,
                 temperature=0.1,
                 mlx_adapter_path=os.path.join(os.path.dirname(__file__), "../../../adapters/adapter_qa_debugger")
             )
@@ -516,7 +516,7 @@ class ExplanationAgent(Agent):
             explanation = await call_primary(
                 system=analysis_system,
                 user=analysis_user,
-                max_tokens=400,
+                max_tokens=2048,
                 temperature=0.3,
             )
             

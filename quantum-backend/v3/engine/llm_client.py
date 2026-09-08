@@ -102,7 +102,7 @@ async def call_primary(
 async def call_fast(
     adapter_name: str,
     prompt: str,
-    max_tokens: int = 400,
+    max_tokens: int = 2048,
     temperature: float = 0.1,
     mlx_adapter_path: str = None
 ) -> str:
