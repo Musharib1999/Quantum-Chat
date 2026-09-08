@@ -391,32 +391,39 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Feature Tag Just Below the IDE Card */}
+            {/* Feature Tag Matching Card Width */}
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
+                width: '100%',
                 marginTop: '16px',
-                paddingLeft: '4px'
+                boxSizing: 'border-box'
               }}
             >
-              <span
+              <div
                 style={{
-                  display: 'inline-flex',
+                  width: '100%',
+                  display: 'flex',
                   alignItems: 'center',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#2E65BF',
+                  justifyContent: 'space-between',
+                  padding: '12px 36px',
+                  borderRadius: '16px',
                   backgroundColor: '#EFF6FF',
-                  padding: '6px 18px',
-                  borderRadius: '9999px',
+                  color: '#2E65BF',
+                  fontSize: '13px',
+                  fontWeight: 600,
                   letterSpacing: '0.02em',
-                  boxShadow: '0 1px 2px rgba(46, 101, 191, 0.08)'
+                  boxShadow: '0 1px 3px rgba(46, 101, 191, 0.08)',
+                  boxSizing: 'border-box'
                 }}
               >
-                Understand • Build • Visualize • Simulate
-              </span>
+                <span>Understand</span>
+                <span style={{ color: '#93C5FD', fontSize: '10px' }}>•</span>
+                <span>Build</span>
+                <span style={{ color: '#93C5FD', fontSize: '10px' }}>•</span>
+                <span>Visualize</span>
+                <span style={{ color: '#93C5FD', fontSize: '10px' }}>•</span>
+                <span>Simulate</span>
+              </div>
             </div>
           </div>
 
