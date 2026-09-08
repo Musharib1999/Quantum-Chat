@@ -99,11 +99,11 @@ export default function LandingPage() {
 
       {/* Main Content */}
       <main
-        style={{ paddingTop: '72px', paddingBottom: '100px' }}
+        style={{ paddingTop: '80px', paddingBottom: '120px' }}
         className="relative z-10 max-w-5xl mx-auto px-6 flex flex-col items-center"
       >
         {/* Hero Section */}
-        <div className="text-center mb-14 md:mb-16 animate-fade-in-up max-w-2xl mx-auto">
+        <div style={{ marginBottom: '52px' }} className="text-center animate-fade-in-up max-w-2xl mx-auto">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-4 leading-tight text-slate-900">
             The Future of <br />
             <span className="text-[rgb(48,102,187)]">
@@ -175,7 +175,7 @@ export default function LandingPage() {
         {/* ───────────────────────────────────────────────────────────── */}
         {/* SECTION HEADER: CLEAN SPACED TYPOGRAPHIC LABEL (NO BARS)     */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="text-center mt-16 md:mt-20 mb-8 md:mb-10">
+        <div style={{ marginTop: '72px', marginBottom: '36px' }} className="text-center">
           <span className="text-xs font-bold tracking-[0.2em] text-slate-400 uppercase">
             Coming Soon
           </span>
@@ -242,7 +242,7 @@ export default function LandingPage() {
       )}
 
       {/* Footer */}
-      <footer className="py-12 border-t border-slate-100 text-slate-400 mt-12">
+      <footer style={{ marginTop: '72px', paddingTop: '48px', paddingBottom: '48px' }} className="border-t border-slate-200/50 text-slate-400">
         <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-col items-start gap-1">
             <p className="text-xs opacity-60">© 2026 Quantum Guru Inc. All rights reserved.</p>
