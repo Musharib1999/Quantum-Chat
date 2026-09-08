@@ -466,6 +466,7 @@ export default function QuantumIDE() {
   const [simulationCounts, setSimulationCounts] = useState<Record<string, number> | null>({ '00': 512, '11': 512 });
   const [circuitAscii, setCircuitAscii] = useState<string>('');
   const [canvasQubits, setCanvasQubits] = useState<number>(4);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [circuitGates, setCircuitGates] = useState<Array<{ name: string; qubit: number; step: number; target?: number; role?: 'control' | 'target' | 'single' }>>([
     { name: 'h', qubit: 0, step: 0, role: 'single' },
     { name: 'cx', qubit: 0, step: 1, target: 1, role: 'control' },
@@ -1834,6 +1835,25 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     synchronizeGatesToCode(updatedGates);
   };
 
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      const currentCode = projectFiles[activeFile]?.content || '';
+      if (currentCode.includes('QuantumCircuit') || targetBackend.includes('aer')) {
+        const declaredQubits = parseQiskitQubitCount(currentCode);
+        const parsedGates = parseQiskitCodeToGates(currentCode, declaredQubits);
+        setCanvasQubits(declaredQubits);
+        setCircuitGates(parsedGates);
+      } else {
+        await handleRun();
+      }
+    } catch (e) {
+      console.error('Error during manual sync:', e);
+    } finally {
+      setTimeout(() => setIsSyncing(false), 400);
+    }
+  };
+
   const handleClearCircuitGates = () => {
     setCircuitGates([]);
     const clearedCode = `from qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\n\n# ⚛️ Synthesized Interactive Circuit (${canvasQubits} Qubits)\nqc = QuantumCircuit(${canvasQubits})\n# Wire cleared. Click slots in Circuit Canvas to add gates.\n\n# Execute on AerSimulator\nsim = AerSimulator()\nresult = sim.run(qc, shots=1024).result()\nprint('Measurement Counts:', result.get_counts())\n`;
@@ -2420,22 +2440,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 {/* Circuit Canvas Actions */}
                 {activeBottomTab === 'circuit' && isBottomOpen && (
                   <div className="flex items-center gap-2">
-                    {/* Live Real-Time Code Sync Indicator */}
-                    <div 
-                      className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium border select-none transition-all"
+                    {/* Clickable Sync Button */}
+                    <button
+                      onClick={handleManualSync}
+                      disabled={isSyncing}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-sans font-medium border transition-all cursor-pointer select-none hover:opacity-90 active:scale-95 disabled:opacity-50"
                       style={{
                         backgroundColor: isDark ? 'rgba(16, 185, 129, 0.10)' : 'rgba(16, 185, 129, 0.12)',
                         borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.35)',
                         color: isDark ? '#34d399' : '#059669'
                       }}
-                      title="Bi-directional real-time sync active: visual circuit edits automatically sync with main.py and vice-versa"
+                      title="Sync code with interactive circuit canvas"
                     >
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                      <span>Synced with code</span>
-                    </div>
+                      <RotateCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                      <span>Sync</span>
+                    </button>
 
                     <button
                       onClick={handleClearCircuitGates}
