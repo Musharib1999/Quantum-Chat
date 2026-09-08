@@ -500,6 +500,56 @@ function parseQuboCodeToQaoaGates(code: string): { numQubits: number; gates: Arr
   return { numQubits, gates };
 }
 
+
+// ── ⚛️ UNIVERSAL GATE NORMALIZER (ENSURES 100% PARITY BETWEEN BACKEND & CANVAS) ──
+function normalizeCircuitGates(rawGates: any[]): Array<{ name: string; qubit: number; step: number; target?: number; role?: 'control' | 'target' | 'single' }> {
+  if (!Array.isArray(rawGates)) return [];
+  const normalized: Array<{ name: string; qubit: number; step: number; target?: number; role?: 'control' | 'target' | 'single' }> = [];
+
+  for (const g of rawGates) {
+    if (typeof g.qubit === 'number') {
+      normalized.push(g);
+      continue;
+    }
+    if (Array.isArray(g.qubits)) {
+      if (g.qubits.length === 1) {
+        normalized.push({
+          name: g.name,
+          qubit: g.qubits[0],
+          step: g.step || 0,
+          role: 'single'
+        });
+      } else if (g.qubits.length === 2) {
+        const [ctrl, tgt] = g.qubits;
+        normalized.push({
+          name: g.name,
+          qubit: ctrl,
+          step: g.step || 0,
+          target: tgt,
+          role: 'control'
+        });
+        normalized.push({
+          name: g.name,
+          qubit: tgt,
+          step: g.step || 0,
+          target: ctrl,
+          role: 'target'
+        });
+      } else {
+        for (const q of g.qubits) {
+          normalized.push({
+            name: g.name,
+            qubit: q,
+            step: g.step || 0,
+            role: 'single'
+          });
+        }
+      }
+    }
+  }
+  return normalized;
+}
+
 export default function QuantumIDE() {
   const { logout } = useAuth();
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -1170,8 +1220,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         if (data.success) {
           if (data.circuit_ascii) setCircuitAscii(data.circuit_ascii);
           if (data.circuit_gates && data.circuit_gates.length > 0) {
-            setCircuitGates(data.circuit_gates as any);
-            if (data.active_qubits) setCanvasQubits(data.active_qubits);
+            const normalized = normalizeCircuitGates(data.circuit_gates);
+            if (normalized.length > 0) {
+              setCircuitGates(normalized);
+              if (data.active_qubits) setCanvasQubits(data.active_qubits);
+            }
           }
           if (data.optimization_results) setOptimizationResults(data.optimization_results);
         }
@@ -1784,8 +1837,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             setCircuitAscii(data.circuit_ascii);
           }
           if (data.circuit_gates && data.circuit_gates.length > 0) {
-            setCircuitGates(data.circuit_gates as any);
-            if (data.active_qubits) setCanvasQubits(data.active_qubits);
+            const normalized = normalizeCircuitGates(data.circuit_gates);
+            if (normalized.length > 0) {
+              setCircuitGates(normalized);
+              if (data.active_qubits) setCanvasQubits(data.active_qubits);
+            }
           }
         } else {
           setTerminalLogs(prev => [
@@ -2522,11 +2578,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     }
                   }
 
-                  // ⚡ Continuous Debounced Auto-Sync (700ms) without manual clicking
-                  if (autoSyncTimer.current) clearTimeout(autoSyncTimer.current);
-                  autoSyncTimer.current = setTimeout(() => {
-                    syncCircuitBackground(val);
-                  }, 700);
+                  // ⚡ Continuous Debounced Auto-Sync for D-Wave code without manual clicking
+                  if (isDwave) {
+                    if (autoSyncTimer.current) clearTimeout(autoSyncTimer.current);
+                    autoSyncTimer.current = setTimeout(() => {
+                      syncCircuitBackground(val);
+                    }, 800);
+                  }
                 }}
                 spellCheck={false}
                 style={{ 
@@ -2732,7 +2790,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                 className="w-full relative z-10"
                               >
                                 {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(stepIdx => {
-                                  const gateOnSlot = circuitGates.find(g => g.qubit === qIdx && g.step === stepIdx);
+                                  const gateOnSlot = circuitGates.find(g => (g.qubit === qIdx || (Array.isArray((g as any).qubits) && (g as any).qubits[0] === qIdx)) && g.step === stepIdx);
                                   const isSelected = activeSlotPopover?.qubit === qIdx && activeSlotPopover?.step === stepIdx;
 
                                   return (
