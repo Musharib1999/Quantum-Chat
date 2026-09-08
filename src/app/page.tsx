@@ -145,7 +145,7 @@ export default function LandingPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 border-slate-200 bg-white/80">
+      <nav className="sticky top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 border-slate-200 bg-white/80">
         <div className="w-full px-6 md:px-8 h-20 flex items-center justify-between">
 
           {/* Logo Section */}
@@ -188,15 +188,15 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-28 md:pt-32 pb-20 flex flex-col items-center">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-5 leading-tight">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-10 pb-20 flex flex-col items-center">
+        <div className="text-center mb-8 animate-fade-in-up">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-3 leading-tight">
             The Future of <br />
             <span className="text-[rgb(48,102,187)]">
               Quantum Analysis
             </span>
           </h1>
-          <p className="text-base md:text-lg mb-6 leading-relaxed text-slate-600 max-w-2xl mx-auto">
+          <p className="text-sm md:text-base mb-4 leading-relaxed text-slate-600 max-w-2xl mx-auto">
             Select your specialized interface below to begin your journey of respective quantum domain
           </p>
         </div>
