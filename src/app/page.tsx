@@ -157,21 +157,12 @@ export default function LandingPage() {
                   fontSize: '1.25rem',
                   fontWeight: 600,
                   color: '#1E293B',
-                  marginBottom: '8px'
+                  marginBottom: '0px'
                 }}
               >
                 One platform. Every quantum workflow.
               </h2>
-              <p
-                style={{
-                  fontSize: '0.95rem',
-                  color: '#64748B',
-                  maxWidth: '560px',
-                  lineHeight: 1.6
-                }}
-              >
-                Choose the workspace built for the way you want to work with quantum computing.
-              </p>
+
             </div>
 
             {/* Featured Hero Card (Increased Breadth, Pure White Elevation, No Outlines) */}
