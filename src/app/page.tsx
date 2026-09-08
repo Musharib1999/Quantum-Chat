@@ -391,11 +391,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Feature Tag Matching Card Width */}
+            {/* Feature Tag Matching Card Width (Clean, No Background) */}
             <div
               style={{
                 width: '100%',
-                marginTop: '16px',
+                marginTop: '14px',
                 boxSizing: 'border-box'
               }}
             >
@@ -405,23 +405,20 @@ export default function LandingPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '12px 36px',
-                  borderRadius: '16px',
-                  backgroundColor: '#EFF6FF',
+                  padding: '6px 28px',
                   color: '#2E65BF',
                   fontSize: '13px',
                   fontWeight: 600,
-                  letterSpacing: '0.02em',
-                  boxShadow: '0 1px 3px rgba(46, 101, 191, 0.08)',
+                  letterSpacing: '0.03em',
                   boxSizing: 'border-box'
                 }}
               >
                 <span>Understand</span>
-                <span style={{ color: '#93C5FD', fontSize: '10px' }}>•</span>
+                <span style={{ color: '#94A3B8', fontSize: '11px' }}>•</span>
                 <span>Build</span>
-                <span style={{ color: '#93C5FD', fontSize: '10px' }}>•</span>
+                <span style={{ color: '#94A3B8', fontSize: '11px' }}>•</span>
                 <span>Visualize</span>
-                <span style={{ color: '#93C5FD', fontSize: '10px' }}>•</span>
+                <span style={{ color: '#94A3B8', fontSize: '11px' }}>•</span>
                 <span>Simulate</span>
               </div>
             </div>
