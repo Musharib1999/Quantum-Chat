@@ -321,6 +321,15 @@ exec_globals = {
     "np": np, "numpy": np,
     "qiskit": qiskit, "QuantumCircuit": QuantumCircuit,
 }
+
+if HAS_DWAVE:
+    exec_globals["dimod"] = dimod
+    exec_globals["SimulatedAnnealingSampler"] = SimulatedAnnealingSampler
+    try:
+        import neal
+        exec_globals["neal"] = neal
+    except Exception:
+        pass
 if HAS_AER:
     class SafeAerSimulator(AerSimulator):
         def run(self, circuits, **kwargs):
