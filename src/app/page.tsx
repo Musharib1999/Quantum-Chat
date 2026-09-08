@@ -84,7 +84,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen transition-colors duration-500 ease-in-out font-sans bg-white text-slate-900">
+    <div className="min-h-screen transition-colors duration-500 ease-in-out font-sans bg-[#F8FAFC] text-slate-900">
 
       {/* Background - Clean White with subtle grid */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -123,7 +123,7 @@ export default function LandingPage() {
         {/* ───────────────────────────────────────────────────────────── */}
         <div
           onClick={handleLaunchIde}
-          className="group relative p-8 sm:p-10 md:p-11 rounded-3xl bg-slate-50/80 hover:bg-blue-50/40 hover:shadow-xl hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer overflow-hidden w-full"
+          className="group relative p-8 sm:p-10 md:p-11 rounded-3xl bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer overflow-hidden w-full"
         >
           {/* Subtle Ambient Glow */}
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500" />
@@ -278,7 +278,7 @@ const UpcomingStudioCard = ({ studio, onClick }: UpcomingStudioCardProps) => {
   return (
     <div
       onClick={onClick}
-      className="group relative p-7 rounded-3xl bg-slate-50/70 hover:bg-slate-100/80 hover:shadow-lg hover:-translate-y-1 active:scale-[0.99] transition-all duration-300 cursor-pointer flex flex-col justify-between"
+      className="group relative p-7 rounded-3xl bg-white shadow-xs hover:shadow-lg hover:-translate-y-1 active:scale-[0.99] transition-all duration-300 cursor-pointer flex flex-col justify-between"
     >
       <div>
         {/* Header: Icon + Quiet Muted Badge (No outlines) */}
@@ -286,7 +286,7 @@ const UpcomingStudioCard = ({ studio, onClick }: UpcomingStudioCardProps) => {
           <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${colorMap[studio.accentColor]}`}>
             {studio.icon}
           </div>
-          <span className="text-[10px] font-medium text-slate-500 bg-white px-2.5 py-1 rounded-full shadow-2xs">
+          <span className="text-[10px] font-medium text-slate-500 bg-slate-100/80 px-2.5 py-1 rounded-full">
             Coming soon
           </span>
         </div>
