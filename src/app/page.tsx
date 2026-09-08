@@ -254,18 +254,11 @@ export default function LandingPage() {
       )}
 
       {/* Footer */}
-      <footer style={{ marginTop: '72px', paddingTop: '48px', paddingBottom: '48px' }} className="border-t border-slate-200/50 text-slate-400">
-        <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-col items-start gap-1">
-            <p className="text-xs opacity-60">© 2026 Quantum Guru Inc. All rights reserved.</p>
-          </div>
-          <div className="flex items-center gap-6 text-xs text-slate-500">
-            <span className="hover:text-slate-800 transition-colors cursor-pointer">Enterprise Infrastructure</span>
-            <span>•</span>
-            <span className="hover:text-slate-800 transition-colors cursor-pointer">Security Boundary</span>
-            <span>•</span>
-            <span className="hover:text-slate-800 transition-colors cursor-pointer">Support</span>
-          </div>
+      <footer style={{ marginTop: '72px', paddingTop: '40px', paddingBottom: '48px' }} className="border-t border-slate-200/50">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <p className="text-xs font-medium text-slate-700">
+            © 2026 Quantum Guru Inc. All rights reserved.
+          </p>
         </div>
       </footer>
 
