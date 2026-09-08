@@ -456,6 +456,7 @@ export default function QuantumIDE() {
     qubo_matrix?: number[][];
     energy_distribution?: Array<{ energy: number; sample: Record<string, number>; num_occurrences: number; bitstring: string }>;
     cloud_rerouted?: boolean;
+    qaoa_dual_compiled?: boolean;
   } | null>(null);
 
   // Phase 1: Collapsible Bottom Drawer & Interactive Circuit Canvas States
@@ -1458,6 +1459,21 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     if (gateName === 'swap') {
       return <span className="text-sm font-bold text-sky-300">✕</span>;
     }
+    if (gateName === 'rzz') {
+      if (role === 'control') {
+        return (
+          <div className="relative flex items-center justify-center">
+            <svg className="w-4 h-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.8)]" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="7.5" />
+            </svg>
+          </div>
+        );
+      }
+      if (role === 'target') {
+        return <span className="font-bold text-emerald-300 text-[11px]">Rzz</span>;
+      }
+      return 'Rzz';
+    }
     if (gateName === 'ccx') {
       if (role === 'control') {
         return (
@@ -1627,7 +1643,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           if (data.circuit_ascii) {
             setCircuitAscii(data.circuit_ascii);
           }
-          // Keep user's manual canvas intact; do not overwrite with simulator internal gates
+          if (data.circuit_gates && data.circuit_gates.length > 0) {
+            setCircuitGates(data.circuit_gates as any);
+            if (data.active_qubits) setCanvasQubits(data.active_qubits);
+          }
         } else {
           setTerminalLogs(prev => [
             ...prev,
@@ -2470,6 +2489,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 {/* TAB 1: INTERACTIVE CIRCUIT CANVAS */}
                 {activeBottomTab === 'circuit' && (
                   <div className="p-3.5 font-sans h-full flex flex-col">
+                    {optimizationResults?.qaoa_dual_compiled && (
+                      <div className="mb-2 flex items-center justify-between px-3 py-1.5 rounded-lg border bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs font-mono shrink-0">
+                        <div className="flex items-center gap-2">
+                          <Activity className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span className="font-semibold">Dual QAOA Circuit Synthesized</span>
+                          <span className="text-zinc-400 text-[11px] hidden sm:inline">• Auto-compiled from D-Wave QUBO Hamiltonian (p=1, {canvasQubits} Qubits)</span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">Phase 2 Gate Bridge</span>
+                      </div>
+                    )}
                     {/* Interactive Qubit Wires Grid (Starts immediately below unified header) */}
                     <div className="flex-1 overflow-x-auto min-h-0 py-1">
                       <div className="min-w-[640px] space-y-2">
