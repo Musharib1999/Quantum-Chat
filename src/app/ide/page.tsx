@@ -446,7 +446,17 @@ export default function QuantumIDE() {
   const [toolSearchQuery, setToolSearchQuery] = useState('');
   const [selectedStudioFilter, setSelectedStudioFilter] = useState<string>('all');
   const [quboLambda, setQuboLambda] = useState<number>(5.0);
-  const [selectedQuboCell, setSelectedQuboCell] = useState<{ row: number; col: number } | null>(null);
+  const [selectedQuboCell, setSelectedQuboCell] = useState<{ row: number; col: number; val?: number } | null>(null);
+  const [optimizationResults, setOptimizationResults] = useState<{
+    energy?: number;
+    sample?: Record<string, number>;
+    num_variables?: number;
+    num_reads?: number;
+    variables?: string[];
+    qubo_matrix?: number[][];
+    energy_distribution?: Array<{ energy: number; sample: Record<string, number>; num_occurrences: number; bitstring: string }>;
+    cloud_rerouted?: boolean;
+  } | null>(null);
 
   // Phase 1: Collapsible Bottom Drawer & Interactive Circuit Canvas States
   const [isBottomOpen, setIsBottomOpen] = useState(true);
@@ -529,7 +539,17 @@ export default function QuantumIDE() {
   // ─────────────────────────────────────────────────────────────
   // ⚡ DYNAMIC QUANTUM RUNTIME STATE (UPDATED BY AGENT & TOOLS)
   // ─────────────────────────────────────────────────────────────
-  const [runtimeMetrics, setRuntimeMetrics] = useState({
+  const [runtimeMetrics, setRuntimeMetrics] = useState<{
+    activeQubits: number;
+    depth: number;
+    cnots: number;
+    circuitText: string;
+    expectationVal: string;
+    fidelity: string;
+    latencySec: string;
+    terminalLog: string[];
+    qubo_telemetry?: any;
+  }>({
     activeQubits: 4,
     depth: 6,
     cnots: 3,
@@ -556,7 +576,7 @@ q_3: ┤ H ├┤ P(2*x[3]) ├────────────────�
   // ─────────────────────────────────────────────────────────────
   // 📂 MULTI-PROJECT WORKSPACE SYSTEM (SWITCH & CREATE AT WILL)
   // ─────────────────────────────────────────────────────────────
-  const initialProjectTemplates: Record<string, { title: string; desc: string; backend: string; defaultTab: 'circuit' | 'terminal'; files: Record<string, { name: string; lang: string; content: string }> }> = {
+  const initialProjectTemplates: Record<string, { title: string; desc: string; backend?: string; defaultTab?: 'circuit' | 'terminal'; files: Record<string, any> }> = {
     'qiskit-circuit': {
       title: 'Gate Circuit (Qiskit)',
       desc: 'Clean 2-qubit Bell state, superposition, and Qiskit AerSimulator.',
@@ -584,29 +604,17 @@ print('Measurement Counts:', result.get_counts())
     },
     'dwave-annealing': {
       title: 'Quantum Annealing (D-Wave)',
-      desc: 'Binary Quadratic Model (BQM), QUBO optimization, and SimulatedAnnealingSampler.',
+      desc: 'Blank canvas for user-written QUBO, BQM, and CQM models with local SimulatedAnnealingSampler.',
       backend: 'dwave_simulated_annealing',
       defaultTab: 'terminal',
       files: {
         'main.py': {
           name: 'main.py',
           lang: 'python',
-          content: `import dimod
-from dwave.samplers import SimulatedAnnealingSampler
+          content: `# ⚡ D-Wave Quantum Annealing (Phase 2)
+# Paste or write your QUBO, BQM, or CQM code below.
+# Execution runs locally on the offline SimulatedAnnealingSampler sandbox.
 
-# ⚡ Binary Quadratic Model (QUBO Optimization)
-# Objective: Minimize Energy E(x0, x1) = -x0 - x1 + 2*(x0 * x1)
-linear = {'x0': -1.0, 'x1': -1.0}
-quadratic = {('x0', 'x1'): 2.0}
-bqm = dimod.BinaryQuadraticModel(linear, quadratic, 0.0, dimod.BINARY)
-
-# Sample on Local Simulated Annealer
-sampler = SimulatedAnnealingSampler()
-sampleset = sampler.sample(bqm, num_reads=100)
-
-best = sampleset.first
-print(f"Optimal Energy: {best.energy}")
-print(f"Best Configuration: {best.sample}")
 `
         }
       }
@@ -1378,12 +1386,23 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         const data = await res.json();
         if (data.success) {
           const outLines = (data.stdout || '').split('\n').filter(Boolean);
+          const optLogs = data.optimization_results ? [
+            `⚡ D-Wave Annealer Telemetry:`,
+            `  • Optimal Ground Energy : ${data.optimization_results.energy}`,
+            `  • Lowest Energy Sample  : ${JSON.stringify(data.optimization_results.sample)}`,
+            `  • Decision Variables    : ${data.optimization_results.num_variables}`,
+            `  • Number of Reads       : ${data.optimization_results.num_reads || shots}`
+          ] : [];
           setTerminalLogs(prev => [
             ...prev,
             ...outLines,
+            ...optLogs,
             `✔ Execution completed on ${data.backend_used} in ${data.execution_time_ms}ms`
           ]);
 
+          if (data.optimization_results) {
+            setOptimizationResults(data.optimization_results);
+          }
           if (data.measurement_counts) {
             setSimulationCounts(data.measurement_counts);
           }
@@ -1684,6 +1703,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             if (data.qubo_matrix_code) {
               updated['qubo_matrix.py'] = {
                 name: 'qubo_matrix.py',
+                lang: 'python',
                 language: 'python',
                 content: data.qubo_matrix_code
               };
@@ -1693,6 +1713,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               for (const [fName, fContent] of Object.entries(data.updated_files)) {
                 updated[fName] = {
                   name: fName,
+                  lang: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
                   language: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
                   content: fContent as string
                 };
@@ -1702,6 +1723,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             if (data.memory_md) {
               updated['MEMORY.md'] = {
                 name: 'MEMORY.md',
+                lang: 'markdown',
                 language: 'markdown',
                 content: data.memory_md
               };
@@ -2142,7 +2164,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   className="px-2.5 py-1 rounded-lg text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
                 >
                   <BarChart3 className="w-3.5 h-3.5" />
-                  <span>Measurement Results</span>
+                  <span>{optimizationResults || targetBackend.includes('dwave') ? 'Energy & QUBO Results' : 'Measurement Results'}</span>
                 </button>
               </div>
 
@@ -2577,35 +2599,227 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   </div>
                 )}
 
-                {/* TAB 3: MEASUREMENT RESULTS */}
+                {/* TAB 3: MEASUREMENT RESULTS / D-WAVE ENERGY & QUBO SPECTRUM */}
                 {activeBottomTab === 'results' && (
-                  <div className="p-4 space-y-3 font-sans h-full overflow-y-auto">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold" style={{ color: colors.textAmber }}>Measurement Statevector Probability Distribution</span>
-                      <span className="text-[11px] font-mono" style={{ color: colors.textMuted }}>Total Shots: {shots}</span>
-                    </div>
+                  <div className="p-4 space-y-4 font-sans h-full overflow-y-auto">
+                    {optimizationResults ? (
+                      <div className="space-y-4">
+                        {/* Header with Ground State Summary */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl border" style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>
+                              Optimal Ground State Energy:
+                            </span>
+                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                              {optimizationResults.energy}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] font-mono" style={{ color: colors.textMuted }}>
+                            <span>Variables: <strong style={{ color: colors.textPrimary }}>{optimizationResults.num_variables || (optimizationResults.variables ? optimizationResults.variables.length : 0)}</strong></span>
+                            <span>Reads: <strong style={{ color: colors.textPrimary }}>{optimizationResults.num_reads || shots}</strong></span>
+                            <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/30">dwave_simulated_annealing</span>
+                          </div>
+                        </div>
 
-                    {simulationCounts ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-                        {Object.entries(simulationCounts).map(([state, cnt]) => {
-                          const pct = Math.round((cnt / (shots || 1024)) * 100);
-                          return (
-                            <div 
-                              key={state}
-                              style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
-                              className="p-3 rounded-xl border space-y-1.5 shadow-xs"
-                            >
-                              <div className="flex items-center justify-between text-xs font-mono">
-                                <span className="font-semibold text-sky-400">|{state}⟩</span>
-                                <span style={{ color: colors.textMuted }}>{cnt} shots</span>
-                              </div>
-                              <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-                                <div className="bg-sky-400 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
-                              </div>
-                              <div className="text-right text-[10px] font-mono text-zinc-400">{pct}% probability</div>
+                        {/* Cloud Rerouted Notice Banner */}
+                        {optimizationResults.cloud_rerouted && (
+                          <div className="p-2.5 rounded-lg border border-sky-500/30 bg-sky-500/10 flex items-center gap-2 text-xs text-sky-300">
+                            <span className="font-bold">ℹ️ Offline Sandbox:</span>
+                            <span>Cloud QPU sampler detected without active Leap credentials. Execution was seamlessly rerouted to local SimulatedAnnealingSampler for Phase 2 offline simulation.</span>
+                          </div>
+                        )}
+
+                        {/* Two-Column Grid: Energy Spectrum + Q-Matrix Heatmap */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {/* Column A: Interactive Energy Spectrum & Sample Distribution */}
+                          <div className="p-3.5 rounded-xl border space-y-3" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-semibold flex items-center gap-1.5" style={{ color: colors.textAmber }}>
+                                <span>⚡</span> Energy Spectrum & Sample Distribution
+                              </span>
+                              <span className="text-[10px] font-mono" style={{ color: colors.textMuted }}>
+                                Top Low-Energy States
+                              </span>
                             </div>
-                          );
-                        })}
+
+                            <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                              {optimizationResults.energy_distribution && optimizationResults.energy_distribution.length > 0 ? (
+                                optimizationResults.energy_distribution.map((item: any, idx: number) => {
+                                  const isGround = idx === 0;
+                                  const maxOcc = Math.max(...(optimizationResults.energy_distribution || []).map((d: any) => d.num_occurrences || 1));
+                                  const occPct = Math.max(12, Math.round(((item.num_occurrences || 1) / maxOcc) * 100));
+
+                                  return (
+                                    <div
+                                      key={idx}
+                                      style={{ backgroundColor: colors.bgPill, borderColor: isGround ? 'rgba(52, 211, 153, 0.4)' : colors.border }}
+                                      className={`p-2.5 rounded-lg border transition-all ${isGround ? 'shadow-xs' : ''}`}
+                                    >
+                                      <div className="flex items-center justify-between text-xs font-mono mb-1">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${isGround ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-neutral-800 text-neutral-400'}`}>
+                                            {isGround ? 'GROUND' : `#${idx + 1}`}
+                                          </span>
+                                          <span className="text-sky-400 font-semibold truncate max-w-[140px]" title={JSON.stringify(item.sample)}>
+                                            {item.bitstring ? `|${item.bitstring}⟩` : JSON.stringify(item.sample)}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span style={{ color: colors.textPrimary }}>E = {item.energy}</span>
+                                          <span className="text-[10px]" style={{ color: colors.textMuted }}>({item.num_occurrences || 1} hits)</span>
+                                        </div>
+                                      </div>
+                                      <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full transition-all ${isGround ? 'bg-emerald-400' : 'bg-sky-400'}`}
+                                          style={{ width: `${occPct}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <div className="p-3 rounded-lg border text-xs font-mono" style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}>
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-emerald-400 font-bold">Ground State:</span>
+                                    <span>E = {optimizationResults.energy}</span>
+                                  </div>
+                                  <pre className="text-[11px] mt-2 text-neutral-300 overflow-x-auto">
+                                    {JSON.stringify(optimizationResults.sample, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Column B: Interactive Q-Matrix Heatmap */}
+                          <div className="p-3.5 rounded-xl border space-y-3" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-semibold flex items-center gap-1.5" style={{ color: colors.textCyan }}>
+                                <span>🧊</span> Quadratic Matrix (Q-Matrix) Heatmap
+                              </span>
+                              <span className="text-[10px] font-mono" style={{ color: colors.textMuted }}>
+                                {optimizationResults.variables ? `${optimizationResults.variables.length}×${optimizationResults.variables.length}` : ''}
+                              </span>
+                            </div>
+
+                            {optimizationResults.qubo_matrix && optimizationResults.variables && optimizationResults.variables.length > 0 ? (
+                              <div className="space-y-3">
+                                <div className="overflow-x-auto max-h-[260px] overflow-y-auto">
+                                  <table className="w-full border-collapse font-mono text-xs text-center">
+                                    <thead>
+                                      <tr>
+                                        <th className="p-1.5 text-left text-[10px] border-b" style={{ borderColor: colors.border, color: colors.textMuted }}>
+                                          Var
+                                        </th>
+                                        {optimizationResults.variables.map((v: string, idx: number) => (
+                                          <th key={idx} className="p-1.5 text-[10px] border-b font-semibold" style={{ borderColor: colors.border, color: colors.textPrimary }}>
+                                            {v}
+                                          </th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {optimizationResults.qubo_matrix.map((row: number[], rIdx: number) => {
+                                        const rVar = (optimizationResults.variables || [])[rIdx];
+                                        return (
+                                          <tr key={rIdx} className="hover:bg-sky-500/5 transition-colors">
+                                            <td className="p-1.5 text-left text-[10px] font-semibold border-r" style={{ borderColor: colors.border, color: colors.textPrimary }}>
+                                              {rVar}
+                                            </td>
+                                            {row.map((val: number, cIdx: number) => {
+                                              const isDiag = rIdx === cIdx;
+                                              const cVar = (optimizationResults.variables || [])[cIdx];
+                                              const isNegative = val < 0;
+                                              const isPositive = val > 0;
+                                              const isZero = val === 0;
+
+                                              let bg = 'rgba(39, 39, 42, 0.4)';
+                                              let fg = colors.textMuted;
+                                              if (isDiag) {
+                                                bg = isNegative ? 'rgba(56, 189, 248, 0.25)' : isPositive ? 'rgba(251, 146, 60, 0.25)' : 'rgba(39, 39, 42, 0.6)';
+                                                fg = isNegative ? '#38bdf8' : isPositive ? '#fb923c' : colors.textPrimary;
+                                              } else if (!isZero) {
+                                                bg = isNegative ? 'rgba(56, 189, 248, 0.15)' : 'rgba(244, 63, 94, 0.15)';
+                                                fg = isNegative ? '#7dd3fc' : '#fda4af';
+                                              }
+
+                                              return (
+                                                <td
+                                                  key={cIdx}
+                                                  onClick={() => setSelectedQuboCell({ row: rIdx, col: cIdx, val })}
+                                                  style={{ backgroundColor: bg, color: fg, borderColor: colors.border }}
+                                                  className="p-1.5 border text-[11px] cursor-pointer hover:ring-1 hover:ring-sky-400 transition-all font-mono"
+                                                  title={`${isDiag ? `Linear bias h(${rVar})` : `Coupling J(${rVar}, ${cVar})`}: ${val}`}
+                                                >
+                                                  {val !== 0 ? val.toFixed(1) : '·'}
+                                                </td>
+                                              );
+                                            })}
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+
+                                {/* Selected Cell Inspector */}
+                                {selectedQuboCell && optimizationResults.variables && selectedQuboCell.row < optimizationResults.variables.length && selectedQuboCell.col < optimizationResults.variables.length && (
+                                  <div className="p-2.5 rounded-lg border text-[11px] font-mono space-y-1" style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}>
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-semibold text-sky-400">
+                                        {selectedQuboCell.row === selectedQuboCell.col
+                                          ? `Linear Bias: h(${optimizationResults.variables[selectedQuboCell.row]})`
+                                          : `Coupling: J(${optimizationResults.variables[selectedQuboCell.row]}, ${optimizationResults.variables[selectedQuboCell.col]})`}
+                                      </span>
+                                      <span className="font-bold" style={{ color: colors.textPrimary }}>
+                                        Value = {selectedQuboCell.val !== undefined ? selectedQuboCell.val : (optimizationResults.qubo_matrix?.[selectedQuboCell.row]?.[selectedQuboCell.col])}
+                                      </span>
+                                    </div>
+                                    <div className="text-[10px]" style={{ color: colors.textMuted }}>
+                                      {selectedQuboCell.row === selectedQuboCell.col
+                                        ? `Hamiltonian linear energy: h · x_${optimizationResults.variables[selectedQuboCell.row]}`
+                                        : `Quadratic interaction: J · x_${optimizationResults.variables[selectedQuboCell.row]} · x_${optimizationResults.variables[selectedQuboCell.col]}`}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-center py-6 text-xs text-zinc-500 font-mono">
+                                No matrix representation extracted.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : simulationCounts ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold" style={{ color: colors.textAmber }}>Measurement Statevector Probability Distribution</span>
+                          <span className="text-[11px] font-mono" style={{ color: colors.textMuted }}>Total Shots: {shots}</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                          {Object.entries(simulationCounts).map(([state, cnt]) => {
+                            const pct = Math.round((cnt / (shots || 1024)) * 100);
+                            return (
+                              <div
+                                key={state}
+                                style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                                className="p-3 rounded-xl border space-y-1.5 shadow-xs"
+                              >
+                                <div className="flex items-center justify-between text-xs font-mono">
+                                  <span className="font-semibold text-sky-400">|{state}⟩</span>
+                                  <span style={{ color: colors.textMuted }}>{cnt} shots</span>
+                                </div>
+                                <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+                                  <div className="bg-sky-400 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
+                                </div>
+                                <div className="text-right text-[10px] font-mono text-zinc-400">{pct}% probability</div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     ) : (
                       <div className="text-center py-6 text-xs text-zinc-500 font-mono">
@@ -3323,7 +3537,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                             <th className="p-2 text-left font-mono text-[11px] border-b" style={{ borderColor: colors.border, color: colors.textMuted }}>
                               Variables
                             </th>
-                            {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v, idx) => (
+                            {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v: string, idx: number) => (
                               <th key={idx} className="p-2 font-mono text-[11px] border-b font-semibold" style={{ borderColor: colors.border, color: colors.textPrimary }}>
                                 x_{idx} ({v.replace('Project_', '').replace('_Farm', '').replace('_Storage', '')})
                               </th>
@@ -3336,14 +3550,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                             [0.0, -43.41, 1.0, -10.0],
                             [0.0, 0.0, -28.86, 1.0],
                             [0.0, 0.0, 0.0, -33.64]
-                          ]).map((row, rIdx) => {
+                          ]).map((row: number[], rIdx: number) => {
                             const varName = (runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E'])[rIdx];
                             return (
                               <tr key={rIdx} className="hover:bg-sky-500/5 transition-colors">
                                 <td className="p-2.5 text-left font-mono font-semibold border-r" style={{ borderColor: colors.border, color: colors.textSkyBlue }}>
                                   x_{rIdx} ({varName})
                                 </td>
-                                {row.map((val, cIdx) => {
+                                {row.map((val: number, cIdx: number) => {
                                   const isSelected = selectedQuboCell?.row === rIdx && selectedQuboCell?.col === cIdx;
                                   const isDiag = rIdx === cIdx;
                                   const isPositive = val > 0;
@@ -3410,7 +3624,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                         Decision variables ({runtimeMetrics.qubo_telemetry?.variables?.length || 4})
                       </div>
                       <div className="space-y-1.5 text-xs font-mono">
-                        {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v, idx) => {
+                        {(runtimeMetrics.qubo_telemetry?.variables || ['Solar_Farm_A', 'Wind_Farm_C', 'Wind_Farm_D', 'Battery_Storage_E']).map((v: string, idx: number) => {
                           const isPicked = (runtimeMetrics.qubo_telemetry?.selected_items || ['Solar_Farm_A', 'Wind_Farm_C', 'Battery_Storage_E']).includes(v);
                           return (
                             <div key={idx} className="flex items-center justify-between p-1.5 rounded-md bg-black/20 border" style={{ borderColor: colors.border }}>
@@ -3757,7 +3971,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
           </div>
         </div>
-      )}\n
+      )}
+
     </div>
   );
 }

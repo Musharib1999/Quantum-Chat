@@ -199,8 +199,81 @@ try:
     import dimod
     from dwave.samplers import SimulatedAnnealingSampler
     HAS_DWAVE = True
+    
+    _CLOUD_NOTICE = "[INFO] Cloud QPU/Hybrid sampler detected without active Leap credentials. Gracefully rerouting to local SimulatedAnnealingSampler for Phase 2 offline simulation."
+    _cloud_rerouted = False
+
+    class FallbackDWaveSampler:
+        def __init__(self, *args, **kwargs):
+            global _cloud_rerouted
+            _cloud_rerouted = True
+            print(_CLOUD_NOTICE, file=sys.stdout)
+            self._sampler = SimulatedAnnealingSampler()
+            self.properties = {"chip_id": "SimulatedAnnealingSampler (Phase 2 Local Fallback)"}
+            self.parameters = {"num_reads": []}
+
+        def sample(self, bqm, **kwargs):
+            return self._sampler.sample(bqm, **kwargs)
+
+        def sample_qubo(self, Q, **kwargs):
+            return self._sampler.sample_qubo(Q, **kwargs)
+
+        def sample_ising(self, h, J, **kwargs):
+            return self._sampler.sample_ising(h, J, **kwargs)
+
+    class FallbackEmbeddingComposite:
+        def __init__(self, child_sampler=None, *args, **kwargs):
+            global _cloud_rerouted
+            _cloud_rerouted = True
+            self.child = child_sampler if child_sampler is not None else FallbackDWaveSampler()
+
+        def sample(self, bqm, **kwargs):
+            return self.child.sample(bqm, **kwargs)
+
+        def sample_qubo(self, Q, **kwargs):
+            return self.child.sample_qubo(Q, **kwargs)
+
+        def sample_ising(self, h, J, **kwargs):
+            return self.child.sample_ising(h, J, **kwargs)
+
+    class FallbackLeapHybridCQMSampler:
+        def __init__(self, *args, **kwargs):
+            global _cloud_rerouted
+            _cloud_rerouted = True
+            print(_CLOUD_NOTICE, file=sys.stdout)
+
+        def sample_cqm(self, cqm, **kwargs):
+            try:
+                from dimod import ExactCQMSolver
+                if len(cqm.variables) <= 12:
+                    return ExactCQMSolver().sample_cqm(cqm)
+            except Exception:
+                pass
+            bqm, _ = dimod.cqm_to_bqm(cqm, lagrange_multiplier=10.0)
+            return SimulatedAnnealingSampler().sample(bqm, **kwargs)
+
+    try:
+        import dwave.system
+        import dwave.system.samplers
+        import dwave.system.composites
+        dwave.system.DWaveSampler = FallbackDWaveSampler
+        dwave.system.samplers.DWaveSampler = FallbackDWaveSampler
+        if hasattr(dwave.system.samplers, "dwave_sampler"):
+            dwave.system.samplers.dwave_sampler.DWaveSampler = FallbackDWaveSampler
+        dwave.system.EmbeddingComposite = FallbackEmbeddingComposite
+        dwave.system.composites.EmbeddingComposite = FallbackEmbeddingComposite
+        if hasattr(dwave.system.composites, "embedding"):
+            dwave.system.composites.embedding.EmbeddingComposite = FallbackEmbeddingComposite
+        dwave.system.LeapHybridCQMSampler = FallbackLeapHybridCQMSampler
+        dwave.system.samplers.LeapHybridCQMSampler = FallbackLeapHybridCQMSampler
+        if hasattr(dwave.system.samplers, "leap_hybrid_sampler"):
+            dwave.system.samplers.leap_hybrid_sampler.LeapHybridCQMSampler = FallbackLeapHybridCQMSampler
+            dwave.system.samplers.leap_hybrid_sampler.LeapHybridSampler = FallbackDWaveSampler
+    except Exception:
+        pass
 except ImportError:
     HAS_DWAVE = False
+    _cloud_rerouted = False
 
 def extract_circuit_gates_inner(qc):
     gates = []
@@ -300,26 +373,116 @@ if target_qc is not None:
         except Exception:
             pass
 
-# 2. D-Wave BinaryQuadraticModel introspection
+# 2. D-Wave QUBO / BQM / CQM introspection
 if HAS_DWAVE:
-    target_bqm = None
+    target_sampleset = None
+    target_model = None
+
+    # Check for direct sampleset first
     for val in exec_globals.values():
-        if isinstance(val, dimod.BinaryQuadraticModel):
-            target_bqm = val
+        if isinstance(val, dimod.SampleSet):
+            target_sampleset = val
             break
-    if target_bqm is not None:
+
+    # Check for models
+    for val in exec_globals.values():
+        if isinstance(val, (dimod.BinaryQuadraticModel, dimod.ConstrainedQuadraticModel)):
+            target_model = val
+            break
+    
+    # Check for raw QUBO dict if no model
+    if target_model is None and target_sampleset is None:
+        for key, val in exec_globals.items():
+            if isinstance(val, dict) and key in ("Q", "qubo", "QUBO", "bqm_dict"):
+                if all(isinstance(k, tuple) and len(k) == 2 for k in val.keys()):
+                    target_model = val
+                    break
+
+    if target_sampleset is not None or target_model is not None:
         backend_used = "dwave_simulated_annealing"
-        active_qubits = len(target_bqm.variables)
         try:
-            sampler = SimulatedAnnealingSampler()
-            sampleset = sampler.sample(target_bqm, num_reads=min(__SHOTS_VAL__, 500))
-            best = sampleset.first
-            opt_results = {
-                "energy": float(best.energy),
-                "sample": {str(k): int(v) for k, v in best.sample.items()},
-                "num_variables": len(target_bqm.variables),
-                "num_reads": len(sampleset)
-            }
+            if target_sampleset is None:
+                sampler = SimulatedAnnealingSampler()
+                if isinstance(target_model, dimod.BinaryQuadraticModel):
+                    target_sampleset = sampler.sample(target_model, num_reads=min(__SHOTS_VAL__, 500))
+                elif isinstance(target_model, dimod.ConstrainedQuadraticModel):
+                    try:
+                        from dimod import ExactCQMSolver
+                        if len(target_model.variables) <= 12:
+                            target_sampleset = ExactCQMSolver().sample_cqm(target_model)
+                        else:
+                            converted_bqm, _ = dimod.cqm_to_bqm(target_model, lagrange_multiplier=10.0)
+                            target_sampleset = sampler.sample(converted_bqm, num_reads=min(__SHOTS_VAL__, 500))
+                    except Exception:
+                        converted_bqm, _ = dimod.cqm_to_bqm(target_model, lagrange_multiplier=10.0)
+                        target_sampleset = sampler.sample(converted_bqm, num_reads=min(__SHOTS_VAL__, 500))
+                elif isinstance(target_model, dict):
+                    target_sampleset = sampler.sample_qubo(target_model, num_reads=min(__SHOTS_VAL__, 500))
+
+            if target_sampleset is not None and len(target_sampleset) > 0:
+                best = target_sampleset.first
+                
+                # Determine variable names
+                if target_model is not None and hasattr(target_model, 'variables'):
+                    var_names = [str(v) for v in target_model.variables if not str(v).startswith('slack_')]
+                elif hasattr(target_sampleset, 'variables'):
+                    var_names = [str(v) for v in target_sampleset.variables if not str(v).startswith('slack_')]
+                else:
+                    var_names = [str(k) for k in best.sample.keys() if not str(k).startswith('slack_')]
+
+                active_qubits = len(var_names)
+
+                # Construct N x N Q-matrix
+                n = len(var_names)
+                var_to_idx = {v: i for i, v in enumerate(var_names)}
+                matrix = [[0.0] * n for _ in range(n)]
+
+                if isinstance(target_model, dimod.BinaryQuadraticModel):
+                    for v, bias in target_model.linear.items():
+                        s_v = str(v)
+                        if s_v in var_to_idx:
+                            matrix[var_to_idx[s_v]][var_to_idx[s_v]] = round(float(bias), 4)
+                    for (u, v), bias in target_model.quadratic.items():
+                        s_u, s_v = str(u), str(v)
+                        if s_u in var_to_idx and s_v in var_to_idx:
+                            i, j = var_to_idx[s_u], var_to_idx[s_v]
+                            matrix[i][j] = round(float(bias), 4)
+                            matrix[j][i] = round(float(bias), 4)
+                elif isinstance(target_model, dict):
+                    for (u, v), bias in target_model.items():
+                        s_u, s_v = str(u), str(v)
+                        if s_u in var_to_idx and s_v in var_to_idx:
+                            i, j = var_to_idx[s_u], var_to_idx[s_v]
+                            matrix[i][j] = round(float(bias), 4)
+                            if i != j:
+                                matrix[j][i] = round(float(bias), 4)
+
+                # Construct energy spectrum distribution (top 12 samples)
+                energy_dist = []
+                for s in target_sampleset.data(fields=['sample', 'energy', 'num_occurrences'], sorted_by='energy'):
+                    clean_sample = {str(k): int(v) for k, v in s.sample.items() if not str(k).startswith('slack_')}
+                    bitstring = "".join(str(clean_sample.get(v, 0)) for v in var_names)
+                    energy_dist.append({
+                        "energy": round(float(s.energy), 4),
+                        "sample": clean_sample,
+                        "num_occurrences": int(s.num_occurrences),
+                        "bitstring": bitstring
+                    })
+                    if len(energy_dist) >= 12:
+                        break
+
+                total_reads = int(sum(target_sampleset.record.num_occurrences)) if hasattr(target_sampleset, 'record') and 'num_occurrences' in target_sampleset.record.dtype.names else len(target_sampleset)
+
+                opt_results = {
+                    "energy": round(float(best.energy), 4),
+                    "sample": {str(k): int(v) for k, v in best.sample.items() if not str(k).startswith('slack_')},
+                    "num_variables": len(var_names),
+                    "variables": var_names,
+                    "qubo_matrix": matrix,
+                    "energy_distribution": energy_dist,
+                    "num_reads": total_reads,
+                    "cloud_rerouted": _cloud_rerouted
+                }
         except Exception as e:
             opt_results = {"error": str(e)}
 

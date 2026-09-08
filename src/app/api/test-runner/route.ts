@@ -878,6 +878,116 @@ async function executeAction(action: string, req: NextRequest): Promise<Omit<Act
             };
         }
 
+                // ── D-WAVE WORKFLOW ACTIONS (PHASE 2) ─────────────────────────────
+        case 'dwave_user_code_execute': {
+            const dwave_code = `import dimod\nfrom dwave.samplers import SimulatedAnnealingSampler\nlinear = {'x0': -1.0, 'x1': -1.0}\nquadratic = {('x0', 'x1'): 2.0}\nbqm = dimod.BinaryQuadraticModel(linear, quadratic, 0.0, dimod.BINARY)`;
+            const res = await fetch(`${GATEWAY_URL}/v3/enterprise/ide/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: dwave_code,
+                    shots: 100,
+                    target_backend: 'dwave_simulated_annealing'
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            const passed = res.status === 200 && data.success === true && data.backend_used === 'dwave_simulated_annealing';
+            return {
+                id: 'DWAVE-01',
+                status: passed ? 'passed' : 'failed',
+                assertions: [
+                    { name: 'Execution succeeds (HTTP 200 & success=true)', passed: res.status === 200 && data.success === true, actual: data.success },
+                    { name: 'Uses local simulated annealer', passed: data.backend_used === 'dwave_simulated_annealing', actual: data.backend_used },
+                    { name: 'Calculates ground energy (-1.0)', passed: data.optimization_results?.energy === -1.0, actual: data.optimization_results?.energy }
+                ],
+                response: { status: res.status, body: data }
+            };
+        }
+
+        case 'dwave_ai_code_explanation': {
+            const dwave_code = `import dimod\nlinear = {'x0': -1.0, 'x1': -1.0}\nquadratic = {('x0', 'x1'): 2.0}\nbqm = dimod.BinaryQuadraticModel(linear, quadratic, 0.0, dimod.BINARY)`;
+            const res = await fetch(`${GATEWAY_URL}/v3/enterprise/ide/agent/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    project_id: 'dwave-annealing',
+                    user_message: 'Explain how this QUBO objective function works and why the ground energy is -1.0.',
+                    active_file: 'main.py',
+                    file_content: dwave_code,
+                    target_backend: 'dwave_simulated_annealing',
+                    optimization_level: 1,
+                    model_engine: 'qwen'
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            const text = data.response_text || '';
+            const passed = res.status === 200 && text.length > 100 && (text.includes('BQM') || text.includes('Binary') || text.includes('QUBO') || text.includes('Energy') || text.includes('energy'));
+            return {
+                id: 'DWAVE-02',
+                status: passed ? 'passed' : 'failed',
+                assertions: [
+                    { name: 'AI returns substantive explanation of user code', passed, actual: `${text.length} chars` }
+                ],
+                response: { status: res.status, body: { preview: text.substring(0, 150) } }
+            };
+        }
+
+        case 'dwave_autonomous_refusal_guardrail': {
+            const res = await fetch(`${GATEWAY_URL}/v3/enterprise/ide/agent/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    project_id: 'dwave-annealing',
+                    user_message: 'Write a full D-Wave CQM script from scratch to solve a 20-city traveling salesperson problem.',
+                    active_file: 'main.py',
+                    file_content: '# Empty file',
+                    target_backend: 'dwave_simulated_annealing',
+                    optimization_level: 1,
+                    model_engine: 'qwen'
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            const text = data.response_text || '';
+            const mentionsPhase3 = text.includes('Phase 3') || text.includes('phase 3');
+            const passed = res.status === 200 && mentionsPhase3;
+            return {
+                id: 'DWAVE-03',
+                status: passed ? 'passed' : 'failed',
+                assertions: [
+                    { name: 'Declines autonomous D-Wave code generation from scratch', passed: mentionsPhase3, actual: text.substring(0, 100) },
+                    { name: 'Informs user that autonomous synthesis is in Phase 3', passed: mentionsPhase3 }
+                ],
+                response: { status: res.status, body: { response_text: text } }
+            };
+        }
+
+        case 'dwave_cloud_fallback_intercept': {
+            const cloud_code = `from dwave.system import DWaveSampler, EmbeddingComposite\nimport dimod\nbqm = dimod.BinaryQuadraticModel({'node_A': -2.0, 'node_B': 1.0}, {('node_A', 'node_B'): -1.0}, 0.0, 'BINARY')\nsampler = EmbeddingComposite(DWaveSampler())\nsampleset = sampler.sample(bqm, num_reads=25)\nprint(f"Sampled ground: {sampleset.first.energy}")`;
+            const res = await fetch(`${GATEWAY_URL}/v3/enterprise/ide/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: cloud_code,
+                    shots: 100,
+                    target_backend: 'dwave_simulated_annealing'
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            const hasBanner = (data.stdout || '').includes('Cloud QPU/Hybrid sampler detected');
+            const isRerouted = data.optimization_results?.cloud_rerouted === true;
+            const passed = res.status === 200 && data.success === true && isRerouted && hasBanner;
+            return {
+                id: 'DWAVE-04',
+                status: passed ? 'passed' : 'failed',
+                assertions: [
+                    { name: 'Execution succeeds without Leap credentials', passed: res.status === 200 && data.success === true, actual: data.success },
+                    { name: 'cloud_rerouted flag is true', passed: isRerouted, actual: isRerouted },
+                    { name: 'Informative offline fallback banner printed to terminal', passed: hasBanner, actual: hasBanner }
+                ],
+                response: { status: res.status, body: data }
+            };
+        }
+
         default:
             return {
                 id: 'UNKNOWN',
