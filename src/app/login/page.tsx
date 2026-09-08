@@ -157,7 +157,7 @@ function LoginForm() {
                         {mode === 'signup' && (
                             <>
                                 <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200/60 mb-3">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">I am registering as a:</label>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">I am registering as a:</label>
                                     <div className="flex gap-2">
                                         <button 
                                             type="button"
@@ -177,7 +177,7 @@ function LoginForm() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-700 pl-1">First Name</label>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">First Name</label>
                                         <input
                                             type="text"
                                             value={firstName}
@@ -187,7 +187,7 @@ function LoginForm() {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-700 pl-1">Last Name</label>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Last Name</label>
                                         <input
                                             type="text"
                                             value={lastName}
@@ -198,7 +198,7 @@ function LoginForm() {
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-700 pl-1">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
                                         {isStudent ? 'University / Institute' : 'Company / Organization'}
                                     </label>
                                     <input
@@ -213,38 +213,47 @@ function LoginForm() {
                         )}
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-700 pl-1">Email</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
                             <div className="relative group">
-                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-[#3066bb] transition-colors">
+                                <div 
+                                    style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
+                                    className="pointer-events-none text-slate-400 group-focus-within:text-[#3066bb] transition-colors"
+                                >
                                     <Mail size={16} />
                                 </div>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
+                                    style={{ paddingLeft: '42px', paddingRight: '14px' }}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
                                     placeholder="name@example.com"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-700 pl-1">Password</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
                             <div className="relative group">
-                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-[#3066bb] transition-colors">
+                                <div 
+                                    style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
+                                    className="pointer-events-none text-slate-400 group-focus-within:text-[#3066bb] transition-colors"
+                                >
                                     <Lock size={16} />
                                 </div>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-11 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
+                                    style={{ paddingLeft: '42px', paddingRight: '42px' }}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                                    style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
+                                    className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                                 >
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
