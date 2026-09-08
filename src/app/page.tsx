@@ -102,98 +102,246 @@ export default function LandingPage() {
 
       {/* Main Content */}
       <main
-        style={{ paddingTop: '72px', paddingBottom: '120px' }}
-        className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 flex flex-col items-center"
+        style={{
+          paddingTop: '64px',
+          paddingBottom: '120px',
+          maxWidth: '1200px',
+          width: '100%',
+          margin: '0 auto',
+          paddingLeft: '24px',
+          paddingRight: '24px',
+          boxSizing: 'border-box'
+        }}
+        className="relative z-10 flex flex-col items-center"
       >
-        {/* Hero Section: 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center w-full mb-10">
-          
+        {/* Hero Section: 2-Column Side-by-Side Layout */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '36px',
+            width: '100%',
+            marginBottom: '40px'
+          }}
+        >
           {/* Left Column: Heading + Featured Card */}
-          <div className="lg:col-span-7 flex flex-col justify-center">
-            
+          <div
+            style={{
+              flex: '1 1 540px',
+              maxWidth: '680px',
+              minWidth: '320px'
+            }}
+          >
             {/* Hero Text */}
-            <div className="text-left mb-6">
-              <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-bold tracking-tight mb-3 leading-[1.1] text-slate-900">
+            <div style={{ textAlign: 'left', marginBottom: '28px' }}>
+              <h1
+                style={{
+                  fontSize: 'clamp(2.5rem, 4.5vw, 3.5rem)',
+                  fontWeight: 800,
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.025em',
+                  color: '#0F172A',
+                  marginBottom: '16px'
+                }}
+              >
                 The Future of <br />
-                <span className="text-[#3066bb]">
+                <span style={{ color: '#2E65BF' }}>
                   Quantum Analysis
                 </span>
               </h1>
-              <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-1.5">
+              <h2
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  color: '#1E293B',
+                  marginBottom: '8px'
+                }}
+              >
                 One platform. Every quantum workflow.
               </h2>
-              <p className="text-xs sm:text-sm md:text-base text-slate-500 max-w-xl">
+              <p
+                style={{
+                  fontSize: '0.95rem',
+                  color: '#64748B',
+                  maxWidth: '520px',
+                  lineHeight: 1.55
+                }}
+              >
                 Choose the workspace built for the way you want to work with quantum computing.
               </p>
             </div>
 
-            {/* Featured Hero Card */}
+            {/* Featured Hero Card (No Outlines, Pure White Elevation) */}
             <div
               onClick={handleLaunchIde}
-              className="group relative p-6 sm:p-8 rounded-3xl bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer overflow-hidden border border-slate-200/70"
+              className="group relative bg-white hover:-translate-y-1 active:scale-[0.995] transition-all duration-300 cursor-pointer"
+              style={{
+                borderRadius: '24px',
+                padding: '28px 32px',
+                boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.06), 0 0 1px 0 rgba(0, 0, 0, 0.08)',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
             >
-              <div className="relative z-10">
-                {/* Status Pills */}
-                <div className="flex flex-wrap items-center gap-2 mb-3.5">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider bg-[#3066bb] text-white shadow-xs uppercase">
-                    <Sparkles size={11} />
-                    Available Now
-                  </span>
-                  <span className="text-[11px] font-medium text-[#3066bb] bg-blue-50 px-2.5 py-1 rounded-full">
-                    Build • Visualize • Simulate
-                  </span>
-                </div>
+              {/* Status Pills */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 12px',
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    letterSpacing: '0.05em',
+                    backgroundColor: '#2E65BF',
+                    color: '#ffffff',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  <Sparkles size={11} />
+                  Available Now
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: '#2E65BF',
+                    backgroundColor: '#EFF6FF',
+                    padding: '4px 12px',
+                    borderRadius: '9999px'
+                  }}
+                >
+                  Build • Visualize • Simulate
+                </span>
+              </div>
 
-                {/* Title & Icon */}
-                <div className="flex items-center gap-3 mb-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#3066bb] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform shrink-0">
-                    <Code2 size={20} />
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight group-hover:text-[#3066bb] transition-colors">
-                    Quantum IDE & Playground
-                  </h3>
+              {/* Title & Icon */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    backgroundColor: '#2E65BF',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <Code2 size={20} />
                 </div>
+                <h3
+                  style={{
+                    fontSize: '1.45rem',
+                    fontWeight: 700,
+                    color: '#0F172A',
+                    letterSpacing: '-0.02em'
+                  }}
+                >
+                  Quantum IDE &amp; Playground
+                </h3>
+              </div>
 
-                {/* Description & Action Button */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-md">
-                    Your interactive environment for writing quantum code, visualizing multi-qubit circuits in real-time, and running simulations across dual Qiskit &amp; D-Wave backends.
-                  </p>
-                  <div className="shrink-0">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLaunchIde();
-                      }}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#3066bb] hover:bg-[#255299] text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer whitespace-nowrap"
-                    >
-                      <span>Launch IDE</span>
-                      <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </div>
+              {/* Description & Action Button */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '18px',
+                  marginTop: '12px'
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '0.85rem',
+                    color: '#475569',
+                    lineHeight: 1.55,
+                    maxWidth: '380px',
+                    margin: 0
+                  }}
+                >
+                  Your interactive environment for writing quantum code, visualizing multi-qubit circuits in real-time, and running simulations across dual Qiskit &amp; D-Wave backends.
+                </p>
+                <div style={{ flexShrink: 0 }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLaunchIde();
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '12px 24px',
+                      backgroundColor: '#2E65BF',
+                      color: '#ffffff',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      borderRadius: '14px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(46, 101, 191, 0.25)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <span>Launch IDE</span>
+                    <ArrowRight size={14} />
+                  </button>
                 </div>
               </div>
             </div>
-
           </div>
 
-          {/* Right Column: Quantum Chandelier Floating Visual */}
-          <div className="lg:col-span-5 flex items-center justify-center relative py-4 lg:py-0">
-            {/* Soft Luminescent Ambient Glow */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-72 h-72 rounded-full bg-blue-400/10 blur-3xl" />
-            </div>
-
-            {/* Chandelier Image */}
-            <div className="relative z-10 flex items-center justify-center transition-transform duration-700 hover:scale-[1.03]">
-              <img
-                src="/quantum-computer.png"
-                alt="Quantum Computer Chandelier"
-                className="w-full max-w-[340px] sm:max-w-[400px] lg:max-w-[450px] h-auto object-contain drop-shadow-xl"
-              />
-            </div>
+          {/* Right Column: Quantum Chandelier Sized & Positioned */}
+          <div
+            style={{
+              flex: '0 1 420px',
+              width: '420px',
+              maxWidth: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'relative',
+              margin: '0 auto'
+            }}
+          >
+            {/* Ambient Cyan/Blue Luminescence */}
+            <div
+              style={{
+                position: 'absolute',
+                width: '320px',
+                height: '320px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(46, 101, 191, 0.12)',
+                filter: 'blur(50px)',
+                pointerEvents: 'none'
+              }}
+            />
+            <img
+              src="/quantum-computer.png"
+              alt="Quantum Computer Chandelier"
+              style={{
+                position: 'relative',
+                zIndex: 1,
+                width: '100%',
+                maxWidth: '400px',
+                height: 'auto',
+                maxHeight: '480px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 15px 25px rgba(46, 101, 191, 0.15))'
+              }}
+            />
           </div>
-
         </div>
 
         {/* ───────────────────────────────────────────────────────────── */}
