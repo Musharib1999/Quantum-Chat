@@ -410,6 +410,96 @@ function parseQiskitCodeToGates(code: string, numQubits: number = 4): Array<{ na
   return gates;
 }
 
+
+// ── ⚛️ INSTANT QUBO -> QAOA DUAL CIRCUIT PARSER (ZERO LATENCY CANVAS SYNTHESIS) ──
+function parseQuboCodeToQaoaGates(code: string): { numQubits: number; gates: Array<{ name: string; qubit: number; step: number; target?: number; role?: 'control' | 'target' | 'single' }> } {
+  if (!code) return { numQubits: 4, gates: [] };
+
+  const pairPattern = /\(\s*(?:['"]?(\w+)['"]?)\s*,\s*(?:['"]?(\w+)['"]?)\s*\)\s*:\s*([+-]?\d+(?:\.\d+)?)/g;
+  const matches = Array.from(code.matchAll(pairPattern));
+  if (matches.length === 0) {
+    return { numQubits: 4, gates: [] };
+  }
+
+  const varMap: Record<string, number> = {};
+  const diagEntries: Record<number, number> = {};
+  const offDiagEntries: Array<[number, number, number]> = [];
+
+  for (const m of matches) {
+    const u = m[1];
+    const v = m[2];
+    const val = parseFloat(m[3]);
+
+    if (varMap[u] === undefined) {
+      varMap[u] = /^\d+$/.test(u) ? parseInt(u, 10) : Object.keys(varMap).length;
+    }
+    if (varMap[v] === undefined) {
+      varMap[v] = /^\d+$/.test(v) ? parseInt(v, 10) : Object.keys(varMap).length;
+    }
+
+    const iu = varMap[u];
+    const iv = varMap[v];
+    if (iu === iv) {
+      diagEntries[iu] = val;
+    } else {
+      offDiagEntries.push([Math.min(iu, iv), Math.max(iu, iv), val]);
+    }
+  }
+
+  const maxVarIndex = Math.max(...Object.values(varMap), 0);
+  const numQubits = Math.max(1, Math.min(16, maxVarIndex + 1));
+  const gates: Array<{ name: string; qubit: number; step: number; target?: number; role?: 'control' | 'target' | 'single' }> = [];
+  const stepTrack: Record<number, number> = {};
+  for (let q = 0; q < numQubits; q++) stepTrack[q] = 0;
+
+  // Step 0: Hadamard on all qubits (Equal superposition)
+  for (let q = 0; q < numQubits; q++) {
+    gates.push({ name: 'h', qubit: q, step: 0, role: 'single' });
+    stepTrack[q] = 1;
+  }
+
+  // Cost Hamiltonian: RZZ two-qubit interactions
+  let currStep = 1;
+  for (const [u, v, _] of offDiagEntries) {
+    if (u < numQubits && v < numQubits) {
+      const s = Math.max(stepTrack[u] || 1, stepTrack[v] || 1, currStep);
+      if (s < 8) {
+        gates.push({ name: 'rzz', qubit: u, step: s, target: v, role: 'control' });
+        gates.push({ name: 'rzz', qubit: v, step: s, target: u, role: 'target' });
+        stepTrack[u] = s + 1;
+        stepTrack[v] = s + 1;
+        currStep = Math.max(currStep, s);
+      }
+    }
+  }
+
+  // Diagonal linear terms: RZ single-qubit phase
+  const rzStep = Math.min(8, Math.max(...Object.values(stepTrack)));
+  for (let q = 0; q < numQubits; q++) {
+    if (rzStep < 8) {
+      gates.push({ name: 'rz', qubit: q, step: rzStep, role: 'single' });
+      stepTrack[q] = rzStep + 1;
+    }
+  }
+
+  // Mixer Hamiltonian: RX on all qubits
+  const rxStep = Math.min(8, Math.max(...Object.values(stepTrack)));
+  for (let q = 0; q < numQubits; q++) {
+    if (rxStep < 8) {
+      gates.push({ name: 'rx', qubit: q, step: rxStep, role: 'single' });
+      stepTrack[q] = rxStep + 1;
+    }
+  }
+
+  // Measurement readout layer
+  const measStep = Math.min(9, Math.max(...Object.values(stepTrack)));
+  for (let q = 0; q < numQubits; q++) {
+    gates.push({ name: 'measure', qubit: q, step: measStep, role: 'single' });
+  }
+
+  return { numQubits, gates };
+}
+
 export default function QuantumIDE() {
   const { logout } = useAuth();
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -438,6 +528,7 @@ export default function QuantumIDE() {
   const [optimizationLevel, setOptimizationLevel] = useState<number>(2);
   const [shots, setShots] = useState<number>(1024);
   const [isRunning, setIsRunning] = useState(false);
+
   const [isCopilotThinking, setIsCopilotThinking] = useState(false);
   const [agentPhase, setAgentPhase] = useState<AgentPhase>('idle');
   const [activeToolDisplay, setActiveToolDisplay] = useState<string>('');
@@ -1056,6 +1147,40 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   const [projectName, setProjectName] = useState('my-quantum-project');
   const [projectFiles, setProjectFiles] = useState(initialProjectTemplates['my-quantum-project'].files);
   const [activeFile, setActiveFile] = useState('main.py');
+  const autoSyncTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const syncCircuitBackground = useCallback(async (codeToSync: string) => {
+    try {
+      const res = await fetch('http://localhost:8002/v3/enterprise/ide/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: projectName,
+          file_name: activeFile,
+          code: codeToSync,
+          target_backend: targetBackend,
+          shots: Number(shots) || 1024,
+          project_files: Object.fromEntries(
+            Object.entries(projectFiles).map(([name, f]) => [name, f.content])
+          )
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          if (data.circuit_ascii) setCircuitAscii(data.circuit_ascii);
+          if (data.circuit_gates && data.circuit_gates.length > 0) {
+            setCircuitGates(data.circuit_gates as any);
+            if (data.active_qubits) setCanvasQubits(data.active_qubits);
+          }
+          if (data.optimization_results) setOptimizationResults(data.optimization_results);
+        }
+      }
+    } catch (e) {
+      // Silent in background
+    }
+  }, [projectName, activeFile, targetBackend, shots, projectFiles]);
+
 
   // Unified Project Switcher with Full Workspace & Chat State Synchronization
   const handleSwitchProject = (targetProject: string) => {
@@ -1255,12 +1380,32 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   useEffect(() => {
     if (projectFiles[activeFile]?.content) {
       const code = projectFiles[activeFile].content;
-      const declaredQubits = parseQiskitQubitCount(code);
-      const parsed = parseQiskitCodeToGates(code, declaredQubits);
-      const maxGateQubit = parsed.length > 0 ? Math.max(...parsed.map(g => g.qubit + 1)) : 2;
-      const finalQubits = Math.max(declaredQubits, maxGateQubit);
-      setCanvasQubits(finalQubits);
-      setCircuitGates(parsed);
+      const isDwave = code.includes('dimod') ||
+                      code.includes('neal') ||
+                      code.includes('SimulatedAnnealingSampler') ||
+                      code.includes('DWaveSampler') ||
+                      code.includes('BinaryQuadraticModel') ||
+                      code.includes('Q = {') ||
+                      code.includes('Q ={') ||
+                      targetBackend.includes('dwave');
+
+      if (isDwave) {
+        const quboRes = parseQuboCodeToQaoaGates(code);
+        if (quboRes.gates.length > 0) {
+          setCanvasQubits(quboRes.numQubits);
+          setCircuitGates(quboRes.gates);
+        }
+        syncCircuitBackground(code);
+      } else {
+        const declaredQubits = parseQiskitQubitCount(code);
+        const parsed = parseQiskitCodeToGates(code, declaredQubits);
+        if (parsed.length > 0 || code.includes('QuantumCircuit')) {
+          const maxGateQubit = parsed.length > 0 ? Math.max(...parsed.map(g => g.qubit + 1)) : 2;
+          const finalQubits = Math.max(declaredQubits, maxGateQubit);
+          setCanvasQubits(finalQubits);
+          setCircuitGates(parsed);
+        }
+      }
     }
   }, [activeFile]);
 
@@ -2351,12 +2496,37 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   });
 
                   // 🔄 LIVE CODE -> CANVAS SYNCHRONIZATION (DYNAMIC QUBIT COUNT & GATES)!
-                  const declaredQubits = parseQiskitQubitCount(val);
-                  const parsedGates = parseQiskitCodeToGates(val, declaredQubits);
-                  const maxGateQubit = parsedGates.length > 0 ? Math.max(...parsedGates.map(g => g.qubit + 1)) : 2;
-                  const finalQubits = Math.max(declaredQubits, maxGateQubit);
-                  setCanvasQubits(finalQubits);
-                  setCircuitGates(parsedGates);
+                  const isDwave = val.includes('dimod') ||
+                                  val.includes('neal') ||
+                                  val.includes('SimulatedAnnealingSampler') ||
+                                  val.includes('DWaveSampler') ||
+                                  val.includes('BinaryQuadraticModel') ||
+                                  val.includes('Q = {') ||
+                                  val.includes('Q ={') ||
+                                  targetBackend.includes('dwave');
+
+                  if (isDwave) {
+                    const quboRes = parseQuboCodeToQaoaGates(val);
+                    if (quboRes.gates.length > 0) {
+                      setCanvasQubits(quboRes.numQubits);
+                      setCircuitGates(quboRes.gates);
+                    }
+                  } else {
+                    const declaredQubits = parseQiskitQubitCount(val);
+                    const parsedGates = parseQiskitCodeToGates(val, declaredQubits);
+                    if (parsedGates.length > 0 || val.includes('QuantumCircuit')) {
+                      const maxGateQubit = parsedGates.length > 0 ? Math.max(...parsedGates.map(g => g.qubit + 1)) : 2;
+                      const finalQubits = Math.max(declaredQubits, maxGateQubit);
+                      setCanvasQubits(finalQubits);
+                      setCircuitGates(parsedGates);
+                    }
+                  }
+
+                  // ⚡ Continuous Debounced Auto-Sync (700ms) without manual clicking
+                  if (autoSyncTimer.current) clearTimeout(autoSyncTimer.current);
+                  autoSyncTimer.current = setTimeout(() => {
+                    syncCircuitBackground(val);
+                  }, 700);
                 }}
                 spellCheck={false}
                 style={{ 
