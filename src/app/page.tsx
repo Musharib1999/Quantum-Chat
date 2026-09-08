@@ -30,7 +30,7 @@ interface StudioCard {
 }
 
 export default function LandingPage() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
   const [restrictedModalInfo, setRestrictedModalInfo] = useState<{ title: string; description: string } | null>(null);
 
@@ -139,52 +139,10 @@ export default function LandingPage() {
         />
       </div>
 
-      {/* Navigation */}
-      <nav className="sticky top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 border-slate-200 bg-white/80">
-        <div className="w-full px-6 md:px-10 h-[72px] flex items-center justify-between">
-
-          {/* Logo Section */}
-          <div className="flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
-            <a href="https://www.quantumcomputers.guru/" className="flex items-center">
-              <img
-                src="/logo.png"
-                alt="Quantum Guru"
-                style={{ height: '54px', width: 'auto', maxHeight: '56px' }}
-                className="w-auto object-contain cursor-pointer drop-shadow-sm"
-              />
-            </a>
-          </div>
-
-          {/* Right Action: Prominent Login / Logout Button */}
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <div className="flex items-center gap-4">
-                {user?.email && (
-                  <span className="hidden md:inline text-xs text-slate-500 font-mono">
-                    {user.email}
-                  </span>
-                )}
-                <button
-                  onClick={logout}
-                  className="px-6 py-2 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white font-semibold rounded-lg transition-all shadow-sm text-sm cursor-pointer"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="px-6 py-2 bg-[#3066bb] text-white border-2 border-[#3066bb] hover:bg-white hover:text-[#3066bb] font-semibold rounded-lg transition-all shadow-sm text-sm"
-              >
-                Login
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
+      
 
       {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-10 pb-20 flex flex-col items-center">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-16 md:pt-20 pb-20 flex flex-col items-center">
         <div className="text-center mb-8 animate-fade-in-up">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-3 leading-tight">
             The Future of <br />
