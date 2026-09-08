@@ -6,6 +6,7 @@ import sys
 import time
 import traceback
 import subprocess
+import tempfile
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 
@@ -43,6 +44,7 @@ class CodeExecutionRequest(BaseModel):
     code: str
     target_backend: Optional[str] = "auto"
     shots: Optional[int] = 1024
+    project_files: Optional[Dict[str, str]] = None
 
 
 class CodeExecutionResponse(BaseModel):
@@ -99,7 +101,7 @@ DISALLOWED_MODULES = {
 }
 
 DISALLOWED_CALLS = {
-    'eval', 'exec', 'compile', 'open', '__import__', 'getattr', 'setattr', 'delattr',
+    'eval', 'exec', 'compile', '__import__', 'getattr', 'setattr', 'delattr',
     'globals', 'locals', 'vars', 'memoryview'
 }
 
@@ -174,7 +176,9 @@ def validate_code_security(code_str: str) -> None:
 
 
 # 🛡️ DEFENSE LAYER 2: PROCESS-ISOLATED RUNNER WITH 5.0S HARD TIMEOUT
-ISOLATED_RUNNER_TEMPLATE = '''import sys, io, json, time, traceback
+ISOLATED_RUNNER_TEMPLATE = '''import sys, io, json, time, traceback, os
+if os.getcwd() not in sys.path:
+    sys.path.insert(0, os.getcwd())
 import numpy as np
 import qiskit
 from qiskit import QuantumCircuit
@@ -297,9 +301,23 @@ def extract_circuit_gates_inner(qc):
             step_track[q] = current_step + 1
     return gates
 
+_orig_open = open
+_ws_cwd = os.path.abspath(os.getcwd())
+def _safe_open(file, mode='r', *args, **kwargs):
+    if any(m in mode for m in ('w', 'a', 'x', '+')):
+        raise PermissionError("Write access to files is prohibited in the execution sandbox.")
+    abs_p = os.path.abspath(os.path.join(_ws_cwd, file) if not os.path.isabs(file) else file)
+    if not abs_p.startswith(_ws_cwd):
+        raise PermissionError(f"Access to file '{file}' outside workspace is prohibited.")
+    return _orig_open(abs_p, mode, *args, **kwargs)
+
+import builtins
+builtins.open = _safe_open
+
 code = sys.stdin.read()
 exec_globals = {
     "__name__": "__main__",
+    "open": _safe_open,
     "np": np, "numpy": np,
     "qiskit": qiskit, "QuantumCircuit": QuantumCircuit,
 }
@@ -517,6 +535,10 @@ def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
     # 🛡️ Layer 1: AST Pre-Execution Security & Limit Validation
     try:
         validate_code_security(code)
+        if req.project_files:
+            for f_name, f_content in req.project_files.items():
+                if f_name.endswith(".py") and f_content:
+                    validate_code_security(f_content)
     except SandboxSecurityError as sec_err:
         return CodeExecutionResponse(
             success=False,
@@ -527,17 +549,39 @@ def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
             error=str(sec_err)
         )
 
-    # 🛡️ Layer 2: Process-Isolated Execution with 5.0s Hard Timeout
+    # 🛡️ Layer 2: Process-Isolated Execution with 5.0s Hard Timeout & Multi-File Workspace
     runner_script = ISOLATED_RUNNER_TEMPLATE.replace("__SHOTS_VAL__", str(shots))
 
     try:
-        proc = subprocess.run(
-            [sys.executable, "-c", runner_script],
-            input=code,
-            capture_output=True,
-            text=True,
-            timeout=5.0
-        )
+        with tempfile.TemporaryDirectory(prefix="quantum_ws_") as tmp_workspace:
+            # Write all project files to isolated workspace directory
+            if req.project_files:
+                for rel_path, file_content in req.project_files.items():
+                    norm_path = os.path.normpath(rel_path).lstrip("/\\")
+                    if ".." in norm_path.split(os.path.sep):
+                        continue
+                    target_p = os.path.join(tmp_workspace, norm_path)
+                    os.makedirs(os.path.dirname(target_p), exist_ok=True)
+                    with open(target_p, "w", encoding="utf-8") as fp:
+                        fp.write(file_content)
+
+            # Ensure the actively executed file is present in workspace
+            if req.file_name:
+                norm_act = os.path.normpath(req.file_name).lstrip("/\\")
+                if ".." not in norm_act.split(os.path.sep):
+                    act_full = os.path.join(tmp_workspace, norm_act)
+                    os.makedirs(os.path.dirname(act_full), exist_ok=True)
+                    with open(act_full, "w", encoding="utf-8") as fp:
+                        fp.write(code)
+
+            proc = subprocess.run(
+                [sys.executable, "-c", runner_script],
+                input=code,
+                capture_output=True,
+                text=True,
+                timeout=5.0,
+                cwd=tmp_workspace
+            )
     except subprocess.TimeoutExpired:
         exec_ms = round((time.time() - t0) * 1000, 2)
         timeout_msg = "ExecutionTimeoutError: Execution exceeded the 5.0-second safety threshold and was terminated. Infinite loops or runaway operations are prohibited."
