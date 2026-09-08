@@ -188,7 +188,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20 flex flex-col justify-center min-h-[calc(100vh-80px)]">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-28 md:pt-32 pb-20 flex flex-col items-center">
         <div className="text-center mb-12 animate-fade-in-up">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-5 leading-tight">
             The Future of <br />
