@@ -84,7 +84,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen transition-colors duration-500 ease-in-out font-sans bg-[#F8FAFC] text-slate-900">
+    <div className="relative min-h-screen transition-colors duration-500 ease-in-out font-sans bg-[#F8FAFC] text-slate-900">
 
       {/* Background - Clean White with subtle grid */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -95,6 +95,18 @@ export default function LandingPage() {
             backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)'
           }}
         />
+      </div>
+
+      {/* Top Left Corner Logo */}
+      <div className="absolute top-6 left-6 md:top-8 md:left-10 z-20 flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
+        <a href="https://www.quantumcomputers.guru/" className="flex items-center">
+          <img
+            src="/logo.png"
+            alt="Quantum Guru"
+            style={{ height: '44px', width: 'auto' }}
+            className="w-auto object-contain cursor-pointer drop-shadow-xs"
+          />
+        </a>
       </div>
 
       {/* Main Content */}
