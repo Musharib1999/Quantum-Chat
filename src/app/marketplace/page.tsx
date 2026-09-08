@@ -911,7 +911,15 @@ export default function QuantumMarketplacePage() {
   };
 
   const router = useRouter();
-  const { user, isAuthenticated, login, logout } = useAuth();
+  const { user, isAuthenticated, isInitializing, login, logout } = useAuth();
+
+  React.useEffect(() => {
+    if (!isInitializing) {
+      if (!isAuthenticated || user?.role !== 'admin') {
+        router.replace('/ide');
+      }
+    }
+  }, [isInitializing, isAuthenticated, user, router]);
 
   // Auth Modal state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);

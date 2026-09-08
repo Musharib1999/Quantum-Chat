@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -8,14 +8,12 @@ import {
   Cpu,
   ArrowRight,
   Bot,
-  Lock as LockIcon,
   Unlock as UnlockIcon,
   Code2,
   Workflow,
   Boxes,
   GraduationCap,
   Clock,
-  Menu,
   X
 } from 'lucide-react';
 
@@ -34,10 +32,7 @@ interface StudioCard {
 export default function LandingPage() {
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [restrictedModalInfo, setRestrictedModalInfo] = useState<{ title: string; description: string } | null>(null);
-
-  const isAdmin = isAuthenticated && user?.role === 'admin';
 
   const studioCards: StudioCard[] = [
     {
@@ -60,7 +55,7 @@ export default function LandingPage() {
       accentColor: 'indigo',
       adminOnly: true,
       badgeText: 'Will be available soon',
-      actionText: 'Explore Studio'
+      actionText: 'Will be available soon'
     },
     {
       id: 'circuits',
@@ -71,7 +66,7 @@ export default function LandingPage() {
       accentColor: 'emerald',
       adminOnly: true,
       badgeText: 'Will be available soon',
-      actionText: 'Explore Circuits'
+      actionText: 'Will be available soon'
     },
     {
       id: 'algorithms',
@@ -82,7 +77,7 @@ export default function LandingPage() {
       accentColor: 'violet',
       adminOnly: true,
       badgeText: 'Will be available soon',
-      actionText: 'Explore Algorithms'
+      actionText: 'Will be available soon'
     },
     {
       id: 'marketplace',
@@ -93,7 +88,7 @@ export default function LandingPage() {
       accentColor: 'amber',
       adminOnly: true,
       badgeText: 'Will be available soon',
-      actionText: 'Explore Exchange'
+      actionText: 'Will be available soon'
     },
     {
       id: 'academy',
@@ -104,21 +99,15 @@ export default function LandingPage() {
       accentColor: 'rose',
       adminOnly: true,
       badgeText: 'Will be available soon',
-      actionText: 'Explore Academy'
+      actionText: 'Will be available soon'
     }
   ];
 
   const handleCardClick = (e: React.MouseEvent, card: StudioCard) => {
     e.preventDefault();
 
-    // 1. Require login for every card
-    if (!isAuthenticated) {
-      router.push(`/login?redirect=${encodeURIComponent(card.href)}`);
-      return;
-    }
-
-    // 2. If card is admin-only and user is not admin, show "Will be available soon" modal
-    if (card.adminOnly && !isAdmin) {
+    // 1. None of the 5 coming-soon studios can be accessed by users -> always open modal
+    if (card.id !== 'ide') {
       setRestrictedModalInfo({
         title: card.title,
         description: card.description
@@ -126,7 +115,13 @@ export default function LandingPage() {
       return;
     }
 
-    // 3. User is authorized -> navigate
+    // 2. Quantum IDE & Playground requires login
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=${encodeURIComponent(card.href)}`);
+      return;
+    }
+
+    // 3. User is authenticated -> navigate to IDE
     router.push(card.href);
   };
 
@@ -146,23 +141,23 @@ export default function LandingPage() {
 
       {/* Navigation */}
       <nav className="sticky top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 border-slate-200 bg-white/80">
-        <div className="w-full px-6 md:px-8 h-20 flex items-center justify-between">
+        <div className="w-full px-6 md:px-10 h-20 flex items-center justify-between">
 
-          {/* Logo Section */}
+          {/* Logo Section - prominent and properly sized */}
           <div className="flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
             <a href="https://www.quantumcomputers.guru/">
               <img
                 src="/logo.png"
                 alt="Quantum Guru"
-                className="h-[40px] md:h-[58px] w-auto object-contain cursor-pointer drop-shadow-xs"
+                className="h-[52px] sm:h-[60px] md:h-[66px] w-auto object-contain cursor-pointer drop-shadow-sm"
               />
             </a>
           </div>
 
-          {/* Right Action: Clean Authentication State (Test suite removed) */}
+          {/* Right Action: Prominent Login / Logout Button */}
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 {user?.email && (
                   <span className="hidden md:inline text-xs text-slate-500 font-mono">
                     {user.email}
@@ -170,7 +165,7 @@ export default function LandingPage() {
                 )}
                 <button
                   onClick={logout}
-                  className="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 rounded-lg transition-all bg-white shadow-2xs cursor-pointer"
+                  className="px-6 py-2 bg-white text-[#3066bb] border-2 border-[#3066bb] hover:bg-[#3066bb] hover:text-white font-semibold rounded-lg transition-all shadow-sm text-sm cursor-pointer"
                 >
                   Logout
                 </button>
@@ -178,7 +173,7 @@ export default function LandingPage() {
             ) : (
               <Link
                 href="/login"
-                className="px-5 py-1.5 bg-[#3066bb] text-white border-2 border-[#3066bb] hover:bg-white hover:text-[#3066bb] font-semibold rounded-lg transition-all shadow-xs text-xs"
+                className="px-6 py-2 bg-[#3066bb] text-white border-2 border-[#3066bb] hover:bg-white hover:text-[#3066bb] font-semibold rounded-lg transition-all shadow-sm text-sm"
               >
                 Login
               </Link>
@@ -237,7 +232,7 @@ export default function LandingPage() {
               {restrictedModalInfo.title}
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed mb-6">
-              This studio is currently in private preview for administrators and will be publicly available soon. In the meantime, you have full access to our active <strong>Quantum IDE & Playground</strong>!
+              This studio is currently under private development and will be available soon. In the meantime, you have full access to our active <strong>Quantum IDE & Playground</strong>!
             </p>
 
             <div className="flex items-center gap-3">
@@ -313,7 +308,7 @@ const FeatureCard = ({ card, onClick }: FeatureCardProps) => {
   };
 
   const colors = colorMap[card.accentColor];
-  const isAvailableSoon = card.adminOnly;
+  const isAvailableSoon = card.id !== 'ide';
 
   return (
     <div
@@ -351,7 +346,11 @@ const FeatureCard = ({ card, onClick }: FeatureCardProps) => {
 
       <div className="flex items-center gap-2 text-xs md:text-sm font-semibold transition-colors duration-300 text-slate-800 group-hover:text-[#3066bb] pt-2 border-t border-slate-50">
         <span>{card.actionText}</span>
-        <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+        {isAvailableSoon ? (
+          <Clock size={14} className="text-amber-600" />
+        ) : (
+          <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+        )}
       </div>
     </div>
   );
