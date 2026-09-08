@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { getCourses, getExercises } from '@/app/actions/admin';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import { shareSession } from '@/app/actions/history';
 import { Clock } from 'lucide-react';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
@@ -173,7 +174,16 @@ function DemoCountdown({ expiresAt }: { expiresAt: string }) {
 }
 
 export default function App() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isInitializing } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isInitializing) {
+      if (!isAuthenticated || user?.role !== 'admin') {
+        router.replace('/ide');
+      }
+    }
+  }, [isInitializing, isAuthenticated, user, router]);
   const getPipelineTitle = (pipeline: string) => {
     switch (pipeline) {
       case 'optimization': return 'Optimization Studio';
