@@ -400,6 +400,7 @@ export default function TestSuitePage() {
                             HIGH: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
                             MEDIUM: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
                             INFO: 'bg-slate-500/10 text-slate-400 border-slate-500/30',
+                            LOW: 'bg-slate-500/10 text-slate-400 border-slate-500/30',
                         }[def.severity];
 
                         return (

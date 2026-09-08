@@ -81,6 +81,11 @@ const TEST_ACTIONS = [
     { id: 'PERF-08', title: 'Pure Groq Production Mode Sanity', action: 'perf_env_sanity', category: 'Performance' },
     { id: 'PERF-09', title: 'Sequential Probe Burst Stability', action: 'perf_burst_stability', category: 'Performance' },
     { id: 'PERF-10', title: 'Audit Report Serializer Readiness', action: 'perf_audit_ready', category: 'Performance' },
+
+    // Category 6: D-Wave Annealing Workflow (Phase 2) (3)
+    { id: 'DWAVE-01', title: 'User BQM Execution on Local Annealer', action: 'dwave_user_code_execute', category: 'D-Wave Annealing' },
+    { id: 'DWAVE-02', title: 'AI Explanation of User-Written D-Wave Code', action: 'dwave_ai_code_explanation', category: 'D-Wave Annealing' },
+    { id: 'DWAVE-03', title: 'Autonomous Synthesis Guardrail (Phase 3)', action: 'dwave_autonomous_refusal_guardrail', category: 'D-Wave Annealing' },
 ];
 
 async function run() {

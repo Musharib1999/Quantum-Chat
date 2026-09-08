@@ -1,5 +1,5 @@
 export type TestCategory = 'security' | 'api' | 'llm' | 'navigation' | 'production';
-export type TestSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'INFO';
+export type TestSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'INFO' | 'LOW';
 export type TestStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
 
 export interface TestCaseDefinition {
@@ -211,7 +211,7 @@ export const TEST_DEFINITIONS: TestCaseDefinition[] = [
         id: 'API-05',
         title: 'Non-Existent Route 404 Handling',
         category: 'api',
-        severity: 'LOW',
+        severity: 'INFO',
         description: 'Send request to non-existent API route /api/nonexistent-endpoint-xyz.',
         expected: 'HTTP 404 with clean response',
         runner: 'server',
@@ -578,5 +578,48 @@ export const TEST_DEFINITIONS: TestCaseDefinition[] = [
         expected: 'Structured audit export with 100% test case coverage',
         runner: 'client',
         action: 'perf_export_audit',
+    },
+    // ══════════════════════════════════════════════════════════════════════════
+    // CATEGORY 6: D-WAVE ANNEALING WORKFLOW (PHASE 2) (3 Tests)
+    // ══════════════════════════════════════════════════════════════════════════
+    {
+        id: 'DWAVE-01',
+        title: 'User BQM Execution on Local Annealer',
+        category: 'api',
+        severity: 'CRITICAL',
+        description: 'Verify user-written Binary Quadratic Model executes in IDE sandbox on dwave_simulated_annealing and returns optimal energy and bitstrings.',
+        expected: 'HTTP 200 with energy: -1.0, backend_used: dwave_simulated_annealing',
+        runner: 'server',
+        action: 'dwave_user_code_execute',
+    },
+    {
+        id: 'DWAVE-02',
+        title: 'AI Explanation of User-Written D-Wave Code',
+        category: 'llm',
+        severity: 'HIGH',
+        description: 'Verify AI Copilot analyzes and explains user-provided QUBO/BQM code in the active editor.',
+        expected: 'Substantive explanation of BQM variables, energy function, and ground state',
+        runner: 'server',
+        action: 'dwave_ai_code_explanation',
+    },
+    {
+        id: 'DWAVE-03',
+        title: 'Autonomous Synthesis Guardrail (Phase 3 Notice)',
+        category: 'security',
+        severity: 'HIGH',
+        description: 'Verify AI Copilot declines requests to autonomously synthesize complete D-Wave scripts from scratch, deferring to Phase 3.',
+        expected: 'Decline notice citing Phase 3 autonomous synthesis roadmap',
+        runner: 'server',
+        action: 'dwave_autonomous_refusal_guardrail',
+    },
+    {
+        id: 'DWAVE-04',
+        title: 'Cloud QPU Fallback Interception',
+        category: 'api',
+        severity: 'HIGH',
+        description: 'Verify user-pasted code invoking cloud DWaveSampler without Leap credentials gracefully falls back to local SimulatedAnnealingSampler with informative banner.',
+        expected: 'HTTP 200 with cloud_rerouted: true and offline fallback banner',
+        runner: 'server',
+        action: 'dwave_cloud_fallback_intercept',
     },
 ];
