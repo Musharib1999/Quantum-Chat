@@ -141,7 +141,7 @@ export default function LandingPage() {
 
       {/* Navigation */}
       <nav className="sticky top-0 left-0 right-0 z-50 border-b backdrop-blur-md transition-all duration-300 border-slate-200 bg-white/80">
-        <div className="w-full px-6 md:px-10 h-20 flex items-center justify-between">
+        <div className="w-full px-6 md:px-10 h-24 flex items-center justify-between">
 
           {/* Logo Section */}
           <div className="flex items-center group cursor-pointer hover:opacity-90 transition-opacity">
@@ -149,7 +149,7 @@ export default function LandingPage() {
               <img
                 src="/logo.png"
                 alt="Quantum Guru"
-                style={{ height: '46px', width: 'auto', maxHeight: '50px' }}
+                style={{ height: '69px', width: 'auto', maxHeight: '72px' }}
                 className="w-auto object-contain cursor-pointer drop-shadow-sm"
               />
             </a>
