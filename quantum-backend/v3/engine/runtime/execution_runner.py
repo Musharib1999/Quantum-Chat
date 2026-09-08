@@ -63,7 +63,7 @@ class CodeExecutionResponse(BaseModel):
 
 
 def extract_circuit_gates(qc: QuantumCircuit) -> List[Dict[str, Any]]:
-    """Extract ordered gate operations for the interactive UI canvas."""
+    """Extract ordered gate operations for the interactive UI canvas with qubit, target, and role."""
     gates = []
     step_track = {i: 0 for i in range(qc.num_qubits)}
 
@@ -78,13 +78,52 @@ def extract_circuit_gates(qc: QuantumCircuit) -> List[Dict[str, Any]]:
             continue
 
         current_step = max(step_track[q] for q in q_indices)
+        params = [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]
 
-        gates.append({
-            "name": name,
-            "qubits": q_indices,
-            "step": current_step,
-            "params": [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]
-        })
+        if len(q_indices) == 1:
+            gates.append({
+                "name": name,
+                "qubit": q_indices[0],
+                "qubits": q_indices,
+                "step": current_step,
+                "role": "single",
+                "params": params
+            })
+        elif len(q_indices) == 2:
+            ctrl, tgt = q_indices[0], q_indices[1]
+            gates.append({
+                "name": name,
+                "qubit": ctrl,
+                "target": tgt,
+                "qubits": q_indices,
+                "step": current_step,
+                "role": "control",
+                "params": params
+            })
+            gates.append({
+                "name": name,
+                "qubit": tgt,
+                "target": ctrl,
+                "qubits": q_indices,
+                "step": current_step,
+                "role": "target",
+                "params": params
+            })
+        elif len(q_indices) == 3:
+            c1, c2, tgt = q_indices[0], q_indices[1], q_indices[2]
+            gates.append({"name": name, "qubit": c1, "target": tgt, "qubits": q_indices, "step": current_step, "role": "control", "params": params})
+            gates.append({"name": name, "qubit": c2, "target": tgt, "qubits": q_indices, "step": current_step, "role": "control", "params": params})
+            gates.append({"name": name, "qubit": tgt, "target": c1, "qubits": q_indices, "step": current_step, "role": "target", "params": params})
+        else:
+            for q in q_indices:
+                gates.append({
+                    "name": name,
+                    "qubit": q,
+                    "qubits": q_indices,
+                    "step": current_step,
+                    "role": "single",
+                    "params": params
+                })
 
         for q in q_indices:
             step_track[q] = current_step + 1
@@ -291,14 +330,56 @@ def extract_circuit_gates_inner(qc):
         if not q_indices:
             continue
         current_step = max(step_track[q] for q in q_indices)
-        gates.append({
-            "name": name,
-            "qubits": q_indices,
-            "step": current_step,
-            "params": [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]
-        })
+        params = [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]
+
+        if len(q_indices) == 1:
+            gates.append({
+                "name": name,
+                "qubit": q_indices[0],
+                "qubits": q_indices,
+                "step": current_step,
+                "role": "single",
+                "params": params
+            })
+        elif len(q_indices) == 2:
+            ctrl, tgt = q_indices[0], q_indices[1]
+            gates.append({
+                "name": name,
+                "qubit": ctrl,
+                "target": tgt,
+                "qubits": q_indices,
+                "step": current_step,
+                "role": "control",
+                "params": params
+            })
+            gates.append({
+                "name": name,
+                "qubit": tgt,
+                "target": ctrl,
+                "qubits": q_indices,
+                "step": current_step,
+                "role": "target",
+                "params": params
+            })
+        elif len(q_indices) == 3:
+            c1, c2, tgt = q_indices[0], q_indices[1], q_indices[2]
+            gates.append({"name": name, "qubit": c1, "target": tgt, "qubits": q_indices, "step": current_step, "role": "control", "params": params})
+            gates.append({"name": name, "qubit": c2, "target": tgt, "qubits": q_indices, "step": current_step, "role": "control", "params": params})
+            gates.append({"name": name, "qubit": tgt, "target": c1, "qubits": q_indices, "step": current_step, "role": "target", "params": params})
+        else:
+            for q in q_indices:
+                gates.append({
+                    "name": name,
+                    "qubit": q,
+                    "qubits": q_indices,
+                    "step": current_step,
+                    "role": "single",
+                    "params": params
+                })
+
         for q in q_indices:
             step_track[q] = current_step + 1
+
     return gates
 
 _orig_open = open
