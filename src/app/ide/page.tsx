@@ -1184,19 +1184,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
-      id: '1',
-      sender: 'user',
-      text: 'Optimize the 2-qubit CNOT depth for the active circuit in main.py and explain the reduction.'
-    },
-    {
-      id: '2',
+      id: 'welcome',
       sender: 'agent',
-      text: 'I analyzed your quantum circuit in `main.py` and ran Transpiler Pass Optimization (Level 2).\n\n- Depth Reduction: `6` $\\longrightarrow$ `4` (-33.3%)\n- 2-Qubit CNOTs: Reduced to 4 gates.\n- Code Mutation: `main.py` has been updated with the optimized commutative block.',
-      toolCall: {
-        name: 'Transpiler Pass Completed',
-        badge: '-33.3% Depth',
-        detail: 'Applied CommutativeCancellation & ConsolidateBlocks (Level 2).'
-      }
+      text: 'Hello! I am your Quantum Copilot. Ask me to explain your code, inspect your Hamiltonian, or analyze your circuit.'
     }
   ]);
 
