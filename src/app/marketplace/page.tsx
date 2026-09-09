@@ -1057,8 +1057,7 @@ export default function QuantumMarketplacePage() {
     setSandboxOutput(null);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002';
-      const res = await fetch(`${backendUrl}/v3/enterprise/ide/agent/chat`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002'}/v3/enterprise/ide/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -418,7 +418,7 @@ export default function App() {
           passed = false;
         }
       } else if (activeExercise.targetState === 'superposition') {
-        const total = Object.values(parsedCounts).reduce((a: any, b: any) => Number(a) + Number(b), 0);
+        const total = Object.values(parsedCounts).reduce((a, b) => a + b, 0);
         const distinct = Object.keys(parsedCounts).filter(k => (parsedCounts[k] / total) > 0.1);
         if (distinct.length >= 2) {
           logs.push(`✓ State verification passed: Superposition detected across states [${distinct.join(', ')}].`);
@@ -2101,7 +2101,7 @@ export default function App() {
                 </span>
               </div>
               <div className="space-y-2">
-                {courses.map((item: any) => {
+                {courses.map((item) => {
                   const isExpanded = expandedLearningLevel === item.level;
                   return (
                     <div 
@@ -2133,7 +2133,7 @@ export default function App() {
                                     Mod {midx + 1}: {mod.name}
                                   </h5>
                                   <div className="space-y-1 text-[11px] text-slate-600 pl-1.5">
-                                    {mod.topics.map((t: string, tidx: number) => (
+                                    {mod.topics.map((t: any, tidx: number) => (
                                       <div 
                                         key={tidx}
                                         onClick={(e) => {
@@ -2200,7 +2200,7 @@ export default function App() {
                             <div className="space-y-1.5">
                               <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500">Recommended Posts</span>
                               <div className="space-y-1 text-[11px] text-amber-600 pl-1.5">
-                                {item.posts.map((post: string, pidx: number) => (
+                                {item.posts.map((post: any, pidx: number) => (
                                   <a 
                                     key={pidx}
                                     href="#"
@@ -2306,8 +2306,8 @@ export default function App() {
                 if (k === null) {
                   k = Math.max(1, Math.ceil((details.variables?.length || 1) * 0.35));
                 }
-                const sortedCoeffs = [...absObjCoeffs].sort((a: number, b: number) => b - a);
-                const densitySum = sortedCoeffs.slice(0, k).reduce((a: number, b: number) => a + b, 0);
+                const sortedCoeffs = [...absObjCoeffs].sort((a, b) => b - a);
+                const densitySum = sortedCoeffs.slice(0, k).reduce((a, b) => a + b, 0);
                 return Number((densitySum + 1.0).toFixed(2));
               }
               return null;
@@ -2966,7 +2966,7 @@ export default function App() {
                           Module {midx + 1}: {mod.name}
                         </h5>
                         <ul className="list-disc pl-4 text-[11px] text-slate-600 space-y-0.5 leading-relaxed">
-                          {mod.topics.map((topic: string, tidx: number) => (
+                          {mod.topics.map((topic: any, tidx: number) => (
                             <li key={tidx}>{topic}</li>
                           ))}
                         </ul>

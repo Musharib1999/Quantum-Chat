@@ -42,6 +42,8 @@ import {
   Trash2
 } from 'lucide-react';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002';
+
 type AgentPhase = 
   | 'idle' 
   | 'thinking' 
@@ -251,10 +253,10 @@ function unrollQiskitLoops(code: string, numQubits: number = 4): string[] {
 
       let vals: number[] = [];
       if (listArg !== undefined) {
-        vals = listArg.split(',').map((s: string) => parseInt(s.trim(), 10)).filter((n: number) => !isNaN(n));
+        vals = listArg.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
       } else if (rangeArg !== undefined) {
-        const rawArgs = rangeArg.split(',').map((s: string) => s.trim());
-        const resolved = rawArgs.map((arg: string) => {
+        const rawArgs = rangeArg.split(',').map(s => s.trim());
+        const resolved = rawArgs.map(arg => {
           if (variables[arg] !== undefined) return variables[arg];
           const n = parseInt(arg, 10);
           return isNaN(n) ? numQubits : n;
@@ -1134,8 +1136,6 @@ constraints = [
     'lih-cas-vqe': {
       title: 'Quantum Chemistry CAS-VQE',
       desc: 'Molecular orbital integrals, CAS active space, and Ground State Energy.',
-      backend: 'aer_simulator',
-      defaultTab: 'terminal',
       files: {
         'vqe_chemistry.py': {
           name: 'vqe_chemistry.py',
@@ -1178,8 +1178,6 @@ print("Active Spatial Orbitals: 4 | Active Electrons: 2 | Active Qubits: 8")
     'iris-qsvm-classifier': {
       title: 'Quantum Machine Learning (QML)',
       desc: 'Quantum Kernel (QSVM) and Variational Classifiers with PCA reduction.',
-      backend: 'aer_simulator',
-      defaultTab: 'terminal',
       files: {
         'qml_classifier.py': {
           name: 'qml_classifier.py',
@@ -1220,7 +1218,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   };
 
-  const [allProjects, setAllProjects] = useState<Record<string, any>>(initialProjectTemplates);
+  const [allProjects, setAllProjects] = useState(initialProjectTemplates);
   const [projectName, setProjectName] = useState('my-quantum-project');
   const [projectFiles, setProjectFiles] = useState(initialProjectTemplates['my-quantum-project'].files);
   const [activeFile, setActiveFile] = useState('main.py');
@@ -1228,7 +1226,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
   const syncCircuitBackground = useCallback(async (codeToSync: string) => {
     try {
-      const res = await fetch('http://localhost:8002/v3/enterprise/ide/execute', {
+      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1759,17 +1757,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     const templateData = initialProjectTemplates[selectedTemplateKey] || initialProjectTemplates['my-quantum-project'];
     const newFiles = { ...templateData.files };
 
-    const targetB = (templateData as any).backend || (selectedTemplateKey.includes('dwave') || selectedTemplateKey.includes('portfolio') ? 'dwave_simulated_annealing' : 'aer_simulator');
-    const targetTab = (templateData as any).defaultTab || (targetB.includes('dwave') ? 'terminal' : 'circuit');
-
     // Update allProjects dictionary
     setAllProjects(prev => ({
       ...prev,
       [finalName]: {
         title: finalName,
         desc: `Custom project scaffolded from ${templateData.title}`,
-        backend: targetB,
-        defaultTab: targetTab,
         files: newFiles
       }
     }));
@@ -1784,8 +1777,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setIsProjectsDropdownOpen(false);
 
     // ⚡ Auto-configure Target Backend & Active Bottom Tab based on Architecture
+    const targetB = templateData.backend || (selectedTemplateKey.includes('dwave') || selectedTemplateKey.includes('portfolio') ? 'dwave_simulated_annealing' : 'aer_simulator');
     setTargetBackend(targetB);
-    setActiveBottomTab(targetTab);
+    const targetTab = templateData.defaultTab || (targetB.includes('dwave') ? 'terminal' : 'circuit');
     setActiveBottomTab(targetTab);
     setIsBottomOpen(true);
 
@@ -1825,8 +1819,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     ]);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002';
-      const res = await fetch(`${backendUrl}/v3/enterprise/ide/execute`, {
+      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2128,8 +2121,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002';
-      const res = await fetch(`${backendUrl}/v3/enterprise/ide/agent/chat`, {
+      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4261,7 +4253,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     <span className="text-[10px]" style={{ color: colors.textEmerald }}>• Process Exited Cleanly (code 0)</span>
                   </div>
                   <div className="p-4 rounded-xl border bg-black/40 space-y-1 overflow-x-auto" style={{ borderColor: colors.border }}>
-                    {(runtimeMetrics?.terminalLog || []).map((line: string, lIdx: number) => (
+                    {(runtimeMetrics?.terminalLog || []).map((line, lIdx) => (
                       <div key={lIdx} style={{ color: line.startsWith('➜') ? colors.textAmber : (line.includes('exit code 0') ? colors.textEmerald : colors.textPrimary) }}>
                         {line}
                       </div>
