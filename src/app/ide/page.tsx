@@ -1226,6 +1226,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   const [projectFiles, setProjectFiles] = useState(initialProjectTemplates['my-quantum-project'].files);
   const [activeFile, setActiveFile] = useState('main.py');
   const autoSyncTimer = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingSaveRef = useRef<{
+    projId: string;
+    projData: { title?: string; desc?: string; files: Record<string, any> };
+    currActiveFile: string;
+    metrics: any;
+  } | null>(null);
 
   const syncCircuitBackground = useCallback(async (codeToSync: string) => {
     try {
@@ -1263,6 +1270,28 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   }, [projectName, activeFile, targetBackend, shots, projectFiles]);
 
 
+  // Synchronously select and persist active file across page reloads
+  const handleSelectActiveFile = useCallback((fName: string) => {
+    setActiveFile(fName);
+    if (typeof window !== 'undefined') {
+      try {
+        const storedProjStr = localStorage.getItem(`quantum_ide_${userScope}_proj_${projectName}`);
+        if (storedProjStr) {
+          const storedProj = JSON.parse(storedProjStr);
+          storedProj.activeFile = fName;
+          localStorage.setItem(`quantum_ide_${userScope}_proj_${projectName}`, JSON.stringify(storedProj));
+        }
+      } catch (e) {}
+    }
+    setAllProjects(prev => ({
+      ...prev,
+      [projectName]: {
+        ...(prev[projectName] || {}),
+        activeFile: fName
+      }
+    }));
+  }, [projectName, userScope]);
+
   // Unified Project Switcher with Full Workspace & Chat State Synchronization
   const handleSwitchProject = (targetProject: string) => {
     if (targetProject === projectName) {
@@ -1270,45 +1299,108 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       return;
     }
 
-    // 1. Save CURRENT project's full state (Files, Active File, Telemetry, Chat History)
+    // 1. Flush any pending debounced writes & save CURRENT project's full state
+    flushPendingSave();
     if (typeof window !== 'undefined') {
       const currentProjData = {
         ...(allProjects[projectName] || {}),
-        files: projectFiles
+        files: projectFiles,
+        activeFile: activeFile
       };
       setAllProjects(prev => ({
         ...prev,
         [projectName]: currentProjData
       }));
-      saveProjectToDatabase(projectName, currentProjData, activeFile, runtimeMetrics);
+      saveProjectToDatabase(
+        projectName, 
+        currentProjData, 
+        activeFile, 
+        { ...runtimeMetrics, terminalLog: terminalLogs }, 
+        true
+      );
       try {
         localStorage.setItem(`quantum_chat_${userScope}_${projectName}`, JSON.stringify(chatMessages));
       } catch (e) {}
     }
 
     // 2. Load TARGET project's full workspace
-    const target = allProjects[targetProject] || initialProjectTemplates[targetProject] || initialProjectTemplates['my-quantum-project'];
-    const targetPrimaryFile = Object.keys(target.files).find(f => f.endsWith('.py')) || Object.keys(target.files)[0] || 'main.py';
+    const target: any = allProjects[targetProject] || initialProjectTemplates[targetProject] || initialProjectTemplates['my-quantum-project'];
     
-    setProjectName(targetProject);
-    setProjectFiles(target.files);
-    setActiveFile(targetPrimaryFile);
-    setIsProjectsDropdownOpen(false);
+    // Check if target project had a saved activeFile in localStorage
+    let targetActiveFile = target.activeFile;
+    let storedMetrics: typeof runtimeMetrics | null = null;
+    let storedTermLogs: string[] | null = null;
 
-    // 3. Restore Target Project's Stored Telemetry
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`quantum_ide_${userScope}_active_project`, targetProject);
       try {
         const storedProjStr = localStorage.getItem(`quantum_ide_${userScope}_proj_${targetProject}`);
         if (storedProjStr) {
           const storedProj = JSON.parse(storedProjStr);
+          if (storedProj.activeFile && target.files && target.files[storedProj.activeFile]) {
+            targetActiveFile = storedProj.activeFile;
+          }
           if (storedProj.runtimeMetrics) {
-            setRuntimeMetrics(storedProj.runtimeMetrics);
+            storedMetrics = storedProj.runtimeMetrics;
+            if (Array.isArray(storedProj.runtimeMetrics.terminalLog) && storedProj.runtimeMetrics.terminalLog.length > 0) {
+              storedTermLogs = storedProj.runtimeMetrics.terminalLog;
+            }
           }
         }
       } catch (e) {}
+    }
 
-      // 4. Restore Target Project's Chat History
+    if (!targetActiveFile || !target.files || !target.files[targetActiveFile]) {
+      targetActiveFile = Object.keys(target.files || {}).find(f => f.endsWith('.py')) || Object.keys(target.files || {})[0] || 'main.py';
+    }
+    
+    setProjectName(targetProject);
+    setProjectFiles(target.files);
+    setActiveFile(targetActiveFile);
+    setIsProjectsDropdownOpen(false);
+
+    // 3. Clean Runtime State Teardown & Target Restoration
+    setSimulationCounts(null);
+    setOptimizationResults(null);
+    if (storedTermLogs && storedTermLogs.length > 0) {
+      setTerminalLogs(storedTermLogs);
+    } else {
+      setTerminalLogs([
+        `✔ Workspace loaded: ${targetProject}`,
+        `Quantum QPU Terminal Ready. Click "Run Code" or press Shift+Enter to dispatch.`
+      ]);
+    }
+    if (storedMetrics) {
+      setRuntimeMetrics(storedMetrics);
+    }
+
+    // 4. Synchronize Circuit Canvas for Target Project
+    const targetCode = target.files?.[targetActiveFile]?.content || target.files?.['main.py']?.content || '';
+    if (targetCode) {
+      const isDwave = targetCode.includes('dimod') ||
+                      targetCode.includes('neal') ||
+                      targetCode.includes('BinaryQuadraticModel') ||
+                      targetCode.includes('Q =') ||
+                      targetProject.includes('dwave') ||
+                      targetProject.includes('opt');
+      if (isDwave) {
+        const quboRes = parseQuboCodeToQaoaGates(targetCode);
+        if (quboRes.gates.length > 0) {
+          setCanvasQubits(quboRes.numQubits);
+          setCircuitGates(quboRes.gates);
+        }
+      } else {
+        const declaredQubits = parseQiskitQubitCount(targetCode);
+        const parsedGates = parseQiskitCodeToGates(targetCode, declaredQubits);
+        if (parsedGates.length > 0 || targetCode.includes('QuantumCircuit')) {
+          setCanvasQubits(declaredQubits);
+          setCircuitGates(parsedGates);
+        }
+      }
+    }
+
+    // 5. Restore Target Project's Chat History (or initialize isolated greeting)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`quantum_ide_${userScope}_active_project`, targetProject);
       try {
         const storedChat = localStorage.getItem(`quantum_chat_${userScope}_${targetProject}`);
         if (storedChat) {
@@ -1319,20 +1411,20 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             setChatMessages([{
               id: Date.now().toString(),
               sender: 'agent',
-              text: `Switched workspace to **${targetProject}**. Active file: \`${targetPrimaryFile}\`. All telemetry and memory synchronized.`
+              text: `Switched workspace to **${targetProject}**. Active file: \`${targetActiveFile}\`. All telemetry and memory synchronized.`
             }]);
           }
         } else {
           setChatMessages([{
             id: Date.now().toString(),
             sender: 'agent',
-            text: `Switched workspace to **${targetProject}**. Active file: \`${targetPrimaryFile}\`. All telemetry and memory synchronized.`
+            text: `Switched workspace to **${targetProject}**. Active file: \`${targetActiveFile}\`. All telemetry and memory synchronized.`
           }]);
         }
       } catch (e) {}
     }
 
-    // 5. Update Dynamic Target Backend depending on project type
+    // 6. Update Dynamic Target Backend depending on project type
     if (targetProject.includes('optimization') || targetProject.includes('opt')) setTargetBackend('dwave_simulated_annealing');
     else if (targetProject.includes('vqe') || targetProject.includes('chem')) setTargetBackend('statevector');
     else setTargetBackend('aer_simulator');
@@ -1498,8 +1590,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       try {
         let mergedProjects: Record<string, any> = { ...initialProjectTemplates };
         const prefix = `quantum_ide_${userScope}_proj_`;
+        const localTimestamps: Record<string, string> = {};
 
-        // 1. Instant hydration from localStorage for this user
+        // 1. Instant synchronous hydration from localStorage for this user
         if (typeof window !== 'undefined') {
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -1510,49 +1603,40 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   mergedProjects[stored.id] = {
                     title: stored.title || stored.id,
                     desc: stored.desc || '',
-                    files: stored.files
+                    files: stored.files,
+                    activeFile: stored.activeFile
                   };
+                  if (stored.updatedAt) {
+                    localTimestamps[stored.id] = stored.updatedAt;
+                  }
                 }
               } catch (e) {}
             }
           }
         }
 
-        // 2. Hydration from MongoDB database
-        const res = await fetch('/api/ide/projects');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.projects && Array.isArray(data.projects)) {
-            data.projects.forEach((proj: any) => {
-              if (proj.projectId && proj.files && Object.keys(proj.files).length > 0) {
-                mergedProjects[proj.projectId] = {
-                  title: proj.title || proj.projectId,
-                  desc: proj.desc || '',
-                  files: proj.files
-                };
-              }
-            });
-          }
-        }
-
-        setAllProjects(mergedProjects);
-
-        // 3. Restore last active project for this user if exists
+        // 2. Hydrate last active project IMMEDIATELY from localStorage (Zero Network Delay / No Flash)
         const lastActiveProjId = typeof window !== 'undefined' ? localStorage.getItem(`quantum_ide_${userScope}_active_project`) : null;
         if (lastActiveProjId && mergedProjects[lastActiveProjId]) {
           const targetProj = mergedProjects[lastActiveProjId];
-          const primaryFile = Object.keys(targetProj.files).find(f => f.endsWith('.py')) || Object.keys(targetProj.files)[0] || 'main.py';
+          let restoredActiveFile = targetProj.activeFile;
+          if (!restoredActiveFile || !targetProj.files[restoredActiveFile]) {
+            restoredActiveFile = Object.keys(targetProj.files).find(f => f.endsWith('.py')) || Object.keys(targetProj.files)[0] || 'main.py';
+          }
           setProjectName(lastActiveProjId);
           setProjectFiles(targetProj.files);
-          setActiveFile(primaryFile);
+          setActiveFile(restoredActiveFile);
 
-          // Restore Telemetry
+          // Restore Telemetry & Terminal Logs
           try {
             const storedProjStr = localStorage.getItem(`quantum_ide_${userScope}_proj_${lastActiveProjId}`);
             if (storedProjStr) {
               const storedProj = JSON.parse(storedProjStr);
               if (storedProj.runtimeMetrics) {
                 setRuntimeMetrics(storedProj.runtimeMetrics);
+                if (Array.isArray(storedProj.runtimeMetrics.terminalLog) && storedProj.runtimeMetrics.terminalLog.length > 0) {
+                  setTerminalLogs(storedProj.runtimeMetrics.terminalLog);
+                }
               }
             }
           } catch (e) {}
@@ -1567,6 +1651,83 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               }
             }
           } catch (e) {}
+
+          // Synchronize Circuit Canvas Visualizer on Load
+          const codeToParse = targetProj.files[restoredActiveFile]?.content || targetProj.files['main.py']?.content || '';
+          if (codeToParse) {
+            const isDwave = codeToParse.includes('dimod') ||
+                            codeToParse.includes('neal') ||
+                            codeToParse.includes('BinaryQuadraticModel') ||
+                            codeToParse.includes('Q =') ||
+                            lastActiveProjId.includes('dwave') ||
+                            lastActiveProjId.includes('opt');
+            if (isDwave) {
+              const quboRes = parseQuboCodeToQaoaGates(codeToParse);
+              if (quboRes.gates.length > 0) {
+                setCanvasQubits(quboRes.numQubits);
+                setCircuitGates(quboRes.gates);
+              }
+            } else {
+              const declaredQubits = parseQiskitQubitCount(codeToParse);
+              const parsedGates = parseQiskitCodeToGates(codeToParse, declaredQubits);
+              if (parsedGates.length > 0 || codeToParse.includes('QuantumCircuit')) {
+                setCanvasQubits(declaredQubits);
+                setCircuitGates(parsedGates);
+              }
+            }
+          }
+        }
+
+        setAllProjects(mergedProjects);
+
+        // 3. Background Hydration from MongoDB database with Timestamp Reconciliation (Last-Write-Wins)
+        const res = await fetch('/api/ide/projects');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.projects && Array.isArray(data.projects)) {
+            let hasServerUpdates = false;
+            data.projects.forEach((proj: any) => {
+              if (proj.projectId && proj.files && Object.keys(proj.files).length > 0) {
+                const localUpdatedStr = localTimestamps[proj.projectId];
+                const serverUpdatedStr = proj.updatedAt;
+
+                let useServer = true;
+                if (localUpdatedStr && serverUpdatedStr) {
+                  const localTime = new Date(localUpdatedStr).getTime();
+                  const serverTime = new Date(serverUpdatedStr).getTime();
+                  if (!isNaN(localTime) && !isNaN(serverTime) && localTime > serverTime) {
+                    // Local is newer than server: keep local and schedule background push to server
+                    useServer = false;
+                    saveProjectToDatabase(
+                      proj.projectId, 
+                      mergedProjects[proj.projectId], 
+                      mergedProjects[proj.projectId]?.activeFile || 'main.py', 
+                      runtimeMetrics, 
+                      true
+                    );
+                  }
+                }
+
+                if (useServer) {
+                  mergedProjects[proj.projectId] = {
+                    title: proj.title || proj.projectId,
+                    desc: proj.desc || '',
+                    files: proj.files,
+                    activeFile: proj.activeFile
+                  };
+                  hasServerUpdates = true;
+                }
+              }
+            });
+
+            if (hasServerUpdates) {
+              setAllProjects({ ...mergedProjects });
+              if (lastActiveProjId && mergedProjects[lastActiveProjId]) {
+                const serverProj = mergedProjects[lastActiveProjId];
+                setProjectFiles(serverProj.files);
+              }
+            }
+          }
         }
       } catch (err) {
         console.warn('Failed to load projects from DB:', err);
@@ -1576,43 +1737,125 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     loadUserProjects();
   }, [userScope, isAuthenticated, isInitializing]);
 
-  // Synchronize project workspace to localStorage and MongoDB backend
+  // Flush any debounced pending writes immediately
+  const flushPendingSave = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    if (pendingSaveRef.current) {
+      const toSave = pendingSaveRef.current;
+      pendingSaveRef.current = null;
+      try {
+        await fetch('/api/ide/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: toSave.projId,
+            title: toSave.projData.title || toSave.projId,
+            desc: toSave.projData.desc || '',
+            files: toSave.projData.files,
+            activeFile: toSave.currActiveFile,
+            runtimeMetrics: toSave.metrics
+          })
+        });
+      } catch (err) {
+        console.warn('Failed to flush pending save:', err);
+      }
+    }
+  }, []);
+
+  // Synchronize project workspace to localStorage (immediate) and MongoDB backend (debounced / immediate)
   const saveProjectToDatabase = useCallback(async (
     projId: string, 
     projData: { title?: string; desc?: string; files: Record<string, any> },
     currActiveFile: string,
-    metrics: typeof runtimeMetrics
+    metrics: typeof runtimeMetrics,
+    immediate = false
   ) => {
+    const timestamp = new Date().toISOString();
+
+    // 1. Immediate local persistence for instant crash/refresh safety
     try {
       if (typeof window !== 'undefined') {
         localStorage.setItem(`quantum_ide_${userScope}_active_project`, projId);
         localStorage.setItem(`quantum_ide_${userScope}_proj_${projId}`, JSON.stringify({
           id: projId,
-          title: projData.title,
-          desc: projData.desc,
+          title: projData.title || projId,
+          desc: projData.desc || '',
           files: projData.files,
           activeFile: currActiveFile,
           runtimeMetrics: metrics,
-          updatedAt: new Date().toISOString()
+          updatedAt: timestamp
         }));
       }
+    } catch (e) {
+      console.warn('Failed to write to localStorage:', e);
+    }
 
-      await fetch('/api/ide/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: projId,
-          title: projData.title,
-          desc: projData.desc,
-          files: projData.files,
-          activeFile: currActiveFile,
-          runtimeMetrics: metrics
-        })
-      });
-    } catch (err) {
-      console.warn('Failed to sync project to MongoDB:', err);
+    // Remote persistence helper
+    const executeRemoteSave = async (payload: {
+      projId: string;
+      projData: { title?: string; desc?: string; files: Record<string, any> };
+      currActiveFile: string;
+      metrics: typeof runtimeMetrics;
+    }) => {
+      try {
+        await fetch('/api/ide/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: payload.projId,
+            title: payload.projData.title || payload.projId,
+            desc: payload.projData.desc || '',
+            files: payload.projData.files,
+            activeFile: payload.currActiveFile,
+            runtimeMetrics: payload.metrics
+          })
+        });
+      } catch (err) {
+        console.warn('Failed to sync project to MongoDB:', err);
+      }
+    };
+
+    if (immediate) {
+      // Clear any pending debounce timer
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      pendingSaveRef.current = null;
+      await executeRemoteSave({ projId, projData, currActiveFile, metrics });
+    } else {
+      // Record latest pending save payload
+      pendingSaveRef.current = { projId, projData, currActiveFile, metrics };
+
+      // Debounce MongoDB write by 1200ms
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(async () => {
+        if (pendingSaveRef.current) {
+          const toSave = pendingSaveRef.current;
+          pendingSaveRef.current = null;
+          saveTimeoutRef.current = null;
+          await executeRemoteSave(toSave);
+        }
+      }, 1200);
     }
   }, [userScope]);
+
+  // Flush before page unloads
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      flushPendingSave();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      flushPendingSave();
+    };
+  }, [flushPendingSave]);
 
 
 
@@ -1747,7 +1990,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         ...pPrev,
         [projectName]: updatedProj
       }));
-      saveProjectToDatabase(projectName, updatedProj, newFileName, runtimeMetrics);
+      saveProjectToDatabase(projectName, updatedProj, newFileName, runtimeMetrics, true);
       return updated;
     });
 
@@ -1757,11 +2000,40 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   // Create a new project with custom name and chosen scaffold template
   const handleCreateCustomProject = () => {
     const rawName = customProjectInput.trim();
-    const finalName = rawName ? rawName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '') : `quantum-project-${Date.now().toString().slice(-4)}`;
+    let finalName = rawName ? rawName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '') : `quantum-project-${Date.now().toString().slice(-4)}`;
     
-    // Get scaffold files from selected template
+    // Name collision guard: ensure unique project name
+    if (allProjects[finalName]) {
+      let counter = 2;
+      while (allProjects[`${finalName}-${counter}`]) {
+        counter++;
+      }
+      finalName = `${finalName}-${counter}`;
+    }
+
+    // 1. Flush & Save CURRENT project before creating new one
+    flushPendingSave();
+    if (typeof window !== 'undefined') {
+      const currentProjData = {
+        ...(allProjects[projectName] || {}),
+        files: projectFiles,
+        activeFile: activeFile
+      };
+      saveProjectToDatabase(
+        projectName, 
+        currentProjData, 
+        activeFile, 
+        { ...runtimeMetrics, terminalLog: terminalLogs }, 
+        true
+      );
+      try {
+        localStorage.setItem(`quantum_chat_${userScope}_${projectName}`, JSON.stringify(chatMessages));
+      } catch (e) {}
+    }
+
+    // 2. Get scaffold files from selected template with deep cloning
     const templateData = initialProjectTemplates[selectedTemplateKey] || initialProjectTemplates['my-quantum-project'];
-    const newFiles = { ...templateData.files };
+    const newFiles = JSON.parse(JSON.stringify(templateData.files));
 
     // Update allProjects dictionary
     setAllProjects(prev => ({
@@ -1769,7 +2041,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       [finalName]: {
         title: finalName,
         desc: `Custom project scaffolded from ${templateData.title}`,
-        files: newFiles
+        files: newFiles,
+        activeFile: 'main.py'
       }
     }));
 
@@ -1782,12 +2055,24 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setIsNewProjectOpen(false);
     setIsProjectsDropdownOpen(false);
 
-    // ⚡ Auto-configure Target Backend & Active Bottom Tab based on Architecture
+    // 3. Clean Runtime State Teardown
+    setSimulationCounts(null);
+    setOptimizationResults(null);
+
+    // Auto-configure Target Backend & Active Bottom Tab based on Architecture
     const targetB = templateData.backend || (selectedTemplateKey.includes('dwave') || selectedTemplateKey.includes('portfolio') ? 'dwave_simulated_annealing' : 'aer_simulator');
     setTargetBackend(targetB);
     const targetTab = templateData.defaultTab || (targetB.includes('dwave') ? 'terminal' : 'circuit');
     setActiveBottomTab(targetTab);
     setIsBottomOpen(true);
+
+    const freshTermLogs = [
+      `✔ Project workspace initialized: ${finalName}`,
+      `➜ Template: ${templateData.title}`,
+      `➜ Target Backend: ${targetB}`,
+      `Quantum QPU Terminal Ready. Click "Run Code" or press Shift+Enter to dispatch.`
+    ];
+    setTerminalLogs(freshTermLogs);
 
     if (newFiles[primaryFile]?.content) {
       const code = newFiles[primaryFile].content;
@@ -1797,14 +2082,31 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       setCircuitGates(gates);
     }
 
-    // Persist to MongoDB
-    saveProjectToDatabase(finalName, { title: finalName, desc: `Custom project scaffolded from ${templateData.title}`, files: newFiles }, primaryFile, runtimeMetrics);
+    const freshMetrics = {
+      ...runtimeMetrics,
+      terminalLog: freshTermLogs
+    };
+    setRuntimeMetrics(freshMetrics);
 
-    setChatMessages(prev => [...prev, {
+    // 4. Clean Chat Isolation (Do NOT inherit old project's chat!)
+    const initialChat = [{
       id: Date.now().toString(),
-      sender: 'agent',
-      text: `Created and opened project: ${finalName} (scaffolded from ${templateData.title}). Saved to MongoDB with \`main.py\` and \`MEMORY.md\`.`
-    }]);
+      sender: 'agent' as const,
+      text: `Created and opened project: **${finalName}** (scaffolded from ${templateData.title}). Saved to MongoDB with \`main.py\` and \`MEMORY.md\`.`
+    }];
+    setChatMessages(initialChat);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`quantum_chat_${userScope}_${finalName}`, JSON.stringify(initialChat));
+    }
+
+    // 5. Persist Immediately to MongoDB and localStorage
+    saveProjectToDatabase(
+      finalName, 
+      { title: finalName, desc: `Custom project scaffolded from ${templateData.title}`, files: newFiles }, 
+      primaryFile, 
+      freshMetrics, 
+      true
+    );
   };
 
 
@@ -1851,12 +2153,20 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             `  • Decision Variables    : ${data.optimization_results.num_variables}`,
             `  • Number of Reads       : ${data.optimization_results.num_reads || shots}`
           ] : [];
-          setTerminalLogs(prev => [
-            ...prev,
+          const updatedRunLogs = [
+            ...terminalLogs,
+            `➜ python3 ${activeFile} (${targetBackend}, ${shots} shots)`,
             ...outLines,
             ...optLogs,
             `✔ Execution completed on ${data.backend_used} in ${data.execution_time_ms}ms`
-          ]);
+          ];
+          setTerminalLogs(updatedRunLogs);
+          const updatedMetricsWithLogs = {
+            ...runtimeMetrics,
+            terminalLog: updatedRunLogs
+          };
+          setRuntimeMetrics(updatedMetricsWithLogs);
+          saveProjectToDatabase(projectName, { files: projectFiles }, activeFile, updatedMetricsWithLogs, true);
 
           if (data.optimization_results) {
             setOptimizationResults(data.optimization_results);
@@ -1981,7 +2291,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         files: { ...(pPrev[projectName]?.files || {}), [activeFile]: { content: newCode } }
       }
     }));
-    saveProjectToDatabase(projectName, { files: { [activeFile]: { name: activeFile, content: newCode, language: 'python' } } }, activeFile, runtimeMetrics);
+    saveProjectToDatabase(projectName, { files: { [activeFile]: { name: activeFile, content: newCode, language: 'python' } } }, activeFile, runtimeMetrics, true);
   };
 
   // Direct In-Place Slot Placement
@@ -2105,7 +2415,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         ...pPrev,
         [projectName]: updatedProj
       }));
-      saveProjectToDatabase(projectName, updatedProj, activeFile, runtimeMetrics);
+      saveProjectToDatabase(projectName, updatedProj, activeFile, runtimeMetrics, true);
       return updated;
     });
   };
@@ -2245,7 +2555,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               projectName, 
               { title: projectName, desc: '', files: updated }, 
               activeFile, 
-              data.runtime_telemetry || runtimeMetrics
+              data.runtime_telemetry || runtimeMetrics,
+              true
             );
 
             return updated;
@@ -2438,7 +2749,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     return (
                       <button
                         key={fName}
-                        onClick={() => setActiveFile(fName)}
+                        onClick={() => handleSelectActiveFile(fName)}
                         className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
                           isActive
                             ? isDark
