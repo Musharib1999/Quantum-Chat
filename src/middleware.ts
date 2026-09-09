@@ -1,47 +1,58 @@
 /**
- * Next.js Middleware — Admin Route Protection
+ * Next.js Middleware — Admin & Route Protection
  *
- * Guards every /api/admin/* route by checking for a valid HttpOnly
- * session cookie set at admin login. No cookie = 401 immediately,
- * before any database query or business logic runs.
+ * Guards all /admin/* pages and /api/admin/* endpoints by validating
+ * the secure HttpOnly admin_session cookie against ADMIN_SESSION_SECRET.
  *
- * The public exceptions (admin login + admin password-change) are
- * excluded so the admin can always authenticate even when logged out.
+ * - Unauthorized page visits (/admin/dashboard) are redirected to /admin/login.
+ * - Unauthorized API calls (/api/admin/*) are rejected with 401 Unauthorized.
+ * - Public routes (/admin/login, /api/admin/auth/login, /api/admin/auth/logout) are exempt.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-// Routes that must be reachable without a session cookie
+// Routes that must be reachable without an active admin session cookie
 const PUBLIC_ADMIN_ROUTES = [
-    '/api/admin/auth/login',
-    '/api/admin/auth/change-password',
+    "/admin/login",
+    "/api/admin/auth/login",
+    "/api/admin/auth/logout",
+    "/api/admin/auth/change-password",
 ];
 
 export function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
-    // Only protect the admin API namespace
-    if (!pathname.startsWith('/api/admin')) {
-        return NextResponse.next();
-    }
-
-    // Allow public admin routes through
+    // Allow public admin routes through without session check
     if (PUBLIC_ADMIN_ROUTES.some(route => pathname.startsWith(route))) {
         return NextResponse.next();
     }
 
-    // Check for valid session cookie
-    const sessionToken = req.cookies.get('admin_session')?.value;
+    const sessionToken = req.cookies.get("admin_session")?.value;
+    const ADMIN_SECRET = process.env.ADMIN_SESSION_SECRET;
 
-    if (!sessionToken || sessionToken !== process.env.ADMIN_SESSION_SECRET) {
-        return NextResponse.json(
-            { error: 'Unauthorized — admin session required.' },
-            { status: 401 }
-        );
+    // 1. Protect all /admin UI pages (e.g. /admin/dashboard)
+    if (pathname.startsWith("/admin")) {
+        if (!sessionToken || !ADMIN_SECRET || sessionToken !== ADMIN_SECRET) {
+            const loginUrl = new URL("/admin/login", req.url);
+            loginUrl.searchParams.set("redirect", pathname);
+            return NextResponse.redirect(loginUrl);
+        }
+        return NextResponse.next();
+    }
+
+    // 2. Protect all /api/admin API routes
+    if (pathname.startsWith("/api/admin")) {
+        if (!sessionToken || !ADMIN_SECRET || sessionToken !== ADMIN_SECRET) {
+            return NextResponse.json(
+                { error: "Unauthorized — admin session required." },
+                { status: 401 }
+            );
+        }
+        return NextResponse.next();
     }
 
     return NextResponse.next();
 }
 
 export const config = {
-    matcher: ['/api/admin/:path*'],
+    matcher: ["/admin/:path*", "/api/admin/:path*"],
 };
