@@ -1,0 +1,4 @@
+# Ignore backend from Vercel deployment (backend is deployed on Railway)
+quantum-backend/
+.agents/
+graphify-out/
