@@ -857,16 +857,8 @@ if __name__ == "__main__":
             groq_clean = groq_resp.replace("**", "").replace("<b>", "").replace("</b>", "").strip()
             response_text = f"Quantum Workspace Reasoning (Qwen 3.6 27B on Groq):\n\n{groq_clean}"
         except Exception as e:
-            response_text = (
-                f"Quantum Workspace Analysis & Theoretical Context:\n\n"
-                f"Regarding your query: \"{msg}\"\n\n"
-                f"1. Active Code Context ({active_file}):\n"
-                f"Your current workspace is configured for {backend} with depth 6.\n\n"
-                f"2. Suggested Commands:\n"
-                f"- Type 'Optimize this portfolio' to trigger the 5-step autonomous optimization chain.\n"
-                f"- Type 'Solve CAS-VQE for H2' to run the molecular ground state engine.\n"
-                f"- Type 'Create Bell state' to synthesize an entangled state."
-            )
+            print(f"[QuantumOrchestrator] groq reasoning error: {e}")
+            response_text = "AI is under maintenance, will be working shortly."
 
         # Check if LLM response or user intent generated executable python code to mutate editor
         extracted_code = None

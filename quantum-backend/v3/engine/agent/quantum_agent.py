@@ -616,17 +616,7 @@ INSTRUCTIONS:
             )
         except Exception as e:
             print(f"[QuantumAgent] call_groq failed for user_message='{user_message[:60]}': {repr(e)}")
-            err_str = str(e)
-            if "429" in err_str or "rate limit" in err_str.lower():
-                qa_response = (
-                    "⚠️ **Groq Rate Limit**: The AI inference provider is temporarily rate-limited "
-                    "(Tokens Per Minute ceiling reached). Please wait 10–15 seconds and retry."
-                )
-            else:
-                qa_response = (
-                    f"⚠️ **Inference Error**: Could not complete quantum reasoning ({err_str}). "
-                    "Please check network connection or retry."
-                )
+            qa_response = "AI is under maintenance, will be working shortly."
 
         yield await self.stream.publish(FinalResponseAction(
             project_id=project_id,

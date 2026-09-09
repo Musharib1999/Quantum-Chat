@@ -175,7 +175,18 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
 
             // Parse Chart Data if present
             let chartData = null;
-            let cleanText = response.text;
+            let cleanText = response.text || "";
+            if (
+                response.source === 'error' ||
+                response.error ||
+                cleanText.includes("❌ **Connection Error**") ||
+                cleanText.includes("Neural link unstable") ||
+                cleanText.includes("Groq") ||
+                cleanText.includes("Inference Error") ||
+                !cleanText.trim()
+            ) {
+                cleanText = "AI is under maintenance, will be working shortly.";
+            }
             const chartMatch = response.text.match(/\[CHART_DATA\]([\s\S]*?)\[\/CHART_DATA\]/);
             if (chartMatch) {
                 try {
@@ -221,7 +232,7 @@ export default function ChatInterface({ mode, contextConfig, placeholder, onAnal
             setProcessingStep(null);
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
-                text: "Error: Neural link unstable. Please retry transmission.",
+                text: "AI is under maintenance, will be working shortly.",
                 sender: 'bot',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             }]);

@@ -639,7 +639,7 @@ ${manifest.ansatz_qiskit_code}
                 const codeBlock = data.final_code ? `\n\n\`\`\`python\n${data.final_code}\n\`\`\`` : "";
                 let responseText = visibleText + codeBlock;
                 if (!responseText.trim()) {
-                    responseText = "⚠️ The optimization pipeline completed but generated an empty response. Check backend logs.";
+                    responseText = "AI is under maintenance, will be working shortly.";
                 }
 
                 const compilerMetrics = data.compiler_metrics || {};
@@ -750,7 +750,7 @@ ${manifest.ansatz_qiskit_code}
 
             let responseText = data.response || "";
             if (!responseText.trim()) {
-                responseText = "⚠️ The Qwen 32B model returned an empty response. Please try again.";
+                responseText = "AI is under maintenance, will be working shortly.";
             }
 
             const workflowSteps = {
@@ -784,7 +784,7 @@ ${manifest.ansatz_qiskit_code}
         } catch (err: any) {
             console.error("Backend request failed:", err);
             return {
-                text: "❌ **Connection Error**: Failed to reach the QuantumGuru engine.\n**Details**: " + err.message,
+                text: "AI is under maintenance, will be working shortly.",
                 source: 'error',
                 guardrailsStatus: 'passed',
                 activeGuardrails: ruleTexts,
@@ -793,7 +793,7 @@ ${manifest.ansatz_qiskit_code}
         }
     }
 
-    return { text: "An unexpected error occurred.", error: "UNHANDLED", source: "error", tokensUsed: 0 };
+    return { text: "AI is under maintenance, will be working shortly.", error: "MAINTENANCE", source: "error", tokensUsed: 0 };
 }
 
 // --- Chat Session History Actions ---

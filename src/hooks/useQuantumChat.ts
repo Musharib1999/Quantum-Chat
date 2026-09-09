@@ -541,7 +541,21 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             }
 
             // Extract step output markers (code, sim output)
-            let cleanText = response.text;
+            let cleanText = response.text || "";
+            if (
+                response.source === 'error' ||
+                response.error ||
+                cleanText.includes("❌ **Connection Error**") ||
+                cleanText.includes("Failed to reach the QuantumGuru engine") ||
+                cleanText.includes("Neural link unstable") ||
+                cleanText.includes("Groq API Error") ||
+                cleanText.includes("Failed to communicate with Groq") ||
+                cleanText.includes("Inference Error") ||
+                cleanText.includes("Groq Rate Limit") ||
+                !cleanText.trim()
+            ) {
+                cleanText = "AI is under maintenance, will be working shortly.";
+            }
             const stepCodeMatch = cleanText.match(/\[STEP_CODE\]([\s\S]*?)\[\/STEP_CODE\]/);
             const stepSimMatch = cleanText.match(/\[STEP_SIM\]([\s\S]*?)\[\/STEP_SIM\]/);
             if (stepCodeMatch || stepSimMatch) {
@@ -601,7 +615,7 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
             console.error("Chat Error:", error);
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
-                text: "Error: Neural link unstable. Please retry transmission.",
+                text: "AI is under maintenance, will be working shortly.",
                 sender: 'bot',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             }]);

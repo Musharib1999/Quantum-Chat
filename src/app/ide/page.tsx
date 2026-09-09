@@ -2163,7 +2163,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         setChatMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           sender: 'agent',
-          text: data.response_text || 'Completed autonomous quantum analysis.',
+          text: (data.response_text && !data.response_text.includes('Inference Error') && !data.response_text.includes('Rate Limit')) ? data.response_text : 'AI is under maintenance, will be working shortly.',
           workflowSteps: data.workflow_steps || undefined,
           scientificVerdict: data.scientific_verdict || undefined,
           codeMutation: mutationData,
@@ -2269,11 +2269,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         setChatMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           sender: 'agent',
-          text: `### ⚛️ Quantum Analysis & Contextual Response\n\nRegarding your query: *"${text}"*\n\n1. Active Code Context (\`${activeFile}\`):\nYour current workspace is running ${runtimeMetrics.activeQubits} qubits (depth ${runtimeMetrics.depth}) on ${targetBackend}.\n\n2. Mathematical State:\n$$\\vert\\psi(\\theta)\\rangle = U_{\\text{ansatz}}(\\theta) U_{\\Phi}(\\mathbf{x})\\vert 0^{\\otimes 4}\\rangle$$\n- Statevector fidelity: ${runtimeMetrics.fidelity}\n- Expectation value: $\\langle Z_0 \\rangle = ${runtimeMetrics.expectationVal}$\n\n3. Recommended Actions:\n- Type \`/execute@program\` to stream results.\n- Click \`+ Connect Tool\` to attach any of the 33 quantum primitives.`,
+          text: "AI is under maintenance, will be working shortly.",
           toolCall: {
             name: `Quantum Copilot (${activeModel.toUpperCase()})`,
-            badge: 'Context Synced',
-            detail: `Target: ${targetBackend} | Level ${optimizationLevel}`
+            badge: 'Maintenance',
+            detail: 'Service temporarily unavailable'
           }
         }]);
       }, 400);
