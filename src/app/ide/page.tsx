@@ -2514,20 +2514,6 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 <span className="text-[10px] font-medium font-sans text-center leading-none">Market</span>
               </Link>
 
-              {/* 5. Settings Action Button */}
-              <button
-                onClick={() => setIsSettingsOpen(true)}
-                className={`w-[52px] h-[50px] flex flex-col items-center justify-center rounded-xl border transition-all cursor-pointer group ${
-                  isDark
-                    ? 'border-transparent text-zinc-400 hover:border-zinc-700/80 hover:bg-zinc-800/80 hover:text-zinc-100 hover:scale-[1.04]'
-                    : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-xs hover:scale-[1.04]'
-                }`}
-                title="IDE Settings"
-              >
-                <Settings className="w-4.5 h-4.5 mb-1 group-hover:rotate-45 transition-transform duration-300" />
-                <span className="text-[10px] font-medium font-sans text-center leading-none">Settings</span>
-              </button>
-
               {/* 6. Logout Action Button */}
               <button
                 onClick={() => {
