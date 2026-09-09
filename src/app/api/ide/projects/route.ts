@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import QuantumProject from '@/models/QuantumProject';
+import { verifyUserSession } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
-    const { searchParams } = new URL(req.url);
-    const userEmail = searchParams.get('email') || 'ms@qc.guru';
+    const userEmail = await verifyUserSession(req);
+
+    // If not authenticated, return empty list (guests only see initial templates)
+    if (!userEmail) {
+      return NextResponse.json({
+        success: true,
+        projects: []
+      });
+    }
 
     const projects = await QuantumProject.find({ userEmail }).sort({ updatedAt: -1 }).lean();
 
@@ -26,8 +34,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
+    const userEmail = await verifyUserSession(req);
+    if (!userEmail) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: You must be logged in to save projects.' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
-    const { projectId, userEmail = 'ms@qc.guru', title, desc, templateKey, activeFile, files, runtimeMetrics, chatMessages } = body;
+    const { projectId, title, desc, templateKey, activeFile, files, runtimeMetrics, chatMessages } = body;
 
     if (!projectId) {
       return NextResponse.json(
@@ -37,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const updatedProject = await QuantumProject.findOneAndUpdate(
-      { projectId },
+      { projectId, userEmail },
       {
         projectId,
         userEmail,

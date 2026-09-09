@@ -829,19 +829,17 @@ export async function getChatSessions(pipeline?: string) {
     
     await dbConnect();
     
-    // Scopes to this user OR legacy sessions without a userEmail field
-    const userFilter = { $or: [{ userEmail }, { userEmail: { $exists: false } }] };
-    let query: any = { ...userFilter };
+    let query: any = { userEmail };
     
     if (pipeline) {
         if (pipeline === 'general') {
             query = {
-                ...userFilter,
+                userEmail,
                 $or: [{ pipeline: 'general' }, { pipeline: { $exists: false } }]
             };
         } else {
             query = {
-                ...userFilter,
+                userEmail,
                 pipeline
             };
         }
@@ -885,15 +883,15 @@ export async function updateChatSession(
     await dbConnect();
     
     const existing = await ChatSession.findById(id);
-    // Strict RLS: Allow update if owned by user OR if it's a legacy session (no userEmail)
-    if (!existing || (existing.userEmail && existing.userEmail !== userEmail)) {
+    // Strict RLS: Allow update only if owned by user
+    if (!existing || existing.userEmail !== userEmail) {
         throw new Error("Unauthorized - Access Denied");
     }
     
     const session = await ChatSession.findByIdAndUpdate(id, {
         messages,
         workflowSteps,
-        userEmail // Claim the session under their account on first update
+        userEmail
     }, { new: true });
     return JSON.parse(JSON.stringify(session));
 }
@@ -905,8 +903,8 @@ export async function deleteChatSession(id: string) {
     await dbConnect();
     
     const existing = await ChatSession.findById(id);
-    // Strict RLS: Allow delete if owned by user OR if it's a legacy session (no userEmail)
-    if (!existing || (existing.userEmail && existing.userEmail !== userEmail)) {
+    // Strict RLS: Allow delete only if owned by user
+    if (!existing || existing.userEmail !== userEmail) {
         throw new Error("Unauthorized - Access Denied");
     }
     

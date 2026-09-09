@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 const QuantumProjectSchema = new mongoose.Schema({
-  projectId: { type: String, required: true, unique: true, index: true },
-  userEmail: { type: String, default: 'ms@qc.guru', index: true },
+  projectId: { type: String, required: true, index: true },
+  userEmail: { type: String, required: true, index: true },
   title: { type: String, required: true },
   desc: { type: String, default: '' },
   templateKey: { type: String, default: 'optimization' },
@@ -23,6 +23,8 @@ const QuantumProjectSchema = new mongoose.Schema({
   },
   chatMessages: { type: [mongoose.Schema.Types.Mixed], default: [] }
 }, { timestamps: true });
+
+QuantumProjectSchema.index({ projectId: 1, userEmail: 1 }, { unique: true });
 
 if (mongoose.models && mongoose.models.QuantumProject) {
   delete mongoose.models.QuantumProject;

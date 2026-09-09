@@ -140,6 +140,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(false);
         localStorage.removeItem('quantum_session');
         sessionStorage.removeItem('qg_session_tokens_used');
+
+        // Comprehensive cleanup: purge all cached user data, IDE projects, and chat sessions
+        if (typeof window !== 'undefined') {
+            const keysToRemove: string[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (
+                    key.startsWith('quantum_ide_') ||
+                    key.startsWith('quantum_chat_') ||
+                    key.startsWith('qg_session_') ||
+                    key.startsWith('session_') ||
+                    key === 'qg_selected_pipeline'
+                )) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+        }
+
         fetch('/api/auth/logout', { method: 'POST' }).catch(err => console.error("Logout cookie clear failed", err));
     };
 

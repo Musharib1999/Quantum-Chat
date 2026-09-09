@@ -55,14 +55,16 @@ export function useQuantumChat(mode: 'industry' | 'market' | 'article' | 'embed'
     // Do NOT auto-load history here — page.tsx controls session switching and
     // message population to prevent cross-pipeline contamination.
     useEffect(() => {
-        let storedId = localStorage.getItem('qg_session_id');
+        const userScope = user?.email ? user.email.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'guest';
+        const storageKey = `qg_session_id_${userScope}`;
+        let storedId = localStorage.getItem(storageKey);
         if (!storedId) {
             storedId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('qg_session_id', storedId);
+            localStorage.setItem(storageKey, storedId);
         }
         setSessionId(storedId);
         // History loading intentionally removed — see page.tsx switchPipeline()
-    }, []);
+    }, [user?.email]);
 
     useEffect(() => {
         if (sessionId && messages.length > 0) {

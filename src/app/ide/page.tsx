@@ -556,7 +556,8 @@ function normalizeCircuitGates(rawGates: any[]): Array<{ name: string; qubit: nu
 }
 
 export default function QuantumIDE() {
-  const { logout, isAuthenticated, isInitializing } = useAuth();
+  const { user, logout, isAuthenticated, isInitializing } = useAuth();
+  const userScope = user?.email ? user.email.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'guest';
   const router = useRouter();
 
   // 1. Client-Side Auth Guard: redirect to login if unauthenticated
@@ -1281,7 +1282,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       }));
       saveProjectToDatabase(projectName, currentProjData, activeFile, runtimeMetrics);
       try {
-        localStorage.setItem(`quantum_chat_${projectName}`, JSON.stringify(chatMessages));
+        localStorage.setItem(`quantum_chat_${userScope}_${projectName}`, JSON.stringify(chatMessages));
       } catch (e) {}
     }
 
@@ -1296,9 +1297,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
     // 3. Restore Target Project's Stored Telemetry
     if (typeof window !== 'undefined') {
-      localStorage.setItem('quantum_ide_active_project', targetProject);
+      localStorage.setItem(`quantum_ide_${userScope}_active_project`, targetProject);
       try {
-        const storedProjStr = localStorage.getItem(`quantum_ide_proj_${targetProject}`);
+        const storedProjStr = localStorage.getItem(`quantum_ide_${userScope}_proj_${targetProject}`);
         if (storedProjStr) {
           const storedProj = JSON.parse(storedProjStr);
           if (storedProj.runtimeMetrics) {
@@ -1309,7 +1310,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
       // 4. Restore Target Project's Chat History
       try {
-        const storedChat = localStorage.getItem(`quantum_chat_${targetProject}`);
+        const storedChat = localStorage.getItem(`quantum_chat_${userScope}_${targetProject}`);
         if (storedChat) {
           const parsedChat = JSON.parse(storedChat);
           if (Array.isArray(parsedChat) && parsedChat.length > 0) {
@@ -1489,17 +1490,20 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   }, [activeFile]);
 
-  // Load all user projects from localStorage & MongoDB database on mount
+  // Load all user projects from localStorage & MongoDB database on mount or when user changes
   useEffect(() => {
+    if (!isAuthenticated && !isInitializing) return;
+
     const loadUserProjects = async () => {
       try {
         let mergedProjects: Record<string, any> = { ...initialProjectTemplates };
+        const prefix = `quantum_ide_${userScope}_proj_`;
 
-        // 1. Instant hydration from localStorage
+        // 1. Instant hydration from localStorage for this user
         if (typeof window !== 'undefined') {
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith('quantum_ide_proj_')) {
+            if (key && key.startsWith(prefix)) {
               try {
                 const stored = JSON.parse(localStorage.getItem(key) || '{}');
                 if (stored.id && stored.files && Object.keys(stored.files).length > 0) {
@@ -1533,8 +1537,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
         setAllProjects(mergedProjects);
 
-        // 3. Restore last active project if exists
-        const lastActiveProjId = typeof window !== 'undefined' ? localStorage.getItem('quantum_ide_active_project') : null;
+        // 3. Restore last active project for this user if exists
+        const lastActiveProjId = typeof window !== 'undefined' ? localStorage.getItem(`quantum_ide_${userScope}_active_project`) : null;
         if (lastActiveProjId && mergedProjects[lastActiveProjId]) {
           const targetProj = mergedProjects[lastActiveProjId];
           const primaryFile = Object.keys(targetProj.files).find(f => f.endsWith('.py')) || Object.keys(targetProj.files)[0] || 'main.py';
@@ -1544,7 +1548,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
           // Restore Telemetry
           try {
-            const storedProjStr = localStorage.getItem(`quantum_ide_proj_${lastActiveProjId}`);
+            const storedProjStr = localStorage.getItem(`quantum_ide_${userScope}_proj_${lastActiveProjId}`);
             if (storedProjStr) {
               const storedProj = JSON.parse(storedProjStr);
               if (storedProj.runtimeMetrics) {
@@ -1555,7 +1559,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
           // Restore Chat Messages
           try {
-            const storedChat = localStorage.getItem(`quantum_chat_${lastActiveProjId}`);
+            const storedChat = localStorage.getItem(`quantum_chat_${userScope}_${lastActiveProjId}`);
             if (storedChat) {
               const parsed = JSON.parse(storedChat);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -1570,7 +1574,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     };
 
     loadUserProjects();
-  }, []);
+  }, [userScope, isAuthenticated, isInitializing]);
 
   // Synchronize project workspace to localStorage and MongoDB backend
   const saveProjectToDatabase = useCallback(async (
@@ -1581,8 +1585,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   ) => {
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('quantum_ide_active_project', projId);
-        localStorage.setItem(`quantum_ide_proj_${projId}`, JSON.stringify({
+        localStorage.setItem(`quantum_ide_${userScope}_active_project`, projId);
+        localStorage.setItem(`quantum_ide_${userScope}_proj_${projId}`, JSON.stringify({
           id: projId,
           title: projData.title,
           desc: projData.desc,
@@ -1608,7 +1612,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     } catch (err) {
       console.warn('Failed to sync project to MongoDB:', err);
     }
-  }, []);
+  }, [userScope]);
 
 
 
