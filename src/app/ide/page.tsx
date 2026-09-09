@@ -1229,7 +1229,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
   const syncCircuitBackground = useCallback(async (codeToSync: string) => {
     try {
-      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/execute`, {
+      const res = await fetch(`/api/ide/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1825,7 +1825,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     ]);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/execute`, {
+      const res = await fetch(`/api/ide/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1889,7 +1889,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         } catch (_) {}
         setTerminalLogs(prev => [
           ...prev,
-          `✖ Runner HTTP Error ${res.status} from ${BACKEND_URL}: Failed to reach simulator backend. ${errorDetail}`
+          `✖ Runner HTTP Error ${res.status}: Failed to reach simulator backend. ${errorDetail}`
         ]);
       }
     } catch (err: any) {
@@ -2132,7 +2132,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
 
     try {
-      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/agent/chat`, {
+      const res = await fetch(`/api/ide/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

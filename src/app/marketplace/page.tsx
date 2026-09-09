@@ -1059,7 +1059,7 @@ export default function QuantumMarketplacePage() {
     setSandboxOutput(null);
 
     try {
-      const res = await fetch(`${getBackendUrl()}/v3/enterprise/ide/agent/chat`, {
+      const res = await fetch(`/api/ide/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
