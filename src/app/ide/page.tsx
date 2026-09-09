@@ -42,7 +42,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002';
+const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002').replace(/\/+$/, '');
 
 type AgentPhase = 
   | 'idle' 
@@ -1876,9 +1876,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           ]);
         }
       } else {
+        let errorDetail = "";
+        try {
+          const errJson = await res.json();
+          errorDetail = errJson.detail || errJson.error || JSON.stringify(errJson);
+        } catch (_) {}
         setTerminalLogs(prev => [
           ...prev,
-          `✖ Runner HTTP Error ${res.status}: Failed to reach simulator backend.`
+          `✖ Runner HTTP Error ${res.status} from ${BACKEND_URL}: Failed to reach simulator backend. ${errorDetail}`
         ]);
       }
     } catch (err: any) {
