@@ -9,7 +9,7 @@ import {
   Send, ChevronRight, Circle, Activity, Info,
   CheckCircle, AlertCircle, Loader2, Bot, User, Terminal,
   X, Settings, Database, Cpu, Trash2, Paperclip, BookOpen, GraduationCap,
-  Share2, Copy, Check
+  Share2, Copy, Check, Award
 } from 'lucide-react';
 import { getCourses, getExercises } from '@/app/actions/admin';
 import { useAuth } from '@/context/AuthContext';
@@ -2127,13 +2127,13 @@ export default function App() {
                           <div className="space-y-2.5">
                             <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Syllabus Modules</span>
                             <div className="space-y-2.5">
-                              {item.modules.map((mod, midx) => (
+                              {item.modules.map((mod: any, midx: number) => (
                                 <div key={midx} className="space-y-1">
                                   <h5 className="text-[10px] font-bold text-slate-700">
                                     Mod {midx + 1}: {mod.name}
                                   </h5>
                                   <div className="space-y-1 text-[11px] text-slate-600 pl-1.5">
-                                    {mod.topics.map((t, tidx) => (
+                                    {mod.topics.map((t: any, tidx: number) => (
                                       <div 
                                         key={tidx}
                                         onClick={(e) => {
@@ -2200,7 +2200,7 @@ export default function App() {
                             <div className="space-y-1.5">
                               <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500">Recommended Posts</span>
                               <div className="space-y-1 text-[11px] text-amber-600 pl-1.5">
-                                {item.posts.map((post, pidx) => (
+                                {item.posts.map((post: any, pidx: number) => (
                                   <a 
                                     key={pidx}
                                     href="#"
@@ -2267,14 +2267,14 @@ export default function App() {
               const objCoeffs = details.objectives?.[0]?.expression?.coefficients || [];
               const absObjCoeffs = objCoeffs.length > 0 ? objCoeffs.map(Math.abs) : [1.0];
               const maxC = Math.max(...absObjCoeffs);
-              const sumC = absObjCoeffs.reduce((a, b) => a + b, 0);
+              const sumC = absObjCoeffs.reduce((a: number, b: number) => a + b, 0);
               const nConstraints = details.constraints?.length || 1;
 
               if (choice === 1) return Number((sumC + 1.0).toFixed(2));
               if (choice === 2) return Number((maxC * nConstraints + 1.0).toFixed(2));
               if (choice === 3) return Number((maxC + 1.0).toFixed(2));
               if (choice === 4) {
-                const sumSq = absObjCoeffs.reduce((a, b) => a + b * b, 0);
+                const sumSq = absObjCoeffs.reduce((a: number, b: number) => a + b * b, 0);
                 return Number((Math.sqrt(sumSq) + 1.0).toFixed(2));
               }
               if (choice === 5) {
@@ -2291,7 +2291,7 @@ export default function App() {
                 return maxRatio > 0 ? Number((maxRatio + 1.0).toFixed(2)) : Number((maxC + 1.0).toFixed(2));
               }
               if (choice === 6) {
-                let k = null;
+                let k: number | null = null;
                 (details.constraints || []).forEach((c: any) => {
                   if (['=', '==', '<='].includes(c.operator)) {
                     const coeffs = c.lhs?.coefficients || [];
@@ -2449,7 +2449,7 @@ export default function App() {
           })()}
 
           {/* ── QUANTUM CIRCUIT STUDIO SIDEBAR CARDS (1 to 4) ────────────────────── */}
-          {(selectedPipeline === "coder" || selectedPipeline === "gate_based") && activeSession && activeSession.workflowSteps && (() => {
+          {((selectedPipeline as string) === "coder" || (selectedPipeline as string) === "gate_based") && activeSession && activeSession.workflowSteps && (() => {
             const ws = activeSession.workflowSteps;
             const stats = ws.optimization_stats || {};
             const parsingDone = ws.parsingStatus === "done";
@@ -2594,7 +2594,7 @@ export default function App() {
                               }
                             }
                             if (activeSessionId) {
-                              setMessages(prev => prev.map(m => m.id === activeSessionId ? {
+                              setMessages(prev => prev.map(m => String(m.id) === String(activeSessionId) ? {
                                 ...m,
                                 workflowSteps: {
                                   ...m.workflowSteps,
@@ -2960,13 +2960,13 @@ export default function App() {
                     Course Syllabus
                   </h4>
                   <div className="space-y-3.5">
-                    {levelData.modules.map((mod, midx) => (
+                    {levelData.modules.map((mod: any, midx: number) => (
                       <div key={midx} className="space-y-1">
                         <h5 className="text-xs font-bold text-slate-800">
                           Module {midx + 1}: {mod.name}
                         </h5>
                         <ul className="list-disc pl-4 text-[11px] text-slate-600 space-y-0.5 leading-relaxed">
-                          {mod.topics.map((topic, tidx) => (
+                          {mod.topics.map((topic: any, tidx: number) => (
                             <li key={tidx}>{topic}</li>
                           ))}
                         </ul>
@@ -2983,7 +2983,7 @@ export default function App() {
                       Hands-on Exercises
                     </h4>
                     <ul className="list-disc pl-4 text-[11px] text-blue-600/80 space-y-0.5">
-                      {levelData.handsOn.map((exercise, eidx) => (
+                      {levelData.handsOn.map((exercise: any, eidx: number) => (
                         <li key={eidx} className="font-medium">{exercise}</li>
                       ))}
                     </ul>

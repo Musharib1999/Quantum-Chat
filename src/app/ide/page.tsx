@@ -42,6 +42,8 @@ import {
   Trash2
 } from 'lucide-react';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002';
+
 type AgentPhase = 
   | 'idle' 
   | 'thinking' 
@@ -1224,7 +1226,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
   const syncCircuitBackground = useCallback(async (codeToSync: string) => {
     try {
-      const res = await fetch('http://localhost:8002/v3/enterprise/ide/execute', {
+      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1817,7 +1819,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     ]);
 
     try {
-      const res = await fetch('http://localhost:8002/v3/enterprise/ide/execute', {
+      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2119,7 +2121,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
 
     try {
-      const res = await fetch('http://localhost:8002/v3/enterprise/ide/agent/chat', {
+      const res = await fetch(`${BACKEND_URL}/v3/enterprise/ide/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

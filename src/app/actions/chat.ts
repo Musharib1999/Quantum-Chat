@@ -42,6 +42,7 @@ export interface AIResponse {
     guardrailsStatus?: string;
     activeGuardrails?: string[];
     tokensUsed?: number;
+    executionResult?: any;
     sessionTokenLimit?: number;
     tokenLimitExceeded?: boolean;
     workflowSteps?: {
