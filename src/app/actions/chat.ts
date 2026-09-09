@@ -56,7 +56,6 @@ export interface AIResponse {
         math_rigor?: any;
         classifier?: string;
     };
-    executionResult?: any;
 }
 
 // --- Guardrails ---
