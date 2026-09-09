@@ -1,5 +1,6 @@
-import { getBackendUrl } from '@/lib/backend';
 "use client";
+
+import { getBackendUrl } from '@/lib/backend';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 

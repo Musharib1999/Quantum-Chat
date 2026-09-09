@@ -1,5 +1,6 @@
-import { getBackendUrl } from '@/lib/backend';
 "use server";
+
+import { getBackendUrl } from '@/lib/backend';
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
