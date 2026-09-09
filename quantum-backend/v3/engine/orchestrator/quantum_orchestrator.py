@@ -208,6 +208,19 @@ class QuantumOrchestrator:
         msg_l = user_message.lower().strip()
         now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
+        # Check if user query is an inquiry / explanatory question
+        is_qa = (
+            any(msg_l.startswith(k) for k in [
+                "what does", "what do", "what is", "what are", "how does", "how do", "why is", "why does",
+                "explain", "walk me through", "analyze", "inspect", "review", "debug", "tell me about"
+            ]) or
+            bool(re.search(r'\b(what does|what do|explain|how does|why does|analyze this|review this|inspect this)\b', msg_l)) or
+            msg_l.endswith("?")
+        )
+
+        if is_qa:
+            return await self._execute_groq_reasoning_workflow(project_id, user_message, active_file, file_content, target_backend, optimization_level, model_engine, now_iso)
+
         # WORKFLOW A: OPTIMIZATION
         if any(k in msg_l for k in ["portfolio", "qubo", "maxcut", "traveling", "tsp", "knapsack", "asset", "optimize"]):
             return await self._execute_optimization_workflow(project_id, user_message, active_file, file_content, target_backend, optimization_level, model_engine, now_iso)
@@ -860,12 +873,7 @@ if __name__ == "__main__":
             print(f"[QuantumOrchestrator] groq reasoning error: {e}")
             response_text = "AI is under maintenance, will be working shortly."
 
-        # Check if LLM response or user intent generated executable python code to mutate editor
-        extracted_code = None
-        code_match = re.search(r'```(?:python|py)?\n([\s\S]*?)```', response_text)
-        if code_match:
-            extracted_code = code_match.group(1).strip()
-
+        # In reasoning / explanation mode, NEVER mutate editor code
         telemetry = {
             "active_qubits": 4,
             "depth": 6,
@@ -882,7 +890,6 @@ if __name__ == "__main__":
         }
 
         target_f = active_file if active_file.endswith(".py") else "main.py"
-        mutation = compute_mutation_summary(target_f, file_content, extracted_code, "Injected generated quantum code from reasoning engine") if extracted_code else None
         mem_md = self._record_memory(project_id, msg, response_text, steps, target_f, backend, 4, 6)
 
         return OrchestratorResult(
@@ -890,8 +897,8 @@ if __name__ == "__main__":
             intent_category="Reasoning",
             workflow_steps=steps,
             response_text=response_text,
-            updated_code=extracted_code,
-            code_mutation=mutation,
+            updated_code=None,
+            code_mutation=None,
             memory_md=mem_md,
             runtime_telemetry=telemetry
         )

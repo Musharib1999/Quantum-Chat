@@ -2170,8 +2170,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           toolCall: data.tool_call || undefined
         }]);
 
-        // 2. Dynamically Mutate Code & MEMORY.md in Workspace
-        if (data.updated_code || data.qubo_matrix_code || data.updated_files || data.memory_md) {
+        // 2. Dynamically Mutate Code & MEMORY.md in Workspace ONLY if not an explanatory question
+        const isExplanationOrQuestion = /^\s*(what does|what do|what is|what are|how does|how do|why|explain|analyze|inspect|review|tell me)\b/i.test(text.trim()) ||
+          text.trim().endsWith('?') ||
+          data.intent_category === 'Reasoning' ||
+          (data.workflow_steps && data.workflow_steps.some((s: any) => s.tool_tag?.includes('explainer')));
+
+        if (!isExplanationOrQuestion && (data.updated_code || data.qubo_matrix_code || data.updated_files || data.memory_md)) {
           setProjectFiles(prev => {
             const updated = { ...prev };
 

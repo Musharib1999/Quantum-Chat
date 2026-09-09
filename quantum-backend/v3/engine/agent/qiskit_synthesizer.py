@@ -37,7 +37,7 @@ BUILD_VERBS = [
     "build", "create", "generate", "synthesize", "make", "construct",
     "implement", "prepare", "setup", "set up", "modify", "update",
     "change", "edit", "replace", "add", "apply", "insert", "write",
-    "code", "entangle", "measure", "put", "append", "transform",
+    "entangle", "put", "append", "transform",
     "convert", "adjust", "include", "wire", "connect"
 ]
 
@@ -47,8 +47,12 @@ FILE_TARGETS = [
 ]
 
 PURE_QA_KEYWORDS = [
-    "what is", "what are", "explain", "why is", "why does", "tell me about",
-    "define", "how does", "difference between", "meaning of", "theory of"
+    "what does", "what do", "what is", "what are", "what will", "what can",
+    "explain", "how does", "how do", "how is", "how to", "why is",
+    "why does", "why do", "tell me about", "tell me what", "tell me how",
+    "define", "difference between", "meaning of", "theory of",
+    "walk me through", "analyze", "inspect", "review", "debug",
+    "can you explain", "could you explain", "understand", "what happens"
 ]
 
 MALICIOUS_KEYWORDS = [
@@ -66,7 +70,19 @@ def is_circuit_synthesis_request(message: str) -> bool:
     if any(k in msg_l for k in MALICIOUS_KEYWORDS):
         return False
 
-    # 2. Must involve a recognized quantum computing concept, named algorithm, or file reference
+    # 2. Check for explicit question / explanatory inquiry
+    is_question = (
+        any(msg_l.startswith(k) for k in PURE_QA_KEYWORDS) or
+        bool(re.search(r'\b(what does|what do|what is|what are|explain|how does|how do|why does|why do|can you explain|walk me through|tell me about|analyze|inspect|review)\b', msg_l)) or
+        msg_l.endswith("?")
+    )
+
+    # If it is an explanatory question about code or circuit, it is NEVER a synthesis request
+    explicit_build_command = any(re.search(r'\b(generate|create|synthesize|build|rewrite)\b', msg_l) for _ in [1])
+    if is_question and not (explicit_build_command and not any(k in msg_l for k in ["what does", "explain", "inspect", "review", "debug", "analyze"])):
+        return False
+
+    # 3. Must involve a recognized quantum computing concept, named algorithm, or file reference
     has_quantum = any(k in msg_l for k in QUANTUM_DOMAINS)
     is_named = any(k in msg_l for k in ["ghz", "grover", "bell", "epr", "qft", "qrng", "teleport", "entangle", "entanglement"])
     has_file = any(k in msg_l for k in FILE_TARGETS)
@@ -74,20 +90,10 @@ def is_circuit_synthesis_request(message: str) -> bool:
     if not has_quantum and not is_named and not has_file:
         return False
 
-    # 3. Check for build/modify action verbs (word-boundary matched)
+    # 4. Check for build/modify action verbs (word-boundary matched)
     has_build = any(re.search(r'\b' + re.escape(v) + r'\b', msg_l) for v in BUILD_VERBS)
 
-    # 4. Check for pure Q&A inquiry
-    has_qa_start = any(msg_l.startswith(k) for k in PURE_QA_KEYWORDS)
-
-    if has_qa_start and not has_build:
-        return False
-
-    # If the user says 'explain how to build ...' or 'tell me how to create ...'
-    if has_qa_start and any(msg_l.startswith(f"{k} how to") or msg_l.startswith(f"{k} how") for k in ["explain", "tell me"]):
-        return False
-
-    return has_build or is_named
+    return has_build or (is_named and any(k in msg_l for k in ["state", "circuit", "pair", "protocol", "algorithm"]))
 
 
 def _extract_qubit_count(text: str, default: int = 3, max_qubits: int = 28) -> int:
