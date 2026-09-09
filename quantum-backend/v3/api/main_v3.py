@@ -29,10 +29,13 @@ db = None
 if MONGODB_URI:
     try:
         db_client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URI)
-        db = db_client.get_default_database()
+        try:
+            db = db_client.get_default_database()
+        except Exception:
+            db = db_client["quantum_guru"]
         if db is None:
-            db = db_client["test"]
-        print("[Gateway DB] Connected to MongoDB Atlas successfully")
+            db = db_client["quantum_guru"]
+        print(f"[Gateway DB] Connected to MongoDB Atlas successfully (database: {db.name})")
     except Exception as e:
         print(f"[Gateway DB] MongoDB connection failed: {e}")
 

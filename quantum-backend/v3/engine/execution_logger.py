@@ -41,9 +41,12 @@ def _get_mongo_db():
                 connectTimeoutMS=3000,
                 tlsAllowInvalidCertificates=True,
             )
-            db = _mongo_client.get_default_database()
+            try:
+                db = _mongo_client.get_default_database()
+            except Exception:
+                db = _mongo_client["quantum_guru"]
             if db is None:
-                db = _mongo_client["test"]
+                db = _mongo_client["quantum_guru"]
             _mongo_db = db
             print("[ExecutionLogger] MongoDB connection pool initialised (maxPoolSize=5)")
         except Exception as e:
