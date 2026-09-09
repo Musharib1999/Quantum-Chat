@@ -5,7 +5,7 @@ This guide documents the exact environment setup required to run the Quantum Gur
 ## 1. Initial Setup & Cloning
 ```bash
 cd /workspace
-git clone https://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@github.com/msfga1996-source/Quantum_Guru.git
+git clone https://<GITHUB_TOKEN>@github.com/msfga1996-source/Quantum_Guru.git
 cd Quantum_Guru
 ```
 
