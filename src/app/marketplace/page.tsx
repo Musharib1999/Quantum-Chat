@@ -1,3 +1,4 @@
+import { getBackendUrl } from '@/lib/backend';
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -1057,7 +1058,7 @@ export default function QuantumMarketplacePage() {
     setSandboxOutput(null);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002'}/v3/enterprise/ide/agent/chat`, {
+      const res = await fetch(`${getBackendUrl()}/v3/enterprise/ide/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

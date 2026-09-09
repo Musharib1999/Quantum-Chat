@@ -1,3 +1,4 @@
+import { getBackendUrl } from '@/lib/backend';
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -146,7 +147,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
         formData.append('file', file);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002'}/ingest/upload`, { method: 'POST', body: formData });
+            const res = await fetch(`${getBackendUrl()}/ingest/upload`, { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
                 setAttachment({ name: file.name, type: ext as any, parsedData: data, loading: false, error: null });
@@ -170,7 +171,7 @@ export default function AssistantChat({ placeholder }: AssistantChatProps) {
         formData.append('url', url);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002'}/ingest/upload`, { method: 'POST', body: formData });
+            const res = await fetch(`${getBackendUrl()}/ingest/upload`, { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
                 setAttachment({ name: data.source_name || label, type: 'sheet', parsedData: data, loading: false, error: null });

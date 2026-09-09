@@ -1,3 +1,4 @@
+import { getBackendUrl } from '@/lib/backend';
 "use server";
 
 import axios from 'axios';
@@ -222,7 +223,7 @@ export async function chatWithQuantumAI(
         }
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002';
+    const backendUrl = getBackendUrl();
 
     // 4. Article mode — arXiv context injection, then RunPod Qwen
     if (contextConfig?.mode === 'article') {

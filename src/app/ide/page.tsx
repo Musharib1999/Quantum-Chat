@@ -42,7 +42,9 @@ import {
   Trash2
 } from 'lucide-react';
 
-const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8002').replace(/\/+$/, '');
+import { getBackendUrl } from '@/lib/backend';
+
+const BACKEND_URL = getBackendUrl();
 
 type AgentPhase = 
   | 'idle' 
