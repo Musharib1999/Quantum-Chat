@@ -39,7 +39,8 @@ import {
   HelpCircle,
   FolderPlus,
   LogOut,
-  Trash2
+  Trash2,
+  Compass
 } from 'lucide-react';
 
 import { getBackendUrl } from '@/lib/backend';
@@ -113,6 +114,55 @@ interface CopilotChatInputProps {
   activeFile: string;
 }
 
+// ── 💡 DYNAMIC AI CAPABILITY PLACEHOLDERS (CYCLES EVERY 4.5s) ──
+const CAPABILITY_PLACEHOLDERS = [
+  "Ask theory: 'What is phase kickback in Grover's algorithm?'",
+  "Ask your code: 'Explain what main.py is doing line-by-line'",
+  "Ask to write code: 'Write a 3-qubit Quantum Teleportation script'",
+  "Ask to create circuit: 'Add Hadamard gates and build a Bell state'",
+  "Ask optimization: 'Formulate a 5-node Max-Cut QUBO problem'"
+];
+
+// ── 🧭 INTERACTIVE 5-STEP PRODUCT WALKTHROUGH LIFECYCLE ──
+const TOUR_STEPS = [
+  {
+    step: 1,
+    title: "1. Workspace & Algorithm Templates",
+    desc: "Switch between pre-scaffolded quantum algorithms (Grover's Search, VQE Molecular Chemistry, or D-Wave QUBO Optimization), or create your own custom quantum workspace.",
+    badge: "Project Architecture"
+  },
+  {
+    step: 2,
+    title: "2. Live Quantum Code Canvas",
+    desc: "Write and edit your Qiskit and D-Wave Python scripts with full syntax highlighting. All changes are auto-saved locally with immediate crash protection and synced to the cloud.",
+    badge: "Code Editor"
+  },
+  {
+    step: 3,
+    title: "3. Real-Time Circuit Visualizer",
+    desc: "Your Python code is parsed live into an interactive quantum circuit diagram. Drag, drop, and inspect gates on quantum wires with zero manual compilation.",
+    badge: "Interactive Canvas"
+  },
+  {
+    step: 4,
+    title: "4. QPU Simulation & Terminal",
+    desc: "Execute your quantum programs directly on high-performance simulators (AerSimulator, Statevector, or D-Wave Simulated Annealer) and analyze measurement counts and probability histograms.",
+    badge: "Execution Engine"
+  },
+  {
+    step: 5,
+    title: "5. Agentic Quantum Copilot",
+    desc: "Your personal quantum pair programmer, AST analyzer, and algorithm architect. It can:",
+    bulletPoints: [
+      "🧠 Answer quantum computing, physics & mathematical theory",
+      "🔍 Inspect and explain your active code file line-by-line",
+      "⚡ Write complete, production-ready quantum scripts for you",
+      "⚛️ Synthesize and mutate visual circuits directly on the canvas"
+    ],
+    badge: "AI Quantum Assistant"
+  }
+];
+
 const CopilotChatInput = React.memo(function CopilotChatInput({
   onSend,
   isThinking,
@@ -121,6 +171,14 @@ const CopilotChatInput = React.memo(function CopilotChatInput({
   activeFile
 }: CopilotChatInputProps) {
   const [input, setInput] = useState('');
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPlaceholderIdx(prev => (prev + 1) % CAPABILITY_PLACEHOLDERS.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -155,9 +213,9 @@ const CopilotChatInput = React.memo(function CopilotChatInput({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask a quantum question about your code or concepts (e.g. explain main.py)..."
+          placeholder={CAPABILITY_PLACEHOLDERS[placeholderIdx]}
           style={{ color: colors.textPrimary, outline: 'none', border: 'none', boxShadow: 'none' }}
-          className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:text-slate-400 dark:placeholder:text-zinc-500 placeholder-slate-400 dark:placeholder-zinc-500 leading-relaxed"
+          className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm font-normal font-sans resize-none placeholder:text-slate-400 dark:placeholder:text-zinc-500 placeholder-slate-400 dark:placeholder-zinc-500 leading-relaxed transition-all duration-300"
         />
         
         <div className="flex items-center justify-end gap-2 pt-1.5 border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}>
@@ -559,6 +617,73 @@ export default function QuantumIDE() {
   const { user, logout, isAuthenticated, isInitializing } = useAuth();
   const userScope = user?.email ? user.email.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'guest';
   const router = useRouter();
+
+  // 🧭 Product Walkthrough Tour State
+  const [isTourActive, setIsTourActive] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  const [hasSeenTour, setHasSeenTour] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const seen = localStorage.getItem('quantum_tour_seen');
+      if (!seen) {
+        setHasSeenTour(false);
+      }
+    }
+  }, []);
+
+  const startTour = useCallback(() => {
+    setTourStep(0);
+    setIsTourActive(true);
+  }, []);
+
+  const endTour = useCallback(() => {
+    setIsTourActive(false);
+    setHasSeenTour(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('quantum_tour_seen', 'true');
+    }
+  }, []);
+
+  // Keyboard navigation for product tour
+  useEffect(() => {
+    if (!isTourActive) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        endTour();
+      } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        if (tourStep < TOUR_STEPS.length - 1) {
+          const next = tourStep + 1;
+          setTourStep(next);
+          if (next === 2) {
+            setIsBottomOpen(true);
+            setActiveBottomTab('circuit');
+          } else if (next === 3) {
+            setIsBottomOpen(true);
+            setActiveBottomTab('terminal');
+          } else if (next === 4) {
+            setIsRightOpen(true);
+          }
+        } else {
+          endTour();
+        }
+      } else if (e.key === 'ArrowLeft') {
+        if (tourStep > 0) {
+          const prev = tourStep - 1;
+          setTourStep(prev);
+          if (prev === 2) {
+            setIsBottomOpen(true);
+            setActiveBottomTab('circuit');
+          } else if (prev === 3) {
+            setIsBottomOpen(true);
+            setActiveBottomTab('terminal');
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isTourActive, tourStep, endTour]);
 
   // 1. Client-Side Auth Guard: redirect to login if unauthenticated
   useEffect(() => {
@@ -2650,7 +2775,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           <div style={{ backgroundColor: colors.border }} className="h-4 w-px mx-1" />
 
           {/* Project Switcher Dropdown */}
-          <div className="relative">
+          <div id="tour-project-selector" className="relative">
             <div 
               onClick={() => setIsProjectsDropdownOpen(!isProjectsDropdownOpen)}
               style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
@@ -2702,8 +2827,24 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           </div>
         </div>
 
-        {/* Right: Header Right Spacer */}
-        <div className="flex items-center gap-2" />
+        {/* Right: Header Actions & Guided Tour */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={startTour}
+            style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-all hover:border-sky-400 hover:scale-[1.02] shadow-2xs group relative"
+            title="Launch Guided Product Tour"
+          >
+            <Compass className="w-3.5 h-3.5 text-sky-400 group-hover:rotate-45 transition-transform duration-300" />
+            <span className="font-heading">Tour</span>
+            {!hasSeenTour && (
+              <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+              </span>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* ───────────────────────────────────────────────────────────── */}
@@ -2861,7 +3002,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         {/* ───────────────────────────────────────────────────────── */}
         {/* SECTION 2 (CENTER - IN FOCUS): CODE EDITOR + CANVAS       */}
         {/* ───────────────────────────────────────────────────────── */}
-        <div style={{ backgroundColor: colors.bgSection2, borderColor: colors.borderSection2 }} className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative shadow-2xl">
+        <div id="tour-editor-pane" style={{ backgroundColor: colors.bgSection2, borderColor: colors.borderSection2 }} className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative shadow-2xl">
           
           {/* Upper Pane: Interactive Monaco Code Canvas */}
           <div style={{ borderColor: colors.border }} className="flex-1 flex flex-col min-h-0 overflow-hidden border-b">
@@ -2955,6 +3096,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
           {/* ── LOWER PANE: COLLAPSIBLE MULTI-TAB BOTTOM DRAWER ── */}
           <div 
+            id="tour-circuit-drawer"
             style={{ 
               borderColor: colors.borderSection2,
               height: isBottomOpen ? `${bottomHeight}px` : '36px',
@@ -2968,7 +3110,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               className="h-10 px-3.5 border-b flex items-center justify-between shrink-0 select-none"
             >
               {/* ZONE 1 (LEFT): Navigation Mode Tabs */}
-              <div className="flex items-center gap-1.5">
+              <div id="tour-run-terminal" className="flex items-center gap-1.5">
                 <button
                   onClick={() => { setActiveBottomTab('circuit'); setIsBottomOpen(true); }}
                   style={{
@@ -3695,6 +3837,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       {/* ─────────────────────────────────────────────────────────── */}
       {isRightOpen ? (
         <aside 
+          id="tour-copilot-panel"
           style={{ 
             width: `${rightWidth}px`, 
             backgroundColor: colors.bgSection3, 
@@ -3990,6 +4133,144 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
 
       {/* ───────────────────────────────────────────────────────────── */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 🧭 GUIDED PRODUCT WALKTHROUGH TOUR MODAL                      */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isTourActive && (
+        <div className="fixed inset-0 z-50 pointer-events-auto flex items-center justify-center">
+          {/* Backdrop with dark blur */}
+          <div 
+            onClick={endTour}
+            className="absolute inset-0 bg-black/75 backdrop-blur-xs transition-opacity duration-300" 
+          />
+
+          {/* Floating Tour Step Card */}
+          <div 
+            style={{ 
+              backgroundColor: colors.bgCard, 
+              borderColor: isDark ? 'rgba(56, 189, 248, 0.4)' : 'rgba(14, 165, 233, 0.5)',
+              color: colors.textPrimary 
+            }}
+            className="relative z-10 w-full max-w-lg mx-4 rounded-2xl border p-6 shadow-2xl shadow-sky-950/40 animate-in fade-in zoom-in-95 duration-200"
+          >
+            {/* Header: Step Pill + Badge + Close Button */}
+            <div className="flex items-center justify-between mb-3.5">
+              <div className="flex items-center gap-2">
+                <span 
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+                  className="px-2.5 py-0.5 rounded-full border text-[11px] font-mono font-medium"
+                >
+                  Step {tourStep + 1} of {TOUR_STEPS.length}
+                </span>
+                <span 
+                  className="text-xs font-mono font-semibold"
+                  style={{ color: colors.textEmerald }}
+                >
+                  {TOUR_STEPS[tourStep].badge}
+                </span>
+              </div>
+              <button 
+                onClick={endTour}
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-zinc-800/50 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                title="Skip and close tour (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Step Title */}
+            <h3 className="text-base font-semibold mb-2 font-heading tracking-tight flex items-center gap-2" style={{ color: colors.textPrimary }}>
+              <span>{TOUR_STEPS[tourStep].title}</span>
+            </h3>
+
+            {/* Step Description */}
+            <p className="text-xs leading-relaxed mb-4 text-slate-300 dark:text-zinc-300 font-sans">
+              {TOUR_STEPS[tourStep].desc}
+            </p>
+
+            {/* Bullet Points for Step 5 (Copilot Superpowers) */}
+            {TOUR_STEPS[tourStep].bulletPoints && (
+              <div 
+                style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                className="rounded-xl border p-3.5 mb-4 space-y-2 text-xs font-sans"
+              >
+                <div className="text-[11px] font-semibold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
+                  4 Core Copilot Superpowers:
+                </div>
+                {TOUR_STEPS[tourStep].bulletPoints.map((bp, i) => (
+                  <div key={i} className="flex items-start gap-2 text-slate-200 dark:text-zinc-200">
+                    <span className="shrink-0">{bp.slice(0, 2)}</span>
+                    <span className="leading-snug">{bp.slice(3)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Progress Bar */}
+            <div className="w-full bg-zinc-800/60 rounded-full h-1.5 mb-5 overflow-hidden border border-zinc-700/30">
+              <div 
+                className="bg-sky-400 h-full transition-all duration-300 rounded-full"
+                style={{ width: `${((tourStep + 1) / TOUR_STEPS.length) * 100}%` }}
+              />
+            </div>
+
+            {/* Footer Buttons: Back, Next/Finish, Skip */}
+            <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: colors.border }}>
+              <button
+                onClick={endTour}
+                className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer px-1"
+              >
+                Skip Tour
+              </button>
+              <div className="flex items-center gap-2">
+                {tourStep > 0 && (
+                  <button
+                    onClick={() => {
+                      const prev = tourStep - 1;
+                      setTourStep(prev);
+                      if (prev === 2) {
+                        setIsBottomOpen(true);
+                        setActiveBottomTab('circuit');
+                      } else if (prev === 3) {
+                        setIsBottomOpen(true);
+                        setActiveBottomTab('terminal');
+                      }
+                    }}
+                    style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
+                    className="px-3.5 py-1.5 rounded-lg border text-xs font-medium hover:bg-zinc-800/80 cursor-pointer transition-all"
+                  >
+                    Back
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (tourStep < TOUR_STEPS.length - 1) {
+                      const next = tourStep + 1;
+                      setTourStep(next);
+                      if (next === 2) {
+                        setIsBottomOpen(true);
+                        setActiveBottomTab('circuit');
+                      } else if (next === 3) {
+                        setIsBottomOpen(true);
+                        setActiveBottomTab('terminal');
+                      } else if (next === 4) {
+                        setIsRightOpen(true);
+                      }
+                    } else {
+                      endTour();
+                    }
+                  }}
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.textCyan, color: colors.textCyan }}
+                  className="px-4 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all hover:scale-[1.02] shadow-xs flex items-center gap-1.5"
+                >
+                  <span>{tourStep === TOUR_STEPS.length - 1 ? 'Finish Tour ✔' : 'Next Step ➔'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SETTINGS MODAL                                                */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isSettingsOpen && (
