@@ -164,10 +164,10 @@ const TOUR_STEPS = [
     position: "left" as const,
     desc: "Your personal quantum pair programmer, AST analyzer, and algorithm architect. It can:",
     bulletPoints: [
-      "🧠 Answer quantum computing, physics & mathematical theory",
-      "🔍 Inspect and explain your active code file line-by-line",
-      "⚡ Write complete, production-ready quantum scripts for you",
-      "⚛️ Synthesize and mutate visual circuits directly on the canvas"
+      { icon: "🧠", text: "Answer quantum computing, physics & mathematical theory" },
+      { icon: "🔍", text: "Inspect and explain your active code file line-by-line" },
+      { icon: "⚡", text: "Write complete, production-ready quantum scripts for you" },
+      { icon: "⚛️", text: "Synthesize and mutate visual circuits directly on the canvas" }
     ],
     badge: "AI Quantum Assistant"
   }
@@ -4354,8 +4354,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   </div>
                   {TOUR_STEPS[tourStep].bulletPoints.map((bp, i) => (
                     <div key={i} className="flex items-start gap-2 text-slate-200 dark:text-zinc-200">
-                      <span className="shrink-0">{bp.slice(0, 2)}</span>
-                      <span className="leading-snug">{bp.slice(3)}</span>
+                      <span className="shrink-0">{bp.icon}</span>
+                      <span className="leading-snug">{bp.text}</span>
                     </div>
                   ))}
                 </div>
