@@ -623,6 +623,23 @@ function normalizeCircuitGates(rawGates: any[]): Array<{ name: string; qubit: nu
   return normalized;
 }
 
+const checkIsDwave = (code?: string, target?: string, template?: string): boolean => {
+  const c = code || '';
+  const t = target || '';
+  const tmpl = template || '';
+  return (
+    c.includes('dimod') ||
+    c.includes('neal') ||
+    c.includes('SimulatedAnnealingSampler') ||
+    c.includes('DWaveSampler') ||
+    c.includes('BinaryQuadraticModel') ||
+    c.includes('qubo') ||
+    t.includes('dwave') ||
+    tmpl.includes('dwave') ||
+    tmpl.includes('portfolio-opti')
+  );
+};
+
 export default function QuantumIDE() {
   const { user, logout, isAuthenticated, isInitializing } = useAuth();
   const userScope = user?.email ? user.email.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'guest';
@@ -677,6 +694,25 @@ export default function QuantumIDE() {
   const [isRunning, setIsRunning] = useState(false);
 
   const [isCopilotThinking, setIsCopilotThinking] = useState(false);
+  const [thinkingStage, setThinkingStage] = useState<number>(0);
+  const [activeAssemblyStep, setActiveAssemblyStep] = useState<number | null>(null);
+  const [isEditorStreaming, setIsEditorStreaming] = useState<boolean>(false);
+  const [streamingCodeDisplay, setStreamingCodeDisplay] = useState<string | null>(null);
+  const [highlightResultsTab, setHighlightResultsTab] = useState<boolean>(false);
+
+  const stageTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const chatStreamTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const editorStreamTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const gateAssemblyTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (stageTimerRef.current) clearInterval(stageTimerRef.current);
+      if (chatStreamTimerRef.current) clearInterval(chatStreamTimerRef.current);
+      if (editorStreamTimerRef.current) clearInterval(editorStreamTimerRef.current);
+      if (gateAssemblyTimerRef.current) clearInterval(gateAssemblyTimerRef.current);
+    };
+  }, []);
   const [agentPhase, setAgentPhase] = useState<AgentPhase>('idle');
   const [activeToolDisplay, setActiveToolDisplay] = useState<string>('');
   const [expandedTraces, setExpandedTraces] = useState<Record<string, boolean>>({});
@@ -2600,6 +2636,71 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
   // ─────────────────────────────────────────────────────────────
   // 🧠 LIVE CONTEXT-AWARE AGENT REASONING + LIVE CODE & TELEMETRY MUTATION
   // ─────────────────────────────────────────────────────────────
+  // Helper to atomically commit synthesized files to state and database
+  const commitUpdatedFiles = (
+    newCode: string | null,
+    targetFileKey: string,
+    dataPayload: any
+  ) => {
+    setProjectFiles(prev => {
+      const updated = { ...prev };
+
+      if (newCode !== null) {
+        updated[targetFileKey] = {
+          ...(updated[targetFileKey] || { name: targetFileKey, language: 'python' }),
+          content: newCode
+        };
+      }
+
+      if (dataPayload.qubo_matrix_code) {
+        updated['qubo_matrix.py'] = {
+          name: 'qubo_matrix.py',
+          lang: 'python',
+          language: 'python',
+          content: dataPayload.qubo_matrix_code
+        };
+      }
+
+      if (dataPayload.updated_files) {
+        for (const [fName, fContent] of Object.entries(dataPayload.updated_files)) {
+          updated[fName] = {
+            name: fName,
+            lang: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
+            language: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
+            content: fContent as string
+          };
+        }
+      }
+
+      if (dataPayload.memory_md) {
+        updated['MEMORY.md'] = {
+          name: 'MEMORY.md',
+          lang: 'markdown',
+          language: 'markdown',
+          content: dataPayload.memory_md
+        };
+      }
+
+      setAllProjects(projPrev => ({
+        ...projPrev,
+        [projectName]: {
+          ...(projPrev[projectName] || {}),
+          files: updated
+        }
+      }));
+
+      saveProjectToDatabase(
+        projectName,
+        { title: projectName, desc: '', files: updated },
+        activeFile,
+        dataPayload.runtime_telemetry || runtimeMetrics,
+        true
+      );
+
+      return updated;
+    });
+  };
+
   const handleSendMessage = async (textToSend: string) => {
     const text = (textToSend || '').trim();
     if (!text || isCopilotThinking) return;
@@ -2607,6 +2708,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text };
     setChatMessages(prev => [...prev, userMsg]);
     setIsCopilotThinking(true);
+    setThinkingStage(0);
+
+    // Multi-phase thinking timeline
+    if (stageTimerRef.current) clearInterval(stageTimerRef.current);
+    stageTimerRef.current = setInterval(() => {
+      setThinkingStage(prev => (prev < 3 ? prev + 1 : prev));
+    }, 350);
 
     if (text === '/execute@program' || text.toLowerCase().includes('run program') || text.toLowerCase().includes('/run')) {
       handleRun();
@@ -2632,8 +2740,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
       if (res.ok) {
         const data = await res.json();
+        if (stageTimerRef.current) clearInterval(stageTimerRef.current);
+        setThinkingStage(3);
         
-        // 1. Update Chat Response with Autonomous Workflow Steps & Code Mutation Summary
+        // 1. Update Chat Response with Autonomous Workflow Steps & Progressive Word Streaming
         const mutationData = data.code_mutation ? {
           fileName: data.code_mutation.file_name,
           action: data.code_mutation.action || 'MUTATE',
@@ -2643,15 +2753,47 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           summary: data.code_mutation.summary || ''
         } : undefined;
 
-        setChatMessages(prev => [...prev, {
-          id: (Date.now() + 1).toString(),
-          sender: 'agent',
-          text: (data.response_text && !data.response_text.includes('Inference Error') && !data.response_text.includes('Rate Limit')) ? data.response_text : 'AI is under maintenance, will be working shortly.',
-          workflowSteps: data.workflow_steps || undefined,
-          scientificVerdict: data.scientific_verdict || undefined,
-          codeMutation: mutationData,
-          toolCall: data.tool_call || undefined
-        }]);
+        const fullAgentText = (data.response_text && !data.response_text.includes('Inference Error') && !data.response_text.includes('Rate Limit')) 
+          ? data.response_text 
+          : 'AI is under maintenance, will be working shortly.';
+        const agentMsgId = (Date.now() + 1).toString();
+
+        const words = fullAgentText.split(' ');
+        if (words.length > 8) {
+          const chunkSize = Math.max(3, Math.ceil(words.length / 15));
+          setChatMessages(prev => [...prev, {
+            id: agentMsgId,
+            sender: 'agent',
+            text: words.slice(0, chunkSize).join(' '),
+            workflowSteps: data.workflow_steps || undefined,
+            scientificVerdict: data.scientific_verdict || undefined,
+            codeMutation: mutationData,
+            toolCall: data.tool_call || undefined
+          }]);
+
+          let currentWordIdx = chunkSize;
+          if (chatStreamTimerRef.current) clearInterval(chatStreamTimerRef.current);
+          chatStreamTimerRef.current = setInterval(() => {
+            currentWordIdx += chunkSize;
+            if (currentWordIdx >= words.length) {
+              if (chatStreamTimerRef.current) clearInterval(chatStreamTimerRef.current);
+              setChatMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: fullAgentText } : m));
+            } else {
+              const partial = words.slice(0, currentWordIdx).join(' ');
+              setChatMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: partial } : m));
+            }
+          }, 20);
+        } else {
+          setChatMessages(prev => [...prev, {
+            id: agentMsgId,
+            sender: 'agent',
+            text: fullAgentText,
+            workflowSteps: data.workflow_steps || undefined,
+            scientificVerdict: data.scientific_verdict || undefined,
+            codeMutation: mutationData,
+            toolCall: data.tool_call || undefined
+          }]);
+        }
 
         // 2. Dynamically Mutate Code & MEMORY.md in Workspace ONLY if not an explanatory question
         const isExplanationOrQuestion = /^\s*(what does|what do|what is|what are|how does|how do|why|explain|analyze|inspect|review|tell me)\b/i.test(text.trim()) ||
@@ -2660,80 +2802,83 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           (data.workflow_steps && data.workflow_steps.some((s: any) => s.tool_tag?.includes('explainer')));
 
         if (!isExplanationOrQuestion && (data.updated_code || data.qubo_matrix_code || data.updated_files || data.memory_md)) {
-          setProjectFiles(prev => {
-            const updated = { ...prev };
+          const newCode = data.updated_code || '';
+          const isDwave = checkIsDwave(newCode, targetBackend, selectedTemplateKey);
 
-            if (data.updated_code) {
-              const newCode = data.updated_code;
-              const targetFileKey = updated[activeFile] && activeFile !== 'MEMORY.md' && activeFile !== 'quantum.config.json'
-                ? activeFile 
-                : (Object.keys(updated).find(f => f.endsWith('.py')) || Object.keys(updated)[0] || 'main.py');
-              
-              if (activeFile !== 'MEMORY.md' && targetFileKey !== activeFile) {
-                setActiveFile(targetFileKey);
-              }
-              updated[targetFileKey] = {
-                ...(updated[targetFileKey] || { name: targetFileKey, language: 'python' }),
-                content: newCode
-              };
+          if (newCode) {
+            const targetFileKey = projectFiles[activeFile] && activeFile !== 'MEMORY.md' && activeFile !== 'quantum.config.json'
+              ? activeFile 
+              : (Object.keys(projectFiles).find(f => f.endsWith('.py')) || Object.keys(projectFiles)[0] || 'main.py');
+            
+            if (activeFile !== 'MEMORY.md' && targetFileKey !== activeFile) {
+              setActiveFile(targetFileKey);
+            }
 
-              // ⚛️ Phase 2: Instant Bi-Directional Circuit Canvas & Qubit Synchronization
+            // ⚛️ Paradigm Pathway: Qiskit Circuit Assembly vs D-Wave Annealing Results
+            if (isDwave) {
+              setActiveBottomTab('results');
+              setIsBottomOpen(true);
+              setHighlightResultsTab(true);
+              setTimeout(() => setHighlightResultsTab(false), 3500);
+            } else {
+              setActiveBottomTab('circuit');
+              setIsBottomOpen(true);
               const declaredQubits = parseQiskitQubitCount(newCode);
               const parsedGates = parseQiskitCodeToGates(newCode, declaredQubits);
               const maxGateQubit = parsedGates.length > 0 ? Math.max(...parsedGates.map(g => g.qubit + 1)) : 2;
               const finalQubits = Math.max(declaredQubits, maxGateQubit);
               setCanvasQubits(finalQubits);
-              setCircuitGates(parsedGates);
-            }
 
-            if (data.qubo_matrix_code) {
-              updated['qubo_matrix.py'] = {
-                name: 'qubo_matrix.py',
-                lang: 'python',
-                language: 'python',
-                content: data.qubo_matrix_code
-              };
-            }
+              // Progressive Step-by-Step Gate Assembly
+              if (parsedGates.length > 0) {
+                const maxStep = Math.min(9, Math.max(0, ...parsedGates.map(g => g.step)));
+                let currentAssemblyStep = 0;
+                setCircuitGates([]);
+                setActiveAssemblyStep(0);
 
-            if (data.updated_files) {
-              for (const [fName, fContent] of Object.entries(data.updated_files)) {
-                updated[fName] = {
-                  name: fName,
-                  lang: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
-                  language: fName.endsWith('.json') ? 'json' : (fName.endsWith('.md') ? 'markdown' : 'python'),
-                  content: fContent as string
-                };
+                if (gateAssemblyTimerRef.current) clearInterval(gateAssemblyTimerRef.current);
+                gateAssemblyTimerRef.current = setInterval(() => {
+                  if (currentAssemblyStep > maxStep) {
+                    if (gateAssemblyTimerRef.current) clearInterval(gateAssemblyTimerRef.current);
+                    setActiveAssemblyStep(null);
+                    setCircuitGates(parsedGates);
+                  } else {
+                    setActiveAssemblyStep(currentAssemblyStep);
+                    setCircuitGates(parsedGates.filter(g => g.step <= currentAssemblyStep));
+                    currentAssemblyStep++;
+                  }
+                }, 70);
+              } else {
+                setCircuitGates([]);
               }
             }
 
-            if (data.memory_md) {
-              updated['MEMORY.md'] = {
-                name: 'MEMORY.md',
-                lang: 'markdown',
-                language: 'markdown',
-                content: data.memory_md
-              };
+            // 📝 High-Speed Editor Code Streaming (Typewriter Effect)
+            const lines = newCode.split('\n');
+            if (lines.length > 2) {
+              setIsEditorStreaming(true);
+              const lineChunk = Math.max(2, Math.ceil(lines.length / 18));
+              let currentLineCount = lineChunk;
+              setStreamingCodeDisplay(lines.slice(0, currentLineCount).join('\n'));
+
+              if (editorStreamTimerRef.current) clearInterval(editorStreamTimerRef.current);
+              editorStreamTimerRef.current = setInterval(() => {
+                currentLineCount += lineChunk;
+                if (currentLineCount >= lines.length) {
+                  if (editorStreamTimerRef.current) clearInterval(editorStreamTimerRef.current);
+                  setIsEditorStreaming(false);
+                  setStreamingCodeDisplay(null);
+                  commitUpdatedFiles(newCode, targetFileKey, data);
+                } else {
+                  setStreamingCodeDisplay(lines.slice(0, currentLineCount).join('\n'));
+                }
+              }, 18);
+            } else {
+              commitUpdatedFiles(newCode, targetFileKey, data);
             }
-
-            // Sync into allProjects workspace store
-            setAllProjects(projPrev => ({
-              ...projPrev,
-              [projectName]: {
-                ...(projPrev[projectName] || {}),
-                files: updated
-              }
-            }));
-
-            saveProjectToDatabase(
-              projectName, 
-              { title: projectName, desc: '', files: updated }, 
-              activeFile, 
-              data.runtime_telemetry || runtimeMetrics,
-              true
-            );
-
-            return updated;
-          });
+          } else {
+            commitUpdatedFiles(null, activeFile, data);
+          }
         }
 
         // 3. Dynamically Mutate Real-Time Runtime Telemetry
@@ -2767,9 +2912,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         }]);
       }, 400);
     } finally {
+      if (stageTimerRef.current) clearInterval(stageTimerRef.current);
       setIsCopilotThinking(false);
     }
   };
+
 
   const files = projectFiles;
 
@@ -3053,7 +3200,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         <div id="tour-editor-pane" style={{ backgroundColor: colors.bgSection2, borderColor: colors.borderSection2 }} className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative shadow-2xl">
           
           {/* Upper Pane: Interactive Monaco Code Canvas */}
-          <div style={{ borderColor: colors.border }} className="flex-1 flex flex-col min-h-0 overflow-hidden border-b">
+          <div style={{ borderColor: colors.border }} className="flex-1 flex flex-col min-h-0 overflow-hidden border-b relative">
+            {/* Agent Live Streaming Pill Banner */}
+            {isEditorStreaming && (
+              <div className="absolute top-3 right-6 z-30 flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/40 text-sky-400 font-mono text-[11px] shadow-lg animate-pulse backdrop-blur-md">
+                <Sparkles className="w-3.5 h-3.5 animate-spin text-sky-400" />
+                <span>Agent streaming {checkIsDwave(streamingCodeDisplay || '', targetBackend, selectedTemplateKey) ? 'D-Wave BQM AST' : 'Qiskit Python AST'}...</span>
+              </div>
+            )}
+
             <div 
               style={{ backgroundColor: colors.bgEditor, color: colors.textPrimary }}
               className="flex-1 min-h-0 overflow-auto p-4 font-mono text-xs leading-relaxed flex"
@@ -3063,15 +3218,17 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 style={{ borderColor: colors.border, color: colors.textMuted }}
                 className="pr-4 select-none text-right font-mono border-r mr-4 space-y-0.5 opacity-50"
               >
-                {(projectFiles[activeFile]?.content || '# Empty file').split('\n').map((_: string, idx: number) => (
+                {((isEditorStreaming && streamingCodeDisplay !== null ? streamingCodeDisplay : projectFiles[activeFile]?.content) || '# Empty file').split('\n').map((_: string, idx: number) => (
                   <div key={idx}>{idx + 1}</div>
                 ))}
               </div>
 
               {/* Editable Code Canvas */}
               <textarea
-                value={projectFiles[activeFile]?.content || ''}
+                value={isEditorStreaming && streamingCodeDisplay !== null ? streamingCodeDisplay : (projectFiles[activeFile]?.content || '')}
+                readOnly={isEditorStreaming}
                 onChange={(e) => {
+                  if (isEditorStreaming) return;
                   const val = e.target.value;
                   setProjectFiles(prev => {
                     const updated = {
@@ -3169,7 +3326,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                   className="px-2.5 py-1 rounded-lg text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
                 >
                   <Cpu className="w-3.5 h-3.5" />
-                  <span>Interactive Circuit Canvas</span>
+                  <span>{checkIsDwave(projectFiles[activeFile]?.content, targetBackend, selectedTemplateKey) ? 'Gate Canvas (Qiskit)' : 'Interactive Circuit Canvas'}</span>
                 </button>
 
                 <button
@@ -3189,14 +3346,14 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 <button
                   onClick={() => { setActiveBottomTab('results'); setIsBottomOpen(true); }}
                   style={{
-                    backgroundColor: activeBottomTab === 'results' && isBottomOpen ? colors.bgPill : 'transparent',
-                    color: activeBottomTab === 'results' && isBottomOpen ? colors.textAmber : colors.textMuted,
-                    borderColor: activeBottomTab === 'results' && isBottomOpen ? colors.border : 'transparent'
+                    backgroundColor: activeBottomTab === 'results' && isBottomOpen ? colors.bgPill : (highlightResultsTab ? 'rgba(245, 158, 11, 0.15)' : 'transparent'),
+                    color: activeBottomTab === 'results' && isBottomOpen ? colors.textAmber : (highlightResultsTab ? colors.textAmber : colors.textMuted),
+                    borderColor: activeBottomTab === 'results' && isBottomOpen ? colors.border : (highlightResultsTab ? 'rgba(245, 158, 11, 0.4)' : 'transparent')
                   }}
-                  className="px-2.5 py-1 rounded-lg text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-colors"
+                  className={`px-2.5 py-1 rounded-lg text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer border transition-all ${highlightResultsTab ? 'ring-2 ring-amber-400/60 animate-pulse' : ''}`}
                 >
                   <BarChart3 className="w-3.5 h-3.5" />
-                  <span>{optimizationResults || targetBackend.includes('dwave') ? 'Energy & QUBO Results' : 'Measurement Results'}</span>
+                  <span>{checkIsDwave(projectFiles[activeFile]?.content, targetBackend, selectedTemplateKey) ? 'Energy & QUBO Results (D-Wave)' : 'Measurement Results'}</span>
                 </button>
               </div>
 
@@ -3335,6 +3492,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                 {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(stepIdx => {
                                   const gateOnSlot = circuitGates.find(g => (g.qubit === qIdx || (Array.isArray((g as any).qubits) && (g as any).qubits[0] === qIdx)) && g.step === stepIdx);
                                   const isSelected = activeSlotPopover?.qubit === qIdx && activeSlotPopover?.step === stepIdx;
+                                  const isAssemblingCurrentStep = activeAssemblyStep === stepIdx;
 
                                   return (
                                     <div key={stepIdx} className="relative w-full h-8 flex items-center justify-center">
@@ -3374,24 +3532,33 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                           }
                                         }}
                                         style={{
-                                          backgroundColor: gateOnSlot 
-                                            ? (isDark ? '#0c4a6e' : '#e0f2fe') 
-                                            : (isSelected ? (isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(2, 132, 199, 0.1)') : 'transparent'),
-                                          borderColor: gateOnSlot 
-                                            ? (isDark ? '#38bdf8' : '#0284c7') 
-                                            : (isSelected ? '#38bdf8' : 'transparent'),
+                                          backgroundColor: isAssemblingCurrentStep
+                                            ? (isDark ? 'rgba(56, 189, 248, 0.35)' : 'rgba(2, 132, 199, 0.25)')
+                                            : (gateOnSlot 
+                                              ? (isDark ? '#0c4a6e' : '#e0f2fe') 
+                                              : (isSelected ? (isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(2, 132, 199, 0.1)') : 'transparent')),
+                                          borderColor: isAssemblingCurrentStep
+                                            ? '#38bdf8'
+                                            : (gateOnSlot 
+                                              ? (isDark ? '#38bdf8' : '#0284c7') 
+                                              : (isSelected ? '#38bdf8' : 'transparent')),
+                                          boxShadow: isAssemblingCurrentStep
+                                            ? '0 0 14px rgba(56, 189, 248, 0.9)'
+                                            : undefined,
                                           color: gateOnSlot 
                                             ? (isDark ? '#7dd3fc' : '#0369a1') 
                                             : (isDark ? '#64748b' : '#94a3b8')
                                         }}
                                         className={`wire-slot-btn relative z-10 w-full h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all cursor-pointer ${
-                                          isSelected
-                                            ? 'ring-2 ring-sky-400 scale-[1.05]'
-                                            : gateOnSlot 
-                                              ? (isDark ? 'ring-1 ring-sky-400/50 shadow-xs' : 'ring-1 ring-sky-500/50 shadow-xs') 
-                                              : (isDark 
-                                                  ? 'hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-sky-300' 
-                                                  : 'hover:border-sky-400 hover:bg-sky-50 hover:text-sky-600')
+                                          isAssemblingCurrentStep
+                                            ? 'scale-110 ring-2 ring-sky-400'
+                                            : (isSelected
+                                              ? 'ring-2 ring-sky-400 scale-[1.05]'
+                                              : gateOnSlot 
+                                                ? (isDark ? 'ring-1 ring-sky-400/50 shadow-xs' : 'ring-1 ring-sky-500/50 shadow-xs') 
+                                                : (isDark 
+                                                    ? 'hover:border-sky-500/40 hover:bg-sky-500/10 hover:text-sky-300' 
+                                                    : 'hover:border-sky-400 hover:bg-sky-50 hover:text-sky-600'))
                                         }`}
                                         title={gateOnSlot ? `Slot (q[${qIdx}], t${stepIdx}): ${gateOnSlot.name.toUpperCase()}${gateOnSlot.target !== undefined ? ` (${gateOnSlot.role === 'control' ? 'Ctrl -> q' + gateOnSlot.target : 'Target <- q' + gateOnSlot.target})` : ''}` : `Slot (q[${qIdx}], t${stepIdx}): Click to choose gate`}
                                       >
@@ -3633,6 +3800,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 {/* TAB 3: MEASUREMENT RESULTS / D-WAVE ENERGY & QUBO SPECTRUM */}
                 {activeBottomTab === 'results' && (
                   <div className="p-4 space-y-4 font-sans h-full overflow-y-auto">
+                    {highlightResultsTab && (
+                      <div className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/15 flex items-center justify-between text-xs text-amber-300 shadow-md animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 font-semibold">
+                          <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
+                          <span>D-Wave QUBO Model Synthesized — Annealing Ground State & Couplers In View</span>
+                        </div>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 font-bold">Auto-Focused</span>
+                      </div>
+                    )}
                     {optimizationResults ? (
                       <div className="space-y-4">
                         {/* Header with Ground State Summary */}
@@ -4094,7 +4270,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                 className="px-2 py-0.5 rounded border text-[10px] font-normal flex items-center gap-1"
                               >
                                 <Check className="w-3 h-3" style={{ color: colors.textEmerald }} />
-                                <span>AST Mutated & Synced</span>
+                                <span>{checkIsDwave(msg.codeMutation.summary, targetBackend, selectedTemplateKey) ? 'QUBO Model Synced' : 'Circuit AST Mutated & Synced'}</span>
                               </span>
                             </div>
                           </div>
@@ -4118,7 +4294,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                               className="px-3 py-1 rounded-md border text-[11px] font-mono flex items-center gap-1.5 hover:border-amber-400 cursor-pointer transition-all shadow-2xs font-normal"
                             >
                               <Play className="w-3 h-3 fill-current" style={{ color: colors.textAmber }} />
-                              <span>Run Program on {targetBackend}</span>
+                              <span>{checkIsDwave(projectFiles[activeFile]?.content, targetBackend, selectedTemplateKey) ? `Execute Annealer (${targetBackend})` : `Run Program on ${targetBackend}`}</span>
                             </button>
                           </div>
                         </div>
@@ -4154,17 +4330,74 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                 </div>
               ))}
 
-              {isCopilotThinking && (
-                <div 
-                  style={{ backgroundColor: 'transparent' }}
-                  className="p-3 space-y-1.5 animate-pulse font-normal"
-                >
-                  <div className="flex items-center gap-2 text-[10px] font-normal" style={{ color: colors.textCyan }}>
-                    <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                    <span>Quantum Copilot is inspecting `{activeFile}`, dispatching tools & compiling telemetry...</span>
+              {isCopilotThinking && (() => {
+                const isDwave = checkIsDwave(projectFiles[activeFile]?.content, targetBackend, selectedTemplateKey);
+                const stages = isDwave ? [
+                  `Inspecting ${activeFile} & formulating combinatorial objective...`,
+                  `Constructing QUBO Hamiltonian matrix & quadratic couplers (dimod)...`,
+                  `Mapping binary variables & embedding to Pegasus annealer topology...`,
+                  `Streaming D-Wave BQM code & configuring annealing parameters...`
+                ] : [
+                  `Inspecting ${activeFile} & parsing circuit intent...`,
+                  `Synthesizing unitary operators & superposition ansatz (Qiskit)...`,
+                  `Transpiling circuit depth & optimizing CNOT gate schedule...`,
+                  `Streaming Qiskit Python AST & locking gates to canvas...`
+                ];
+
+                return (
+                  <div 
+                    style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                    className="p-3.5 rounded-xl border space-y-2.5 shadow-2xs font-normal animate-in fade-in duration-200"
+                  >
+                    <div className="flex items-center justify-between text-xs pb-1 border-b" style={{ borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>
+                      <div className="flex items-center gap-2 font-mono font-semibold" style={{ color: colors.textCyan }}>
+                        <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                        <span>{isDwave ? 'D-Wave Annealer Agent Reasoning' : 'Qiskit Quantum Copilot Reasoning'}</span>
+                      </div>
+                      <span 
+                        style={{
+                          backgroundColor: isDwave ? (isDark ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.1)') : (isDark ? 'rgba(56,189,248,0.15)' : 'rgba(2,132,199,0.1)'),
+                          color: isDwave ? colors.textAmber : colors.textCyan,
+                          borderColor: isDwave ? 'rgba(245,158,11,0.3)' : 'rgba(56,189,248,0.3)'
+                        }}
+                        className="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                      >
+                        {isDwave ? 'QUBO / BQM' : 'Gate-Based'}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 font-mono text-[11px]">
+                      {stages.map((stg, sIdx) => {
+                        const isDone = thinkingStage > sIdx;
+                        const isCurrent = thinkingStage === sIdx;
+                        return (
+                          <div 
+                            key={sIdx} 
+                            className={`flex items-center gap-2 transition-all duration-300 ${
+                              isCurrent ? 'font-semibold' : isDone ? 'opacity-85' : 'opacity-35'
+                            }`}
+                            style={{ 
+                              color: isDone ? colors.textEmerald : isCurrent ? colors.textCyan : colors.textMuted 
+                            }}
+                          >
+                            {isDone ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: colors.textEmerald }} />
+                            ) : isCurrent ? (
+                              <div className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
+                              </div>
+                            ) : (
+                              <div className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-500/50" />
+                              </div>
+                            )}
+                            <span className="truncate">{stg}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Copilot Input Box (Isolated Component: Zero Root Re-renders on Keystrokes) */}
