@@ -128,30 +128,40 @@ const TOUR_STEPS = [
   {
     step: 1,
     title: "1. Workspace & Algorithm Templates",
+    targetId: "tour-project-selector",
+    position: "bottom" as const,
     desc: "Switch between pre-scaffolded quantum algorithms (Grover's Search, VQE Molecular Chemistry, or D-Wave QUBO Optimization), or create your own custom quantum workspace.",
     badge: "Project Architecture"
   },
   {
     step: 2,
     title: "2. Live Quantum Code Canvas",
+    targetId: "tour-editor-pane",
+    position: "inside-top" as const,
     desc: "Write and edit your Qiskit and D-Wave Python scripts with full syntax highlighting. All changes are auto-saved locally with immediate crash protection and synced to the cloud.",
     badge: "Code Editor"
   },
   {
     step: 3,
     title: "3. Real-Time Circuit Visualizer",
+    targetId: "tour-circuit-drawer",
+    position: "top" as const,
     desc: "Your Python code is parsed live into an interactive quantum circuit diagram. Drag, drop, and inspect gates on quantum wires with zero manual compilation.",
     badge: "Interactive Canvas"
   },
   {
     step: 4,
     title: "4. QPU Simulation & Terminal",
+    targetId: "tour-run-terminal",
+    position: "top" as const,
     desc: "Execute your quantum programs directly on high-performance simulators (AerSimulator, Statevector, or D-Wave Simulated Annealer) and analyze measurement counts and probability histograms.",
     badge: "Execution Engine"
   },
   {
     step: 5,
     title: "5. Agentic Quantum Copilot",
+    targetId: "tour-copilot-panel",
+    position: "left" as const,
     desc: "Your personal quantum pair programmer, AST analyzer, and algorithm architect. It can:",
     bulletPoints: [
       "🧠 Answer quantum computing, physics & mathematical theory",
@@ -618,72 +628,6 @@ export default function QuantumIDE() {
   const userScope = user?.email ? user.email.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'guest';
   const router = useRouter();
 
-  // 🧭 Product Walkthrough Tour State
-  const [isTourActive, setIsTourActive] = useState(false);
-  const [tourStep, setTourStep] = useState(0);
-  const [hasSeenTour, setHasSeenTour] = useState(true);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const seen = localStorage.getItem('quantum_tour_seen');
-      if (!seen) {
-        setHasSeenTour(false);
-      }
-    }
-  }, []);
-
-  const startTour = useCallback(() => {
-    setTourStep(0);
-    setIsTourActive(true);
-  }, []);
-
-  const endTour = useCallback(() => {
-    setIsTourActive(false);
-    setHasSeenTour(true);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('quantum_tour_seen', 'true');
-    }
-  }, []);
-
-  // Keyboard navigation for product tour
-  useEffect(() => {
-    if (!isTourActive) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        endTour();
-      } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
-        if (tourStep < TOUR_STEPS.length - 1) {
-          const next = tourStep + 1;
-          setTourStep(next);
-          if (next === 2) {
-            setIsBottomOpen(true);
-            setActiveBottomTab('circuit');
-          } else if (next === 3) {
-            setIsBottomOpen(true);
-            setActiveBottomTab('terminal');
-          } else if (next === 4) {
-            setIsRightOpen(true);
-          }
-        } else {
-          endTour();
-        }
-      } else if (e.key === 'ArrowLeft') {
-        if (tourStep > 0) {
-          const prev = tourStep - 1;
-          setTourStep(prev);
-          if (prev === 2) {
-            setIsBottomOpen(true);
-            setActiveBottomTab('circuit');
-          } else if (prev === 3) {
-            setIsBottomOpen(true);
-            setActiveBottomTab('terminal');
-          }
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isTourActive, tourStep, endTour]);
 
   // 1. Client-Side Auth Guard: redirect to login if unauthenticated
   useEffect(() => {
@@ -780,6 +724,110 @@ export default function QuantumIDE() {
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [rightWidth, setRightWidth] = useState(288);
   const isRightDragging = useRef(false);
+
+  // 🧭 Product Walkthrough Tour State
+  const [isTourActive, setIsTourActive] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  const [hasSeenTour, setHasSeenTour] = useState(true);
+  const [spotlightRect, setSpotlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const seen = localStorage.getItem('quantum_tour_seen');
+      if (!seen) {
+        setHasSeenTour(false);
+      }
+    }
+  }, []);
+
+  const startTour = useCallback(() => {
+    setTourStep(0);
+    setIsTourActive(true);
+  }, []);
+
+  const endTour = useCallback(() => {
+    setIsTourActive(false);
+    setHasSeenTour(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('quantum_tour_seen', 'true');
+    }
+  }, []);
+
+  // Calculate dynamic bounding rect for highlighted active tour block
+  useEffect(() => {
+    if (!isTourActive) {
+      setSpotlightRect(null);
+      return;
+    }
+
+    const updateRect = () => {
+      const stepConfig = TOUR_STEPS[tourStep];
+      if (!stepConfig) return;
+      const el = document.getElementById(stepConfig.targetId);
+      if (el) {
+        const r = el.getBoundingClientRect();
+        const pad = 6;
+        setSpotlightRect({
+          top: Math.max(0, r.top - pad),
+          left: Math.max(0, r.left - pad),
+          width: r.width + pad * 2,
+          height: r.height + pad * 2
+        });
+      } else {
+        setSpotlightRect(null);
+      }
+    };
+
+    const timer = setTimeout(updateRect, 70);
+    window.addEventListener('resize', updateRect);
+    window.addEventListener('scroll', updateRect);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('scroll', updateRect);
+    };
+  }, [isTourActive, tourStep, isBottomOpen, isRightOpen]);
+
+  // Keyboard navigation for product tour
+  useEffect(() => {
+    if (!isTourActive) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        endTour();
+      } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        if (tourStep < TOUR_STEPS.length - 1) {
+          const next = tourStep + 1;
+          setTourStep(next);
+          if (next === 2) {
+            setIsBottomOpen(true);
+            setActiveBottomTab('circuit');
+          } else if (next === 3) {
+            setIsBottomOpen(true);
+            setActiveBottomTab('terminal');
+          } else if (next === 4) {
+            setIsRightOpen(true);
+          }
+        } else {
+          endTour();
+        }
+      } else if (e.key === 'ArrowLeft') {
+        if (tourStep > 0) {
+          const prev = tourStep - 1;
+          setTourStep(prev);
+          if (prev === 2) {
+            setIsBottomOpen(true);
+            setActiveBottomTab('circuit');
+          } else if (prev === 3) {
+            setIsBottomOpen(true);
+            setActiveBottomTab('terminal');
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isTourActive, tourStep, endTour]);
+
 
     // Dismiss gate popovers when clicking outside
   useEffect(() => {
@@ -4136,140 +4184,248 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 🧭 GUIDED PRODUCT WALKTHROUGH TOUR MODAL                      */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {isTourActive && (
-        <div className="fixed inset-0 z-50 pointer-events-auto flex items-center justify-center">
-          {/* Backdrop with dark blur */}
-          <div 
-            onClick={endTour}
-            className="absolute inset-0 bg-black/75 backdrop-blur-xs transition-opacity duration-300" 
-          />
+      {isTourActive && (() => {
+        // Calculate anchored popover position and directional arrow pointer
+        const getPopoverLayout = () => {
+          if (!spotlightRect || typeof window === 'undefined') {
+            return {
+              style: {
+                position: 'fixed' as const,
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 'min(90vw, 480px)',
+                zIndex: 55
+              },
+              arrow: null as ('up' | 'down' | 'left' | 'right' | null)
+            };
+          }
 
-          {/* Floating Tour Step Card */}
-          <div 
-            style={{ 
-              backgroundColor: colors.bgCard, 
-              borderColor: isDark ? 'rgba(56, 189, 248, 0.4)' : 'rgba(14, 165, 233, 0.5)',
-              color: colors.textPrimary 
-            }}
-            className="relative z-10 w-full max-w-lg mx-4 rounded-2xl border p-6 shadow-2xl shadow-sky-950/40 animate-in fade-in zoom-in-95 duration-200"
-          >
-            {/* Header: Step Pill + Badge + Close Button */}
-            <div className="flex items-center justify-between mb-3.5">
-              <div className="flex items-center gap-2">
-                <span 
-                  style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
-                  className="px-2.5 py-0.5 rounded-full border text-[11px] font-mono font-medium"
-                >
-                  Step {tourStep + 1} of {TOUR_STEPS.length}
-                </span>
-                <span 
-                  className="text-xs font-mono font-semibold"
-                  style={{ color: colors.textEmerald }}
-                >
-                  {TOUR_STEPS[tourStep].badge}
-                </span>
-              </div>
-              <button 
-                onClick={endTour}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-zinc-800/50 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
-                title="Skip and close tour (Esc)"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+          const cardWidth = Math.min(480, window.innerWidth - 32);
+          const cardHeight = tourStep === 4 ? 370 : 250;
+          const stepConfig = TOUR_STEPS[tourStep];
+          let top = 0;
+          let left = 0;
+          let arrow: 'up' | 'down' | 'left' | 'right' | null = null;
 
-            {/* Step Title */}
-            <h3 className="text-base font-semibold mb-2 font-heading tracking-tight flex items-center gap-2" style={{ color: colors.textPrimary }}>
-              <span>{TOUR_STEPS[tourStep].title}</span>
-            </h3>
+          if (stepConfig.position === 'bottom') {
+            top = spotlightRect.top + spotlightRect.height + 14;
+            left = Math.min(window.innerWidth - cardWidth - 16, Math.max(16, spotlightRect.left));
+            arrow = 'up';
+          } else if (stepConfig.position === 'top') {
+            top = Math.max(16, spotlightRect.top - cardHeight - 16);
+            left = Math.min(window.innerWidth - cardWidth - 16, Math.max(16, spotlightRect.left + 20));
+            arrow = 'down';
+          } else if (stepConfig.position === 'left') {
+            top = Math.max(20, Math.min(window.innerHeight - cardHeight - 20, spotlightRect.top + 40));
+            left = Math.max(16, spotlightRect.left - cardWidth - 18);
+            arrow = 'right';
+          } else {
+            // inside-top for Step 2 editor
+            top = Math.max(70, spotlightRect.top + 24);
+            left = Math.max(24, Math.min(window.innerWidth - cardWidth - 24, spotlightRect.left + 40));
+            arrow = null;
+          }
 
-            {/* Step Description */}
-            <p className="text-xs leading-relaxed mb-4 text-slate-300 dark:text-zinc-300 font-sans">
-              {TOUR_STEPS[tourStep].desc}
-            </p>
+          return {
+            style: {
+              position: 'fixed' as const,
+              top: `${top}px`,
+              left: `${left}px`,
+              width: `${cardWidth}px`,
+              zIndex: 55,
+              transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
+            },
+            arrow
+          };
+        };
 
-            {/* Bullet Points for Step 5 (Copilot Superpowers) */}
-            {TOUR_STEPS[tourStep].bulletPoints && (
+        const popover = getPopoverLayout();
+
+        return (
+          <div className="fixed inset-0 z-50 pointer-events-auto">
+            {/* 1. Animated Spotlight Cutout Box with glowing cyan outline over Active UI Block */}
+            {spotlightRect && (
               <div 
-                style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
-                className="rounded-xl border p-3.5 mb-4 space-y-2 text-xs font-sans"
-              >
-                <div className="text-[11px] font-semibold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
-                  4 Core Copilot Superpowers:
-                </div>
-                {TOUR_STEPS[tourStep].bulletPoints.map((bp, i) => (
-                  <div key={i} className="flex items-start gap-2 text-slate-200 dark:text-zinc-200">
-                    <span className="shrink-0">{bp.slice(0, 2)}</span>
-                    <span className="leading-snug">{bp.slice(3)}</span>
-                  </div>
-                ))}
-              </div>
+                style={{
+                  position: 'fixed',
+                  top: `${spotlightRect.top}px`,
+                  left: `${spotlightRect.left}px`,
+                  width: `${spotlightRect.width}px`,
+                  height: `${spotlightRect.height}px`,
+                  boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.80), 0 0 25px rgba(56, 189, 248, 0.55), inset 0 0 15px rgba(56, 189, 248, 0.15)',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(56, 189, 248, 0.95)',
+                  pointerEvents: 'none',
+                  zIndex: 51,
+                  transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}
+              />
             )}
 
-            {/* Progress Bar */}
-            <div className="w-full bg-zinc-800/60 rounded-full h-1.5 mb-5 overflow-hidden border border-zinc-700/30">
+            {/* Fallback backdrop if spotlight rect is not available */}
+            {!spotlightRect && (
               <div 
-                className="bg-sky-400 h-full transition-all duration-300 rounded-full"
-                style={{ width: `${((tourStep + 1) / TOUR_STEPS.length) * 100}%` }}
-              />
-            </div>
-
-            {/* Footer Buttons: Back, Next/Finish, Skip */}
-            <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: colors.border }}>
-              <button
                 onClick={endTour}
-                className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer px-1"
-              >
-                Skip Tour
-              </button>
-              <div className="flex items-center gap-2">
-                {tourStep > 0 && (
+                className="absolute inset-0 bg-black/80 backdrop-blur-xs z-50 transition-opacity duration-300"
+              />
+            )}
+
+            {/* Clickable backdrop overlay to dismiss when clicking outside */}
+            <div 
+              onClick={endTour}
+              className="fixed inset-0 z-52 bg-transparent cursor-pointer"
+            />
+
+            {/* 2. Floating Anchored Tour Step Card with directional arrow */}
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              style={{ 
+                backgroundColor: colors.bgCard, 
+                borderColor: isDark ? 'rgba(56, 189, 248, 0.4)' : 'rgba(14, 165, 233, 0.5)',
+                color: colors.textPrimary,
+                ...popover.style
+              }}
+              className="rounded-2xl border p-5 shadow-2xl shadow-sky-950/50 relative animate-in fade-in zoom-in-95 duration-200"
+            >
+              {/* Directional Pointer Arrows */}
+              {popover.arrow === 'up' && (
+                <div 
+                  style={{ backgroundColor: colors.bgCard, borderColor: isDark ? 'rgba(56, 189, 248, 0.4)' : 'rgba(14, 165, 233, 0.5)' }}
+                  className="absolute -top-2 left-10 w-3.5 h-3.5 rotate-45 border-t border-l" 
+                />
+              )}
+              {popover.arrow === 'down' && (
+                <div 
+                  style={{ backgroundColor: colors.bgCard, borderColor: isDark ? 'rgba(56, 189, 248, 0.4)' : 'rgba(14, 165, 233, 0.5)' }}
+                  className="absolute -bottom-2 left-10 w-3.5 h-3.5 rotate-45 border-b border-r" 
+                />
+              )}
+              {popover.arrow === 'right' && (
+                <div 
+                  style={{ backgroundColor: colors.bgCard, borderColor: isDark ? 'rgba(56, 189, 248, 0.4)' : 'rgba(14, 165, 233, 0.5)' }}
+                  className="absolute top-10 -right-2 w-3.5 h-3.5 rotate-45 border-t border-r" 
+                />
+              )}
+
+              {/* Header: Step Pill + Badge + Close Button */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span 
+                    style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}
+                    className="px-2.5 py-0.5 rounded-full border text-[11px] font-mono font-medium"
+                  >
+                    Step {tourStep + 1} of {TOUR_STEPS.length}
+                  </span>
+                  <span 
+                    className="text-xs font-mono font-semibold"
+                    style={{ color: colors.textEmerald }}
+                  >
+                    {TOUR_STEPS[tourStep].badge}
+                  </span>
+                </div>
+                <button 
+                  onClick={endTour}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-zinc-800/50 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                  title="Skip and close tour (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Step Title */}
+              <h3 className="text-base font-semibold mb-2 font-heading tracking-tight flex items-center gap-2" style={{ color: colors.textPrimary }}>
+                <span>{TOUR_STEPS[tourStep].title}</span>
+              </h3>
+
+              {/* Step Description */}
+              <p className="text-xs leading-relaxed mb-3.5 text-slate-300 dark:text-zinc-300 font-sans">
+                {TOUR_STEPS[tourStep].desc}
+              </p>
+
+              {/* Bullet Points for Step 5 (Copilot Superpowers) */}
+              {TOUR_STEPS[tourStep].bulletPoints && (
+                <div 
+                  style={{ backgroundColor: colors.bgPill, borderColor: colors.border }}
+                  className="rounded-xl border p-3.5 mb-3.5 space-y-2 text-xs font-sans"
+                >
+                  <div className="text-[11px] font-semibold uppercase tracking-wider font-heading" style={{ color: colors.textCyan }}>
+                    4 Core Copilot Superpowers:
+                  </div>
+                  {TOUR_STEPS[tourStep].bulletPoints.map((bp, i) => (
+                    <div key={i} className="flex items-start gap-2 text-slate-200 dark:text-zinc-200">
+                      <span className="shrink-0">{bp.slice(0, 2)}</span>
+                      <span className="leading-snug">{bp.slice(3)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Progress Bar */}
+              <div className="w-full bg-zinc-800/60 rounded-full h-1.5 mb-4 overflow-hidden border border-zinc-700/30">
+                <div 
+                  className="bg-sky-400 h-full transition-all duration-300 rounded-full"
+                  style={{ width: `${((tourStep + 1) / TOUR_STEPS.length) * 100}%` }}
+                />
+              </div>
+
+              {/* Footer Buttons: Back, Next/Finish, Skip */}
+              <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: colors.border }}>
+                <button
+                  onClick={endTour}
+                  className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer px-1"
+                >
+                  Skip Tour
+                </button>
+                <div className="flex items-center gap-2">
+                  {tourStep > 0 && (
+                    <button
+                      onClick={() => {
+                        const prev = tourStep - 1;
+                        setTourStep(prev);
+                        if (prev === 2) {
+                          setIsBottomOpen(true);
+                          setActiveBottomTab('circuit');
+                        } else if (prev === 3) {
+                          setIsBottomOpen(true);
+                          setActiveBottomTab('terminal');
+                        }
+                      }}
+                      style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
+                      className="px-3.5 py-1.5 rounded-lg border text-xs font-medium hover:bg-zinc-800/80 cursor-pointer transition-all"
+                    >
+                      Back
+                    </button>
+                  )}
                   <button
                     onClick={() => {
-                      const prev = tourStep - 1;
-                      setTourStep(prev);
-                      if (prev === 2) {
-                        setIsBottomOpen(true);
-                        setActiveBottomTab('circuit');
-                      } else if (prev === 3) {
-                        setIsBottomOpen(true);
-                        setActiveBottomTab('terminal');
+                      if (tourStep < TOUR_STEPS.length - 1) {
+                        const next = tourStep + 1;
+                        setTourStep(next);
+                        if (next === 2) {
+                          setIsBottomOpen(true);
+                          setActiveBottomTab('circuit');
+                        } else if (next === 3) {
+                          setIsBottomOpen(true);
+                          setActiveBottomTab('terminal');
+                        } else if (next === 4) {
+                          setIsRightOpen(true);
+                        }
+                      } else {
+                        endTour();
                       }
                     }}
-                    style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
-                    className="px-3.5 py-1.5 rounded-lg border text-xs font-medium hover:bg-zinc-800/80 cursor-pointer transition-all"
+                    style={{ backgroundColor: colors.bgPill, borderColor: colors.textCyan, color: colors.textCyan }}
+                    className="px-4 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all hover:scale-[1.02] shadow-xs flex items-center gap-1.5"
                   >
-                    Back
+                    <span>{tourStep === TOUR_STEPS.length - 1 ? 'Finish Tour ✔' : 'Next Step ➔'}</span>
                   </button>
-                )}
-                <button
-                  onClick={() => {
-                    if (tourStep < TOUR_STEPS.length - 1) {
-                      const next = tourStep + 1;
-                      setTourStep(next);
-                      if (next === 2) {
-                        setIsBottomOpen(true);
-                        setActiveBottomTab('circuit');
-                      } else if (next === 3) {
-                        setIsBottomOpen(true);
-                        setActiveBottomTab('terminal');
-                      } else if (next === 4) {
-                        setIsRightOpen(true);
-                      }
-                    } else {
-                      endTour();
-                    }
-                  }}
-                  style={{ backgroundColor: colors.bgPill, borderColor: colors.textCyan, color: colors.textCyan }}
-                  className="px-4 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all hover:scale-[1.02] shadow-xs flex items-center gap-1.5"
-                >
-                  <span>{tourStep === TOUR_STEPS.length - 1 ? 'Finish Tour ✔' : 'Next Step ➔'}</span>
-                </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* SETTINGS MODAL                                                */}
       {/* ───────────────────────────────────────────────────────────── */}
