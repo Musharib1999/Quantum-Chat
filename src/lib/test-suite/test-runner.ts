@@ -8,7 +8,7 @@ export async function runSingleTest(def: TestCaseDefinition): Promise<TestResult
             const res = await fetch('/api/test-runner', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: def.action })
+                body: JSON.stringify({ action: def.action, testId: def.id })
             });
 
             if (!res.ok) {

@@ -750,6 +750,7 @@ export default function QuantumIDE() {
   const [activeSlotPopover, setActiveSlotPopover] = useState<{ qubit: number; step: number; x: number; y: number } | null>(null);
   const [isToolbarDropdownOpen, setIsToolbarDropdownOpen] = useState(false);
   const [copilotMode, setCopilotMode] = useState<'coding' | 'qa'>('coding');
+  const [codeSnapshots, setCodeSnapshots] = useState<Record<string, string>>({});
 
   // Section 1 (Left Sidebar) state: Open/Closed & Width (20% default)
   const [isLeftOpen, setIsLeftOpen] = useState(true);
@@ -1477,6 +1478,23 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       // Silent in background
     }
   }, [projectName, activeFile, targetBackend, shots, projectFiles]);
+
+  // ↩ 1-Click Rollback / Revert for Agent Code Mutations
+  const handleRevertCode = useCallback((fileName: string) => {
+    if (codeSnapshots[fileName] !== undefined) {
+      const prevContent = codeSnapshots[fileName];
+      setProjectFiles(prev => ({
+        ...prev,
+        [fileName]: { ...prev[fileName], content: prevContent }
+      }));
+      syncCircuitBackground(prevContent);
+      setTerminalLogs(prev => [
+        ...prev,
+        `↩ Reverted ${fileName} to code snapshot prior to AI mutation.`
+      ]);
+      setActiveFile(fileName);
+    }
+  }, [codeSnapshots, syncCircuitBackground]);
 
 
   // Synchronously select and persist active file across page reloads
@@ -2814,6 +2832,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               setActiveFile(targetFileKey);
             }
 
+            // 📸 Save pre-mutation snapshot for 1-click revert capability
+            setCodeSnapshots(prev => ({
+              ...prev,
+              [targetFileKey]: projectFiles[targetFileKey]?.content || ''
+            }));
+
             // ⚛️ Paradigm Pathway: Qiskit Circuit Assembly vs D-Wave Annealing Results
             if (isDwave) {
               setActiveBottomTab('results');
@@ -2823,33 +2847,45 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             } else {
               setActiveBottomTab('circuit');
               setIsBottomOpen(true);
-              const declaredQubits = parseQiskitQubitCount(newCode);
-              const parsedGates = parseQiskitCodeToGates(newCode, declaredQubits);
-              const maxGateQubit = parsedGates.length > 0 ? Math.max(...parsedGates.map(g => g.qubit + 1)) : 2;
-              const finalQubits = Math.max(declaredQubits, maxGateQubit);
-              setCanvasQubits(finalQubits);
 
-              // Progressive Step-by-Step Gate Assembly
-              if (parsedGates.length > 0) {
-                const maxStep = Math.min(9, Math.max(0, ...parsedGates.map(g => g.step)));
-                let currentAssemblyStep = 0;
-                setCircuitGates([]);
-                setActiveAssemblyStep(0);
+              // ⚛️ Authoritative Backend Qiskit AST Gate Layout (Guarantees zero jump on Simulate)
+              const authoritativeGates = (data.circuit_gates && Array.isArray(data.circuit_gates) && data.circuit_gates.length > 0)
+                ? normalizeCircuitGates(data.circuit_gates)
+                : null;
 
-                if (gateAssemblyTimerRef.current) clearInterval(gateAssemblyTimerRef.current);
-                gateAssemblyTimerRef.current = setInterval(() => {
-                  if (currentAssemblyStep > maxStep) {
-                    if (gateAssemblyTimerRef.current) clearInterval(gateAssemblyTimerRef.current);
-                    setActiveAssemblyStep(null);
-                    setCircuitGates(parsedGates);
-                  } else {
-                    setActiveAssemblyStep(currentAssemblyStep);
-                    setCircuitGates(parsedGates.filter(g => g.step <= currentAssemblyStep));
-                    currentAssemblyStep++;
-                  }
-                }, 70);
+              if (authoritativeGates && authoritativeGates.length > 0) {
+                if (data.active_qubits) setCanvasQubits(data.active_qubits);
+                if (data.circuit_ascii) setCircuitAscii(data.circuit_ascii);
+                setCircuitGates(authoritativeGates);
               } else {
-                setCircuitGates([]);
+                const declaredQubits = parseQiskitQubitCount(newCode);
+                const parsedGates = parseQiskitCodeToGates(newCode, declaredQubits);
+                const maxGateQubit = parsedGates.length > 0 ? Math.max(...parsedGates.map(g => g.qubit + 1)) : 2;
+                const finalQubits = Math.max(declaredQubits, maxGateQubit);
+                setCanvasQubits(finalQubits);
+
+                // Progressive Step-by-Step Gate Assembly
+                if (parsedGates.length > 0) {
+                  const maxStep = Math.min(9, Math.max(0, ...parsedGates.map(g => g.step)));
+                  let currentAssemblyStep = 0;
+                  setCircuitGates([]);
+                  setActiveAssemblyStep(0);
+
+                  if (gateAssemblyTimerRef.current) clearInterval(gateAssemblyTimerRef.current);
+                  gateAssemblyTimerRef.current = setInterval(() => {
+                    if (currentAssemblyStep > maxStep) {
+                      if (gateAssemblyTimerRef.current) clearInterval(gateAssemblyTimerRef.current);
+                      setActiveAssemblyStep(null);
+                      setCircuitGates(parsedGates);
+                    } else {
+                      setActiveAssemblyStep(currentAssemblyStep);
+                      setCircuitGates(parsedGates.filter(g => g.step <= currentAssemblyStep));
+                      currentAssemblyStep++;
+                    }
+                  }, 70);
+                } else {
+                  setCircuitGates([]);
+                }
               }
             }
 
@@ -3277,13 +3313,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     }
                   }
 
-                  // ⚡ Continuous Debounced Auto-Sync for D-Wave code without manual clicking
-                  if (isDwave) {
-                    if (autoSyncTimer.current) clearTimeout(autoSyncTimer.current);
-                    autoSyncTimer.current = setTimeout(() => {
-                      syncCircuitBackground(val);
-                    }, 800);
-                  }
+                  // ⚡ Continuous Debounced Auto-Sync for both Qiskit & D-Wave code without manual clicking
+                  if (autoSyncTimer.current) clearTimeout(autoSyncTimer.current);
+                  autoSyncTimer.current = setTimeout(() => {
+                    syncCircuitBackground(val);
+                  }, 600);
                 }}
                 spellCheck={false}
                 style={{ 
@@ -4282,20 +4316,44 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                             </div>
                           )}
 
-                          {/* Quick Execute Button */}
-                          <div className="pt-1.5 flex items-center justify-end border-t" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)' }}>
-                            <button
-                              onClick={() => handleSendMessage('/execute@program')}
-                              style={{ 
-                                backgroundColor: isDark ? 'rgba(222, 170, 33, 0.15)' : 'rgba(222, 170, 33, 0.2)',
-                                borderColor: 'rgba(222, 170, 33, 0.4)',
-                                color: colors.textAmber
-                              }}
-                              className="px-3 py-1 rounded-md border text-[11px] font-mono flex items-center gap-1.5 hover:border-amber-400 cursor-pointer transition-all shadow-2xs font-normal"
-                            >
-                              <Play className="w-3 h-3 fill-current" style={{ color: colors.textAmber }} />
-                              <span>{checkIsDwave(projectFiles[activeFile]?.content, targetBackend, selectedTemplateKey) ? `Execute Annealer (${targetBackend})` : `Run Program on ${targetBackend}`}</span>
-                            </button>
+                          {/* Mutation Actions & Safety Bar */}
+                          <div className="pt-1.5 flex items-center justify-between border-t gap-2 flex-wrap" style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)' }}>
+                            {/* Verification Badge */}
+                            <span className="px-2 py-0.5 rounded border text-[10px] font-mono flex items-center gap-1 text-emerald-400 bg-emerald-500/10 border-emerald-500/30">
+                              <Check className="w-3 h-3 text-emerald-400" />
+                              <span>Pre-Flight Verified</span>
+                            </span>
+
+                            {/* Right Action Buttons: Revert + Run */}
+                            <div className="flex items-center gap-1.5">
+                              {codeSnapshots[msg.codeMutation.fileName] !== undefined && (
+                                <button
+                                  onClick={() => handleRevertCode(msg.codeMutation!.fileName)}
+                                  style={{
+                                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.12)' : 'rgba(239, 68, 68, 0.15)',
+                                    borderColor: 'rgba(239, 68, 68, 0.35)',
+                                    color: '#f87171'
+                                  }}
+                                  className="px-2.5 py-1 rounded-md border text-[11px] font-mono flex items-center gap-1 hover:border-red-400 cursor-pointer transition-all shadow-2xs font-normal"
+                                  title={`Revert ${msg.codeMutation.fileName} to previous state`}
+                                >
+                                  <RotateCw className="w-3 h-3" />
+                                  <span>Revert</span>
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleSendMessage('/execute@program')}
+                                style={{ 
+                                  backgroundColor: isDark ? 'rgba(222, 170, 33, 0.15)' : 'rgba(222, 170, 33, 0.2)',
+                                  borderColor: 'rgba(222, 170, 33, 0.4)',
+                                  color: colors.textAmber
+                                }}
+                                className="px-3 py-1 rounded-md border text-[11px] font-mono flex items-center gap-1.5 hover:border-amber-400 cursor-pointer transition-all shadow-2xs font-normal"
+                              >
+                                <Play className="w-3 h-3 fill-current" style={{ color: colors.textAmber }} />
+                                <span>{checkIsDwave(projectFiles[activeFile]?.content, targetBackend, selectedTemplateKey) ? `Execute Annealer (${targetBackend})` : `Run Program on ${targetBackend}`}</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )}

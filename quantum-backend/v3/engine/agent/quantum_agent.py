@@ -359,12 +359,24 @@ class QuantumAgent:
         elif final_resp and final_resp.clarification:
             clarification_data = final_resp.clarification
 
-        qubo_code = final_resp.custom_payload.get("qubo_matrix_code") if final_resp and final_resp.custom_payload else None
+        custom_p = final_resp.custom_payload if (final_resp and final_resp.custom_payload) else {}
+        qubo_code = custom_p.get("qubo_matrix_code")
+        circuit_gates = custom_p.get("circuit_gates")
+        circuit_ascii = custom_p.get("circuit_ascii")
+        active_qubits = custom_p.get("active_qubits")
+        validation_status = custom_p.get("validation_status")
+        measurement_counts = custom_p.get("measurement_counts")
+
         updated_files = {}
         if c_act:
             updated_files[c_act.file_path] = c_act.replacement_content
         if qubo_code:
             updated_files["qubo_matrix.py"] = qubo_code
+
+        if circuit_ascii and "circuit_text" not in runtime_telemetry:
+            runtime_telemetry["circuit_text"] = circuit_ascii
+        if active_qubits and "active_qubits" not in runtime_telemetry:
+            runtime_telemetry["active_qubits"] = active_qubits
 
         return {
             "success": True,
@@ -378,7 +390,12 @@ class QuantumAgent:
             "memory_md": memory_md,
             "runtime_telemetry": runtime_telemetry,
             "scientific_verdict": final_resp.scientific_verdict if final_resp else None,
-            "clarification": clarification_data
+            "clarification": clarification_data,
+            "circuit_gates": circuit_gates,
+            "circuit_ascii": circuit_ascii,
+            "active_qubits": active_qubits,
+            "validation_status": validation_status,
+            "measurement_counts": measurement_counts
         }
 
     async def run_stream(
@@ -529,7 +546,14 @@ class QuantumAgent:
             yield await self.stream.publish(FinalResponseAction(
                 project_id=project_id,
                 response_text=explanation,
-                scientific_verdict=f"Synthesized {metadata.get('circuit_name', 'Quantum Circuit')} with AerSimulator execution block."
+                scientific_verdict=f"Synthesized {metadata.get('circuit_name', 'Quantum Circuit')} with AerSimulator execution block.",
+                custom_payload={
+                    "circuit_gates": metadata.get("circuit_gates"),
+                    "circuit_ascii": metadata.get("circuit_ascii"),
+                    "active_qubits": metadata.get("active_qubits"),
+                    "validation_status": metadata.get("validation_status", "verified"),
+                    "measurement_counts": metadata.get("measurement_counts")
+                }
             ))
             return
 

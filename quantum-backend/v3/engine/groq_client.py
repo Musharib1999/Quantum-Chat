@@ -33,7 +33,7 @@ async def call_groq(
     model: str = None,
 ) -> str:
     # For Groq on-demand free tier, OTPM limit is 1,000. Clamp max_tokens to 850 to prevent 429 rate limit.
-    effective_max_tokens = min(max_tokens, 850) if max_tokens > 100 else max_tokens
+    effective_max_tokens = min(max_tokens, 750) if max_tokens > 100 else max_tokens
     """
     Call Groq completions API with OpenAI-compatible payload.
 

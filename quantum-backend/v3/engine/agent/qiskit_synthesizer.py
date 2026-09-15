@@ -16,7 +16,7 @@ import re
 import math
 from typing import Tuple, Dict, Any, Optional
 from ..groq_client import call_groq
-from ..runtime.execution_runner import validate_code_security
+from ..runtime.execution_runner import validate_code_security, run_code_sandbox, CodeExecutionRequest
 
 # Canonical Persistent Execution Output Block for AerSimulator
 CANONICAL_AER_BLOCK = """# Execute on AerSimulator
@@ -499,6 +499,128 @@ qc.measure_all()
     return code, explanation, metadata
 
 
+def _sanitize_and_append_aer(code_body: str) -> str:
+    """Ensure canonical AerSimulator execution block and required imports exist."""
+    code_body = code_body.strip()
+    if "sim.run(qc" not in code_body and "AerSimulator" not in code_body:
+        code_body = f"{code_body}\n\n{CANONICAL_AER_BLOCK}"
+    elif CANONICAL_AER_BLOCK not in code_body:
+        code_lines = [l for l in code_body.split("\n") if not any(k in l for k in ["AerSimulator()", "sim.run(", "result.get_counts("])]
+        code_body = "\n".join(code_lines).strip() + f"\n\n{CANONICAL_AER_BLOCK}"
+
+    if "from qiskit import" not in code_body and "import qiskit" not in code_body:
+        code_body = f"from qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\n\n{code_body}"
+    elif "from qiskit_aer import AerSimulator" not in code_body:
+        code_body = f"from qiskit_aer import AerSimulator\n{code_body}"
+    return code_body
+
+
+async def verify_and_enrich_qiskit_circuit(
+    code_body: str,
+    explanation: str,
+    metadata: Dict[str, Any],
+    prompt: str = ""
+) -> Tuple[str, str, Dict[str, Any]]:
+    """
+    Executes pre-flight dry run of synthesized Qiskit code inside the Python execution sandbox.
+    If an error is detected, attempts an automated self-repair pass via Groq.
+    If self-repair fails, falls back to a verified archetype circuit.
+    Enriches metadata with authoritative circuit_gates, circuit_ascii, active_qubits, and measurement_counts.
+    """
+    code_body = _sanitize_and_append_aer(code_body)
+
+    # 1. First dry-run execution attempt
+    exec_res = None
+    err_msg = ""
+    try:
+        validate_code_security(code_body)
+        exec_req = CodeExecutionRequest(code=code_body, target_backend="aer_simulator", shots=1024)
+        exec_res = run_code_sandbox(exec_req)
+    except Exception as e:
+        exec_res = None
+        err_msg = str(e)
+
+    # If first attempt succeeded, enrich and return!
+    if exec_res and exec_res.success:
+        metadata["circuit_gates"] = exec_res.circuit_gates
+        metadata["circuit_ascii"] = exec_res.circuit_ascii
+        metadata["active_qubits"] = exec_res.active_qubits
+        metadata["depth"] = exec_res.circuit_depth or metadata.get("depth", 4)
+        metadata["measurement_counts"] = exec_res.measurement_counts
+        metadata["validation_status"] = "verified"
+        metadata["execution_time_ms"] = exec_res.execution_time_ms
+        return code_body, explanation, metadata
+
+    # 2. Automated Self-Healing Repair Loop
+    err_text = exec_res.stderr if (exec_res and exec_res.stderr) else (exec_res.error if exec_res else err_msg)
+    print(f"[qiskit_synthesizer] Pre-flight dry-run failed with: {err_text}. Initiating self-repair...")
+
+    repair_prompt = (
+        "You are an expert Quantum Computing Compiler. The Qiskit code generated for the user prompt failed with a runtime error in AerSimulator.\n"
+        "Fix the code so it runs without any errors. Follow these strict rules:\n"
+        "1. Output ONLY executable Python code inside a single ```python ... ``` block.\n"
+        "2. Ensure all qubit indices are within the allocated register size (0 <= qubit < num_qubits).\n"
+        "3. Ensure all gates and imports are valid in modern Qiskit.\n"
+        "4. Do NOT import forbidden modules (no os, sys, subprocess, etc.)."
+    )
+    user_repair_query = (
+        f"Original User Request: {prompt}\n\n"
+        f"Faulty Code:\n```python\n{code_body}\n```\n\n"
+        f"Runtime Error in AerSimulator:\n{err_text}\n\n"
+        f"Provide the corrected, working Qiskit Python script."
+    )
+
+    try:
+        raw_repaired = await call_groq(system=repair_prompt, user=user_repair_query, max_tokens=4096, temperature=0.0)
+        code_match = re.search(r'```(?:python)?\s*([\s\S]*?)```', raw_repaired)
+        candidate_code = code_match.group(1).strip() if code_match else raw_repaired.strip()
+        candidate_code = _sanitize_and_append_aer(candidate_code)
+        validate_code_security(candidate_code)
+
+        repair_exec = run_code_sandbox(CodeExecutionRequest(code=candidate_code, target_backend="aer_simulator", shots=1024))
+        if repair_exec.success:
+            print("[qiskit_synthesizer] Self-repair SUCCEEDED! Returning verified repaired code.")
+            metadata["circuit_gates"] = repair_exec.circuit_gates
+            metadata["circuit_ascii"] = repair_exec.circuit_ascii
+            metadata["active_qubits"] = repair_exec.active_qubits
+            metadata["depth"] = repair_exec.circuit_depth or metadata.get("depth", 4)
+            metadata["measurement_counts"] = repair_exec.measurement_counts
+            metadata["validation_status"] = "verified_after_repair"
+            metadata["execution_time_ms"] = repair_exec.execution_time_ms
+            explanation = explanation + "\n\n*(Note: Circuit syntax was automatically verified and optimized for AerSimulator compatibility.)*"
+            return candidate_code, explanation, metadata
+    except Exception as repair_err:
+        print(f"[qiskit_synthesizer] Self-repair failed: {repair_err}")
+
+    # 3. Safe Archetype Fallback (Guarantees zero customer-facing breakage)
+    print("[qiskit_synthesizer] Self-repair exhausted. Falling back to guaranteed verified quantum archetype...")
+    p_lower = prompt.lower()
+    if any(k in p_lower for k in ["bell", "epr"]):
+        fb_code, fb_exp, fb_meta = generate_bell_circuit("phi_plus")
+    elif any(k in p_lower for k in ["grover", "search"]):
+        fb_code, fb_exp, fb_meta = generate_grover_circuit("101")
+    elif any(k in p_lower for k in ["qft", "fourier"]):
+        fb_code, fb_exp, fb_meta = generate_qft_circuit(3)
+    else:
+        fb_code, fb_exp, fb_meta = generate_ghz_circuit(num_qubits=3)
+
+    fb_code = _sanitize_and_append_aer(fb_code)
+    fb_exec = run_code_sandbox(CodeExecutionRequest(code=fb_code, target_backend="aer_simulator", shots=1024))
+    fb_meta["circuit_gates"] = fb_exec.circuit_gates
+    fb_meta["circuit_ascii"] = fb_exec.circuit_ascii
+    fb_meta["active_qubits"] = fb_exec.active_qubits
+    fb_meta["depth"] = fb_exec.circuit_depth or 4
+    fb_meta["measurement_counts"] = fb_exec.measurement_counts
+    fb_meta["validation_status"] = "fallback_verified"
+    fb_meta["execution_time_ms"] = fb_exec.execution_time_ms
+
+    fallback_explanation = (
+        f"{fb_exp}\n\n*(Note: Synthesizer defaulted to verified {fb_meta.get('circuit_name', 'Archetype')} "
+        f"to prevent invalid register syntax in '{prompt}'.)*"
+    )
+    return fb_code, fallback_explanation, fb_meta
+
+
 # ── LLM-ASSISTED GENERAL CIRCUIT SYNTHESIZER ──
 
 async def synthesize_custom_qiskit_circuit(prompt: str, current_code: str = "") -> Tuple[str, str, Dict[str, Any]]:
@@ -522,6 +644,7 @@ async def synthesize_custom_qiskit_circuit(prompt: str, current_code: str = "") 
     try:
         raw_res = await call_groq(system=system_prompt, user=user_query, max_tokens=4096, temperature=0.1)
     except Exception as e:
+        print(f"[synthesizer call_groq error]: {e}")
         # Fallback to GHZ or Bell state if LLM fails
         return generate_ghz_circuit(num_qubits=3)
 
@@ -576,54 +699,55 @@ async def synthesize_qiskit_circuit(prompt: str, current_code: str = "") -> Tupl
     """
     Main entrypoint: analyzes user prompt, matches against specialized quantum archetypes,
     or dispatches to the general LLM synthesizer with strict guardrails.
+    Includes pre-flight dry-run verification and metadata enrichment.
     """
     p_lower = prompt.lower().strip()
 
-    # 1. GHZ State Request
-    if "ghz" in p_lower or ("greenberger" in p_lower and "zeilinger" in p_lower):
-        n = _extract_qubit_count(prompt, default=3)
-        return generate_ghz_circuit(num_qubits=n)
+    # 1. Specialized Algorithm Routing (prioritize custom protocols over generic templates)
+    if any(k in p_lower for k in [
+        "deutsch", "bernstein", "vazirani", "simon", "superdense", "teleport",
+        "qaoa", "vqe", "ansatz", "adder", "repetition", "phase estimation",
+        "qpe", "w-state", "w state", "cluster state", "ising"
+    ]):
+        code, exp, meta = await synthesize_custom_qiskit_circuit(prompt, current_code)
 
-    # 2. Bell State / Entanglement Request
-    if any(k in p_lower for k in ["bell", "epr", "entangle", "entanglement"]):
+    # 2. GHZ State Request
+    elif "ghz" in p_lower or ("greenberger" in p_lower and "zeilinger" in p_lower):
+        n = _extract_qubit_count(prompt, default=3)
+        code, exp, meta = generate_ghz_circuit(num_qubits=n)
+
+    # 3. Bell State / EPR Pair Request (strict match to avoid intercepting larger protocols)
+    elif (bool(re.search(r' (bell state|bell pair|epr pair|bell basis) ', p_lower)) or p_lower.startswith("bell") or "prepare bell" in p_lower or "create bell" in p_lower or "generate bell" in p_lower):
         q_prompt = re.search(r'(\d+)\s*[- ]*(?:qubit|qubits|q)', prompt, re.IGNORECASE)
-        if q_prompt:
-            n = max(2, min(int(q_prompt.group(1)), 28))
-        elif current_code:
-            n = _extract_qubit_count(current_code, default=2)
-        else:
-            n = 2
-
+        n = int(q_prompt.group(1)) if q_prompt else 2
         if n > 2:
-            return generate_ghz_circuit(num_qubits=n)
-
-        if "phi-" in p_lower or "phi minus" in p_lower:
-            return generate_bell_circuit("phi_minus")
+            code, exp, meta = generate_ghz_circuit(num_qubits=n)
+        elif "phi-" in p_lower or "phi minus" in p_lower:
+            code, exp, meta = generate_bell_circuit("phi_minus")
         elif "psi+" in p_lower or "psi plus" in p_lower:
-            return generate_bell_circuit("psi_plus")
+            code, exp, meta = generate_bell_circuit("psi_plus")
         elif "psi-" in p_lower or "psi minus" in p_lower:
-            return generate_bell_circuit("psi_minus")
-        return generate_bell_circuit("phi_plus")
+            code, exp, meta = generate_bell_circuit("psi_minus")
+        else:
+            code, exp, meta = generate_bell_circuit("phi_plus")
 
-    # 3. Grover's Search Request
-    if "grover" in p_lower or "search" in p_lower:
+    # 4. Grover's Search Request
+    elif "grover" in p_lower:
         target = _extract_target_bitstring(prompt, default="101")
-        return generate_grover_circuit(target_state=target)
+        code, exp, meta = generate_grover_circuit(target_state=target)
 
-    # 4. Quantum Fourier Transform (QFT) Request
-    if "qft" in p_lower or "fourier" in p_lower:
-        n = _extract_qubit_count(prompt, default=4)
-        return generate_qft_circuit(num_qubits=n)
-
-    # 5. Quantum Random Number Generator (QRNG) Request
-    if "qrng" in p_lower or "random number" in p_lower:
-        n = _extract_qubit_count(prompt, default=2)
-        return generate_qrng_circuit(num_qubits=n)
-
-    # 6. Quantum Teleportation Protocol
-    if "teleport" in p_lower:
+    # 5. Quantum Fourier Transform (QFT) Request (pure QFT, not QPE or inverse)
+    elif ("qft" in p_lower or "fourier" in p_lower) and not any(k in p_lower for k in ["inverse", "dag", "dagger", "qpe", "phase estimation"]):
         n = _extract_qubit_count(prompt, default=3)
-        return generate_teleportation_circuit(num_qubits=n)
+        code, exp, meta = generate_qft_circuit(num_qubits=n)
+
+    # 6. Quantum Random Number Generator (QRNG) Request
+    elif "qrng" in p_lower or "random number" in p_lower:
+        n = _extract_qubit_count(prompt, default=2)
+        code, exp, meta = generate_qrng_circuit(num_qubits=n)
 
     # 7. General Custom Quantum Circuit
-    return await synthesize_custom_qiskit_circuit(prompt, current_code)
+    else:
+        code, exp, meta = await synthesize_custom_qiskit_circuit(prompt, current_code)
+
+    return await verify_and_enrich_qiskit_circuit(code, exp, meta, prompt=prompt)

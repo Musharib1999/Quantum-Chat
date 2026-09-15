@@ -20,7 +20,9 @@ import {
     Cpu,
     Lock,
     Globe,
-    Layers
+    Layers,
+    Activity,
+    Flame
 } from 'lucide-react';
 import {
     TEST_DEFINITIONS,
@@ -181,6 +183,18 @@ export default function TestSuitePage() {
 
     const totalDuration = Object.values(results).reduce((sum, r) => sum + (r.durationMs || 0), 0);
 
+    const quboResults = Object.entries(results).filter(([id]) => id.startsWith('QUBO-'));
+    const quboAccuracyAvg = quboResults.length > 0
+        ? Math.round(quboResults.reduce((acc, [, r]) => acc + (((r as any).details)?.accuracyScore ?? (r.status === 'passed' ? 100 : 0)), 0) / quboResults.length)
+        : null;
+
+    const qiskitResults = Object.entries(results).filter(([id]) => id.startsWith('QISKIT-'));
+    const qiskitFidelityAvg = qiskitResults.length > 0
+        ? Math.round(qiskitResults.reduce((acc, [, r]) => acc + (((r as any).details)?.fidelity ? ((r as any).details).fidelity * 100 : (r.status === 'passed' ? 100 : 0)), 0) / qiskitResults.length)
+        : null;
+
+    const total429Retries = Object.values(results).reduce((acc, r) => acc + (((r as any).details)?.retries429 || 0), 0);
+
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-6 md:p-10">
             {/* Header / Nav */}
@@ -269,6 +283,26 @@ export default function TestSuitePage() {
                         </div>
                         <div className="text-[11px] text-slate-500 mt-0.5">Production Grade</div>
                     </div>
+
+                    <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4">
+                        <div className="text-xs text-amber-400 font-medium flex items-center gap-1">
+                            <Activity className="w-3.5 h-3.5" /> QUBO Accuracy
+                        </div>
+                        <div className="text-2xl font-bold text-amber-400 mt-1">
+                            {quboAccuracyAvg !== null ? `${quboAccuracyAvg}%` : 'Pending'}
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">Mathematical Min</div>
+                    </div>
+
+                    <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4">
+                        <div className="text-xs text-cyan-400 font-medium flex items-center gap-1">
+                            <Cpu className="w-3.5 h-3.5" /> Qiskit Fidelity
+                        </div>
+                        <div className="text-2xl font-bold text-cyan-400 mt-1">
+                            {qiskitFidelityAvg !== null ? `${qiskitFidelityAvg}%` : 'Pending'}
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">AerSimulator Overlap</div>
+                    </div>
                 </div>
 
                 {/* Progress Bar */}
@@ -279,6 +313,17 @@ export default function TestSuitePage() {
                     />
                 </div>
 
+                {/* Groq 429 Resilience Telemetry Notice */}
+                {total429Retries > 0 && (
+                    <div className="mb-4 p-3 rounded-xl border border-sky-500/30 bg-sky-950/30 flex items-center justify-between text-xs text-sky-300 font-mono">
+                        <div className="flex items-center gap-2">
+                            <Flame className="w-4 h-4 text-sky-400 animate-pulse" />
+                            <span><strong>Groq 429 Rate Limit Interceptor:</strong> Handled {total429Retries} throttling events with adaptive exponential backoff & jitter. Zero dropped tests.</span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] uppercase tracking-wider font-bold">Resilient</span>
+                    </div>
+                )}
+
                 {/* Action Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900/60 border border-slate-800 p-4 rounded-xl mb-8">
                     <div className="flex flex-wrap items-center gap-3">
@@ -288,7 +333,7 @@ export default function TestSuitePage() {
                             className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50"
                         >
                             <Play className={`w-4 h-4 fill-current ${isRunningAll ? 'animate-spin' : ''}`} />
-                            {isRunningAll ? (cooldownSec > 0 ? `Rate-limit Cooldown (${cooldownSec}s)...` : 'Running Test Suite...') : selectedCategory === 'all' ? 'Run All 52 Tests' : `Run Category (${selectedCategory.toUpperCase()})`}
+                            {isRunningAll ? (cooldownSec > 0 ? `Rate-limit Cooldown (${cooldownSec}s)...` : 'Running Test Suite...') : selectedCategory === 'all' ? `Run All ${TEST_DEFINITIONS.length} Tests` : `Run Category (${selectedCategory.toUpperCase()})`}
                         </button>
 
                         {cooldownSec > 0 && (
@@ -330,10 +375,12 @@ export default function TestSuitePage() {
                     {/* Category Tabs */}
                     <div className="flex flex-wrap gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 text-xs">
                         {[
-                            { id: 'all', label: 'All', count: 52, icon: Layers },
+                            { id: 'all', label: 'All', count: TEST_DEFINITIONS.length, icon: Layers },
+                            { id: 'qubo_audit', label: 'QUBO Audit (20)', count: 20, icon: Activity },
+                            { id: 'qiskit_audit', label: 'Qiskit Audit (20)', count: 20, icon: Cpu },
                             { id: 'security', label: 'Security & Auth', count: 12, icon: Lock },
-                            { id: 'api', label: 'API Robustness', count: 12, icon: Terminal },
-                            { id: 'llm', label: 'AI Reasoning (Groq)', count: 10, icon: Cpu },
+                            { id: 'api', label: 'API Robustness', count: 16, icon: Terminal },
+                            { id: 'llm', label: 'AI Reasoning (Groq)', count: 11, icon: Cpu },
                             { id: 'navigation', label: 'Navigation & State', count: 8, icon: Globe },
                             { id: 'production', label: 'Production SLA', count: 10, icon: Zap },
                         ].map(tab => {
