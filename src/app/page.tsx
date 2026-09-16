@@ -25,13 +25,12 @@ export default function LandingPage() {
   const pillars: StudioPillar[] = [
     {
       id: 'ai-assistant',
-      badge: 'AI COMPILER',
+      badge: 'PHASE 2 ENGINE',
       title: 'AI Quantum Assistant',
       description: 'Turn natural language business problems into mathematically verified, hardware-ready formulations without in-house quantum talent.',
       features: ['Plain Intent Ingress', 'Canonical Math Modeling', 'Zero Math Hallucinations'],
-      ctaText: 'Open Assistant →',
-      route: '/quantum-assistant',
-      isAvailable: true,
+      ctaText: 'Enterprise Preview',
+      isAvailable: false,
       accentColor: '#2E65BF'
     },
     {
@@ -264,12 +263,12 @@ export default function LandingPage() {
               An AI-native platform to formulate, build, optimize, and execute quantum solutions — without in-house quantum talent or custom plumbing.
             </p>
 
-            {/* Dual CTA Buttons (Zero Icons) */}
+            {/* Hero CTA Button (Zero Icons) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '32px' }}>
               <button
-                onClick={() => handleNavigate('/quantum-assistant')}
+                onClick={() => handleNavigate('/ide')}
                 style={{
-                  padding: '13px 26px',
+                  padding: '14px 28px',
                   backgroundColor: '#2E65BF',
                   color: '#ffffff',
                   fontSize: '14px',
@@ -281,25 +280,6 @@ export default function LandingPage() {
                   transition: 'all 0.2s'
                 }}
                 className="hover:bg-[#255299] active:scale-[0.98]"
-              >
-                Try Quantum AI →
-              </button>
-
-              <button
-                onClick={() => handleNavigate('/ide')}
-                style={{
-                  padding: '13px 24px',
-                  backgroundColor: '#ffffff',
-                  color: '#1E293B',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  borderRadius: '12px',
-                  border: '1px solid #CBD5E1',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-                  transition: 'all 0.2s'
-                }}
-                className="hover:border-slate-400 hover:bg-slate-50 active:scale-[0.98]"
               >
                 Launch Quantum IDE →
               </button>
@@ -674,10 +654,10 @@ export default function LandingPage() {
             <button
               onClick={() => handleNavigate('/ide')}
               style={{
-                padding: '13px 26px',
+                padding: '14px 28px',
                 backgroundColor: '#2E65BF',
                 color: '#ffffff',
-                fontSize: '13px',
+                fontSize: '14px',
                 fontWeight: 600,
                 borderRadius: '10px',
                 border: 'none',
@@ -688,23 +668,6 @@ export default function LandingPage() {
               className="hover:bg-[#255299] active:scale-[0.98]"
             >
               Launch Quantum IDE →
-            </button>
-            <button
-              onClick={() => handleNavigate('/quantum-assistant')}
-              style={{
-                padding: '13px 24px',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                color: '#ffffff',
-                fontSize: '13px',
-                fontWeight: 600,
-                borderRadius: '10px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              className="hover:bg-white/15 active:scale-[0.98]"
-            >
-              Try Quantum AI Assistant →
             </button>
           </div>
         </section>
@@ -730,7 +693,7 @@ export default function LandingPage() {
               {restrictedModalInfo.title}
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed mb-6">
-              This studio is part of our Phase 2 enterprise rollout. You have full, unrestricted access to the live <strong>Quantum IDE & Studio</strong> and <strong>AI Quantum Assistant</strong> right now.
+              This studio is part of our Phase 2 enterprise rollout. You have full, unrestricted access to the live <strong>Quantum IDE & Studio</strong> right now.
             </p>
 
             <div className="flex items-center gap-3">

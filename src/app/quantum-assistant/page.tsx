@@ -1641,7 +1641,7 @@ export default function App() {
                           </div>
 
                           {[
-                            { label: 'Quantum Assistant', pipeline: 'general' },
+                            // { label: 'Quantum Assistant', pipeline: 'general' },
                             { label: 'Optimization Studio', pipeline: 'optimization' },
                             { label: 'Quantum Algorithm Studio', pipeline: 'algorithm' },
                             { label: 'Quantum Circuit Studio', pipeline: 'coder' },
