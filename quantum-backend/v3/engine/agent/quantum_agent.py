@@ -169,6 +169,7 @@ class QuantumAgent:
         active_qubits = custom_p.get("active_qubits")
         validation_status = custom_p.get("validation_status")
         measurement_counts = custom_p.get("measurement_counts")
+        optimization_results = custom_p.get("optimization_results")
 
         updated_files = {}
         if c_act:
@@ -198,7 +199,8 @@ class QuantumAgent:
             "circuit_ascii": circuit_ascii,
             "active_qubits": active_qubits,
             "validation_status": validation_status,
-            "measurement_counts": measurement_counts
+            "measurement_counts": measurement_counts,
+            "optimization_results": optimization_results
         }
 
     async def run_stream(

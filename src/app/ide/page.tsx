@@ -2921,10 +2921,16 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       setThinkingStage(prev => (prev < 3 ? prev + 1 : prev));
     }, 350);
 
-    if (text === '/execute@program' || text.toLowerCase().includes('run program') || text.toLowerCase().includes('/run')) {
-      handleRun();
-    } else if (text === '/simulate@circuit' || text.toLowerCase().includes('simulate circuit')) {
+    if (text === '/execute@program' || text.toLowerCase().trim() === 'run program' || text.toLowerCase().trim() === '/run') {
+      if (stageTimerRef.current) clearInterval(stageTimerRef.current);
+      setIsCopilotThinking(false);
+      handleRun('results');
+      return;
+    } else if (text === '/simulate@circuit' || text.toLowerCase().trim() === 'simulate circuit') {
+      if (stageTimerRef.current) clearInterval(stageTimerRef.current);
+      setIsCopilotThinking(false);
       handleSimulate();
+      return;
     }
 
     try {
@@ -3056,6 +3062,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
             // ⚛️ Paradigm Pathway: Qiskit Circuit Assembly vs D-Wave Annealing Results
             if (isDwave) {
+              setTargetBackend('dwave_simulated_annealing');
+              if (data.optimization_results) {
+                setOptimizationResults(data.optimization_results);
+              }
               setActiveBottomTab('results');
               setIsBottomOpen(true);
               setHighlightResultsTab(true);
@@ -4576,7 +4586,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                 onClick={() => {
                                   setActiveBottomTab('results');
                                   setIsBottomOpen(true);
-                                  handleSendMessage('/execute@program');
+                                  handleRun('results');
                                 }}
                                 style={{ 
                                   backgroundColor: isDark ? 'rgba(222, 170, 33, 0.15)' : 'rgba(222, 170, 33, 0.2)',

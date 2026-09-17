@@ -508,6 +508,17 @@ if HAS_DWAVE:
 
     # Check for Q_matrix (numpy 2D array) and variable_names from qubo_matrix.py
     if target_model is None and target_sampleset is None:
+        if "Q_matrix" not in exec_globals or "variable_names" not in exec_globals:
+            try:
+                import qubo_matrix
+                if hasattr(qubo_matrix, "Q_matrix") and hasattr(qubo_matrix, "variable_names"):
+                    exec_globals["Q_matrix"] = qubo_matrix.Q_matrix
+                    exec_globals["variable_names"] = qubo_matrix.variable_names
+                    if hasattr(qubo_matrix, "qubo_offset"):
+                        exec_globals["qubo_offset"] = qubo_matrix.qubo_offset
+            except Exception:
+                pass
+
         if "Q_matrix" in exec_globals and "variable_names" in exec_globals:
             q_mat = exec_globals["Q_matrix"]
             v_names = exec_globals["variable_names"]
