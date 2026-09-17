@@ -52,19 +52,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const updateDoc: any = {
+      projectId,
+      userEmail,
+      title: title || projectId,
+      desc: desc || '',
+      templateKey: templateKey || 'optimization',
+      activeFile: activeFile || 'main.py',
+      files: files || {},
+      runtimeMetrics: runtimeMetrics || {}
+    };
+
+    if (chatMessages !== undefined) {
+      updateDoc.chatMessages = chatMessages;
+    }
+
     const updatedProject = await QuantumProject.findOneAndUpdate(
       { projectId, userEmail },
-      {
-        projectId,
-        userEmail,
-        title: title || projectId,
-        desc: desc || '',
-        templateKey: templateKey || 'optimization',
-        activeFile: activeFile || 'main.py',
-        files: files || {},
-        runtimeMetrics: runtimeMetrics || {},
-        chatMessages: chatMessages || []
-      },
+      updateDoc,
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 

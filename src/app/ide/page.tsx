@@ -1442,7 +1442,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     projData: { title?: string; desc?: string; files: Record<string, any> };
     currActiveFile: string;
     metrics: any;
+    chatMessages?: ChatMessage[];
   } | null>(null);
+  const projectNameRef = useRef<string>(projectName);
 
   const syncCircuitBackground = useCallback(async (codeToSync: string) => {
     try {
@@ -1543,10 +1545,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         currentProjData, 
         activeFile, 
         { ...runtimeMetrics, terminalLog: terminalLogs }, 
-        true
+        true,
+        chatMessagesRef.current
       );
       try {
-        localStorage.setItem(`quantum_chat_${userScope}_${projectName}`, JSON.stringify(chatMessages));
+        localStorage.setItem(`quantum_chat_${userScope}_${projectName}`, JSON.stringify(chatMessagesRef.current));
       } catch (e) {}
     }
 
@@ -1634,19 +1637,34 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           const parsedChat = JSON.parse(storedChat);
           if (Array.isArray(parsedChat) && parsedChat.length > 0) {
             setChatMessages(parsedChat);
+            chatMessagesRef.current = parsedChat;
+          } else if (Array.isArray(target.chatMessages) && target.chatMessages.length > 0) {
+            setChatMessages(target.chatMessages);
+            chatMessagesRef.current = target.chatMessages;
+            localStorage.setItem(`quantum_chat_${userScope}_${targetProject}`, JSON.stringify(target.chatMessages));
           } else {
-            setChatMessages([{
+            const initialChat: ChatMessage[] = [{
               id: Date.now().toString(),
               sender: 'agent',
               text: `Switched workspace to **${targetProject}**. Active file: \`${targetActiveFile}\`. All telemetry and memory synchronized.`
-            }]);
+            }];
+            setChatMessages(initialChat);
+            chatMessagesRef.current = initialChat;
+            localStorage.setItem(`quantum_chat_${userScope}_${targetProject}`, JSON.stringify(initialChat));
           }
+        } else if (Array.isArray(target.chatMessages) && target.chatMessages.length > 0) {
+          setChatMessages(target.chatMessages);
+          chatMessagesRef.current = target.chatMessages;
+          localStorage.setItem(`quantum_chat_${userScope}_${targetProject}`, JSON.stringify(target.chatMessages));
         } else {
-          setChatMessages([{
+          const initialChat: ChatMessage[] = [{
             id: Date.now().toString(),
             sender: 'agent',
             text: `Switched workspace to **${targetProject}**. Active file: \`${targetActiveFile}\`. All telemetry and memory synchronized.`
-          }]);
+          }];
+          setChatMessages(initialChat);
+          chatMessagesRef.current = initialChat;
+          localStorage.setItem(`quantum_chat_${userScope}_${targetProject}`, JSON.stringify(initialChat));
         }
       } catch (e) {}
     }
@@ -1714,6 +1732,15 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       text: 'Hello! I am your Quantum Copilot. Ask me to explain your code, inspect your Hamiltonian, or analyze your circuit.'
     }
   ]);
+  const chatMessagesRef = useRef<ChatMessage[]>(chatMessages);
+
+  useEffect(() => {
+    projectNameRef.current = projectName;
+  }, [projectName]);
+
+  useEffect(() => {
+    chatMessagesRef.current = chatMessages;
+  }, [chatMessages]);
 
   // Handle Drag Resizing
   const handleLeftMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1827,11 +1854,17 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               try {
                 const stored = JSON.parse(localStorage.getItem(key) || '{}');
                 if (stored.id && stored.files && Object.keys(stored.files).length > 0) {
+                  let projChat: ChatMessage[] = [];
+                  const chatCached = localStorage.getItem(`quantum_chat_${userScope}_${stored.id}`);
+                  if (chatCached) {
+                    try { projChat = JSON.parse(chatCached); } catch (e) {}
+                  }
                   mergedProjects[stored.id] = {
                     title: stored.title || stored.id,
                     desc: stored.desc || '',
                     files: stored.files,
-                    activeFile: stored.activeFile
+                    activeFile: stored.activeFile,
+                    chatMessages: projChat
                   };
                   if (stored.updatedAt) {
                     localTimestamps[stored.id] = stored.updatedAt;
@@ -1875,7 +1908,12 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
               const parsed = JSON.parse(storedChat);
               if (Array.isArray(parsed) && parsed.length > 0) {
                 setChatMessages(parsed);
+                chatMessagesRef.current = parsed;
               }
+            } else if (Array.isArray(targetProj.chatMessages) && targetProj.chatMessages.length > 0) {
+              setChatMessages(targetProj.chatMessages);
+              chatMessagesRef.current = targetProj.chatMessages;
+              localStorage.setItem(`quantum_chat_${userScope}_${lastActiveProjId}`, JSON.stringify(targetProj.chatMessages));
             }
           } catch (e) {}
 
@@ -1940,9 +1978,22 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                     title: proj.title || proj.projectId,
                     desc: proj.desc || '',
                     files: proj.files,
-                    activeFile: proj.activeFile
+                    activeFile: proj.activeFile,
+                    chatMessages: proj.chatMessages || []
                   };
                   hasServerUpdates = true;
+
+                  const currentActive = lastActiveProjId || 'my-quantum-project';
+                  if (proj.projectId === currentActive) {
+                    try {
+                      const localChatStr = localStorage.getItem(`quantum_chat_${userScope}_${currentActive}`);
+                      if (!localChatStr && Array.isArray(proj.chatMessages) && proj.chatMessages.length > 0) {
+                        setChatMessages(proj.chatMessages);
+                        chatMessagesRef.current = proj.chatMessages;
+                        localStorage.setItem(`quantum_chat_${userScope}_${currentActive}`, JSON.stringify(proj.chatMessages));
+                      }
+                    } catch (e) {}
+                  }
                 }
               }
             });
@@ -1983,7 +2034,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             desc: toSave.projData.desc || '',
             files: toSave.projData.files,
             activeFile: toSave.currActiveFile,
-            runtimeMetrics: toSave.metrics
+            runtimeMetrics: toSave.metrics,
+            chatMessages: toSave.chatMessages || []
           })
         });
       } catch (err) {
@@ -1998,9 +2050,25 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     projData: { title?: string; desc?: string; files: Record<string, any> },
     currActiveFile: string,
     metrics: typeof runtimeMetrics,
-    immediate = false
+    immediate = false,
+    messagesToSave?: ChatMessage[]
   ) => {
     const timestamp = new Date().toISOString();
+
+    // Determine messages to save for this project
+    let currentChatMessages: ChatMessage[] = messagesToSave || [];
+    if (!currentChatMessages.length && projId === projectNameRef.current && chatMessagesRef.current) {
+      currentChatMessages = chatMessagesRef.current;
+    }
+    if (!currentChatMessages.length && typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`quantum_chat_${userScope}_${projId}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) currentChatMessages = parsed;
+        }
+      } catch (e) {}
+    }
 
     // 1. Immediate local persistence for instant crash/refresh safety
     try {
@@ -2015,6 +2083,9 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           runtimeMetrics: metrics,
           updatedAt: timestamp
         }));
+        if (currentChatMessages.length > 0) {
+          localStorage.setItem(`quantum_chat_${userScope}_${projId}`, JSON.stringify(currentChatMessages));
+        }
       }
     } catch (e) {
       console.warn('Failed to write to localStorage:', e);
@@ -2026,6 +2097,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       projData: { title?: string; desc?: string; files: Record<string, any> };
       currActiveFile: string;
       metrics: typeof runtimeMetrics;
+      chatMessages?: ChatMessage[];
     }) => {
       try {
         await fetch('/api/ide/projects', {
@@ -2037,7 +2109,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             desc: payload.projData.desc || '',
             files: payload.projData.files,
             activeFile: payload.currActiveFile,
-            runtimeMetrics: payload.metrics
+            runtimeMetrics: payload.metrics,
+            chatMessages: payload.chatMessages || []
           })
         });
       } catch (err) {
@@ -2052,10 +2125,10 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         saveTimeoutRef.current = null;
       }
       pendingSaveRef.current = null;
-      await executeRemoteSave({ projId, projData, currActiveFile, metrics });
+      await executeRemoteSave({ projId, projData, currActiveFile, metrics, chatMessages: currentChatMessages });
     } else {
       // Record latest pending save payload
-      pendingSaveRef.current = { projId, projData, currActiveFile, metrics };
+      pendingSaveRef.current = { projId, projData, currActiveFile, metrics, chatMessages: currentChatMessages };
 
       // Debounce MongoDB write by 1200ms
       if (saveTimeoutRef.current) {
@@ -2251,10 +2324,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         currentProjData, 
         activeFile, 
         { ...runtimeMetrics, terminalLog: terminalLogs }, 
-        true
+        true,
+        chatMessagesRef.current
       );
       try {
-        localStorage.setItem(`quantum_chat_${userScope}_${projectName}`, JSON.stringify(chatMessages));
+        localStorage.setItem(`quantum_chat_${userScope}_${projectName}`, JSON.stringify(chatMessagesRef.current));
       } catch (e) {}
     }
 
@@ -2316,12 +2390,13 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setRuntimeMetrics(freshMetrics);
 
     // 4. Clean Chat Isolation (Do NOT inherit old project's chat!)
-    const initialChat = [{
+    const initialChat: ChatMessage[] = [{
       id: Date.now().toString(),
-      sender: 'agent' as const,
+      sender: 'agent',
       text: `Created and opened project: **${finalName}** (scaffolded from ${templateData.title}). Saved to MongoDB with \`main.py\` and \`MEMORY.md\`.`
     }];
     setChatMessages(initialChat);
+    chatMessagesRef.current = initialChat;
     if (typeof window !== 'undefined') {
       localStorage.setItem(`quantum_chat_${userScope}_${finalName}`, JSON.stringify(initialChat));
     }
@@ -2332,7 +2407,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       { title: finalName, desc: `Custom project scaffolded from ${templateData.title}`, files: newFiles }, 
       primaryFile, 
       freshMetrics, 
-      true
+      true,
+      initialChat
     );
   };
 
@@ -2816,7 +2892,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
         { title: projectName, desc: '', files: updated },
         activeFile,
         dataPayload.runtime_telemetry || runtimeMetrics,
-        true
+        true,
+        chatMessagesRef.current
       );
 
       return updated;
@@ -2828,7 +2905,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     if (!text || isCopilotThinking) return;
 
     const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text };
-    setChatMessages(prev => [...prev, userMsg]);
+    setChatMessages(prev => {
+      const next = [...prev, userMsg];
+      chatMessagesRef.current = next;
+      return next;
+    });
     setIsCopilotThinking(true);
     setThinkingStage(0);
 
@@ -2880,18 +2961,27 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
           : 'AI is under maintenance, will be working shortly.';
         const agentMsgId = (Date.now() + 1).toString();
 
+        const agentMsgObj: ChatMessage = {
+          id: agentMsgId,
+          sender: 'agent',
+          text: fullAgentText,
+          workflowSteps: data.workflow_steps || undefined,
+          scientificVerdict: data.scientific_verdict || undefined,
+          codeMutation: mutationData,
+          toolCall: data.tool_call || undefined
+        };
+
         const words = fullAgentText.split(' ');
         if (words.length > 8) {
           const chunkSize = Math.max(3, Math.ceil(words.length / 15));
-          setChatMessages(prev => [...prev, {
-            id: agentMsgId,
-            sender: 'agent',
-            text: words.slice(0, chunkSize).join(' '),
-            workflowSteps: data.workflow_steps || undefined,
-            scientificVerdict: data.scientific_verdict || undefined,
-            codeMutation: mutationData,
-            toolCall: data.tool_call || undefined
-          }]);
+          setChatMessages(prev => {
+            const next = [...prev, {
+              ...agentMsgObj,
+              text: words.slice(0, chunkSize).join(' ')
+            }];
+            chatMessagesRef.current = next;
+            return next;
+          });
 
           let currentWordIdx = chunkSize;
           if (chatStreamTimerRef.current) clearInterval(chatStreamTimerRef.current);
@@ -2899,22 +2989,42 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             currentWordIdx += chunkSize;
             if (currentWordIdx >= words.length) {
               if (chatStreamTimerRef.current) clearInterval(chatStreamTimerRef.current);
-              setChatMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: fullAgentText } : m));
+              setChatMessages(prev => {
+                const next = prev.map(m => m.id === agentMsgId ? { ...m, text: fullAgentText } : m);
+                chatMessagesRef.current = next;
+                return next;
+              });
+              const finalTurnMsgs = [...chatMessagesRef.current.filter(m => m.id !== agentMsgId), agentMsgObj];
+              chatMessagesRef.current = finalTurnMsgs;
+              saveProjectToDatabase(
+                projectName,
+                allProjects[projectName] || { files: projectFiles },
+                activeFile,
+                runtimeMetrics,
+                true,
+                finalTurnMsgs
+              );
             } else {
               const partial = words.slice(0, currentWordIdx).join(' ');
               setChatMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: partial } : m));
             }
           }, 20);
         } else {
-          setChatMessages(prev => [...prev, {
-            id: agentMsgId,
-            sender: 'agent',
-            text: fullAgentText,
-            workflowSteps: data.workflow_steps || undefined,
-            scientificVerdict: data.scientific_verdict || undefined,
-            codeMutation: mutationData,
-            toolCall: data.tool_call || undefined
-          }]);
+          setChatMessages(prev => {
+            const next = [...prev, agentMsgObj];
+            chatMessagesRef.current = next;
+            return next;
+          });
+          const finalTurnMsgs = [...chatMessagesRef.current.filter(m => m.id !== agentMsgId), agentMsgObj];
+          chatMessagesRef.current = finalTurnMsgs;
+          saveProjectToDatabase(
+            projectName,
+            allProjects[projectName] || { files: projectFiles },
+            activeFile,
+            runtimeMetrics,
+            true,
+            finalTurnMsgs
+          );
         }
 
         // 2. Dynamically Mutate Code & MEMORY.md in Workspace ONLY if not an explanatory question
@@ -3040,7 +3150,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       }
     } catch (err) {
       setTimeout(() => {
-        setChatMessages(prev => [...prev, {
+        const errorMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
           sender: 'agent',
           text: "AI is under maintenance, will be working shortly.",
@@ -3049,7 +3159,22 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
             badge: 'Maintenance',
             detail: 'Service temporarily unavailable'
           }
-        }]);
+        };
+        setChatMessages(prev => {
+          const next = [...prev, errorMsg];
+          chatMessagesRef.current = next;
+          return next;
+        });
+        const errorTurnMsgs = [...chatMessagesRef.current, errorMsg];
+        chatMessagesRef.current = errorTurnMsgs;
+        saveProjectToDatabase(
+          projectName,
+          allProjects[projectName] || { files: projectFiles },
+          activeFile,
+          runtimeMetrics,
+          true,
+          errorTurnMsgs
+        );
       }, 400);
     } finally {
       if (stageTimerRef.current) clearInterval(stageTimerRef.current);
