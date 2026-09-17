@@ -6,7 +6,7 @@ import httpx
 import asyncio
 from . import config
 
-_TIMEOUT = httpx.Timeout(120.0, connect=10.0)
+_TIMEOUT = httpx.Timeout(180.0, connect=10.0)
 
 
 async def _call_openai_compat(
@@ -18,7 +18,7 @@ async def _call_openai_compat(
     max_tokens: int = 1024,
     temperature: float = 0.2,
 ) -> str:
-    """Generic OpenAI-compatible chat completion call."""
+    """Generic OpenAI-compatible chat completion call with automatic /v1 suffix normalization."""
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -32,8 +32,12 @@ async def _call_openai_compat(
         "max_tokens": max_tokens,
         "temperature": temperature,
     }
+    cleaned_url = base_url.rstrip("/")
+    if not cleaned_url.endswith("/v1"):
+        cleaned_url += "/v1"
+
     async with httpx.AsyncClient(timeout=_TIMEOUT, verify=False) as client:
-        r = await client.post(f"{base_url}/chat/completions", headers=headers, json=payload)
+        r = await client.post(f"{cleaned_url}/chat/completions", headers=headers, json=payload)
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"].strip()
 

@@ -21,7 +21,7 @@ from ..memory.project_memory import (
     CodeDiffSnapshot, 
     QuantumStateSnapshot
 )
-from ..groq_client import call_groq
+from ..llm_client import call_primary
 
 MOLECULE_DATABASE = {
     "c3h6o": {
@@ -360,7 +360,7 @@ if __name__ == "__main__":
                 f"Selected assets: 0 and 2. Ground energy: -11.42. Approximation ratio: 96.4%. "
                 f"Include a brief comparison to classical PuLP solver. Do not use bold asterisks (**)."
             )
-            groq_resp = await call_groq(
+            groq_resp = await call_primary(
                 system="You are Quantum Guru AI. Output plain text without bold text (**). Be concise, rigorous, and clear.",
                 user=groq_prompt,
                 model="qwen/qwen3.6-27b"
@@ -551,7 +551,7 @@ if __name__ == "__main__":
                 f"Chemical accuracy error: {abs(mol['vqe_energy'] - mol['fci_energy'])*1000:.2f} mHa. "
                 f"Do not use bold asterisks (**)."
             )
-            groq_resp = await call_groq(
+            groq_resp = await call_primary(
                 system="You are Quantum Guru AI. Output plain text without bold text (**). Be concise, rigorous, and clear.",
                 user=groq_prompt,
                 model="qwen/qwen3.6-27b"
@@ -862,7 +862,7 @@ if __name__ == "__main__":
                 f"Provide a scientifically rigorous, concise, helpful explanation using Dirac bra-ket notation where appropriate. "
                 f"CRITICAL: Do NOT use any bold markdown formatting (no double asterisks **)."
             )
-            groq_resp = await call_groq(
+            groq_resp = await call_primary(
                 system="You are Quantum Guru AI. Output plain text without bold text (**). Be concise, factual, and mathematically rigorous.",
                 user=groq_prompt,
                 model="qwen/qwen3.6-27b"

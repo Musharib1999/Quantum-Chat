@@ -39,7 +39,7 @@ from ..tools.tool_models import (
     OptExecuteSolverRequest,
     OptDecodeSolutionRequest
 )
-from ..groq_client import call_groq
+from ..llm_client import call_primary
 
 
 def is_optimization_synthesis_request(
@@ -162,7 +162,7 @@ async def solve_dynamic_optimization_problem(
 }"""
         parsed_ok = False
         try:
-            raw_res = await call_groq(system=system_prompt, user=user_msg, max_tokens=2048)
+            raw_res = await call_primary(system=system_prompt, user=user_msg, max_tokens=2048)
             m = re.search(r'\{.*\}', raw_res, re.DOTALL)
             if m:
                 llm_data = json.loads(m.group(0))

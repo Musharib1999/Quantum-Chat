@@ -15,7 +15,7 @@ import ast
 import re
 import math
 from typing import Tuple, Dict, Any, Optional
-from ..groq_client import call_groq
+from ..llm_client import call_primary
 from ..runtime.execution_runner import validate_code_security, run_code_sandbox, CodeExecutionRequest
 
 # Canonical Persistent Execution Output Block for AerSimulator
@@ -1085,7 +1085,7 @@ async def verify_and_enrich_qiskit_circuit(
     )
 
     try:
-        raw_repaired = await call_groq(system=repair_prompt, user=user_repair_query, max_tokens=4096, temperature=0.0)
+        raw_repaired = await call_primary(system=repair_prompt, user=user_repair_query, max_tokens=4096, temperature=0.0)
         code_match = re.search(r'```(?:python)?\s*([\s\S]*?)```', raw_repaired)
         candidate_code = code_match.group(1).strip() if code_match else raw_repaired.strip()
         candidate_code = _sanitize_and_append_aer(candidate_code)
@@ -1179,7 +1179,7 @@ async def synthesize_custom_qiskit_circuit(prompt: str, current_code: str = "") 
     user_query = f"User Request: {prompt}\n\nCurrent Workspace Code:\n{current_code[:1000] if current_code else '# Empty'}\n\nSynthesize the complete Qiskit program."
 
     try:
-        raw_res = await call_groq(system=system_prompt, user=user_query, max_tokens=4096, temperature=0.1)
+        raw_res = await call_primary(system=system_prompt, user=user_query, max_tokens=4096, temperature=0.1)
     except Exception as e:
         print(f"[synthesizer call_groq error]: {e}")
         # If user has an existing circuit in workspace, NEVER destroy it!

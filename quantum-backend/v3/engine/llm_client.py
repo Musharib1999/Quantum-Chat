@@ -3,8 +3,8 @@ llm_client.py — Unified LLM Abstraction Layer with Identity Masking & Guardrai
 Quantum Guru Engine v3 / scratch codebase
 
 Routes reasoning/nlp and fast/coding requests to the configured provider:
-  - RunPod vLLM (Qwen 3 32B + Llama 3 8B + LoRA)
-  - Groq Cloud API (Llama 3.3 70B + Llama 3 8B)
+  - RunPod vLLM (Qwen 2.5 Coder 32B AWQ on port 8000)
+  - Groq Cloud API (Llama 3.3 70B / Qwen 3.6 27B)
 """
 
 import re
@@ -107,7 +107,9 @@ async def call_fast(
     mlx_adapter_path: str = None
 ) -> str:
     """
-    Call the fast/coder model (Llama 8B LoRA on RunPod, or Qwen 3.6 27B on Groq).
+    Call the fast/coder model.
+    When provider == 'runpod': routes directly to Qwen-2.5-Coder-32B on RunPod vLLM (QWEN_BASE_URL).
+    When provider == 'groq': routes to GROQ_FAST_MODEL on Groq.
     Includes identity guardrail intercepts and output sanitization.
     """
     # 1. Input Guardrail Check (Fast, saves tokens)
@@ -119,28 +121,24 @@ async def call_fast(
 
     provider = getattr(config, "INFERENCE_PROVIDER", "runpod")
     
+    system_content = "You are a helpful coding assistant specialized in quantum algorithms, QUBO formulation, and optimization."
+    user_content = prompt
+    
+    # Strip any LLaMA or ChatML special tokens if present
+    if "<|start_header_id|>" in prompt or "<|im_start|>" in prompt:
+        sys_pat = r"<\|(?:start_header_id\|system<\|end_header_id\||im_start\|system)\s*\n*(.*?)\n*<\|(?:eot_id|im_end)\|>"
+        usr_pat = r"<\|(?:start_header_id\|user<\|end_header_id\||im_start\|user)\s*\n*(.*?)\n*<\|(?:eot_id|im_end)\|>"
+        sys_m = re.search(sys_pat, prompt, re.DOTALL)
+        usr_m = re.search(usr_pat, prompt, re.DOTALL)
+        if sys_m:
+            system_content = sys_m.group(1).strip()
+        if usr_m:
+            user_content = usr_m.group(1).strip()
+            
+    secured_system = system_content + IDENTITY_INJECTION
+    
     if provider == "groq":
         from .groq_client import call_groq
-        
-        system_content = "You are a helpful coding assistant."
-        user_content = prompt
-        
-        system_match = [m.start() for m in re.finditer(r'<\|start_header_id\|>system<\|end_header_id\|>', prompt)]
-        
-        if system_match:
-            sys_pat = r'<\|start_header_id\|>system<\|end_header_id\|>\n\n(.*?)\n\n<\|eot_id\|>'
-            usr_pat = r'<\|start_header_id\|>user<\|end_header_id\|>\n\n(.*?)\n\n<\|eot_id\|>'
-            
-            sys_m = re.search(sys_pat, prompt, re.DOTALL)
-            usr_m = re.search(usr_pat, prompt, re.DOTALL)
-            
-            if sys_m:
-                system_content = sys_m.group(1).strip()
-            if usr_m:
-                user_content = usr_m.group(1).strip()
-                
-        secured_system = system_content + IDENTITY_INJECTION
-                
         raw_response = await call_groq(
             system=secured_system,
             user=user_content,
@@ -149,25 +147,13 @@ async def call_fast(
             model=config.GROQ_FAST_MODEL
         )
     else:
-        from .llama_client import call_adapter
-        
-        secured_prompt = prompt
-        system_marker = "<|start_header_id|>system<|end_header_id|>"
-        eot_marker = "<|eot_id|>"
-        if system_marker in prompt:
-            parts = prompt.split(system_marker, 1)
-            sub_parts = parts[1].split(eot_marker, 1)
-            secured_system = sub_parts[0] + IDENTITY_INJECTION
-            secured_prompt = parts[0] + system_marker + secured_system + eot_marker + (sub_parts[1] if len(sub_parts) > 1 else "")
-        else:
-            secured_prompt = f"<|start_header_id|>system<|end_header_id|>\nYou are a helpful coding assistant.{IDENTITY_INJECTION}\n<|eot_id|>\n" + prompt
-
-        raw_response = await call_adapter(
-            adapter_name=adapter_name,
-            prompt=secured_prompt,
+        # RunPod vLLM: Route to dedicated Qwen-2.5-Coder-32B
+        from .qwen_client import call_qwen
+        raw_response = await call_qwen(
+            system=secured_system,
+            user=user_content,
             max_tokens=max_tokens,
-            temperature=temperature,
-            mlx_adapter_path=mlx_adapter_path
+            temperature=temperature
         )
 
     # 3. Output Sanitizer (Safety backup)
