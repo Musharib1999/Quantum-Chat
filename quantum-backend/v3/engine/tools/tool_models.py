@@ -50,6 +50,7 @@ class OptExecuteSolverRequest(BaseModel):
     var_names: list[str] = Field(default_factory=list)
     shots: int = 1024
     num_reads: int = 200
+    offset: float = 0.0
 
 class OptExecuteSolverResponse(BaseModel):
     optimal_bitstring: str
@@ -471,12 +472,15 @@ class OptAlgebraicSlackQUBORequest(BaseModel):
     mutual_exclusions: list[tuple[str, str]] = Field(default_factory=list, description="Pairs of mutually exclusive variables (x_i + x_j <= 1)")
     dependencies: list[tuple[str, str]] = Field(default_factory=list, description="Variable implications (x_j <= x_i: target requires dependency)")
     penalty_lambda: float = Field(default=10.0, description="Lagrange penalty stiffness multiplier")
+    quadratic_objective: list[tuple[str, str, float]] = Field(default_factory=list, description="Quadratic objective couplings (u, v, weight)")
 
 class OptAlgebraicSlackQUBOResponse(BaseModel):
     qubo_matrix: list[list[float]] = Field(default_factory=list, description="Exact N x N numerical symmetric/upper-triangular Q-matrix")
     variable_names: list[str] = Field(default_factory=list, description="Combined decision and logarithmic slack variable labels")
     slack_variables: list[str] = Field(default_factory=list, description="Allocated binary logarithmic slack variables")
     total_qubits: int = Field(default=0, description="Total qubit requirement")
+    offset: float = Field(default=0.0, description="Constant energy offset (lambda * rhs^2)")
+    penalty_lambda: float = Field(default=10.0, description="Penalty stiffness multiplier used")
     cell_derivations: dict[str, str] = Field(default_factory=dict, description="Human-readable mathematical expansion formula per matrix cell")
     python_script: str = Field(default="", description="Standalone executable Python solver script with exact closures")
     execution_time_ms: float = Field(default=0.0, description="Compilation latency in milliseconds")
