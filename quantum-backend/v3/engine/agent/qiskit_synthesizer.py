@@ -597,6 +597,9 @@ async def verify_and_enrich_qiskit_circuit(
     p_lower = prompt.lower()
     if any(k in p_lower for k in ["bell", "epr"]):
         fb_code, fb_exp, fb_meta = generate_bell_circuit("phi_plus")
+    elif any(k in p_lower for k in ["teleport"]):
+        n = _extract_qubit_count(prompt, default=3)
+        fb_code, fb_exp, fb_meta = generate_teleportation_circuit(num_qubits=n)
     elif any(k in p_lower for k in ["grover", "search"]):
         fb_code, fb_exp, fb_meta = generate_grover_circuit("101")
     elif any(k in p_lower for k in ["qft", "fourier"]):
@@ -645,7 +648,10 @@ async def synthesize_custom_qiskit_circuit(prompt: str, current_code: str = "") 
         raw_res = await call_groq(system=system_prompt, user=user_query, max_tokens=4096, temperature=0.1)
     except Exception as e:
         print(f"[synthesizer call_groq error]: {e}")
-        # Fallback to GHZ or Bell state if LLM fails
+        # Fallback to Teleportation, GHZ, or Bell state if LLM fails
+        if "teleport" in prompt.lower():
+            n = _extract_qubit_count(prompt, default=3)
+            return generate_teleportation_circuit(num_qubits=n)
         return generate_ghz_circuit(num_qubits=3)
 
     # Extract python code block
@@ -705,11 +711,16 @@ async def synthesize_qiskit_circuit(prompt: str, current_code: str = "") -> Tupl
 
     # 1. Specialized Algorithm Routing (prioritize custom protocols over generic templates)
     if any(k in p_lower for k in [
-        "deutsch", "bernstein", "vazirani", "simon", "superdense", "teleport",
+        "deutsch", "bernstein", "vazirani", "simon", "superdense",
         "qaoa", "vqe", "ansatz", "adder", "repetition", "phase estimation",
         "qpe", "w-state", "w state", "cluster state", "ising"
     ]):
         code, exp, meta = await synthesize_custom_qiskit_circuit(prompt, current_code)
+
+    # 2. Quantum Teleportation Protocol Request
+    elif "teleport" in p_lower:
+        n = _extract_qubit_count(prompt, default=3)
+        code, exp, meta = generate_teleportation_circuit(num_qubits=n)
 
     # 2. GHZ State Request
     elif "ghz" in p_lower or ("greenberger" in p_lower and "zeilinger" in p_lower):
