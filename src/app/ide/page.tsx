@@ -2439,74 +2439,165 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
   };
 
-  // Helper: Synchronize placed gates to Python code with 2D coordinates (# t=...)
-  const synchronizeGatesToCode = (gates: Array<{ name: string; qubit: number; step: number; target?: number; role?: string }>) => {
-    const numQubits = Math.max(canvasQubits, ...gates.map(g => g.qubit + 1));
-    const measureGates = gates.filter(g => g.name === 'measure');
-    const allMeasured = measureGates.length >= numQubits && new Set(measureGates.map(g => g.qubit)).size === numQubits;
-    const hasManualMeasure = measureGates.length > 0;
+  // Surgical helper: Add gate directly to existing structured code
+  const surgicalAddGateToCode = (code: string, gateName: string, qubit: number, step: number, target?: number) => {
+    let qMatch = code.match(/QuantumCircuit\s*\(\s*(\d+)/);
+    let numQubits = qMatch ? parseInt(qMatch[1], 10) : 4;
+    const neededQ = Math.max(qubit + 1, target !== undefined ? target + 1 : 0);
 
-    let newCodeLines = [
-      'from qiskit import QuantumCircuit',
-      'from qiskit_aer import AerSimulator',
-      '',
-      `# ⚛️ Synthesized Interactive Circuit (${numQubits} Qubits)`,
-      hasManualMeasure && !allMeasured ? `qc = QuantumCircuit(${numQubits}, ${numQubits})` : `qc = QuantumCircuit(${numQubits})`
-    ];
-
-    const sorted = [...gates]
-      .filter(g => g.role !== 'target')
-      .sort((a, b) => a.step - b.step || a.qubit - b.qubit);
-
-    sorted.forEach(g => {
-      let code = '';
-      if (g.name === 'h') code = `qc.h(${g.qubit})`;
-      else if (g.name === 'x') code = `qc.x(${g.qubit})`;
-      else if (g.name === 'y') code = `qc.y(${g.qubit})`;
-      else if (g.name === 'z') code = `qc.z(${g.qubit})`;
-      else if (g.name === 's') code = `qc.s(${g.qubit})`;
-      else if (g.name === 't') code = `qc.t(${g.qubit})`;
-      else if (g.name === 'rx') code = `qc.rx(0.7854, ${g.qubit})`;
-      else if (g.name === 'ry') code = `qc.ry(0.7854, ${g.qubit})`;
-      else if (g.name === 'rz') code = `qc.rz(0.7854, ${g.qubit})`;
-      else if (g.name === 'cx') {
-        const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
-        code = `qc.cx(${g.qubit}, ${targetQ})`;
-      }
-      else if (g.name === 'cz') {
-        const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
-        code = `qc.cz(${g.qubit}, ${targetQ})`;
-      }
-      else if (g.name === 'swap') {
-        const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
-        code = `qc.swap(${g.qubit}, ${targetQ})`;
-      }
-      else if (g.name === 'ccx') {
-        const q1 = g.qubit;
-        const q2 = (g.qubit + 1) % numQubits;
-        const q3 = g.target !== undefined ? g.target : ((g.qubit + 2) % numQubits);
-        code = `qc.ccx(${q1}, ${q2}, ${q3})`;
-      }
-      else if (g.name === 'measure' && !allMeasured) {
-        code = `qc.measure(${g.qubit}, ${g.qubit})`;
-      }
-
-      if (code) {
-        newCodeLines.push(`${code}  # t=${g.step}`);
-      }
-    });
-
-    if (allMeasured) {
-      newCodeLines.push('qc.measure_all()');
+    if (neededQ > numQubits) {
+      code = code.replace(/QuantumCircuit\s*\(\s*\d+/, `QuantumCircuit(${neededQ}`);
+      numQubits = neededQ;
     }
 
-    newCodeLines.push('');
-    newCodeLines.push('# Execute on AerSimulator');
-    newCodeLines.push('sim = AerSimulator()');
-    newCodeLines.push(`result = sim.run(qc, shots=${shots || 1024}).result()`);
-    newCodeLines.push("print('Measurement Counts:', result.get_counts())");
+    let gateCall = '';
+    if (gateName === 'cx' || gateName === 'cz' || gateName === 'swap') {
+      const tgt = target !== undefined ? target : ((qubit + 1) % numQubits);
+      gateCall = `qc.${gateName}(${qubit}, ${tgt})`;
+    } else if (gateName === 'ccx') {
+      const q2 = (qubit + 1) % numQubits;
+      const q3 = target !== undefined ? target : ((qubit + 2) % numQubits);
+      gateCall = `qc.ccx(${qubit}, ${q2}, ${q3})`;
+    } else if (gateName === 'measure') {
+      gateCall = `qc.measure(${qubit}, ${qubit})`;
+    } else if (gateName === 'rx' || gateName === 'ry' || gateName === 'rz') {
+      gateCall = `qc.${gateName}(0.7854, ${qubit})`;
+    } else {
+      gateCall = `qc.${gateName}(${qubit})`;
+    }
 
-    const newCode = newCodeLines.join('\n');
+    const lines = code.split('\n');
+    let insertIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (l.includes('qc.measure_all') || l.includes('qc.measure(') || l.includes('sim = AerSimulator') || l.includes('# Execute on AerSimulator')) {
+        insertIdx = i;
+        break;
+      }
+    }
+    if (insertIdx === -1) {
+      insertIdx = lines.length;
+    }
+
+    const newLine = `${gateCall}  # t=${step}`;
+    lines.splice(insertIdx, 0, newLine);
+    return lines.join('\n');
+  };
+
+  // Surgical helper: Remove gate from existing structured code
+  const surgicalRemoveGateFromCode = (code: string, qubit: number, step?: number) => {
+    const lines = code.split('\n');
+    let removedIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (step !== undefined && l.includes(`# t=${step}`) && (l.includes(`(${qubit}`) || l.includes(`, ${qubit})`))) {
+        removedIdx = i;
+        break;
+      }
+    }
+    if (removedIdx === -1) {
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const l = lines[i];
+        if (l.includes(`(${qubit}`) && l.includes('qc.') && !l.includes('measure') && !l.includes('QuantumCircuit')) {
+          removedIdx = i;
+          break;
+        }
+      }
+    }
+    if (removedIdx !== -1) {
+      lines.splice(removedIdx, 1);
+    }
+    return lines.join('\n');
+  };
+
+  // Helper: Synchronize placed gates to Python code with 2D coordinates (# t=...)
+  const synchronizeGatesToCode = (
+    gates: Array<{ name: string; qubit: number; step: number; target?: number; role?: string }>,
+    surgicalEdit?: { action: 'add' | 'remove'; gateName?: string; qubit: number; step: number; target?: number }
+  ) => {
+    const currentCode = projectFiles[activeFile]?.content || '';
+    const hasCustomStructure = currentCode && currentCode.includes('QuantumCircuit') && !currentCode.startsWith('# ⚛️ Synthesized Interactive Circuit');
+
+    let newCode = '';
+
+    if (hasCustomStructure && surgicalEdit) {
+      if (surgicalEdit.action === 'add' && surgicalEdit.gateName) {
+        const cleanedCode = surgicalRemoveGateFromCode(currentCode, surgicalEdit.qubit, surgicalEdit.step);
+        newCode = surgicalAddGateToCode(cleanedCode, surgicalEdit.gateName, surgicalEdit.qubit, surgicalEdit.step, surgicalEdit.target);
+      } else if (surgicalEdit.action === 'remove') {
+        newCode = surgicalRemoveGateFromCode(currentCode, surgicalEdit.qubit, surgicalEdit.step);
+      } else {
+        newCode = currentCode;
+      }
+    } else {
+      const numQubits = Math.max(canvasQubits, ...gates.map(g => g.qubit + 1));
+      const measureGates = gates.filter(g => g.name === 'measure');
+      const allMeasured = measureGates.length >= numQubits && new Set(measureGates.map(g => g.qubit)).size === numQubits;
+      const hasManualMeasure = measureGates.length > 0;
+
+      let newCodeLines = [
+        'from qiskit import QuantumCircuit',
+        'from qiskit_aer import AerSimulator',
+        '',
+        `# ⚛️ Synthesized Interactive Circuit (${numQubits} Qubits)`,
+        hasManualMeasure && !allMeasured ? `qc = QuantumCircuit(${numQubits}, ${numQubits})` : `qc = QuantumCircuit(${numQubits})`
+      ];
+
+      const sorted = [...gates]
+        .filter(g => g.role !== 'target')
+        .sort((a, b) => a.step - b.step || a.qubit - b.qubit);
+
+      sorted.forEach(g => {
+        let code = '';
+        if (g.name === 'h') code = `qc.h(${g.qubit})`;
+        else if (g.name === 'x') code = `qc.x(${g.qubit})`;
+        else if (g.name === 'y') code = `qc.y(${g.qubit})`;
+        else if (g.name === 'z') code = `qc.z(${g.qubit})`;
+        else if (g.name === 's') code = `qc.s(${g.qubit})`;
+        else if (g.name === 't') code = `qc.t(${g.qubit})`;
+        else if (g.name === 'rx') code = `qc.rx(0.7854, ${g.qubit})`;
+        else if (g.name === 'ry') code = `qc.ry(0.7854, ${g.qubit})`;
+        else if (g.name === 'rz') code = `qc.rz(0.7854, ${g.qubit})`;
+        else if (g.name === 'cx') {
+          const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
+          code = `qc.cx(${g.qubit}, ${targetQ})`;
+        }
+        else if (g.name === 'cz') {
+          const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
+          code = `qc.cz(${g.qubit}, ${targetQ})`;
+        }
+        else if (g.name === 'swap') {
+          const targetQ = g.target !== undefined ? g.target : ((g.qubit + 1) % numQubits);
+          code = `qc.swap(${g.qubit}, ${targetQ})`;
+        }
+        else if (g.name === 'ccx') {
+          const q1 = g.qubit;
+          const q2 = (g.qubit + 1) % numQubits;
+          const q3 = g.target !== undefined ? g.target : ((g.qubit + 2) % numQubits);
+          code = `qc.ccx(${q1}, ${q2}, ${q3})`;
+        }
+        else if (g.name === 'measure' && !allMeasured) {
+          code = `qc.measure(${g.qubit}, ${g.qubit})`;
+        }
+
+        if (code) {
+          newCodeLines.push(`${code}  # t=${g.step}`);
+        }
+      });
+
+      if (allMeasured) {
+        newCodeLines.push('qc.measure_all()');
+      }
+
+      newCodeLines.push('');
+      newCodeLines.push('# Execute on AerSimulator');
+      newCodeLines.push('sim = AerSimulator()');
+      newCodeLines.push(`result = sim.run(qc, shots=${shots || 1024}).result()`);
+      newCodeLines.push("print('Measurement Counts:', result.get_counts())");
+
+      newCode = newCodeLines.join('\n');
+    }
+
     setProjectFiles(prev => ({
       ...prev,
       [activeFile]: { ...prev[activeFile], content: newCode }
@@ -2519,14 +2610,20 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       }
     }));
     saveProjectToDatabase(projectName, { files: { [activeFile]: { name: activeFile, content: newCode, language: 'python' } } }, activeFile, runtimeMetrics, true);
+
+    const finalDeclaredQubits = parseQiskitQubitCount(newCode);
+    if (finalDeclaredQubits > canvasQubits) {
+      setCanvasQubits(finalDeclaredQubits);
+    }
   };
 
   // Direct In-Place Slot Placement
   const handlePlaceGateOnSlot = (gateName: string, qubit: number, step: number) => {
     let updatedGates = [...circuitGates];
+    let targetQ: number | undefined = undefined;
 
     if (gateName === 'cx' || gateName === 'cz' || gateName === 'swap') {
-      const targetQ = (qubit + 1) % canvasQubits;
+      targetQ = (qubit + 1) % canvasQubits;
       // remove any previous gate on both slots at this step
       updatedGates = updatedGates.filter(g => !(g.step === step && (g.qubit === qubit || g.qubit === targetQ)));
       updatedGates.push({ name: gateName, qubit, step, target: targetQ, role: 'control' });
@@ -2548,7 +2645,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     setCircuitGates(updatedGates);
     setSelectedGateTool(gateName);
     setActiveSlotPopover(null);
-    synchronizeGatesToCode(updatedGates);
+    synchronizeGatesToCode(updatedGates, { action: 'add', gateName, qubit, step, target: targetQ });
   };
 
   // Direct In-Place Slot Removal
@@ -2560,15 +2657,18 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
     setCircuitGates(updatedGates);
     setActiveSlotPopover(null);
-    synchronizeGatesToCode(updatedGates);
+    synchronizeGatesToCode(updatedGates, { action: 'remove', qubit, step });
   };
 
   // Interactive Circuit Canvas Gate Placement & Bi-directional Code Synthesis
   const handleToggleGateSlot = (qubit: number, step: number) => {
     const existingIndex = circuitGates.findIndex(g => g.qubit === qubit && g.step === step);
     let updatedGates = [...circuitGates];
+    let isRemoval = false;
+    let targetQ: number | undefined = undefined;
 
     if (existingIndex >= 0) {
+      isRemoval = true;
       const prev = updatedGates[existingIndex];
       updatedGates.splice(existingIndex, 1);
       if (prev.target !== undefined) {
@@ -2576,7 +2676,7 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
       }
     } else {
       if (selectedGateTool === 'cx' || selectedGateTool === 'cz' || selectedGateTool === 'swap') {
-        const targetQ = (qubit + 1) % canvasQubits;
+        targetQ = (qubit + 1) % canvasQubits;
         updatedGates = updatedGates.filter(g => !(g.step === step && (g.qubit === qubit || g.qubit === targetQ)));
         updatedGates.push({ name: selectedGateTool, qubit, step, target: targetQ, role: 'control' });
         updatedGates.push({ name: selectedGateTool, qubit: targetQ, step, target: qubit, role: 'target' });
@@ -2591,7 +2691,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
     }
 
     setCircuitGates(updatedGates);
-    synchronizeGatesToCode(updatedGates);
+    if (isRemoval) {
+      synchronizeGatesToCode(updatedGates, { action: 'remove', qubit, step });
+    } else {
+      synchronizeGatesToCode(updatedGates, { action: 'add', gateName: selectedGateTool, qubit, step, target: targetQ });
+    }
   };
 
   const handleManualSync = async () => {
