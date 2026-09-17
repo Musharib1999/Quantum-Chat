@@ -25,7 +25,7 @@ GROQ_FAST_MODEL      = os.environ.get("GROQ_FAST_MODEL", "qwen/qwen3.6-27b")
 # ── Qwen 3 32B (RunPod vllm, port 8000) ───────────────────────────────────────
 QWEN_BASE_URL  = os.environ.get("QWEN_BASE_URL", "")   # e.g. https://<pod>-8000.proxy.runpod.net/v1
 QWEN_API_KEY   = os.environ.get("QWEN_API_KEY", "none")
-QWEN_MODEL     = os.environ.get("QWEN_MODEL", "Qwen/Qwen2.5-Coder-32B-Instruct-FP8")
+QWEN_MODEL     = os.environ.get("QWEN_MODEL", "Qwen/Qwen2.5-Coder-32B-Instruct-AWQ")
 
 # ── Llama 3 8B + LoRA adapters (RunPod vllm, port 8001) ───────────────────────
 LLAMA_BASE_URL = os.environ.get("LLAMA_BASE_URL", "")  # e.g. https://<pod>-8001.proxy.runpod.net/v1

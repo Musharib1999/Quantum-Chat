@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Quantum Guru — RunPod Single 48GB GPU Setup & Launch Script (A40 / CUDA 12.8)
-# Model: Qwen/Qwen2.5-Coder-32B-Instruct-FP8
+# Model: Qwen/Qwen2.5-Coder-32B-Instruct-AWQ
 # ==============================================================================
 
 set -e
@@ -26,13 +26,13 @@ if ! command -v cloudflared &> /dev/null; then
 fi
 
 echo "=== [4/5] Starting vLLM OpenAI API Server on Port 8000 ==="
-echo "Model: Qwen/Qwen2.5-Coder-32B-Instruct-FP8"
+echo "Model: Qwen/Qwen2.5-Coder-32B-Instruct-AWQ"
 echo "VRAM Allocation: 90% (~43.2 GB total; ~19.5 GB weights + ~23.7 GB KV Cache)"
 echo "Max Context: 8192 tokens"
 
 # Launch vLLM in background and log to /workspace/vllm.log
 nohup python3 -m vllm.entrypoints.openai.api_server \
-    --model Qwen/Qwen2.5-Coder-32B-Instruct-FP8 \
+    --model Qwen/Qwen2.5-Coder-32B-Instruct-AWQ \
     --port 8000 \
     --host 0.0.0.0 \
     --max-model-len 8192 \
@@ -63,5 +63,5 @@ echo ""
 echo "Configure this in your Railway Environment Variables or local .env:"
 echo "  INFERENCE_PROVIDER=runpod"
 echo "  QWEN_BASE_URL=${TUNNEL_URL}/v1"
-echo "  QWEN_MODEL=Qwen/Qwen2.5-Coder-32B-Instruct-FP8"
+echo "  QWEN_MODEL=Qwen/Qwen2.5-Coder-32B-Instruct-AWQ"
 echo "=============================================================================="
