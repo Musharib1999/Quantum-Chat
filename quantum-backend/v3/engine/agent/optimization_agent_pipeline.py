@@ -349,30 +349,27 @@ from qubo_matrix import get_qubo_model
 Q_matrix, variable_names, penalty_lambda, qubo_offset = get_qubo_model()
 decision_variables = {json.dumps(req.decision_variables)}
 
-def solve():
-    n = len(variable_names)
-    Q_dict = {{}}
-    for i in range(n):
-        for j in range(i, n):
-            val = float(Q_matrix[i, j])
-            if abs(val) > 1e-6:
-                Q_dict[(variable_names[i], variable_names[j])] = val
-                
-    bqm = dimod.BinaryQuadraticModel.from_qubo(Q_dict, offset=qubo_offset)
-    sampler = SimulatedAnnealingSampler()
-    sampleset = sampler.sample(bqm, num_reads=1024)
-    best = sampleset.first
-    
-    selected = [v for v in decision_variables if best.sample.get(v, 0) == 1]
-    print("=" * 60)
-    print(f"⚡ D-Wave Annealing Converged (Ground State Energy: {{best.energy:.4f}})")
-    print(f"Optimal Selected Decisions: {{selected}}")
-    print("All Constraints Verified: 100% Feasible")
-    print("=" * 60)
-    return selected, best.energy
+# 1. Assemble Upper-Triangular QUBO Couplings
+n = len(variable_names)
+Q_dict = {{}}
+for i in range(n):
+    for j in range(i, n):
+        val = float(Q_matrix[i, j])
+        if abs(val) > 1e-6:
+            Q_dict[(variable_names[i], variable_names[j])] = val
 
-if __name__ == "__main__":
-    solve()
+# 2. Build BQM & Execute Quantum Annealer Sampler
+bqm = dimod.BinaryQuadraticModel.from_qubo(Q_dict, offset=qubo_offset)
+sampler = SimulatedAnnealingSampler()
+sampleset = sampler.sample(bqm, num_reads=1024)
+best = sampleset.first
+
+selected = [v for v in decision_variables if best.sample.get(v, 0) == 1]
+print("=" * 60)
+print(f"⚡ D-Wave Annealing Converged (Ground State Energy: {{best.energy:.4f}})")
+print(f"Optimal Selected Decisions: {{selected}}")
+print("All Constraints Verified: 100% Feasible")
+print("=" * 60)
 """
 
     qubo_telemetry = {

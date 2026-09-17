@@ -501,10 +501,30 @@ if HAS_DWAVE:
     # Check for raw QUBO dict if no model
     if target_model is None and target_sampleset is None:
         for key, val in exec_globals.items():
-            if isinstance(val, dict) and key in ("Q", "qubo", "QUBO", "bqm_dict"):
+            if isinstance(val, dict) and key in ("Q", "qubo", "QUBO", "bqm_dict", "Q_dict"):
                 if all(isinstance(k, tuple) and len(k) == 2 for k in val.keys()):
                     target_model = val
                     break
+
+    # Check for Q_matrix (numpy 2D array) and variable_names from qubo_matrix.py
+    if target_model is None and target_sampleset is None:
+        if "Q_matrix" in exec_globals and "variable_names" in exec_globals:
+            q_mat = exec_globals["Q_matrix"]
+            v_names = exec_globals["variable_names"]
+            offset_val = float(exec_globals.get("qubo_offset", 0.0))
+            try:
+                if hasattr(q_mat, "shape") and len(q_mat.shape) == 2:
+                    q_d = {}
+                    n_vars = len(v_names)
+                    for i in range(n_vars):
+                        for j in range(i, n_vars):
+                            val_ij = float(q_mat[i, j])
+                            if abs(val_ij) > 1e-6:
+                                q_d[(v_names[i], v_names[j])] = val_ij
+                    if q_d:
+                        target_model = dimod.BinaryQuadraticModel.from_qubo(q_d, offset=offset_val)
+            except Exception:
+                pass
 
     if target_sampleset is not None or target_model is not None:
         backend_used = "dwave_simulated_annealing"

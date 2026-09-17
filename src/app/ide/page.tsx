@@ -2473,6 +2473,8 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
 
           if (data.optimization_results) {
             setOptimizationResults(data.optimization_results);
+            setActiveBottomTab('results');
+            setIsBottomOpen(true);
           }
           if (data.measurement_counts) {
             setSimulationCounts(data.measurement_counts);
@@ -4571,7 +4573,11 @@ print("Ingesting dataset & computing Quantum Kernel Fidelity Matrix...")
                                 </button>
                               )}
                               <button
-                                onClick={() => handleSendMessage('/execute@program')}
+                                onClick={() => {
+                                  setActiveBottomTab('results');
+                                  setIsBottomOpen(true);
+                                  handleSendMessage('/execute@program');
+                                }}
                                 style={{ 
                                   backgroundColor: isDark ? 'rgba(222, 170, 33, 0.15)' : 'rgba(222, 170, 33, 0.2)',
                                   borderColor: 'rgba(222, 170, 33, 0.4)',
