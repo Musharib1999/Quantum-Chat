@@ -482,6 +482,24 @@ class QuantumAgent:
             elif any(k in u_low for k in ["grover", "search"]):
                 archetype_label = "Grover Oracular Search"
                 speedup_label = "Quadratic Speedup O(sqrt(N))"
+            elif any(k in u_low for k in ["bernstein", "vazirani"]):
+                archetype_label = "Bernstein-Vazirani Algorithm"
+                speedup_label = "Deterministic Speedup O(1) vs O(N)"
+            elif any(k in u_low for k in ["deutsch", "jozsa"]):
+                archetype_label = "Deutsch-Jozsa Algorithm"
+                speedup_label = "Deterministic Speedup 1 query vs 2^(N-1)+1"
+            elif any(k in u_low for k in ["superdense"]):
+                archetype_label = "Superdense Coding Protocol"
+                speedup_label = "Channel Capacity Doubling (2x)"
+            elif any(k in u_low for k in ["w-state", "w state"]):
+                archetype_label = "Multipartite W-State Entanglement"
+                speedup_label = "Robust Multi-Wire Coherence"
+            elif any(k in u_low for k in ["half adder", "adder"]):
+                archetype_label = "Quantum Reversible Arithmetic"
+                speedup_label = "Unitary Binary Addition"
+            elif any(k in u_low for k in ["qpe", "phase estimation"]):
+                archetype_label = "Quantum Phase Estimation (QPE)"
+                speedup_label = "Exponential Eigenphase Estimation"
             else:
                 archetype_label = res_algo.get('recommended_algorithm', 'Quantum Circuit')
                 speedup_label = res_algo.get('theoretical_speedup', 'Quadratic Speedup')

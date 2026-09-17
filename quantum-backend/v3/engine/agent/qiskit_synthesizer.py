@@ -29,8 +29,10 @@ QUANTUM_DOMAINS = [
     "bell", "bell state", "bell pair", "epr", "teleport", "teleportation",
     "qft", "fourier", "qrng", "random number", "superposition",
     "entangle", "entangled", "entanglement", "deutsch", "bernstein",
-    "vazirani", "ansatz", "qaoa", "cnot", "hadamard", "pauli", "toffoli",
-    "phase oracle", "statevector", "measure", "measurement", "measurements"
+    "vazirani", "ansatz", "qaoa", "vqe", "cnot", "hadamard", "pauli", "toffoli",
+    "phase oracle", "statevector", "measure", "measurement", "measurements",
+    "quantum", "superdense", "w-state", "w state", "adder", "half adder", "full adder",
+    "qpe", "phase estimation", "simon", "barrier"
 ]
 
 BUILD_VERBS = [
@@ -84,7 +86,11 @@ def is_circuit_synthesis_request(message: str) -> bool:
 
     # 3. Must involve a recognized quantum computing concept, named algorithm, or file reference
     has_quantum = any(k in msg_l for k in QUANTUM_DOMAINS)
-    is_named = any(k in msg_l for k in ["ghz", "grover", "bell", "epr", "qft", "qrng", "teleport", "entangle", "entanglement"])
+    is_named = any(k in msg_l for k in [
+        "ghz", "grover", "bell", "epr", "qft", "qrng", "teleport", "entangle", "entanglement",
+        "bernstein", "vazirani", "deutsch", "jozsa", "superdense", "w-state", "w state",
+        "adder", "half adder", "qpe", "phase estimation", "simon", "vqe", "qaoa", "barrier"
+    ])
     has_file = any(k in msg_l for k in FILE_TARGETS)
 
     if not has_quantum and not is_named and not has_file:
@@ -499,6 +505,514 @@ qc.measure_all()
     return code, explanation, metadata
 
 
+
+
+# ── ADDITIONAL DETERMINISTIC ALGORITHMIC GENERATORS ──
+
+def generate_bernstein_vazirani_circuit(hidden_string: str = "", num_qubits: int = 4) -> Tuple[str, str, Dict[str, Any]]:
+    """Synthesize Bernstein-Vazirani Algorithm circuit for finding hidden bitstring s in O(1) queries."""
+    if hidden_string and re.match(r'^[01]+$', hidden_string):
+        s = hidden_string
+        n_query = len(s)
+        total_qubits = max(2, min(n_query + 1, 28))
+    else:
+        total_qubits = max(2, min(num_qubits, 28))
+        n_query = total_qubits - 1
+        pattern = "10" * (n_query // 2 + 1)
+        s = pattern[:n_query] if n_query > 0 else "1"
+
+    ancilla = total_qubits - 1
+    code_lines = [
+        "from qiskit import QuantumCircuit",
+        "from qiskit_aer import AerSimulator",
+        "",
+        f"# Bernstein-Vazirani Algorithm ({total_qubits} Qubits, Hidden Bitstring s = '{s}')",
+        f"# Solves hidden bitstring f(x) = s . x mod 2 in 1 quantum query vs {n_query} classical queries",
+        f"qc = QuantumCircuit({total_qubits})",
+        "",
+        f"# 1. Prepare Ancilla qubit (q{ancilla}) in state |->",
+        f"qc.x({ancilla})",
+        f"qc.h({ancilla})",
+        "",
+        f"# 2. Initialize {n_query} query qubits in uniform superposition",
+    ]
+    for q in range(n_query):
+        code_lines.append(f"qc.h({q})")
+
+    code_lines.extend([
+        "",
+        f"# 3. Quantum Oracle encoding inner product s . x (s = '{s}')",
+    ])
+    for idx, bit in enumerate(reversed(s)):
+        if bit == '1' and idx < n_query:
+            code_lines.append(f"qc.cx({idx}, {ancilla})")
+
+    code_lines.extend([
+        "",
+        "# 4. Interference layer on query register",
+    ])
+    for q in range(n_query):
+        code_lines.append(f"qc.h({q})")
+
+    code_lines.extend([
+        "",
+        "# 5. Measure all qubits",
+        "qc.measure_all()",
+        "",
+        CANONICAL_AER_BLOCK
+    ])
+    code = "\n".join(code_lines)
+
+    explanation = (
+        f"### Bernstein-Vazirani Algorithm ({total_qubits} Qubits, Hidden String $s = \\text{{{s}}}$)\n\n"
+        f"Synthesized the deterministic **Bernstein-Vazirani Algorithm** solving the hidden bitstring problem in a single query.\n\n"
+        f"**Mathematical Formulation:**\n"
+        f"* **Oracle Function:** $f(x) = s \\cdot x \\pmod 2$, where $s = {s}$.\n"
+        f"* **Quantum Speedup:** Requires strictly **1 evaluation** on a quantum processor compared to $\\mathcal{{O}}(n) = {n_query}$ queries classically.\n"
+        f"* **Phase Kickback:** Ancilla wire $q_{{{ancilla}}}$ is prepared in $\\lvert - \\rangle = \\frac{{\\lvert 0 \\rangle - \\lvert 1 \\rangle}}{{\\sqrt{{2}}}}$. Applying CNOT gates conditioned on $s_i = 1$ kicks the relative phase $(-1)^{{s_i}}$ back into the query register.\n"
+        f"* **Measurement:** Measuring the query qubits yields the exact bitstring `{s}` with **100% theoretical probability**."
+    )
+
+    metadata = {
+        "circuit_name": f"Bernstein-Vazirani (s='{s}')",
+        "num_qubits": total_qubits,
+        "depth": 6,
+        "gates": n_query * 2 + 2 + s.count('1'),
+        "summary": f"Synthesized {total_qubits}-qubit Bernstein-Vazirani circuit for hidden bitstring '{s}'"
+    }
+    return code, explanation, metadata
+
+
+def generate_deutsch_jozsa_circuit(num_qubits: int = 3, oracle_type: str = "balanced") -> Tuple[str, str, Dict[str, Any]]:
+    """Synthesize Deutsch-Jozsa Algorithm circuit determining constant vs balanced functions in 1 query."""
+    total_qubits = max(2, min(num_qubits, 28))
+    n_query = total_qubits - 1
+    ancilla = total_qubits - 1
+    oracle = "constant" if "constant" in oracle_type.lower() else "balanced"
+
+    code_lines = [
+        "from qiskit import QuantumCircuit",
+        "from qiskit_aer import AerSimulator",
+        "",
+        f"# Deutsch-Jozsa Algorithm ({total_qubits} Qubits, Oracle: {oracle.upper()})",
+        f"# Determines whether f(x) is constant or balanced in a single evaluation",
+        f"qc = QuantumCircuit({total_qubits})",
+        "",
+        f"# 1. Initialize Ancilla qubit (q{ancilla}) into |->",
+        f"qc.x({ancilla})",
+        f"qc.h({ancilla})",
+        "",
+        f"# 2. Create uniform superposition across {n_query} query inputs",
+    ]
+    for q in range(n_query):
+        code_lines.append(f"qc.h({q})")
+
+    code_lines.extend([
+        "",
+        f"# 3. Quantum Oracle: {oracle.capitalize()}",
+    ])
+    if oracle == "balanced":
+        for q in range(n_query):
+            code_lines.append(f"qc.cx({q}, {ancilla})")
+    else:
+        code_lines.append(f"# Constant oracle: f(x) = 0 (no-op identity transformation)")
+        code_lines.append(f"qc.barrier()")
+
+    code_lines.extend([
+        "",
+        "# 4. Apply final Hadamard transform to query inputs",
+    ])
+    for q in range(n_query):
+        code_lines.append(f"qc.h({q})")
+
+    code_lines.extend([
+        "",
+        "# 5. Measure all qubits",
+        "qc.measure_all()",
+        "",
+        CANONICAL_AER_BLOCK
+    ])
+    code = "\n".join(code_lines)
+
+    expected_outcome = "0" * n_query if oracle == "constant" else "non-zero (contains '1')"
+    explanation = (
+        f"### Deutsch-Jozsa Algorithm ({total_qubits} Qubits, {oracle.capitalize()} Oracle)\n\n"
+        f"Synthesized the canonical **Deutsch-Jozsa Algorithm** evaluating whether a black-box boolean function is constant or balanced.\n\n"
+        f"* **Exponential Quantum Advantage:** Solves with **1 query**, whereas a deterministic classical algorithm requires $2^{{n-1}} + 1 = {2**(n_query - 1) + 1}$ queries in the worst case.\n"
+        f"* **Interference Outcome:**\n"
+        f"  - **Constant function:** Constructive interference yields $\\lvert 0\\rangle^{{\\otimes {n_query}}}$.\n"
+        f"  - **Balanced function:** Orthogonal interference yields zero amplitude at $\\lvert 0^{{\\otimes {n_query}}} \\rangle$ (expected outcome: {expected_outcome})."
+    )
+
+    metadata = {
+        "circuit_name": f"Deutsch-Jozsa ({oracle.capitalize()})",
+        "num_qubits": total_qubits,
+        "depth": 5,
+        "gates": n_query * 2 + 2 + (n_query if oracle == "balanced" else 0),
+        "summary": f"Synthesized {total_qubits}-qubit Deutsch-Jozsa circuit with {oracle} oracle"
+    }
+    return code, explanation, metadata
+
+
+def generate_superdense_coding_circuit(message: str = "11") -> Tuple[str, str, Dict[str, Any]]:
+    """Synthesize Superdense Coding protocol transmitting 2 classical bits via 1 entangled qubit."""
+    clean_msg = "".join(c for c in message if c in "01")
+    if len(clean_msg) < 2:
+        clean_msg = "11"
+    else:
+        clean_msg = clean_msg[:2]
+
+    code_lines = [
+        "from qiskit import QuantumCircuit",
+        "from qiskit_aer import AerSimulator",
+        "",
+        f"# Superdense Coding Protocol (Message = '{clean_msg}')",
+        "# Transmits two classical bits from Alice to Bob using 1 transmitted qubit + 1 shared EPR pair",
+        "qc = QuantumCircuit(2)",
+        "",
+        "# Step 1: Prepare shared EPR Bell pair between Alice (q0) and Bob (q1)",
+        "qc.h(0)",
+        "qc.cx(0, 1)",
+        "qc.barrier()",
+        "",
+        f"# Step 2: Alice encodes classical bitstring '{clean_msg}' on her qubit (q0)",
+    ]
+    if clean_msg == "00":
+        code_lines.append("# Message '00': Identity I (no gate needed)")
+        code_lines.append("qc.barrier()")
+    elif clean_msg == "01":
+        code_lines.append("qc.x(0)  # Message '01': Bit-flip X")
+    elif clean_msg == "10":
+        code_lines.append("qc.z(0)  # Message '10': Phase-flip Z")
+    elif clean_msg == "11":
+        code_lines.append("qc.x(0)")
+        code_lines.append("qc.z(0)  # Message '11': Both X and Z")
+
+    code_lines.extend([
+        "qc.barrier()",
+        "",
+        "# Step 3: Bob receives q0 and performs Bell-basis decoding",
+        "qc.cx(0, 1)",
+        "qc.h(0)",
+        "qc.barrier()",
+        "",
+        "# Step 4: Measure both qubits (measurement directly yields Alice's 2 classical bits)",
+        "qc.measure_all()",
+        "",
+        CANONICAL_AER_BLOCK
+    ])
+    code = "\n".join(code_lines)
+
+    explanation = (
+        f"### Superdense Coding Protocol (Message: `{clean_msg}`)\n\n"
+        f"Synthesized the **Superdense Coding Protocol** demonstrating quantum channel capacity doubling.\n\n"
+        f"1. **Entanglement Sharing:** Alice and Bob initially share the Bell state $\\lvert \\Phi^+ \\rangle = \\frac{{\\lvert 00 \\rangle + \\lvert 11 \\rangle}}{{\\sqrt{{2}}}}$.\n"
+        f"2. **Alice's Local Encoding:** Applying Pauli operations $(\\mathbb{{I}}, X, Z, XZ)$ on $q_0$ shifts the joint state to the corresponding orthogonal Bell basis vector.\n"
+        f"3. **Bob's Bell Measurement:** Reversing the Bell circuit ($CX_{{01}} + H_0$) rotates the state back into the computational basis, reading out `{clean_msg}` with **100% fidelity**."
+    )
+
+    metadata = {
+        "circuit_name": f"Superdense Coding ('{clean_msg}')",
+        "num_qubits": 2,
+        "depth": 5,
+        "gates": 6,
+        "summary": f"Synthesized 2-qubit Superdense Coding protocol transmitting '{clean_msg}'"
+    }
+    return code, explanation, metadata
+
+
+def generate_w_state_circuit(num_qubits: int = 3) -> Tuple[str, str, Dict[str, Any]]:
+    """Synthesize genuine N-qubit W-state |W_n> = (|10...0> + |01...0> + ... + |00...1>) / sqrt(n)."""
+    n = max(2, min(num_qubits, 28))
+
+    code_lines = [
+        "import math",
+        "from qiskit import QuantumCircuit",
+        "from qiskit_aer import AerSimulator",
+        "",
+        f"# {n}-Qubit Entangled W-State",
+        f"# |W_{n}> = (|10...0> + |01...0> + ... + |00...1>) / sqrt({n})",
+        f"qc = QuantumCircuit({n})",
+        "",
+        "# Step 1: Excite first wire",
+        "qc.x(0)",
+        "",
+        "# Step 2: Cascade controlled-RY rotations dividing amplitude equally",
+    ]
+    for i in range(n - 1):
+        rem = n - i
+        code_lines.append(f"theta_{i} = 2 * math.acos(math.sqrt(1.0 / {rem}))")
+        code_lines.append(f"qc.cry(theta_{i}, {i}, {i + 1})")
+        code_lines.append(f"qc.cx({i + 1}, {i})")
+
+    code_lines.extend([
+        "",
+        "# Step 3: Measurement",
+        "qc.measure_all()",
+        "",
+        CANONICAL_AER_BLOCK
+    ])
+    code = "\n".join(code_lines)
+
+    explanation = (
+        f"### {n}-Qubit Entangled W-State ($\\lvert W_{{{n}}} \\rangle$)\n\n"
+        f"Synthesized the multipartite **{n}-Qubit W-State**, which exhibits robust entanglement resilient against single-qubit particle loss.\n\n"
+        f"$$\\lvert W_{{{n}}} \\rangle = \\frac{{1}}{{\\sqrt{{{n}}}}} \\left( \\lvert 10\\dots0 \\rangle + \\lvert 01\\dots0 \\rangle + \\dots + \\lvert 00\\dots1 \\rangle \\right)$$\n\n"
+        f"* **Entanglement Mechanism:** Sequential controlled-$R_y$ rotations ($CRY$) with angles $\\theta_i = 2 \\arccos\\sqrt{{1/(n-i)}}$ evenly distribute a single excitation across all {n} wires.\n"
+        f"* **AerSimulator Verification:** Measurement results are strictly partitioned with equal ~${(100.0/n):.1f}\\%$ probability across Hamming-weight-1 basis states."
+    )
+
+    metadata = {
+        "circuit_name": f"{n}-Qubit W-State",
+        "num_qubits": n,
+        "depth": 2 * n + 1,
+        "gates": 2 * n,
+        "summary": f"Synthesized {n}-qubit multipartite W-state with uniform Hamming-weight-1 superposition"
+    }
+    return code, explanation, metadata
+
+
+def generate_half_adder_circuit() -> Tuple[str, str, Dict[str, Any]]:
+    """Synthesize 3-qubit Quantum Half Adder circuit using Toffoli and CNOT gates."""
+    code = f"""from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+# Quantum Half Adder (Inputs: A=1, B=1)
+# Output: Sum = A XOR B (Q1), Carry = A AND B (Q2)
+# Expected result: Sum=0, Carry=1 (Binary: '101' across Q2, Q1, Q0)
+qc = QuantumCircuit(3)
+
+# 1. State Preparation: Set inputs A=1 (q0) and B=1 (q1), Carry=0 (q2)
+qc.x(0)
+qc.x(1)
+qc.barrier()
+
+# 2. Toffoli (CCX) computes Carry = A AND B onto q2
+qc.ccx(0, 1, 2)
+
+# 3. CNOT (CX) computes Sum = A XOR B onto q1
+qc.cx(0, 1)
+qc.barrier()
+
+# 4. Measure all registers
+qc.measure_all()
+
+{CANONICAL_AER_BLOCK}"""
+
+    explanation = (
+        "### Quantum Half Adder Circuit (3 Qubits)\n\n"
+        "Synthesized a reversible **Quantum Half Adder** performing binary addition ($1 + 1 = 2_{10} = 10_2$).\n\n"
+        "* **Carry Calculation ($CCX$ / Toffoli):** Controlled by input wires $q_0 (A)$ and $q_1 (B)$, setting $q_2 = A \\land B$.\n"
+        "* **Sum Calculation ($CX$):** Flips $q_1$ if $q_0 = 1$, yielding $Sum = A \\oplus B$.\n"
+        "* **Verification:** With inputs initialized to $A=1, B=1$, execution yields $Sum = 0, Carry = 1$ with 100% deterministic fidelity."
+    )
+
+    metadata = {
+        "circuit_name": "Quantum Half Adder",
+        "num_qubits": 3,
+        "depth": 4,
+        "gates": 4,
+        "summary": "Synthesized 3-qubit Quantum Half Adder with Toffoli carry and CNOT sum"
+    }
+    return code, explanation, metadata
+
+
+def generate_qpe_circuit(num_counting_qubits: int = 3, phase: float = 0.25) -> Tuple[str, str, Dict[str, Any]]:
+    """Synthesize Quantum Phase Estimation (QPE) circuit for unitary operator with phase theta."""
+    t = max(2, min(num_counting_qubits, 16))
+    total_qubits = t + 1
+    eigenstate_q = t
+
+    code_lines = [
+        "import math",
+        "from qiskit import QuantumCircuit",
+        "from qiskit_aer import AerSimulator",
+        "",
+        f"# Quantum Phase Estimation (QPE) ({total_qubits} Qubits: {t} counting, 1 target)",
+        f"# Estimates eigenvalue phase phi = {phase} for unitary operator U |psi> = exp(2*pi*i*phi) |psi>",
+        f"qc = QuantumCircuit({total_qubits})",
+        "",
+        f"# 1. Initialize eigenstate |1> on target qubit (q{eigenstate_q})",
+        f"qc.x({eigenstate_q})",
+        "qc.barrier()",
+        "",
+        f"# 2. Initialize {t} counting qubits in uniform superposition",
+    ]
+    for i in range(t):
+        code_lines.append(f"qc.h({i})")
+
+    code_lines.extend([
+        "qc.barrier()",
+        "",
+        f"# 3. Controlled-U^(2^k) phase rotations (phase = {phase})",
+    ])
+    for k in range(t):
+        code_lines.append(f"qc.cp(2 * math.pi * {phase} * {2**k}, {k}, {eigenstate_q})")
+
+    code_lines.extend([
+        "qc.barrier()",
+        "",
+        f"# 4. Inverse Quantum Fourier Transform (IQFT) on {t} counting qubits",
+    ])
+    for i in range(t // 2):
+        code_lines.append(f"qc.swap({i}, {t - 1 - i})")
+    for i in range(t):
+        for j in range(i):
+            code_lines.append(f"qc.cp(-math.pi / {2**(i - j)}, {j}, {i})")
+        code_lines.append(f"qc.h({i})")
+
+    code_lines.extend([
+        "qc.barrier()",
+        "",
+        "# 5. Measure all registers",
+        "qc.measure_all()",
+        "",
+        CANONICAL_AER_BLOCK
+    ])
+    code = "\n".join(code_lines)
+
+    explanation = (
+        f"### Quantum Phase Estimation (QPE) ({total_qubits} Qubits, $\\phi = {phase}$)\n\n"
+        f"Synthesized the authoritative **Quantum Phase Estimation (QPE)** circuit retrieving eigenphase $\\phi$ of a unitary operator $U$.\n\n"
+        f"* **Register Allocation:** {t} precision counting qubits ($q_0 \\dots q_{{{t-1}}}$) and 1 target eigenstate wire ($q_{{{eigenstate_q}}}$).\n"
+        f"* **Phase Kickback:** Successive controlled-$U^{{2^k}}$ operations encode binary fractions of $\\phi$ into the relative phases of the counting register.\n"
+        f"* **Inverse QFT:** Resolves phase-encoded Fourier basis states back into the computational basis, reading out the binary representation of ${phase}$."
+    )
+
+    metadata = {
+        "circuit_name": f"Quantum Phase Estimation ({t} Counting Qubits)",
+        "num_qubits": total_qubits,
+        "depth": t * 2 + 5,
+        "gates": t * 3 + 3,
+        "summary": f"Synthesized {total_qubits}-qubit QPE circuit with {t} counting qubits for phase {phase}"
+    }
+    return code, explanation, metadata
+
+
+# ── DETERMINISTIC INCREMENTAL GATE MUTATOR ──
+
+def try_incremental_gate_mutation(prompt: str, current_code: str) -> Optional[Tuple[str, str, Dict[str, Any]]]:
+    """
+    Surgically inspects natural language prompt for atomic gate modification instructions
+    (e.g., 'add H gate at 4th qubit', 'apply X gate on qubit 2', 'insert CX between 0 and 1').
+    If matched and valid against the active circuit topology, performs deterministic in-place
+    insertion before measurement, preserving 100% of existing qubits, wires, and prior gates.
+    """
+    if not current_code or "QuantumCircuit" not in current_code:
+        return None
+
+    p_lower = prompt.lower().strip()
+
+    # Must contain an insertion / addition / gate application verb or pattern
+    has_mutation_intent = any(k in p_lower for k in [
+        "add", "apply", "insert", "put", "append", "attach", "wire", "inject", "include", "gate"
+    ])
+    if not has_mutation_intent:
+        return None
+
+    # Do not intercept full algorithmic recreation requests
+    if any(k in p_lower for k in ["create new", "start over", "reset circuit", "recreate", "rewrite from scratch"]):
+        return None
+
+    # Extract declared qubit count from existing code
+    q_match = re.search(r'QuantumCircuit\s*\(\s*(\d+)', current_code)
+    if not q_match:
+        return None
+    num_qubits = int(q_match.group(1))
+
+    # Identify target gate
+    gate = None
+    if re.search(r'\b(h|hadamard)\b', p_lower): gate = 'h'
+    elif re.search(r'\b(x|pauli[- ]?x|not)\b', p_lower): gate = 'x'
+    elif re.search(r'\b(y|pauli[- ]?y)\b', p_lower): gate = 'y'
+    elif re.search(r'\b(z|pauli[- ]?z)\b', p_lower): gate = 'z'
+    elif re.search(r'\b(s|phase)\b', p_lower): gate = 's'
+    elif re.search(r'\b(t)\b', p_lower): gate = 't'
+    elif re.search(r'\b(cx|cnot|controlled[- ]?not)\b', p_lower): gate = 'cx'
+    elif re.search(r'\b(cz|controlled[- ]?z)\b', p_lower): gate = 'cz'
+    elif re.search(r'\b(swap)\b', p_lower): gate = 'swap'
+    elif re.search(r'\b(barrier)\b', p_lower): gate = 'barrier'
+
+    if not gate:
+        return None
+
+    if gate == 'barrier':
+        gate_call = "barrier()"
+        target_desc = "all wires"
+    elif gate in ['cx', 'cz', 'swap']:
+        nums = [int(x) for x in re.findall(r'\b\d+\b', p_lower)]
+        if len(nums) >= 2 and nums[0] < num_qubits and nums[1] < num_qubits:
+            gate_call = f"{gate}({nums[0]}, {nums[1]})"
+            target_desc = f"qubits {nums[0]} -> {nums[1]}"
+        else:
+            return None
+    else:
+        # Check ordinal (e.g. 4th qubit -> index 3) vs cardinal (e.g. qubit 4 -> index 4)
+        ord_m = re.search(r'(\d+)(?:st|nd|rd|th)\s*(?:qubit|wire|q)?', p_lower)
+        card_m = re.search(r'(?:qubit|wire|q|at)\s*(\d+)', p_lower)
+        if ord_m:
+            val = int(ord_m.group(1))
+            target_q = val - 1 if 0 <= val - 1 < num_qubits else val
+        elif card_m:
+            val = int(card_m.group(1))
+            target_q = val if 0 <= val < num_qubits else (val - 1 if 0 <= val - 1 < num_qubits else 0)
+        else:
+            nums = [int(x) for x in re.findall(r'\b\d+\b', p_lower)]
+            target_q = nums[0] if nums and 0 <= nums[0] < num_qubits else None
+
+        if target_q is None or target_q >= num_qubits or target_q < 0:
+            return None
+        gate_call = f"{gate}({target_q})"
+        target_desc = f"qubit {target_q}"
+
+    # Inject line into existing code immediately before measurement or simulation block
+    lines = current_code.split("\n")
+    insert_idx = -1
+    for i, line in enumerate(lines):
+        if any(k in line for k in ["qc.measure", "sim = AerSimulator", "# Execute on AerSimulator", "sim.run(qc"]):
+            insert_idx = i
+            break
+    if insert_idx == -1:
+        insert_idx = len(lines)
+
+    lines.insert(insert_idx, f"qc.{gate_call}")
+    mutated_code = "\n".join(lines)
+
+    # Validate security and dry-run syntax
+    try:
+        validate_code_security(mutated_code)
+        exec_req = CodeExecutionRequest(code=mutated_code, target_backend="aer_simulator", shots=1024)
+        exec_res = run_code_sandbox(exec_req)
+        if not exec_res.success:
+            return None
+    except Exception as e:
+        print(f"[try_incremental_gate_mutation error]: {e}")
+        return None
+
+    explanation = (
+        f"### Incremental Circuit Mutation: Added {gate.upper()} Gate\n\n"
+        f"Successfully mutated the active **{num_qubits}-qubit circuit** by inserting `qc.{gate_call}` on {target_desc}.\n\n"
+        f"* **Preserved Topology:** Maintained all {num_qubits} qubits, wire declarations, and preceding gate instructions.\n"
+        f"* **Dry-Run Validation:** Executed on `AerSimulator` with 1024 shots without syntax or indexing errors."
+    )
+
+    metadata = {
+        "circuit_name": f"{num_qubits}-Qubit Circuit (Mutated)",
+        "num_qubits": num_qubits,
+        "depth": exec_res.circuit_depth or 5,
+        "gates": len(exec_res.circuit_gates) if exec_res.circuit_gates else 6,
+        "circuit_gates": exec_res.circuit_gates,
+        "circuit_ascii": exec_res.circuit_ascii,
+        "active_qubits": exec_res.active_qubits,
+        "measurement_counts": exec_res.measurement_counts,
+        "validation_status": "mutated_verified",
+        "execution_time_ms": exec_res.execution_time_ms,
+        "summary": f"Injected qc.{gate_call} on {target_desc} into active {num_qubits}-qubit circuit"
+    }
+
+    return mutated_code, explanation, metadata
+
+
 def _sanitize_and_append_aer(code_body: str) -> str:
     """Ensure canonical AerSimulator execution block and required imports exist."""
     code_body = code_body.strip()
@@ -592,20 +1106,40 @@ async def verify_and_enrich_qiskit_circuit(
     except Exception as repair_err:
         print(f"[qiskit_synthesizer] Self-repair failed: {repair_err}")
 
-    # 3. Safe Archetype Fallback (Guarantees zero customer-facing breakage)
+    # 3. Safe Archetype Fallback (Guarantees zero customer-facing breakage & non-destructive preservation)
     print("[qiskit_synthesizer] Self-repair exhausted. Falling back to guaranteed verified quantum archetype...")
     p_lower = prompt.lower()
+    n_req = _extract_qubit_count(prompt, default=_extract_qubit_count(code_body, default=3))
+
     if any(k in p_lower for k in ["bell", "epr"]):
         fb_code, fb_exp, fb_meta = generate_bell_circuit("phi_plus")
     elif any(k in p_lower for k in ["teleport"]):
-        n = _extract_qubit_count(prompt, default=3)
-        fb_code, fb_exp, fb_meta = generate_teleportation_circuit(num_qubits=n)
+        fb_code, fb_exp, fb_meta = generate_teleportation_circuit(num_qubits=n_req)
+    elif any(k in p_lower for k in ["bernstein", "vazirani"]):
+        target_s = _extract_target_bitstring(prompt, default="")
+        fb_code, fb_exp, fb_meta = generate_bernstein_vazirani_circuit(hidden_string=target_s, num_qubits=n_req)
+    elif any(k in p_lower for k in ["deutsch", "jozsa"]):
+        fb_code, fb_exp, fb_meta = generate_deutsch_jozsa_circuit(num_qubits=n_req)
+    elif any(k in p_lower for k in ["superdense"]):
+        fb_code, fb_exp, fb_meta = generate_superdense_coding_circuit("11")
+    elif any(k in p_lower for k in ["w-state", "w state"]):
+        fb_code, fb_exp, fb_meta = generate_w_state_circuit(num_qubits=n_req)
+    elif any(k in p_lower for k in ["adder", "half adder"]):
+        fb_code, fb_exp, fb_meta = generate_half_adder_circuit()
+    elif any(k in p_lower for k in ["qpe", "phase estimation"]):
+        fb_code, fb_exp, fb_meta = generate_qpe_circuit(num_counting_qubits=n_req)
     elif any(k in p_lower for k in ["grover", "search"]):
-        fb_code, fb_exp, fb_meta = generate_grover_circuit("101")
+        target = _extract_target_bitstring(prompt, default="")
+        if not target or len(target) < 2:
+            pattern = "10" * (n_req // 2 + 1)
+            target = pattern[:n_req]
+        fb_code, fb_exp, fb_meta = generate_grover_circuit(target_state=target)
     elif any(k in p_lower for k in ["qft", "fourier"]):
-        fb_code, fb_exp, fb_meta = generate_qft_circuit(3)
+        fb_code, fb_exp, fb_meta = generate_qft_circuit(num_qubits=n_req)
+    elif any(k in p_lower for k in ["qrng", "random"]):
+        fb_code, fb_exp, fb_meta = generate_qrng_circuit(num_qubits=n_req)
     else:
-        fb_code, fb_exp, fb_meta = generate_ghz_circuit(num_qubits=3)
+        fb_code, fb_exp, fb_meta = generate_ghz_circuit(num_qubits=n_req)
 
     fb_code = _sanitize_and_append_aer(fb_code)
     fb_exec = run_code_sandbox(CodeExecutionRequest(code=fb_code, target_backend="aer_simulator", shots=1024))
@@ -648,11 +1182,53 @@ async def synthesize_custom_qiskit_circuit(prompt: str, current_code: str = "") 
         raw_res = await call_groq(system=system_prompt, user=user_query, max_tokens=4096, temperature=0.1)
     except Exception as e:
         print(f"[synthesizer call_groq error]: {e}")
-        # Fallback to Teleportation, GHZ, or Bell state if LLM fails
-        if "teleport" in prompt.lower():
-            n = _extract_qubit_count(prompt, default=3)
-            return generate_teleportation_circuit(num_qubits=n)
-        return generate_ghz_circuit(num_qubits=3)
+        # If user has an existing circuit in workspace, NEVER destroy it!
+        if current_code and "QuantumCircuit" in current_code:
+            preserved_qubits = _extract_qubit_count(current_code, default=3)
+            pres_meta = {
+                "circuit_name": f"{preserved_qubits}-Qubit Preserved Circuit",
+                "num_qubits": preserved_qubits,
+                "depth": 4,
+                "gates": 4,
+                "summary": f"Preserved existing {preserved_qubits}-qubit circuit following external LLM timeout"
+            }
+            pres_exp = (
+                "⚠️ *External LLM service was temporarily unavailable. "
+                f"Your active **{preserved_qubits}-qubit circuit** has been safely preserved without modification.*"
+            )
+            return current_code, pres_exp, pres_meta
+
+        # Fallback to appropriate archetype matching prompt and qubit count
+        p_low = prompt.lower()
+        n_req = _extract_qubit_count(prompt, default=3)
+        if "teleport" in p_low:
+            return generate_teleportation_circuit(num_qubits=n_req)
+        elif "bernstein" in p_low or "vazirani" in p_low:
+            target_s = _extract_target_bitstring(prompt, default="")
+            return generate_bernstein_vazirani_circuit(hidden_string=target_s, num_qubits=n_req)
+        elif "deutsch" in p_low or "jozsa" in p_low:
+            return generate_deutsch_jozsa_circuit(num_qubits=n_req)
+        elif "superdense" in p_low:
+            return generate_superdense_coding_circuit("11")
+        elif "w-state" in p_low or "w state" in p_low:
+            return generate_w_state_circuit(num_qubits=n_req)
+        elif "adder" in p_low:
+            return generate_half_adder_circuit()
+        elif "qpe" in p_low or "phase estimation" in p_low:
+            return generate_qpe_circuit(num_counting_qubits=n_req)
+        elif "grover" in p_low or "search" in p_low:
+            target = _extract_target_bitstring(prompt, default="")
+            if not target or len(target) < 2:
+                pattern = "10" * (n_req // 2 + 1)
+                target = pattern[:n_req]
+            return generate_grover_circuit(target_state=target)
+        elif "qft" in p_low or "fourier" in p_low:
+            return generate_qft_circuit(num_qubits=n_req)
+        elif "bell" in p_low or "epr" in p_low:
+            return generate_bell_circuit("phi_plus")
+        elif "qrng" in p_low or "random" in p_low:
+            return generate_qrng_circuit(num_qubits=n_req)
+        return generate_ghz_circuit(num_qubits=n_req)
 
     # Extract python code block
     code_match = re.search(r'```(?:python)?\s*([\s\S]*?)```', raw_res)
@@ -709,20 +1285,50 @@ async def synthesize_qiskit_circuit(prompt: str, current_code: str = "") -> Tupl
     """
     p_lower = prompt.lower().strip()
 
-    # 1. Specialized Algorithm Routing (prioritize custom protocols over generic templates)
-    if any(k in p_lower for k in [
-        "deutsch", "bernstein", "vazirani", "simon", "superdense",
-        "qaoa", "vqe", "ansatz", "adder", "repetition", "phase estimation",
-        "qpe", "w-state", "w state", "cluster state", "ising"
-    ]):
-        code, exp, meta = await synthesize_custom_qiskit_circuit(prompt, current_code)
+    # 1. Priority: Check for In-Place Incremental Gate Mutation on Active Circuit
+    if current_code and "QuantumCircuit" in current_code:
+        mut_res = try_incremental_gate_mutation(prompt, current_code)
+        if mut_res is not None:
+            code, exp, meta = mut_res
+            return await verify_and_enrich_qiskit_circuit(code, exp, meta, prompt=prompt)
 
-    # 2. Quantum Teleportation Protocol Request
-    elif "teleport" in p_lower:
+    # 2. Deterministic Quantum Teleportation Protocol Request
+    if "teleport" in p_lower:
         n = _extract_qubit_count(prompt, default=3)
         code, exp, meta = generate_teleportation_circuit(num_qubits=n)
 
-    # 2. GHZ State Request
+    # 3. Deterministic Bernstein-Vazirani Algorithm Request
+    elif "bernstein" in p_lower or "vazirani" in p_lower:
+        target_s = _extract_target_bitstring(prompt, default="")
+        n = _extract_qubit_count(prompt, default=4)
+        code, exp, meta = generate_bernstein_vazirani_circuit(hidden_string=target_s, num_qubits=n)
+
+    # 4. Deterministic Deutsch-Jozsa Algorithm Request
+    elif "deutsch" in p_lower or "jozsa" in p_lower:
+        n = _extract_qubit_count(prompt, default=3)
+        oracle_type = "constant" if "constant" in p_lower else "balanced"
+        code, exp, meta = generate_deutsch_jozsa_circuit(num_qubits=n, oracle_type=oracle_type)
+
+    # 5. Deterministic Superdense Coding Protocol Request
+    elif "superdense" in p_lower:
+        target_msg = _extract_target_bitstring(prompt, default="11")
+        code, exp, meta = generate_superdense_coding_circuit(message=target_msg)
+
+    # 6. Deterministic W-State Multipartite Entanglement Request
+    elif "w-state" in p_lower or "w state" in p_lower or "w_state" in p_lower:
+        n = _extract_qubit_count(prompt, default=3)
+        code, exp, meta = generate_w_state_circuit(num_qubits=n)
+
+    # 7. Deterministic Quantum Half Adder / Adder Request
+    elif "half adder" in p_lower or (p_lower.startswith("adder") or "quantum adder" in p_lower or "build adder" in p_lower or "create adder" in p_lower):
+        code, exp, meta = generate_half_adder_circuit()
+
+    # 8. Deterministic Quantum Phase Estimation (QPE) Request
+    elif ("qpe" in p_lower or "phase estimation" in p_lower) and not any(k in p_lower for k in ["inverse", "dagger"]):
+        n = _extract_qubit_count(prompt, default=3)
+        code, exp, meta = generate_qpe_circuit(num_counting_qubits=n)
+
+    # 9. Deterministic GHZ State Request
     elif "ghz" in p_lower or ("greenberger" in p_lower and "zeilinger" in p_lower):
         n = _extract_qubit_count(prompt, default=3)
         code, exp, meta = generate_ghz_circuit(num_qubits=n)
@@ -742,9 +1348,13 @@ async def synthesize_qiskit_circuit(prompt: str, current_code: str = "") -> Tupl
         else:
             code, exp, meta = generate_bell_circuit("phi_plus")
 
-    # 4. Grover's Search Request
+    # 10. Grover's Search Request
     elif "grover" in p_lower:
-        target = _extract_target_bitstring(prompt, default="101")
+        target = _extract_target_bitstring(prompt, default="")
+        if not target or len(target) < 2:
+            n = _extract_qubit_count(prompt, default=3)
+            pattern = "10" * (n // 2 + 1)
+            target = pattern[:n]
         code, exp, meta = generate_grover_circuit(target_state=target)
 
     # 5. Quantum Fourier Transform (QFT) Request (pure QFT, not QPE or inverse)
