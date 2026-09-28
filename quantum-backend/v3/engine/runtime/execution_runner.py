@@ -18,6 +18,18 @@ from qiskit.visualization import circuit_drawer
 try:
     import qiskit_aer
     from qiskit_aer import AerSimulator
+    try:
+        from qiskit_aer import Aer
+        qiskit.Aer = Aer
+    except Exception:
+        pass
+    def _compat_execute(circuits, backend=None, **kwargs):
+        if backend is None:
+            backend = AerSimulator()
+        return backend.run(circuits, **kwargs)
+    if not hasattr(qiskit, 'execute'):
+        qiskit.execute = _compat_execute
+
     _orig_aer_run = AerSimulator.run
     def _safe_aer_run(self, circuits, **kwargs):
         if isinstance(circuits, QuantumCircuit) and getattr(circuits, "num_clbits", 0) == 0:
@@ -226,6 +238,18 @@ from qiskit.visualization import circuit_drawer
 try:
     import qiskit_aer
     from qiskit_aer import AerSimulator
+    try:
+        from qiskit_aer import Aer
+        qiskit.Aer = Aer
+    except Exception:
+        pass
+    def _compat_execute(circuits, backend=None, **kwargs):
+        if backend is None:
+            backend = AerSimulator()
+        return backend.run(circuits, **kwargs)
+    if not hasattr(qiskit, 'execute'):
+        qiskit.execute = _compat_execute
+
     _orig_aer_run = AerSimulator.run
     def _safe_aer_run(self, circuits, **kwargs):
         if isinstance(circuits, QuantumCircuit) and getattr(circuits, "num_clbits", 0) == 0:
@@ -421,6 +445,12 @@ if HAS_AER:
                     return super().run(c, **kwargs)
             return super().run(circuits, **kwargs)
     exec_globals["AerSimulator"] = SafeAerSimulator
+    try:
+        from qiskit_aer import Aer
+        exec_globals["Aer"] = Aer
+    except Exception:
+        pass
+    exec_globals["execute"] = _compat_execute
 if HAS_DWAVE:
     exec_globals["dimod"] = dimod
     exec_globals["SimulatedAnnealingSampler"] = SimulatedAnnealingSampler

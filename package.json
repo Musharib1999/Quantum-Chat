@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@types/katex": "^0.16.8",
     "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
@@ -20,6 +21,7 @@
     "framer-motion": "^12.34.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
+    "katex": "^0.18.9",
     "lucide-react": "^0.563.0",
     "mongoose": "^9.1.6",
     "next": "^15.1.12",

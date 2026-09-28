@@ -4,13 +4,14 @@ Exposes route gateways and proxies computational/AI jobs to the Quantum AI Engin
 """
 import os
 import sys
+import time
 import httpx
 import json
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Dict, Any, List
 
 # Add parent directory to path so config imports resolve properly
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -857,4 +858,150 @@ async def ide_code_execute_endpoint(req: CodeExecutionRequest):
             success=False,
             error=str(e),
             stderr=str(e)
+        )
+
+
+# =========================================================================
+# PHASE 2: DIRECT FAST D-WAVE SIMULATED ANNEALING ENDPOINT (N <= 200)
+# =========================================================================
+class QuboSimulateRequest(BaseModel):
+    qubo: Optional[Dict[str, float]] = None
+    matrix: Optional[List[List[float]]] = None
+    variables: Optional[List[str]] = None
+    offset: Optional[float] = 0.0
+    num_reads: Optional[int] = 1000
+    seed: Optional[int] = None
+
+
+class QuboSimulateResponse(BaseModel):
+    success: bool
+    energy: float = 0.0
+    sample: Dict[str, int] = {}
+    num_variables: int = 0
+    variables: List[str] = []
+    qubo_matrix: List[List[float]] = []
+    energy_distribution: List[Dict[str, Any]] = []
+    num_reads: int = 1000
+    execution_time_ms: float = 0.0
+    error: Optional[str] = None
+
+
+@app.post("/v3/enterprise/dwave/simulate-qubo", response_model=QuboSimulateResponse)
+async def simulate_qubo_endpoint(req: QuboSimulateRequest):
+    """
+    Ultra-fast local simulated annealing solver for QUBO matrices up to N=200 variables.
+    Bypasses Leap cloud queues and minor embedding overhead for real-time UI interactivity.
+    """
+    t0 = time.time()
+    try:
+        import dimod
+        import neal
+
+        sparse_q = {}
+        var_names = req.variables or []
+
+        # Case 1: Dense 2D matrix provided
+        if req.matrix and len(req.matrix) > 0:
+            n = len(req.matrix)
+            if not var_names or len(var_names) != n:
+                var_names = [f"x{i}" for i in range(n)]
+
+            for r in range(n):
+                for c in range(r, n):
+                    if r == c:
+                        val = float(req.matrix[r][c])
+                    else:
+                        # If symmetric, coupler is matrix[r][c]; if upper-triangular, sum both
+                        val_rc = float(req.matrix[r][c])
+                        val_cr = float(req.matrix[c][r])
+                        if abs(val_rc - val_cr) < 1e-5:
+                            val = val_rc
+                        else:
+                            val = val_rc + val_cr
+                    if abs(val) > 1e-6:
+                        sparse_q[(var_names[r], var_names[c])] = val
+
+        # Case 2: Sparse dict provided
+        elif req.qubo:
+            extracted_vars = set()
+            for k, val in req.qubo.items():
+                if abs(float(val)) < 1e-6:
+                    continue
+                cleaned = str(k).strip("()[]{} ")
+                parts = [p.strip().strip("'\"") for p in cleaned.split(",")]
+                if len(parts) == 2:
+                    u, v = parts[0], parts[1]
+                else:
+                    u, v = str(k), str(k)
+                sparse_q[(u, v)] = float(val)
+                extracted_vars.add(u)
+                extracted_vars.add(v)
+
+            if not var_names:
+                var_names = sorted(list(extracted_vars))
+
+        else:
+            raise ValueError("Either 'matrix' or 'qubo' dictionary must be provided.")
+
+        if not var_names:
+            var_names = ["x0"]
+            sparse_q[("x0", "x0")] = 0.0
+
+        num_vars = len(var_names)
+        num_reads = min(max(10, req.num_reads or 1000), 10000)
+
+        # Build BQM and solve using neal
+        bqm = dimod.BinaryQuadraticModel.from_qubo(sparse_q, offset=float(req.offset or 0.0))
+        sampler = neal.SimulatedAnnealingSampler()
+        kwargs = {}
+        if req.seed is not None:
+            kwargs["seed"] = req.seed
+
+        sampleset = sampler.sample(bqm, num_reads=num_reads, **kwargs).aggregate()
+        best = sampleset.first
+
+        # Extract energy distribution (top 15 states)
+        energy_dist = []
+        for s in sampleset.data(fields=['sample', 'energy', 'num_occurrences'], sorted_by='energy'):
+            clean_sample = {str(k): int(v) for k, v in s.sample.items()}
+            bitstring = "".join(str(clean_sample.get(v, 0)) for v in var_names)
+            energy_dist.append({
+                "energy": round(float(s.energy), 4),
+                "sample": clean_sample,
+                "num_occurrences": int(s.num_occurrences),
+                "bitstring": bitstring
+            })
+            if len(energy_dist) >= 15:
+                break
+
+        # Reconstruct dense N x N matrix for the frontend
+        var_to_idx = {v: i for i, v in enumerate(var_names)}
+        dense_matrix = [[0.0] * num_vars for _ in range(num_vars)]
+        for (u, v), w in sparse_q.items():
+            if u in var_to_idx and v in var_to_idx:
+                i, j = var_to_idx[u], var_to_idx[v]
+                dense_matrix[i][j] = round(float(w), 4)
+                if i != j:
+                    dense_matrix[j][i] = round(float(w), 4)
+
+        exec_ms = round((time.time() - t0) * 1000, 2)
+
+        return QuboSimulateResponse(
+            success=True,
+            energy=round(float(best.energy), 4),
+            sample={str(k): int(v) for k, v in best.sample.items()},
+            num_variables=num_vars,
+            variables=var_names,
+            qubo_matrix=dense_matrix,
+            energy_distribution=energy_dist,
+            num_reads=num_reads,
+            execution_time_ms=exec_ms
+        )
+
+    except Exception as e:
+        exec_ms = round((time.time() - t0) * 1000, 2)
+        return QuboSimulateResponse(
+            success=False,
+            error=str(e),
+            execution_time_ms=exec_ms
         )

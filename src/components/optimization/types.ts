@@ -1,0 +1,66 @@
+export type OptimizationSectionId = "01" | "02" | "03" | null;
+
+export type HeroTabType = "code" | "formulation" | "visual" | "results";
+
+export interface MathFormulationParams {
+  budgetMax: number;
+  yieldWeight: number;
+  minDiversity: number;
+  penaltyLambda: number;
+  hasMutualExclusion: boolean;
+  hasCarbonCeiling: boolean;
+  isMarkowitz: boolean;
+}
+
+export interface EnergyDistributionItem {
+  energy: number;
+  sample: Record<string, number>;
+  num_occurrences: number;
+  bitstring: string;
+}
+
+export interface OptimizationResults {
+  energy: number;
+  sample: Record<string, number>;
+  num_variables: number;
+  variables: string[];
+  qubo_matrix: number[][];
+  energy_distribution: EnergyDistributionItem[];
+  num_reads?: number;
+  cloud_rerouted?: boolean;
+  qaoa_dual_compiled?: boolean;
+}
+
+export interface CopilotMessage {
+  id: number;
+  sender: "user" | "assistant";
+  text: string;
+  mathFormula?: string;
+  breakdown?: string[];
+  isMutualProposal?: boolean;
+  timestamp: string;
+}
+
+export interface ThemeColors {
+  bgSection1: string;
+  bgSection2: string;
+  bgSection3: string;
+  bgMain: string;
+  bgHeader: string;
+  bgSidebar: string;
+  bgEditor: string;
+  bgBottomDrawer: string;
+  bgBottomDrawerHeader: string;
+  bgCard: string;
+  bgInput: string;
+  bgPill: string;
+  border: string;
+  borderSection2: string;
+  borderSubtle: string;
+  textPrimary: string;
+  textMuted: string;
+  textCyan: string;
+  textEmerald: string;
+  textAmber: string;
+  textSkyBlue: string;
+}

@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Guru Studio - Calm Precision Studio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- KaTeX CSS & JS for Mathematical Formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Babel JS -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+                        mono: ["JetBrains Mono", "Fira Code", "monospace"],
+                    },
+                    colors: {
+                        studio: {
+                            bgDark: "#090A0D",
+                            panelDark: "#0E0F13",
+                            cardDark: "#13141A",
+                            borderDark: "rgba(255, 255, 255, 0.07)",
+                            
+                            bgLight: "#F8FAFC",
+                            panelLight: "#FFFFFF",
+                            cardLight: "#FFFFFF",
+                            borderLight: "#E2E8F0",
+                        },
+                        jewel: {
+                            ice: "#0284C7",
+                            iceDark: "#38BDF8",
+                            mint: "#059669",
+                            mintDark: "#34D399",
+                            sand: "#D97706",
+                            sandDark: "#FBBF24",
+                            lilac: "#7C3AED",
+                            lilacDark: "#A78BFA",
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(150, 150, 150, 0.35); }
+        .canvas-grid-dark {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .canvas-grid-light {
+            background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased overflow-hidden select-none transition-colors duration-200">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const Icon = ({ name, className = "w-4 h-4" }) => {
+            const icons = {
+                cpu: <path d="M12 2v2M12 20v2M2 12h2M20 12h2M6.34 6.34l1.42 1.42M16.24 16.24l1.42 1.42M6.34 17.66l1.42-1.42M16.24 7.76l1.42-1.42M9 9h6v6H9z" />,
+                play: <polygon points="6 4 18 12 6 20 6 4" />,
+                zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
+                code: <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" />,
+                layers: <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />,
+                terminal: <path d="M4 17l6-6-6-6M12 19h8" />,
+                chevronDown: <polyline points="6 9 12 15 18 9" />,
+                download: <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />,
+                copy: <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />,
+                sparkles: <path d="M12 3l1.91 5.82L19.73 10.7l-4.7 4.58L16.18 21 12 17.77 7.82 21l1.15-5.72-4.7-4.58 5.82-1.88L12 3z" />,
+                fileText: <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6" />,
+                folder: <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />,
+                plus: <path d="M12 5v14M5 12h14" />,
+                search: <g><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></g>,
+                x: <line x1="18" y1="6" x2="6" y2="18" />,
+                check: <polyline points="20 6 9 17 4 12" />,
+                matrix: <rect x="3" y="3" width="18" height="18" rx="2" />,
+                activity: <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />,
+                send: <line x1="22" y1="2" x2="11" y2="13" />,
+                sun: <g><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></g>,
+                moon: <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />,
+                box: <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            };
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    {icons[name] || <circle cx="12" cy="12" r="10" />}
+                </svg>
+            );
+        };
+
+        const LatexMath = ({ math, inline = true }) => {
+            const [rendered, setRendered] = useState(() => {
+                if (typeof window !== "undefined" && window.katex) {
+                    try {
+                        return window.katex.renderToString(math, {
+                            displayMode: !inline,
+                            throwOnError: false
+                        });
+                    } catch (e) {
+                        return "";
+                    }
+                }
+                return "";
+            });
+
+            useEffect(() => {
+                const tryRender = () => {
+                    if (window.katex) {
+                        try {
+                            const res = window.katex.renderToString(math, {
+                                displayMode: !inline,
+                                throwOnError: false
+                            });
+                            setRendered(res);
+                            return true;
+                        } catch (e) {
+                            return false;
+                        }
+                    }
+                    return false;
+                };
+
+                if (!tryRender()) {
+                    const timer = setInterval(() => {
+                        if (tryRender()) clearInterval(timer);
+                    }, 50);
+                    return () => clearInterval(timer);
+                }
+            }, [math, inline]);
+
+            if (rendered) {
+                return <span className="inline-block text-zinc-100" dangerouslySetInnerHTML={{ __html: rendered }} />;
+            }
+            return <span className="inline-block text-zinc-300 font-mono text-xs">{math}</span>;
+        };
+
+        // Project Database Store (Sample)
+        const initialProjects = [
+            {
+                id: "clean_energy_portfolio",
+                title: "Clean Energy Portfolio",
+                desc: "4-asset capital budgeting with mutual exclusions and grid stability dependencies.",
+                framework: "dwave",
+                updated: "2 mins ago",
+                files: ["main.py", "qubo_matrix.py", "hamiltonian.json"],
+                activeFile: "main.py"
+            },
+            {
+                id: "quantum_teleportation",
+                title: "Quantum Teleportation",
+                desc: "3-qubit entangled Bell channel with Bob classical feed-forward corrections.",
+                framework: "qiskit",
+                updated: "1 hour ago",
+                files: ["teleportation.py", "circuit.qasm"],
+                activeFile: "teleportation.py"
+            },
+            {
+                id: "maxcut_bipartite_graph",
+                title: "Max-Cut 12-Node Partition",
+                desc: "Unconstrained binary quadratic model for bipartite graph cut maximization.",
+                framework: "dwave",
+                updated: "Yesterday",
+                files: ["maxcut.py", "graph_edges.json"],
+                activeFile: "maxcut.py"
+            },
+            {
+                id: "vqe_h2_molecule",
+                title: "VQE H2 Ground Energy",
+                desc: "Variational Quantum Eigensolver for molecular hydrogen ground state energy curve.",
+                framework: "qiskit",
+                updated: "3 days ago",
+                files: ["vqe_h2.py", "ansatz.py"],
+                activeFile: "vqe_h2.py"
+            }
+        ];
+
+        
+        // ── Quantum Syntax Tokenizer & Highlighter ──
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        
+        const DWAVE_SAMPLE_CODE = "# Quantum Guru — Clean Energy Portfolio Selection (QUBO)\n# Solver: D-Wave BinaryQuadraticModel & Simulated Annealer\nimport dimod\nfrom dwave.samplers import SimulatedAnnealingSampler\nfrom qubo_matrix import get_qubo_model\n\n# 1. Ingest problem matrix & penalty multipliers\nQ_matrix, variable_names, penalty_lambda, offset = get_qubo_model()\n\n# 2. Assemble D-Wave BQM Hamiltonian\nbqm = dimod.BinaryQuadraticModel.from_qubo(Q_matrix, offset=offset)\n\n# 3. Execute Quantum-Classical Annealing\nsampler = SimulatedAnnealingSampler()\nsampleset = sampler.sample(bqm, num_reads=2048)\n\nbest = sampleset.first\nprint(f\"⚡ Ground Energy: {best.energy:.4f}\")\nprint(\"Optimal Decisions:\", [variable_names[i] for i, v in enumerate(best.sample) if v == 1])";
+        const QISKIT_SAMPLE_CODE = "# Quantum Guru — Qiskit Quantum Teleportation Protocol\nfrom qiskit import QuantumCircuit, Aer, execute\nimport numpy as np\n\nqc = QuantumCircuit(3, 3)\n\n# 1. State preparation on qubit 0 (Alice state)\nqc.rx(np.pi / 3, 0)\nqc.barrier()\n\n# 2. Entangled Bell pair between Alice (q1) and Bob (q2)\nqc.h(1)\nqc.cx(1, 2)\nqc.barrier()\n\n# 3. Bell measurement protocol\nqc.cx(0, 1)\nqc.h(0)\nqc.measure([0, 1], [0, 1])\nqc.barrier()\n\n# 4. Bob conditional recovery corrections\nqc.cx(1, 2)\nqc.cz(0, 2)\nqc.measure(2, 2)\n\n# Simulated execution on Aer backend\nsim = Aer.get_backend(\"aer_simulator\")\nres = execute(qc, sim, shots=4096).result()\nprint(\"Teleportation Counts:\", res.get_counts())";
+
+        function highlightPythonLine(line, isDark) {
+            if (/^\s*#/.test(line)) {
+                return `<span class="${isDark ? "text-zinc-500" : "text-slate-400"} italic">${escapeHtml(line)}</span>`;
+            }
+
+            let comment = "";
+            const commentIdx = line.search(/\s+#/);
+            if (commentIdx !== -1) {
+                comment = line.substring(commentIdx);
+                line = line.substring(0, commentIdx);
+            }
+
+            const tokenRegex = /(f?".*?"|\x27.*?\x27|\b(?:from|import|as|def|return|if|else|elif|for|in|while|with|class|and|or|not|yield)\b|\b(?:QuantumCircuit|Aer|AerSimulator|QuantumRegister|ClassicalRegister|BinaryQuadraticModel|SimulatedAnnealingSampler|LeapHybridSampler|dimod|qiskit|numpy|np)\b|\b(?:print|enumerate|range|len|sum|min|max|int|float|str|dict|list|set)\b|\.[a-zA-Z_]\w*(?=\s*\()|\b[a-zA-Z_]\w*(?=\s*\()|\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b|[=+\-*/%<>&|^~:]+|[a-zA-Z_]\w*|[^\s\w]+|\s+)/g;
+
+            let out = "";
+            let m;
+            while ((m = tokenRegex.exec(line)) !== null) {
+                const t = m[0];
+                if (/^f?["\x27]/.test(t)) {
+                    out += `<span class="${isDark ? "text-rose-300" : "text-rose-700"}">${escapeHtml(t)}</span>`;
+                } else if (/^(from|import|as|def|return|if|else|elif|for|in|while|with|class|and|or|not|yield)$/.test(t)) {
+                    out += `<span class="${isDark ? "text-purple-400" : "text-purple-700"} font-semibold">${escapeHtml(t)}</span>`;
+                } else if (/^(QuantumCircuit|Aer|AerSimulator|QuantumRegister|ClassicalRegister|BinaryQuadraticModel|SimulatedAnnealingSampler|LeapHybridSampler|dimod|qiskit|numpy|np)$/.test(t)) {
+                    out += `<span class="${isDark ? "text-emerald-400" : "text-emerald-600"} font-semibold">${escapeHtml(t)}</span>`;
+                } else if (/^(print|enumerate|range|len|sum|min|max|int|float|str|dict|list|set)$/.test(t)) {
+                    out += `<span class="${isDark ? "text-cyan-400" : "text-cyan-700"}">${escapeHtml(t)}</span>`;
+                } else if (t.startsWith(".") && t.length > 1) {
+                    out += ``.concat(`.<span class="${isDark ? "text-sky-300" : "text-sky-600"} font-medium">${escapeHtml(t.slice(1))}</span>`);
+                } else if (line.substring(tokenRegex.lastIndex).trim().startsWith("(") && /^[a-zA-Z_]/.test(t)) {
+                    out += `<span class="${isDark ? "text-sky-300" : "text-sky-600"} font-medium">${escapeHtml(t)}</span>`;
+                } else if (/^\d+(?:\.\d+)?(?:e[+-]?\d+)?$/.test(t)) {
+                    out += `<span class="${isDark ? "text-amber-400" : "text-amber-600"} font-mono">${escapeHtml(t)}</span>`;
+                } else if (/^[=+\-*/%<>&|^~:]+$/.test(t)) {
+                    out += `<span class="${isDark ? "text-zinc-500" : "text-slate-400"}">${escapeHtml(t)}</span>`;
+                } else if (/^[a-zA-Z_]\w*$/.test(t)) {
+                    out += `<span class="${isDark ? "text-zinc-200" : "text-slate-800"}">${escapeHtml(t)}</span>`;
+                } else {
+                    out += escapeHtml(t);
+                }
+            }
+
+            if (comment) {
+                out += `<span class="${isDark ? "text-zinc-500" : "text-slate-400"} italic">${escapeHtml(comment)}</span>`;
+            }
+
+            return out;
+        }
+
+        
+        const CodeEditor = ({ code, onChange, isDark, framework, onCopy, onReset }) => {
+            const textareaRef = useRef(null);
+            const preRef = useRef(null);
+            const gutterRef = useRef(null);
+
+            const handleScroll = (e) => {
+                if (preRef.current) {
+                    preRef.current.scrollTop = e.target.scrollTop;
+                    preRef.current.scrollLeft = e.target.scrollLeft;
+                }
+                if (gutterRef.current) {
+                    gutterRef.current.scrollTop = e.target.scrollTop;
+                }
+            };
+
+            const handleKeyDown = (e) => {
+                if (e.key === "Tab") {
+                    e.preventDefault();
+                    const start = e.target.selectionStart;
+                    const end = e.target.selectionEnd;
+                    const val = e.target.value;
+                    const updated = val.substring(0, start) + "    " + val.substring(end);
+                    onChange(updated);
+                    setTimeout(() => {
+                        if (textareaRef.current) {
+                            textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 4;
+                        }
+                    }, 0);
+                }
+            };
+
+            const lines = code.split("\n");
+
+            return (
+                <div className="flex-1 flex flex-col h-full overflow-hidden">
+                    {/* Dual-layer Interactive Editor Canvas */}
+                    <div className={`relative flex-1 flex overflow-hidden font-mono text-xs ${
+                        isDark ? "bg-[#090A0D]" : "bg-white"
+                    }`}>
+                        {/* Synchronized Line Numbers Gutter */}
+                        <div
+                            ref={gutterRef}
+                            className={`w-12 py-3.5 pr-3 select-none text-right shrink-0 overflow-hidden border-r text-[11px] leading-[20px] font-mono ${
+                                isDark ? "bg-[#0B0C0E] border-white/[0.06] text-zinc-600" : "bg-slate-50 border-slate-200 text-slate-400"
+                            }`}
+                        >
+                            {lines.map((_, i) => (
+                                <div key={i} className="h-[20px]">{i + 1}</div>
+                            ))}
+                        </div>
+
+                        {/* Staged Code Area */}
+                        <div className="relative flex-1 h-full overflow-hidden">
+                            {/* Layer 1: Syntax Highlighted Representation (Underneath) */}
+                            <pre
+                                ref={preRef}
+                                className="absolute inset-0 p-3.5 m-0 overflow-hidden pointer-events-none font-mono text-xs leading-[20px] whitespace-pre select-none"
+                                aria-hidden="true"
+                            >
+                                {lines.map((l, i) => (
+                                    <div
+                                        key={i}
+                                        className="h-[20px]"
+                                        dangerouslySetInnerHTML={{ __html: highlightPythonLine(l, isDark) || "&nbsp;" }}
+                                    />
+                                ))}
+                            </pre>
+
+                            {/* Layer 2: Transparent Interactive Textarea (Active Top Layer) */}
+                            <textarea
+                                ref={textareaRef}
+                                value={code}
+                                onChange={(e) => onChange(e.target.value)}
+                                onScroll={handleScroll}
+                                onKeyDown={handleKeyDown}
+                                spellCheck="false"
+                                autoCapitalize="off"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                className={`absolute inset-0 w-full h-full p-3.5 m-0 font-mono text-xs leading-[20px] whitespace-pre bg-transparent text-transparent caret-sky-400 outline-none resize-none overflow-auto ${
+                                    isDark ? "selection:bg-sky-500/30" : "selection:bg-sky-300/40"
+                                }`}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        
+        
+        
+        const FormulationView = ({ 
+            framework, 
+            isDark, 
+            mathParams, 
+            setMathParams, 
+            onRecompile, 
+            isDirty, 
+            onCopyLatex,
+            selectedSection,
+            onSelectSection
+        }) => {
+            const { budgetCap, minDiversity, gammaWeight, penaltyLambda, enableDiversity, hasMutualExclusion, lambdaEx = 8.0 } = mathParams;
+
+            // Computed analytical strings
+            const mathObj1 = `\\min_{x \\in \\{0, 1\\}^4} \\quad \\mathcal{H}_{\\text{obj}}(x) = \\sum_{i=1}^4 C_i x_i - ${gammaWeight.toFixed(1)} \\sum_{i=1}^4 R_i x_i`;
+            
+            let obj2Str = `\\text{subject to} \\quad \\sum_{i=1}^4 C_i x_i \\le B_{\\text{max}} = ${budgetCap.toFixed(1)} \\text{ M}`;
+            if (enableDiversity) obj2Str += ` \\quad \\text{and} \\quad \\sum_{i=1}^4 x_i \\ge ${minDiversity}`;
+            if (hasMutualExclusion) obj2Str += ` \\quad \\text{and} \\quad x_{\\text{wind}} + x_{\\text{solar}} \\le 1`;
+            const mathObj2 = obj2Str;
+
+            const mathPen2 = `\\mathcal{H}_{\\text{total}}(x, s) = \\mathcal{H}_{\\text{obj}}(x) + \\mathcal{H}_{\\text{penalty}}(x, s)`;
+
+            let pen1Str = `\\mathcal{H}_{\\text{penalty}}(x, s) = ${penaltyLambda.toFixed(1)} \\left( \\sum_{i=1}^4 C_i x_i + \\sum_{k=0}^1 2^k s_k - ${budgetCap.toFixed(1)} \\right)^2`;
+            if (enableDiversity) pen1Str += ` + 2.0 \\left( ${minDiversity} - \\sum_{i=1}^4 x_i + s_{\\text{div}} \\right)^2`;
+            if (hasMutualExclusion) pen1Str += ` + ${lambdaEx.toFixed(1)} (x_{\\text{wind}} \\cdot x_{\\text{solar}})`;
+            const mathPen1 = pen1Str;
+
+            const mathQii = `Q_{ii} = C_i - ${gammaWeight.toFixed(1)} R_i - 2(${penaltyLambda.toFixed(1)})(${budgetCap.toFixed(1)}) C_i + ${penaltyLambda.toFixed(1)} C_i^2`;
+            const mathQij = hasMutualExclusion
+                ? `Q_{\\text{wind},\\text{solar}} = 2 (${penaltyLambda.toFixed(1)}) C_{\\text{wind}} C_{\\text{solar}} + \\mathbf{${lambdaEx.toFixed(1)}}`
+                : `Q_{ij} = 2 (${penaltyLambda.toFixed(1)}) C_i C_j \\quad (i \\ne j)`;
+
+            return (
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {framework === "dwave" ? (
+                        <>
+                            {/* RECOMPILATION HERO STATUS BAR IF DIRTY */}
+                            {isDirty && (
+                                <div className={`p-4 rounded-xl border flex items-center justify-between shadow-lg transition-all animate-in fade-in slide-in-from-top-2 ${
+                                    isDark ? "bg-amber-950/40 border-amber-500/40 text-amber-200" : "bg-amber-50 border-amber-300 text-amber-900"
+                                }`}>
+                                    <div className="flex items-center space-x-3">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                                        <div>
+                                            <div className="text-xs font-semibold">Mathematical Parameters Modified</div>
+                                            <div className="text-[11px] opacity-80 font-mono">
+                                                Budget: ${budgetCap}M · Penalty λ: {penaltyLambda}x · Recompile required to update Q-Matrix &amp; QUBO code.
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={onRecompile}
+                                        className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs transition-colors flex items-center space-x-1.5 shadow-md"
+                                    >
+                                        <Icon name="zap" className="w-3.5 h-3.5 fill-current" />
+                                        <span>Recompile to QUBO</span>
+                                        <span className="text-[10px] opacity-75 font-mono ml-1">⌘B</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* D-WAVE SECTION 1: EDITABLE PRIMAL OPTIMIZATION PROBLEM */}
+                            <div id="math-section-01" className={`p-5 rounded-xl border space-y-4 transition-all ${
+                                selectedSection === "01"
+                                    ? "border-sky-500/60 ring-1 ring-sky-500/30 shadow-lg shadow-sky-500/10 " + (isDark ? "bg-[#11131a]" : "bg-sky-50/20")
+                                    : isDark ? "bg-[#111217] border-white/[0.08]" : "bg-white border-slate-200 shadow-xs"
+                            }`}>
+                                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-amber-400 font-mono text-sm font-bold">01</span>
+                                        <h3 className={`font-semibold text-sm ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                                            Primal Mathematical Optimization Model
+                                        </h3>
+                                        {selectedSection === "01" && (
+                                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center space-x-1 animate-pulse">
+                                                <span>🎯 Scoped in Copilot</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            BQM Canonical Form
+                                        </span>
+                                        <button
+                                            onClick={() => onSelectSection(selectedSection === "01" ? null : "01")}
+                                            className={`flex items-center space-x-1 text-xs px-2.5 py-1 rounded-md transition-all ${
+                                                selectedSection === "01"
+                                                    ? "bg-sky-500 text-white font-semibold shadow-xs"
+                                                    : isDark 
+                                                        ? "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 border border-white/[0.08]" 
+                                                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                                            }`}
+                                            title="Scope Optimization Copilot to Section 01"
+                                        >
+                                            <Icon name="sparkles" className="w-3 h-3 text-current" />
+                                            <span>{selectedSection === "01" ? "Scoped" : "Ask Copilot"}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Mathematical Formula Output */}
+                                <div className={`p-4 rounded-lg font-mono text-xs overflow-x-auto flex flex-col items-center space-y-3.5 ${
+                                    isDark ? "bg-[#090A0D] border border-white/[0.05]" : "bg-slate-50 border border-slate-200"
+                                }`}>
+                                    <LatexMath math={mathObj1} inline={false} />
+                                    <LatexMath math={mathObj2} inline={false} />
+                                    {hasMutualExclusion && (
+                                        <div className="w-full mt-2 pt-2 border-t border-fuchsia-500/30 flex items-center justify-between text-[11px] font-mono text-fuchsia-300">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="w-2 h-2 rounded-full bg-fuchsia-400 animate-pulse"></span>
+                                                <span className="font-semibold">Pairwise Mutual Exclusion:</span>
+                                                <span>x_wind + x_solar ≤ 1 ➔ H_mutual = {lambdaEx.toFixed(1)} · (x_wind · x_solar)</span>
+                                            </div>
+                                            <span className="px-2 py-0.5 rounded bg-fuchsia-500/20 border border-fuchsia-500/40 text-fuchsia-300">
+                                                λ_ex = +{lambdaEx.toFixed(1)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* In-place Formulation Control Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                                    {/* Parameter 1: Budget Cap */}
+                                    <div className={`p-3 rounded-lg border space-y-1.5 ${
+                                        isDark ? "bg-[#090A0D] border-white/[0.05]" : "bg-slate-50 border-slate-200"
+                                    }`}>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[11px] font-medium text-zinc-400">Budget Cap (B_max)</label>
+                                            <span className="text-[10px] font-mono text-emerald-400">Inequality Constraint</span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-xs text-zinc-500 font-mono">$</span>
+                                            <input
+                                                type="number"
+                                                step="1.0"
+                                                min="10.0"
+                                                max="40.0"
+                                                value={budgetCap}
+                                                onChange={(e) => setMathParams({ ...mathParams, budgetCap: parseFloat(e.target.value) || 10.0 })}
+                                                className={`w-full px-2.5 py-1 text-xs font-mono font-semibold rounded border outline-none ${
+                                                    isDark ? "bg-[#14151A] border-white/[0.1] text-amber-300 focus:border-amber-400" : "bg-white border-slate-300 text-slate-900"
+                                                }`}
+                                            />
+                                            <span className="text-xs text-zinc-500 font-mono">M</span>
+                                        </div>
+                                        <p className="text-[10px] text-zinc-500">Capex ceiling across chosen facilities.</p>
+                                    </div>
+
+                                    {/* Parameter 2: Yield Tradeoff Multiplier */}
+                                    <div className={`p-3 rounded-lg border space-y-1.5 ${
+                                        isDark ? "bg-[#090A0D] border-white/[0.05]" : "bg-slate-50 border-slate-200"
+                                    }`}>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[11px] font-medium text-zinc-400">Yield Weight (γ)</label>
+                                            <span className="text-[10px] font-mono text-sky-400">Objective Tradeoff</span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="range"
+                                                min="0.2"
+                                                max="3.0"
+                                                step="0.1"
+                                                value={gammaWeight}
+                                                onChange={(e) => setMathParams({ ...mathParams, gammaWeight: parseFloat(e.target.value) })}
+                                                className="w-full accent-sky-400 cursor-pointer"
+                                            />
+                                            <span className="text-xs font-mono font-bold text-sky-400 w-12 text-right">{gammaWeight.toFixed(1)}x</span>
+                                        </div>
+                                        <p className="text-[10px] text-zinc-500">Penalizes cost vs. clean MW yield.</p>
+                                    </div>
+
+                                    {/* Parameter 3: Diversity Constraint */}
+                                    <div className={`p-3 rounded-lg border space-y-1.5 ${
+                                        isDark ? "bg-[#090A0D] border-white/[0.05]" : "bg-slate-50 border-slate-200"
+                                    }`}>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[11px] font-medium text-zinc-400">Min Diversity (K_min)</label>
+                                            <input
+                                                type="checkbox"
+                                                checked={enableDiversity}
+                                                onChange={(e) => setMathParams({ ...mathParams, enableDiversity: e.target.checked })}
+                                                className="accent-amber-400 cursor-pointer"
+                                                title="Toggle diversity constraint"
+                                            />
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="4"
+                                                disabled={!enableDiversity}
+                                                value={minDiversity}
+                                                onChange={(e) => setMathParams({ ...mathParams, minDiversity: parseInt(e.target.value) || 1 })}
+                                                className={`w-full px-2.5 py-1 text-xs font-mono font-semibold rounded border outline-none ${
+                                                    !enableDiversity ? "opacity-40 cursor-not-allowed " : ""
+                                                }${isDark ? "bg-[#14151A] border-white/[0.1] text-amber-300 focus:border-amber-400" : "bg-white border-slate-300 text-slate-900"}`}
+                                            />
+                                            <span className="text-xs text-zinc-500 font-mono">Sites</span>
+                                        </div>
+                                        <p className="text-[10px] text-zinc-500">{enableDiversity ? "Requires at least K distinct sites." : "Diversity constraint disabled."}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* D-WAVE SECTION 2: EDITABLE PENALTY HAMILTONIAN & SLACK */}
+                            <div id="math-section-02" className={`p-5 rounded-xl border space-y-4 transition-all ${
+                                selectedSection === "02"
+                                    ? "border-sky-500/60 ring-1 ring-sky-500/30 shadow-lg shadow-sky-500/10 " + (isDark ? "bg-[#11131a]" : "bg-sky-50/20")
+                                    : isDark ? "bg-[#111217] border-white/[0.08]" : "bg-white border-slate-200 shadow-xs"
+                            }`}>
+                                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-amber-400 font-mono text-sm font-bold">02</span>
+                                        <h3 className={`font-semibold text-sm ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                                            QUBO Penalty Hamiltonian &amp; Slack Transformation
+                                        </h3>
+                                        {selectedSection === "02" && (
+                                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center space-x-1 animate-pulse">
+                                                <span>🎯 Scoped in Copilot</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <div className="flex items-center space-x-1.5 mr-2">
+                                            <span className={`text-xs font-mono ${isDark ? "text-zinc-400" : "text-slate-500"}`}>Multiplier:</span>
+                                            <span className="text-xs font-mono font-bold text-amber-400">λ = {penaltyLambda.toFixed(1)}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => onSelectSection(selectedSection === "02" ? null : "02")}
+                                            className={`flex items-center space-x-1 text-xs px-2.5 py-1 rounded-md transition-all ${
+                                                selectedSection === "02"
+                                                    ? "bg-sky-500 text-white font-semibold shadow-xs"
+                                                    : isDark 
+                                                        ? "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 border border-white/[0.08]" 
+                                                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                                            }`}
+                                            title="Scope Optimization Copilot to Section 02"
+                                        >
+                                            <Icon name="sparkles" className="w-3 h-3 text-current" />
+                                            <span>{selectedSection === "02" ? "Scoped" : "Ask Copilot"}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Math Penalty Representation */}
+                                <div className={`p-4 rounded-lg font-mono text-xs overflow-x-auto flex flex-col items-center space-y-3.5 ${
+                                    isDark ? "bg-[#090A0D] border border-white/[0.05]" : "bg-slate-50 border border-slate-200"
+                                }`}>
+                                    <LatexMath math={mathPen1} inline={false} />
+                                    <LatexMath math={mathPen2} inline={false} />
+                                </div>
+
+                                {/* Interactive Penalty Multiplier Slider */}
+                                <div className={`p-3.5 rounded-lg border flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                                    isDark ? "bg-[#090A0D] border-white/[0.05]" : "bg-slate-50 border-slate-200"
+                                }`}>
+                                    <div className="space-y-0.5">
+                                        <div className={`text-xs font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
+                                            Penalty Multiplier Stiffness (λ)
+                                        </div>
+                                        <div className="text-[11px] text-zinc-500">
+                                            Ensures infeasible states are strictly elevated above the ground state.
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center space-x-3 w-full sm:w-64">
+                                        <input
+                                            type="range"
+                                            min="1.0"
+                                            max="8.0"
+                                            step="0.1"
+                                            value={penaltyLambda}
+                                            onChange={(e) => setMathParams({ ...mathParams, penaltyLambda: parseFloat(e.target.value) })}
+                                            className="w-full accent-amber-400 cursor-pointer"
+                                        />
+                                        <span className="font-mono text-xs font-semibold text-amber-400 w-10 text-right">
+                                            {penaltyLambda.toFixed(1)}x
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* D-WAVE SECTION 3: RECOMPILED Q-MATRIX DERIVATION */}
+                            <div id="math-section-03" className={`p-5 rounded-xl border space-y-3 transition-all ${
+                                selectedSection === "03"
+                                    ? "border-sky-500/60 ring-1 ring-sky-500/30 shadow-lg shadow-sky-500/10 " + (isDark ? "bg-[#11131a]" : "bg-sky-50/20")
+                                    : isDark ? "bg-[#111217] border-white/[0.08]" : "bg-white border-slate-200 shadow-xs"
+                            }`}>
+                                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-amber-400 font-mono text-sm font-bold">03</span>
+                                        <h3 className={`font-semibold text-sm ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                                            Analytical Q-Matrix Coupler Expansion
+                                        </h3>
+                                        {selectedSection === "03" && (
+                                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center space-x-1 animate-pulse">
+                                                <span>🎯 Scoped in Copilot</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className={`text-[11px] font-mono ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
+                                            Symmetric Coupling (∀ i ≠ j)
+                                        </span>
+                                        <button
+                                            onClick={() => onSelectSection(selectedSection === "03" ? null : "03")}
+                                            className={`flex items-center space-x-1 text-xs px-2.5 py-1 rounded-md transition-all ${
+                                                selectedSection === "03"
+                                                    ? "bg-sky-500 text-white font-semibold shadow-xs"
+                                                    : isDark 
+                                                        ? "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 border border-white/[0.08]" 
+                                                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                                            }`}
+                                            title="Scope Optimization Copilot to Section 03"
+                                        >
+                                            <Icon name="sparkles" className="w-3 h-3 text-current" />
+                                            <span>{selectedSection === "03" ? "Scoped" : "Ask Copilot"}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <p className={`text-xs leading-relaxed ${isDark ? "text-zinc-400" : "text-slate-600"}`}>
+                                    Expanding the squared penalty with your updated parameters yields:
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className={`p-3.5 rounded-lg border font-mono text-xs flex flex-col items-center justify-center space-y-1 ${
+                                        isDark ? "bg-[#090A0D] border-white/[0.05]" : "bg-slate-50 border-slate-200"
+                                    }`}>
+                                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Diagonal Bias Term</span>
+                                        <LatexMath math={mathQii} inline={false} />
+                                    </div>
+
+                                    <div className={`p-3.5 rounded-lg border font-mono text-xs flex flex-col items-center justify-center space-y-1 ${
+                                        isDark ? "bg-[#090A0D] border-white/[0.05]" : "bg-slate-50 border-slate-200"
+                                    }`}>
+                                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Off-Diagonal Coupler</span>
+                                        <LatexMath math={mathQij} inline={false} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* D-WAVE SECTION 4: ACTIONS & LATEX EXPORT */}
+                            <div className="flex items-center justify-between pt-2">
+                                <button
+                                    onClick={onCopyLatex}
+                                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                        isDark ? "border-white/[0.08] hover:bg-white/[0.04] text-zinc-300" : "border-slate-200 hover:bg-slate-100 text-slate-700"
+                                    }`}
+                                >
+                                    <Icon name="copy" className="w-3.5 h-3.5" />
+                                    <span>Copy LaTeX Formulation</span>
+                                </button>
+
+                                <button
+                                    onClick={onRecompile}
+                                    className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition-colors shadow-sm"
+                                >
+                                    <Icon name="zap" className="w-3.5 h-3.5 fill-current" />
+                                    <span>Recompile Pipeline to QUBO</span>
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className={`p-5 rounded-xl border space-y-4 ${
+                            isDark ? "bg-[#111217] border-white/[0.08]" : "bg-white border-slate-200 shadow-xs"
+                        }`}>
+                            <h3 className="font-semibold text-sm">Qiskit Analytic State Equations</h3>
+                            <div className="p-4 rounded-lg font-mono text-xs overflow-x-auto flex flex-col items-center space-y-3 bg-[#090A0D]">
+                                <LatexMath math="|\\psi\\rangle = \\cos(\\theta/2)|0\\rangle + e^{i\\phi}\\sin(\\theta/2)|1\\rangle" inline={false} />
+                                <LatexMath math="|\\Phi^+\\rangle = \\frac{1}{\\sqrt{2}}(|00\\rangle + |11\\rangle)" inline={false} />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        
+        const ASSET_NAMES = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"];
+        const ASSET_SPECS = [
+            { name: "Wind_A", cost: 9.0, yield: 45.0 },
+            { name: "Solar_B", cost: 7.0, yield: 50.0 },
+            { name: "Battery_C", cost: 6.0, yield: 30.0 },
+            { name: "Hydro_D", cost: 8.0, yield: 55.0 }
+        ];
+
+        const computeQMatrix = ({ budgetCap, gammaWeight, penaltyLambda, hasMutualExclusion, lambdaEx = 8.0 }) => {
+            const n = ASSET_SPECS.length;
+            const matrix = Array(n).fill(0).map(() => Array(n).fill(0));
+            const c = ASSET_SPECS.map(a => a.cost);
+            const r = ASSET_SPECS.map(a => a.yield);
+            const b = budgetCap;
+            const lam = penaltyLambda;
+            const gam = gammaWeight;
+
+            for (let i = 0; i < n; i++) {
+                const objBias = (c[i] - gam * r[i] * 0.45);
+                const constrDiag = 0.05 * lam * (c[i] * c[i] - 2 * (b / 2.0) * c[i]);
+                matrix[i][i] = parseFloat((objBias + constrDiag).toFixed(1));
+            }
+
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    let coupler = parseFloat((0.035 * lam * c[i] * c[j]).toFixed(1));
+                    // Mode C: Pairwise mutual exclusion penalty between Wind_A (0) and Solar_B (1)
+                    if (hasMutualExclusion && ((i === 0 && j === 1) || (i === 1 && j === 0))) {
+                        coupler = parseFloat((coupler + lambdaEx).toFixed(1));
+                    }
+                    matrix[i][j] = coupler;
+                    matrix[j][i] = coupler;
+                }
+            }
+            return matrix;
+        };
+
+        const getCopilotSolution = (params) => {
+            const { budgetCap, gammaWeight, penaltyLambda, minDiversity, enableDiversity } = params;
+
+            if (budgetCap >= 24.0) {
+                return {
+                    title: "Solar_B + Hydro_D + Wind_A",
+                    feasible: "100% Feasible",
+                    feasibleClass: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+                    indicatorClass: "bg-emerald-500",
+                    objectiveScore: (150.0 * gammaWeight).toFixed(1),
+                    cost: "24.0",
+                    maxCost: budgetCap.toFixed(1),
+                    groundEnergy: (-150.0 * gammaWeight).toFixed(2),
+                    slacks: "6 Bits Active",
+                    explanation: `Expanded budget accommodates 3 high-yield assets. All diversity constraints (K=${enableDiversity ? minDiversity : 1}) satisfied with zero penalty slack.`
+                };
+            } else if (budgetCap >= 15.0) {
+                if (enableDiversity && minDiversity > 2) {
+                    return {
+                        title: "Constraint Infeasible",
+                        feasible: "Penalty Elevation",
+                        feasibleClass: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+                        indicatorClass: "bg-amber-500",
+                        objectiveScore: (90.0 * gammaWeight).toFixed(1),
+                        cost: "15.0",
+                        maxCost: budgetCap.toFixed(1),
+                        groundEnergy: `+${(12.5 * penaltyLambda).toFixed(2)}`,
+                        slacks: `Requires K=${minDiversity} (Deficit +1)`,
+                        explanation: `Budget ceiling (${budgetCap.toFixed(1)}M) only permits 2 assets, violating the required min diversity K=${minDiversity}. Higher budget (≥$24M) needed.`
+                    };
+                }
+                return {
+                    title: "Solar_B + Hydro_D",
+                    feasible: "100% Feasible",
+                    feasibleClass: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+                    indicatorClass: "bg-emerald-500",
+                    objectiveScore: (90.0 * gammaWeight).toFixed(1),
+                    cost: "15.0",
+                    maxCost: budgetCap.toFixed(1),
+                    groundEnergy: (-90.0 * gammaWeight).toFixed(2),
+                    slacks: "4 Bits Active",
+                    explanation: `Optimal Pareto frontier: High clean MW yield per dollar. Fits within ${budgetCap.toFixed(1)}M budget with ${(budgetCap - 15.0).toFixed(1)}M headroom.`
+                };
+            } else if (budgetCap >= 8.0) {
+                if (enableDiversity && minDiversity >= 2) {
+                    return {
+                        title: "Constraint Infeasible",
+                        feasible: "Budget Violation",
+                        feasibleClass: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+                        indicatorClass: "bg-rose-500",
+                        objectiveScore: (55.0 * gammaWeight).toFixed(1),
+                        cost: "8.0",
+                        maxCost: budgetCap.toFixed(1),
+                        groundEnergy: `+${(24.0 * penaltyLambda).toFixed(2)}`,
+                        slacks: `Requires K=${minDiversity} sites`,
+                        explanation: `Budget (${budgetCap.toFixed(1)}M) is insufficient to fund K=${minDiversity} assets (minimum 2 sites require at least $13.0M).`
+                    };
+                }
+                return {
+                    title: "Hydro_D",
+                    feasible: "100% Feasible",
+                    feasibleClass: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+                    indicatorClass: "bg-emerald-500",
+                    objectiveScore: (55.0 * gammaWeight).toFixed(1),
+                    cost: "8.0",
+                    maxCost: budgetCap.toFixed(1),
+                    groundEnergy: (-55.0 * gammaWeight).toFixed(2),
+                    slacks: "2 Bits Active",
+                    explanation: `Single highest-density clean asset selected within limited ${budgetCap.toFixed(1)}M budget.`
+                };
+            } else {
+                return {
+                    title: "Zero Allocation (Infeasible)",
+                    feasible: "Budget Insufficient",
+                    feasibleClass: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+                    indicatorClass: "bg-rose-500",
+                    objectiveScore: "0.0",
+                    cost: "0.0",
+                    maxCost: budgetCap.toFixed(1),
+                    groundEnergy: `+${(50.0 * penaltyLambda).toFixed(2)}`,
+                    slacks: "Violated",
+                    explanation: `Budget ceiling (${budgetCap.toFixed(1)}M) is lower than cheapest individual facility ($6.0M Battery / $7.0M Solar).`
+                };
+            }
+        };
+
+        function QuantumGuruStudio() {
+            // Theme Mode: "dark" | "light"
+            const [theme, setTheme] = useState("dark");
+            const isDark = theme === "dark";
+
+            // Projects State
+            const [projects, setProjects] = useState(initialProjects);
+            const [activeProject, setActiveProject] = useState(initialProjects[0]);
+            
+            // Framework follows active project
+            const framework = activeProject.framework;
+
+            // Navigation & Modals
+            const [showProjectModal, setShowProjectModal] = useState(false);
+            const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+            const [projectSearch, setProjectSearch] = useState("");
+            const [newProjName, setNewProjName] = useState("");
+            const [newProjFramework, setNewProjFramework] = useState("dwave");
+            const [newProjTemplate, setNewProjTemplate] = useState("portfolio");
+
+            // Hero View Selection (Dynamic per framework)
+            const [dwaveCode, setDwaveCode] = useState(DWAVE_SAMPLE_CODE);
+        const [qiskitCode, setQiskitCode] = useState(QISKIT_SAMPLE_CODE);
+        const [mathParams, setMathParams] = useState({
+            budgetCap: 18.0,
+            minDiversity: 2,
+            gammaWeight: 1.0,
+            penaltyLambda: 3.5,
+            enableDiversity: true,
+            hasMutualExclusion: false,
+            lambdaEx: 8.0
+        });
+        const [compiledMathParams, setCompiledMathParams] = useState({
+            budgetCap: 18.0,
+            minDiversity: 2,
+            gammaWeight: 1.0,
+            penaltyLambda: 3.5,
+            enableDiversity: true,
+            hasMutualExclusion: false,
+            lambdaEx: 8.0
+        });
+        
+        // Mode C: Copilot Chat & Interactive Refactoring State
+        const [copilotMessages, setCopilotMessages] = useState([
+            {
+                id: 1,
+                sender: "assistant",
+                text: "Quantum Formulation Copilot active. Ask me to add constraints (e.g. mutual exclusion, carbon limits), adjust Lagrange penalty multipliers, or modify your QUBO objective.",
+                timestamp: "Just now"
+            }
+        ]);
+        const [copilotInput, setCopilotInput] = useState("");
+        const [selectedMathSection, setSelectedMathSection] = useState("01");
+
+        // Auto-scroll Copilot chat on new messages
+        useEffect(() => {
+            const el = document.getElementById("copilot-chat-container");
+            if (el) el.scrollTop = el.scrollHeight;
+        }, [copilotMessages, isCopilotThinking]);
+
+        // Auto-scroll to selected section in math tab
+        useEffect(() => {
+            if (selectedMathSection) {
+                const el = document.getElementById("math-section-" + selectedMathSection);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, [selectedMathSection]);
+        const [isCopilotThinking, setIsCopilotThinking] = useState(false);
+        const [pendingAction, setPendingAction] = useState(null);
+        const [isModelDirty, setIsModelDirty] = useState(false);
+
+        // Derive active QUBO matrix and Copilot solution from compiled params
+        const activeQMatrix = computeQMatrix(compiledMathParams);
+        const activeCopilotSolution = getCopilotSolution(compiledMathParams);
+
+        // Track when user edits math params
+        const updateMathParams = (newParams) => {
+            setMathParams(newParams);
+            setIsModelDirty(true);
+        };
+
+        // Recompile Pipeline Handler
+        const handleRecompile = () => {
+            setIsModelDirty(false);
+            setCompiledMathParams({ ...mathParams });
+            
+            // 1. Generate updated D-Wave code with the new budget and penalty
+            const mutualExclusionLine = mathParams.hasMutualExclusion 
+                ? `,\n    mutual_exclusion=[(\"Wind_A\", \"Solar_B\")]  # H_mutual = ${mathParams.lambdaEx || 8.0} * x_wind * x_solar`
+                : "";
+            const updatedDwave = `# Quantum Guru — Clean Energy Portfolio Selection (QUBO)
+# Solver: D-Wave BinaryQuadraticModel & Simulated Annealer
+# Recompiled with Budget: ${mathParams.budgetCap}M, Lambda: ${mathParams.penaltyLambda}x${mathParams.hasMutualExclusion ? ", Mutual Exclusion: Wind_A ⟂ Solar_B (+8.0)" : ""}
+import dimod
+from dwave.samplers import SimulatedAnnealingSampler
+from qubo_matrix import get_qubo_model
+
+# 1. Ingest problem matrix with custom constraints & penalty multipliers
+Q_matrix, variable_names, penalty_lambda, offset = get_qubo_model(
+    budget=${mathParams.budgetCap},
+    penalty_lambda=${mathParams.penaltyLambda},
+    gamma=${mathParams.gammaWeight}${mutualExclusionLine}
+)
+
+# 2. Assemble D-Wave BQM Hamiltonian
+bqm = dimod.BinaryQuadraticModel.from_qubo(Q_matrix, offset=offset)
+
+# 3. Execute Quantum-Classical Annealing
+sampler = SimulatedAnnealingSampler()
+sampleset = sampler.sample(bqm, num_reads=2048)
+
+best = sampleset.first
+print(f"⚡ Recompiled Ground Energy: {best.energy:.4f}")
+print("Optimal Decisions:", [variable_names[i] for i, v in enumerate(best.sample) if v == 1])`;
+
+            setDwaveCode(updatedDwave);
+            showToast(`Recompiled QUBO: Budget $${mathParams.budgetCap}M, Lambda $${mathParams.penaltyLambda}x${mathParams.hasMutualExclusion ? ' + Mutual Exclusion (Wind_A ⟂ Solar_B)' : ''}!`);
+        };
+
+        // Mode C: Apply Copilot-Proposed Mutual Exclusion and Recompile
+        const handleApplyMutualExclusion = () => {
+            const updatedParams = {
+                ...mathParams,
+                hasMutualExclusion: true,
+                lambdaEx: 8.0
+            };
+            setMathParams(updatedParams);
+            setCompiledMathParams(updatedParams);
+            setIsModelDirty(false);
+
+            const mutualExLine = `,\n    mutual_exclusion=[(\"Wind_A\", \"Solar_B\")]  # H_mutual = 8.0 * x_wind * x_solar`;
+            const updatedDwave = `# Quantum Guru — Clean Energy Portfolio Selection (QUBO)
+# Solver: D-Wave BinaryQuadraticModel & Simulated Annealer
+# Recompiled with Mutual Exclusion: Wind_A ⟂ Solar_B (λ_ex = +8.0)
+import dimod
+from dwave.samplers import SimulatedAnnealingSampler
+from qubo_matrix import get_qubo_model
+
+# 1. Ingest problem matrix with custom constraints & penalty multipliers
+Q_matrix, variable_names, penalty_lambda, offset = get_qubo_model(
+    budget=${updatedParams.budgetCap},
+    penalty_lambda=${updatedParams.penaltyLambda},
+    gamma=${updatedParams.gammaWeight}${mutualExLine}
+)
+
+# 2. Assemble D-Wave BQM Hamiltonian
+bqm = dimod.BinaryQuadraticModel.from_qubo(Q_matrix, offset=offset)
+
+# 3. Execute Quantum-Classical Annealing
+sampler = SimulatedAnnealingSampler()
+sampleset = sampler.sample(bqm, num_reads=2048)
+
+best = sampleset.first
+print(f"⚡ Recompiled Ground Energy: {best.energy:.4f}")
+print("Optimal Decisions:", [variable_names[i] for i, v in enumerate(best.sample) if v == 1])`;
+
+            setDwaveCode(updatedDwave);
+            setPendingAction(null);
+            
+            setCopilotMessages(prev => [
+                ...prev,
+                {
+                    id: Date.now(),
+                    sender: "assistant",
+                    text: "✅ Recompiled with Mutual Exclusion! Coupler Q[Wind_A, Solar_B] elevated by +8.0 energy units. KaTeX formulation, Q-Matrix heatmap, and Python code updated.",
+                    timestamp: "Just now",
+                    isSuccess: true
+                }
+            ]);
+
+            showToast("⚡ Recompiled with Mutual Exclusion: Wind_A ⟂ Solar_B (+8.0 coupler penalty)!");
+        };
+
+        // Mode C: Handle User Submitting Copilot Prompt
+        const handleSendCopilotPrompt = (promptText) => {
+            const query = promptText || copilotInput;
+            if (!query.trim()) return;
+
+            const userMsg = {
+                id: Date.now(),
+                sender: "user",
+                text: query,
+                timestamp: "Just now"
+            };
+
+            setCopilotMessages(prev => [...prev, userMsg]);
+            setCopilotInput("");
+            setIsCopilotThinking(true);
+
+            setTimeout(() => {
+                setIsCopilotThinking(false);
+                const lower = query.toLowerCase();
+
+                // QUERY 1: Mutual Exclusion
+                if (lower.includes("wind") && lower.includes("solar") || lower.includes("mutual") || lower.includes("simultaneous") || lower.includes("exclusion")) {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            isMutualProposal: true,
+                            text: "Formulating quadratic penalty term for pairwise mutual exclusion between Wind_A (x₁) and Solar_B (x₂):",
+                            mathFormula: "\\mathcal{H}_{\\text{mutual}}(x) = \\lambda_{\\text{ex}} (x_{\\text{wind}} \\cdot x_{\\text{solar}})",
+                            breakdown: [
+                                "Updates primal formulation: x_wind + x_solar ≤ 1",
+                                "Adds +λ_ex (+8.0) to row Wind_A, col Solar_B in Q-Matrix Heatmap",
+                                "Elevates infeasible state |11..⟩ by +8.0 energy units above ground state"
+                            ],
+                            timestamp: "Just now"
+                        }
+                    ]);
+                    setPendingAction("mutual_exclusion");
+
+                // QUERY 2: Carbon Emissions Ceiling
+                } else if (lower.includes("carbon") || lower.includes("emission") || lower.includes("e_max")) {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            text: "Formulating carbon intensity ceiling constraint across clean energy facilities:",
+                            mathFormula: "\\sum_{i=1}^4 E_i x_i \\le E_{\\text{max}} \\implies \\mathcal{H}_{\\text{carbon}} = \\lambda_{\\text{co2}} \\left( \\sum_{i=1}^4 E_i x_i + s_{\\text{co2}} - E_{\\text{max}} \\right)^2",
+                            breakdown: [
+                                "Ingests emissions vector: E = [12.0, 1.5, 4.0, 0.8] gCO₂/kWh",
+                                "Adds logarithmic continuous relaxation slack bits (s_co2)",
+                                "Automatically bounds total lifecycle CO₂ without violating budget"
+                            ],
+                            timestamp: "Just now"
+                        }
+                    ]);
+
+                // QUERY 3: Markowitz Covariance Risk
+                } else if (lower.includes("markowitz") || lower.includes("covariance") || lower.includes("sigma") || lower.includes("risk")) {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            text: "Converting objective to Markowitz quadratic mean-variance portfolio optimization:",
+                            mathFormula: "\\min_{x \\in \\{0, 1\\}^4} \\quad \\mathcal{H}_{\\text{obj}}(x) = \\sum_{i=1}^4 \\sum_{j=1}^4 \\sigma_{ij} x_i x_j - \\gamma \\sum_{i=1}^4 \\mu_i x_i",
+                            breakdown: [
+                                "Substitutes individual asset variances into diagonal biases Q_ii",
+                                "Directly projects pairwise meteorological covariance σ_ij into off-diagonal couplers Q_ij",
+                                "Native 2-body QUBO formulation (requires zero auxiliary ancilla qubits)"
+                            ],
+                            timestamp: "Just now"
+                        }
+                    ]);
+
+                // QUERY 4: Lambda Optimal Bound Check
+                } else if (lower.includes("optimal") || lower.includes("bound") || lower.includes("delta h")) {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            text: "Spectral audit: Verifying Lagrange multiplier against classical violation energy gaps:",
+                            mathFormula: "\\lambda_{\\text{crit}} > \\max_x |\\Delta \\mathcal{H}_{\\text{obj}}| = |C_{\\text{wind}} - \\gamma R_{\\text{wind}}| = |9.0 - 20.25| = 11.25",
+                            breakdown: [
+                                "Minimum facility capex step: min(C_i) = $6.0M (Battery_C)",
+                                "Theoretical critical multiplier threshold: λ_crit = 11.25 / 6.0 = 1.88x",
+                                "✅ Confirmed: Current λ = 3.5x strictly guarantees ground-state feasibility without analog DAC saturation"
+                            ],
+                            timestamp: "Just now"
+                        }
+                    ]);
+
+                // QUERY 5: Slack Bit Decomposition (2^k vs One-Hot)
+                } else if (lower.includes("slack") || lower.includes("one-hot") || lower.includes("2^k") || lower.includes("decomposition")) {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            text: "Comparing inequality slack bit encoding strategies on D-Wave Advantage QPU:",
+                            mathFormula: "\\text{Logarithmic: } s = \\sum_{k=0}^1 2^k s_k \\quad \\text{vs} \\quad \\text{One-Hot: } s = \\sum_{j=1}^3 \\sigma_j \\quad (\\sum \\sigma_j = 1)",
+                            breakdown: [
+                                "Logarithmic Encoding (Active): Requires only 2 auxiliary qubits (saves 33% qubit overhead)",
+                                "One-Hot Encoding: Uniform coupler weights, but requires ancillary Lagrange penalty term",
+                                "Recommendation: Retain logarithmic 2^k for optimal embedding on Pegasus topology"
+                            ],
+                            timestamp: "Just now"
+                        }
+                    ]);
+
+                // QUERY 6: Coupler Q_01 Derivation
+                } else if (lower.includes("q_01") || lower.includes("how coupler") || lower.includes("derived") || lower.includes("15.7")) {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            text: "Analytical step-by-step derivation for Q-Matrix coupler Q[Wind_A, Solar_B]:",
+                            mathFormula: "Q_{01} = \\underbrace{2\\lambda C_1 C_2 \\times 0.035}_{\\text{Budget Expansion: } 7.7} + \\underbrace{\\lambda_{\\text{ex}}}_{\\text{Mutual Exclusion: } 8.0} = \\mathbf{15.7}",
+                            breakdown: [
+                                "Base Quadratic Budget Penalty: 2(3.5)(9.0)(7.0)(0.035) = 7.7 (repulsive penalty from shared budget)",
+                                "Mutual Exclusion Penalty: +λ_ex = +8.0 (injected energy wall preventing |11..⟩)",
+                                "Total coupler Q_01 = 15.7: Forces annealer to penalize simultaneous selection by +15.7 energy units"
+                            ],
+                            timestamp: "Just now"
+                        }
+                    ]);
+
+                // QUERY 7: DAC Dynamic Range & Conditioning
+                } else if (lower.includes("dac") || lower.includes("dynamic range") || lower.includes("conditioning")) {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            text: "Hardware physical conditioning audit for D-Wave Advantage 4400+ QPU:",
+                            mathFormula: "\\text{Dynamic Range} = \\frac{\\max |Q_{ij}|}{\\min |Q_{ij, \\ne 0}|} = \\frac{50.8}{5.1} = 9.96 \\le 10.0",
+                            breakdown: [
+                                "Maximum energy well: Q_hydro = -50.8",
+                                "Minimum non-zero coupling: Q_solar_battery = +5.1",
+                                "Effective Dynamic Range: 9.96:1 (Strictly within D-Wave 14-bit integer DAC resolution; no rescaling needed)"
+                            ],
+                            timestamp: "Just now"
+                        }
+                    ]);
+
+                // QUERY 8: Ising Symmetrization
+                } else if (lower.includes("ising") || lower.includes("symmetrize") || lower.includes("interaction matrix")) {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            text: "Transforming upper-triangular QUBO to symmetric transverse-field Ising spin glass Hamiltonian:",
+                            mathFormula: "x_i = \\frac{1 - s_i}{2} \\implies \\mathcal{H}_{\\text{Ising}} = \\sum_{i=1}^4 h_i s_i + \\sum_{i < j} J_{ij} s_i s_j",
+                            breakdown: [
+                                "Local longitudinal magnetic field: h_i = -½ Q_ii - ¼ ∑_{j≠i} Q_ij",
+                                "Pairwise exchange coupling: J_ij = ¼ Q_ij = ¼(15.7) = +3.925 (antiferromagnetic repulsion)",
+                                "Direct 1-to-1 physical mapping to D-Wave superconducting flux qubits and rf-SQUID couplers"
+                            ],
+                            timestamp: "Just now"
+                        }
+                    ]);
+
+                // Default
+                } else {
+                    setCopilotMessages(prev => [
+                        ...prev,
+                        {
+                            id: Date.now() + 1,
+                            sender: "assistant",
+                            text: `Understood. I can help refactor your optimization formulation. Try selecting a section on the left or picking one of the context-aware prompt chips below.`,
+                            timestamp: "Just now"
+                        }
+                    ]);
+                }
+            }, 300);
+        };
+
+        const [heroTab, setHeroTab] = useState("formulation"); // "code" | "visual" | "results"
+
+            // UI State
+            const [showTerminal, setShowTerminal] = useState(false);
+            const [isExecuting, setIsExecuting] = useState(false);
+            const [wavefrontStep, setWavefrontStep] = useState(0);
+            const [hoveredCell, setHoveredCell] = useState(null);
+            const [toastMsg, setToastMsg] = useState(null);
+
+            // Filtered projects
+            const filteredProjects = projects.filter(p => 
+                p.title.toLowerCase().includes(projectSearch.toLowerCase()) ||
+                p.desc.toLowerCase().includes(projectSearch.toLowerCase())
+            );
+
+            // Switch Project
+            const handleSelectProject = (proj) => {
+                setActiveProject(proj);
+                setShowProjectModal(false);
+                setHeroTab("code");
+                showToast(`Switched to project: ${proj.title}`);
+            };
+
+            // Create New Project Handler
+            const handleCreateProject = (e) => {
+                e.preventDefault();
+                if (!newProjName.trim()) return;
+
+                const id = newProjName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+                const newProj = {
+                    id: id,
+                    title: newProjName,
+                    desc: newProjFramework === "dwave" 
+                        ? "D-Wave Binary Quadratic Model formulation & simulated annealing." 
+                        : "Qiskit parameterized quantum circuit & Aer simulation.",
+                    framework: newProjFramework,
+                    updated: "Just now",
+                    files: newProjFramework === "dwave" ? ["main.py", "qubo_matrix.py"] : ["main.py", "circuit.qasm"],
+                    activeFile: "main.py"
+                };
+
+                setProjects([newProj, ...projects]);
+                setActiveProject(newProj);
+                setShowNewProjectModal(false);
+                setNewProjName("");
+                showToast(`Created new project: ${newProj.title}`);
+            };
+
+            const handleExecute = () => {
+                setIsExecuting(true);
+                setWavefrontStep(0);
+                const target = framework === "dwave" ? "dwave_simulated_annealing" : "aer_simulator";
+                showToast(`Dispatching to ${target}...`);
+
+                let step = 0;
+                const interval = setInterval(() => {
+                    step += 1;
+                    setWavefrontStep(step);
+                    if (step > 8) {
+                        clearInterval(interval);
+                        setIsExecuting(false);
+                        const msg = framework === "dwave" 
+                            ? "Annealing Converged! Ground Energy: -90.0000" 
+                            : "Aer Simulation Completed! 4096 shots sampled (Fidelity 99.8%)";
+                        showToast(msg);
+                    }
+                }, 200);
+            };
+
+            
+        // Global Keyboard Shortcut: ⌘B / Ctrl+B to Recompile QUBO
+        useEffect(() => {
+            const handleKeyDown = (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+                    e.preventDefault();
+                    handleRecompile();
+                }
+            };
+            window.addEventListener('keydown', handleKeyDown);
+            return () => window.removeEventListener('keydown', handleKeyDown);
+        }, [mathParams]);
+
+        const showToast = (msg) => {
+                setToastMsg(msg);
+                setTimeout(() => setToastMsg(null), 3000);
+            };
+
+            return (
+                <div className={`w-screen h-screen flex flex-col font-sans transition-colors duration-200 ${
+                    isDark ? "bg-[#090A0D] text-zinc-300" : "bg-[#F8FAFC] text-slate-700"
+                }`}>
+                    
+                    {/* ── TOP STUDIO HEADER ── */}
+                    <header className={`h-12 border-b px-4 flex items-center justify-between shrink-0 z-30 transition-colors ${
+                        isDark 
+                            ? "bg-[#0E0F13] border-white/[0.07]" 
+                            : "bg-white border-slate-200/80 shadow-xs"
+                    }`}>
+                        
+                        {/* Zone 1: Branding + WORKSPACE PROJECT SELECTOR */}
+                        <div className="flex items-center space-x-3">
+                            <div className={`w-6 h-6 rounded flex items-center justify-center font-mono text-xs font-bold ${
+                                isDark 
+                                    ? "bg-zinc-800 border border-zinc-700 text-sky-400" 
+                                    : "bg-sky-50 border border-sky-200 text-sky-600"
+                            }`}>
+                                Q
+                            </div>
+                            <span className={`text-xs font-semibold tracking-tight ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                                Quantum Guru
+                            </span>
+                            <span className={isDark ? "text-zinc-600" : "text-slate-300"}>/</span>
+
+                            {/* PROJECT SELECTOR BUTTON (Linear / Cursor Style) */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowProjectModal(true)}
+                                    className={`flex items-center space-x-2 px-2.5 py-1 rounded-md text-xs font-mono border transition-all ${
+                                        isDark 
+                                            ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-zinc-200" 
+                                            : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800"
+                                    }`}
+                                >
+                                    <Icon name="folder" className={`w-3.5 h-3.5 ${framework === "dwave" ? "text-emerald-500" : "text-sky-500"}`} />
+                                    <span className="font-semibold">{activeProject.id}</span>
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-sans uppercase font-medium ${
+                                        framework === "dwave"
+                                            ? isDark ? "bg-emerald-950/60 text-emerald-400" : "bg-emerald-100 text-emerald-800"
+                                            : isDark ? "bg-sky-950/60 text-sky-400" : "bg-sky-100 text-sky-800"
+                                    }`}>
+                                        {framework}
+                                    </span>
+                                    <Icon name="chevronDown" className="w-3 h-3 text-zinc-500" />
+                                </button>
+                            </div>
+
+                            {/* "+ New" Direct Quick Trigger */}
+                            <button
+                                onClick={() => setShowNewProjectModal(true)}
+                                title="Create New Project"
+                                className={`flex items-center space-x-1 px-2 py-1 rounded-md text-xs border transition-colors ${
+                                    isDark 
+                                        ? "bg-white/[0.02] hover:bg-white/[0.06] border-white/[0.08] text-zinc-400 hover:text-zinc-200" 
+                                        : "bg-white hover:bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900"
+                                }`}
+                            >
+                                <Icon name="plus" className="w-3 h-3" />
+                                <span className="font-medium text-[11px]">New</span>
+                            </button>
+                        </div>
+
+                        {/* Zone 2: Hero Stage View Selector (Dynamic per framework) */}
+                        <div className={`flex items-center p-0.5 rounded-lg border text-xs font-medium ${
+                            isDark ? "bg-[#090A0D] border-white/[0.08]" : "bg-slate-100 border-slate-200"
+                        }`}>
+                            <button
+                                onClick={() => setHeroTab("code")}
+                                className={`px-3 py-1 rounded transition-all ${
+                                    heroTab === "code"
+                                        ? isDark ? "bg-zinc-800 text-zinc-100 shadow-xs" : "bg-white text-slate-900 shadow-xs font-semibold"
+                                        : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-500 hover:text-slate-900"
+                                }`}
+                            >
+                                Code
+                            </button>
+                            
+                            <button
+                                onClick={() => setHeroTab("formulation")}
+                                className={`px-3 py-1 rounded transition-all ${
+                                    heroTab === "formulation"
+                                        ? isDark ? "bg-zinc-800 text-zinc-100 shadow-xs" : "bg-white text-slate-900 shadow-xs font-semibold"
+                                        : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-500 hover:text-slate-900"
+                                }`}
+                            >
+                                {framework === "qiskit" ? "State Equations" : "Math Formulation"}
+                            </button>
+                            
+                            <button
+                                onClick={() => setHeroTab("visual")}
+                                className={`px-3 py-1 rounded transition-all ${
+                                    heroTab === "visual"
+                                        ? isDark ? "bg-zinc-800 text-zinc-100 shadow-xs" : "bg-white text-slate-900 shadow-xs font-semibold"
+                                        : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-500 hover:text-slate-900"
+                                }`}
+                            >
+                                {framework === "qiskit" ? "Circuit Wire" : "Q-Matrix Heatmap"}
+                            </button>
+
+                            <button
+                                onClick={() => setHeroTab("results")}
+                                className={`px-3 py-1 rounded transition-all ${
+                                    heroTab === "results"
+                                        ? isDark ? "bg-zinc-800 text-zinc-100 shadow-xs" : "bg-white text-slate-900 shadow-xs font-semibold"
+                                        : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-500 hover:text-slate-900"
+                                }`}
+                            >
+                                {framework === "qiskit" ? "State Histogram" : "Energy Spectrum"}
+                            </button>
+                        </div>
+
+                        {/* Zone 3: Light/Dark Theme Switcher + Primary Action Button */}
+                        <div className="flex items-center space-x-3">
+                            
+                            {/* THEME TOGGLE (Sun / Moon) */}
+                            <button
+                                onClick={() => {
+                                    const next = isDark ? "light" : "dark";
+                                    setTheme(next);
+                                    showToast(`Switched to ${next === "light" ? "Nordic Cleanroom (Light)" : "Obsidian Lumina (Dark)"} mode`);
+                                }}
+                                title="Toggle Dark/Light Mode"
+                                className={`p-1.5 rounded-md border transition-colors ${
+                                    isDark 
+                                        ? "bg-zinc-800/80 border-white/[0.08] text-amber-300 hover:bg-zinc-700" 
+                                        : "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                                }`}
+                            >
+                                <Icon name={isDark ? "sun" : "moon"} className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* PRIMARY CTA */}
+                            <button
+                                onClick={handleExecute}
+                                disabled={isExecuting}
+                                className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-xs ${
+                                    isExecuting
+                                        ? "bg-amber-500/20 text-amber-500 border border-amber-500/30"
+                                        : isDark
+                                            ? "bg-zinc-100 hover:bg-white text-zinc-950 border border-white"
+                                            : "bg-slate-900 hover:bg-slate-800 text-white border border-slate-900"
+                                }`}
+                            >
+                                <Icon name="play" className="w-3.5 h-3.5 fill-current" />
+                                <span>{isExecuting ? "Executing..." : framework === "dwave" ? "Solve Annealer" : "Simulate on Aer"}</span>
+                                <span className="text-[10px] opacity-60 font-mono ml-1">⌘↵</span>
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* ── 2-COLUMN CALM STUDIO WORKBENCH ── */}
+                    <div className="flex-1 flex overflow-hidden">
+                        
+                        {/* HERO CANVAS (70% Spacious Center Stage) */}
+                        <main className={`flex-1 flex flex-col min-w-0 border-r relative transition-colors ${
+                            isDark 
+                                ? "bg-[#090A0D] border-white/[0.07]" 
+                                : "bg-white border-slate-200/80"
+                        }`}>
+                            
+                            {/* ── UNIFIED SLENDER HERO SUBHEADER ── */}
+                            <div className={`h-9 px-4 border-b flex items-center justify-between text-xs font-mono shrink-0 select-none ${
+                                isDark ? "bg-[#0E0F13]/70 border-white/[0.07] text-zinc-400" : "bg-slate-50 border-slate-200 text-slate-500"
+                            }`}>
+                                {/* Left: Active File / Context */}
+                                <div className="flex items-center space-x-2.5">
+                                    <span className="text-emerald-500 text-sm">
+                                        {heroTab === "code" ? "🐍" : heroTab === "formulation" ? "📐" : heroTab === "visual" ? (framework === "qiskit" ? "⚛️" : "📊") : "📈"}
+                                    </span>
+                                    <span className={`font-medium ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
+                                        {heroTab === "code" 
+                                            ? activeProject.activeFile 
+                                            : heroTab === "formulation"
+                                                ? (framework === "qiskit" ? "statevector_equations.tex" : "qubo_penalty_formulation.tex")
+                                                : heroTab === "visual" 
+                                                    ? (framework === "qiskit" ? "circuit_schematic.wire" : "qubo_interactions.mat")
+                                                    : (framework === "qiskit" ? "state_probabilities.hist" : "energy_spectrum.eig")}
+                                    </span>
+                                    <span className="text-zinc-600">in</span>
+                                    <span className={isDark ? "text-zinc-400" : "text-slate-600"}>{activeProject.title}</span>
+                                    
+                                    <span className="text-zinc-600 hidden sm:inline">•</span>
+                                    <div className="hidden sm:flex items-center space-x-1.5 text-[11px]">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${framework === "dwave" ? "bg-emerald-500" : "bg-sky-500"}`}></span>
+                                        <span className={framework === "dwave" ? "text-emerald-500" : "text-sky-500"}>
+                                            {framework === "dwave" ? "D-Wave BQM Verified" : "Qiskit Aer Compiled"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Right: Contextual Controls (Legend & Actions for Code, Telemetry for Visual/Results) */}
+                                {heroTab === "code" ? (
+                                    <div className="flex items-center space-x-3">
+                                        <div className="flex items-center space-x-1.5">
+                                            <button
+                                                onClick={() => {
+                                                    if (framework === "dwave") setDwaveCode(DWAVE_SAMPLE_CODE);
+                                                    else setQiskitCode(QISKIT_SAMPLE_CODE);
+                                                    showToast("Template reset to default!");
+                                                }}
+                                                title="Reset code to clean template"
+                                                className={`flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] border transition-colors ${
+                                                    isDark 
+                                                        ? "border-white/[0.08] hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200" 
+                                                        : "border-slate-200 hover:bg-slate-100 text-slate-600"
+                                                }`}
+                                            >
+                                                <span>↺ Reset</span>
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const currentVal = framework === "dwave" ? dwaveCode : qiskitCode;
+                                                    navigator.clipboard.writeText(currentVal);
+                                                    showToast("Code copied to clipboard!");
+                                                }}
+                                                title="Copy full code"
+                                                className={`flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] border transition-colors ${
+                                                    isDark 
+                                                        ? "border-white/[0.08] hover:bg-white/[0.04] text-zinc-300" 
+                                                        : "border-slate-200 hover:bg-slate-100 text-slate-700"
+                                                }`}
+                                            >
+                                                <Icon name="copy" className="w-3 h-3" />
+                                                <span>Copy</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center space-x-3 text-[11px] font-mono text-zinc-500">
+                                        <span>{framework === "qiskit" ? "3 Qubits · 3 Classical" : "42 Variables · Advantage QPU"}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* ── VIEW 1: MONACO CODE EDITOR ── */}
+                            {heroTab === "code" && (
+                                <CodeEditor
+                                    code={framework === "dwave" ? dwaveCode : qiskitCode}
+                                    onChange={(newVal) => {
+                                        if (framework === "dwave") setDwaveCode(newVal);
+                                        else setQiskitCode(newVal);
+                                    }}
+                                    isDark={isDark}
+                                    framework={framework}
+                                    onReset={() => {
+                                        if (framework === "dwave") setDwaveCode(DWAVE_SAMPLE_CODE);
+                                        else setQiskitCode(QISKIT_SAMPLE_CODE);
+                                        setToastMsg("Template reset to default!");
+                                        setTimeout(() => setToastMsg(null), 2000);
+                                    }}
+                                    onCopy={() => {
+                                        const currentVal = framework === "dwave" ? dwaveCode : qiskitCode;
+                                        navigator.clipboard.writeText(currentVal);
+                                        setToastMsg("Code copied to clipboard!");
+                                        setTimeout(() => setToastMsg(null), 2000);
+                                    }}
+                                />
+                            )}
+
+                            {/* ── VIEW: MATHEMATICAL FORMULATION ── */}
+                            {heroTab === "formulation" && (
+                                <FormulationView
+                                    framework={framework}
+                                    isDark={isDark}
+                                    mathParams={mathParams}
+                                    setMathParams={updateMathParams}
+                                    onRecompile={handleRecompile}
+                                    isDirty={isModelDirty}
+                                    selectedSection={selectedMathSection}
+                                    onSelectSection={setSelectedMathSection}
+                                    onCopyLatex={() => {
+                                        navigator.clipboard.writeText(
+                                            `\\min \\sum C_i x_i - ${mathParams.gammaWeight}\\sum R_i x_i + ${mathParams.penaltyLambda}(\\sum C_i x_i + \\sum 2^k s_k - ${mathParams.budgetCap})^2`
+                                        );
+                                        showToast("LaTeX equation copied to clipboard!");
+                                    }}
+                                />
+                            )}
+
+                            {/* ── VIEW 2: VISUAL STAGE ── */}
+                            {heroTab === "visual" && (
+                                <div className="flex-1 p-6 overflow-auto">
+                                    {framework === "qiskit" ? (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between font-mono text-xs">
+                                                <span className={`font-semibold font-sans ${isDark ? "text-zinc-200" : "text-slate-900"}`}>
+                                                    Quantum Teleportation Circuit Schematic
+                                                </span>
+                                                <span className="text-[11px] text-zinc-500">3 Qubits · 3 Classical Bits</span>
+                                            </div>
+                                            
+                                            <div className={`rounded-xl border p-8 space-y-8 relative overflow-hidden ${
+                                                isDark ? "bg-[#0B0C10] border-white/[0.08] canvas-grid-dark" : "bg-slate-50 border-slate-200 canvas-grid-light"
+                                            }`}>
+                                                {[
+                                                    ["Rx", "B", "I", "I", "B", "CX-C", "H", "M"],
+                                                    ["I", "B", "H", "CX-C", "B", "CX-T", "I", "M"],
+                                                    ["I", "B", "I", "CX-T", "B", "I", "CX-T", "M"]
+                                                ].map((wire, qIdx) => (
+                                                    <div key={qIdx} className="flex items-center relative">
+                                                        <div className="w-16 font-mono text-xs text-zinc-400 shrink-0 font-medium">
+                                                            q[{qIdx}] <span className="text-[10px] text-zinc-500">|0⟩</span>
+                                                        </div>
+                                                        <div className={`absolute left-16 right-0 h-[1px] ${isDark ? "bg-zinc-800" : "bg-slate-300"}`}></div>
+                                                        <div className="flex-1 flex justify-between items-center relative z-10 pl-4">
+                                                            {wire.map((gate, gIdx) => (
+                                                                <div key={gIdx} className="w-10 h-10 flex items-center justify-center">
+                                                                    {gate === "B" ? (
+                                                                        <div className={`w-0.5 h-10 border-r-2 border-dashed ${isDark ? "border-zinc-700" : "border-slate-400"}`}></div>
+                                                                    ) : gate === "CX-C" ? (
+                                                                        <div className="w-3 h-3 rounded-full bg-sky-500"></div>
+                                                                    ) : gate === "CX-T" ? (
+                                                                        <div className="w-6 h-6 rounded-full border border-sky-500 bg-sky-500/10 text-sky-500 flex items-center justify-center font-mono text-xs font-bold">⊕</div>
+                                                                    ) : gate === "I" ? null : (
+                                                                        <div className={`w-8 h-8 rounded border flex items-center justify-center font-mono text-xs font-medium shadow-xs ${
+                                                                            isDark 
+                                                                                ? "bg-zinc-800/90 border-zinc-700 text-zinc-200" 
+                                                                                : "bg-white border-slate-300 text-slate-800"
+                                                                        }`}>
+                                                                            {gate}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between font-mono text-xs">
+                                                <span className={`font-semibold font-sans ${isDark ? "text-zinc-200" : "text-slate-900"}`}>
+                                                    Symmetric QUBO Coupling Matrix (Upper-Triangular)
+                                                </span>
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                                        λ = {compiledMathParams.penaltyLambda.toFixed(1)}x
+                                                    </span>
+                                                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                                        Budget B = ${compiledMathParams.budgetCap.toFixed(1)}M
+                                                    </span>
+                                                    {isModelDirty && (
+                                                        <span className="text-[10px] font-mono text-amber-400 animate-pulse">
+                                                            (Uncompiled edits pending)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className={`rounded-xl border p-6 space-y-3 ${
+                                                isDark ? "bg-[#0E0F13] border-white/[0.08]" : "bg-white border-slate-200 shadow-xs"
+                                            }`}>
+                                                <div className="overflow-x-auto space-y-2 font-mono text-xs">
+                                                    <div className="flex items-center space-x-2 pl-24 pb-1 text-[10px] text-zinc-500">
+                                                        {ASSET_NAMES.map((v, i) => <div key={i} className="w-20 text-center truncate">{v}</div>)}
+                                                    </div>
+                                                    {activeQMatrix.map((row, rIdx) => (
+                                                        <div key={rIdx} className="flex items-center space-x-2">
+                                                            <div className="w-24 text-[11px] text-zinc-400 font-medium truncate text-right pr-2">
+                                                                {["Wind_A", "Solar_B", "Battery_C", "Hydro_D"][rIdx]}
+                                                            </div>
+                                                            {row.map((val, cIdx) => {
+                                                                let bgStyle = isDark 
+                                                                    ? "bg-zinc-800/30 text-zinc-400 border-zinc-700/40" 
+                                                                    : "bg-slate-50 text-slate-600 border-slate-200";
+                                                                if (val < -10) bgStyle = isDark ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50 font-semibold" : "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold";
+                                                                else if (val > 0) bgStyle = isDark ? "bg-amber-950/40 text-amber-300 border-amber-800/40" : "bg-amber-50 text-amber-800 border-amber-200";
+
+                                                                const isMutual = compiledMathParams.hasMutualExclusion && ((rIdx === 0 && cIdx === 1) || (rIdx === 1 && cIdx === 0));
+                                                                let cellStyle = bgStyle;
+                                                                if (isMutual) {
+                                                                    cellStyle = isDark 
+                                                                        ? "bg-fuchsia-950/70 text-fuchsia-200 border-fuchsia-500 font-bold shadow-md shadow-fuchsia-500/20 ring-1 ring-fuchsia-400" 
+                                                                        : "bg-fuchsia-50 text-fuchsia-900 border-fuchsia-400 font-bold ring-1 ring-fuchsia-300";
+                                                                }
+
+                                                                return (
+                                                                    <div
+                                                                        key={cIdx}
+                                                                        onMouseEnter={() => setHoveredCell({ val, isMutual })}
+                                                                        onMouseLeave={() => setHoveredCell(null)}
+                                                                        className={`w-20 h-9 rounded border flex items-center justify-center font-mono text-xs cursor-pointer transition-all hover:scale-105 relative ${cellStyle}`}
+                                                                    >
+                                                                        {val.toFixed(1)}
+                                                                        {isMutual && (
+                                                                            <span className="absolute -top-1.5 -right-1 px-1 text-[8px] bg-fuchsia-500 text-white font-bold rounded-full uppercase tracking-tighter">
+                                                                                +8
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* ── VIEW 3: RESULTS STAGE ── */}
+                            {heroTab === "results" && (
+                                <div className="flex-1 p-6 overflow-auto space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className={`text-sm font-semibold font-sans ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                                            {framework === "dwave" ? "D-Wave Energy Spectrum (Top Ground States)" : "Qiskit Aer Statevector Measurement Counts"}
+                                        </h3>
+                                        <span className={`text-xs font-mono ${framework === "dwave" ? "text-emerald-500" : "text-sky-500"}`}>
+                                            {framework === "dwave" ? "Global Ground State: -90.0000" : "Total Shots: 4096"}
+                                        </span>
+                                    </div>
+
+                                    <div className={`p-6 rounded-xl border space-y-4 ${
+                                        isDark ? "bg-[#0E0F13] border-white/[0.08]" : "bg-white border-slate-200 shadow-xs"
+                                    }`}>
+                                        <div className="h-36 flex items-end space-x-3 pt-3 border-b border-zinc-700/40">
+                                            {[
+                                                { label: framework === "dwave" ? "|0101⟩" : "|000⟩", count: 2048, pct: 50.0, ground: true },
+                                                { label: framework === "dwave" ? "|1010⟩" : "|001⟩", count: 1890, pct: 46.1 },
+                                                { label: framework === "dwave" ? "|1100⟩" : "|010⟩", count: 85, pct: 2.1 },
+                                                { label: framework === "dwave" ? "|0011⟩" : "|111⟩", count: 73, pct: 1.8 }
+                                            ].map((item, idx) => (
+                                                <div key={idx} className="flex-1 flex flex-col items-center space-y-2">
+                                                    <div className="text-[11px] font-mono text-zinc-400">{item.pct}%</div>
+                                                    <div 
+                                                        className={`w-full rounded-t transition-all ${
+                                                            item.ground 
+                                                                ? framework === "dwave" ? "bg-emerald-500 shadow-sm" : "bg-sky-500 shadow-sm"
+                                                                : isDark ? "bg-zinc-700/60 hover:bg-zinc-600" : "bg-slate-300 hover:bg-slate-400"
+                                                        }`}
+                                                        style={{ height: `${item.pct * 1.8}px` }}
+                                                    ></div>
+                                                    <div className={`text-xs font-mono font-medium ${
+                                                        item.ground 
+                                                            ? framework === "dwave" ? "text-emerald-500" : "text-sky-500" 
+                                                            : isDark ? "text-zinc-400" : "text-slate-600"
+                                                    }`}>
+                                                        {item.label}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </main>
+
+                        {/* ── COPILOT ASSISTANT (30% Focused Sidebar) ── */}
+                        <aside className={`w-96 flex flex-col shrink-0 z-10 border-l transition-colors ${
+                            isDark ? "bg-[#0E0F13] border-white/[0.07]" : "bg-white border-slate-200/80"
+                        }`}>
+                            {/* Copilot Header */}
+                            <div className={`h-9 px-4 border-b flex items-center justify-between text-xs font-medium shrink-0 ${
+                                isDark ? "border-white/[0.07] text-zinc-400" : "border-slate-200 text-slate-500 bg-slate-50"
+                            }`}>
+                                <div className="flex items-center space-x-2">
+                                    <Icon name="sparkles" className={`w-3.5 h-3.5 ${framework === "dwave" ? "text-emerald-500" : "text-sky-500"}`} />
+                                    <span className={isDark ? "text-zinc-200 font-semibold" : "text-slate-800 font-semibold"}>
+                                        {framework === "dwave" ? "Optimization Copilot" : "Quantum Circuit Copilot"}
+                                    </span>
+                                    {compiledMathParams.hasMutualExclusion && (
+                                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30">
+                                            Wind_A ⟂ Solar_B
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="text-[10px] font-mono text-zinc-500">Qwen-27B AWQ</span>
+                            </div>
+
+                            {/* Section 1: Active Solution Status Pill */}
+                            <div className={`p-3.5 border-b shrink-0 space-y-2.5 ${
+                                isDark ? "bg-[#121318]/70 border-white/[0.06]" : "bg-slate-50/80 border-slate-200/80"
+                            }`}>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-emerald-500 flex items-center space-x-1.5">
+                                        <span className={`w-2 h-2 rounded-full ${activeCopilotSolution.indicatorClass}`}></span>
+                                        <span className="truncate max-w-[180px]">{activeCopilotSolution.title}</span>
+                                    </span>
+                                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${activeCopilotSolution.feasibleClass}`}>
+                                        {activeCopilotSolution.feasible}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400">
+                                    <span>Cost: <strong className={isDark ? "text-zinc-200" : "text-slate-800"}>${activeCopilotSolution.cost}M</strong> / ${activeCopilotSolution.maxCost}M</span>
+                                    <span>Score: <strong className="text-emerald-400">{activeCopilotSolution.objectiveScore}</strong></span>
+                                    <span>Energy: <strong className="text-amber-400">{activeCopilotSolution.groundEnergy}</strong></span>
+                                </div>
+                            </div>
+
+                            {/* Section 2: Interactive Copilot Chat Stream */}
+                            <div id="copilot-chat-container" className="flex-1 p-3.5 overflow-y-auto space-y-3.5 text-xs">
+                                {copilotMessages.map((msg) => (
+                                    <div 
+                                        key={msg.id} 
+                                        className={`flex flex-col space-y-1 ${msg.sender === "user" ? "items-end" : "items-start"}`}
+                                    >
+                                        <div className={`p-3 rounded-xl max-w-[92%] space-y-2 ${
+                                            msg.sender === "user"
+                                                ? "bg-sky-600 text-white shadow-sm rounded-tr-none font-medium text-[11.5px]"
+                                                : isDark 
+                                                    ? "bg-[#151720] border border-white/[0.08] text-zinc-200 shadow-sm rounded-tl-none" 
+                                                    : "bg-slate-100 border border-slate-200 text-slate-800 shadow-xs rounded-tl-none"
+                                        }`}>
+                                            <p className="leading-relaxed">{msg.text}</p>
+
+                                            {/* AI Mathematical Formulation Bubble */}
+                                            {msg.mathFormula && (
+                                                <div className="space-y-2.5 pt-1">
+                                                    {/* KaTeX Equation Output */}
+                                                    <div className={`p-2.5 rounded-lg font-mono text-xs flex justify-center border overflow-x-auto ${
+                                                        isDark ? "bg-[#090A0D] border-white/[0.06] text-amber-300" : "bg-white border-slate-300 text-slate-900"
+                                                    }`}>
+                                                        <LatexMath math={msg.mathFormula} inline={false} />
+                                                    </div>
+
+                                                    {/* Impact Checklist */}
+                                                    {msg.breakdown && (
+                                                        <div className="space-y-1 text-[11px] text-zinc-400">
+                                                            {msg.breakdown.map((item, idx) => (
+                                                                <div key={idx} className="flex items-start space-x-1.5">
+                                                                    <span className="text-sky-400 font-bold">•</span>
+                                                                    <span>{item}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Mode C Action Button: Recompile with Mutual Exclusion */}
+                                                    {msg.isMutualProposal && (
+                                                        <button
+                                                            onClick={handleApplyMutualExclusion}
+                                                            className="w-full py-2 px-3 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-md shadow-fuchsia-500/20"
+                                                        >
+                                                            <Icon name="zap" className="w-3.5 h-3.5 fill-current" />
+                                                            <span>Recompile with Mutual Exclusion</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-[9px] text-zinc-500 px-1 font-mono">{msg.timestamp}</span>
+                                    </div>
+                                ))}
+
+                                {isCopilotThinking && (
+                                    <div className="flex items-center space-x-2 text-zinc-400 text-xs italic p-2">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                                        <span>Qwen-27B formulating penalty Hamiltonian...</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Section 3: Context-Aware Suggested Prompt Chips + Input Bar */}
+                            <div className={`p-3 border-t shrink-0 space-y-2.5 ${isDark ? "border-white/[0.07] bg-[#0E0F13]" : "border-slate-200 bg-slate-50"}`}>
+                                
+                                {/* Active Section Context Scoping Pill */}
+                                {selectedMathSection && (
+                                    <div className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono flex items-center justify-between animate-in fade-in ${
+                                        isDark ? "bg-sky-950/40 border-sky-500/30 text-sky-300" : "bg-sky-50 border-sky-200 text-sky-900"
+                                    }`}>
+                                        <div className="flex items-center space-x-1.5 truncate">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse shrink-0"></span>
+                                            <span className="font-semibold text-[10px] uppercase tracking-wider text-sky-400 shrink-0">Context:</span>
+                                            <span className="truncate font-semibold">{
+                                                selectedMathSection === "01" ? "01 · Primal Model" :
+                                                selectedMathSection === "02" ? "02 · Penalty & Slacks" :
+                                                selectedMathSection === "03" ? "03 · Q-Matrix Couplers" : "Global Pipeline"
+                                            }</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setSelectedMathSection(null)}
+                                            className="text-zinc-400 hover:text-white text-xs ml-2 hover:bg-white/[0.1] w-4 h-4 rounded flex items-center justify-center shrink-0"
+                                            title="Clear section focus"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Context-Aware Prompt Chips */}
+                                <div className="space-y-1.5">
+                                    <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+                                        <span>Suggested Prompts ({selectedMathSection ? `Section ${selectedMathSection}` : "Studio"})</span>
+                                        <span className="text-[9px] lowercase text-sky-400/80">click to ask</span>
+                                    </div>
+
+                                    {/* SECTION 01 PROMPT CHIPS */}
+                                    {selectedMathSection === "01" && (
+                                        <div className="space-y-1 animate-in fade-in">
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Add carbon emissions ceiling constraint: ∑ E_i x_i ≤ E_max")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Add carbon emissions ceiling constraint: ∑ E_i x_i ≤ E_max"
+                                            >
+                                                <span className="text-emerald-400 shrink-0">💡</span>
+                                                <span className="truncate">Add carbon emission constraint: ∑ E_i x_i ≤ E_max</span>
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Add a constraint where Wind_A and Solar_B cannot both be built simultaneously.")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Add mutual exclusion: Wind_A & Solar_B cannot both be built"
+                                            >
+                                                <span className="text-fuchsia-400 shrink-0">💡</span>
+                                                <span className="truncate">Add mutual exclusion: Wind_A & Solar_B cannot both be built</span>
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Convert objective from linear yield to Markowitz covariance risk (x^T Σ x)")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Convert objective from linear yield to Markowitz covariance risk (x^T Σ x)"
+                                            >
+                                                <span className="text-sky-400 shrink-0">💡</span>
+                                                <span className="truncate">Convert objective to Markowitz quadratic risk (x^T Σ x)</span>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* SECTION 02 PROMPT CHIPS */}
+                                    {selectedMathSection === "02" && (
+                                        <div className="space-y-1 animate-in fade-in">
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Is lambda = 3.5x optimal? Calculate lambda > max |Delta H_obj|")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Is λ = 3.5x optimal? Calculate λ > max |ΔH_obj|"
+                                            >
+                                                <span className="text-amber-400 shrink-0">💡</span>
+                                                <span className="truncate">Is λ = 3.5x optimal? Calculate λ > max |ΔH_obj|</span>
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Switch slack bit decomposition from logarithmic (2^k) to binary one-hot")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Switch slack bit decomposition from logarithmic (2^k) to binary one-hot"
+                                            >
+                                                <span className="text-sky-400 shrink-0">💡</span>
+                                                <span className="truncate">Switch slack bit decomposition from 2^k to binary one-hot</span>
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Tighten penalty stiffness to strictly eliminate ground-state violations")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Tighten penalty stiffness to strictly eliminate ground-state violations"
+                                            >
+                                                <span className="text-rose-400 shrink-0">💡</span>
+                                                <span className="truncate">Tighten penalty stiffness to eliminate violations</span>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* SECTION 03 PROMPT CHIPS */}
+                                    {selectedMathSection === "03" && (
+                                        <div className="space-y-1 animate-in fade-in">
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Explain step-by-step how coupler Q_01 = 15.7 was derived")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Explain step-by-step how coupler Q_01 = 15.7 was derived"
+                                            >
+                                                <span className="text-amber-400 shrink-0">💡</span>
+                                                <span className="truncate">Explain step-by-step how coupler Q_01 = 15.7 was derived</span>
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Check matrix conditioning and dynamic range for D-Wave DAC limits")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Check matrix conditioning and dynamic range for D-Wave DAC limits"
+                                            >
+                                                <span className="text-emerald-400 shrink-0">💡</span>
+                                                <span className="truncate">Check matrix conditioning & D-Wave DAC dynamic range</span>
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Symmetrize upper-triangular couplers into full Ising interaction matrix")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                                title="Symmetrize upper-triangular couplers into full Ising interaction matrix"
+                                            >
+                                                <span className="text-fuchsia-400 shrink-0">💡</span>
+                                                <span className="truncate">Symmetrize couplers into full Ising interaction matrix</span>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* DEFAULT / NO SECTION SELECTED */}
+                                    {!selectedMathSection && (
+                                        <div className="space-y-1 animate-in fade-in">
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Add a constraint where Wind_A and Solar_B cannot both be built simultaneously.")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                            >
+                                                <span className="text-fuchsia-400 shrink-0">💡</span>
+                                                <span className="truncate">Add mutual exclusion: Wind_A & Solar_B</span>
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleSendCopilotPrompt("Is lambda = 3.5x optimal? Calculate lambda > max |Delta H_obj|")}
+                                                className={`w-full px-2 py-1.5 rounded-lg border text-[11px] text-left truncate flex items-center space-x-1.5 transition-colors ${
+                                                    isDark ? "bg-[#14161F] hover:bg-[#1a1d29] border-white/[0.08] text-zinc-300" : "bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+                                                }`}
+                                            >
+                                                <span className="text-amber-400 shrink-0">💡</span>
+                                                <span className="truncate">Is λ = 3.5x optimal? Audit penalty stiffness</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        handleSendCopilotPrompt();
+                                    }}
+                                    className="flex items-center space-x-2"
+                                >
+                                    <input 
+                                        type="text" 
+                                        value={copilotInput}
+                                        onChange={(e) => setCopilotInput(e.target.value)}
+                                        placeholder="Add constraint (e.g. mutual exclusion)..."
+                                        className={`flex-1 px-3 py-2 rounded-lg text-xs outline-none border transition-colors ${
+                                            isDark 
+                                                ? "bg-[#14151A] border-white/[0.08] text-zinc-200 placeholder:text-zinc-600 focus:border-fuchsia-500" 
+                                                : "bg-white border-slate-300 text-slate-800 placeholder:text-slate-400 focus:border-fuchsia-500"
+                                        }`}
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="p-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition-colors shrink-0"
+                                        title="Send to Optimization Copilot"
+                                    >
+                                        <Icon name="play" className="w-3 h-3 fill-current rotate-[-90deg]" />
+                                    </button>
+                                </form>
+                            </div>
+                        </aside>
+                    </div>
+
+                    {/* ── 1-LINE BOTTOM STATUS RIBBON ── */}
+                    <footer className={`h-7 border-t px-4 flex items-center justify-between text-[11px] font-mono shrink-0 z-30 ${
+                        isDark ? "bg-[#0E0F13] border-white/[0.07] text-zinc-500" : "bg-white border-slate-200 text-slate-500"
+                    }`}>
+                        <div className="flex items-center space-x-5">
+                            <span className="flex items-center space-x-1.5">
+                                <span className={`w-1.5 h-1.5 rounded-full ${framework === "dwave" ? "bg-emerald-500" : "bg-sky-500"}`}></span>
+                                <span className={isDark ? "text-zinc-300 font-medium" : "text-slate-800 font-medium"}>
+                                    {framework === "dwave" ? "dwave_simulated_annealing" : "qiskit_aer_simulator"}
+                                </span>
+                            </span>
+                            <span>{framework === "dwave" ? `Ground Energy: ${activeCopilotSolution.groundEnergy}` : "State Fidelity: 99.8%"}</span>
+                            <span>Latency: 109ms</span>
+                        </div>
+
+                        <button 
+                            onClick={() => setShowTerminal(!showTerminal)}
+                            className={`flex items-center space-x-1 transition-colors ${
+                                isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                            <Icon name="terminal" className="w-3 h-3" />
+                            <span>{showTerminal ? "Hide Console ↓" : "View Console Logs ↑"}</span>
+                        </button>
+                    </footer>
+
+                    {/* Slide-Up Terminal Console */}
+                    {showTerminal && (
+                        <div className={`fixed bottom-7 left-0 right-0 h-44 border-t shadow-2xl z-40 p-4 font-mono text-xs overflow-y-auto space-y-1.5 ${
+                            isDark ? "bg-[#090A0D] border-white/[0.1] text-zinc-300" : "bg-slate-900 text-slate-200 border-slate-800"
+                        }`}>
+                            <div className="flex items-center justify-between pb-2 border-b border-zinc-700/40 text-[10px] text-zinc-500">
+                                <span>Execution Console Output</span>
+                                <button onClick={() => setShowTerminal(false)} className="hover:text-zinc-300">
+                                    <Icon name="x" className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            <div>16:33:01 [INFO] Target runtime: {framework === "dwave" ? "dwave_simulated_annealing" : "aer_simulator"}</div>
+                            <div className="text-emerald-400">16:33:02 [SUCCESS] Compiled AST and verified all constraints.</div>
+                            <div>16:33:02 [DONE] Execution converged in 109.59ms. Exited cleanly with status 0.</div>
+                        </div>
+                    )}
+
+                    {/* ════════════════════════════════════════════════════════════════ */}
+                    {/* ── PROJECT SWITCHER MODAL (Cursor / Linear / Vercel Style) ── */}
+                    {/* ════════════════════════════════════════════════════════════════ */}
+                    {showProjectModal && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+                            <div className={`w-full max-w-xl rounded-xl border p-5 space-y-4 shadow-2xl transition-all ${
+                                isDark ? "bg-[#111218] border-white/[0.1]" : "bg-white border-slate-200"
+                            }`}>
+                                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                                    <div className="flex items-center space-x-2">
+                                        <Icon name="box" className="w-4 h-4 text-sky-500" />
+                                        <h3 className={`font-semibold text-sm ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                                            Workspace Projects
+                                        </h3>
+                                    </div>
+                                    <button 
+                                        onClick={() => setShowProjectModal(false)}
+                                        className="text-zinc-500 hover:text-zinc-300"
+                                    >
+                                        <Icon name="x" className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                {/* Filter Search & Quick "+ New" Trigger */}
+                                <div className="flex items-center space-x-2">
+                                    <div className={`flex-1 flex items-center px-3 py-2 rounded-lg border text-xs ${
+                                        isDark ? "bg-[#181920] border-white/[0.08]" : "bg-slate-50 border-slate-200"
+                                    }`}>
+                                        <Icon name="search" className="w-3.5 h-3.5 text-zinc-500 mr-2" />
+                                        <input
+                                            type="text"
+                                            value={projectSearch}
+                                            onChange={(e) => setProjectSearch(e.target.value)}
+                                            placeholder="Filter projects by name or description..."
+                                            className="w-full bg-transparent outline-none text-zinc-200 placeholder:text-zinc-500 text-xs"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setShowProjectModal(false);
+                                            setShowNewProjectModal(true);
+                                        }}
+                                        className="px-3 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-medium text-xs flex items-center space-x-1.5 shrink-0"
+                                    >
+                                        <Icon name="plus" className="w-3.5 h-3.5" />
+                                        <span>New Project</span>
+                                    </button>
+                                </div>
+
+                                {/* Project List */}
+                                <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
+                                    {filteredProjects.map((p) => {
+                                        const isCurrent = p.id === activeProject.id;
+                                        return (
+                                            <div
+                                                key={p.id}
+                                                onClick={() => handleSelectProject(p)}
+                                                className={`p-3 rounded-lg border cursor-pointer transition-all flex items-start justify-between ${
+                                                    isCurrent
+                                                        ? isDark 
+                                                            ? "bg-zinc-800/80 border-sky-500/50 shadow-xs" 
+                                                            : "bg-sky-50/70 border-sky-300 shadow-xs"
+                                                        : isDark 
+                                                            ? "bg-white/[0.02] hover:bg-white/[0.06] border-white/[0.06]" 
+                                                            : "bg-white hover:bg-slate-50 border-slate-200"
+                                                }`}
+                                            >
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className={`font-semibold text-xs ${
+                                                            isCurrent 
+                                                                ? "text-sky-400 font-mono" 
+                                                                : isDark ? "text-zinc-200 font-mono" : "text-slate-900 font-mono"
+                                                        }`}>
+                                                            {p.title}
+                                                        </span>
+                                                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-sans uppercase font-medium ${
+                                                            p.framework === "dwave"
+                                                                ? isDark ? "bg-emerald-950/60 text-emerald-400" : "bg-emerald-100 text-emerald-800"
+                                                                : isDark ? "bg-sky-950/60 text-sky-400" : "bg-sky-100 text-sky-800"
+                                                        }`}>
+                                                            {p.framework}
+                                                        </span>
+                                                        {isCurrent && (
+                                                            <span className="text-[10px] text-sky-400 font-medium font-sans">
+                                                                • Active
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[11px] text-zinc-400 line-clamp-1">
+                                                        {p.desc}
+                                                    </p>
+                                                </div>
+
+                                                <span className="text-[10px] font-mono text-zinc-500 shrink-0 ml-3">
+                                                    {p.updated}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ════════════════════════════════════════════════════════════════ */}
+                    {/* ── CREATE NEW PROJECT MODAL ── */}
+                    {/* ════════════════════════════════════════════════════════════════ */}
+                    {showNewProjectModal && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+                            <form 
+                                onSubmit={handleCreateProject}
+                                className={`w-full max-w-lg rounded-xl border p-5 space-y-4 shadow-2xl transition-all ${
+                                    isDark ? "bg-[#111218] border-white/[0.1]" : "bg-white border-slate-200"
+                                }`}
+                            >
+                                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                                    <div className="flex items-center space-x-2">
+                                        <Icon name="plus" className="w-4 h-4 text-emerald-500" />
+                                        <h3 className={`font-semibold text-sm ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                                            Create New Quantum Project
+                                        </h3>
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowNewProjectModal(false)}
+                                        className="text-zinc-500 hover:text-zinc-300"
+                                    >
+                                        <Icon name="x" className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                {/* Project Name */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-zinc-400">Project Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={newProjName}
+                                        onChange={(e) => setNewProjName(e.target.value)}
+                                        placeholder="e.g. maxcut_clustering_experiment"
+                                        className={`w-full px-3 py-2 rounded-lg text-xs outline-none border transition-colors ${
+                                            isDark 
+                                                ? "bg-[#181920] border-white/[0.08] text-zinc-200 placeholder:text-zinc-600 focus:border-sky-500" 
+                                                : "bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-sky-500"
+                                        }`}
+                                    />
+                                </div>
+
+                                {/* Target Quantum Framework Selection */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-zinc-400">Development Paradigm</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div
+                                            onClick={() => setNewProjFramework("dwave")}
+                                            className={`p-3 rounded-lg border cursor-pointer transition-all space-y-1 ${
+                                                newProjFramework === "dwave"
+                                                    ? isDark 
+                                                        ? "bg-emerald-950/40 border-emerald-500 text-zinc-100" 
+                                                        : "bg-emerald-50 border-emerald-500 text-emerald-900"
+                                                    : isDark 
+                                                        ? "bg-white/[0.02] border-white/[0.08] text-zinc-400 hover:bg-white/[0.04]" 
+                                                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                            }`}
+                                        >
+                                            <div className="flex items-center space-x-1.5 font-semibold text-xs">
+                                                <span>⚡</span>
+                                                <span>D-Wave (Annealing)</span>
+                                            </div>
+                                            <p className="text-[10px] text-zinc-500">
+                                                Combinatorial optimization, QUBO matrices, BQM &amp; CQM models.
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            onClick={() => setNewProjFramework("qiskit")}
+                                            className={`p-3 rounded-lg border cursor-pointer transition-all space-y-1 ${
+                                                newProjFramework === "qiskit"
+                                                    ? isDark 
+                                                        ? "bg-sky-950/40 border-sky-500 text-zinc-100" 
+                                                        : "bg-sky-50 border-sky-500 text-sky-900"
+                                                    : isDark 
+                                                ? "bg-white/[0.02] border-white/[0.08] text-zinc-400 hover:bg-white/[0.04]" 
+                                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                            }`}
+                                        >
+                                            <div className="flex items-center space-x-1.5 font-semibold text-xs">
+                                                <span>⚛️</span>
+                                                <span>Qiskit (Gate Model)</span>
+                                            </div>
+                                            <p className="text-[10px] text-zinc-500">
+                                                Quantum circuits, unitary gates, Aer simulation, statevectors.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end space-x-2 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewProjectModal(false)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
+                                            isDark ? "border-white/[0.08] text-zinc-400 hover:bg-white/[0.04]" : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                                        }`}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs shadow-xs"
+                                    >
+                                        Create &amp; Open
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
+                    {/* Toast Notification */}
+                    {toastMsg && (
+                        <div className={`fixed bottom-10 right-6 px-3.5 py-2 rounded-lg font-mono text-xs shadow-2xl flex items-center space-x-2 z-50 border ${
+                            isDark ? "bg-zinc-800 border-zinc-700 text-zinc-200" : "bg-white border-slate-300 text-slate-800 shadow-lg"
+                        }`}>
+                            <Icon name="check" className="w-3.5 h-3.5 text-emerald-500" />
+                            <span>{toastMsg}</span>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<QuantumGuruStudio />);
+    </script>
+</body>
+</html>
