@@ -94,7 +94,7 @@ const DEFAULT_VARIABLES = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"];
 const ASSET_COSTS = [9.0, 7.0, 6.0, 8.0];
 const ASSET_YIELDS = [12.5, 9.0, 8.0, 10.5];
 
-const DWAVE_INITIAL_CODE = `# Quantum Guru — Clean Energy Portfolio Selection (QUBO)
+const CLEAN_ENERGY_PORTFOLIO_CODE = `# Quantum Guru — Clean Energy Portfolio Selection (QUBO)
 # Solver: D-Wave BinaryQuadraticModel & Simulated Annealer
 import dimod
 from dwave.samplers import SimulatedAnnealingSampler
@@ -113,6 +113,39 @@ sampleset = sampler.sample(bqm, num_reads=2048)
 best = sampleset.first
 print(f"⚡ Ground Energy: {best.energy:.4f}")
 print("Optimal Decisions:", [variable_names[i] for i, v in enumerate(best.sample) if v == 1])`;
+
+const NEW_DWAVE_STARTER_CODE = `# Quantum Guru — D-Wave Binary Quadratic Model Starter
+import dimod
+from dwave.samplers import SimulatedAnnealingSampler
+
+# Define a binary quadratic model (BQM)
+# Example: Minimize objective E(x, y) = -x - y + 2xy
+bqm = dimod.BinaryQuadraticModel({'x': -1.0, 'y': -1.0}, {('x', 'y'): 2.0}, 0.0, dimod.BINARY)
+
+# Solve using Simulated Annealing
+sampler = SimulatedAnnealingSampler()
+sampleset = sampler.sample(bqm, num_reads=100)
+
+best = sampleset.first
+print("Optimal Decisions:", best.sample)
+print(f"⚡ Ground Energy: {best.energy:.4f}")`;
+
+const NEW_QISKIT_STARTER_CODE = `# Quantum Guru — Qiskit Starter Circuit
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+# Create a 2-qubit Bell state circuit
+qc = QuantumCircuit(2, 2)
+qc.h(0)
+qc.cx(0, 1)
+qc.measure([0, 1], [0, 1])
+
+# Execute on Aer simulator
+sim = AerSimulator()
+res = sim.run(qc, shots=1024).result()
+print("Measurement Counts:", res.get_counts())`;
+
+const DWAVE_INITIAL_CODE = CLEAN_ENERGY_PORTFOLIO_CODE;
 
 const QISKIT_INITIAL_CODE = `# Quantum Guru — Qiskit Quantum Teleportation Protocol
 from qiskit import QuantumCircuit
@@ -191,7 +224,7 @@ const INITIAL_PROJECTS: ProjectItem[] = [
     updated: "2 mins ago",
     files: ["main.py", "qubo_matrix.py", "deployment.json", "input.sample.json"],
     activeFile: "main.py",
-    fileContents: { "main.py": DWAVE_INITIAL_CODE },
+    fileContents: { "main.py": CLEAN_ENERGY_PORTFOLIO_CODE },
   },
   {
     id: "quantum_teleportation",
@@ -362,8 +395,52 @@ export default function QuantumGuruStudioPage() {
         if (localCustom) {
           const parsed = JSON.parse(localCustom);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const ids = new Set(parsed.map((p: any) => p.id));
-            return [...parsed, ...INITIAL_PROJECTS.filter((p) => !ids.has(p.id))];
+            // Auto-sanitize existing custom projects that may have been contaminated with Clean Energy Portfolio template
+            const sanitizedList = parsed.map((p: any) => {
+              if (p.id !== "clean_energy_portfolio") {
+                const mainContent = p.fileContents?.["main.py"] || "";
+                const isContaminated =
+                  mainContent.includes("# Quantum Guru — Clean Energy Portfolio Selection") ||
+                  mainContent.includes("from qubo_matrix import get_qubo_model");
+
+                const updatedContents = { ...p.fileContents };
+                if (isContaminated) {
+                  updatedContents["main.py"] = p.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
+                  try {
+                    localStorage.setItem(`quantum_ide_code_${p.id}_main.py`, updatedContents["main.py"]);
+                  } catch (e) {}
+                }
+
+                // If qubo_matrix.py was auto-added by old template bug, remove it
+                let updatedFiles = Array.isArray(p.files) ? [...p.files] : ["main.py"];
+                if (updatedFiles.includes("qubo_matrix.py")) {
+                  const quboContent = p.fileContents?.["qubo_matrix.py"] || "";
+                  if (!quboContent || quboContent.includes("def get_qubo_model") || quboContent.trim() === "# qubo_matrix.py") {
+                    updatedFiles = updatedFiles.filter((f: string) => f !== "qubo_matrix.py");
+                    delete updatedContents["qubo_matrix.py"];
+                    try {
+                      localStorage.removeItem(`quantum_ide_code_${p.id}_qubo_matrix.py`);
+                    } catch (e) {}
+                  }
+                }
+
+                return {
+                  ...p,
+                  files: updatedFiles,
+                  fileContents: updatedContents,
+                };
+              }
+              return p;
+            });
+
+            try {
+              localStorage.setItem("quantum_ide_custom_projects", JSON.stringify(sanitizedList));
+              localStorage.removeItem("quantum_ide_last_dwave_code");
+              localStorage.removeItem("quantum_ide_last_qiskit_code");
+            } catch (e) {}
+
+            const ids = new Set(sanitizedList.map((p: any) => p.id));
+            return [...sanitizedList, ...INITIAL_PROJECTS.filter((p) => !ids.has(p.id))];
           }
         }
       } catch (e) {}
@@ -467,28 +544,31 @@ export default function QuantumGuruStudioPage() {
   const [dwaveCode, setDwaveCode] = useState<string>(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedId = localStorage.getItem("quantum_ide_active_project_id") || "clean_energy_portfolio";
+        const params = new URLSearchParams(window.location.search);
+        const urlId = params.get("project") || params.get("projectId");
+        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id") || "clean_energy_portfolio";
         const savedFile = localStorage.getItem("quantum_ide_active_file") || "main.py";
         const savedCode = localStorage.getItem(`quantum_ide_code_${savedId}_${savedFile}`);
-        if (savedCode) return savedCode;
-
-        const lastDwave = localStorage.getItem("quantum_ide_last_dwave_code");
-        if (lastDwave) return lastDwave;
+        if (savedCode) {
+          if (savedId !== "clean_energy_portfolio" && (savedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection") || savedCode.includes("from qubo_matrix import get_qubo_model"))) {
+            return NEW_DWAVE_STARTER_CODE;
+          }
+          return savedCode;
+        }
       } catch (e) {}
     }
-    return DWAVE_INITIAL_CODE;
+    return CLEAN_ENERGY_PORTFOLIO_CODE;
   });
 
   const [qiskitCode, setQiskitCode] = useState<string>(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedId = localStorage.getItem("quantum_ide_active_project_id") || "quantum_teleportation";
+        const params = new URLSearchParams(window.location.search);
+        const urlId = params.get("project") || params.get("projectId");
+        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id") || "quantum_teleportation";
         const savedFile = localStorage.getItem("quantum_ide_active_file") || "teleportation.py";
         const savedCode = localStorage.getItem(`quantum_ide_code_${savedId}_${savedFile}`);
         if (savedCode) return savedCode;
-
-        const lastQiskit = localStorage.getItem("quantum_ide_last_qiskit_code");
-        if (lastQiskit) return lastQiskit;
       } catch (e) {}
     }
     return QISKIT_INITIAL_CODE;
@@ -662,18 +742,24 @@ export default function QuantumGuruStudioPage() {
           }
 
           // Restore code from localStorage or project fileContents
-          const savedCode = localStorage.getItem(`quantum_ide_code_${matched.id}_${initialFile}`);
+          let savedCode = localStorage.getItem(`quantum_ide_code_${matched.id}_${initialFile}`);
+          if (!savedCode && matched.fileContents && matched.fileContents[initialFile]) {
+            savedCode = matched.fileContents[initialFile];
+          }
+
+          // Check if custom project has cross-contaminated portfolio code
+          if (matched.id !== "clean_energy_portfolio" && savedCode && (savedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection") || savedCode.includes("from qubo_matrix import get_qubo_model"))) {
+            savedCode = matched.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
+            try {
+              localStorage.setItem(`quantum_ide_code_${matched.id}_${initialFile}`, savedCode);
+            } catch (e) {}
+          }
+
           if (savedCode) {
             if (matched.framework === "dwave") {
               setDwaveCode(savedCode);
             } else {
               setQiskitCode(savedCode);
-            }
-          } else if (matched.fileContents && matched.fileContents[initialFile]) {
-            if (matched.framework === "dwave") {
-              setDwaveCode(matched.fileContents[initialFile]);
-            } else {
-              setQiskitCode(matched.fileContents[initialFile]);
             }
           }
         }
@@ -689,11 +775,6 @@ export default function QuantumGuruStudioPage() {
     try {
       const currentCode = framework === "dwave" ? dwaveCode : qiskitCode;
       localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, currentCode);
-      if (framework === "dwave") {
-        localStorage.setItem("quantum_ide_last_dwave_code", dwaveCode);
-      } else {
-        localStorage.setItem("quantum_ide_last_qiskit_code", qiskitCode);
-      }
     } catch (e) {
       console.warn("Failed to auto-save code to localStorage:", e);
     }
@@ -720,12 +801,13 @@ export default function QuantumGuruStudioPage() {
     if (!loadedCode && activeProject.fileContents && activeProject.fileContents[file]) {
       loadedCode = activeProject.fileContents[file];
     }
-    if (loadedCode) {
-      if (framework === "dwave") {
-        setDwaveCode(loadedCode);
-      } else {
-        setQiskitCode(loadedCode);
-      }
+    if (!loadedCode) {
+      loadedCode = `# ${file}\n`;
+    }
+    if (framework === "dwave") {
+      setDwaveCode(loadedCode);
+    } else {
+      setQiskitCode(loadedCode);
     }
   };
 
@@ -747,8 +829,28 @@ export default function QuantumGuruStudioPage() {
     if (!loadedCode && proj.fileContents && proj.fileContents[targetFile]) {
       loadedCode = proj.fileContents[targetFile];
     }
+    // Check for contamination in custom projects
+    if (proj.id !== "clean_energy_portfolio" && loadedCode && (loadedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection") || loadedCode.includes("from qubo_matrix import get_qubo_model"))) {
+      loadedCode = proj.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`quantum_ide_code_${proj.id}_${targetFile}`, loadedCode);
+        } catch (e) {}
+      }
+    }
+
     if (!loadedCode) {
-      loadedCode = proj.framework === "dwave" ? DWAVE_INITIAL_CODE : QISKIT_INITIAL_CODE;
+      if (proj.id === "clean_energy_portfolio") {
+        loadedCode = CLEAN_ENERGY_PORTFOLIO_CODE;
+      } else if (proj.id === "quantum_teleportation") {
+        loadedCode = QISKIT_INITIAL_CODE;
+      } else if (proj.id === "maxcut_bipartite_graph") {
+        loadedCode = MAXCUT_INITIAL_CODE;
+      } else if (proj.id === "vqe_h2_molecule") {
+        loadedCode = VQE_INITIAL_CODE;
+      } else {
+        loadedCode = proj.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
+      }
     }
 
     if (proj.framework === "dwave") {
@@ -811,7 +913,7 @@ export default function QuantumGuruStudioPage() {
   };
 
   const handleCreateProject = async (newProj: ProjectItem) => {
-    const initialCode = newProj.framework === "dwave" ? DWAVE_INITIAL_CODE : QISKIT_INITIAL_CODE;
+    const initialCode = newProj.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
     const targetFile = newProj.activeFile || newProj.files?.[0] || "main.py";
 
     const customProj: ProjectItem = {

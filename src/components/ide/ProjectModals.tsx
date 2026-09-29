@@ -242,8 +242,8 @@ export function NewProjectModal({
       updated: "Just now",
       files:
         framework === "dwave"
-          ? ["main.py", "qubo_matrix.py", "config.json"]
-          : ["main.py", "circuit.qasm", "config.json"],
+          ? ["main.py", "config.json"]
+          : ["main.py", "config.json"],
       activeFile: "main.py",
     };
     onCreateProject(newProj);
