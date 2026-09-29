@@ -10,8 +10,8 @@ All code commits and releases are maintained in continuous synchronization acros
 
 | Remote Alias | Repository URL | Primary Purpose | Current Sync State |
 | :--- | :--- | :--- | :--- |
-| **`railway`** | `https://github.com/musharibsep-eng/Quantum-Guru-09-09-2026.git` | Production Deployment / Railway CI/CD Target | **Synchronized (`57a8538`)** |
-| **`quantum-chat`** | `https://github.com/Musharib1999/Quantum-Chat.git` | Primary Collaboration & Source Repository | **Synchronized (`57a8538`)** |
+| **`railway`** | `https://github.com/musharibsep-eng/Quantum-Guru-09-09-2026.git` | Production Deployment / Railway CI/CD Target | **Synchronized (`09f3503`)** |
+| **`quantum-chat`** | `https://github.com/Musharib1999/Quantum-Chat.git` | Primary Collaboration & Source Repository | **Synchronized (`09f3503`)** |
 | **`origin`** | `https://github.com/Musharib1999/QuantumGuru_Version2_09_11_2026.git` | Upstream Platform Master Archive | Secondary Reference |
 
 ---
@@ -34,7 +34,7 @@ All code commits and releases are maintained in continuous synchronization acros
 * **Release Stage:** Phase 2 (High-Density Studio & Cloud RunPod/Qwen Integration)
 * **Active Working Branch:** `phase-2/cloud-runpod-qwen`
 * **Latest Sync Timestamp:** `2026-09-29 18:40:00 +05:30`
-* **Latest Commit Hash:** `57a8538`
+* **Latest Commit Hash:** `09f3503`
 
 ---
 
@@ -68,7 +68,7 @@ git push all <branch-name>
 
 | Commit | Date | Author | Description & Impact |
 | :--- | :--- | :--- | :--- |
-| **[HEAD]** | 2026-09-29 | Musharib Subhani | **fix(ide): dynamic BQM formulation, live QUBO Q-matrix, elevated terminal stdout & spectrum telemetry**<br>• Replaced hardcoded Clean Energy Portfolio matrix in `QMatrixHeatmap` with live `solverResult.qubo_matrix` and dynamic variable headers<br>• Added runtime symbolic LaTeX Hamiltonian generation (`latex_formula`) in `execution_runner.py` rendered dynamically in `FormulationCanvas`<br>• Elevated stdout to display immediately below command prompt in terminal, expanded terminal drawer height to `h-48`<br>• Wired dynamic `num_reads` and active variables into `EnergySpectrumView` telemetry |
+| **`09f3503` (HEAD)** | 2026-09-29 | Musharib Subhani | **fix(ide): dynamic BQM formulation, live QUBO Q-matrix, elevated terminal stdout & spectrum telemetry**<br>• Replaced hardcoded Clean Energy Portfolio matrix in `QMatrixHeatmap` with live `solverResult.qubo_matrix` and dynamic variable headers<br>• Added runtime symbolic LaTeX Hamiltonian generation (`latex_formula`) in `execution_runner.py` rendered dynamically in `FormulationCanvas`<br>• Elevated stdout to display immediately below command prompt in terminal, expanded terminal drawer height to `h-48`<br>• Wired dynamic `num_reads` and active variables into `EnergySpectrumView` telemetry |
 | **`57a8538`** | 2026-09-29 | Musharib Subhani | **fix(dwave): preserve custom editor code on compile, execute real dimod code via /api/ide/execute**<br>• Fixed root cause where clicking `⚡ Recompile` triggered `setDwaveCode(...)`, obliterating user pasted or typed code<br>• Rerouted D-Wave execution to `/api/ide/execute` with target backend `dwave_simulated_annealing`<br>• Added runtime sandbox support for legacy `from qubo_matrix import get_qubo_model` and auto-extraction of `dimod` optimization solutions (ground energy, active variable decisions, sampled eigenstates)<br>• Preserved user's code in Monaco editor 100% across all compilation and execution runs |
 | **`b2834f0`** | 2026-09-29 | Musharib Subhani | **fix(qiskit): route execution via /api/ide/execute proxy, live Aer results & dynamic circuit canvas**<br>• Switched direct client-side fetch from \`http://localhost:8002\` to internal Next.js proxy \`/api/ide/execute\` (resolving CORS / gateway offline errors)<br>• Dynamically populated statevector measurement counts, active qubit count, circuit depth, and shot count from Qiskit Aer<br>• Replaced hardcoded circuit placeholder in \`CircuitCanvasView\` with dynamic gate wire synthesis and official Qiskit ASCII diagram drawer<br>• Wired live telemetry specs (\`Qubits\`, \`Depth\`, \`Shots\`) into bottom status bar<br>• Added real-time output terminal streaming with stdout and ASCII circuit diagrams |
 | **`e30a569`** | 2026-09-29 | Musharib Subhani | **chore(landing): rename IDE to Studio across landing page and metadata**<br>• Renamed \`Quantum IDE & Studio\` workspace title to \`Quantum Studio\`<br>• Updated navbar and hero CTA buttons to \`Launch Studio\` and \`Launch Quantum Studio →\`<br>• Updated modal and rollout copy to refer exclusively to \`Quantum Studio\`<br>• Aligned page metadata title to \`Quantum Guru AI — AI-Native Quantum Studio\` |
