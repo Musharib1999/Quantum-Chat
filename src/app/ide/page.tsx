@@ -754,14 +754,14 @@ export default function QuantumGuruStudioPage() {
 
     if (framework === "dwave") {
       try {
-        const response = await fetch("/api/dwave/simulate-qubo", {
+        // Execute the user's actual D-Wave Python code directly in the sandbox!
+        const response = await fetch("/api/ide/execute", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            variables: DEFAULT_VARIABLES,
-            matrix: currentMatrix,
-            num_reads: 300,
-            seed: 42,
+            code: dwaveCode,
+            target_backend: "dwave_simulated_annealing",
+            shots: 1024,
           }),
         });
 
@@ -770,45 +770,41 @@ export default function QuantumGuruStudioPage() {
         setLatencyMs(parseFloat(dur.toFixed(1)));
 
         if (data.success) {
-          setSolverResult({
-            energy: data.energy,
-            sample: data.sample,
-            num_variables: data.num_variables || DEFAULT_VARIABLES.length,
-            variables: data.variables || DEFAULT_VARIABLES,
-            qubo_matrix: data.qubo_matrix || currentMatrix,
-            energy_distribution: data.energy_distribution || [],
-          });
+          if (data.optimization_results) {
+            const opt = data.optimization_results;
+            setSolverResult({
+              energy: opt.energy,
+              sample: opt.sample,
+              num_variables: opt.num_variables || Object.keys(opt.sample).length,
+              variables: opt.variables || Object.keys(opt.sample),
+              qubo_matrix: opt.qubo_matrix || currentMatrix,
+              energy_distribution: opt.energy_distribution || [],
+            });
+
+            const chosen = Object.entries(opt.sample)
+              .filter(([_, v]) => v === 1)
+              .map(([k]) => k)
+              .join(", ");
+
+            setTerminalOutput(
+              `$ dwave-anneal --backend simulated_annealing\n` +
+                `[SUCCESS] Annealing simulation completed in ${dur.toFixed(1)}ms\n` +
+                `⚡ Ground State Energy: ${opt.energy.toFixed(4)}\n` +
+                `⚡ Optimal Active Variables: [${chosen || "None"}]\n` +
+                `⚡ Sampled Eigenstates: ${opt.energy_distribution?.length || 0}\n` +
+                (data.stdout ? `\n--- Standard Output ---\n${data.stdout}` : "")
+            );
+          } else {
+            setTerminalOutput(
+              `$ dwave-anneal --backend simulated_annealing\n` +
+                `[SUCCESS] Completed in ${dur.toFixed(1)}ms\n` +
+                (data.stdout ? `\n${data.stdout}` : "")
+            );
+          }
           setIsModelDirty(false);
-
-          const chosen = Object.entries(data.sample)
-            .filter(([_, v]) => v === 1)
-            .map(([k]) => k)
-            .join(", ");
-
-          setTerminalOutput(
-            `$ dwave-neal --reads 300 --seed 42\n` +
-              `[SUCCESS] Simulated annealing converged in ${dur.toFixed(1)}ms\n` +
-              `⚡ Ground State Energy: ${data.energy.toFixed(4)}\n` +
-              `⚡ Active Assets: [${chosen}]\n` +
-              `⚡ Top Eigenstates Sampled: ${data.energy_distribution?.length || 0}\n`
-          );
-
-          // Update python script code with new parameters
-          setDwaveCode(
-            `# Quantum Guru — Clean Energy Portfolio Selection (QUBO)\n` +
-              `# Recompiled: Budget=$${mathParams.budgetMax}M, Lambda=${mathParams.penaltyLambda}x${mathParams.hasMutualExclusion ? ", Mutual Exclusion: Wind_A ⟂ Solar_B (+8.0)" : ""}\n` +
-              `import dimod\nfrom dwave.samplers import SimulatedAnnealingSampler\nfrom qubo_matrix import get_qubo_model\n\n` +
-              `Q_matrix, variable_names, penalty_lambda, offset = get_qubo_model(\n` +
-              `    budget=${mathParams.budgetMax},\n` +
-              `    penalty_lambda=${mathParams.penaltyLambda}\n` +
-              `)\n\n` +
-              `bqm = dimod.BinaryQuadraticModel.from_qubo(Q_matrix, offset=offset)\n` +
-              `sampler = SimulatedAnnealingSampler()\n` +
-              `sampleset = sampler.sample(bqm, num_reads=2048)\n\n` +
-              `best = sampleset.first\n` +
-              `print(f"⚡ Recompiled Ground Energy: {best.energy:.4f}")\n` +
-              `print("Optimal Decisions:", [variable_names[i] for i, v in enumerate(best.sample) if v == 1])`
-          );
+          // NOTE: User's code in the editor is preserved 100%! Never overwrite dwaveCode!
+        } else {
+          setTerminalOutput(`[STDERR] ${data.stderr || data.error || "D-Wave execution error"}`);
         }
       } catch (err: any) {
         setTerminalOutput(`[ERROR] D-Wave execution failed: ${err.message}`);

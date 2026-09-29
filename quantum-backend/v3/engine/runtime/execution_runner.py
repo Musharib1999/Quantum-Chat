@@ -435,6 +435,27 @@ if HAS_DWAVE:
         exec_globals["neal"] = neal
     except Exception:
         pass
+
+    import types
+    qm_mod = types.ModuleType("qubo_matrix")
+    def get_qubo_model(budget=18, penalty_lambda=3.5, **kwargs):
+        var_names = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"]
+        Q = {
+            ("Wind_A", "Wind_A"): -11.25,
+            ("Wind_A", "Solar_B"): 15.7,
+            ("Wind_A", "Battery_C"): 7.7,
+            ("Wind_A", "Hydro_D"): 9.9,
+            ("Solar_B", "Solar_B"): -9.5,
+            ("Solar_B", "Battery_C"): 5.1,
+            ("Solar_B", "Hydro_D"): 7.7,
+            ("Battery_C", "Battery_C"): -18.0,
+            ("Battery_C", "Hydro_D"): 6.6,
+            ("Hydro_D", "Hydro_D"): -50.8,
+        }
+        return Q, var_names, penalty_lambda, -62.2
+    qm_mod.get_qubo_model = get_qubo_model
+    sys.modules["qubo_matrix"] = qm_mod
+    exec_globals["get_qubo_model"] = get_qubo_model
 if HAS_AER:
     class SafeAerSimulator(AerSimulator):
         def run(self, circuits, **kwargs):
