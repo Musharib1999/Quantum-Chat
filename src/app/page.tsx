@@ -36,10 +36,10 @@ export default function LandingPage() {
     {
       id: 'ide',
       badge: 'ACTIVE WORKSPACE',
-      title: 'Quantum IDE & Studio',
+      title: 'Quantum Studio',
       description: 'Build, visualize, simulate, and execute quantum circuits in an interactive environment with Qiskit and D-Wave workflows in one place.',
       features: ['Monaco AST Code Canvas', 'Real-Time Circuit Visualizer', 'Pre-Flight Aer Sandbox'],
-      ctaText: 'Launch IDE →',
+      ctaText: 'Launch Studio →',
       route: '/ide',
       isAvailable: true,
       accentColor: '#059669'
@@ -177,7 +177,7 @@ export default function LandingPage() {
           }}
           className="hover:bg-[#255299] active:scale-[0.98]"
         >
-          Launch IDE
+          Launch Studio
         </button>
       </nav>
 
@@ -281,7 +281,7 @@ export default function LandingPage() {
                 }}
                 className="hover:bg-[#255299] active:scale-[0.98]"
               >
-                Launch Quantum IDE →
+                Launch Quantum Studio →
               </button>
             </div>
 
@@ -667,7 +667,7 @@ export default function LandingPage() {
               }}
               className="hover:bg-[#255299] active:scale-[0.98]"
             >
-              Launch Quantum IDE →
+              Launch Quantum Studio →
             </button>
           </div>
         </section>
@@ -693,7 +693,7 @@ export default function LandingPage() {
               {restrictedModalInfo.title}
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed mb-6">
-              This studio is part of our Phase 2 enterprise rollout. You have full, unrestricted access to the live <strong>Quantum IDE & Studio</strong> right now.
+              This studio is part of our Phase 2 enterprise rollout. You have full, unrestricted access to the live <strong>Quantum Studio</strong> right now.
             </p>
 
             <div className="flex items-center gap-3">
@@ -702,7 +702,7 @@ export default function LandingPage() {
                 onClick={() => setRestrictedModalInfo(null)}
                 className="flex-1 text-center py-2.5 px-4 bg-[#2E65BF] text-white text-xs font-semibold rounded-xl hover:bg-[#255299] transition-all shadow-xs"
               >
-                Launch Quantum IDE →
+                Launch Quantum Studio →
               </Link>
               <button
                 onClick={() => setRestrictedModalInfo(null)}

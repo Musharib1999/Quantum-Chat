@@ -24,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Quantum Guru AI — AI-Native Quantum IDE",
+  title: "Quantum Guru AI — AI-Native Quantum Studio",
   description: "The AI-Native Development Environment for Quantum Computing",
 };
 
