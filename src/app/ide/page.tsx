@@ -446,11 +446,16 @@ export default function QuantumGuruStudioPage() {
   });
 
   const [qiskitCounts, setQiskitCounts] = useState<Record<string, number>>({
-    "000": 2048,
-    "001": 1890,
-    "010": 85,
-    "111": 73,
+    "1": 1024,
   });
+  const [qiskitQubits, setQiskitQubits] = useState<number>(1);
+  const [qiskitDepth, setQiskitDepth] = useState<number>(2);
+  const [qiskitShots, setQiskitShots] = useState<number>(1024);
+  const [circuitGates, setCircuitGates] = useState<any[]>([
+    { name: "x", qubit: 0, qubits: [0], step: 0, role: "single" },
+    { name: "measure", qubit: 0, qubits: [0], step: 1, role: "single" }
+  ]);
+  const [circuitAscii, setCircuitAscii] = useState<string>("     ┌───┐┌─┐\n  q: ┤ X ├┤M├\n     └───┘└╥┘\nc: 1/══════╩═\n           0 ");
 
   const [dwaveCopilotMessages, setDwaveCopilotMessages] = useState<CopilotMessage[]>(DWAVE_INITIAL_MESSAGES);
   const [qiskitCopilotMessages, setQiskitCopilotMessages] = useState<CopilotMessage[]>(QISKIT_INITIAL_MESSAGES);
@@ -811,15 +816,20 @@ export default function QuantumGuruStudioPage() {
         setIsRunningOrRecompiling(false);
       }
     } else {
-      // Qiskit execution via backend gateway
+      // Qiskit execution via server-side Next.js proxy
       try {
-        const response = await fetch("http://localhost:8002/v3/enterprise/ide/execute", {
+        setShowTerminal(true);
+        // Extract shots if defined in code, else default to 1024
+        const shotsMatch = qiskitCode.match(/shots\s*=\s*(\d+)/);
+        const execShots = shotsMatch ? parseInt(shotsMatch[1], 10) : 1024;
+
+        const response = await fetch("/api/ide/execute", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             code: qiskitCode,
             target_backend: "aer_simulator",
-            shots: 4096,
+            shots: execShots,
           }),
         });
 
@@ -828,15 +838,31 @@ export default function QuantumGuruStudioPage() {
         setLatencyMs(parseFloat(dur.toFixed(1)));
 
         if (data.success) {
-          if (data.measurement_counts) {
+          if (data.measurement_counts && Object.keys(data.measurement_counts).length > 0) {
             setQiskitCounts(data.measurement_counts);
+            const total = Object.values(data.measurement_counts as Record<string, number>).reduce((a, b) => a + b, 0);
+            if (total > 0) setQiskitShots(total);
           }
+          if (data.circuit_gates) {
+            setCircuitGates(data.circuit_gates);
+          }
+          if (data.circuit_ascii) {
+            setCircuitAscii(data.circuit_ascii);
+          }
+          if (data.active_qubits !== undefined) {
+            setQiskitQubits(data.active_qubits);
+          }
+          if (data.circuit_depth !== undefined) {
+            setQiskitDepth(data.circuit_depth);
+          }
+
           setTerminalOutput(
-            `$ qiskit-aer --backend aer_simulator --shots 4096\n` +
-              `[SUCCESS] Completed in ${dur.toFixed(1)}ms\n` +
-              `Active Qubits: ${data.active_qubits || 3} | Depth: ${data.circuit_depth || 8}\n` +
+            `$ qiskit-aer --backend aer_simulator --shots ${execShots}\n` +
+              `[SUCCESS] Simulation completed in ${dur.toFixed(1)}ms\n` +
+              `Active Qubits: ${data.active_qubits ?? 1} | Depth: ${data.circuit_depth ?? 1}\n` +
               `Measurement Counts: ${JSON.stringify(data.measurement_counts || {})}\n` +
-              `${data.stdout || ""}`
+              (data.stdout ? `\n--- Standard Output ---\n${data.stdout}` : "") +
+              (data.circuit_ascii ? `\n--- Circuit Diagram ---\n${data.circuit_ascii}` : "")
           );
         } else {
           setTerminalOutput(`[STDERR] ${data.stderr || data.error || "Circuit execution error"}`);
@@ -1021,10 +1047,10 @@ export default function QuantumGuruStudioPage() {
                 specs={
                   framework === "qiskit"
                     ? {
-                        qubits: 3,
-                        depth: 8,
+                        qubits: qiskitQubits,
+                        depth: qiskitDepth,
                         fidelity: 99.8,
-                        shots: 4096,
+                        shots: qiskitShots,
                       }
                     : {
                         cost: totalCost,
@@ -1069,8 +1095,10 @@ export default function QuantumGuruStudioPage() {
                 ) : (
                   <CircuitCanvasView
                     isDark={isDark}
-                    qubitCount={3}
-                    circuitDepth={8}
+                    qubitCount={qiskitQubits}
+                    circuitDepth={qiskitDepth}
+                    circuitGates={circuitGates}
+                    circuitAscii={circuitAscii}
                   />
                 )}
               </div>
@@ -1098,31 +1126,39 @@ export default function QuantumGuruStudioPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">
-                        Qiskit Aer Statevector Measurement Counts
-                      </h3>
-                      <span className="text-xs font-mono text-sky-400">
-                        Total Shots: 4096
+                      <div>
+                        <h3 className="text-sm font-semibold">
+                          Qiskit Aer Statevector Measurement Counts
+                        </h3>
+                        <p className="text-xs text-zinc-400">
+                          Simulated distribution over {qiskitShots} shots
+                        </p>
+                      </div>
+                      <span className="text-xs font-mono text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded border border-sky-500/20 font-medium">
+                        Total Shots: {qiskitShots}
                       </span>
                     </div>
 
-                    <div className="h-44 flex items-end space-x-4 pt-4 border-b border-zinc-700/40">
+                    <div className="min-h-48 flex items-end justify-center space-x-6 pt-6 pb-2 border-b border-zinc-700/40">
                       {Object.entries(qiskitCounts).map(([bit, count], idx) => {
-                        const pct = ((count / 4096) * 100).toFixed(1);
+                        const pct = qiskitShots > 0 ? ((count / qiskitShots) * 100).toFixed(1) : "0.0";
                         return (
                           <div
                             key={idx}
-                            className="flex-1 flex flex-col items-center space-y-2"
+                            className="flex flex-col items-center space-y-2 min-w-[60px] max-w-[120px]"
                           >
-                            <div className="text-[11px] font-mono text-zinc-400">
+                            <div className="text-[11px] font-mono text-zinc-400 font-semibold">
                               {pct}%
                             </div>
                             <div
-                              className="w-full rounded-t bg-sky-500 hover:brightness-110 transition-all"
-                              style={{ height: `${parseFloat(pct) * 2.5}px` }}
+                              className="w-12 rounded-t bg-sky-500 hover:brightness-110 transition-all shadow-sm shadow-sky-500/30"
+                              style={{ height: `${Math.max(parseFloat(pct) * 2, 8)}px` }}
                             />
-                            <div className="text-xs font-mono text-zinc-300">
+                            <div className="text-xs font-mono font-bold text-zinc-200">
                               |{bit}⟩
+                            </div>
+                            <div className="text-[10px] font-mono text-zinc-500">
+                              {count} shots
                             </div>
                           </div>
                         );
