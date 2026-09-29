@@ -32,6 +32,28 @@ export interface OptimizationResults {
   latex_formula?: string;
 }
 
+export interface PipelineStep {
+  id: string;
+  agent: string;
+  title: string;
+  status: "pending" | "running" | "done" | "failed";
+  message?: string;
+  details?: string;
+  timestamp?: string;
+}
+
+export interface FormulationMeta {
+  objectiveSense?: string;
+  objectiveExpr?: string;
+  variables?: string[];
+  constraints?: { name: string; left: string; op: string; right: number }[];
+  penaltyWeight?: number;
+  penaltyLabel?: string;
+  q_size?: number;
+  q_nnz?: number;
+  matrixDensity?: number;
+}
+
 export interface CopilotMessage {
   id: number;
   sender: "user" | "assistant";
@@ -40,6 +62,11 @@ export interface CopilotMessage {
   breakdown?: string[];
   isMutualProposal?: boolean;
   timestamp: string;
+  pipelineSteps?: PipelineStep[];
+  generatedCode?: string;
+  appliedToEditor?: boolean;
+  formulationMeta?: FormulationMeta;
+  isStreaming?: boolean;
 }
 
 export interface ThemeColors {

@@ -7,6 +7,12 @@ import {
   X,
   Zap,
   Lightbulb,
+  Bot,
+  Loader2,
+  Code2,
+  Check,
+  Layers,
+  Cpu,
 } from "lucide-react";
 import { OptimizationSectionId, CopilotMessage, ThemeColors } from "./types";
 import { LatexMath } from "./LatexMath";
@@ -26,6 +32,7 @@ export interface OptimizationCopilotProps {
   circuitHealth?: any;
   variables?: string[];
   isPortfolioProblem?: boolean;
+  onApplyCodeToEditor?: (code: string, meta?: any) => void;
 }
 
 export function OptimizationCopilot({
@@ -41,6 +48,7 @@ export function OptimizationCopilot({
   onApplyCircuitAction,
   variables = [],
   isPortfolioProblem = true,
+  onApplyCodeToEditor,
 }: OptimizationCopilotProps) {
   const [input, setInput] = useState("");
   const [showSuggestionsPopover, setShowSuggestionsPopover] = useState<boolean>(false);
@@ -242,6 +250,122 @@ export function OptimizationCopilot({
               }
             >
               <p className="leading-relaxed break-words [word-break:break-word] overflow-wrap-anywhere">{msg.text}</p>
+
+              {/* Live Autonomous Multi-Agent Reasoning Pipeline */}
+              {msg.pipelineSteps && msg.pipelineSteps.length > 0 && (
+                <div className="space-y-2 pt-2 w-full min-w-0">
+                  <div
+                    className="p-2.5 rounded-lg border space-y-2"
+                    style={{
+                      backgroundColor: isDark ? "rgba(0, 0, 0, 0.4)" : "#F8FAFC",
+                      borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "#E2E8F0",
+                    }}
+                  >
+                    <div className="flex items-center justify-between text-[11px] font-mono border-b pb-1.5" style={{ borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#E2E8F0" }}>
+                      <span className="font-semibold text-sky-400 flex items-center space-x-1.5">
+                        <Bot className="w-3.5 h-3.5" />
+                        <span>7-Agent Autonomous Pipeline</span>
+                      </span>
+                      <span className="text-[10px] text-zinc-400">
+                        {msg.isStreaming ? (
+                          <span className="flex items-center space-x-1 text-amber-400">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>Synthesizing</span>
+                          </span>
+                        ) : (
+                          <span className="text-emerald-400 font-bold">Verified</span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-[11px]">
+                      {msg.pipelineSteps.map((step) => (
+                        <div key={step.id} className="flex items-start space-x-2 py-0.5">
+                          <div className="mt-0.5 shrink-0">
+                            {step.status === "running" ? (
+                              <Loader2 className="w-3.5 h-3.5 text-sky-400 animate-spin" />
+                            ) : step.status === "done" ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            ) : step.status === "failed" ? (
+                              <X className="w-3.5 h-3.5 text-rose-400" />
+                            ) : (
+                              <span className="w-3.5 h-3.5 rounded-full border border-zinc-600 block" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1 leading-tight">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-semibold font-mono text-[10px]" style={{ color: colors.textPrimary }}>
+                                {step.title}
+                              </span>
+                              <span className="text-[9px] font-mono text-zinc-500">[{step.agent}]</span>
+                            </div>
+                            {step.message && (
+                              <p className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
+                                {step.message}
+                              </p>
+                            )}
+                            {step.details && (
+                              <p className="text-[9px] font-mono text-sky-400/90 mt-0.5">
+                                {step.details}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Generated Python Code & Bidirectional Editor Injection */}
+              {msg.generatedCode && (
+                <div className="space-y-2 pt-2 w-full min-w-0">
+                  <div
+                    className="p-2.5 rounded-lg border space-y-2"
+                    style={{
+                      backgroundColor: isDark ? "#0A0B0E" : "#F1F5F9",
+                      borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "#CBD5E1",
+                    }}
+                  >
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-zinc-300 font-semibold flex items-center space-x-1.5">
+                        <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Synthesized QUBO Script</span>
+                      </span>
+                      {msg.formulationMeta?.q_size && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                          {msg.formulationMeta.q_size} Qubits
+                        </span>
+                      )}
+                    </div>
+
+                    <pre className="p-2 rounded bg-black/40 text-[10px] font-mono text-zinc-300 max-h-36 overflow-y-auto custom-scrollbar whitespace-pre leading-relaxed border border-white/[0.05]">
+                      {msg.generatedCode}
+                    </pre>
+
+                    <button
+                      onClick={() => onApplyCodeToEditor && onApplyCodeToEditor(msg.generatedCode!, msg.formulationMeta)}
+                      className={`w-full py-2 px-3 rounded-lg font-semibold text-xs transition-all flex items-center justify-center space-x-2 shadow-md ${
+                        msg.appliedToEditor
+                          ? "bg-emerald-600 text-white shadow-emerald-500/20"
+                          : "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-500/20"
+                      }`}
+                    >
+                      {msg.appliedToEditor ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Injected into Monaco Editor & Running</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="w-3.5 h-3.5 fill-current" />
+                          <span>Apply to Monaco Editor & Run</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* KaTeX Math Formula Bubble (Bounded width & horizontal scroll) */}
               {msg.mathFormula && (

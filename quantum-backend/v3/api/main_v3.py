@@ -1005,3 +1005,39 @@ async def simulate_qubo_endpoint(req: QuboSimulateRequest):
             error=str(e),
             execution_time_ms=exec_ms
         )
+
+
+# =========================================================================
+# DATA INGRESS & EGRESS CONNECTORS PROXIES (Pillar 2)
+# =========================================================================
+@app.post("/v3/enterprise/connectors/ingress/csv")
+async def proxy_connectors_csv_ingress(req: dict):
+    """
+    Proxies CSV ingress requests to the Quantum AI Engine.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(f"{ENGINE_URL}/engine/connectors/ingress/csv", json=req)
+            if resp.status_code != 200:
+                raise HTTPException(status_code=resp.status_code, detail=resp.text)
+            return resp.json()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ingress proxy failure: {str(e)}")
+
+@app.post("/v3/enterprise/connectors/egress")
+async def proxy_connectors_egress(req: dict):
+    """
+    Proxies solution and Q-matrix egress export requests to the Quantum AI Engine.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(f"{ENGINE_URL}/engine/connectors/egress", json=req)
+            if resp.status_code != 200:
+                raise HTTPException(status_code=resp.status_code, detail=resp.text)
+            return resp.json()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Egress proxy failure: {str(e)}")

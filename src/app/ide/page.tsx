@@ -29,6 +29,7 @@ import {
   FrameworkType,
   HeroTabType,
 } from "@/components/ide";
+import { DataConnectorsModal } from "@/components/optimization/DataConnectorsModal";
 import {
   FormulationCanvas,
   QMatrixHeatmap,
@@ -576,6 +577,7 @@ export default function QuantumGuruStudioPage() {
 
   const [showProjectModal, setShowProjectModal] = useState<boolean>(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
+  const [isDataConnectorsOpen, setIsDataConnectorsOpen] = useState<boolean>(false);
 
   const [isModelDirty, setIsModelDirty] = useState<boolean>(false);
   const [isRunningOrRecompiling, setIsRunningOrRecompiling] = useState<boolean>(false);
@@ -1214,25 +1216,92 @@ export default function QuantumGuruStudioPage() {
     }
   }, [framework, dwaveCode, qiskitCode, currentMatrix, mathParams, activeProject, activeFile]);
 
-  const handleSendMessage = (text: string) => {
+  const handleApplyPipelineCode = async (code: string, meta?: any) => {
+    if (!code) return;
+    setDwaveCode(code);
+    setActiveProject((prev) => ({
+      ...prev,
+      fileContents: {
+        ...(prev.fileContents || {}),
+        [activeFile]: code,
+      },
+    }));
+    try {
+      localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, code);
+    } catch {}
+
+    setDwaveCopilotMessages((prev) =>
+      prev.map((m) => (m.generatedCode === code ? { ...m, appliedToEditor: true } : m))
+    );
+
+    setHeroTab("code");
+    setShowTerminal(true);
+    setIsRunningOrRecompiling(true);
+    setTerminalOutput(
+      `$ dimod-sampler --backend dwave_simulated_annealing\n` +
+      `[SYNTHESIS] Autonomous QUBO model injected into Monaco editor (${activeFile})\n` +
+      `[EXECUTING] Compiling Hamiltonian couplers & sampling ground states...`
+    );
+
+    try {
+      const resp = await fetch("/api/ide/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          target: "dwave_simulated_annealing",
+          num_reads: 5000,
+        }),
+      });
+      const data = await resp.json();
+      if (data.success && data.optimization_results) {
+        const opt = data.optimization_results;
+        const solverRes = {
+          sample: opt.sample || {},
+          optimal_state: opt.sample || null,
+          energy: typeof opt.energy === "number" ? opt.energy : null,
+          variables: opt.variables || (opt.sample ? Object.keys(opt.sample) : []),
+          num_variables: opt.num_variables || (opt.sample ? Object.keys(opt.sample).length : 0),
+          qubo_matrix: opt.qubo_matrix || null,
+          energy_distribution: opt.energy_distribution || [],
+          latex_formula: opt.latex_formula || null,
+          num_reads: opt.num_reads || 5000,
+        };
+        setSolverResult(solverRes);
+        try {
+          localStorage.setItem(`quantum_ide_result_${activeProject.id}`, JSON.stringify(solverRes));
+        } catch {}
+
+        setTerminalOutput(
+          `$ dimod-sampler --backend dwave_simulated_annealing\n` +
+          `[SUCCESS] Ground State Energy: ${opt.energy ?? -1.0} | Active Qubits: ${solverRes.variables.length}\n` +
+          `Optimal Decisions: ${JSON.stringify(opt.sample || {})}\n` +
+          (data.stdout ? `\n--- Standard Output ---\n${data.stdout}` : "")
+        );
+      } else {
+        setTerminalOutput(`[STDERR] ${data.stderr || data.error || "Simulator execution error"}`);
+      }
+    } catch (err: any) {
+      setTerminalOutput(`[ERROR] Execution engine error: ${err.message}`);
+    } finally {
+      setIsRunningOrRecompiling(false);
+    }
+  };
+
+  const handleSendMessage = async (text: string) => {
     const userMsg: CopilotMessage = {
       id: Date.now(),
       sender: "user",
       text,
       timestamp: "Just now",
     };
-    if (framework === "dwave") {
-      setDwaveCopilotMessages((prev) => [...prev, userMsg]);
-    } else {
+
+    if (framework === "qiskit") {
       setQiskitCopilotMessages((prev) => [...prev, userMsg]);
-    }
-
-    setTimeout(() => {
-      let replyText = "";
-      let formula: string | undefined = undefined;
-      const lower = text.toLowerCase();
-
-      if (framework === "qiskit") {
+      setTimeout(() => {
+        let replyText = "";
+        let formula: string | undefined = undefined;
+        const lower = text.toLowerCase();
         if (lower.includes("bob") || lower.includes("correct") || lower.includes("pauli")) {
           replyText =
             "Bob applies conditional recovery corrections based on Alice's classical measurement results (c0, c1): if c1=1, apply Pauli-X; if c0=1, apply Pauli-Z. This maps the collapsed Bell projection back to the original state |ψ⟩ = α|0⟩ + β|1⟩.";
@@ -1241,50 +1310,165 @@ export default function QuantumGuruStudioPage() {
           replyText =
             "Depolarizing channel added with error rate p = 0.01. Each two-qubit CNOT gate experiences decoherence, reducing the Bell pair fidelity from 100% to ~98.4%.";
           formula = "\\mathcal{E}(\\rho) = (1 - p)\\rho + \\frac{p}{3}\\sum_{i=1}^3 \\sigma_i \\rho \\sigma_i";
-        } else if (lower.includes("transpile") || lower.includes("basis") || lower.includes("depth")) {
-          replyText =
-            "Transpiled to native superconducting basis gates: {cx, id, rz, sx, x}. Optimization level 3 reduced overall circuit depth from 12 to 8 gates.";
-          formula = "U_3(\\theta, \\phi, \\lambda) = R_z(\\phi + \\pi) R_x(\\pi/2) R_z(\\theta + \\pi) R_x(\\pi/2) R_z(\\lambda)";
-        } else if (lower.includes("entangle") || lower.includes("bell")) {
-          replyText =
-            "EPR Bell channel created between qubits 1 and 2 via H(q1) followed by CNOT(q1, q2). State is maximally entangled with concurrence C = 1.0.";
-          formula = "|\\Phi^+\\rangle = \\frac{|00\\rangle + |11\\rangle}{\\sqrt{2}}";
         } else {
-          replyText =
-            `Analyzing Qiskit circuit topology for "${activeProject.title}": 3 qubits, 3 classical registers, 8 quantum gates. All gates are unitary and reversible.`;
+          replyText = `Analyzing Qiskit circuit topology for "${activeProject.title}": 3 qubits, 3 classical registers, 8 quantum gates. All gates are unitary and reversible.`;
           formula = "U^\\dagger U = \\mathbb{I}";
         }
-      } else {
-        if (lower.includes("mutual") || lower.includes("exclusion")) {
-          replyText =
-            "Injected mutual exclusion penalty between Wind_A and Solar_B (\\lambda_{\\text{ex}} = +8.0). This adds a large energy barrier preventing concurrent construction.";
-          formula = "\\mathcal{H}_{\\text{ME}} = 8.0 \\cdot x_{\\text{wind}} \\cdot x_{\\text{solar}}";
-        } else if (lower.includes("carbon") || lower.includes("emission")) {
-          replyText =
-            "Enforced carbon emissions ceiling constraint \\sum E_i x_i \\le E_{\\text{max}}. Diagonal couplers for fossil or high-emission sites elevated.";
-          formula = "\\mathcal{H}_{\\text{carbon}} = \\mu \\left( \\sum_{i} E_i x_i - E_{\\text{max}} \\right)^2";
-        } else if (lower.includes("lambda") || lower.includes("multiplier")) {
-          replyText =
-            "Lagrange multiplier stiffness \\lambda = 3.5 satisfies the ground-state feasibility condition \\lambda > \\max \\| \\Delta \\mathcal{H}_{\\text{obj}} \\|.";
-          formula = "\\lambda > \\frac{\\max(\\text{yield})}{\\min(\\text{cost})} \\approx 2.85 \\implies \\lambda = 3.5 \\text{ is optimal}";
-        } else {
-          replyText = `Analyzing your request for DWAVE QUBO in Section ${selectedMathSection || "01"}...`;
-        }
+
+        const botMsg: CopilotMessage = {
+          id: Date.now() + 1,
+          sender: "assistant",
+          text: replyText,
+          mathFormula: formula,
+          timestamp: "Just now",
+        };
+        setQiskitCopilotMessages((prev) => [...prev, botMsg]);
+      }, 400);
+      return;
+    }
+
+    // D-Wave: Autonomous QUBO Multi-Agent Formulation Pipeline
+    setDwaveCopilotMessages((prev) => [...prev, userMsg]);
+
+    const botMsgId = Date.now() + 1;
+    const initialBotMsg: CopilotMessage = {
+      id: botMsgId,
+      sender: "assistant",
+      text: "Decomposing natural language formulation with 7-Agent Autonomous Pipeline...",
+      timestamp: "Just now",
+      isStreaming: true,
+      pipelineSteps: [
+        {
+          id: "supervisor",
+          agent: "SupervisorAgent",
+          title: "Supervisor Agent",
+          status: "running",
+          message: "Decomposing problem bounds & mathematical structure...",
+        },
+      ],
+    };
+
+    setDwaveCopilotMessages((prev) => [...prev, initialBotMsg]);
+
+    try {
+      const resp = await fetch("/api/ide/pipeline/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problem: text,
+          mode: "auto",
+          penalty_choice: 3,
+          session_id: activeProject.id,
+        }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        throw new Error(`Pipeline response status: ${resp.status}`);
       }
 
-      const botMsg: CopilotMessage = {
-        id: Date.now() + 1,
-        sender: "assistant",
-        text: replyText,
-        mathFormula: formula,
-        timestamp: "Just now",
-      };
-      if (framework === "dwave") {
-        setDwaveCopilotMessages((prev) => [...prev, botMsg]);
-      } else {
-        setQiskitCopilotMessages((prev) => [...prev, botMsg]);
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let streamBuffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        streamBuffer += decoder.decode(value, { stream: true });
+        const lines = streamBuffer.split("\n");
+        streamBuffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          try {
+            const data = JSON.parse(trimmed.slice(5).trim());
+            const stepName = data.step;
+
+            setDwaveCopilotMessages((prev) =>
+              prev.map((msg) => {
+                if (msg.id !== botMsgId) return msg;
+                const existingSteps = msg.pipelineSteps ? [...msg.pipelineSteps] : [];
+
+                if (stepName === "complete") {
+                  const res = data.result || {};
+                  const stats = res.optimization_stats || {};
+                  
+                  if (res.final_code) {
+                    setTimeout(() => {
+                      handleApplyPipelineCode(res.final_code, {
+                        variables: res.variable_map,
+                        q_size: stats.q_size,
+                        q_nnz: stats.q_nnz,
+                      });
+                    }, 150);
+                  }
+
+                  return {
+                    ...msg,
+                    text: `Autonomous QUBO formulation complete! Synthesized ${stats.q_size || 0} logical qubits with ${stats.q_nnz || 0} non-zero couplers using Verma-Lewis penalty stiffness (λ = ${stats.penalty_weight || 5.0}).`,
+                    isStreaming: false,
+                    generatedCode: res.final_code,
+                    appliedToEditor: true,
+                    mathFormula: res.latex_model || undefined,
+                    formulationMeta: {
+                      objectiveSense: stats.objective_sense,
+                      variables: res.variable_map,
+                      penaltyWeight: stats.penalty_weight,
+                      penaltyLabel: stats.penalty_label,
+                      q_size: stats.q_size,
+                      q_nnz: stats.q_nnz,
+                      matrixDensity: stats.matrix_density,
+                    },
+                    pipelineSteps: existingSteps.map((s) => ({ ...s, status: "done" })),
+                  };
+                }
+
+                const stepId = stepName || data.agent || "step";
+                const stepIdx = existingSteps.findIndex((s) => s.id === stepId || s.agent === data.agent);
+
+                const updatedStep = {
+                  id: stepId,
+                  agent: data.agent || "Agent",
+                  title: data.title || (data.agent ? data.agent.replace("Agent", " Agent") : "Pipeline Step"),
+                  status: data.status === "done" ? ("done" as const) : data.status === "failed" ? ("failed" as const) : ("running" as const),
+                  message: data.message,
+                  details: data.details,
+                };
+
+                if (stepIdx >= 0) {
+                  existingSteps[stepIdx] = { ...existingSteps[stepIdx], ...updatedStep };
+                } else {
+                  existingSteps.push(updatedStep);
+                }
+
+                return {
+                  ...msg,
+                  pipelineSteps: existingSteps,
+                  text: data.message ? `Agent Reasoning: ${data.message}` : msg.text,
+                };
+              })
+            );
+          } catch {
+            // ignore chunk parse errors
+          }
+        }
       }
-    }, 400);
+    } catch (err: any) {
+      setDwaveCopilotMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === botMsgId
+            ? {
+                ...msg,
+                text: `Pipeline error: ${err.message}`,
+                isStreaming: false,
+                pipelineSteps: msg.pipelineSteps?.map((s) =>
+                  s.status === "running" ? { ...s, status: "failed" as const, message: err.message } : s
+                ),
+              }
+            : msg
+        )
+      );
+    }
   };
 
   const handleToggleMutualExclusion = () => {
@@ -1326,6 +1510,7 @@ export default function QuantumGuruStudioPage() {
         activeProject={activeProject}
         onOpenProjectModal={() => setShowProjectModal(true)}
         onOpenNewProjectModal={() => setShowNewProjectModal(true)}
+        onOpenDataConnectors={() => setIsDataConnectorsOpen(true)}
         isRunningOrRecompiling={isRunningOrRecompiling}
         onRunOrRecompile={handleRunOrRecompile}
         isModelDirty={isModelDirty}
@@ -1552,6 +1737,7 @@ export default function QuantumGuruStudioPage() {
             onApplyCircuitAction={handleRunOrRecompile}
             variables={solverResult.variables}
             isPortfolioProblem={isPortfolio}
+            onApplyCodeToEditor={handleApplyPipelineCode}
             solutionHealth={{
               title: activeProject.title,
               cost: totalCost,
@@ -1571,6 +1757,18 @@ export default function QuantumGuruStudioPage() {
           />
         </aside>
       </div>
+
+      {/* Data Connectors Modal (Pillar 2 Ingress / Egress) */}
+      <DataConnectorsModal
+        isOpen={isDataConnectorsOpen}
+        onClose={() => setIsDataConnectorsOpen(false)}
+        isDark={isDark}
+        colors={colors}
+        solverResult={solverResult}
+        onSendToPipeline={(problemText) => {
+          handleSendMessage(problemText);
+        }}
+      />
 
       {/* Project Switcher Modal */}
       <ProjectSwitcherModal

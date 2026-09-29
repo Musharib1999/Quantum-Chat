@@ -18,6 +18,7 @@ import {
   FileJson,
   FileText,
   Check,
+  Share2,
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
 
@@ -42,6 +43,7 @@ interface StudioHeaderProps {
   showTerminal?: boolean;
   onToggleTerminal?: () => void;
   isSyncing?: boolean;
+  onOpenDataConnectors?: () => void;
 }
 
 export function StudioHeader({
@@ -61,6 +63,7 @@ export function StudioHeader({
   activeFile,
   onSelectFile,
   onAddFile,
+  onOpenDataConnectors,
 }: StudioHeaderProps) {
   const isDwave = activeProject.framework === "dwave";
   const [isFileDropdownOpen, setIsFileDropdownOpen] = useState(false);
@@ -418,6 +421,18 @@ export function StudioHeader({
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
         </div>
+
+        {/* Data Connectors Button (Pillar 2 Ingress / Egress) */}
+        {onOpenDataConnectors && isDwave && (
+          <button
+            onClick={onOpenDataConnectors}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.1] text-sky-400 hover:text-sky-300 shadow-xs"
+            title="Open Data Ingress and Egress Connectors"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Data Connectors</span>
+          </button>
+        )}
 
         {/* Primary Action Button (⚡ Recompile / ▷ Run Circuit) */}
         <button

@@ -519,6 +519,99 @@ async def engine_gate_model_stream(request: GateModelRequest):
     )
 
 
+
+# =========================================================================
+# DATA INGRESS & EGRESS CONNECTORS (Pillar 2)
+# =========================================================================
+from typing import List, Dict, Any, Optional
+from engine.connectors.data_connectors import (
+    CSVProblemIngress, JSONProblemIngress, SolutionEgress, QMatrixEgress
+)
+
+class CSVIngressRequest(BaseModel):
+    csv_text: str
+    problem_type: Optional[str] = "selection"  # "selection", "knapsack", "maxcut"
+    name_col: Optional[str] = None
+    objective_col: Optional[str] = None
+    sense: Optional[str] = "MAXIMIZE"
+    constraints_config: Optional[List[Dict[str, Any]]] = None
+
+class EgressExportRequest(BaseModel):
+    export_type: str  # "solution_json", "solution_csv", "qmatrix_dense", "qmatrix_coo", "bqm_json"
+    solution: Optional[Dict[str, int]] = None
+    energy: Optional[float] = 0.0
+    q_matrix: Optional[List[List[float]]] = None
+    variables: Optional[List[str]] = None
+    offset: Optional[float] = 0.0
+    metadata: Optional[Dict[str, Any]] = None
+
+@app.post("/engine/connectors/ingress/csv")
+async def engine_connectors_csv_ingress(request: CSVIngressRequest):
+    """
+    Ingests raw CSV data and formulates mathematical optimization models.
+    """
+    try:
+        if request.problem_type == "maxcut":
+            res = CSVProblemIngress.parse_adjacency_matrix(request.csv_text, problem_type="maxcut")
+        else:
+            res = CSVProblemIngress.parse_tabular(
+                csv_text=request.csv_text,
+                problem_type=request.problem_type or "selection",
+                name_col=request.name_col,
+                objective_col=request.objective_col,
+                sense=request.sense or "MAXIMIZE",
+                constraints_config=request.constraints_config,
+            )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"CSV Ingress failed: {str(e)}")
+
+@app.post("/engine/connectors/egress")
+async def engine_connectors_egress(request: EgressExportRequest):
+    """
+    Exports solver solutions or Q-matrices into enterprise formats.
+    """
+    try:
+        vars_list = request.variables or []
+        exp_type = request.export_type.lower()
+        if exp_type == "solution_json":
+            payload = SolutionEgress.to_json(
+                solution_sample=request.solution or {},
+                energy=request.energy or 0.0,
+                variables=vars_list,
+                metadata=request.metadata,
+            )
+            return {"format": "json", "filename": "solution.json", "content": payload}
+        elif exp_type == "solution_csv":
+            payload = SolutionEgress.to_csv(
+                solution_sample=request.solution or {},
+                variables=vars_list,
+            )
+            return {"format": "csv", "filename": "solution.csv", "content": payload}
+        elif exp_type == "qmatrix_dense":
+            payload = QMatrixEgress.to_dense_csv(
+                q_matrix=request.q_matrix or [],
+                variable_names=vars_list,
+            )
+            return {"format": "csv", "filename": "qubo_matrix_dense.csv", "content": payload}
+        elif exp_type == "qmatrix_coo":
+            payload = QMatrixEgress.to_sparse_coo(
+                q_matrix=request.q_matrix or [],
+                variable_names=vars_list,
+            )
+            return {"format": "csv", "filename": "qubo_matrix.coo", "content": payload}
+        elif exp_type == "bqm_json":
+            payload = QMatrixEgress.to_bqm_json(
+                q_matrix=request.q_matrix or [],
+                variable_names=vars_list,
+                offset=request.offset or 0.0,
+            )
+            return {"format": "json", "filename": "qubo_bqm.json", "content": payload}
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported export type: {request.export_type}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Egress export failed: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("ENGINE_PORT", 8003))
