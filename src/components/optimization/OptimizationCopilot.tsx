@@ -348,7 +348,13 @@ export function OptimizationCopilot({
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#087FC3] hover:bg-[#066DAE] disabled:opacity-30 text-white font-medium text-xs transition-colors shadow-xs"
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium font-mono text-xs transition-colors shadow-xs cursor-pointer ${
+                  input.trim()
+                    ? "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-600/20"
+                    : isDark
+                    ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/[0.06]"
+                    : "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                }`}
                 title="Send message (Enter, Shift+Enter for new line)"
               >
                 <span>Send</span>

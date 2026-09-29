@@ -7,25 +7,17 @@ import {
   Plus,
   Play,
   Zap,
-  Sun,
-  Moon,
   Cpu,
   LogIn,
+  LogOut,
   RotateCw,
-  Cloud,
-  CloudOff,
-  Code,
   Sparkles,
-  Layers,
   Activity,
-  BarChart2,
   Folder,
   FileCode,
   FileJson,
   FileText,
   Check,
-  Copy,
-  Terminal,
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
 
@@ -40,6 +32,7 @@ interface StudioHeaderProps {
   isModelDirty?: boolean;
   user: any;
   isAuthenticated: boolean;
+  onLogout?: () => void;
   heroTab: HeroTabType;
   onSelectHeroTab: (tab: HeroTabType) => void;
   activeFile?: string;
@@ -62,26 +55,18 @@ export function StudioHeader({
   isModelDirty = false,
   user,
   isAuthenticated,
+  onLogout,
   heroTab,
   onSelectHeroTab,
   activeFile,
   onSelectFile,
   onAddFile,
-  onCopyCode,
-  showTerminal = false,
-  onToggleTerminal,
-  isSyncing = false,
 }: StudioHeaderProps) {
   const isDwave = activeProject.framework === "dwave";
   const [isFileDropdownOpen, setIsFileDropdownOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const fileDropdownRef = useRef<HTMLDivElement>(null);
-
-  const handleCopy = () => {
-    onCopyCode?.();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const currentFile =
     activeFile ||
@@ -94,7 +79,7 @@ export function StudioHeader({
       ? activeProject.files
       : [currentFile];
 
-  // Close dropdown on outside click or Escape key
+  // Close dropdowns on outside click or Escape key
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -103,28 +88,33 @@ export function StudioHeader({
       ) {
         setIsFileDropdownOpen(false);
       }
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
     }
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsFileDropdownOpen(false);
+        setIsUserMenuOpen(false);
       }
     }
-    if (isFileDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isFileDropdownOpen]);
+  }, []);
 
   const getFileIcon = (file?: string) => {
     if (!file) {
       return (
         <FileCode
           className={`w-3.5 h-3.5 shrink-0 ${
-            isDwave ? "text-emerald-400" : "text-sky-400"
+            isDwave ? "text-emerald-500" : "text-sky-500"
           }`}
         />
       );
@@ -133,16 +123,16 @@ export function StudioHeader({
       return (
         <FileCode
           className={`w-3.5 h-3.5 shrink-0 ${
-            isDwave ? "text-emerald-400" : "text-sky-400"
+            isDwave ? "text-emerald-500" : "text-sky-500"
           }`}
         />
       );
     }
     if (file.endsWith(".qasm")) {
-      return <Activity className="w-3.5 h-3.5 shrink-0 text-indigo-400" />;
+      return <Activity className="w-3.5 h-3.5 shrink-0 text-indigo-500" />;
     }
     if (file.endsWith(".json")) {
-      return <FileJson className="w-3.5 h-3.5 shrink-0 text-amber-400" />;
+      return <FileJson className="w-3.5 h-3.5 shrink-0 text-amber-500" />;
     }
     return <FileText className="w-3.5 h-3.5 shrink-0 text-zinc-400" />;
   };
@@ -163,23 +153,30 @@ export function StudioHeader({
           : "bg-white border-slate-200"
       }`}
     >
-      {/* ── LEFT: QG Brand + Hero Tabs + Divider + Project/File Breadcrumb ── */}
-      <div className="flex items-center space-x-2.5 shrink-0 min-w-0">
-        {/* Brand Logo with White Background (36px = +50% larger, standalone without QG text) */}
-        <div className="mr-1 shrink-0 select-none">
-          <div className="w-9 h-9 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden">
+      {/* ── LEFT: Logo + "QUANTUM GURU" + Space + Hero Tabs + Divider + Project/File Breadcrumb ── */}
+      <div className="flex items-center shrink-0 min-w-0">
+        {/* Brand Logo (36px, white background) + QUANTUM GURU text */}
+        <div className="flex items-center space-x-2.5 shrink-0 select-none mr-4">
+          <div className="w-9 h-9 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50">
             <img
               src="/qg-logo.png"
               alt="Quantum Guru"
               className="w-full h-full object-contain"
             />
           </div>
+          <span
+            className={`text-xs font-mono font-bold tracking-wider uppercase select-none ${
+              isDark ? "text-white" : "text-slate-900"
+            }`}
+          >
+            QUANTUM GURU
+          </span>
         </div>
 
-        {/* ── HERO TABS (Code | Model | QUBO | Results) ── */}
+        {/* ── HERO TABS (Code | Model/Circuit | QUBO | Results) ── */}
         <div
           className={`flex items-center space-x-0.5 p-0.5 rounded-lg text-xs font-mono select-none transition-colors shrink-0 ${
-            isDark ? "bg-white/[0.06]" : "bg-slate-100"
+            isDark ? "bg-white/[0.06]" : "bg-slate-100 border border-slate-200/60"
           }`}
         >
           {/* Tab 1: Code */}
@@ -189,7 +186,7 @@ export function StudioHeader({
               heroTab === "code"
                 ? isDark
                   ? "bg-white/[0.12] text-white shadow-xs"
-                  : "bg-white text-[#087FC3] shadow-xs"
+                  : "bg-white text-sky-700 font-semibold shadow-xs"
                 : isDark
                 ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -206,7 +203,7 @@ export function StudioHeader({
                 heroTab === "formulation"
                   ? isDark
                     ? "bg-white/[0.12] text-white shadow-xs"
-                    : "bg-white text-[#087FC3] shadow-xs"
+                    : "bg-white text-sky-700 font-semibold shadow-xs"
                   : isDark
                   ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -226,7 +223,7 @@ export function StudioHeader({
               heroTab === "visual"
                 ? isDark
                   ? "bg-white/[0.12] text-white shadow-xs"
-                  : "bg-white text-[#087FC3] shadow-xs"
+                  : "bg-white text-sky-700 font-semibold shadow-xs"
                 : isDark
                 ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -242,7 +239,7 @@ export function StudioHeader({
               heroTab === "results"
                 ? isDark
                   ? "bg-white/[0.12] text-white shadow-xs"
-                  : "bg-white text-[#087FC3] shadow-xs"
+                  : "bg-white text-sky-700 font-semibold shadow-xs"
                 : isDark
                 ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -252,182 +249,186 @@ export function StudioHeader({
           </button>
         </div>
 
-        {/* Separator / Divider: │ */}
+        {/* ── VERTICAL DIVIDER ── */}
         <div
-          className={`h-4 w-[1px] mx-1 shrink-0 ${
-            isDark ? "bg-white/[0.12]" : "bg-slate-300"
+          className={`h-4 w-[1px] mx-3 shrink-0 ${
+            isDark ? "bg-white/[0.08]" : "bg-slate-300"
           }`}
         />
 
-        {/* ── BREADCRUMB: Project Name ▾ + File Name ▾ ── */}
-        <div className="flex items-center shrink-0">
-          <div
-            className={`flex items-center rounded-md text-xs font-medium transition-all ${
+        {/* ── PROJECT & FILE BREADCRUMB ── */}
+        <div className="flex items-center space-x-1.5 shrink-0">
+          {/* Project Dropdown Trigger Pill */}
+          <button
+            onClick={onOpenProjectModal}
+            className={`flex items-center space-x-1.5 px-2 py-1 rounded-md text-xs font-mono transition-colors group cursor-pointer border ${
               isDark
-                ? "bg-zinc-800/40 text-zinc-200"
-                : "bg-slate-100 text-[#172033]"
+                ? "border-transparent hover:bg-zinc-800/80 text-zinc-300 hover:text-white"
+                : "border-slate-200/80 bg-slate-50 hover:bg-slate-100 text-slate-800 hover:text-slate-900"
             }`}
+            title="Switch project"
           >
-            {/* 1. Project Name Button (Triggers Switch Project Modal) */}
-            <button
-              onClick={onOpenProjectModal}
-              className={`group flex items-center space-x-1.5 px-2.5 py-1 rounded-l-md transition-colors ${
-                isDark ? "hover:bg-zinc-800/80" : "hover:bg-[#E2E8F0]"
-              }`}
-              title="Click to Switch Project"
-            >
-              <Folder className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-              <span className="max-w-[120px] sm:max-w-[150px] truncate font-mono text-[11px]">
-                {activeProject.title}
-              </span>
-              <ChevronDown className="w-3 h-3 text-zinc-400 group-hover:text-zinc-200" />
-            </button>
-
-            {/* Separator / Divider */}
-            <div
-              className={`h-4 w-[1px] ${
-                isDark ? "bg-white/[0.08]" : "bg-[#C4CEDB]"
+            <Folder
+              className={`w-3.5 h-3.5 shrink-0 ${
+                isDark ? "text-sky-400" : "text-sky-600"
               }`}
             />
+            <span className="max-w-[100px] sm:max-w-[130px] truncate font-medium">
+              {activeProject.title}
+            </span>
+            <ChevronDown className="w-3 h-3 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200 transition-transform" />
+          </button>
 
-            {/* 2. File Name Dropdown Button */}
-            <div className="relative" ref={fileDropdownRef}>
-              <button
-                onClick={() => setIsFileDropdownOpen((prev) => !prev)}
-                className={`group flex items-center space-x-1.5 px-2.5 py-1 rounded-r-md transition-colors ${
-                  isFileDropdownOpen
-                    ? isDark
-                      ? "bg-white/[0.08] text-white"
-                      : "bg-slate-200 text-slate-900"
-                    : isDark
-                    ? "hover:bg-zinc-800/80 text-zinc-300"
-                    : "hover:bg-[#E2E8F0] text-[#172033]"
+          {/* Breadcrumb Separator */}
+          <span
+            className={`text-xs select-none ${
+              isDark ? "text-zinc-600" : "text-slate-300"
+            }`}
+          >
+            /
+          </span>
+
+          {/* File Dropdown Trigger Pill (Directly Anchored Popover) */}
+          <div className="relative" ref={fileDropdownRef}>
+            <button
+              onClick={() => setIsFileDropdownOpen((prev) => !prev)}
+              className={`flex items-center space-x-1.5 px-2 py-1 rounded-md text-xs font-mono transition-colors group cursor-pointer border ${
+                isFileDropdownOpen
+                  ? isDark
+                    ? "bg-zinc-800 border-white/[0.12] text-white"
+                    : "bg-slate-100 border-slate-300 text-slate-900"
+                  : isDark
+                  ? "border-transparent hover:bg-zinc-800/80 text-zinc-300 hover:text-white"
+                  : "border-slate-200/80 bg-slate-50 hover:bg-slate-100 text-slate-800 hover:text-slate-900"
+              }`}
+              title="Click to view all project files"
+            >
+              {getFileIcon(currentFile)}
+              <span className={`max-w-[90px] sm:max-w-[120px] truncate font-mono text-[11px] font-semibold ${
+                isDark ? "text-sky-400" : "text-sky-700"
+              }`}>
+                {currentFile}
+              </span>
+              <ChevronDown
+                className={`w-3 h-3 text-zinc-400 transition-transform duration-150 ${
+                  isFileDropdownOpen ? "rotate-180 text-sky-500" : ""
                 }`}
-                title="Click to view all project files"
+              />
+            </button>
+
+            {/* ── PROJECT FILES DROPDOWN POPOVER ── */}
+            {isFileDropdownOpen && (
+              <div
+                className={`absolute top-full left-0 mt-1.5 w-64 rounded-xl border shadow-2xl backdrop-blur-md z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 ${
+                  isDark
+                    ? "bg-[#13141A]/95 border-white/[0.12] text-zinc-200 shadow-black/80"
+                    : "bg-white border-slate-200 text-slate-900 shadow-xl"
+                }`}
               >
-                {getFileIcon(currentFile)}
-                <span className="max-w-[90px] sm:max-w-[120px] truncate font-mono text-[11px] font-semibold text-sky-400">
-                  {currentFile}
-                </span>
-                <ChevronDown
-                  className={`w-3 h-3 text-zinc-400 group-hover:text-zinc-200 transition-transform duration-150 ${
-                    isFileDropdownOpen ? "rotate-180 text-sky-400" : ""
-                  }`}
-                />
-              </button>
-
-              {/* ── PROJECT FILES DROPDOWN POPOVER ── */}
-              {isFileDropdownOpen && (
-                <div
-                  className={`absolute top-full left-0 mt-1.5 w-64 rounded-xl border shadow-2xl backdrop-blur-md z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 ${
-                    isDark
-                      ? "bg-[#13141A]/95 border-white/[0.12] text-zinc-200 shadow-black/80"
-                      : "bg-white border-slate-200 text-slate-900 shadow-xl"
-                  }`}
-                >
-                  {/* Dropdown Header */}
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06] text-[10px] font-mono uppercase tracking-wider text-zinc-400">
-                    <span>Project Files</span>
-                    <span>{projectFiles.length} file{projectFiles.length !== 1 ? "s" : ""}</span>
-                  </div>
-
-                  {/* Scrollable File List */}
-                  <div className="max-h-60 overflow-y-auto custom-scrollbar p-1 space-y-0.5">
-                    {projectFiles.map((file: string) => {
-                      const isActive = file === currentFile;
-                      return (
-                        <button
-                          key={file}
-                          onClick={() => {
-                            onSelectFile?.(file);
-                            setIsFileDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors ${
-                            isActive
-                              ? isDark
-                                ? "bg-sky-500/15 text-sky-300 font-semibold"
-                                : "bg-sky-50 text-sky-700 font-semibold"
-                              : isDark
-                              ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white"
-                              : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2 min-w-0">
-                            {getFileIcon(file)}
-                            <span className="truncate">{file}</span>
-                          </div>
-                          <div className="flex items-center space-x-1.5 shrink-0 ml-2">
-                            <span className="text-[10px] text-zinc-500 font-normal">
-                              {getFileTypeLabel(file)}
-                            </span>
-                            {isActive && (
-                              <Check className="w-3.5 h-3.5 text-sky-400" />
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Dropdown Footer: Add File action */}
-                  <div className="p-1 border-t border-white/[0.06]">
-                    <button
-                      onClick={() => {
-                        const name = window.prompt("Enter new file name (e.g., config.json):");
-                        if (name && name.trim()) {
-                          onAddFile?.(name.trim());
-                          setIsFileDropdownOpen(false);
-                        }
-                      }}
-                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-xs font-mono transition-colors ${
-                        isDark
-                          ? "hover:bg-white/[0.05] text-sky-400 hover:text-sky-300"
-                          : "hover:bg-slate-100 text-sky-600 hover:text-sky-700"
-                      }`}
-                    >
-                      <Plus className="w-3.5 h-3.5 shrink-0" />
-                      <span>New file in project...</span>
-                    </button>
-                  </div>
+                {/* Dropdown Header */}
+                <div className={`flex items-center justify-between px-3 py-2 border-b text-[10px] font-mono uppercase tracking-wider ${
+                  isDark ? "border-white/[0.06] text-zinc-400" : "border-slate-100 text-slate-500 bg-slate-50/50"
+                }`}>
+                  <span>Project Files</span>
+                  <span>{projectFiles.length} file{projectFiles.length !== 1 ? "s" : ""}</span>
                 </div>
-              )}
-            </div>
+
+                {/* Scrollable File List */}
+                <div className="max-h-60 overflow-y-auto custom-scrollbar p-1 space-y-0.5">
+                  {projectFiles.map((file: string) => {
+                    const isActive = file === currentFile;
+                    return (
+                      <button
+                        key={file}
+                        onClick={() => {
+                          onSelectFile?.(file);
+                          setIsFileDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors ${
+                          isActive
+                            ? isDark
+                              ? "bg-sky-500/15 text-sky-300 font-semibold"
+                              : "bg-sky-50 text-sky-700 font-semibold"
+                            : isDark
+                            ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white"
+                            : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 min-w-0">
+                          {getFileIcon(file)}
+                          <span className="truncate">{file}</span>
+                        </div>
+                        <div className="flex items-center space-x-1.5 shrink-0 ml-2">
+                          <span className={`text-[10px] font-normal ${isDark ? "text-zinc-500" : "text-slate-400"}`}>
+                            {getFileTypeLabel(file)}
+                          </span>
+                          {isActive && (
+                            <Check className="w-3.5 h-3.5 text-sky-500" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Dropdown Footer: Add File action */}
+                <div className={`p-1 border-t ${isDark ? "border-white/[0.06]" : "border-slate-100"}`}>
+                  <button
+                    onClick={() => {
+                      const name = window.prompt("Enter new file name (e.g., config.json):");
+                      if (name && name.trim()) {
+                        onAddFile?.(name.trim());
+                        setIsFileDropdownOpen(false);
+                      }
+                    }}
+                    className={`w-full flex items-center space-x-2 px-3 py-1.5 text-xs font-mono transition-colors ${
+                      isDark
+                        ? "hover:bg-white/[0.05] text-sky-400 hover:text-sky-300"
+                        : "hover:bg-slate-100 text-sky-600 hover:text-sky-700 font-medium"
+                    }`}
+                  >
+                    <Plus className="w-3.5 h-3.5 shrink-0" />
+                    <span>New file in project...</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── RIGHT: Backend Selector + Run Action + User ── */}
+      {/* ── RIGHT: Backend Chip (Clean Status) + Action Button + User Profile ── */}
       <div className="flex items-center space-x-2 shrink-0">
-        {/* Backend Target Selector */}
+        {/* Backend Target Simulator Status Chip (NO non-functional dropdown arrow) */}
         <div
-          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono border transition-colors ${
+          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono border transition-colors select-none ${
             isDark
               ? "bg-zinc-800/40 border-white/[0.08] text-zinc-300"
               : "bg-slate-100 border-slate-200 text-slate-700"
           }`}
+          title="Active Simulation Engine"
         >
           <Cpu
             className={`w-3.5 h-3.5 ${
-              isDwave ? "text-emerald-400" : "text-sky-400"
+              isDwave ? "text-emerald-500" : "text-sky-500"
             }`}
           />
           <span className="text-[11px] font-medium">
             {isDwave ? "D-Wave" : "AerSimulator"}
           </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
-          <ChevronDown className="w-3 h-3 text-zinc-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
         </div>
 
         {/* Primary Action Button (⚡ Recompile / ▷ Run Circuit) */}
         <button
           onClick={onRunOrRecompile}
           disabled={isRunningOrRecompiling}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium font-mono transition-all shadow-xs ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold font-mono transition-all shadow-sm cursor-pointer ${
             isDwave
               ? isModelDirty
-                ? "bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:brightness-110 shadow-amber-500/20"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20"
-              : "bg-[#087FC3] hover:bg-[#066DAE] text-white shadow-sm"
+                ? "bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20"
+              : "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-600/20"
           }`}
         >
           {isRunningOrRecompiling ? (
@@ -450,17 +451,108 @@ export function StudioHeader({
           </span>
         </button>
 
-        <div className="h-4 w-[1px] bg-zinc-700/50" />
+        <div className={`h-4 w-[1px] ${isDark ? "bg-zinc-700/50" : "bg-slate-200"}`} />
 
-        {/* User / Session Badge */}
+        {/* User / Session Badge & Logout Dropdown */}
         {isAuthenticated ? (
-          <div className="flex items-center space-x-2 text-xs font-mono text-zinc-300">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">
-              {user?.name?.[0] || user?.email?.[0] || "U"}
+          <div className="relative" ref={userMenuRef}>
+            <div className="flex items-center space-x-1.5">
+              <button
+                onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                className={`flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-mono transition-colors border cursor-pointer ${
+                  isDark
+                    ? "bg-zinc-800/60 hover:bg-zinc-800 border-white/[0.08] text-zinc-200"
+                    : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800"
+                }`}
+                title="Account menu"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-xs shrink-0">
+                  {user?.name?.[0] || user?.email?.[0] || "U"}
+                </div>
+                <span className="hidden sm:inline max-w-[80px] truncate text-[11px] font-medium">
+                  {user?.name || user?.email?.split("@")[0]}
+                </span>
+                <ChevronDown className={`w-3 h-3 text-zinc-400 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {/* Quick direct logout button */}
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className={`p-1.5 rounded-md transition-colors border cursor-pointer ${
+                    isDark
+                      ? "border-white/[0.08] hover:bg-rose-500/15 hover:border-rose-500/30 text-zinc-400 hover:text-rose-400"
+                      : "border-slate-200 hover:bg-rose-50 hover:border-rose-300 text-slate-600 hover:text-rose-600"
+                  }`}
+                  title="Logout"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            <span className="hidden sm:inline max-w-[80px] truncate text-[11px]">
-              {user?.name || user?.email?.split("@")[0]}
-            </span>
+
+            {/* User Dropdown Menu Popover */}
+            {isUserMenuOpen && (
+              <div
+                className={`absolute right-0 top-full mt-1.5 w-56 rounded-xl border shadow-xl backdrop-blur-md z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 ${
+                  isDark
+                    ? "bg-[#13141A]/95 border-white/[0.12] text-zinc-200 shadow-black/80"
+                    : "bg-white border-slate-200 text-slate-900 shadow-xl"
+                }`}
+              >
+                <div className={`px-3 py-2 border-b flex items-center space-x-2.5 ${isDark ? "border-white/[0.06]" : "border-slate-100 bg-slate-50/50"}`}>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase shrink-0 shadow-xs">
+                    {user?.name?.[0] || user?.email?.[0] || "U"}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate font-mono">
+                      {user?.name || user?.email?.split("@")[0]}
+                    </p>
+                    <p className={`text-[10px] truncate ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-1 space-y-0.5">
+                  <Link
+                    href="/marketplace"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className={`flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors ${
+                      isDark ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white" : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Marketplace</span>
+                  </Link>
+                  <Link
+                    href="/quantum-assistant"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className={`flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors ${
+                      isDark ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white" : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-sky-500" />
+                    <span>Assistant</span>
+                  </Link>
+                </div>
+
+                {onLogout && (
+                  <div className={`p-1 border-t ${isDark ? "border-white/[0.06]" : "border-slate-100"}`}>
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs font-mono text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span className="font-semibold">Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <Link
@@ -468,7 +560,7 @@ export function StudioHeader({
             className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono transition-colors border ${
               isDark
                 ? "bg-zinc-800/60 hover:bg-zinc-800 border-white/[0.06] text-zinc-300"
-                : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700"
+                : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 font-medium"
             }`}
           >
             <LogIn className="w-3.5 h-3.5 text-zinc-400" />

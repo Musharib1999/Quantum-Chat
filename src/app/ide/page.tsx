@@ -275,11 +275,44 @@ const QISKIT_INITIAL_MESSAGES: CopilotMessage[] = [
 export default function QuantumGuruStudioPage() {
   const [codeSnapshots, setCodeSnapshots] = useState<string[]>([]);
   const [targetBackend, setTargetBackend] = useState<string>("dwave_simulated_annealing");
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const isDark = theme === "dark";
   const colors = isDark ? darkColors : lightColors;
+
+  // Persist theme to localStorage and keep DOM synchronized across reloads
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("qg_theme") as "dark" | "light" | null;
+      if (saved === "light" || saved === "dark") {
+        setTheme(saved);
+        document.documentElement.classList.toggle("dark", saved === "dark");
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => {
+      const nextTheme = prev === "dark" ? "light" : "dark";
+      try {
+        localStorage.setItem("qg_theme", nextTheme);
+        document.documentElement.classList.toggle("dark", nextTheme === "dark");
+        document.documentElement.setAttribute("data-theme", nextTheme);
+      } catch (e) {}
+      return nextTheme;
+    });
+  };
+
+  const handleLogout = () => {
+    try {
+      logout();
+    } catch (e) {
+      console.error("Logout error", e);
+    }
+    window.location.replace("/login");
+  };
 
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
@@ -924,7 +957,7 @@ export default function QuantumGuruStudioPage() {
       {/* ── TOP CALM PRECISION HEADER ── */}
       <StudioHeader
         isDark={isDark}
-        onToggleTheme={() => setTheme(isDark ? "light" : "dark")}
+        onToggleTheme={handleToggleTheme}
         activeProject={activeProject}
         onOpenProjectModal={() => setShowProjectModal(true)}
         onOpenNewProjectModal={() => setShowNewProjectModal(true)}
@@ -933,6 +966,7 @@ export default function QuantumGuruStudioPage() {
         isModelDirty={isModelDirty}
         user={user}
         isAuthenticated={isAuthenticated}
+        onLogout={handleLogout}
         heroTab={heroTab}
         onSelectHeroTab={handleSelectHeroTab}
         activeFile={activeFile}
@@ -972,7 +1006,7 @@ export default function QuantumGuruStudioPage() {
             {heroTab === "code" && (
               <StudioCodeEditor
                 isDark={isDark}
-                onToggleTheme={() => setTheme(isDark ? "light" : "dark")}
+                onToggleTheme={handleToggleTheme}
                 code={framework === "dwave" ? dwaveCode : qiskitCode}
                 onChange={framework === "dwave" ? setDwaveCode : setQiskitCode}
                 files={activeProject.files}
