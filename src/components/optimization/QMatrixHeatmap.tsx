@@ -163,6 +163,17 @@ export function QMatrixHeatmap({
       )}
 
       {/* Main Matrix Canvas / Table */}
+      {n === 0 ? (
+        <div className="flex-1 min-h-[380px] flex flex-col justify-center items-center p-8 rounded-xl border text-center space-y-3" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
+          <Grid className="w-10 h-10 text-zinc-500 opacity-60" />
+          <h3 className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
+            No QUBO Couplers Compiled Yet
+          </h3>
+          <p className="text-xs max-w-sm" style={{ color: colors.textMuted }}>
+            Click <strong>Run</strong> or <strong>Recompile</strong> in the Code editor to execute your model and synthesize the quadratic interaction matrix.
+          </p>
+        </div>
+      ) : (
       <div className="flex-1 min-h-[380px] flex flex-col justify-center items-center p-4 rounded-xl border relative" style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}>
         {isLarge ? (
           /* High-Performance Canvas for N > 16 (Up to N=200) */
@@ -250,6 +261,7 @@ export function QMatrixHeatmap({
           </div>
         )}
       </div>
+      )}
 
       {/* Cell Inspector Drawer / Footer */}
       {selectedCell && (

@@ -33,6 +33,10 @@ interface StudioCodeEditorProps {
     score?: number;
     energy?: number;
     feasible?: boolean;
+    isPortfolio?: boolean;
+    variablesCount?: number;
+    activeCount?: number;
+    reads?: number;
   };
 }
 
@@ -164,7 +168,7 @@ export function StudioCodeEditor({
                     Shots: <strong className={isDark ? "text-amber-400" : "text-amber-700 font-semibold"}>{specs?.shots ?? 4096}</strong>
                   </span>
                 </>
-              ) : (
+              ) : specs?.isPortfolio ? (
                 <>
                   <span>
                     Cost: <strong className={isDark ? "text-zinc-200" : "text-slate-900 font-semibold"}>${Number((specs?.cost ?? 14).toFixed(1))}/${Number((specs?.maxCost ?? 18).toFixed(1))}</strong>
@@ -180,6 +184,24 @@ export function StudioCodeEditor({
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span className={`font-semibold ${isDark ? "text-emerald-400" : "text-emerald-700"}`}>
                     {specs?.feasible ?? true ? "100% Feasible" : "Infeasible"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    Variables: <strong className={isDark ? "text-zinc-200" : "text-slate-900 font-semibold"}>{specs?.variablesCount ?? 1}</strong>
+                  </span>
+                  <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
+                  <span>
+                    Active: <strong className={isDark ? "text-emerald-400" : "text-emerald-700 font-semibold"}>{specs?.activeCount ?? 0}</strong>
+                  </span>
+                  <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
+                  <span>
+                    Energy: <strong className={isDark ? "text-amber-400" : "text-amber-700 font-semibold"}>{(specs?.energy ?? 0).toFixed(2)}</strong>
+                  </span>
+                  <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
+                  <span>
+                    Reads: <strong className={isDark ? "text-sky-400" : "text-sky-700 font-semibold"}>{specs?.reads ?? 1024}</strong>
                   </span>
                 </>
               )}

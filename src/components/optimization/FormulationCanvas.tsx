@@ -18,6 +18,8 @@ export interface FormulationCanvasProps {
   customBqmFormula?: string;
   variables?: string[];
   activeFileName?: string;
+  projectName?: string;
+  isPortfolioProblem?: boolean;
 }
 
 export function FormulationCanvas({
@@ -33,6 +35,8 @@ export function FormulationCanvas({
   customBqmFormula,
   variables,
   activeFileName,
+  projectName,
+  isPortfolioProblem = true,
 }: FormulationCanvasProps) {
   const [copiedLatex, setCopiedLatex] = useState(false);
 
@@ -82,10 +86,10 @@ export function FormulationCanvas({
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b" style={{ borderColor: colors.border }}>
         <div className="flex items-center space-x-2.5">
           <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded border" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}>
-            {customBqmFormula ? (activeFileName || "custom_qubo.py") : "qubo_penalty_formulation.tex"}
+            {isPortfolioProblem ? "qubo_penalty_formulation.tex" : (activeFileName || "main.py")}
           </span>
           <span className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
-            {customBqmFormula ? "in Custom Formulation" : "in Clean Energy Portfolio"}
+            {isPortfolioProblem ? "in Clean Energy Portfolio" : `in ${projectName || "Custom Project"}`}
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
           <span className="text-[11px] font-mono text-emerald-400">D-Wave BQM Verified</span>
@@ -93,7 +97,7 @@ export function FormulationCanvas({
 
         <div className="flex items-center space-x-3">
           <span className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
-            {variables ? `${variables.length} Variable${variables.length === 1 ? "" : "s"}` : "42 Variables"} · Advantage QPU
+            {isPortfolioProblem ? "42 Variables" : `${variables && variables.length > 0 ? variables.length : 1} Variable${variables && variables.length === 1 ? "" : "s"}`} · Advantage QPU
           </span>
           <button
             onClick={handleCopy}

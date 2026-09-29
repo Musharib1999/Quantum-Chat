@@ -522,7 +522,9 @@ export default function QuantumGuruStudioPage() {
     isMarkowitz: false,
   });
 
-  const [solverResult, setSolverResult] = useState<OptimizationResults>({
+  const isPortfolio = activeProject.id === "clean_energy_portfolio";
+
+  const DEFAULT_PORTFOLIO_RESULT: OptimizationResults = {
     energy: -62.2,
     sample: { Wind_A: 0, Solar_B: 0, Battery_C: 1, Hydro_D: 1 },
     num_variables: 4,
@@ -559,6 +561,29 @@ export default function QuantumGuruStudioPage() {
         bitstring: "0110",
       },
     ],
+  };
+
+  const [solverResult, setSolverResult] = useState<OptimizationResults>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const targetId = localStorage.getItem("quantum_ide_active_project_id") || "clean_energy_portfolio";
+        if (targetId === "clean_energy_portfolio") {
+          return DEFAULT_PORTFOLIO_RESULT;
+        }
+        const stored = localStorage.getItem(`quantum_ide_result_${targetId}`);
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+    }
+    return activeProject.id === "clean_energy_portfolio"
+      ? DEFAULT_PORTFOLIO_RESULT
+      : {
+          energy: 0,
+          sample: {},
+          num_variables: 0,
+          variables: [],
+          qubo_matrix: [],
+          energy_distribution: [],
+        };
   });
 
   const [qiskitCounts, setQiskitCounts] = useState<Record<string, number>>({
@@ -730,6 +755,28 @@ export default function QuantumGuruStudioPage() {
       setDwaveCode(loadedCode);
     } else {
       setQiskitCode(loadedCode);
+    }
+
+    if (proj.id === "clean_energy_portfolio") {
+      setSolverResult(DEFAULT_PORTFOLIO_RESULT);
+    } else {
+      let savedRes = null;
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem(`quantum_ide_result_${proj.id}`);
+          if (stored) savedRes = JSON.parse(stored);
+        } catch (e) {}
+      }
+      setSolverResult(
+        savedRes || {
+          energy: 0,
+          sample: {},
+          num_variables: 0,
+          variables: [],
+          qubo_matrix: [],
+          energy_distribution: [],
+        }
+      );
     }
 
     if (typeof window !== "undefined") {
@@ -957,16 +1004,22 @@ export default function QuantumGuruStudioPage() {
         if (data.success) {
           if (data.optimization_results) {
             const opt = data.optimization_results;
-            setSolverResult({
+            const newRes: OptimizationResults = {
               energy: opt.energy,
               sample: opt.sample,
               num_variables: opt.num_variables || Object.keys(opt.sample).length,
               variables: opt.variables || Object.keys(opt.sample),
-              qubo_matrix: opt.qubo_matrix || currentMatrix,
+              qubo_matrix: opt.qubo_matrix || [],
               energy_distribution: opt.energy_distribution || [],
               num_reads: opt.num_reads,
               latex_formula: opt.latex_formula,
-            });
+            };
+            setSolverResult(newRes);
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem(`quantum_ide_result_${activeProject.id}`, JSON.stringify(newRes));
+              } catch (e) {}
+            }
 
             const chosen = Object.entries(opt.sample)
               .filter(([_, v]) => v === 1)
@@ -1057,7 +1110,7 @@ export default function QuantumGuruStudioPage() {
         setIsRunningOrRecompiling(false);
       }
     }
-  }, [framework, currentMatrix, mathParams, qiskitCode]);
+  }, [framework, dwaveCode, qiskitCode, currentMatrix, mathParams, activeProject, activeFile]);
 
   const handleSendMessage = (text: string) => {
     const userMsg: CopilotMessage = {
@@ -1236,12 +1289,21 @@ export default function QuantumGuruStudioPage() {
                         fidelity: 99.8,
                         shots: qiskitShots,
                       }
-                    : {
+                    : isPortfolio
+                    ? {
+                        isPortfolio: true,
                         cost: totalCost,
                         maxCost: mathParams.budgetMax,
                         score: totalScore,
                         energy: solverResult.energy,
                         feasible: totalCost <= mathParams.budgetMax,
+                      }
+                    : {
+                        isPortfolio: false,
+                        variablesCount: solverResult.variables?.length || 1,
+                        activeCount: Object.values(solverResult.sample || {}).filter((v) => v === 1).length,
+                        energy: solverResult.energy,
+                        reads: solverResult.num_reads || 1024,
                       }
                 }
               />
@@ -1262,6 +1324,8 @@ export default function QuantumGuruStudioPage() {
                   customBqmFormula={solverResult.latex_formula}
                   variables={solverResult.variables}
                   activeFileName={activeFile}
+                  projectName={activeProject.title}
+                  isPortfolioProblem={isPortfolio}
                 />
               </div>
             )}
@@ -1274,10 +1338,11 @@ export default function QuantumGuruStudioPage() {
                     <QMatrixHeatmap
                       isDark={isDark}
                       colors={colors}
-                      matrix={solverResult.qubo_matrix || currentMatrix}
-                      variables={solverResult.variables || DEFAULT_VARIABLES}
+                      matrix={solverResult.qubo_matrix && solverResult.qubo_matrix.length > 0 ? solverResult.qubo_matrix : (isPortfolio ? currentMatrix : [])}
+                      variables={solverResult.variables && solverResult.variables.length > 0 ? solverResult.variables : (isPortfolio ? DEFAULT_VARIABLES : [])}
                       hasMutualExclusion={
                         Boolean(
+                          isPortfolio &&
                           solverResult.variables?.includes("Wind_A") &&
                           solverResult.variables?.includes("Solar_B") &&
                           mathParams.hasMutualExclusion
