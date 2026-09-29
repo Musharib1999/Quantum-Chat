@@ -90,45 +90,6 @@ const lightColors: ThemeColors = {
   textSkyBlue: "#087FC3",
 };
 
-const INITIAL_PROJECTS: ProjectItem[] = [
-  {
-    id: "clean_energy_portfolio",
-    title: "Clean Energy Portfolio",
-    desc: "4-asset capital budgeting with mutual exclusions and grid stability dependencies.",
-    framework: "dwave",
-    updated: "2 mins ago",
-    files: ["main.py", "qubo_matrix.py", "deployment.json", "input.sample.json"],
-    activeFile: "main.py",
-  },
-  {
-    id: "quantum_teleportation",
-    title: "Quantum Teleportation",
-    desc: "3-qubit entangled Bell channel with Bob classical feed-forward corrections.",
-    framework: "qiskit",
-    updated: "1 hour ago",
-    files: ["teleportation.py", "circuit.qasm", "deployment.json"],
-    activeFile: "teleportation.py",
-  },
-  {
-    id: "maxcut_bipartite_graph",
-    title: "Max-Cut 12-Node Partition",
-    desc: "Unconstrained binary quadratic model for bipartite graph cut maximization.",
-    framework: "dwave",
-    updated: "Yesterday",
-    files: ["maxcut.py", "graph_edges.json", "deployment.json"],
-    activeFile: "maxcut.py",
-  },
-  {
-    id: "vqe_h2_molecule",
-    title: "VQE H2 Ground Energy",
-    desc: "Variational Quantum Eigensolver for molecular hydrogen ground state energy curve.",
-    framework: "qiskit",
-    updated: "3 days ago",
-    files: ["vqe_h2.py", "ansatz.py", "deployment.json"],
-    activeFile: "vqe_h2.py",
-  },
-];
-
 const DEFAULT_VARIABLES = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"];
 const ASSET_COSTS = [9.0, 7.0, 6.0, 8.0];
 const ASSET_YIELDS = [12.5, 9.0, 8.0, 10.5];
@@ -184,6 +145,85 @@ qc.measure(2, 2)
 sim = AerSimulator()
 res = sim.run(qc, shots=4096).result()
 print("Teleportation Counts:", res.get_counts())`;
+
+const MAXCUT_INITIAL_CODE = `# Quantum Guru — Max-Cut 12-Node Graph Partition (QUBO)
+import dimod
+from dwave.samplers import SimulatedAnnealingSampler
+
+edges = [(i, (i + 1) % 12) for i in range(12)] + [(0, 6), (2, 8), (4, 10)]
+linear = {f"n_{i}": 0.0 for i in range(12)}
+quadratic = {(f"n_{u}", f"n_{v}"): 2.0 for u, v in edges}
+
+bqm = dimod.BinaryQuadraticModel(linear, quadratic, -float(len(edges)), dimod.SPIN)
+sampler = SimulatedAnnealingSampler()
+sampleset = sampler.sample(bqm, num_reads=1024)
+
+best = sampleset.first
+print(f"⚡ Max-Cut Ground Energy: {best.energy:.4f}")
+print("Partition Set A:", [k for k, v in best.sample.items() if v == 1])
+print("Partition Set B:", [k for k, v in best.sample.items() if v == -1])`;
+
+const VQE_INITIAL_CODE = `# Quantum Guru — VQE Molecular H2 Ground State
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+import numpy as np
+
+qc = QuantumCircuit(2, 2)
+qc.x(0)
+qc.barrier()
+
+theta = 0.7854  # pi / 4 variational ansatz parameter
+qc.ry(theta, 1)
+qc.cx(1, 0)
+qc.barrier()
+qc.measure([0, 1], [0, 1])
+
+sim = AerSimulator()
+res = sim.run(qc, shots=2048).result()
+print("VQE H2 State Counts:", res.get_counts())`;
+
+const INITIAL_PROJECTS: ProjectItem[] = [
+  {
+    id: "clean_energy_portfolio",
+    title: "Clean Energy Portfolio",
+    desc: "4-asset capital budgeting with mutual exclusions and grid stability dependencies.",
+    framework: "dwave",
+    updated: "2 mins ago",
+    files: ["main.py", "qubo_matrix.py", "deployment.json", "input.sample.json"],
+    activeFile: "main.py",
+    fileContents: { "main.py": DWAVE_INITIAL_CODE },
+  },
+  {
+    id: "quantum_teleportation",
+    title: "Quantum Teleportation",
+    desc: "3-qubit entangled Bell channel with Bob classical feed-forward corrections.",
+    framework: "qiskit",
+    updated: "1 hour ago",
+    files: ["teleportation.py", "circuit.qasm", "deployment.json"],
+    activeFile: "teleportation.py",
+    fileContents: { "teleportation.py": QISKIT_INITIAL_CODE },
+  },
+  {
+    id: "maxcut_bipartite_graph",
+    title: "Max-Cut 12-Node Partition",
+    desc: "Unconstrained binary quadratic model for bipartite graph cut maximization.",
+    framework: "dwave",
+    updated: "Yesterday",
+    files: ["maxcut.py", "graph_edges.json", "deployment.json"],
+    activeFile: "maxcut.py",
+    fileContents: { "maxcut.py": MAXCUT_INITIAL_CODE },
+  },
+  {
+    id: "vqe_h2_molecule",
+    title: "VQE H2 Ground Energy",
+    desc: "Variational Quantum Eigensolver for molecular hydrogen ground state energy curve.",
+    framework: "qiskit",
+    updated: "3 days ago",
+    files: ["vqe_h2.py", "ansatz.py", "deployment.json"],
+    activeFile: "vqe_h2.py",
+    fileContents: { "vqe_h2.py": VQE_INITIAL_CODE },
+  },
+];
 
 
 // =============================================================================
@@ -315,7 +355,22 @@ export default function QuantumGuruStudioPage() {
   };
 
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<ProjectItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const localCustom = localStorage.getItem("quantum_ide_custom_projects");
+        if (localCustom) {
+          const parsed = JSON.parse(localCustom);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const ids = new Set(parsed.map((p: any) => p.id));
+            return [...parsed, ...INITIAL_PROJECTS.filter((p) => !ids.has(p.id))];
+          }
+        }
+      } catch (e) {}
+    }
+    return INITIAL_PROJECTS;
+  });
+
   // Fetch cloud projects from MongoDB Atlas when authenticated
   useEffect(() => {
     async function loadCloudProjects() {
@@ -369,14 +424,75 @@ export default function QuantumGuruStudioPage() {
     }
   }, [isAuthenticated, user?.email]);
 
-  const [activeProject, setActiveProject] = useState<ProjectItem>(INITIAL_PROJECTS[0]);
+  const [activeProject, setActiveProject] = useState<ProjectItem>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlId = params.get("project") || params.get("projectId");
+        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id");
+        if (savedId) {
+          const localCustom = localStorage.getItem("quantum_ide_custom_projects");
+          const customList: ProjectItem[] = localCustom ? JSON.parse(localCustom) : [];
+          const all = [...customList, ...INITIAL_PROJECTS];
+          const matched = all.find((p) => p.id === savedId);
+          if (matched) return matched;
+        }
+      } catch (e) {}
+    }
+    return INITIAL_PROJECTS[0];
+  });
+
   const framework = activeProject.framework;
 
-  const [heroTab, setHeroTab] = useState<HeroTabType>("code");
-  const [activeFile, setActiveFile] = useState<string>(activeProject.activeFile);
+  const [heroTab, setHeroTab] = useState<HeroTabType>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedTab = localStorage.getItem("quantum_ide_hero_tab") as HeroTabType | null;
+        if (savedTab) return savedTab;
+      } catch (e) {}
+    }
+    return "code";
+  });
 
-  const [dwaveCode, setDwaveCode] = useState<string>(DWAVE_INITIAL_CODE);
-  const [qiskitCode, setQiskitCode] = useState<string>(QISKIT_INITIAL_CODE);
+  const [activeFile, setActiveFile] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedFile = localStorage.getItem("quantum_ide_active_file");
+        if (savedFile && activeProject.files?.includes(savedFile)) return savedFile;
+      } catch (e) {}
+    }
+    return activeProject.activeFile || activeProject.files?.[0] || "main.py";
+  });
+
+  const [dwaveCode, setDwaveCode] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedId = localStorage.getItem("quantum_ide_active_project_id") || "clean_energy_portfolio";
+        const savedFile = localStorage.getItem("quantum_ide_active_file") || "main.py";
+        const savedCode = localStorage.getItem(`quantum_ide_code_${savedId}_${savedFile}`);
+        if (savedCode) return savedCode;
+
+        const lastDwave = localStorage.getItem("quantum_ide_last_dwave_code");
+        if (lastDwave) return lastDwave;
+      } catch (e) {}
+    }
+    return DWAVE_INITIAL_CODE;
+  });
+
+  const [qiskitCode, setQiskitCode] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedId = localStorage.getItem("quantum_ide_active_project_id") || "quantum_teleportation";
+        const savedFile = localStorage.getItem("quantum_ide_active_file") || "teleportation.py";
+        const savedCode = localStorage.getItem(`quantum_ide_code_${savedId}_${savedFile}`);
+        if (savedCode) return savedCode;
+
+        const lastQiskit = localStorage.getItem("quantum_ide_last_qiskit_code");
+        if (lastQiskit) return lastQiskit;
+      } catch (e) {}
+    }
+    return QISKIT_INITIAL_CODE;
+  });
 
   const [showProjectModal, setShowProjectModal] = useState<boolean>(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
@@ -497,7 +613,7 @@ export default function QuantumGuruStudioPage() {
     setIsModelDirty(true);
   }, [mathParams]);
 
-  // Restore active project and file on refresh from URL or localStorage
+  // Restore active project, file, and code on refresh from URL or localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -518,8 +634,22 @@ export default function QuantumGuruStudioPage() {
           setActiveFile(initialFile);
           if (savedTab) {
             setHeroTab(savedTab);
-          } else {
-            setHeroTab("code");
+          }
+
+          // Restore code from localStorage or project fileContents
+          const savedCode = localStorage.getItem(`quantum_ide_code_${matched.id}_${initialFile}`);
+          if (savedCode) {
+            if (matched.framework === "dwave") {
+              setDwaveCode(savedCode);
+            } else {
+              setQiskitCode(savedCode);
+            }
+          } else if (matched.fileContents && matched.fileContents[initialFile]) {
+            if (matched.framework === "dwave") {
+              setDwaveCode(matched.fileContents[initialFile]);
+            } else {
+              setQiskitCode(matched.fileContents[initialFile]);
+            }
           }
         }
       }
@@ -527,6 +657,22 @@ export default function QuantumGuruStudioPage() {
       console.warn("Failed to restore active project from storage:", e);
     }
   }, [projects]);
+
+  // Real-time auto-save of current editor code to localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const currentCode = framework === "dwave" ? dwaveCode : qiskitCode;
+      localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, currentCode);
+      if (framework === "dwave") {
+        localStorage.setItem("quantum_ide_last_dwave_code", dwaveCode);
+      } else {
+        localStorage.setItem("quantum_ide_last_qiskit_code", qiskitCode);
+      }
+    } catch (e) {
+      console.warn("Failed to auto-save code to localStorage:", e);
+    }
+  }, [dwaveCode, qiskitCode, activeProject.id, activeFile, framework]);
 
   const handleSelectHeroTab = (tab: HeroTabType) => {
     setHeroTab(tab);
@@ -539,14 +685,26 @@ export default function QuantumGuruStudioPage() {
 
   const handleSelectFile = (file: string) => {
     setActiveFile(file);
+    let loadedCode = "";
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("quantum_ide_active_file", file);
+        loadedCode = localStorage.getItem(`quantum_ide_code_${activeProject.id}_${file}`) || "";
       } catch (e) {}
+    }
+    if (!loadedCode && activeProject.fileContents && activeProject.fileContents[file]) {
+      loadedCode = activeProject.fileContents[file];
+    }
+    if (loadedCode) {
+      if (framework === "dwave") {
+        setDwaveCode(loadedCode);
+      } else {
+        setQiskitCode(loadedCode);
+      }
     }
   };
 
-  // Framework Switch Handler
+  // Framework & Project Switch Handler
   const handleSelectProject = (proj: ProjectItem) => {
     setActiveProject(proj);
     const targetFile = proj.activeFile || proj.files?.[0] || "main.py";
@@ -554,13 +712,24 @@ export default function QuantumGuruStudioPage() {
     const targetTab: HeroTabType = "code";
     setHeroTab(targetTab);
 
-    // If project has saved file contents from MongoDB Atlas, populate editor
-    if (proj.fileContents && proj.fileContents[targetFile]) {
-      if (proj.framework === "dwave") {
-        setDwaveCode(proj.fileContents[targetFile]);
-      } else {
-        setQiskitCode(proj.fileContents[targetFile]);
-      }
+    // Retrieve saved code for this project and file from localStorage or fileContents
+    let loadedCode = "";
+    if (typeof window !== "undefined") {
+      try {
+        loadedCode = localStorage.getItem(`quantum_ide_code_${proj.id}_${targetFile}`) || "";
+      } catch (e) {}
+    }
+    if (!loadedCode && proj.fileContents && proj.fileContents[targetFile]) {
+      loadedCode = proj.fileContents[targetFile];
+    }
+    if (!loadedCode) {
+      loadedCode = proj.framework === "dwave" ? DWAVE_INITIAL_CODE : QISKIT_INITIAL_CODE;
+    }
+
+    if (proj.framework === "dwave") {
+      setDwaveCode(loadedCode);
+    } else {
+      setQiskitCode(loadedCode);
     }
 
     if (typeof window !== "undefined") {
@@ -621,6 +790,12 @@ export default function QuantumGuruStudioPage() {
         localStorage.setItem("quantum_ide_active_project_id", customProj.id);
         localStorage.setItem("quantum_ide_active_file", targetFile);
         localStorage.setItem("quantum_ide_hero_tab", "code");
+        localStorage.setItem(`quantum_ide_code_${customProj.id}_${targetFile}`, initialCode);
+
+        const stored = localStorage.getItem("quantum_ide_custom_projects");
+        const list: ProjectItem[] = stored ? JSON.parse(stored) : [];
+        localStorage.setItem("quantum_ide_custom_projects", JSON.stringify([customProj, ...list.filter(p => p.id !== customProj.id)]));
+
         window.history.replaceState(null, "", `/ide?project=${encodeURIComponent(customProj.id)}`);
       } catch (e) {}
     }
@@ -672,6 +847,16 @@ export default function QuantumGuruStudioPage() {
     if (!window.confirm(`Are you sure you want to delete "${target.title}"?`)) return;
 
     setProjects((prev) => prev.filter((p) => p.id !== projectId));
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("quantum_ide_custom_projects");
+        if (stored) {
+          const list: ProjectItem[] = JSON.parse(stored);
+          localStorage.setItem("quantum_ide_custom_projects", JSON.stringify(list.filter(p => p.id !== projectId)));
+        }
+      } catch (e) {}
+    }
 
     if (activeProject.id === projectId) {
       const fallback = projects.find((p) => p.id !== projectId) || INITIAL_PROJECTS[0];
