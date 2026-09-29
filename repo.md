@@ -10,8 +10,8 @@ All code commits and releases are maintained in continuous synchronization acros
 
 | Remote Alias | Repository URL | Primary Purpose | Current Sync State |
 | :--- | :--- | :--- | :--- |
-| **`railway`** | `https://github.com/musharibsep-eng/Quantum-Guru-09-09-2026.git` | Production Deployment / Railway CI/CD Target | **Synchronized (`9780cc0`)** |
-| **`quantum-chat`** | `https://github.com/Musharib1999/Quantum-Chat.git` | Primary Collaboration & Source Repository | **Synchronized (`9780cc0`)** |
+| **`railway`** | `https://github.com/musharibsep-eng/Quantum-Guru-09-09-2026.git` | Production Deployment / Railway CI/CD Target | **Synchronized (`11f17c5`)** |
+| **`quantum-chat`** | `https://github.com/Musharib1999/Quantum-Chat.git` | Primary Collaboration & Source Repository | **Synchronized (`11f17c5`)** |
 | **`origin`** | `https://github.com/Musharib1999/QuantumGuru_Version2_09_11_2026.git` | Upstream Platform Master Archive | Secondary Reference |
 
 ---
@@ -20,7 +20,7 @@ All code commits and releases are maintained in continuous synchronization acros
 
 | Branch Name | Status | Target Solvers / Features | Latest Commit |
 | :--- | :--- | :--- | :--- |
-| **`phase-2/cloud-runpod-qwen`** | **ACTIVE (Current HEAD)** | High-Density IDE Studio, 442px Copilot, D-Wave & Qiskit UI, RunPod Qwen-2.5-Coder-32B backend | `a187c5b` |
+| **`phase-2/cloud-runpod-qwen`** | **ACTIVE (Current HEAD)** | High-Density IDE Studio, 442px Copilot, D-Wave & Qiskit UI, RunPod Qwen-2.5-Coder-32B backend | `11f17c5` |
 | **`main`** | **Production** | Stable core release branch across all studios | `bab7a24` |
 | **`phase-3/optimization-qubo`** | **Staged** | Autonomous QUBO, algebraic slack compilation, multi-objective annealing | `dbfa110` |
 | **`phase-4/agentic-chemistry-qml`** | Planned | Active-space VQE (OpenFermion/PySCF) and QSVM classifiers | `dbfa110` |
@@ -34,7 +34,7 @@ All code commits and releases are maintained in continuous synchronization acros
 * **Release Stage:** Phase 2 (High-Density Studio & Cloud RunPod/Qwen Integration)
 * **Active Working Branch:** `phase-2/cloud-runpod-qwen`
 * **Latest Sync Timestamp:** `2026-09-29 19:35:00 +05:30`
-* **Latest Commit Hash:** `9780cc0`
+* **Latest Commit Hash:** `11f17c5`
 
 ---
 
@@ -68,7 +68,8 @@ git push all <branch-name>
 
 | Commit | Date | Author | Description & Impact |
 | :--- | :--- | :--- | :--- |
-| **`9780cc0` (HEAD)** | 2026-09-29 | Musharib Subhani | **fix(ide): eliminate residual placeholder values on custom projects & fix stale useCallback dwaveCode execution**<br>• Fixed root cause where `handleRunOrRecompile` closed over stale mount-time `dwaveCode` (missing from `useCallback` dependency array), causing runs to execute Clean Energy Portfolio code<br>• Isolated Clean Energy sliders, slack transformation ($H_{\\text{penalty}}$), and $Q_{ii}$ expansion to `clean_energy_portfolio` project only<br>• Replaced hardcoded portfolio cost/score metrics (`Cost: $14/$18 · Score: 18.5`) in status bar with dynamic QUBO telemetry (`Variables: N · Active: K · Energy: E · Reads: R`)<br>• Added empty-state prompt in `QMatrixHeatmap` when couplers are uncompiled, preventing residual 4x4 asset matrix leaks<br>• Added per-project results caching (`quantum_ide_result_${projectId}`) to prevent cross-project result contamination |
+| **`11f17c5` (HEAD)** | 2026-09-29 | Musharib Subhani | **fix(ide): isolate new project starters and auto-purge portfolio template cross-contamination**<br>• Decoupled Clean Energy Portfolio code from new project creation, introducing clean generic minimal starters (`NEW_DWAVE_STARTER_CODE` and `NEW_QISKIT_STARTER_CODE`)<br>• Removed Clean Energy-specific `qubo_matrix.py` from `NewProjectModal` default file manifests for new projects<br>• Eliminated global `quantum_ide_last_dwave_code` and `quantum_ide_last_qiskit_code` persistence that leaked previously edited code across projects<br>• Added automated migration / self-healing sanitization to purge contaminated portfolio starter code and phantom `qubo_matrix.py` files from existing custom projects upon load |
+| **`9780cc0`** | 2026-09-29 | Musharib Subhani | **fix(ide): eliminate residual placeholder values on custom projects & fix stale useCallback dwaveCode execution**<br>• Fixed root cause where `handleRunOrRecompile` closed over stale mount-time `dwaveCode` (missing from `useCallback` dependency array), causing runs to execute Clean Energy Portfolio code<br>• Isolated Clean Energy sliders, slack transformation ($H_{\\text{penalty}}$), and $Q_{ii}$ expansion to `clean_energy_portfolio` project only<br>• Replaced hardcoded portfolio cost/score metrics (`Cost: $14/$18 · Score: 18.5`) in status bar with dynamic QUBO telemetry (`Variables: N · Active: K · Energy: E · Reads: R`)<br>• Added empty-state prompt in `QMatrixHeatmap` when couplers are uncompiled, preventing residual 4x4 asset matrix leaks<br>• Added per-project results caching (`quantum_ide_result_${projectId}`) to prevent cross-project result contamination |
 | **`d70a26d`** | 2026-09-29 | Musharib Subhani | **fix(ide): full localStorage persistence for active project, custom projects & editor code across reloads**<br>• Replaced hardcoded initial project and code state with synchronous `localStorage` lazy initializers<br>• Auto-saved user's written and pasted code (`dwaveCode` / `qiskitCode`) in real-time per project and file to `localStorage`<br>• Restored custom projects, active files, and editor buffer on refresh, stopping unintentional resets back to the Clean Energy Portfolio<br>• Populated template `fileContents` across all built-in projects (Clean Energy, Quantum Teleportation, Max-Cut, and VQE H2) |
 | **`09f3503`** | 2026-09-29 | Musharib Subhani | **fix(ide): dynamic BQM formulation, live QUBO Q-matrix, elevated terminal stdout & spectrum telemetry**<br>• Replaced hardcoded Clean Energy Portfolio matrix in `QMatrixHeatmap` with live `solverResult.qubo_matrix` and dynamic variable headers<br>• Added runtime symbolic LaTeX Hamiltonian generation (`latex_formula`) in `execution_runner.py` rendered dynamically in `FormulationCanvas`<br>• Elevated stdout to display immediately below command prompt in terminal, expanded terminal drawer height to `h-48`<br>• Wired dynamic `num_reads` and active variables into `EnergySpectrumView` telemetry |
 | **`57a8538`** | 2026-09-29 | Musharib Subhani | **fix(dwave): preserve custom editor code on compile, execute real dimod code via /api/ide/execute**<br>• Fixed root cause where clicking `⚡ Recompile` triggered `setDwaveCode(...)`, obliterating user pasted or typed code<br>• Rerouted D-Wave execution to `/api/ide/execute` with target backend `dwave_simulated_annealing`<br>• Added runtime sandbox support for legacy `from qubo_matrix import get_qubo_model` and auto-extraction of `dimod` optimization solutions (ground energy, active variable decisions, sampled eigenstates)<br>• Preserved user's code in Monaco editor 100% across all compilation and execution runs |
