@@ -10,8 +10,8 @@ All code commits and releases are maintained in continuous synchronization acros
 
 | Remote Alias | Repository URL | Primary Purpose | Current Sync State |
 | :--- | :--- | :--- | :--- |
-| **`railway`** | `https://github.com/musharibsep-eng/Quantum-Guru-09-09-2026.git` | Production Deployment / Railway CI/CD Target | **Synchronized (`e55f329`)** |
-| **`quantum-chat`** | `https://github.com/Musharib1999/Quantum-Chat.git` | Primary Collaboration & Source Repository | **Synchronized (`e55f329`)** |
+| **`railway`** | `https://github.com/musharibsep-eng/Quantum-Guru-09-09-2026.git` | Production Deployment / Railway CI/CD Target | **Synchronized (`05e02ec`)** |
+| **`quantum-chat`** | `https://github.com/Musharib1999/Quantum-Chat.git` | Primary Collaboration & Source Repository | **Synchronized (`05e02ec`)** |
 | **`origin`** | `https://github.com/Musharib1999/QuantumGuru_Version2_09_11_2026.git` | Upstream Platform Master Archive | Secondary Reference |
 
 ---
@@ -20,7 +20,7 @@ All code commits and releases are maintained in continuous synchronization acros
 
 | Branch Name | Status | Target Solvers / Features | Latest Commit |
 | :--- | :--- | :--- | :--- |
-| **`phase-2/cloud-runpod-qwen`** | **ACTIVE (Current HEAD)** | High-Density IDE Studio, 442px Copilot, D-Wave & Qiskit UI, RunPod Qwen-2.5-Coder-32B backend | `e55f329` |
+| **`phase-2/cloud-runpod-qwen`** | **ACTIVE (Current HEAD)** | High-Density IDE Studio, 442px Copilot, D-Wave & Qiskit UI, RunPod Qwen-2.5-Coder-32B backend | `05e02ec` |
 | **`main`** | **Production** | Stable core release branch across all studios | `bab7a24` |
 | **`phase-3/optimization-qubo`** | **Staged** | Autonomous QUBO, algebraic slack compilation, multi-objective annealing | `dbfa110` |
 | **`phase-4/agentic-chemistry-qml`** | Planned | Active-space VQE (OpenFermion/PySCF) and QSVM classifiers | `dbfa110` |
@@ -34,7 +34,7 @@ All code commits and releases are maintained in continuous synchronization acros
 * **Release Stage:** Phase 2 (High-Density Studio & Cloud RunPod/Qwen Integration)
 * **Active Working Branch:** `phase-2/cloud-runpod-qwen`
 * **Latest Sync Timestamp:** `2026-09-29 19:35:00 +05:30`
-* **Latest Commit Hash:** `e55f329`
+* **Latest Commit Hash:** `05e02ec`
 
 ---
 
@@ -68,7 +68,8 @@ git push all <branch-name>
 
 | Commit | Date | Author | Description & Impact |
 | :--- | :--- | :--- | :--- |
-| **`e55f329` (HEAD)** | 2026-09-29 | Musharib Subhani | **docs: add QUBO reverse-engineering pipeline to future scope specification**<br>• Documented 4-layer decompiler architecture for reverse-engineering raw QUBO/BQM code into primal mathematical models, variable registries, and implicit constraints<br>• Defined topological fingerprinting for Mutual Exclusion cliques, One-Hot selection, and powers-of-2 logarithmic slack variable decomposition<br>• Specified closed-loop round-trip formal verification ($||Q_{\text{recompiled}} - Q_{\text{user}}|| < 10^{-5}$) using the `AutoQUBO` (`dcc.py`) compiler<br>• Outlined 5-phase development milestones for bidirectional Studio IDE model synchronization |
+| **`05e02ec` (HEAD)** | 2026-09-29 | Musharib Subhani | **fix(ide): isolate Model tab and Copilot starters from Clean Energy demo presets**<br>• Fully decoupled Model Formulation Canvas from hardcoded Clean Energy Portfolio presets when working in custom projects<br>• Transformed Section 01 into dynamic Decision Variables Registry ($x_i \in \{0, 1\}$), Objective Sense (Minimization), and Solver Architecture (D-Wave BQM)<br>• Replaced Capex constraint and hardcoded penalty sliders in Section 02 with Canonical Hamiltonian Decomposition ($\mathcal{H}(\mathbf{x}) = \sum Q_{ii} x_i + \sum Q_{ij} x_i x_j$)<br>• Replaced Clean Energy asset formulas in Section 03 with Analytical Coupler Expansion ($Q_{ii} = h_i, Q_{ij} = J_{ij}$)<br>• Made Optimization Copilot prompt suggestions dynamic based on active variables ($x, y, \dots$) rather than static 'Wind_A & Solar_B'<br>• Fixed raw KaTeX escaping bug in LaTeX math copy handler and coupler view |
+| **`e55f329`** | 2026-09-29 | Musharib Subhani | **docs: add QUBO reverse-engineering pipeline to future scope specification**<br>• Documented 4-layer decompiler architecture for reverse-engineering raw QUBO/BQM code into primal mathematical models, variable registries, and implicit constraints<br>• Defined topological fingerprinting for Mutual Exclusion cliques, One-Hot selection, and powers-of-2 logarithmic slack variable decomposition<br>• Specified closed-loop round-trip formal verification ($||Q_{\text{recompiled}} - Q_{\text{user}}|| < 10^{-5}$) using the `AutoQUBO` (`dcc.py`) compiler<br>• Outlined 5-phase development milestones for bidirectional Studio IDE model synchronization |
 | **`11f17c5`** | 2026-09-29 | Musharib Subhani | **fix(ide): isolate new project starters and auto-purge portfolio template cross-contamination**<br>• Decoupled Clean Energy Portfolio code from new project creation, introducing clean generic minimal starters (`NEW_DWAVE_STARTER_CODE` and `NEW_QISKIT_STARTER_CODE`)<br>• Removed Clean Energy-specific `qubo_matrix.py` from `NewProjectModal` default file manifests for new projects<br>• Eliminated global `quantum_ide_last_dwave_code` and `quantum_ide_last_qiskit_code` persistence that leaked previously edited code across projects<br>• Added automated migration / self-healing sanitization to purge contaminated portfolio starter code and phantom `qubo_matrix.py` files from existing custom projects upon load |
 | **`9780cc0`** | 2026-09-29 | Musharib Subhani | **fix(ide): eliminate residual placeholder values on custom projects & fix stale useCallback dwaveCode execution**<br>• Fixed root cause where `handleRunOrRecompile` closed over stale mount-time `dwaveCode` (missing from `useCallback` dependency array), causing runs to execute Clean Energy Portfolio code<br>• Isolated Clean Energy sliders, slack transformation ($H_{\\text{penalty}}$), and $Q_{ii}$ expansion to `clean_energy_portfolio` project only<br>• Replaced hardcoded portfolio cost/score metrics (`Cost: $14/$18 · Score: 18.5`) in status bar with dynamic QUBO telemetry (`Variables: N · Active: K · Energy: E · Reads: R`)<br>• Added empty-state prompt in `QMatrixHeatmap` when couplers are uncompiled, preventing residual 4x4 asset matrix leaks<br>• Added per-project results caching (`quantum_ide_result_${projectId}`) to prevent cross-project result contamination |
 | **`d70a26d`** | 2026-09-29 | Musharib Subhani | **fix(ide): full localStorage persistence for active project, custom projects & editor code across reloads**<br>• Replaced hardcoded initial project and code state with synchronous `localStorage` lazy initializers<br>• Auto-saved user's written and pasted code (`dwaveCode` / `qiskitCode`) in real-time per project and file to `localStorage`<br>• Restored custom projects, active files, and editor buffer on refresh, stopping unintentional resets back to the Clean Energy Portfolio<br>• Populated template `fileContents` across all built-in projects (Clean Energy, Quantum Teleportation, Max-Cut, and VQE H2) |
