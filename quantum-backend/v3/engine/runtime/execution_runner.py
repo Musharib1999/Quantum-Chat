@@ -663,6 +663,41 @@ if HAS_DWAVE:
 
                 total_reads = int(sum(target_sampleset.record.num_occurrences)) if hasattr(target_sampleset, 'record') and 'num_occurrences' in target_sampleset.record.dtype.names else len(target_sampleset)
 
+                # 📐 Synthesize Symbolic LaTeX Hamiltonian
+                latex_parts = []
+                if isinstance(target_model, dimod.BinaryQuadraticModel):
+                    for v, bias in target_model.linear.items():
+                        if abs(bias) > 1e-5:
+                            s_v = f"x_{{{v}}}" if len(str(v)) > 1 else str(v)
+                            b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
+                            latex_parts.append(f"{b_str} \, {s_v}")
+                    for (u, v), bias in target_model.quadratic.items():
+                        if abs(bias) > 1e-5:
+                            s_u = f"x_{{{u}}}" if len(str(u)) > 1 else str(u)
+                            s_v = f"x_{{{v}}}" if len(str(v)) > 1 else str(v)
+                            b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
+                            latex_parts.append(f"{b_str} \, {s_u} {s_v}")
+                    if abs(target_model.offset) > 1e-5:
+                        o_str = f"{target_model.offset:+.4g}".rstrip('0').rstrip('.') if '.' in f"{target_model.offset:+.4g}" else f"{target_model.offset:+.4g}"
+                        latex_parts.append(o_str)
+                elif isinstance(target_model, dict):
+                    for (u, v), bias in target_model.items():
+                        if abs(bias) > 1e-5:
+                            b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
+                            if u == v:
+                                s_u = f"x_{{{u}}}" if len(str(u)) > 1 else str(u)
+                                latex_parts.append(f"{b_str} \, {s_u}")
+                            else:
+                                s_u = f"x_{{{u}}}" if len(str(u)) > 1 else str(u)
+                                s_v = f"x_{{{v}}}" if len(str(v)) > 1 else str(v)
+                                latex_parts.append(f"{b_str} \, {s_u} {s_v}")
+
+                latex_formula = " ".join(latex_parts).strip()
+                if latex_formula.startswith("+"):
+                    latex_formula = latex_formula[1:].strip()
+                if not latex_formula:
+                    latex_formula = "0"
+
                 opt_results = {
                     "energy": round(float(best.energy), 4),
                     "sample": {str(k): int(v) for k, v in best.sample.items() if not str(k).startswith('slack_')},
@@ -672,7 +707,8 @@ if HAS_DWAVE:
                     "energy_distribution": energy_dist,
                     "num_reads": total_reads,
                     "cloud_rerouted": _cloud_rerouted,
-                    "qaoa_dual_compiled": True
+                    "qaoa_dual_compiled": True,
+                    "latex_formula": latex_formula
                 }
 
                 # ⚛️ Synthesize Dual QAOA QuantumCircuit for Interactive Circuit Canvas

@@ -779,6 +779,8 @@ export default function QuantumGuruStudioPage() {
               variables: opt.variables || Object.keys(opt.sample),
               qubo_matrix: opt.qubo_matrix || currentMatrix,
               energy_distribution: opt.energy_distribution || [],
+              num_reads: opt.num_reads,
+              latex_formula: opt.latex_formula,
             });
 
             const chosen = Object.entries(opt.sample)
@@ -786,13 +788,14 @@ export default function QuantumGuruStudioPage() {
               .map(([k]) => k)
               .join(", ");
 
+            const stdoutClean = data.stdout ? data.stdout.trim() : "";
             setTerminalOutput(
               `$ dwave-anneal --backend simulated_annealing\n` +
+                (stdoutClean ? `${stdoutClean}\n\n` : "") +
                 `[SUCCESS] Annealing simulation completed in ${dur.toFixed(1)}ms\n` +
                 `⚡ Ground State Energy: ${opt.energy.toFixed(4)}\n` +
                 `⚡ Optimal Active Variables: [${chosen || "None"}]\n` +
-                `⚡ Sampled Eigenstates: ${opt.energy_distribution?.length || 0}\n` +
-                (data.stdout ? `\n--- Standard Output ---\n${data.stdout}` : "")
+                `⚡ Sampled Eigenstates: ${opt.energy_distribution?.length || 0}\n`
             );
           } else {
             setTerminalOutput(
@@ -1071,6 +1074,9 @@ export default function QuantumGuruStudioPage() {
                   isDirty={isModelDirty}
                   selectedSection={selectedMathSection}
                   onSelectSection={setSelectedMathSection}
+                  customBqmFormula={solverResult.latex_formula}
+                  variables={solverResult.variables}
+                  activeFileName={activeFile}
                 />
               </div>
             )}
@@ -1083,9 +1089,15 @@ export default function QuantumGuruStudioPage() {
                     <QMatrixHeatmap
                       isDark={isDark}
                       colors={colors}
-                      matrix={currentMatrix}
-                      variables={DEFAULT_VARIABLES}
-                      hasMutualExclusion={mathParams.hasMutualExclusion}
+                      matrix={solverResult.qubo_matrix || currentMatrix}
+                      variables={solverResult.variables || DEFAULT_VARIABLES}
+                      hasMutualExclusion={
+                        Boolean(
+                          solverResult.variables?.includes("Wind_A") &&
+                          solverResult.variables?.includes("Solar_B") &&
+                          mathParams.hasMutualExclusion
+                        )
+                      }
                     />
                   </div>
                 ) : (
@@ -1109,9 +1121,9 @@ export default function QuantumGuruStudioPage() {
                     colors={colors}
                     distribution={solverResult.energy_distribution}
                     groundEnergy={solverResult.energy}
-                    numReads={300}
+                    numReads={solverResult.num_reads || 300}
                     latencyMs={latencyMs}
-                    variables={DEFAULT_VARIABLES}
+                    variables={solverResult.variables || DEFAULT_VARIABLES}
                   />
                 ) : (
                   <div

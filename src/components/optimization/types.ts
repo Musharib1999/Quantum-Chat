@@ -29,6 +29,7 @@ export interface OptimizationResults {
   num_reads?: number;
   cloud_rerouted?: boolean;
   qaoa_dual_compiled?: boolean;
+  latex_formula?: string;
 }
 
 export interface CopilotMessage {

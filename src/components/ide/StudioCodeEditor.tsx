@@ -104,7 +104,7 @@ export function StudioCodeEditor({
       {/* ── COLLAPSIBLE STATUS BAR & CONSOLE ── */}
       <div
         className={`border-t shrink-0 flex flex-col transition-all duration-150 ${
-          isTerminalOpen ? "h-36" : "h-7"
+          isTerminalOpen ? "h-48" : "h-7"
         } ${
           isDark
             ? "bg-[#090A0D] border-white/[0.08]"
