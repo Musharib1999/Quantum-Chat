@@ -24,6 +24,8 @@ export interface OptimizationCopilotProps {
   onApplyCircuitAction?: () => void;
   solutionHealth?: any;
   circuitHealth?: any;
+  variables?: string[];
+  isPortfolioProblem?: boolean;
 }
 
 export function OptimizationCopilot({
@@ -37,6 +39,8 @@ export function OptimizationCopilot({
   isThinking = false,
   onApplyMutualExclusion,
   onApplyCircuitAction,
+  variables = [],
+  isPortfolioProblem = true,
 }: OptimizationCopilotProps) {
   const [input, setInput] = useState("");
   const [showSuggestionsPopover, setShowSuggestionsPopover] = useState<boolean>(false);
@@ -81,50 +85,103 @@ export function OptimizationCopilot({
           query: "Transpile circuit to native CX + SX + RZ basis gates",
         },
       ]
-    : selectedSection === "02"
-    ? [
-        {
-          label: "Is λ = 3.5x optimal? Calculate λ > max |ΔH_obj|",
-          query: "Is lambda = 3.5x optimal? Calculate lambda > max |Delta H_obj|",
-        },
-        {
-          label: "Switch slack bit decomposition to binary one-hot",
-          query: "Switch slack bit decomposition from logarithmic (2^k) to binary one-hot",
-        },
-        {
-          label: "Tighten penalty stiffness to eliminate violations",
-          query: "Tighten penalty stiffness to strictly eliminate ground-state violations",
-        },
-      ]
-    : selectedSection === "03"
-    ? [
-        {
-          label: "Explain step-by-step how coupler Q_01 = 15.7 was derived",
-          query: "Explain step-by-step how coupler Q_01 = 15.7 was derived",
-        },
-        {
-          label: "Why does mutual exclusion add +8.0 to coupler?",
-          query: "Why does mutual exclusion add +8.0 to the off-diagonal coupler?",
-        },
-        {
-          label: "Calculate matrix sparsity percentage & dynamic range",
-          query: "What is the sparsity percentage and dynamic range of this matrix?",
-        },
-      ]
-    : [
-        {
-          label: "Add carbon emission constraint: ∑ E_i x_i ≤ E_max",
-          query: "Add carbon emissions ceiling constraint: ∑ E_i x_i ≤ E_max",
-        },
-        {
-          label: "Add mutual exclusion: Wind_A & Solar_B cannot both be built",
-          query: "Add a constraint where Wind_A and Solar_B cannot both be built simultaneously.",
-        },
-        {
-          label: "Convert objective to Markowitz quadratic risk (x^T Σ x)",
-          query: "Convert objective from linear yield to Markowitz covariance risk (x^T Σ x)",
-        },
-      ];
+    : isPortfolioProblem
+    ? selectedSection === "02"
+      ? [
+          {
+            label: "Is λ = 3.5x optimal? Calculate λ > max |ΔH_obj|",
+            query: "Is lambda = 3.5x optimal? Calculate lambda > max |Delta H_obj|",
+          },
+          {
+            label: "Switch slack bit decomposition to binary one-hot",
+            query: "Switch slack bit decomposition from logarithmic (2^k) to binary one-hot",
+          },
+          {
+            label: "Tighten penalty stiffness to eliminate violations",
+            query: "Tighten penalty stiffness to strictly eliminate ground-state violations",
+          },
+        ]
+      : selectedSection === "03"
+      ? [
+          {
+            label: "Explain step-by-step how coupler Q_01 = 15.7 was derived",
+            query: "Explain step-by-step how coupler Q_01 = 15.7 was derived",
+          },
+          {
+            label: "Why does mutual exclusion add +8.0 to coupler?",
+            query: "Why does mutual exclusion add +8.0 to the off-diagonal coupler?",
+          },
+          {
+            label: "Calculate matrix sparsity percentage & dynamic range",
+            query: "What is the sparsity percentage and dynamic range of this matrix?",
+          },
+        ]
+      : [
+          {
+            label: "Add carbon emission constraint: ∑ E_i x_i ≤ E_max",
+            query: "Add carbon emissions ceiling constraint: ∑ E_i x_i ≤ E_max",
+          },
+          {
+            label: "Add mutual exclusion: Wind_A & Solar_B cannot both be built",
+            query: "Add a constraint where Wind_A and Solar_B cannot both be built simultaneously.",
+          },
+          {
+            label: "Convert objective to Markowitz quadratic risk (x^T Σ x)",
+            query: "Convert objective from linear yield to Markowitz covariance risk (x^T Σ x)",
+          },
+        ]
+    : (() => {
+        const vList = variables && variables.length > 0 ? variables : ["x"];
+        const v0 = vList[0];
+        const v1 = vList.length > 1 ? vList[1] : null;
+
+        if (selectedSection === "02") {
+          return [
+            {
+              label: "Formulate quadratic penalty multiplier (λ)",
+              query: "How should I select penalty multiplier stiffness lambda to elevate infeasible states above ground energy?",
+            },
+            {
+              label: "Decompose inequality with binary slack bits",
+              query: "Explain how to convert inequality constraints into equality using logarithmic slack bit decomposition",
+            },
+            {
+              label: "Calculate Hamiltonian dynamic range",
+              query: "Analyze the dynamic range of coefficients in this Hamiltonian formulation",
+            },
+          ];
+        }
+        if (selectedSection === "03") {
+          return [
+            {
+              label: v1 ? `Explain coupling between ${v0} and ${v1}` : `Explain self-energy of ${v0}`,
+              query: v1 ? `Explain the quadratic coupling J between ${v0} and ${v1}` : `Explain the diagonal linear bias h on variable ${v0}`,
+            },
+            {
+              label: "Analyze matrix sparsity & connectivity",
+              query: "What is the sparsity percentage and dynamic range of this Q-matrix?",
+            },
+            {
+              label: "Verify Chimera/Pegasus graph embedding",
+              query: "Can this problem graph be embedded directly onto D-Wave Pegasus QPU without chain breaks?",
+            },
+          ];
+        }
+        return [
+          {
+            label: v1 ? `Add mutual exclusion between ${v0} and ${v1}` : `Add quadratic interaction for ${v0}`,
+            query: v1 ? `Add a mutual exclusion constraint where ${v0} and ${v1} cannot both be active.` : `How do I add a second variable and couple it quadratically with ${v0}?`,
+          },
+          {
+            label: `Explain optimal decision state for ${v0}`,
+            query: `Analyze the ground state decision and energy distribution for ${v0}.`,
+          },
+          {
+            label: "Explain BQM to Ising transformation",
+            query: "Explain the algebraic transformation from binary variables {0, 1} to Ising spin variables {-1, +1}",
+          },
+        ];
+      })();
 
   return (
     <div

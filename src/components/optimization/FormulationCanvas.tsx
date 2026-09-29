@@ -51,7 +51,9 @@ export function FormulationCanvas({
   } = mathParams;
 
   const handleCopy = () => {
-    const fullLatex = `\\min_{x \\in \\{0, 1\\}^4} \\mathcal{H}_{\\text{obj}}(x) = \\sum_{i=1}^4 C_i x_i - ${yieldWeight.toFixed(1)} \\sum_{i=1}^4 R_i x_i \\quad \\text{s.t.} \\quad \\sum_{i=1}^4 C_i x_i \\le ${budgetMax.toFixed(1)} \\text{ M}`;
+    const fullLatex = isPortfolioProblem
+      ? `\\min_{x \\in \\{0, 1\\}^4} \\mathcal{H}_{\\text{obj}}(x) = \\sum_{i=1}^4 C_i x_i - ${yieldWeight.toFixed(1)} \\sum_{i=1}^4 R_i x_i \\quad \\text{s.t.} \\quad \\sum_{i=1}^4 C_i x_i \\le ${budgetMax.toFixed(1)} \\text{ M}`
+      : `\\min_{\\mathbf{x} \\in \\{0, 1\\}^{${variables?.length || 1}}} \\quad \\mathcal{H}(\\mathbf{x}) = ${customBqmFormula || "0"}`;
     if (onCopyLatex) {
       onCopyLatex(fullLatex);
     } else if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -200,78 +202,119 @@ export function FormulationCanvas({
           )}
         </div>
 
-        {/* Interactive Sliders Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-          {/* Budget Cap */}
-          <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
-            <div className="flex items-center justify-between text-[11px]">
-              <span style={{ color: colors.textPrimary }}>Budget Cap (B_max)</span>
-              <span className="font-mono text-[10px] text-emerald-400">Inequality Constraint</span>
+        {/* Interactive Sliders Grid (Portfolio Only) OR Model Info Cards (Custom Projects) */}
+        {isPortfolioProblem ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+            {/* Budget Cap */}
+            <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: colors.textPrimary }}>Budget Cap (B_max)</span>
+                <span className="font-mono text-[10px] text-emerald-400">Inequality Constraint</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono" style={{ color: colors.textMuted }}>$</span>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="6"
+                  max="40"
+                  value={budgetMax}
+                  onChange={(e) => setMathParams(prev => ({ ...prev, budgetMax: parseFloat(e.target.value) || 0 }))}
+                  className="w-full text-xs font-mono px-2 py-1 rounded border outline-none font-semibold"
+                  style={{ backgroundColor: colors.bgInput, borderColor: colors.border, color: colors.textPrimary }}
+                />
+                <span className="text-xs font-mono" style={{ color: colors.textMuted }}>M</span>
+              </div>
+              <p className="text-[10px]" style={{ color: colors.textMuted }}>Capex ceiling across chosen facilities.</p>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-mono" style={{ color: colors.textMuted }}>$</span>
-              <input
-                type="number"
-                step="0.5"
-                min="6"
-                max="40"
-                value={budgetMax}
-                onChange={(e) => setMathParams(prev => ({ ...prev, budgetMax: parseFloat(e.target.value) || 0 }))}
-                className="w-full text-xs font-mono px-2 py-1 rounded border outline-none font-semibold"
-                style={{ backgroundColor: colors.bgInput, borderColor: colors.border, color: colors.textPrimary }}
-              />
-              <span className="text-xs font-mono" style={{ color: colors.textMuted }}>M</span>
-            </div>
-            <p className="text-[10px]" style={{ color: colors.textMuted }}>Capex ceiling across chosen facilities.</p>
-          </div>
 
-          {/* Yield Weight */}
-          <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
-            <div className="flex items-center justify-between text-[11px]">
-              <span style={{ color: colors.textPrimary }}>Yield Weight (γ)</span>
-              <span className="font-mono text-[10px] text-sky-400">Objective Tradeoff</span>
+            {/* Yield Weight */}
+            <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: colors.textPrimary }}>Yield Weight (γ)</span>
+                <span className="font-mono text-[10px] text-sky-400">Objective Tradeoff</span>
+              </div>
+              <div className="flex items-center space-x-2 pt-1">
+                <input
+                  type="range"
+                  min="0.1"
+                  max="3.0"
+                  step="0.1"
+                  value={yieldWeight}
+                  onChange={(e) => setMathParams(prev => ({ ...prev, yieldWeight: parseFloat(e.target.value) }))}
+                  className="w-full accent-sky-500 cursor-pointer"
+                />
+                <span className="text-xs font-mono font-semibold w-10 text-right" style={{ color: colors.textCyan }}>
+                  {yieldWeight.toFixed(1)}x
+                </span>
+              </div>
+              <p className="text-[10px]" style={{ color: colors.textMuted }}>Penalizes cost vs. clean MW yield.</p>
             </div>
-            <div className="flex items-center space-x-2 pt-1">
-              <input
-                type="range"
-                min="0.1"
-                max="3.0"
-                step="0.1"
-                value={yieldWeight}
-                onChange={(e) => setMathParams(prev => ({ ...prev, yieldWeight: parseFloat(e.target.value) }))}
-                className="w-full accent-sky-500 cursor-pointer"
-              />
-              <span className="text-xs font-mono font-semibold w-10 text-right" style={{ color: colors.textCyan }}>
-                {yieldWeight.toFixed(1)}x
-              </span>
-            </div>
-            <p className="text-[10px]" style={{ color: colors.textMuted }}>Penalizes cost vs. clean MW yield.</p>
-          </div>
 
-          {/* Min Diversity */}
-          <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
-            <div className="flex items-center justify-between text-[11px]">
-              <span style={{ color: colors.textPrimary }}>Min Diversity (K_min)</span>
-              <span className="font-mono text-[10px] text-amber-400">Sites</span>
+            {/* Min Diversity */}
+            <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: colors.textPrimary }}>Min Diversity (K_min)</span>
+                <span className="font-mono text-[10px] text-amber-400">Sites</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="4"
+                  value={minDiversity}
+                  onChange={(e) => setMathParams(prev => ({ ...prev, minDiversity: parseInt(e.target.value) || 1 }))}
+                  className="w-full text-xs font-mono px-2 py-1 rounded border outline-none font-semibold"
+                  style={{ backgroundColor: colors.bgInput, borderColor: colors.border, color: colors.textPrimary }}
+                />
+                <span className="text-xs font-mono" style={{ color: colors.textMuted }}>Sites</span>
+              </div>
+              <p className="text-[10px]" style={{ color: colors.textMuted }}>Requires at least K distinct sites.</p>
             </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                min="1"
-                max="4"
-                value={minDiversity}
-                onChange={(e) => setMathParams(prev => ({ ...prev, minDiversity: parseInt(e.target.value) || 1 }))}
-                className="w-full text-xs font-mono px-2 py-1 rounded border outline-none font-semibold"
-                style={{ backgroundColor: colors.bgInput, borderColor: colors.border, color: colors.textPrimary }}
-              />
-              <span className="text-xs font-mono" style={{ color: colors.textMuted }}>Sites</span>
-            </div>
-            <p className="text-[10px]" style={{ color: colors.textMuted }}>Requires at least K distinct sites.</p>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+            <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: colors.textPrimary }}>Decision Variables</span>
+                <span className="font-mono text-[10px] text-emerald-400">{variables?.length || 1} Variable{(variables?.length || 1) === 1 ? "" : "s"}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {(variables && variables.length > 0 ? variables : ["x"]).map((v, i) => (
+                  <span key={i} className="text-xs font-mono px-2 py-0.5 rounded border font-semibold" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}>
+                    {v} ∈ &#123;0, 1&#125;
+                  </span>
+                ))}
+              </div>
+              <p className="text-[10px]" style={{ color: colors.textMuted }}>Active binary decision space for solver.</p>
+            </div>
+
+            <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: colors.textPrimary }}>Objective Sense</span>
+                <span className="font-mono text-[10px] text-sky-400">Minimization</span>
+              </div>
+              <div className="text-xs font-mono pt-1 font-semibold" style={{ color: colors.textPrimary }}>
+                min H(x) Ground Energy
+              </div>
+              <p className="text-[10px]" style={{ color: colors.textMuted }}>Ising / QUBO physical ground state search.</p>
+            </div>
+
+            <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: colors.textPrimary }}>Target Solver</span>
+                <span className="font-mono text-[10px] text-amber-400">Quantum Annealer</span>
+              </div>
+              <div className="text-xs font-mono pt-1 font-semibold" style={{ color: colors.textPrimary }}>
+                D-Wave BQM / Simulated Annealer
+              </div>
+              <p className="text-[10px]" style={{ color: colors.textMuted }}>Advantage QPU & Classical Sampler verified.</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* SECTION 02: QUBO PENALTY & SLACKS */}
+      {/* SECTION 02: QUBO PENALTY & SLACKS (Portfolio) OR HAMILTONIAN CHARACTERISTICS (Custom) */}
       <div
         id="math-section-02"
         className={`p-5 rounded-xl border space-y-4 transition-all ${
@@ -288,7 +331,7 @@ export function FormulationCanvas({
           <div className="flex items-center space-x-2">
             <span className="font-mono text-sm font-bold text-amber-400">02</span>
             <h3 className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
-              QUBO Penalty Hamiltonian &amp; Slack Transformation
+              {isPortfolioProblem ? "QUBO Penalty Hamiltonian & Slack Transformation" : "Canonical Hamiltonian Decomposition"}
             </h3>
             {selectedSection === "02" && (
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center space-x-1 animate-pulse">
@@ -297,10 +340,16 @@ export function FormulationCanvas({
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-1.5 mr-2">
-              <span className="text-xs font-mono" style={{ color: colors.textMuted }}>Multiplier:</span>
-              <span className="text-xs font-mono font-bold text-amber-400">λ = {penaltyLambda.toFixed(1)}</span>
-            </div>
+            {isPortfolioProblem ? (
+              <div className="flex items-center space-x-1.5 mr-2">
+                <span className="text-xs font-mono" style={{ color: colors.textMuted }}>Multiplier:</span>
+                <span className="text-xs font-mono font-bold text-amber-400">λ = {penaltyLambda.toFixed(1)}</span>
+              </div>
+            ) : (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                Quadratic Polynomial
+              </span>
+            )}
             <button
               onClick={() => onSelectSection(selectedSection === "02" ? null : "02")}
               className={`flex items-center space-x-1 text-xs px-2.5 py-1 rounded-md transition-all border ${
@@ -322,31 +371,59 @@ export function FormulationCanvas({
           className="p-4 rounded-lg flex flex-col items-center justify-center space-y-3 border overflow-x-auto text-xs sm:text-sm"
           style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}
         >
-          <LatexMath math={penaltyFormula} inline={false} isDark={isDark} />
-          <LatexMath math="\\mathcal{H}_{\\text{total}}(x, s) = \\mathcal{H}_{\\text{obj}}(x) + \\mathcal{H}_{\\text{penalty}}(x, s)" inline={false} isDark={isDark} />
+          {isPortfolioProblem ? (
+            <>
+              <LatexMath math={penaltyFormula} inline={false} isDark={isDark} />
+              <LatexMath math="\\mathcal{H}_{\\text{total}}(x, s) = \\mathcal{H}_{\\text{obj}}(x) + \\mathcal{H}_{\\text{penalty}}(x, s)" inline={false} isDark={isDark} />
+            </>
+          ) : (
+            <>
+              <LatexMath math="\\mathcal{H}(\\mathbf{x}) = \\sum_{i=1}^n Q_{ii} x_i + \\sum_{i < j} Q_{ij} x_i x_j + \\text{offset}" inline={false} isDark={isDark} />
+              <p className="text-xs text-center" style={{ color: colors.textMuted }}>
+                Standard algebraic representation mapping binary choices to energy eigenvalues.
+              </p>
+            </>
+          )}
         </div>
 
-        {/* Penalty Multiplier Slider */}
-        <div className="p-3.5 rounded-lg border space-y-2" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold" style={{ color: colors.textPrimary }}>Penalty Multiplier Stiffness (λ)</span>
-            <span className="font-mono font-bold text-amber-400">{penaltyLambda.toFixed(1)}x</span>
+        {/* Penalty Multiplier Slider (Portfolio) OR Coupler Characteristics (Custom) */}
+        {isPortfolioProblem ? (
+          <div className="p-3.5 rounded-lg border space-y-2" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold" style={{ color: colors.textPrimary }}>Penalty Multiplier Stiffness (λ)</span>
+              <span className="font-mono font-bold text-amber-400">{penaltyLambda.toFixed(1)}x</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <input
+                type="range"
+                min="1.0"
+                max="10.0"
+                step="0.5"
+                value={penaltyLambda}
+                onChange={(e) => setMathParams(prev => ({ ...prev, penaltyLambda: parseFloat(e.target.value) }))}
+                className="w-full accent-amber-500 cursor-pointer"
+              />
+            </div>
+            <p className="text-[10px]" style={{ color: colors.textMuted }}>
+              Ensures infeasible states are strictly elevated above the physical ground state energy.
+            </p>
           </div>
-          <div className="flex items-center space-x-3">
-            <input
-              type="range"
-              min="1.0"
-              max="10.0"
-              step="0.5"
-              value={penaltyLambda}
-              onChange={(e) => setMathParams(prev => ({ ...prev, penaltyLambda: parseFloat(e.target.value) }))}
-              className="w-full accent-amber-500 cursor-pointer"
-            />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <div className="p-3 rounded-lg border space-y-1" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+              <span className="text-[11px] font-semibold block" style={{ color: colors.textPrimary }}>Linear Bias Terms (Q_ii)</span>
+              <p className="text-[11px]" style={{ color: colors.textMuted }}>
+                Local magnetic fields applied to individual qubits. Represents individual cost or reward of activating variable x_i.
+              </p>
+            </div>
+            <div className="p-3 rounded-lg border space-y-1" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+              <span className="text-[11px] font-semibold block" style={{ color: colors.textPrimary }}>Quadratic Couplers (Q_ij)</span>
+              <p className="text-[11px]" style={{ color: colors.textMuted }}>
+                Pairwise interaction couplers J_ij between distinct qubits (i ≠ j). Positive values penalize co-occurrence; negative values encourage correlation.
+              </p>
+            </div>
           </div>
-          <p className="text-[10px]" style={{ color: colors.textMuted }}>
-            Ensures infeasible states are strictly elevated above the physical ground state energy.
-          </p>
-        </div>
+        )}
       </div>
 
       {/* SECTION 03: Q-MATRIX COUPLERS */}
@@ -395,7 +472,9 @@ export function FormulationCanvas({
         </div>
 
         <p className="text-xs leading-relaxed" style={{ color: colors.textMuted }}>
-          Expanding the squared penalty Hamiltonian with updated parameters yields the analytical coupler expressions:
+          {isPortfolioProblem
+            ? "Expanding the squared penalty Hamiltonian with updated parameters yields the analytical coupler expressions:"
+            : "Mathematical mapping between objective formulation and physical Q-matrix entries:"}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
@@ -405,7 +484,9 @@ export function FormulationCanvas({
             </span>
             <div className="text-center font-mono py-1">
               <LatexMath
-                math={`Q_{ii} = C_i - ${yieldWeight.toFixed(1)} R_i - 2(${penaltyLambda.toFixed(1)})(${budgetMax.toFixed(1)})C_i + ${penaltyLambda.toFixed(1)} C_i^2`}
+                math={isPortfolioProblem
+                  ? `Q_{ii} = C_i - ${yieldWeight.toFixed(1)} R_i - 2(${penaltyLambda.toFixed(1)})(${budgetMax.toFixed(1)})C_i + ${penaltyLambda.toFixed(1)} C_i^2`
+                  : `Q_{ii} = h_i \\quad (\\text{linear self-energy of variable } x_i)`}
                 inline={false}
                 isDark={isDark}
               />
@@ -418,9 +499,11 @@ export function FormulationCanvas({
             </span>
             <div className="text-center font-mono py-1">
               <LatexMath
-                math={hasMutualExclusion
-                  ? `Q_{ij} = 2(${penaltyLambda.toFixed(1)})C_i C_j + \\lambda_{\\text{ex}} \\quad (i \\ne j)`
-                  : `Q_{ij} = 2(${penaltyLambda.toFixed(1)})C_i C_j \\quad (i \\ne j)`}
+                math={isPortfolioProblem
+                  ? (hasMutualExclusion
+                      ? `Q_{ij} = 2(${penaltyLambda.toFixed(1)})C_i C_j + \\lambda_{\\text{ex}} \\quad (i \\ne j)`
+                      : `Q_{ij} = 2(${penaltyLambda.toFixed(1)})C_i C_j \\quad (i \\ne j)`)
+                  : `Q_{ij} = J_{ij} \\quad (\\text{interaction strength between } x_i \\text{ and } x_j)`}
                 inline={false}
                 isDark={isDark}
               />

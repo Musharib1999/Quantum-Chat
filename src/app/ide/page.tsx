@@ -1550,6 +1550,8 @@ export default function QuantumGuruStudioPage() {
             onSendMessage={handleSendMessage}
             onApplyMutualExclusion={handleToggleMutualExclusion}
             onApplyCircuitAction={handleRunOrRecompile}
+            variables={solverResult.variables}
+            isPortfolioProblem={isPortfolio}
             solutionHealth={{
               title: activeProject.title,
               cost: totalCost,
