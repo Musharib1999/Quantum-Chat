@@ -147,39 +147,39 @@ export function StudioCodeEditor({
           </div>
 
           {/* Right-aligned: 1. Project Telemetry details + 2. Console Toggle */}
-          <div className="flex items-center space-x-3 text-[11px] font-mono">
+          <div suppressHydrationWarning className="flex items-center space-x-3 text-[11px] font-mono">
             {/* 1. Project telemetry sort of details */}
-            <div className={`flex items-center space-x-2 ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
+            <div suppressHydrationWarning className={`flex items-center space-x-2 ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
               {framework === "qiskit" ? (
                 <>
                   <span>
-                    Qubits: <strong className={isDark ? "text-zinc-200" : "text-slate-900 font-semibold"}>{specs?.qubits ?? 3}</strong>
+                    Qubits: <strong suppressHydrationWarning className={isDark ? "text-zinc-200" : "text-slate-900 font-semibold"}>{specs?.qubits ?? 3}</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span>
-                    Depth: <strong className={isDark ? "text-sky-400" : "text-sky-700 font-semibold"}>{specs?.depth ?? 8}</strong>
+                    Depth: <strong suppressHydrationWarning className={isDark ? "text-sky-400" : "text-sky-700 font-semibold"}>{specs?.depth ?? 8}</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span>
-                    Fidelity: <strong className={isDark ? "text-emerald-400" : "text-emerald-700 font-semibold"}>{(specs?.fidelity ?? 99.8).toFixed(1)}%</strong>
+                    Fidelity: <strong suppressHydrationWarning className={isDark ? "text-emerald-400" : "text-emerald-700 font-semibold"}>{(specs?.fidelity ?? 99.8).toFixed(1)}%</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span>
-                    Shots: <strong className={isDark ? "text-amber-400" : "text-amber-700 font-semibold"}>{specs?.shots ?? 4096}</strong>
+                    Shots: <strong suppressHydrationWarning className={isDark ? "text-amber-400" : "text-amber-700 font-semibold"}>{specs?.shots ?? 4096}</strong>
                   </span>
                 </>
               ) : specs?.isPortfolio ? (
                 <>
                   <span>
-                    Cost: <strong className={isDark ? "text-zinc-200" : "text-slate-900 font-semibold"}>${Number((specs?.cost ?? 14).toFixed(1))}/${Number((specs?.maxCost ?? 18).toFixed(1))}</strong>
+                    Cost: <strong suppressHydrationWarning className={isDark ? "text-zinc-200" : "text-slate-900 font-semibold"}>${Number((specs?.cost ?? 14).toFixed(1))}/${Number((specs?.maxCost ?? 18).toFixed(1))}</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span>
-                    Score: <strong className={isDark ? "text-emerald-400" : "text-emerald-700 font-semibold"}>{(specs?.score ?? 18.5).toFixed(1)}</strong>
+                    Score: <strong suppressHydrationWarning className={isDark ? "text-emerald-400" : "text-emerald-700 font-semibold"}>{(specs?.score ?? 18.5).toFixed(1)}</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span>
-                    Energy: <strong className={isDark ? "text-amber-400" : "text-amber-700 font-semibold"}>{(specs?.energy ?? -62.2).toFixed(1)}</strong>
+                    Energy: <strong suppressHydrationWarning className={isDark ? "text-amber-400" : "text-amber-700 font-semibold"}>{(specs?.energy ?? -62.2).toFixed(1)}</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span className={`font-semibold ${isDark ? "text-emerald-400" : "text-emerald-700"}`}>
@@ -189,19 +189,19 @@ export function StudioCodeEditor({
               ) : (
                 <>
                   <span>
-                    Variables: <strong className={isDark ? "text-zinc-200" : "text-slate-900 font-semibold"}>{specs?.variablesCount ?? 1}</strong>
+                    Variables: <strong suppressHydrationWarning className={isDark ? "text-zinc-200" : "text-slate-900 font-semibold"}>{specs?.variablesCount ?? 1}</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span>
-                    Active: <strong className={isDark ? "text-emerald-400" : "text-emerald-700 font-semibold"}>{specs?.activeCount ?? 0}</strong>
+                    Active: <strong suppressHydrationWarning className={isDark ? "text-emerald-400" : "text-emerald-700 font-semibold"}>{specs?.activeCount ?? 0}</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span>
-                    Energy: <strong className={isDark ? "text-amber-400" : "text-amber-700 font-semibold"}>{(specs?.energy ?? 0).toFixed(2)}</strong>
+                    Energy: <strong suppressHydrationWarning className={isDark ? "text-amber-400" : "text-amber-700 font-semibold"}>{(specs?.energy ?? 0).toFixed(2)}</strong>
                   </span>
                   <span className={isDark ? "text-zinc-600" : "text-slate-300"}>·</span>
                   <span>
-                    Reads: <strong className={isDark ? "text-sky-400" : "text-sky-700 font-semibold"}>{specs?.reads ?? 1024}</strong>
+                    Reads: <strong suppressHydrationWarning className={isDark ? "text-sky-400" : "text-sky-700 font-semibold"}>{specs?.reads ?? 1024}</strong>
                   </span>
                 </>
               )}

@@ -1499,6 +1499,7 @@ export default function QuantumGuruStudioPage() {
 
   return (
     <div
+      suppressHydrationWarning
       className={`h-screen w-screen flex flex-col font-sans select-none overflow-hidden transition-colors ${
         isDark ? "bg-[#090A0D] text-slate-100" : "bg-[#F1F5F9] text-[#172033]"
       }`}
