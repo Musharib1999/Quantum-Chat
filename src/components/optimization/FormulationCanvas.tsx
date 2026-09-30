@@ -378,7 +378,7 @@ export function FormulationCanvas({
             </>
           ) : (
             <>
-              <LatexMath math="\\mathcal{H}(\\mathbf{x}) = \\sum_{i=1}^n Q_{ii} x_i + \\sum_{i < j} Q_{ij} x_i x_j + \\text{offset}" inline={false} isDark={isDark} />
+              <LatexMath math={String.raw`\mathcal{H}(\mathbf{x}) = \sum_{i=1}^n Q_{ii} x_i + \sum_{i < j} Q_{ij} x_i x_j + \text{offset}`} inline={false} isDark={isDark} />
               <p className="text-xs text-center" style={{ color: colors.textMuted }}>
                 Standard algebraic representation mapping binary choices to energy eigenvalues.
               </p>
@@ -486,7 +486,7 @@ export function FormulationCanvas({
               <LatexMath
                 math={isPortfolioProblem
                   ? `Q_{ii} = C_i - ${yieldWeight.toFixed(1)} R_i - 2(${penaltyLambda.toFixed(1)})(${budgetMax.toFixed(1)})C_i + ${penaltyLambda.toFixed(1)} C_i^2`
-                  : `Q_{ii} = h_i \\quad (\\text{linear self-energy of variable } x_i)`}
+                  : String.raw`Q_{ii} = h_i \quad (\text{linear self-energy of variable } x_i)`}
                 inline={false}
                 isDark={isDark}
               />
@@ -503,7 +503,7 @@ export function FormulationCanvas({
                   ? (hasMutualExclusion
                       ? `Q_{ij} = 2(${penaltyLambda.toFixed(1)})C_i C_j + \\lambda_{\\text{ex}} \\quad (i \\ne j)`
                       : `Q_{ij} = 2(${penaltyLambda.toFixed(1)})C_i C_j \\quad (i \\ne j)`)
-                  : `Q_{ij} = J_{ij} \\quad (\\text{interaction strength between } x_i \\text{ and } x_j)`}
+                  : String.raw`Q_{ij} = J_{ij} \quad (\text{interaction strength between } x_i \text{ and } x_j)`}
                 inline={false}
                 isDark={isDark}
               />

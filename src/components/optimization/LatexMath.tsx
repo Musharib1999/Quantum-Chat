@@ -16,7 +16,11 @@ export function LatexMath({ math, inline = true, isDark = true, className = "" }
 
   useEffect(() => {
     try {
-      const rendered = katex.renderToString(math.trim(), {
+      let cleanMath = (math || "").trim();
+      // Normalize accidental double backslashes before LaTeX command words (e.g. \mathcal, \sum, \text)
+      cleanMath = cleanMath.replace(/\\([a-zA-Z]+)/g, (_, cmd) => "\\" + cmd);
+
+      const rendered = katex.renderToString(cleanMath, {
         displayMode: !inline,
         throwOnError: false,
       });

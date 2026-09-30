@@ -550,41 +550,55 @@ if HAS_DWAVE:
             break
     
     # Check for raw QUBO dict if no model
-    if target_model is None and target_sampleset is None:
-        for key, val in exec_globals.items():
-            if isinstance(val, dict) and key in ("Q", "qubo", "QUBO", "bqm_dict", "Q_dict"):
-                if all(isinstance(k, tuple) and len(k) == 2 for k in val.keys()):
-                    target_model = val
-                    break
+    if target_model is None:
+        for key in ("sparse_Q", "Q", "qubo", "QUBO", "bqm_dict", "Q_dict"):
+            val = exec_globals.get(key)
+            if isinstance(val, dict) and all(isinstance(k, tuple) and len(k) == 2 for k in val.keys()):
+                target_model = val
+                break
 
     # Check for Q_matrix (numpy 2D array) and variable_names from qubo_matrix.py
-    if target_model is None and target_sampleset is None:
-        if "Q_matrix" not in exec_globals or "variable_names" not in exec_globals:
+    if target_model is None:
+        q_mat = exec_globals.get("Q") or exec_globals.get("Q_matrix")
+        v_names = exec_globals.get("variable_map") or exec_globals.get("variable_names")
+        if (q_mat is None or v_names is None) and "qubo_matrix" in sys.modules:
             try:
                 import qubo_matrix
                 if hasattr(qubo_matrix, "Q_matrix") and hasattr(qubo_matrix, "variable_names"):
-                    exec_globals["Q_matrix"] = qubo_matrix.Q_matrix
-                    exec_globals["variable_names"] = qubo_matrix.variable_names
-                    if hasattr(qubo_matrix, "qubo_offset"):
-                        exec_globals["qubo_offset"] = qubo_matrix.qubo_offset
+                    q_mat = qubo_matrix.Q_matrix
+                    v_names = qubo_matrix.variable_names
             except Exception:
                 pass
 
-        if "Q_matrix" in exec_globals and "variable_names" in exec_globals:
-            q_mat = exec_globals["Q_matrix"]
-            v_names = exec_globals["variable_names"]
-            offset_val = float(exec_globals.get("qubo_offset", 0.0))
+        if q_mat is not None and hasattr(q_mat, "shape") and len(q_mat.shape) == 2:
+            offset_val = float(exec_globals.get("offset", exec_globals.get("qubo_offset", 0.0)))
             try:
-                if hasattr(q_mat, "shape") and len(q_mat.shape) == 2:
-                    q_d = {}
-                    n_vars = len(v_names)
-                    for i in range(n_vars):
-                        for j in range(i, n_vars):
-                            val_ij = float(q_mat[i, j])
-                            if abs(val_ij) > 1e-6:
-                                q_d[(v_names[i], v_names[j])] = val_ij
-                    if q_d:
-                        target_model = dimod.BinaryQuadraticModel.from_qubo(q_d, offset=offset_val)
+                q_d = {}
+                n_vars = q_mat.shape[0]
+                names = list(v_names) if (v_names and len(v_names) >= n_vars) else [f"x_{i}" for i in range(n_vars)]
+                for i in range(n_vars):
+                    for j in range(i, n_vars):
+                        val_ij = float(q_mat[i, j])
+                        if abs(val_ij) > 1e-6:
+                            q_d[(names[i], names[j])] = val_ij
+                if q_d:
+                    target_model = dimod.BinaryQuadraticModel.from_qubo(q_d, offset=offset_val)
+            except Exception:
+                pass
+
+    # If target_model is a dict with integer keys and variable_map is available, map to named BQM
+    if isinstance(target_model, dict):
+        v_map = exec_globals.get('variable_map') or exec_globals.get('variable_names')
+        if v_map and isinstance(v_map, (list, tuple)):
+            try:
+                named_q = {}
+                for (u, v), bias in target_model.items():
+                    u_name = v_map[u] if (isinstance(u, int) and u < len(v_map)) else str(u)
+                    v_name = v_map[v] if (isinstance(v, int) and v < len(v_map)) else str(v)
+                    pair = (u_name, v_name) if str(u_name) <= str(v_name) else (v_name, u_name)
+                    named_q[pair] = named_q.get(pair, 0.0) + float(bias)
+                offset_val = float(exec_globals.get("offset", exec_globals.get("qubo_offset", 0.0)))
+                target_model = dimod.BinaryQuadraticModel.from_qubo(named_q, offset=offset_val)
             except Exception:
                 pass
 
@@ -613,7 +627,12 @@ if HAS_DWAVE:
                 best = target_sampleset.first
                 
                 # Determine variable names
-                if target_model is not None and hasattr(target_model, 'variables'):
+                v_map = exec_globals.get('variable_map') or exec_globals.get('variable_names')
+                v_map = list(v_map) if isinstance(v_map, (list, tuple)) else None
+
+                if v_map:
+                    var_names = [str(v) for v in v_map if not str(v).startswith('slack_')]
+                elif target_model is not None and hasattr(target_model, 'variables'):
                     var_names = [str(v) for v in target_model.variables if not str(v).startswith('slack_')]
                 elif hasattr(target_sampleset, 'variables'):
                     var_names = [str(v) for v in target_sampleset.variables if not str(v).startswith('slack_')]
@@ -629,18 +648,20 @@ if HAS_DWAVE:
 
                 if isinstance(target_model, dimod.BinaryQuadraticModel):
                     for v, bias in target_model.linear.items():
-                        s_v = str(v)
+                        s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
                         if s_v in var_to_idx:
                             matrix[var_to_idx[s_v]][var_to_idx[s_v]] = round(float(bias), 4)
                     for (u, v), bias in target_model.quadratic.items():
-                        s_u, s_v = str(u), str(v)
+                        s_u = v_map[u] if (v_map and isinstance(u, int) and u < len(v_map)) else str(u)
+                        s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
                         if s_u in var_to_idx and s_v in var_to_idx:
                             i, j = var_to_idx[s_u], var_to_idx[s_v]
                             matrix[i][j] = round(float(bias), 4)
                             matrix[j][i] = round(float(bias), 4)
                 elif isinstance(target_model, dict):
                     for (u, v), bias in target_model.items():
-                        s_u, s_v = str(u), str(v)
+                        s_u = v_map[u] if (v_map and isinstance(u, int) and u < len(v_map)) else str(u)
+                        s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
                         if s_u in var_to_idx and s_v in var_to_idx:
                             i, j = var_to_idx[s_u], var_to_idx[s_v]
                             matrix[i][j] = round(float(bias), 4)
@@ -650,10 +671,15 @@ if HAS_DWAVE:
                 # Construct energy spectrum distribution (top 12 samples)
                 energy_dist = []
                 for s in target_sampleset.data(fields=['sample', 'energy', 'num_occurrences'], sorted_by='energy'):
-                    clean_sample = {str(k): int(v) for k, v in s.sample.items() if not str(k).startswith('slack_')}
+                    clean_sample = {}
+                    for k, v in s.sample.items():
+                        var_label = v_map[k] if (v_map and isinstance(k, int) and k < len(v_map)) else str(k)
+                        if not str(var_label).startswith('slack_'):
+                            clean_sample[str(var_label)] = int(v)
                     bitstring = "".join(str(clean_sample.get(v, 0)) for v in var_names)
+                    s_energy = float(exec_globals.get("offset", exec_globals.get("qubo_offset", 0.0))) + float(s.energy) if ("offset" in exec_globals or "qubo_offset" in exec_globals) else float(s.energy)
                     energy_dist.append({
-                        "energy": round(float(s.energy), 4),
+                        "energy": round(s_energy, 4),
                         "sample": clean_sample,
                         "num_occurrences": int(s.num_occurrences),
                         "bitstring": bitstring
@@ -668,29 +694,41 @@ if HAS_DWAVE:
                 if isinstance(target_model, dimod.BinaryQuadraticModel):
                     for v, bias in target_model.linear.items():
                         if abs(bias) > 1e-5:
-                            s_v = f"x_{{{v}}}" if len(str(v)) > 1 else str(v)
-                            b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
-                            latex_parts.append(f"{b_str} \, {s_v}")
+                            s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
+                            if not str(s_v).startswith('slack_'):
+                                s_v_tex = f"x_{{{s_v}}}" if len(str(s_v)) > 1 else str(s_v)
+                                b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
+                                latex_parts.append(f"{b_str} \, {s_v_tex}")
                     for (u, v), bias in target_model.quadratic.items():
                         if abs(bias) > 1e-5:
-                            s_u = f"x_{{{u}}}" if len(str(u)) > 1 else str(u)
-                            s_v = f"x_{{{v}}}" if len(str(v)) > 1 else str(v)
-                            b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
-                            latex_parts.append(f"{b_str} \, {s_u} {s_v}")
+                            s_u = v_map[u] if (v_map and isinstance(u, int) and u < len(v_map)) else str(u)
+                            s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
+                            if not str(s_u).startswith('slack_') and not str(s_v).startswith('slack_'):
+                                b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
+                                if s_u == s_v:
+                                    s_u_tex = f"x_{{{s_u}}}" if len(str(s_u)) > 1 else str(s_u)
+                                    latex_parts.append(f"{b_str} \, {s_u_tex}")
+                                else:
+                                    s_u_tex = f"x_{{{s_u}}}" if len(str(s_u)) > 1 else str(s_u)
+                                    s_v_tex = f"x_{{{s_v}}}" if len(str(s_v)) > 1 else str(s_v)
+                                    latex_parts.append(f"{b_str} \, {s_u_tex} {s_v_tex}")
                     if abs(target_model.offset) > 1e-5:
                         o_str = f"{target_model.offset:+.4g}".rstrip('0').rstrip('.') if '.' in f"{target_model.offset:+.4g}" else f"{target_model.offset:+.4g}"
                         latex_parts.append(o_str)
                 elif isinstance(target_model, dict):
                     for (u, v), bias in target_model.items():
                         if abs(bias) > 1e-5:
-                            b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
-                            if u == v:
-                                s_u = f"x_{{{u}}}" if len(str(u)) > 1 else str(u)
-                                latex_parts.append(f"{b_str} \, {s_u}")
-                            else:
-                                s_u = f"x_{{{u}}}" if len(str(u)) > 1 else str(u)
-                                s_v = f"x_{{{v}}}" if len(str(v)) > 1 else str(v)
-                                latex_parts.append(f"{b_str} \, {s_u} {s_v}")
+                            s_u = v_map[u] if (v_map and isinstance(u, int) and u < len(v_map)) else str(u)
+                            s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
+                            if not str(s_u).startswith('slack_') and not str(s_v).startswith('slack_'):
+                                b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
+                                if s_u == s_v:
+                                    s_u_tex = f"x_{{{s_u}}}" if len(str(s_u)) > 1 else str(s_u)
+                                    latex_parts.append(f"{b_str} \, {s_u_tex}")
+                                else:
+                                    s_u_tex = f"x_{{{s_u}}}" if len(str(s_u)) > 1 else str(s_u)
+                                    s_v_tex = f"x_{{{s_v}}}" if len(str(s_v)) > 1 else str(s_v)
+                                    latex_parts.append(f"{b_str} \, {s_u_tex} {s_v_tex}")
 
                 latex_formula = " ".join(latex_parts).strip()
                 if latex_formula.startswith("+"):
@@ -698,9 +736,15 @@ if HAS_DWAVE:
                 if not latex_formula:
                     latex_formula = "0"
 
+                best_energy_val = float(exec_globals.get("best_energy", best.energy))
+
                 opt_results = {
-                    "energy": round(float(best.energy), 4),
-                    "sample": {str(k): int(v) for k, v in best.sample.items() if not str(k).startswith('slack_')},
+                    "energy": round(best_energy_val, 4),
+                    "sample": {
+                        (v_map[k] if (v_map and isinstance(k, int) and k < len(v_map)) else str(k)): int(v)
+                        for k, v in best.sample.items()
+                        if not str(v_map[k] if (v_map and isinstance(k, int) and k < len(v_map)) else k).startswith('slack_')
+                    },
                     "num_variables": len(var_names),
                     "variables": var_names,
                     "qubo_matrix": matrix,
@@ -710,7 +754,6 @@ if HAS_DWAVE:
                     "qaoa_dual_compiled": True,
                     "latex_formula": latex_formula
                 }
-
                 # ⚛️ Synthesize Dual QAOA QuantumCircuit for Interactive Circuit Canvas
                 if target_qc is None and 1 <= len(var_names) <= 20:
                     try:

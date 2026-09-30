@@ -144,22 +144,39 @@ def resolve_penalty_weight(penalty_choice: int, om: OptimizationModel) -> float:
 def parse_model_deterministically(model_text: str) -> dict:
     """
     Deterministically parses user pasted optimization models.
-    Supports multiline text, LaTeX-style symbols, and implicit multiplication.
+    Supports multiline text, single-line natural language formulations,
+    LaTeX-style symbols, and implicit multiplication.
     """
     # 1. Standardize line endings and normalize LaTeX
     normalized = model_text.replace("\r\n", "\n").replace("\r", "\n")
     
     # Normalize operators and symbols
-    normalized = normalized.replace("\\le", "<=").replace("\\leq", "<=")
-    normalized = normalized.replace("\\ge", ">=").replace("\\geq", ">=")
-    normalized = normalized.replace(" s.t. ", "\nsubject to\n").replace(" S.T. ", "\nsubject to\n")
-    normalized = re.sub(r"\b(subject to|s\.t\.)\b", "subject to", normalized, flags=re.IGNORECASE)
+    normalized = normalized.replace(r"\le", "<=").replace(r"\leq", "<=")
+    normalized = normalized.replace(r"\ge", ">=").replace(r"\geq", ">=")
+    
+    # Split subject to / such that / s.t. into dedicated line
+    normalized = re.sub(r"(?i)\b(subject\s+to|such\s+that)\b|\bs\.t\.", "\nsubject to\n", normalized)
+    
+    # Split semicolons
+    normalized = re.sub(r";\s*", "\n", normalized)
 
-    # Split by periods/semicolons if it is a single-line string
-    if "\n" not in normalized.strip():
-        normalized = re.sub(r"[\.;]\s+", "\n", normalized)
+    raw_lines = [line.strip() for line in normalized.split("\n") if line.strip()]
+    lines = []
 
-    lines = [line.strip() for line in normalized.split("\n") if line.strip()]
+    # Clean and split lines, filtering out variable domain declarations
+    for line in raw_lines:
+        if re.search(r"(?i)\b(binary|spin|qubit|\{0\s*,\s*1\}|[01]\^n)\b", line) and not re.search(r"(<=|>=|==)", line):
+            continue
+        cleaned = re.sub(r"(?i)\b(where|with)\b.*?\b(binary|spin|qubit|\{0\s*,\s*1\}|[01]\^n).*$", "", line).strip()
+        cleaned = re.sub(r"(?i)\b[a-zA-Z0-9_,\s]+?\s+(are|is|in|\\in)\s+(binary|spin|qubit|\{0\s*,\s*1\}).*$", "", cleaned).strip()
+        if cleaned:
+            if "," in cleaned and re.search(r"(<=|>=|==|=)", cleaned):
+                chunks = [c.strip() for c in cleaned.split(",") if c.strip()]
+                for ch in chunks:
+                    if re.search(r"(<=|>=|==|=)", ch):
+                        lines.append(ch)
+            else:
+                lines.append(cleaned)
     
     sense = "MINIMIZE"
     objective_expr = "0"
@@ -177,9 +194,7 @@ def parse_model_deterministically(model_text: str) -> dict:
 
     # Add implicit multiplication (e.g. 3x -> 3*x, 3*x_0 -> 3*x_0)
     def expand_implicit_multiplication(expr: str) -> str:
-        # e.g., 3x_0 -> 3*x_0, 3x -> 3*x, 3(x) -> 3*(x)
         res = re.sub(r"(\d+)([a-zA-Z_])", r"\1*\2", expr)
-        # e.g. 3(x+y) -> 3*(x+y)
         res = re.sub(r"(\d+)\s*\(", r"\1*(", res)
         return res
 
@@ -240,7 +255,8 @@ def parse_model_deterministically(model_text: str) -> dict:
     # Filter out common keywords
     keywords = {
         "min", "max", "minimize", "maximize", "subject", "to", "st", 
-        "sum", "forall", "lambda", "x_idx", "and", "or", "not", "abs"
+        "sum", "forall", "lambda", "x_idx", "and", "or", "not", "abs",
+        "where", "with", "are", "is", "in", "binary", "spin", "qubit"
     }
     
     for word in words:
@@ -257,6 +273,7 @@ def parse_model_deterministically(model_text: str) -> dict:
         "variables": variables,
         "constraints": constraints
     }
+
 
 def build_om_from_ir(ir: dict) -> OptimizationModel:
     """Convert the parsed IR dict into an OptimizationModel dataclass."""
