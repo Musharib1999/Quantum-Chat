@@ -158,8 +158,8 @@ export function StudioHeader({
     >
       {/* ── LEFT: Logo + "QUANTUM GURU" + Space + Hero Tabs + Divider + Project/File Breadcrumb ── */}
       <div className="flex items-center shrink-0 min-w-0">
-        {/* Brand Logo (36px, white background) + Quantum Guru (2-line title case) */}
-        <div className="flex items-center space-x-2 shrink-0 select-none mr-3 sm:mr-4">
+        {/* Brand Logo (36px, white background) + QUANTUM GURU text */}
+        <div className="flex items-center space-x-2.5 shrink-0 select-none mr-4">
           <div className="w-9 h-9 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50">
             <img
               src="/qg-logo.png"
@@ -167,22 +167,13 @@ export function StudioHeader({
               className="w-full h-full object-contain"
             />
           </div>
-          <div className="flex flex-col justify-center leading-none">
-            <span
-              className={`text-[11px] font-mono font-bold tracking-tight select-none ${
-                isDark ? "text-white" : "text-slate-900"
-              }`}
-            >
-              Quantum
-            </span>
-            <span
-              className={`text-[10px] font-mono font-semibold tracking-normal select-none mt-0.5 ${
-                isDark ? "text-zinc-400" : "text-slate-500"
-              }`}
-            >
-              Guru
-            </span>
-          </div>
+          <span
+            className={`text-xs font-mono font-bold tracking-wider uppercase select-none ${
+              isDark ? "text-white" : "text-slate-900"
+            }`}
+          >
+            QUANTUM GURU
+          </span>
         </div>
 
         {/* ── HERO TABS (Code | Model/Circuit | QUBO | Results) ── */}
