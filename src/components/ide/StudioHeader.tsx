@@ -150,7 +150,7 @@ export function StudioHeader({
 
   return (
     <header
-      className={`h-12 border-b px-3.5 flex items-center justify-between shrink-0 z-20 shadow-xs transition-colors ${
+      className={`h-12 border-b pl-2 pr-3.5 flex items-center justify-between shrink-0 z-20 shadow-xs transition-colors ${
         isDark
           ? "bg-[#0E0F13] border-white/[0.08]"
           : "bg-white border-slate-200"
@@ -158,8 +158,8 @@ export function StudioHeader({
     >
       {/* ── LEFT: Logo + "QUANTUM GURU" + Space + Hero Tabs + Divider + Project/File Breadcrumb ── */}
       <div className="flex items-center shrink-0 min-w-0">
-        {/* Brand Logo (36px, white background) + QUANTUM GURU text */}
-        <div className="flex items-center space-x-2.5 shrink-0 select-none mr-4">
+        {/* Brand Logo (36px, white background) + Quantum Guru (2-line title case) */}
+        <div className="flex items-center space-x-2 shrink-0 select-none mr-3 sm:mr-4">
           <div className="w-9 h-9 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50">
             <img
               src="/qg-logo.png"
@@ -167,13 +167,22 @@ export function StudioHeader({
               className="w-full h-full object-contain"
             />
           </div>
-          <span
-            className={`text-xs font-mono font-bold tracking-wider uppercase select-none ${
-              isDark ? "text-white" : "text-slate-900"
-            }`}
-          >
-            QUANTUM GURU
-          </span>
+          <div className="flex flex-col justify-center leading-none">
+            <span
+              className={`text-[11px] font-mono font-bold tracking-tight select-none ${
+                isDark ? "text-white" : "text-slate-900"
+              }`}
+            >
+              Quantum
+            </span>
+            <span
+              className={`text-[10px] font-mono font-semibold tracking-normal select-none mt-0.5 ${
+                isDark ? "text-zinc-400" : "text-slate-500"
+              }`}
+            >
+              Guru
+            </span>
+          </div>
         </div>
 
         {/* ── HERO TABS (Code | Model/Circuit | QUBO | Results) ── */}
@@ -411,13 +420,18 @@ export function StudioHeader({
           }`}
           title="Active Simulation Engine"
         >
-          <Cpu
-            className={`w-3.5 h-3.5 ${
-              isDwave ? "text-emerald-500" : "text-sky-500"
-            }`}
-          />
-          <span className="text-[11px] font-medium">
-            {isDwave ? "D-Wave" : "AerSimulator"}
+          {isDwave && (
+            <Cpu className="w-3.5 h-3.5 text-emerald-500" />
+          )}
+          <span
+            className="text-[11px] font-semibold"
+            style={
+              isDwave
+                ? undefined
+                : { color: isDark ? "#8A3FFC" : "#6929C4" }
+            }
+          >
+            {isDwave ? "D-Wave" : "Qiskit Sim"}
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
         </div>
@@ -490,20 +504,7 @@ export function StudioHeader({
                 <ChevronDown className={`w-3 h-3 text-zinc-400 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`} />
               </button>
 
-              {/* Quick direct logout button */}
-              {onLogout && (
-                <button
-                  onClick={onLogout}
-                  className={`p-1.5 rounded-md transition-colors border cursor-pointer ${
-                    isDark
-                      ? "border-white/[0.08] hover:bg-rose-500/15 hover:border-rose-500/30 text-zinc-400 hover:text-rose-400"
-                      : "border-slate-200 hover:bg-rose-50 hover:border-rose-300 text-slate-600 hover:text-rose-600"
-                  }`}
-                  title="Logout"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              )}
+
             </div>
 
             {/* User Dropdown Menu Popover */}
