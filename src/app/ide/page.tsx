@@ -347,6 +347,11 @@ const QISKIT_INITIAL_MESSAGES: CopilotMessage[] = [
 ];
 
 export default function QuantumGuruStudioPage() {
+  const [mounted, setMounted] = useState<boolean>(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [codeSnapshots, setCodeSnapshots] = useState<string[]>([]);
   const [targetBackend, setTargetBackend] = useState<string>("dwave_simulated_annealing");
   const { user, isAuthenticated, logout } = useAuth();
@@ -1496,6 +1501,32 @@ export default function QuantumGuruStudioPage() {
     });
     return score;
   }, [solverResult.sample]);
+
+  if (!mounted) {
+    return (
+      <div
+        suppressHydrationWarning
+        className="h-screen w-screen flex flex-col items-center justify-center bg-[#090A0D] text-white select-none"
+      >
+        <div className="flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs border border-slate-200/50">
+            <img
+              src="/qg-logo.png"
+              alt="Quantum Guru"
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span className="text-sm font-mono font-bold tracking-wider uppercase text-white">
+            QUANTUM GURU STUDIO
+          </span>
+        </div>
+        <div className="mt-4 flex items-center space-x-2 text-xs font-mono text-zinc-400">
+          <div className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+          <span>Loading Quantum Studio environment...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

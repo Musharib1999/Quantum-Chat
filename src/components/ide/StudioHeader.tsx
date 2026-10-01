@@ -150,6 +150,7 @@ export function StudioHeader({
 
   return (
     <header
+      suppressHydrationWarning
       className={`h-12 border-b pl-2 pr-3.5 flex items-center justify-between shrink-0 z-20 shadow-xs transition-colors ${
         isDark
           ? "bg-[#0E0F13] border-white/[0.08]"
