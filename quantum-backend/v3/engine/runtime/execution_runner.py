@@ -532,6 +532,10 @@ if target_qc is not None:
         except Exception:
             pass
 
+    # If user script already calculated its own counts dictionary, use it
+    if counts is None and "counts" in exec_globals and isinstance(exec_globals["counts"], dict):
+        counts = exec_globals["counts"]
+
 # 2. D-Wave QUBO / BQM / CQM introspection
 if HAS_DWAVE:
     target_sampleset = None
