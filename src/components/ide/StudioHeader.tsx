@@ -151,11 +151,11 @@ export function StudioHeader({
           : "bg-white border-slate-200"
       }`}
     >
-      {/* ── LEFT: Logo + "QUANTUM GURU" + Space + Hero Tabs + Divider + Project/File Breadcrumb ── */}
-      <div className="flex items-center shrink-0 min-w-0">
-        {/* Brand Logo (36px, white background) + QUANTUM GURU text */}
-        <div className="flex items-center space-x-2.5 shrink-0 select-none mr-4">
-          <div className="w-9 h-9 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50">
+      {/* ── LEFT: 3 Distinct Functional Zones with Generous Spacing ── */}
+      <div className="flex items-center gap-5 shrink-0 min-w-0">
+        {/* ── SECTION 1: Brand Anchor (Logo + Platform Name) ── */}
+        <div className="flex items-center space-x-2.5 shrink-0 select-none">
+          <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50">
             <img
               src="/qg-logo.png"
               alt="Quantum Guru"
@@ -171,7 +171,14 @@ export function StudioHeader({
           </span>
         </div>
 
-        {/* ── HERO TABS (Code | Model/Circuit | QUBO | Results) ── */}
+        {/* Structural Divider 1: Brand ↔ Workspace Navigation */}
+        <div
+          className={`h-4 w-[1px] shrink-0 ${
+            isDark ? "bg-white/10" : "bg-slate-200"
+          }`}
+        />
+
+        {/* ── SECTION 2: Workspace View Switcher (Hero Tabs) ── */}
         <div
           className={`flex items-center space-x-0.5 p-0.5 rounded-lg text-xs font-mono select-none transition-colors shrink-0 ${
             isDark ? "bg-white/[0.06]" : "bg-slate-100 border border-slate-200/60"
@@ -247,19 +254,19 @@ export function StudioHeader({
           </button>
         </div>
 
-        {/* ── VERTICAL DIVIDER ── */}
+        {/* Structural Divider 2: Workspace Navigation ↔ File Context */}
         <div
-          className={`h-4 w-[1px] mx-3 shrink-0 ${
-            isDark ? "bg-white/[0.08]" : "bg-slate-300"
+          className={`h-4 w-[1px] shrink-0 ${
+            isDark ? "bg-white/10" : "bg-slate-200"
           }`}
         />
 
-        {/* ── PROJECT & FILE BREADCRUMB ── */}
-        <div className="flex items-center space-x-1.5 shrink-0">
+        {/* ── SECTION 3: Contextual Hierarchy (Project & File Breadcrumbs) ── */}
+        <div className="flex items-center space-x-2 shrink-0">
           {/* Project Dropdown Trigger Pill */}
           <button
             onClick={onOpenProjectModal}
-            className={`flex items-center space-x-1.5 px-2 py-1 rounded-md text-xs font-mono transition-colors group cursor-pointer border ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1.25 rounded-md text-xs font-mono transition-colors group cursor-pointer border ${
               isDark
                 ? "border-transparent hover:bg-zinc-800/80 text-zinc-300 hover:text-white"
                 : "border-slate-200/80 bg-slate-50 hover:bg-slate-100 text-slate-800 hover:text-slate-900"
@@ -271,7 +278,7 @@ export function StudioHeader({
                 isDark ? "text-zinc-400" : "text-slate-500"
               }`}
             />
-            <span className="max-w-[100px] sm:max-w-[130px] truncate font-medium">
+            <span className="max-w-[160px] sm:max-w-[200px] truncate font-medium">
               {activeProject.title}
             </span>
             <ChevronDown className="w-3 h-3 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200 transition-transform" />
@@ -279,8 +286,8 @@ export function StudioHeader({
 
           {/* Breadcrumb Separator */}
           <span
-            className={`text-xs select-none ${
-              isDark ? "text-zinc-600" : "text-slate-300"
+            className={`text-xs select-none px-0.5 ${
+              isDark ? "text-zinc-600" : "text-slate-400"
             }`}
           >
             /
@@ -290,7 +297,7 @@ export function StudioHeader({
           <div className="relative" ref={fileDropdownRef}>
             <button
               onClick={() => setIsFileDropdownOpen((prev) => !prev)}
-              className={`flex items-center space-x-1.5 px-2 py-1 rounded-md text-xs font-mono transition-colors group cursor-pointer border ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.25 rounded-md text-xs font-mono transition-colors group cursor-pointer border ${
                 isFileDropdownOpen
                   ? isDark
                     ? "bg-zinc-800 border-white/[0.12] text-white"
@@ -302,7 +309,7 @@ export function StudioHeader({
               title="Click to view all project files"
             >
               {getFileIcon(currentFile)}
-              <span className={`max-w-[90px] sm:max-w-[120px] truncate font-mono text-[11px] font-semibold ${
+              <span className={`max-w-[120px] sm:max-w-[160px] truncate font-mono text-[11px] font-semibold ${
                 isDark ? "text-zinc-200" : "text-slate-800"
               }`}>
                 {currentFile}
