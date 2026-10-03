@@ -4,3 +4,5 @@ export * from "./ProjectExplorer";
 export * from "./StudioCodeEditor";
 export * from "./CircuitCanvasView";
 export * from "./ProjectModals";
+export * from "./AlgorithmStudioModal";
+export * from "./StudioBottomBar";

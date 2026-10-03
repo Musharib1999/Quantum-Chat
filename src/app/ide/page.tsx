@@ -22,9 +22,12 @@ import {
   StudioHeader,
   ProjectExplorer,
   StudioCodeEditor,
+  StudioBottomBar,
   CircuitCanvasView,
   ProjectSwitcherModal,
   NewProjectModal,
+  AlgorithmStudioModal,
+  AlgorithmBankItem,
   ProjectItem,
   FrameworkType,
   HeroTabType,
@@ -582,6 +585,7 @@ export default function QuantumGuruStudioPage() {
 
   const [showProjectModal, setShowProjectModal] = useState<boolean>(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
+  const [showAlgorithmStudioModal, setShowAlgorithmStudioModal] = useState<boolean>(false);
   const [isDataConnectorsOpen, setIsDataConnectorsOpen] = useState<boolean>(false);
 
   const [isModelDirty, setIsModelDirty] = useState<boolean>(false);
@@ -684,6 +688,7 @@ export default function QuantumGuruStudioPage() {
     { name: "measure", qubit: 0, qubits: [0], step: 1, role: "single" }
   ]);
   const [circuitAscii, setCircuitAscii] = useState<string>("     ┌───┐┌─┐\n  q: ┤ X ├┤M├\n     └───┘└╥┘\nc: 1/══════╩═\n           0 ");
+  const [isCircuitSynced, setIsCircuitSynced] = useState<boolean>(true);
 
   const [dwaveCopilotMessages, setDwaveCopilotMessages] = useState<CopilotMessage[]>(DWAVE_INITIAL_MESSAGES);
   const [qiskitCopilotMessages, setQiskitCopilotMessages] = useState<CopilotMessage[]>(QISKIT_INITIAL_MESSAGES);
@@ -919,15 +924,37 @@ export default function QuantumGuruStudioPage() {
     }
   };
 
+  const handleCreateProjectFromAlgorithm = (algo: AlgorithmBankItem, projectName: string) => {
+    const fw = algo.primaryFramework || algo.framework || "dwave";
+    const targetFile = "main.py";
+    const finalName = projectName.trim() || `my-${algo.slug}`;
+    const projId = `algo_${finalName.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${Date.now()}`;
+    const newProj: ProjectItem = {
+      id: projId,
+      title: finalName,
+      desc: algo.description,
+      framework: fw,
+      updated: "Just now",
+      files: [targetFile],
+      activeFile: targetFile,
+      fileContents: { [targetFile]: algo.code },
+      isCustom: true,
+      cloudSynced: false,
+    };
+    handleCreateProject(newProj);
+  };
+
   const handleCreateProject = async (newProj: ProjectItem) => {
-    const initialCode = newProj.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
     const targetFile = newProj.activeFile || newProj.files?.[0] || "main.py";
+    const initialCode =
+      newProj.fileContents?.[targetFile] ||
+      (newProj.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE);
 
     const customProj: ProjectItem = {
       ...newProj,
       isCustom: true,
       cloudSynced: false,
-      fileContents: { [targetFile]: initialCode },
+      fileContents: newProj.fileContents || { [targetFile]: initialCode },
     };
 
     setProjects((prev) => [customProj, ...prev]);
@@ -1088,6 +1115,122 @@ export default function QuantumGuruStudioPage() {
     return () => clearTimeout(timer);
   }, [dwaveCode, qiskitCode, activeFile, activeProject, user?.email]);
 
+  const handleUpdateQubitCount = (newCount: number) => {
+    const clamped = Math.min(30, Math.max(1, newCount));
+    setQiskitQubits(clamped);
+
+    // Update QuantumCircuit(N, N) initialization in Python code
+    setQiskitCode((prevCode) => {
+      let updated = prevCode;
+      const qcRegex = /QuantumCircuit\(\s*\d+\s*(?:,\s*\d+\s*)?\)/;
+      if (qcRegex.test(updated)) {
+        updated = updated.replace(qcRegex, `QuantumCircuit(${clamped}, ${clamped})`);
+      } else {
+        updated = `from qiskit import QuantumCircuit\nqc = QuantumCircuit(${clamped}, ${clamped})\n` + updated;
+      }
+      return updated;
+    });
+
+    // Prune gates that now exceed the new qubit capacity
+    setCircuitGates((prev) =>
+      prev.filter((g) => {
+        const q = g.qubit ?? (g.qubits ? g.qubits[0] : 0);
+        const tgt = g.qubits && g.qubits.length > 1 ? g.qubits[1] : q;
+        return q < clamped && tgt < clamped;
+      })
+    );
+
+    setIsCircuitSynced(true);
+  };
+
+  const handleAddGateToCircuit = (gateName: string, qubit: number, targetQubit?: number, step?: number) => {
+    const gateUpper = gateName.toUpperCase();
+    let codeSnippet = "";
+
+    switch (gateUpper) {
+      case "H":
+        codeSnippet = `qc.h(${qubit})`;
+        break;
+      case "X":
+        codeSnippet = `qc.x(${qubit})`;
+        break;
+      case "Y":
+        codeSnippet = `qc.y(${qubit})`;
+        break;
+      case "Z":
+        codeSnippet = `qc.z(${qubit})`;
+        break;
+      case "S":
+        codeSnippet = `qc.s(${qubit})`;
+        break;
+      case "T":
+        codeSnippet = `qc.t(${qubit})`;
+        break;
+      case "RX":
+        codeSnippet = `qc.rx(1.57, ${qubit})`;
+        break;
+      case "RY":
+        codeSnippet = `qc.ry(1.57, ${qubit})`;
+        break;
+      case "RZ":
+        codeSnippet = `qc.rz(1.57, ${qubit})`;
+        break;
+      case "CX":
+      case "CNOT":
+        codeSnippet = `qc.cx(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+        break;
+      case "CZ":
+        codeSnippet = `qc.cz(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+        break;
+      case "SWAP":
+        codeSnippet = `qc.swap(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+        break;
+      case "M":
+      case "MEASURE":
+        codeSnippet = `qc.measure(${qubit}, ${qubit})`;
+        break;
+      default:
+        codeSnippet = `qc.u(1.57, 0, 0, ${qubit})`;
+        break;
+    }
+
+    // Inject before measurement/simulation lines or append
+    setQiskitCode((prevCode) => {
+      const lines = prevCode.split("\n");
+      const insertIdx = lines.findIndex(
+        (l) =>
+          l.trim().startsWith("sim =") ||
+          l.trim().startsWith("sim.run") ||
+          l.trim().startsWith("qc.measure_all") ||
+          l.trim().startsWith("print(")
+      );
+
+      if (insertIdx !== -1) {
+        lines.splice(insertIdx, 0, codeSnippet);
+        return lines.join("\n");
+      }
+      return prevCode.trimEnd() + "\n" + codeSnippet + "\n";
+    });
+
+    // Update visual circuit state
+    const newGate = {
+      name: gateUpper.toLowerCase(),
+      qubit,
+      qubits: targetQubit !== undefined ? [qubit, targetQubit] : [qubit],
+      step: step !== undefined ? step : circuitGates.length,
+      role: targetQubit !== undefined ? "two" : "single",
+    };
+
+    setCircuitGates((prev) => [...prev, newGate]);
+    setQiskitDepth((prev) => Math.max(prev, (step ?? prev) + 1));
+    setIsCircuitSynced(true);
+  };
+
+  const handleRemoveGateFromCircuit = (gateIndex: number) => {
+    setCircuitGates((prev) => prev.filter((_, idx) => idx !== gateIndex));
+    setIsCircuitSynced(true);
+  };
+
   const handleRunOrRecompile = useCallback(async () => {
     setIsRunningOrRecompiling(true);
     setShowTerminal(true);
@@ -1160,6 +1303,7 @@ export default function QuantumGuruStudioPage() {
         setTerminalOutput(`[ERROR] D-Wave execution failed: ${err.message}`);
       } finally {
         setIsRunningOrRecompiling(false);
+        setIsCircuitSynced(true);
       }
     } else {
       // Qiskit execution via server-side Next.js proxy
@@ -1542,7 +1686,10 @@ export default function QuantumGuruStudioPage() {
         activeProject={activeProject}
         onOpenProjectModal={() => setShowProjectModal(true)}
         onOpenNewProjectModal={() => setShowNewProjectModal(true)}
+        onOpenAlgorithmStudio={() => setShowAlgorithmStudioModal(true)}
         onOpenDataConnectors={() => setIsDataConnectorsOpen(true)}
+        isSynced={isCircuitSynced}
+        onSync={handleRunOrRecompile}
         isRunningOrRecompiling={isRunningOrRecompiling}
         onRunOrRecompile={handleRunOrRecompile}
         isModelDirty={isModelDirty}
@@ -1590,7 +1737,15 @@ export default function QuantumGuruStudioPage() {
                 isDark={isDark}
                 onToggleTheme={handleToggleTheme}
                 code={framework === "dwave" ? dwaveCode : qiskitCode}
-                onChange={framework === "dwave" ? setDwaveCode : setQiskitCode}
+                onChange={(val) => {
+                  if (framework === "dwave") {
+                    setDwaveCode(val);
+                    setIsModelDirty(true);
+                  } else {
+                    setQiskitCode(val);
+                    setIsCircuitSynced(false);
+                  }
+                }}
                 files={activeProject.files}
                 activeFile={activeFile}
                 onSelectFile={handleSelectFile}
@@ -1676,6 +1831,9 @@ export default function QuantumGuruStudioPage() {
                     circuitDepth={qiskitDepth}
                     circuitGates={circuitGates}
                     circuitAscii={circuitAscii}
+                    onUpdateQubitCount={handleUpdateQubitCount}
+                    onAddGate={handleAddGateToCircuit}
+                    onRemoveGate={handleRemoveGateFromCircuit}
                   />
                 )}
               </div>
@@ -1746,6 +1904,43 @@ export default function QuantumGuruStudioPage() {
               </div>
             )}
           </div>
+
+          {/* ── PERSISTENT BOTTOM BAR & CONSOLE (Visible on ALL tabs: Code, Circuit, Results, Model, QUBO) ── */}
+          <StudioBottomBar
+            isDark={isDark}
+            onToggleTheme={handleToggleTheme}
+            framework={framework}
+            isSynced={isCircuitSynced}
+            onSync={handleRunOrRecompile}
+            showTerminal={showTerminal}
+            onToggleTerminal={() => setShowTerminal((prev) => !prev)}
+            terminalOutput={terminalOutput}
+            specs={
+              framework === "qiskit"
+                ? {
+                    qubits: qiskitQubits,
+                    depth: qiskitDepth,
+                    fidelity: 99.8,
+                    shots: qiskitShots,
+                  }
+                : isPortfolio
+                ? {
+                    isPortfolio: true,
+                    cost: totalCost,
+                    maxCost: mathParams.budgetMax,
+                    score: totalScore,
+                    energy: solverResult.energy,
+                    feasible: totalCost <= mathParams.budgetMax,
+                  }
+                : {
+                    isPortfolio: false,
+                    variablesCount: solverResult.variables?.length || 1,
+                    activeCount: Object.values(solverResult.sample || {}).filter((v) => v === 1).length,
+                    energy: solverResult.energy,
+                    reads: solverResult.num_reads || 1024,
+                  }
+            }
+          />
         </div>
 
         {/* Right: Quantum Copilot */}
@@ -1810,6 +2005,10 @@ export default function QuantumGuruStudioPage() {
         activeProject={activeProject}
         onSelectProject={handleSelectProject}
         onOpenNewProject={() => setShowNewProjectModal(true)}
+        onOpenAlgorithmStudio={() => {
+          setShowProjectModal(false);
+          setShowAlgorithmStudioModal(true);
+        }}
         onDeleteProject={handleDeleteProject}
         isDark={isDark}
       />
@@ -1819,6 +2018,18 @@ export default function QuantumGuruStudioPage() {
         isOpen={showNewProjectModal}
         onClose={() => setShowNewProjectModal(false)}
         onCreateProject={handleCreateProject}
+        onOpenAlgorithmStudio={() => {
+          setShowNewProjectModal(false);
+          setShowAlgorithmStudioModal(true);
+        }}
+        isDark={isDark}
+      />
+
+      {/* Algorithm Studio Dedicated Modal */}
+      <AlgorithmStudioModal
+        isOpen={showAlgorithmStudioModal}
+        onClose={() => setShowAlgorithmStudioModal(false)}
+        onCreateProjectFromAlgorithm={handleCreateProjectFromAlgorithm}
         isDark={isDark}
       />
     </div>
