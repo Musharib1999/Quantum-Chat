@@ -68,7 +68,7 @@ export function ProjectSwitcherModal({
           }`}
         >
           <div className="flex items-center space-x-2">
-            <Folder className="w-4 h-4 text-sky-400" />
+            <Folder className="w-4 h-4 text-zinc-400" />
             <h3 className="font-semibold text-sm">Switch Quantum Project</h3>
           </div>
           <button
@@ -132,8 +132,8 @@ export function ProjectSwitcherModal({
                   className={`p-3 rounded-lg flex items-center justify-between cursor-pointer transition-all border ${
                     isSelected
                       ? isDark
-                        ? "bg-white/[0.08] border-sky-500/40"
-                        : "bg-sky-50 border-sky-300"
+                        ? "bg-white/[0.08] border-white/20 text-white"
+                        : "bg-slate-100 border-slate-300 text-slate-900"
                       : isDark
                       ? "hover:bg-white/[0.04] border-transparent"
                       : "hover:bg-slate-100 border-transparent"
@@ -146,9 +146,9 @@ export function ProjectSwitcherModal({
                       </span>
                       <span
                         className={`text-[10px] font-mono px-1.5 py-0.2 rounded uppercase ${
-                          proj.framework === "dwave"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                          isDark
+                            ? "bg-white/[0.05] text-zinc-300 border border-white/[0.08]"
+                            : "bg-slate-100 text-slate-700 border border-slate-200"
                         }`}
                       >
                         {proj.framework}
@@ -160,17 +160,25 @@ export function ProjectSwitcherModal({
                   </div>
                   <div className="flex items-center space-x-2 shrink-0">
                     {proj.isCustom ? (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center space-x-1">
-                        <Cloud className="w-3 h-3" />
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex items-center space-x-1 ${
+                        isDark
+                          ? "bg-white/[0.05] text-zinc-400 border border-white/[0.06]"
+                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}>
+                        <Cloud className="w-3 h-3 text-zinc-400" />
                         <span>Cloud</span>
                       </span>
                     ) : (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 flex items-center space-x-1">
-                        <Package className="w-3 h-3" />
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex items-center space-x-1 ${
+                        isDark
+                          ? "bg-white/[0.05] text-zinc-400 border border-white/[0.06]"
+                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}>
+                        <Package className="w-3 h-3 text-zinc-400" />
                         <span>Template</span>
                       </span>
                     )}
-                    {isSelected && <Check className="w-4 h-4 text-sky-400 shrink-0" />}
+                    {isSelected && <Check className="w-4 h-4 text-zinc-200 shrink-0" />}
                     {proj.isCustom && onDeleteProject && (
                       <button
                         onClick={(e) => {
@@ -204,9 +212,10 @@ export function ProjectSwitcherModal({
                 onClose();
                 onOpenAlgorithmStudio();
               }}
-              className="flex items-center space-x-1.5 text-[11px] font-mono text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+              className={`flex items-center space-x-1.5 text-[11px] font-mono transition-colors cursor-pointer ${
+                isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
+              }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
               <span>Browse Algorithm Vault →</span>
             </button>
           ) : (
@@ -220,7 +229,11 @@ export function ProjectSwitcherModal({
               onClose();
               onOpenNewProject();
             }}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-xs transition-colors cursor-pointer"
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-mono font-semibold text-xs shadow-xs transition-all cursor-pointer active:scale-[0.98] ${
+              isDark
+                ? "bg-zinc-200 hover:bg-white text-zinc-900 shadow-zinc-900/20"
+                : "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10"
+            }`}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Project</span>
@@ -289,8 +302,8 @@ export function NewProjectModal({
           }`}
         >
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/20">
-              <FolderPlus className="w-4 h-4 text-sky-400" />
+            <div className="w-8 h-8 rounded-lg bg-white/[0.06] text-zinc-300 flex items-center justify-center shrink-0 border border-white/[0.08]">
+              <FolderPlus className="w-4 h-4 text-zinc-300" />
             </div>
             <div>
               <h3 className="font-semibold text-sm">New Quantum Project</h3>
@@ -326,8 +339,8 @@ export function NewProjectModal({
               onChange={(e) => setName(e.target.value)}
               className={`w-full px-3 py-2 rounded-lg border outline-none text-xs font-mono transition-colors ${
                 isDark
-                  ? "bg-[#090A0D] border-white/[0.1] text-zinc-100 focus:border-sky-500"
-                  : "bg-slate-50 border-slate-200 text-slate-900 focus:border-sky-500"
+                  ? "bg-[#090A0D] border-white/[0.1] text-zinc-100 focus:border-zinc-400"
+                  : "bg-slate-50 border-slate-200 text-slate-900 focus:border-zinc-400"
               }`}
               autoFocus
             />
@@ -344,7 +357,9 @@ export function NewProjectModal({
                 onClick={() => setFramework("dwave")}
                 className={`p-3 rounded-xl border text-left flex flex-col space-y-1 transition-all cursor-pointer ${
                   framework === "dwave"
-                    ? "border-emerald-500/80 bg-emerald-500/10 text-emerald-400 shadow-xs"
+                    ? isDark
+                      ? "border-white/30 bg-white/[0.08] text-white shadow-xs"
+                      : "border-slate-400 bg-slate-100 text-slate-900 shadow-xs"
                     : isDark
                     ? "border-white/[0.08] text-zinc-400 hover:border-zinc-700 bg-white/[0.02]"
                     : "border-slate-200 text-slate-600 hover:border-slate-300 bg-slate-50"
@@ -352,10 +367,10 @@ export function NewProjectModal({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1.5">
-                    <Cpu className="w-3.5 h-3.5 text-emerald-500" />
+                    <Cpu className="w-3.5 h-3.5 text-zinc-300" />
                     <span className="font-semibold text-xs">D-Wave</span>
                   </div>
-                  {framework === "dwave" && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                  {framework === "dwave" && <Check className="w-3.5 h-3.5 text-zinc-200" />}
                 </div>
                 <span className="text-[10px] opacity-75 font-sans leading-tight">
                   Annealing • QUBO & Ising Solver
@@ -367,7 +382,9 @@ export function NewProjectModal({
                 onClick={() => setFramework("qiskit")}
                 className={`p-3 rounded-xl border text-left flex flex-col space-y-1 transition-all cursor-pointer ${
                   framework === "qiskit"
-                    ? "border-purple-500/80 bg-purple-500/10 text-purple-400 shadow-xs"
+                    ? isDark
+                      ? "border-white/30 bg-white/[0.08] text-white shadow-xs"
+                      : "border-slate-400 bg-slate-100 text-slate-900 shadow-xs"
                     : isDark
                     ? "border-white/[0.08] text-zinc-400 hover:border-zinc-700 bg-white/[0.02]"
                     : "border-slate-200 text-slate-600 hover:border-slate-300 bg-slate-50"
@@ -375,10 +392,10 @@ export function NewProjectModal({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1.5">
-                    <Layers className="w-3.5 h-3.5 text-purple-400" />
+                    <Layers className="w-3.5 h-3.5 text-zinc-300" />
                     <span className="font-semibold text-xs">Qiskit</span>
                   </div>
-                  {framework === "qiskit" && <Check className="w-3.5 h-3.5 text-purple-400" />}
+                  {framework === "qiskit" && <Check className="w-3.5 h-3.5 text-zinc-200" />}
                 </div>
                 <span className="text-[10px] opacity-75 font-sans leading-tight">
                   Gate Model • Circuits & Aer Sim
@@ -396,19 +413,18 @@ export function NewProjectModal({
               }}
               className={`p-3 rounded-xl border transition-all cursor-pointer group ${
                 isDark
-                  ? "bg-gradient-to-r from-purple-950/25 via-indigo-950/20 to-transparent border-purple-500/25 hover:border-purple-500/40 hover:bg-purple-950/35"
-                  : "bg-gradient-to-r from-purple-50/70 via-indigo-50/40 to-white border-purple-200 hover:border-purple-300"
+                  ? "bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.05]"
+                  : "bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/25">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                  </div>
                   <div className="min-w-0">
                     <div className="flex items-center space-x-1.5">
                       <span className="font-semibold text-xs">Algorithm Vault</span>
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300">
+                      <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+                        isDark ? "bg-white/[0.06] text-zinc-300 border border-white/[0.08]" : "bg-slate-200 text-slate-700"
+                      }`}>
                         26 Verified
                       </span>
                     </div>
@@ -418,7 +434,9 @@ export function NewProjectModal({
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-1 text-xs font-mono text-purple-400 group-hover:text-purple-300 shrink-0 ml-2 font-medium">
+                <div className={`flex items-center space-x-1 text-xs font-mono shrink-0 ml-2 font-medium ${
+                  isDark ? "text-zinc-300 group-hover:text-white" : "text-slate-700 group-hover:text-slate-900"
+                }`}>
                   <span>Browse</span>
                   <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </div>
@@ -451,7 +469,11 @@ export function NewProjectModal({
               type="button"
               onClick={handleCreate}
               disabled={!name.trim()}
-              className="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white font-mono font-semibold text-xs shadow-sm transition-all cursor-pointer flex items-center space-x-1.5"
+              className={`px-4 py-1.5 rounded-lg disabled:opacity-40 font-mono font-semibold text-xs shadow-sm transition-all cursor-pointer flex items-center space-x-1.5 active:scale-[0.98] ${
+                isDark
+                  ? "bg-zinc-200 hover:bg-white text-zinc-900 shadow-zinc-900/20"
+                  : "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10"
+              }`}
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Project</span>

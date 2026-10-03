@@ -147,41 +147,47 @@ export function FormulationCanvas({
         id="math-section-01"
         className={`p-5 rounded-xl border space-y-4 transition-all ${
           selectedSection === "01"
-            ? "ring-1 ring-sky-500/30 shadow-lg shadow-sky-500/10"
+            ? "ring-1 ring-white/20 shadow-lg shadow-black/40"
             : ""
         }`}
         style={{
-          backgroundColor: selectedSection === "01" ? (isDark ? "#11131a" : "rgba(240, 249, 255, 0.6)") : colors.bgCard,
-          borderColor: selectedSection === "01" ? "rgba(14, 165, 233, 0.6)" : colors.border,
+          backgroundColor: selectedSection === "01" ? (isDark ? "#14151B" : "#F8FAFC") : colors.bgCard,
+          borderColor: selectedSection === "01" ? (isDark ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)") : colors.border,
         }}
       >
         <div className="flex items-center justify-between pb-2 border-b" style={{ borderColor: colors.border }}>
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-sm font-bold text-amber-400">01</span>
+            <span className="font-mono text-sm font-bold text-zinc-400">01</span>
             <h3 className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
               Primal Mathematical Optimization Model
             </h3>
             {selectedSection === "01" && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center space-x-1 animate-pulse">
-                <span>🎯 Scoped in Copilot</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border flex items-center space-x-1 ${
+                isDark ? "bg-white/[0.08] text-zinc-200 border-white/[0.15]" : "bg-slate-100 text-slate-800 border-slate-300"
+              }`}>
+                <span>Scoped in Copilot</span>
               </span>
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+              isDark ? "bg-white/[0.05] text-zinc-300 border-white/[0.08]" : "bg-slate-100 text-slate-700 border-slate-200"
+            }`}>
               BQM Canonical Form
             </span>
             <button
               onClick={() => onSelectSection(selectedSection === "01" ? null : "01")}
-              className={`flex items-center space-x-1 text-xs px-2.5 py-1 rounded-md transition-all border ${
+              className={`flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-md font-mono transition-all border cursor-pointer ${
                 selectedSection === "01"
-                  ? "bg-sky-500 text-white font-semibold border-sky-400"
-                  : "hover:border-sky-400/40"
+                  ? isDark
+                    ? "bg-zinc-200 hover:bg-white text-zinc-900 font-semibold border-transparent shadow-xs"
+                    : "bg-slate-900 hover:bg-slate-800 text-white font-semibold border-transparent shadow-xs"
+                  : isDark
+                  ? "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border-white/[0.08]"
+                  : "bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-200"
               }`}
-              style={selectedSection === "01" ? {} : { backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
               title="Scope Optimization Copilot to Section 01"
             >
-              <Sparkles className="w-3 h-3 text-current" />
               <span>{selectedSection === "01" ? "Scoped" : "Ask Copilot"}</span>
             </button>
           </div>
@@ -209,7 +215,7 @@ export function FormulationCanvas({
             <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
               <div className="flex items-center justify-between text-[11px]">
                 <span style={{ color: colors.textPrimary }}>Budget Cap (B_max)</span>
-                <span className="font-mono text-[10px] text-emerald-400">Inequality Constraint</span>
+                <span className="font-mono text-[10px] text-zinc-400">Inequality Constraint</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-mono" style={{ color: colors.textMuted }}>$</span>
@@ -232,7 +238,7 @@ export function FormulationCanvas({
             <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
               <div className="flex items-center justify-between text-[11px]">
                 <span style={{ color: colors.textPrimary }}>Yield Weight (γ)</span>
-                <span className="font-mono text-[10px] text-sky-400">Objective Tradeoff</span>
+                <span className="font-mono text-[10px] text-zinc-400">Objective Tradeoff</span>
               </div>
               <div className="flex items-center space-x-2 pt-1">
                 <input
@@ -242,9 +248,9 @@ export function FormulationCanvas({
                   step="0.1"
                   value={yieldWeight}
                   onChange={(e) => setMathParams(prev => ({ ...prev, yieldWeight: parseFloat(e.target.value) }))}
-                  className="w-full accent-sky-500 cursor-pointer"
+                  className="w-full accent-zinc-400 cursor-pointer"
                 />
-                <span className="text-xs font-mono font-semibold w-10 text-right" style={{ color: colors.textCyan }}>
+                <span className={`text-xs font-mono font-semibold w-10 text-right ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
                   {yieldWeight.toFixed(1)}x
                 </span>
               </div>
@@ -255,7 +261,7 @@ export function FormulationCanvas({
             <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
               <div className="flex items-center justify-between text-[11px]">
                 <span style={{ color: colors.textPrimary }}>Min Diversity (K_min)</span>
-                <span className="font-mono text-[10px] text-amber-400">Sites</span>
+                <span className="font-mono text-[10px] text-zinc-400">Sites</span>
               </div>
               <div className="flex items-center space-x-2">
                 <input
@@ -277,11 +283,13 @@ export function FormulationCanvas({
             <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
               <div className="flex items-center justify-between text-[11px]">
                 <span style={{ color: colors.textPrimary }}>Decision Variables</span>
-                <span className="font-mono text-[10px] text-emerald-400">{variables?.length || 1} Variable{(variables?.length || 1) === 1 ? "" : "s"}</span>
+                <span className="font-mono text-[10px] text-zinc-400">{variables?.length || 1} Variable{(variables?.length || 1) === 1 ? "" : "s"}</span>
               </div>
               <div className="flex flex-wrap gap-1.5 pt-0.5">
                 {(variables && variables.length > 0 ? variables : ["x"]).map((v, i) => (
-                  <span key={i} className="text-xs font-mono px-2 py-0.5 rounded border font-semibold" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}>
+                  <span key={i} className={`text-xs font-mono px-2 py-0.5 rounded border font-semibold ${
+                    isDark ? "bg-white/[0.05] text-zinc-200 border-white/[0.08]" : "bg-slate-100 text-slate-800 border-slate-200"
+                  }`}>
                     {v} ∈ &#123;0, 1&#125;
                   </span>
                 ))}
@@ -292,7 +300,7 @@ export function FormulationCanvas({
             <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
               <div className="flex items-center justify-between text-[11px]">
                 <span style={{ color: colors.textPrimary }}>Objective Sense</span>
-                <span className="font-mono text-[10px] text-sky-400">Minimization</span>
+                <span className="font-mono text-[10px] text-zinc-400">Minimization</span>
               </div>
               <div className="text-xs font-mono pt-1 font-semibold" style={{ color: colors.textPrimary }}>
                 min H(x) Ground Energy
@@ -303,7 +311,7 @@ export function FormulationCanvas({
             <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
               <div className="flex items-center justify-between text-[11px]">
                 <span style={{ color: colors.textPrimary }}>Target Solver</span>
-                <span className="font-mono text-[10px] text-amber-400">Quantum Annealer</span>
+                <span className="font-mono text-[10px] text-zinc-400">Quantum Annealer</span>
               </div>
               <div className="text-xs font-mono pt-1 font-semibold" style={{ color: colors.textPrimary }}>
                 D-Wave BQM / Simulated Annealer
@@ -319,23 +327,25 @@ export function FormulationCanvas({
         id="math-section-02"
         className={`p-5 rounded-xl border space-y-4 transition-all ${
           selectedSection === "02"
-            ? "ring-1 ring-sky-500/30 shadow-lg shadow-sky-500/10"
+            ? "ring-1 ring-white/20 shadow-lg shadow-black/40"
             : ""
         }`}
         style={{
-          backgroundColor: selectedSection === "02" ? (isDark ? "#11131a" : "rgba(240, 249, 255, 0.6)") : colors.bgCard,
-          borderColor: selectedSection === "02" ? "rgba(14, 165, 233, 0.6)" : colors.border,
+          backgroundColor: selectedSection === "02" ? (isDark ? "#14151B" : "#F8FAFC") : colors.bgCard,
+          borderColor: selectedSection === "02" ? (isDark ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)") : colors.border,
         }}
       >
         <div className="flex items-center justify-between pb-2 border-b" style={{ borderColor: colors.border }}>
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-sm font-bold text-amber-400">02</span>
+            <span className="font-mono text-sm font-bold text-zinc-400">02</span>
             <h3 className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
               {isPortfolioProblem ? "QUBO Penalty Hamiltonian & Slack Transformation" : "Canonical Hamiltonian Decomposition"}
             </h3>
             {selectedSection === "02" && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center space-x-1 animate-pulse">
-                <span>🎯 Scoped in Copilot</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border flex items-center space-x-1 ${
+                isDark ? "bg-white/[0.08] text-zinc-200 border-white/[0.15]" : "bg-slate-100 text-slate-800 border-slate-300"
+              }`}>
+                <span>Scoped in Copilot</span>
               </span>
             )}
           </div>
@@ -346,21 +356,25 @@ export function FormulationCanvas({
                 <span className="text-xs font-mono font-bold text-amber-400">λ = {penaltyLambda.toFixed(1)}</span>
               </div>
             ) : (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                isDark ? "bg-white/[0.05] text-zinc-300 border-white/[0.08]" : "bg-slate-100 text-slate-700 border-slate-200"
+              }`}>
                 Quadratic Polynomial
               </span>
             )}
             <button
               onClick={() => onSelectSection(selectedSection === "02" ? null : "02")}
-              className={`flex items-center space-x-1 text-xs px-2.5 py-1 rounded-md transition-all border ${
+              className={`flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-md font-mono transition-all border cursor-pointer ${
                 selectedSection === "02"
-                  ? "bg-sky-500 text-white font-semibold border-sky-400"
-                  : "hover:border-sky-400/40"
+                  ? isDark
+                    ? "bg-zinc-200 hover:bg-white text-zinc-900 font-semibold border-transparent shadow-xs"
+                    : "bg-slate-900 hover:bg-slate-800 text-white font-semibold border-transparent shadow-xs"
+                  : isDark
+                  ? "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border-white/[0.08]"
+                  : "bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-200"
               }`}
-              style={selectedSection === "02" ? {} : { backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
               title="Scope Optimization Copilot to Section 02"
             >
-              <Sparkles className="w-3 h-3 text-current" />
               <span>{selectedSection === "02" ? "Scoped" : "Ask Copilot"}</span>
             </button>
           </div>
@@ -401,7 +415,7 @@ export function FormulationCanvas({
                 step="0.5"
                 value={penaltyLambda}
                 onChange={(e) => setMathParams(prev => ({ ...prev, penaltyLambda: parseFloat(e.target.value) }))}
-                className="w-full accent-amber-500 cursor-pointer"
+                className="w-full accent-zinc-400 cursor-pointer"
               />
             </div>
             <p className="text-[10px]" style={{ color: colors.textMuted }}>
@@ -431,23 +445,25 @@ export function FormulationCanvas({
         id="math-section-03"
         className={`p-5 rounded-xl border space-y-3 transition-all ${
           selectedSection === "03"
-            ? "ring-1 ring-sky-500/30 shadow-lg shadow-sky-500/10"
+            ? "ring-1 ring-white/20 shadow-lg shadow-black/40"
             : ""
         }`}
         style={{
-          backgroundColor: selectedSection === "03" ? (isDark ? "#11131a" : "rgba(240, 249, 255, 0.6)") : colors.bgCard,
-          borderColor: selectedSection === "03" ? "rgba(14, 165, 233, 0.6)" : colors.border,
+          backgroundColor: selectedSection === "03" ? (isDark ? "#14151B" : "#F8FAFC") : colors.bgCard,
+          borderColor: selectedSection === "03" ? (isDark ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)") : colors.border,
         }}
       >
         <div className="flex items-center justify-between pb-2 border-b" style={{ borderColor: colors.border }}>
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-sm font-bold text-amber-400">03</span>
+            <span className="font-mono text-sm font-bold text-zinc-400">03</span>
             <h3 className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
               Analytical Q-Matrix Coupler Expansion
             </h3>
             {selectedSection === "03" && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center space-x-1 animate-pulse">
-                <span>🎯 Scoped in Copilot</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border flex items-center space-x-1 ${
+                isDark ? "bg-white/[0.08] text-zinc-200 border-white/[0.15]" : "bg-slate-100 text-slate-800 border-slate-300"
+              }`}>
+                <span>Scoped in Copilot</span>
               </span>
             )}
           </div>
@@ -457,15 +473,17 @@ export function FormulationCanvas({
             </span>
             <button
               onClick={() => onSelectSection(selectedSection === "03" ? null : "03")}
-              className={`flex items-center space-x-1 text-xs px-2.5 py-1 rounded-md transition-all border ${
+              className={`flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-md font-mono transition-all border cursor-pointer ${
                 selectedSection === "03"
-                  ? "bg-sky-500 text-white font-semibold border-sky-400"
-                  : "hover:border-sky-400/40"
+                  ? isDark
+                    ? "bg-zinc-200 hover:bg-white text-zinc-900 font-semibold border-transparent shadow-xs"
+                    : "bg-slate-900 hover:bg-slate-800 text-white font-semibold border-transparent shadow-xs"
+                  : isDark
+                  ? "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border-white/[0.08]"
+                  : "bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-200"
               }`}
-              style={selectedSection === "03" ? {} : { backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}
               title="Scope Optimization Copilot to Section 03"
             >
-              <Sparkles className="w-3 h-3 text-current" />
               <span>{selectedSection === "03" ? "Scoped" : "Ask Copilot"}</span>
             </button>
           </div>

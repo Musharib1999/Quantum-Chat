@@ -53,12 +53,12 @@ export function QMatrixHeatmap({
     if (val === 0) return isDark ? "#141417" : "#F8FAFC";
     if (isDiag) {
       return val < 0
-        ? `rgba(56, 189, 248, ${Math.min(0.85, 0.2 + Math.abs(val) / Math.max(Math.abs(stats.min), 1) * 0.6)})`
-        : `rgba(251, 146, 60, ${Math.min(0.85, 0.2 + Math.abs(val) / Math.max(stats.max, 1) * 0.6)})`;
+        ? `rgba(59, 130, 246, ${Math.min(0.7, 0.2 + Math.abs(val) / Math.max(Math.abs(stats.min), 1) * 0.45)})`
+        : `rgba(239, 68, 68, ${Math.min(0.7, 0.2 + Math.abs(val) / Math.max(stats.max, 1) * 0.45)})`;
     }
     return val < 0
-      ? `rgba(56, 189, 248, ${Math.min(0.7, 0.15 + Math.abs(val) / Math.max(Math.abs(stats.min), 1) * 0.5)})`
-      : `rgba(244, 63, 94, ${Math.min(0.7, 0.15 + Math.abs(val) / Math.max(stats.max, 1) * 0.5)})`;
+      ? `rgba(59, 130, 246, ${Math.min(0.6, 0.15 + Math.abs(val) / Math.max(Math.abs(stats.min), 1) * 0.4)})`
+      : `rgba(239, 68, 68, ${Math.min(0.6, 0.15 + Math.abs(val) / Math.max(stats.max, 1) * 0.4)})`;
   };
 
   // Render HTML5 2D Canvas for N > 16
@@ -83,7 +83,7 @@ export function QMatrixHeatmap({
 
     // Highlight hovered cell crosshair
     if (hoveredCell) {
-      ctx.strokeStyle = "#38bdf8";
+      ctx.strokeStyle = "#94a3b8";
       ctx.lineWidth = 1.5;
       ctx.strokeRect(hoveredCell.col * cellSize, hoveredCell.row * cellSize, cellSize, cellSize);
     }
@@ -122,23 +122,31 @@ export function QMatrixHeatmap({
       {/* Header bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b" style={{ borderColor: colors.border }}>
         <div className="flex items-center space-x-2">
-          <Grid className="w-4 h-4 text-sky-400" />
+          <Grid className="w-4 h-4 text-zinc-400" />
           <h2 className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
             Quadratic Interaction Coupler Matrix (Q-Matrix)
           </h2>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded border" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}>
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+            isDark ? "bg-white/[0.05] text-zinc-300 border-white/[0.08]" : "bg-slate-100 text-slate-700 border-slate-200"
+          }`}>
             {n} × {n} ({n * n} Couplers)
           </span>
         </div>
 
         <div className="flex items-center space-x-2 text-xs font-mono">
-          <span className="px-2 py-0.5 rounded border text-[11px]" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textEmerald }}>
+          <span className={`px-2 py-0.5 rounded border text-[11px] ${
+            isDark ? "bg-white/[0.04] text-zinc-300 border-white/[0.08]" : "bg-slate-100 text-slate-700 border-slate-200"
+          }`}>
             Min: {stats.min.toFixed(1)}
           </span>
-          <span className="px-2 py-0.5 rounded border text-[11px]" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textAmber }}>
+          <span className={`px-2 py-0.5 rounded border text-[11px] ${
+            isDark ? "bg-white/[0.04] text-zinc-300 border-white/[0.08]" : "bg-slate-100 text-slate-700 border-slate-200"
+          }`}>
             Max: +{stats.max.toFixed(1)}
           </span>
-          <span className="px-2 py-0.5 rounded border text-[11px]" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textMuted }}>
+          <span className={`px-2 py-0.5 rounded border text-[11px] ${
+            isDark ? "bg-white/[0.04] text-zinc-400 border-white/[0.08]" : "bg-slate-100 text-slate-500 border-slate-200"
+          }`}>
             Sparsity: {stats.sparsity.toFixed(0)}%
           </span>
         </div>
@@ -236,7 +244,7 @@ export function QMatrixHeatmap({
                               backgroundColor: getColor(val, isDiag),
                               borderColor: colors.border,
                             }}
-                            className={`p-3 border text-xs cursor-pointer hover:ring-2 hover:ring-sky-400 transition-all font-mono relative ${
+                            className={`p-3 border text-xs cursor-pointer hover:ring-2 hover:ring-white/30 transition-all font-mono relative ${
                               isMutual ? "ring-2 ring-fuchsia-500 shadow-sm" : ""
                             }`}
                             title={`${isDiag ? `Linear bias h(${rVar})` : `Coupling J(${rVar}, ${cVar})`}: ${val}`}
@@ -267,11 +275,13 @@ export function QMatrixHeatmap({
       {selectedCell && (
         <div className="p-3.5 rounded-xl border flex flex-wrap items-center justify-between gap-3 animate-in fade-in" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
           <div className="flex items-center space-x-3">
-            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}>
+            <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded border ${
+              isDark ? "bg-white/[0.05] text-zinc-300 border-white/[0.08]" : "bg-slate-100 text-slate-700 border-slate-200"
+            }`}>
               {selectedCell.row === selectedCell.col ? "Linear Bias (h_i)" : "Quadratic Coupler (J_ij)"}
             </span>
             <span className="text-xs" style={{ color: colors.textPrimary }}>
-              <strong>{selectedCell.var1}</strong> {selectedCell.row === selectedCell.col ? "" : `× ${selectedCell.var2}`} = <strong className="text-amber-400 font-mono text-sm">{selectedCell.val > 0 ? `+${selectedCell.val.toFixed(2)}` : selectedCell.val.toFixed(2)}</strong>
+              <strong>{selectedCell.var1}</strong> {selectedCell.row === selectedCell.col ? "" : `× ${selectedCell.var2}`} = <strong className={`font-mono text-sm font-bold ${isDark ? "text-zinc-100" : "text-slate-900"}`}>{selectedCell.val > 0 ? `+${selectedCell.val.toFixed(2)}` : selectedCell.val.toFixed(2)}</strong>
             </span>
           </div>
 

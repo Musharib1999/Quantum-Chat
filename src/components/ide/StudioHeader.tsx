@@ -120,28 +120,16 @@ export function StudioHeader({
 
   const getFileIcon = (file?: string) => {
     if (!file) {
-      return (
-        <FileCode
-          className={`w-3.5 h-3.5 shrink-0 ${
-            isDwave ? "text-emerald-500" : "text-zinc-300"
-          }`}
-        />
-      );
+      return <FileCode className="w-3.5 h-3.5 shrink-0 text-zinc-400" />;
     }
     if (file.endsWith(".py")) {
-      return (
-        <FileCode
-          className={`w-3.5 h-3.5 shrink-0 ${
-            isDwave ? "text-emerald-500" : "text-zinc-300"
-          }`}
-        />
-      );
+      return <FileCode className="w-3.5 h-3.5 shrink-0 text-zinc-300" />;
     }
     if (file.endsWith(".qasm")) {
-      return <Activity className="w-3.5 h-3.5 shrink-0 text-indigo-500" />;
+      return <Activity className="w-3.5 h-3.5 shrink-0 text-zinc-400" />;
     }
     if (file.endsWith(".json")) {
-      return <FileJson className="w-3.5 h-3.5 shrink-0 text-amber-500" />;
+      return <FileJson className="w-3.5 h-3.5 shrink-0 text-zinc-400" />;
     }
     return <FileText className="w-3.5 h-3.5 shrink-0 text-zinc-400" />;
   };
@@ -357,11 +345,11 @@ export function StudioHeader({
                         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors ${
                           isActive
                             ? isDark
-                              ? "bg-sky-500/15 text-sky-300 font-semibold"
-                              : "bg-sky-50 text-sky-700 font-semibold"
+                              ? "bg-white/[0.08] text-white font-semibold"
+                              : "bg-slate-100 text-slate-900 font-semibold"
                             : isDark
-                            ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white"
-                            : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                            ? "hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200"
+                            : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
                         }`}
                       >
                         <div className="flex items-center space-x-2 min-w-0">
@@ -391,10 +379,10 @@ export function StudioHeader({
                         setIsFileDropdownOpen(false);
                       }
                     }}
-                    className={`w-full flex items-center space-x-2 px-3 py-1.5 text-xs font-mono transition-colors ${
+                    className={`w-full flex items-center space-x-2 px-3 py-1.5 text-xs font-mono rounded-md transition-colors ${
                       isDark
-                        ? "hover:bg-white/[0.05] text-sky-400 hover:text-sky-300"
-                        : "hover:bg-slate-100 text-sky-600 hover:text-sky-700 font-medium"
+                        ? "hover:bg-white/[0.05] text-zinc-400 hover:text-zinc-200"
+                        : "hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-medium"
                     }`}
                   >
                     <Plus className="w-3.5 h-3.5 shrink-0" />

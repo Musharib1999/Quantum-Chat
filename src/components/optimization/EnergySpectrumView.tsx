@@ -31,11 +31,13 @@ export function EnergySpectrumView({
       {/* Telemetry Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b" style={{ borderColor: colors.border }}>
         <div className="flex items-center space-x-2">
-          <Activity className="w-4 h-4 text-emerald-400" />
+          <Activity className="w-4 h-4 text-zinc-400" />
           <h2 className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
             Ground State Energy Spectrum &amp; Eigenstate Distribution
           </h2>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded border text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+            isDark ? "bg-white/[0.04] text-zinc-400 border-white/[0.08]" : "bg-slate-100 text-slate-500 border-slate-200"
+          }`}>
             Phase Space Explored
           </span>
         </div>
@@ -44,10 +46,14 @@ export function EnergySpectrumView({
           <span className="px-2.5 py-1 rounded border text-[11px] font-semibold" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textEmerald }}>
             E_ground: {groundEnergy.toFixed(2)}
           </span>
-          <span className="px-2.5 py-1 rounded border text-[11px]" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textPrimary }}>
+          <span className={`px-2.5 py-1 rounded border text-[11px] ${
+            isDark ? "bg-white/[0.04] text-zinc-300 border-white/[0.08]" : "bg-slate-100 text-slate-700 border-slate-200"
+          }`}>
             Reads: {numReads}
           </span>
-          <span className="px-2.5 py-1 rounded border text-[11px]" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textCyan }}>
+          <span className={`px-2.5 py-1 rounded border text-[11px] ${
+            isDark ? "bg-white/[0.04] text-zinc-400 border-white/[0.08]" : "bg-slate-100 text-slate-500 border-slate-200"
+          }`}>
             Latency: {latencyMs.toFixed(0)}ms
           </span>
         </div>
@@ -77,7 +83,7 @@ export function EnergySpectrumView({
               </div>
               <div className="text-sm font-semibold pt-0.5" style={{ color: colors.textPrimary }}>
                 Active Selection:{" "}
-                <span className="font-mono text-xs text-sky-400">
+                <span className={`font-mono text-xs font-semibold ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
                   {Object.entries(bestState.sample)
                     .filter(([_, v]) => v === 1)
                     .map(([k]) => k)
@@ -127,7 +133,7 @@ export function EnergySpectrumView({
                 className={`p-2.5 rounded-lg border flex flex-col space-y-1.5 transition-colors ${
                   isGround
                     ? "border-emerald-500/40 bg-emerald-500/5"
-                    : "hover:bg-sky-500/5"
+                    : isDark ? "hover:bg-white/[0.04]" : "hover:bg-slate-100"
                 }`}
                 style={{
                   borderColor: isGround ? undefined : colors.border,
@@ -150,7 +156,7 @@ export function EnergySpectrumView({
                   </div>
 
                   <div className="flex items-center space-x-3 font-mono text-xs">
-                    <span className={isGround ? "text-emerald-400 font-bold" : "text-amber-400"}>
+                    <span className={isGround ? "text-emerald-400 font-bold" : isDark ? "text-zinc-400" : "text-slate-600"}>
                       E = {item.energy.toFixed(2)}
                     </span>
                     <span className="w-12 text-right" style={{ color: colors.textPrimary }}>
@@ -163,7 +169,7 @@ export function EnergySpectrumView({
                 <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: colors.bgPill }}>
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      isGround ? "bg-emerald-500" : "bg-sky-500"
+                      isGround ? "bg-emerald-500" : isDark ? "bg-zinc-600" : "bg-slate-400"
                     }`}
                     style={{ width: `${Math.max(prob, 2)}%` }}
                   />
