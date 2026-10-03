@@ -446,7 +446,7 @@ export function StudioHeader({
           disabled={isRunningOrRecompiling}
           className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono transition-all shadow-sm cursor-pointer ${
             isDark
-              ? "bg-white hover:bg-zinc-200 text-black shadow-white/5 active:scale-[0.98]"
+              ? "bg-zinc-200 hover:bg-white text-zinc-900 shadow-zinc-900/20 active:scale-[0.98]"
               : "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10 active:scale-[0.98]"
           } ${isRunningOrRecompiling ? "opacity-75 cursor-not-allowed" : ""}`}
         >

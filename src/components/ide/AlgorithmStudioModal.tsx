@@ -241,7 +241,7 @@ export function AlgorithmStudioModal({
                   className={`px-2.5 py-0.5 rounded-full whitespace-nowrap transition-all text-[11px] font-medium cursor-pointer ${
                     isActive
                       ? isDark
-                        ? "bg-white text-black font-semibold shadow-xs"
+                        ? "bg-zinc-200 text-zinc-900 font-semibold shadow-xs"
                         : "bg-slate-900 text-white font-semibold shadow-xs"
                       : isDark
                       ? "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-zinc-200 border border-white/[0.06]"
@@ -275,7 +275,7 @@ export function AlgorithmStudioModal({
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
                   isDark
-                    ? "bg-white text-black hover:bg-zinc-200"
+                    ? "bg-zinc-200 text-zinc-900 hover:bg-white"
                     : "bg-slate-900 text-white hover:bg-slate-800"
                 }`}
               >
@@ -379,7 +379,7 @@ export function AlgorithmStudioModal({
                         onClick={() => handleOpenNaming(algo)}
                         className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all shadow-xs cursor-pointer active:scale-[0.98] ${
                           isDark
-                            ? "bg-white hover:bg-zinc-200 text-black shadow-white/5"
+                            ? "bg-zinc-200 hover:bg-white text-zinc-900 shadow-zinc-900/20"
                             : "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10"
                         }`}
                       >
@@ -495,7 +495,7 @@ export function AlgorithmStudioModal({
                     disabled={!projectName.trim()}
                     className={`px-4 py-1.5 rounded-lg disabled:opacity-40 font-mono font-semibold text-xs shadow-sm transition-all cursor-pointer flex items-center space-x-1.5 ${
                       isDark
-                        ? "bg-white hover:bg-zinc-200 text-black shadow-white/5"
+                        ? "bg-zinc-200 hover:bg-white text-zinc-900 shadow-zinc-900/20"
                         : "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10"
                     }`}
                   >
