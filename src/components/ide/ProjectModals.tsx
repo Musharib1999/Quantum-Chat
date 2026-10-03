@@ -207,7 +207,7 @@ export function ProjectSwitcherModal({
               className="flex items-center space-x-1.5 text-[11px] font-mono text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Browse Algorithm Studio →</span>
+              <span>Browse Algorithm Vault →</span>
             </button>
           ) : (
             <span className={`text-[11px] font-mono ${isDark ? "text-zinc-500" : "text-slate-500"}`}>
@@ -407,7 +407,7 @@ export function NewProjectModal({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center space-x-1.5">
-                      <span className="font-semibold text-xs">Algorithm Studio</span>
+                      <span className="font-semibold text-xs">Algorithm Vault</span>
                       <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300">
                         26 Verified
                       </span>

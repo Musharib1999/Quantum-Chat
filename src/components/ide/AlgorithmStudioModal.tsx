@@ -123,7 +123,7 @@ export function AlgorithmStudioModal({
             </div>
             <div className="min-w-0">
               <div className="flex items-center space-x-2.5">
-                <h2 className="font-bold text-base tracking-tight">Quantum Algorithm Studio</h2>
+                <h2 className="font-bold text-base tracking-tight">Quantum Algorithm Vault</h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1">
                   <ShieldCheck className="w-3 h-3" />
                   <span>26 Verified Blueprints</span>
@@ -142,7 +142,7 @@ export function AlgorithmStudioModal({
                 ? "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.06]"
                 : "text-slate-400 hover:text-slate-800 hover:bg-slate-100"
             }`}
-            title="Close Studio"
+            title="Close Vault"
           >
             <X className="w-4.5 h-4.5" />
           </button>

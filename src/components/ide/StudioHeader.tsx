@@ -409,7 +409,7 @@ export function StudioHeader({
 
       {/* ── RIGHT: Backend Chip (Clean Status) + Action Button + User Profile ── */}
       <div className="flex items-center space-x-2 shrink-0">
-        {/* Algorithm Studio Button */}
+        {/* Algorithm Vault Button */}
         {onOpenAlgorithmStudio && (
           <button
             onClick={onOpenAlgorithmStudio}
@@ -418,10 +418,9 @@ export function StudioHeader({
                 ? "bg-purple-950/30 hover:bg-purple-900/40 border-purple-500/30 text-purple-300 hover:text-white shadow-xs"
                 : "bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700 shadow-xs"
             }`}
-            title="Open Algorithm Studio (26 Verified Blueprints)"
+            title="Open Algorithm Vault (26 Verified Blueprints)"
           >
-            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span className="font-medium hidden sm:inline">Algorithm Studio</span>
+            <span className="font-medium hidden sm:inline">Algorithm Vault</span>
           </button>
         )}
 
