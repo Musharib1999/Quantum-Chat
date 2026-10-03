@@ -170,7 +170,7 @@ export function CircuitCanvasView({
           >
             Quantum Circuit Schematic
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 font-medium">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-zinc-300 border border-white/[0.08] font-medium">
             Aer QPU Simulator
           </span>
         </div>
@@ -195,8 +195,8 @@ export function CircuitCanvasView({
               }}
               className={`w-11 px-1 py-0.5 rounded border text-center font-mono font-bold text-xs outline-none transition-colors ${
                 isDark
-                  ? "bg-black/40 border-white/[0.12] text-sky-400 focus:border-sky-500"
-                  : "bg-white border-slate-300 text-sky-700 focus:border-sky-500"
+                  ? "bg-black/40 border-white/[0.12] text-zinc-100 focus:border-white/30"
+                  : "bg-white border-slate-300 text-slate-900 focus:border-slate-400"
               }`}
               title="Adjust circuit qubit count (1 to 30 qubits)"
             />
@@ -207,7 +207,7 @@ export function CircuitCanvasView({
             <span>·</span>
             <span>
               Depth:{" "}
-              <strong className={isDark ? "text-sky-400" : "text-sky-700"}>
+              <strong className={isDark ? "text-zinc-200" : "text-slate-900"}>
                 {circuitDepth || maxStep}
               </strong>
             </span>
@@ -227,7 +227,7 @@ export function CircuitCanvasView({
                   activeSubView === "visual"
                     ? isDark
                       ? "bg-white/[0.12] text-white"
-                      : "bg-white text-sky-700 shadow-xs"
+                      : "bg-white text-slate-900 font-semibold shadow-xs"
                     : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
@@ -240,7 +240,7 @@ export function CircuitCanvasView({
                   activeSubView === "ascii"
                     ? isDark
                       ? "bg-white/[0.12] text-white"
-                      : "bg-white text-sky-700 shadow-xs"
+                      : "bg-white text-slate-900 font-semibold shadow-xs"
                     : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
@@ -272,7 +272,7 @@ export function CircuitCanvasView({
               <button
                 type="button"
                 onClick={() => setExtraSteps((prev) => prev + 2)}
-                className="flex items-center space-x-1 px-2 py-0.5 rounded bg-white/[0.04] hover:bg-white/[0.08] text-sky-400 border border-white/[0.08] transition-all cursor-pointer text-[10px]"
+                className="flex items-center space-x-1 px-2 py-0.5 rounded bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.08] transition-all cursor-pointer text-[10px]"
                 title="Add 2 more parallel time-step columns"
               >
                 <Plus className="w-3 h-3" />

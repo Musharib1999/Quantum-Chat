@@ -123,7 +123,7 @@ export function StudioHeader({
       return (
         <FileCode
           className={`w-3.5 h-3.5 shrink-0 ${
-            isDwave ? "text-emerald-500" : "text-sky-500"
+            isDwave ? "text-emerald-500" : "text-zinc-300"
           }`}
         />
       );
@@ -132,7 +132,7 @@ export function StudioHeader({
       return (
         <FileCode
           className={`w-3.5 h-3.5 shrink-0 ${
-            isDwave ? "text-emerald-500" : "text-sky-500"
+            isDwave ? "text-emerald-500" : "text-zinc-300"
           }`}
         />
       );
@@ -196,7 +196,7 @@ export function StudioHeader({
               heroTab === "code"
                 ? isDark
                   ? "bg-white/[0.12] text-white shadow-xs"
-                  : "bg-white text-sky-700 font-semibold shadow-xs"
+                  : "bg-white text-slate-900 font-semibold shadow-xs"
                 : isDark
                 ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -213,7 +213,7 @@ export function StudioHeader({
                 heroTab === "formulation"
                   ? isDark
                     ? "bg-white/[0.12] text-white shadow-xs"
-                    : "bg-white text-sky-700 font-semibold shadow-xs"
+                    : "bg-white text-slate-900 font-semibold shadow-xs"
                   : isDark
                   ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -233,7 +233,7 @@ export function StudioHeader({
               heroTab === "visual"
                 ? isDark
                   ? "bg-white/[0.12] text-white shadow-xs"
-                  : "bg-white text-sky-700 font-semibold shadow-xs"
+                  : "bg-white text-slate-900 font-semibold shadow-xs"
                 : isDark
                 ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -249,7 +249,7 @@ export function StudioHeader({
               heroTab === "results"
                 ? isDark
                   ? "bg-white/[0.12] text-white shadow-xs"
-                  : "bg-white text-sky-700 font-semibold shadow-xs"
+                  : "bg-white text-slate-900 font-semibold shadow-xs"
                 : isDark
                 ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
@@ -280,7 +280,7 @@ export function StudioHeader({
           >
             <Folder
               className={`w-3.5 h-3.5 shrink-0 ${
-                isDark ? "text-sky-400" : "text-sky-600"
+                isDark ? "text-zinc-400" : "text-slate-500"
               }`}
             />
             <span className="max-w-[100px] sm:max-w-[130px] truncate font-medium">
@@ -315,13 +315,13 @@ export function StudioHeader({
             >
               {getFileIcon(currentFile)}
               <span className={`max-w-[90px] sm:max-w-[120px] truncate font-mono text-[11px] font-semibold ${
-                isDark ? "text-sky-400" : "text-sky-700"
+                isDark ? "text-zinc-200" : "text-slate-800"
               }`}>
                 {currentFile}
               </span>
               <ChevronDown
                 className={`w-3 h-3 text-zinc-400 transition-transform duration-150 ${
-                  isFileDropdownOpen ? "rotate-180 text-sky-500" : ""
+                  isFileDropdownOpen ? "rotate-180 text-zinc-300" : ""
                 }`}
               />
             </button>
@@ -373,7 +373,7 @@ export function StudioHeader({
                             {getFileTypeLabel(file)}
                           </span>
                           {isActive && (
-                            <Check className="w-3.5 h-3.5 text-sky-500" />
+                            <Check className="w-3.5 h-3.5 text-zinc-300" />
                           )}
                         </div>
                       </button>
@@ -409,51 +409,51 @@ export function StudioHeader({
 
       {/* ── RIGHT: Backend Chip (Clean Status) + Action Button + User Profile ── */}
       <div className="flex items-center space-x-2 shrink-0">
-        {/* Algorithm Vault Button */}
+        {/* Algorithm Vault Button (Refined Neutral Ghost Pill) */}
         {onOpenAlgorithmStudio && (
           <button
             onClick={onOpenAlgorithmStudio}
-            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono border transition-all cursor-pointer ${
+            className={`flex items-center px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
               isDark
-                ? "bg-purple-950/30 hover:bg-purple-900/40 border-purple-500/30 text-purple-300 hover:text-white shadow-xs"
-                : "bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700 shadow-xs"
+                ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-zinc-300 hover:text-white"
+                : "bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700 hover:text-slate-900"
             }`}
             title="Open Algorithm Vault (26 Verified Blueprints)"
           >
-            <span className="font-medium hidden sm:inline">Algorithm Vault</span>
+            <span className="font-medium">Algorithm Vault</span>
           </button>
         )}
 
-        {/* Data Connectors Button (Pillar 2 Ingress / Egress) */}
+        {/* Data Connectors Button (Refined Neutral Ghost Pill) */}
         {onOpenDataConnectors && isDwave && (
           <button
             onClick={onOpenDataConnectors}
-            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.1] text-sky-400 hover:text-sky-300 shadow-xs"
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
+              isDark
+                ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-zinc-300 hover:text-white"
+                : "bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700 hover:text-slate-900"
+            }`}
             title="Open Data Ingress and Egress Connectors"
           >
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Data Connectors</span>
+            <Share2 className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="font-medium hidden sm:inline">Data Connectors</span>
           </button>
         )}
 
-        {/* Primary Action Button (⚡ Recompile / ▷ Run Circuit) */}
+        {/* Primary Action Button (Option A: High-Contrast Monochromatic Linear/Vercel style) */}
         <button
           onClick={onRunOrRecompile}
           disabled={isRunningOrRecompiling}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold font-mono transition-all shadow-sm cursor-pointer ${
-            isDwave
-              ? isModelDirty
-                ? "bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20"
-              : "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-600/20"
-          }`}
+          className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono transition-all shadow-sm cursor-pointer ${
+            isDark
+              ? "bg-white hover:bg-zinc-200 text-black shadow-white/5 active:scale-[0.98]"
+              : "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10 active:scale-[0.98]"
+          } ${isRunningOrRecompiling ? "opacity-75 cursor-not-allowed" : ""}`}
         >
           {isRunningOrRecompiling ? (
             <RotateCw className="w-3.5 h-3.5 animate-spin" />
-          ) : isDwave ? (
-            <Zap className="w-3.5 h-3.5" />
           ) : (
-            <Play className="w-3.5 h-3.5" />
+            <Play className="w-3.5 h-3.5 fill-current" />
           )}
           <span>
             {isRunningOrRecompiling
@@ -462,7 +462,7 @@ export function StudioHeader({
                 : "Executing..."
               : isDwave
               ? isModelDirty
-                ? "⚡ Recompile"
+                ? "Recompile"
                 : "Compiled"
               : "Run Circuit"}
           </span>
@@ -536,7 +536,7 @@ export function StudioHeader({
                       isDark ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white" : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-sky-500" />
+                    <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
                     <span>Assistant</span>
                   </Link>
                 </div>
