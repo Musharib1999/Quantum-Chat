@@ -27,7 +27,7 @@ export function StudioCodeEditor({
   const lineCount = code.split("\n").length;
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden select-text">
+    <div id="tour-editor-pane" className="flex-1 flex flex-col h-full overflow-hidden select-text">
       {/* ── MAIN EDITOR CANVAS: LINE NUMBERS + CODE TEXTAREA ── */}
       <div className="flex-1 flex overflow-hidden relative font-mono text-xs h-full">
         {/* Line Numbers */}

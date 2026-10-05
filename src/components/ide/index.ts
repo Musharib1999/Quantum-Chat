@@ -6,3 +6,4 @@ export * from "./CircuitCanvasView";
 export * from "./ProjectModals";
 export * from "./AlgorithmStudioModal";
 export * from "./StudioBottomBar";
+export * from "./GuidedTourModal";

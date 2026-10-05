@@ -54,6 +54,7 @@ export function StudioBottomBar({
 
   return (
     <div
+      id="tour-bottom-console"
       className={`border-t shrink-0 flex flex-col transition-all duration-150 ${
         showTerminal ? "h-48" : "h-7"
       } ${

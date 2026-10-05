@@ -20,6 +20,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import {
   StudioHeader,
+  GuidedTourModal,
   ProjectExplorer,
   StudioCodeEditor,
   StudioBottomBar,
@@ -586,6 +587,47 @@ export default function QuantumGuruStudioPage() {
   const [showProjectModal, setShowProjectModal] = useState<boolean>(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
   const [showAlgorithmStudioModal, setShowAlgorithmStudioModal] = useState<boolean>(false);
+
+  // 🧭 Product Walkthrough Tour State
+  const [isTourActive, setIsTourActive] = useState<boolean>(false);
+  const [tourStep, setTourStep] = useState<number>(0);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const seen = localStorage.getItem("quantum_tour_seen");
+      if (!seen) {
+        const timer = setTimeout(() => {
+          setIsTourActive(true);
+        }, 1200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
+
+  const handleStartTour = useCallback(() => {
+    setTourStep(0);
+    setHeroTab("code");
+    setShowTerminal(false);
+    setIsTourActive(true);
+  }, []);
+
+  const handleEndTour = useCallback(() => {
+    setIsTourActive(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("quantum_tour_seen", "true");
+    }
+  }, []);
+
+  const handleTourStepChange = useCallback((newStep: number) => {
+    setTourStep(newStep);
+    if (newStep === 0 || newStep === 1) {
+      setHeroTab("code");
+    } else if (newStep === 2) {
+      setHeroTab("visual");
+    } else if (newStep === 3) {
+      setShowTerminal(true);
+    }
+  }, []);
   const [isDataConnectorsOpen, setIsDataConnectorsOpen] = useState<boolean>(false);
 
   const [isModelDirty, setIsModelDirty] = useState<boolean>(false);
@@ -1681,6 +1723,7 @@ export default function QuantumGuruStudioPage() {
     >
       {/* ── TOP CALM PRECISION HEADER ── */}
       <StudioHeader
+        onStartTour={handleStartTour}
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
         activeProject={activeProject}
@@ -1806,7 +1849,7 @@ export default function QuantumGuruStudioPage() {
 
             {/* 3. VISUAL TAB (Q-Matrix or Circuit) */}
             {heroTab === "visual" && (
-              <div className="p-6">
+              <div id="tour-visual-canvas" className="p-6">
                 {framework === "dwave" ? (
                   <div className="max-w-4xl mx-auto space-y-4">
                     <QMatrixHeatmap
@@ -1945,6 +1988,7 @@ export default function QuantumGuruStudioPage() {
 
         {/* Right: Quantum Copilot */}
         <aside
+          id="tour-copilot-panel"
           style={{ width: "442px" }}
           className={`w-[442px] h-full max-h-full min-h-0 min-w-0 flex flex-col shrink-0 border-l transition-colors overflow-hidden ${
             isDark
@@ -2031,6 +2075,15 @@ export default function QuantumGuruStudioPage() {
         onClose={() => setShowAlgorithmStudioModal(false)}
         onCreateProjectFromAlgorithm={handleCreateProjectFromAlgorithm}
         isDark={isDark}
+      />
+
+      {/* 🧭 Guided Product Walkthrough Tour Modal */}
+      <GuidedTourModal
+        isOpen={isTourActive}
+        onClose={handleEndTour}
+        isDark={isDark}
+        currentStep={tourStep}
+        onStepChange={handleTourStepChange}
       />
     </div>
   );

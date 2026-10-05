@@ -19,6 +19,7 @@ import {
   FileText,
   Check,
   Share2,
+  Compass,
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
 
@@ -47,6 +48,7 @@ interface StudioHeaderProps {
   onToggleTerminal?: () => void;
   isSyncing?: boolean;
   onOpenDataConnectors?: () => void;
+  onStartTour?: () => void;
 }
 
 export function StudioHeader({
@@ -70,6 +72,7 @@ export function StudioHeader({
   onSelectFile,
   onAddFile,
   onOpenDataConnectors,
+  onStartTour,
 }: StudioHeaderProps) {
   const isDwave = activeProject.framework === "dwave";
   const [isFileDropdownOpen, setIsFileDropdownOpen] = useState(false);
@@ -180,6 +183,7 @@ export function StudioHeader({
 
         {/* ── SECTION 2: Workspace View Switcher (Hero Tabs) ── */}
         <div
+          id="tour-hero-tabs"
           className={`flex items-center space-x-0.5 p-0.5 rounded-lg text-xs font-mono select-none transition-colors shrink-0 ${
             isDark ? "bg-white/[0.06]" : "bg-slate-100 border border-slate-200/60"
           }`}
@@ -262,7 +266,7 @@ export function StudioHeader({
         />
 
         {/* ── SECTION 3: Contextual Hierarchy (Project & File Breadcrumbs) ── */}
-        <div className="flex items-center space-x-2 shrink-0">
+        <div id="tour-project-selector" className="flex items-center space-x-2 shrink-0">
           {/* Project Dropdown Trigger Pill */}
           <button
             onClick={onOpenProjectModal}
@@ -435,8 +439,25 @@ export function StudioHeader({
           </button>
         )}
 
+        {/* Tour Walkthrough Button */}
+        {onStartTour && (
+          <button
+            onClick={onStartTour}
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
+              isDark
+                ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-zinc-300 hover:text-white"
+                : "bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700 hover:text-slate-900"
+            }`}
+            title="Take Guided Product Tour"
+          >
+            <Compass className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="font-medium">Tour</span>
+          </button>
+        )}
+
         {/* Primary Action Button (Option A: High-Contrast Monochromatic Linear/Vercel style) */}
         <button
+          id="tour-run-action"
           onClick={onRunOrRecompile}
           disabled={isRunningOrRecompiling}
           className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold font-mono transition-all shadow-sm cursor-pointer ${
@@ -524,6 +545,20 @@ export function StudioHeader({
 
                 {/* Navigation Links */}
                 <div className="p-1 space-y-0.5">
+                  {onStartTour && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onStartTour();
+                      }}
+                      className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left ${
+                        isDark ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white" : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                      }`}
+                    >
+                      <Compass className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>Take Product Tour</span>
+                    </button>
+                  )}
                   <Link
                     href="/marketplace"
                     onClick={() => setIsUserMenuOpen(false)}
