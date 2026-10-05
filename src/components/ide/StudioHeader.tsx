@@ -471,20 +471,24 @@ export function StudioHeader({
             <div className="flex items-center space-x-1.5">
               <button
                 onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                className={`flex items-center space-x-2 px-2 py-1 rounded-md text-xs font-mono transition-colors border cursor-pointer ${
+                className={`flex items-center space-x-2 px-2.5 py-1.25 rounded-md text-xs transition-colors border cursor-pointer ${
                   isDark
-                    ? "bg-zinc-800/60 hover:bg-zinc-800 border-white/[0.08] text-zinc-200"
+                    ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-zinc-200 hover:text-white"
                     : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-800"
                 }`}
                 title="Account menu"
               >
-                <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase shadow-xs shrink-0">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold uppercase shadow-xs shrink-0 border ${
+                  isDark
+                    ? "bg-zinc-800 border-white/10 text-zinc-200"
+                    : "bg-slate-200 border-slate-300 text-slate-700"
+                }`}>
                   {user?.name?.[0] || user?.email?.[0] || "U"}
                 </div>
-                <span className="hidden sm:inline max-w-[80px] truncate text-[11px] font-medium">
+                <span className="hidden sm:inline max-w-[80px] truncate text-[11px] font-medium font-mono">
                   {user?.name || user?.email?.split("@")[0]}
                 </span>
-                <ChevronDown className={`w-3 h-3 text-zinc-400 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-3 h-3 text-zinc-400 transition-transform ${isUserMenuOpen ? "rotate-180 text-zinc-200" : ""}`} />
               </button>
 
 
@@ -493,49 +497,56 @@ export function StudioHeader({
             {/* User Dropdown Menu Popover */}
             {isUserMenuOpen && (
               <div
-                className={`absolute right-0 top-full mt-1.5 w-56 rounded-xl border shadow-xl backdrop-blur-md z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 ${
+                className={`absolute right-0 top-full mt-1.5 w-60 rounded-xl border shadow-2xl backdrop-blur-md z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 ${
                   isDark
                     ? "bg-[#13141A]/95 border-white/[0.12] text-zinc-200 shadow-black/80"
                     : "bg-white border-slate-200 text-slate-900 shadow-xl"
                 }`}
               >
-                <div className={`px-3 py-2 border-b flex items-center space-x-2.5 ${isDark ? "border-white/[0.06]" : "border-slate-100 bg-slate-50/50"}`}>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase shrink-0 shadow-xs">
+                {/* User Info Header */}
+                <div className={`px-3.5 py-3 border-b flex items-center space-x-3 ${isDark ? "border-white/[0.06]" : "border-slate-100 bg-slate-50/50"}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold uppercase shrink-0 border ${
+                    isDark
+                      ? "bg-zinc-800 border-white/10 text-zinc-200"
+                      : "bg-slate-200 border-slate-300 text-slate-700"
+                  }`}>
                     {user?.name?.[0] || user?.email?.[0] || "U"}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold truncate font-mono">
+                    <p className="text-xs font-semibold truncate font-mono text-zinc-100 dark:text-zinc-100">
                       {user?.name || user?.email?.split("@")[0]}
                     </p>
-                    <p className={`text-[10px] truncate ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
+                    <p className={`text-[11px] truncate font-mono ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
                       {user?.email}
                     </p>
                   </div>
                 </div>
 
+                {/* Navigation Links */}
                 <div className="p-1 space-y-0.5">
                   <Link
                     href="/marketplace"
                     onClick={() => setIsUserMenuOpen(false)}
-                    className={`flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors ${
+                    className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                       isDark ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white" : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
                     }`}
                   >
-                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    <Zap className="w-3.5 h-3.5 text-zinc-400" />
                     <span>Marketplace</span>
                   </Link>
                   <Link
                     href="/quantum-assistant"
                     onClick={() => setIsUserMenuOpen(false)}
-                    className={`flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors ${
+                    className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                       isDark ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white" : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                    <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
                     <span>Assistant</span>
                   </Link>
                 </div>
 
+                {/* Sign Out Action */}
                 {onLogout && (
                   <div className={`p-1 border-t ${isDark ? "border-white/[0.06]" : "border-slate-100"}`}>
                     <button
@@ -543,10 +554,14 @@ export function StudioHeader({
                         setIsUserMenuOpen(false);
                         onLogout();
                       }}
-                      className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded-lg text-xs font-mono text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                        isDark
+                          ? "text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10"
+                          : "text-slate-600 hover:text-rose-600 hover:bg-rose-50"
+                      }`}
                     >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span className="font-semibold">Sign Out</span>
+                      <LogOut className="w-3.5 h-3.5 text-current" />
+                      <span>Sign Out</span>
                     </button>
                   </div>
                 )}
