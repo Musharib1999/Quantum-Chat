@@ -51,7 +51,7 @@ async def call_groq(
     if not api_key:
         raise ValueError("GROQ_API_KEY environment variable is not set.")
 
-    model_name = model or config.GROQ_PRIMARY_MODEL or "qwen/qwen3.6-27b"
+    model_name = model or config.GROQ_PRIMARY_MODEL or "qwen/qwen3.8-27b"
 
     url = "https://api.groq.com/openai/v1/chat/completions"
     payload = {
