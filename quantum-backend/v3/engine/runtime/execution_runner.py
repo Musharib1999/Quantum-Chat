@@ -82,11 +82,25 @@ def extract_circuit_gates(qc: QuantumCircuit) -> List[Dict[str, Any]]:
     for circuit_instruction in qc.data:
         op = circuit_instruction.operation
         name = op.name.lower()
-        if name in ("barrier", "delay"):
+        if name == "delay":
             continue
 
         q_indices = [qc.find_bit(q).index for q in circuit_instruction.qubits]
         if not q_indices:
+            continue
+
+        if name == "barrier":
+            current_step = max(step_track[q] for q in q_indices)
+            for q in q_indices:
+                gates.append({
+                    "name": "barrier",
+                    "qubit": q,
+                    "qubits": q_indices,
+                    "step": current_step,
+                    "role": "barrier",
+                    "params": []
+                })
+                step_track[q] = current_step + 1
             continue
 
         current_step = max(step_track[q] for q in q_indices)
@@ -348,10 +362,23 @@ def extract_circuit_gates_inner(qc):
     for circuit_instruction in qc.data:
         op = circuit_instruction.operation
         name = op.name.lower()
-        if name in ("barrier", "delay"):
+        if name == "delay":
             continue
         q_indices = [qc.find_bit(q).index for q in circuit_instruction.qubits]
         if not q_indices:
+            continue
+        if name == "barrier":
+            current_step = max(step_track[q] for q in q_indices)
+            for q in q_indices:
+                gates.append({
+                    "name": "barrier",
+                    "qubit": q,
+                    "qubits": q_indices,
+                    "step": current_step,
+                    "role": "barrier",
+                    "params": []
+                })
+                step_track[q] = current_step + 1
             continue
         current_step = max(step_track[q] for q in q_indices)
         params = [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]

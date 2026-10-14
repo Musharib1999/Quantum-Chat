@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { OptimizationSectionId, CopilotMessage, ThemeColors } from "./types";
 import { LatexMath } from "./LatexMath";
+import IdeMarkdownRenderer from "@/components/IdeMarkdownRenderer";
 
 export interface OptimizationCopilotProps {
   isDark?: boolean;
@@ -249,7 +250,13 @@ export function OptimizationCopilot({
                     }
               }
             >
-              <p className="leading-relaxed break-words [word-break:break-word] overflow-wrap-anywhere">{msg.text}</p>
+              {msg.sender === "user" ? (
+                <p className="leading-relaxed break-words [word-break:break-word] overflow-wrap-anywhere">{msg.text}</p>
+              ) : (
+                <div className="w-full min-w-0 overflow-hidden leading-relaxed">
+                  <IdeMarkdownRenderer content={msg.text} isDark={isDark} />
+                </div>
+              )}
 
               {/* Live Autonomous Multi-Agent Reasoning Pipeline */}
               {msg.pipelineSteps && msg.pipelineSteps.length > 0 && (
@@ -330,7 +337,7 @@ export function OptimizationCopilot({
                     <div className="flex items-center justify-between text-[11px] font-mono">
                       <span className="text-zinc-300 font-semibold flex items-center space-x-1.5">
                         <Code2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Synthesized QUBO Script</span>
+                        <span>{isQiskit ? "Synthesized Qiskit Script" : "Synthesized QUBO Script"}</span>
                       </span>
                       {msg.formulationMeta?.q_size && (
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">

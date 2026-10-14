@@ -135,6 +135,7 @@ export function CircuitCanvasView({
     { name: "RY", label: "Ry(π/2)", color: "bg-amber-500/15 border-amber-500/40 text-amber-400" },
     { name: "RZ", label: "Rz(π/2)", color: "bg-amber-500/15 border-amber-500/40 text-amber-400" },
     { name: "M", label: "Measure", color: "bg-amber-500/20 border-amber-500/50 text-amber-400" },
+    { name: "BARRIER", label: "Sync Barrier", color: "bg-zinc-500/20 border-zinc-500/50 text-zinc-300" },
   ];
 
   const twoQubitGates = [
@@ -329,12 +330,14 @@ export function CircuitCanvasView({
                         <div className="relative group/gate">
                           {gate.name === "B" ? (
                             <div
-                              className={`w-0.5 ${
-                                isCompact ? "h-8" : "h-10"
-                              } border-r-2 border-dashed ${
-                                isDark ? "border-zinc-700" : "border-slate-400"
+                              className={`w-2.5 ${
+                                isCompact ? "h-9" : "h-11"
+                              } flex items-center justify-center rounded-xs ${
+                                isDark
+                                  ? "bg-amber-500/10 border-x-2 border-dashed border-amber-500/50"
+                                  : "bg-slate-400/20 border-x-2 border-dashed border-slate-500/60"
                               }`}
-                              title="Barrier"
+                              title="Quantum Barrier — Synchronizes wire time steps (qc.barrier)"
                             />
                           ) : gate.name === "CX-C" || gate.name === "CZ-C" ? (
                             <div

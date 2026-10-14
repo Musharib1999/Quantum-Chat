@@ -350,6 +350,218 @@ const QISKIT_INITIAL_MESSAGES: CopilotMessage[] = [
   },
 ];
 
+
+function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any[]; depth: number } {
+  const qcMatch = code.match(/QuantumCircuit\(\s*(\d+)/);
+  let numQubits = qcMatch ? Math.min(30, Math.max(1, parseInt(qcMatch[1], 10))) : 2;
+  const stepTrack: Record<number, number> = {};
+  for (let i = 0; i < 30; i++) stepTrack[i] = 0;
+
+  const gates: any[] = [];
+  const lines = code.split("\n");
+
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/#.*$/, "").trim();
+    if (!line.startsWith("qc.")) continue;
+
+    const callMatch = line.match(/^qc\.([a-zA-Z0-9_]+)\((.*)\)/);
+    if (!callMatch) continue;
+
+    const opName = callMatch[1].toLowerCase();
+    const argsStr = callMatch[2].trim();
+
+    if (opName === "delay") continue;
+
+    if (opName === "barrier") {
+      const nums = Array.from(argsStr.matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
+      const qIndices = nums.length > 0 ? nums : Array.from({ length: numQubits }, (_, i) => i);
+      const currentStep = Math.max(0, ...qIndices.map((q) => stepTrack[q] ?? 0));
+      for (const q of qIndices) {
+        if (q >= numQubits) numQubits = Math.min(30, q + 1);
+        gates.push({
+          name: "barrier",
+          qubit: q,
+          qubits: qIndices,
+          step: currentStep,
+          role: "barrier",
+          params: [],
+        });
+        stepTrack[q] = currentStep + 1;
+      }
+      continue;
+    }
+
+    if (opName === "measure_all") {
+      const qIndices = Array.from({ length: numQubits }, (_, i) => i);
+      const barrierStep = Math.max(0, ...qIndices.map((q) => stepTrack[q] ?? 0));
+      for (const q of qIndices) {
+        gates.push({
+          name: "barrier",
+          qubit: q,
+          qubits: qIndices,
+          step: barrierStep,
+          role: "barrier",
+          params: [],
+        });
+        gates.push({
+          name: "measure",
+          qubit: q,
+          qubits: [q],
+          step: barrierStep + 1,
+          role: "single",
+          params: [],
+        });
+        stepTrack[q] = barrierStep + 2;
+      }
+      continue;
+    }
+
+    if (opName === "measure") {
+      const listMatch = argsStr.match(/^\[\s*([\d,\s]+)\s*\]/);
+      let qList: number[] = [];
+      if (listMatch) {
+        qList = Array.from(listMatch[1].matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
+      } else {
+        const firstInt = argsStr.match(/^\s*(\d+)/);
+        if (firstInt) qList = [parseInt(firstInt[1], 10)];
+      }
+      for (const q of qList) {
+        if (q >= numQubits) numQubits = Math.min(30, q + 1);
+        const currentStep = stepTrack[q] ?? 0;
+        gates.push({
+          name: "measure",
+          qubit: q,
+          qubits: [q],
+          step: currentStep,
+          role: "single",
+          params: [],
+        });
+        stepTrack[q] = currentStep + 1;
+      }
+      continue;
+    }
+
+    const parts = argsStr.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length === 0) continue;
+
+    if (["cx", "cnot", "cz", "swap", "ch", "cy", "cp", "crx", "cry", "crz"].includes(opName)) {
+      if (parts.length >= 2) {
+        const ctrl = parseInt(parts[parts.length - 2], 10);
+        const tgt = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(ctrl) && !isNaN(tgt)) {
+          if (Math.max(ctrl, tgt) >= numQubits) numQubits = Math.min(30, Math.max(ctrl, tgt) + 1);
+          const currentStep = Math.max(stepTrack[ctrl] ?? 0, stepTrack[tgt] ?? 0);
+          const normalizedName = opName === "cnot" ? "cx" : opName;
+          gates.push({
+            name: normalizedName,
+            qubit: ctrl,
+            target: tgt,
+            qubits: [ctrl, tgt],
+            step: currentStep,
+            role: "control",
+            params: [],
+          });
+          gates.push({
+            name: normalizedName,
+            qubit: tgt,
+            target: ctrl,
+            qubits: [ctrl, tgt],
+            step: currentStep,
+            role: "target",
+            params: [],
+          });
+          stepTrack[ctrl] = currentStep + 1;
+          stepTrack[tgt] = currentStep + 1;
+        }
+      }
+      continue;
+    }
+
+    if (["ccx", "toffoli", "cswap"].includes(opName) && parts.length >= 3) {
+      const c1 = parseInt(parts[parts.length - 3], 10);
+      const c2 = parseInt(parts[parts.length - 2], 10);
+      const tgt = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(c1) && !isNaN(c2) && !isNaN(tgt)) {
+        const qIndices = [c1, c2, tgt];
+        const currentStep = Math.max(...qIndices.map((q) => stepTrack[q] ?? 0));
+        gates.push({ name: opName, qubit: c1, target: tgt, qubits: qIndices, step: currentStep, role: "control", params: [] });
+        gates.push({ name: opName, qubit: c2, target: tgt, qubits: qIndices, step: currentStep, role: "control", params: [] });
+        gates.push({ name: opName, qubit: tgt, target: c1, qubits: qIndices, step: currentStep, role: "target", params: [] });
+        for (const q of qIndices) stepTrack[q] = currentStep + 1;
+      }
+      continue;
+    }
+
+    const lastArg = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(lastArg)) {
+      if (lastArg >= numQubits) numQubits = Math.min(30, lastArg + 1);
+      const currentStep = stepTrack[lastArg] ?? 0;
+      gates.push({
+        name: opName,
+        qubit: lastArg,
+        qubits: [lastArg],
+        step: currentStep,
+        role: "single",
+        params: [],
+      });
+      stepTrack[lastArg] = currentStep + 1;
+    }
+  }
+
+  const maxStepVal = Math.max(1, ...Object.values(stepTrack));
+  return { numQubits, gates, depth: maxStepVal };
+}
+
+function classifyOptimizationIntent(text: string): "CHAT" | "FORMULATE" {
+  const clean = text.trim().toLowerCase();
+  if (!clean) return "CHAT";
+
+  // Tier 1: Definite greetings and casual conversational triggers
+  const greetings = [
+    "hi", "hello", "hey", "hola", "howdy", "sup", "yo",
+    "good morning", "good afternoon", "good evening", "good night",
+    "who are you", "what can you do", "help", "test", "thanks", "thank you",
+    "nice to meet you", "bye", "goodbye"
+  ];
+  if (greetings.includes(clean)) return "CHAT";
+  if (/^(hi|hello|hey|yo)\b/i.test(clean) && clean.split(/\s+/).length <= 4) return "CHAT";
+
+  // Tier 2: Pure questions, inquiries, and explanations
+  const questionStarters = [
+    "what is", "what are", "what does", "how does", "how do", "why is",
+    "why does", "explain", "tell me about", "describe", "define",
+    "can you explain", "could you explain", "is lambda", "is penalty"
+  ];
+  const isQuestion = questionStarters.some((prefix) => clean.startsWith(prefix));
+
+  const explicitFormulateVerbs = [
+    "formulate", "synthesize", "generate qubo", "build qubo", "create model",
+    "write model", "solve problem", "solve for", "optimize this", "allocate"
+  ];
+  const asksToFormulate = explicitFormulateVerbs.some((v) => clean.includes(v));
+
+  if (isQuestion && !asksToFormulate) {
+    return "CHAT";
+  }
+
+  // Tier 3: Optimization Problem Formulation Triggers
+  const optimizationTriggers = [
+    "formulate", "synthesize", "optimize", "minimise", "minimize", "maximise", "maximize",
+    "budget", "constraint", "constraints", "slack", "hamiltonian", "qubo",
+    "allocate", "allocation", "knapsack", "maxcut", "portfolio", "roster",
+    "penalty stiffness", "verma-lewis", "couplers", "penalty weight"
+  ];
+
+  const hasOptKeyword = optimizationTriggers.some((kw) => clean.includes(kw));
+  const hasNumbersAndUnits = /\b\d+\s*(workers|shifts|hours|days|assets|plants|items|kg|mw|dollars|\$|cost|budget)/i.test(clean);
+
+  if (hasOptKeyword || hasNumbersAndUnits || asksToFormulate) {
+    return "FORMULATE";
+  }
+
+  return clean.split(/\s+/).length <= 6 ? "CHAT" : "FORMULATE";
+}
+
 export default function QuantumGuruStudioPage() {
   const [mounted, setMounted] = useState<boolean>(false);
   useEffect(() => {
@@ -823,6 +1035,16 @@ export default function QuantumGuruStudioPage() {
     }
   }, [projects]);
 
+  // Synchronize Circuit Canvas (including qc.barrier step alignment) whenever qiskitCode updates
+  useEffect(() => {
+    const parsed = parseQiskitCodeToCircuit(qiskitCode);
+    if (parsed.gates.length > 0) {
+      setCircuitGates(parsed.gates);
+      setQiskitQubits(parsed.numQubits);
+      setQiskitDepth(parsed.depth);
+    }
+  }, [qiskitCode]);
+
   // Real-time auto-save of current editor code to localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1231,6 +1453,10 @@ export default function QuantumGuruStudioPage() {
       case "MEASURE":
         codeSnippet = `qc.measure(${qubit}, ${qubit})`;
         break;
+      case "BARRIER":
+      case "B":
+        codeSnippet = `qc.barrier()`;
+        break;
       default:
         codeSnippet = `qc.u(1.57, 0, 0, ${qubit})`;
         break;
@@ -1489,38 +1715,164 @@ export default function QuantumGuruStudioPage() {
 
     if (framework === "qiskit") {
       setQiskitCopilotMessages((prev) => [...prev, userMsg]);
-      setTimeout(() => {
-        let replyText = "";
-        let formula: string | undefined = undefined;
-        const lower = text.toLowerCase();
-        if (lower.includes("bob") || lower.includes("correct") || lower.includes("pauli")) {
-          replyText =
-            "Bob applies conditional recovery corrections based on Alice's classical measurement results (c0, c1): if c1=1, apply Pauli-X; if c0=1, apply Pauli-Z. This maps the collapsed Bell projection back to the original state |ψ⟩ = α|0⟩ + β|1⟩.";
-          formula = "U_{\\text{Bob}}(c_0, c_1) = X^{c_1} Z^{c_0}";
-        } else if (lower.includes("noise") || lower.includes("depolar") || lower.includes("qpu")) {
-          replyText =
-            "Depolarizing channel added with error rate p = 0.01. Each two-qubit CNOT gate experiences decoherence, reducing the Bell pair fidelity from 100% to ~98.4%.";
-          formula = "\\mathcal{E}(\\rho) = (1 - p)\\rho + \\frac{p}{3}\\sum_{i=1}^3 \\sigma_i \\rho \\sigma_i";
-        } else {
-          replyText = `Analyzing Qiskit circuit topology for "${activeProject.title}": 3 qubits, 3 classical registers, 8 quantum gates. All gates are unitary and reversible.`;
-          formula = "U^\\dagger U = \\mathbb{I}";
+
+      const botMsgId = Date.now() + 1;
+      const initialBotMsg: CopilotMessage = {
+        id: botMsgId,
+        sender: "assistant",
+        text: "Analyzing circuit and reasoning with Quantum Guru Copilot...",
+        timestamp: "Just now",
+        isStreaming: true,
+      };
+      setQiskitCopilotMessages((prev) => [...prev, initialBotMsg]);
+
+      try {
+        const resp = await fetch("/api/ide/agent/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            project_id: activeProject.id,
+            user_message: text,
+            active_file: activeFile,
+            file_content: qiskitCode,
+            target_backend: "aer_simulator",
+            optimization_level: 2,
+            model_engine: "groq",
+          }),
+        });
+
+        if (!resp.ok) {
+          throw new Error(`Circuit Agent error: HTTP ${resp.status}`);
         }
 
-        const botMsg: CopilotMessage = {
-          id: Date.now() + 1,
-          sender: "assistant",
-          text: replyText,
-          mathFormula: formula,
-          timestamp: "Just now",
-        };
-        setQiskitCopilotMessages((prev) => [...prev, botMsg]);
-      }, 400);
+        const data = await resp.json();
+        const steps = (data.workflow_steps || []).map((ws: any, idx: number) => ({
+          id: `step_${ws.step_num || idx + 1}`,
+          agent: ws.name || "Tool",
+          title: ws.name || "Agent Tool",
+          status: ws.status === "success" ? ("done" as const) : ws.status === "failed" ? ("failed" as const) : ("done" as const),
+          message: ws.summary || ws.tool_tag,
+          details: ws.execution_time_ms ? `${ws.execution_time_ms.toFixed(1)}ms` : undefined,
+        }));
+
+        if (data.circuit_gates && data.circuit_gates.length > 0) {
+          setCircuitGates(data.circuit_gates);
+        }
+        if (data.circuit_ascii) {
+          setCircuitAscii(data.circuit_ascii);
+        }
+        if (data.active_qubits) {
+          setQiskitQubits(data.active_qubits);
+        }
+        if (data.measurement_counts) {
+          setQiskitCounts(data.measurement_counts);
+        }
+
+        setQiskitCopilotMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMsgId
+              ? {
+                  ...msg,
+                  text: data.response_text || "Analysis complete.",
+                  isStreaming: false,
+                  pipelineSteps: steps.length > 0 ? steps : undefined,
+                  generatedCode: data.updated_code || undefined,
+                  appliedToEditor: false,
+                }
+              : msg
+          )
+        );
+      } catch (err: any) {
+        setQiskitCopilotMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMsgId
+              ? {
+                  ...msg,
+                  text: `Notice: ${err.message || "Failed to reach AI engine"}`,
+                  isStreaming: false,
+                }
+              : msg
+          )
+        );
+      }
       return;
     }
 
-    // D-Wave: Autonomous QUBO Multi-Agent Formulation Pipeline
+    // D-Wave: Check user intent via Two-Tier Intent Router
     setDwaveCopilotMessages((prev) => [...prev, userMsg]);
+    const optIntent = classifyOptimizationIntent(text);
 
+    // Intent Branch A: Casual Greeting or Conversational Q&A / Explanation
+    if (optIntent === "CHAT") {
+      const botMsgId = Date.now() + 1;
+      const initialBotMsg: CopilotMessage = {
+        id: botMsgId,
+        sender: "assistant",
+        text: "Thinking...",
+        timestamp: "Just now",
+        isStreaming: true,
+      };
+      setDwaveCopilotMessages((prev) => [...prev, initialBotMsg]);
+
+      try {
+        const resp = await fetch("/api/ide/agent/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            project_id: activeProject.id,
+            user_message: text,
+            active_file: activeFile,
+            file_content: dwaveCode,
+            target_backend: "dwave_simulated_annealing",
+            model_engine: "groq",
+          }),
+        });
+
+        if (!resp.ok) {
+          throw new Error(`Copilot response error: HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const steps = (data.workflow_steps || []).map((ws: any, idx: number) => ({
+          id: `step_${ws.step_num || idx + 1}`,
+          agent: ws.name || "Tool",
+          title: ws.name || "Agent Tool",
+          status: ws.status === "success" ? ("done" as const) : ws.status === "failed" ? ("failed" as const) : ("done" as const),
+          message: ws.summary || ws.tool_tag,
+          details: ws.execution_time_ms ? `${ws.execution_time_ms.toFixed(1)}ms` : undefined,
+        }));
+
+        setDwaveCopilotMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMsgId
+              ? {
+                  ...msg,
+                  text: data.response_text || "Ready to assist.",
+                  isStreaming: false,
+                  pipelineSteps: steps.length > 0 ? steps : undefined,
+                  generatedCode: data.updated_code || undefined,
+                  appliedToEditor: false,
+                }
+              : msg
+          )
+        );
+      } catch (err: any) {
+        setDwaveCopilotMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMsgId
+              ? {
+                  ...msg,
+                  text: `Notice: ${err.message || "Failed to reach AI engine"}`,
+                  isStreaming: false,
+                }
+              : msg
+          )
+        );
+      }
+      return;
+    }
+
+    // Intent Branch B: Explicit Combinatorial Optimization Problem -> 7-Agent Autonomous Pipeline
     const botMsgId = Date.now() + 1;
     const initialBotMsg: CopilotMessage = {
       id: botMsgId,
