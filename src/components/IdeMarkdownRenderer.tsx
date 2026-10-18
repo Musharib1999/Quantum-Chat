@@ -9,7 +9,14 @@ import { Copy, Check } from 'lucide-react';
 function KaTeXMathInner({ math, displayMode = false, isDark = true }: { math: string; displayMode?: boolean; isDark?: boolean }) {
   if (typeof window !== 'undefined' && (window as any).katex) {
     try {
-      const rendered = (window as any).katex.renderToString(math.trim(), {
+      let cleanMath = (math || '').trim();
+      cleanMath = cleanMath.replace(/\\([a-zA-Z]+)/g, '\\$1');
+      cleanMath = cleanMath.replace(/_\{([^}]+)\}/g, (m: string, inner: string) => {
+        if (inner.includes('\\text') || !inner.includes('_')) return m;
+        const escaped = inner.replace(/\\_/g, '_').replace(/_/g, '\\_');
+        return `_{\\text{${escaped}}}`;
+      });
+      const rendered = (window as any).katex.renderToString(cleanMath, {
         displayMode,
         throwOnError: false
       });

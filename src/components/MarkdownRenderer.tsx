@@ -29,7 +29,14 @@ function KaTeXMath({ math, displayMode = false }: { math: string; displayMode?: 
         const win = window as any;
         if (win.katex) {
             try {
-                const rendered = win.katex.renderToString(math, {
+                let cleanMath = (math || '').trim();
+                cleanMath = cleanMath.replace(/\\([a-zA-Z]+)/g, '\\$1');
+                cleanMath = cleanMath.replace(/_\{([^}]+)\}/g, (m: string, inner: string) => {
+                    if (inner.includes('\\text') || !inner.includes('_')) return m;
+                    const escaped = inner.replace(/\\_/g, '_').replace(/_/g, '\\_');
+                    return `_{\\text{${escaped}}}`;
+                });
+                const rendered = win.katex.renderToString(cleanMath, {
                     displayMode,
                     throwOnError: false
                 });

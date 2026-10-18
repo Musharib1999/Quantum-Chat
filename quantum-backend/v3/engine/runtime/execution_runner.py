@@ -721,13 +721,20 @@ if HAS_DWAVE:
                 total_reads = int(sum(target_sampleset.record.num_occurrences)) if hasattr(target_sampleset, 'record') and 'num_occurrences' in target_sampleset.record.dtype.names else len(target_sampleset)
 
                 # 📐 Synthesize Symbolic LaTeX Hamiltonian
+                def _format_var_tex(var_raw):
+                    s = str(var_raw)
+                    if "_" in s:
+                        escaped = s.replace("_", r"\_")
+                        return f"x_{{{{\\text{{{escaped}}}}}}}"
+                    return f"x_{{{s}}}" if len(s) > 1 else f"x_{s}"
+
                 latex_parts = []
                 if isinstance(target_model, dimod.BinaryQuadraticModel):
                     for v, bias in target_model.linear.items():
                         if abs(bias) > 1e-5:
                             s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
                             if not str(s_v).startswith('slack_'):
-                                s_v_tex = f"x_{{{s_v}}}" if len(str(s_v)) > 1 else str(s_v)
+                                s_v_tex = _format_var_tex(s_v)
                                 b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
                                 latex_parts.append(f"{b_str} \, {s_v_tex}")
                     for (u, v), bias in target_model.quadratic.items():
@@ -737,11 +744,11 @@ if HAS_DWAVE:
                             if not str(s_u).startswith('slack_') and not str(s_v).startswith('slack_'):
                                 b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
                                 if s_u == s_v:
-                                    s_u_tex = f"x_{{{s_u}}}" if len(str(s_u)) > 1 else str(s_u)
+                                    s_u_tex = _format_var_tex(s_u)
                                     latex_parts.append(f"{b_str} \, {s_u_tex}")
                                 else:
-                                    s_u_tex = f"x_{{{s_u}}}" if len(str(s_u)) > 1 else str(s_u)
-                                    s_v_tex = f"x_{{{s_v}}}" if len(str(s_v)) > 1 else str(s_v)
+                                    s_u_tex = _format_var_tex(s_u)
+                                    s_v_tex = _format_var_tex(s_v)
                                     latex_parts.append(f"{b_str} \, {s_u_tex} {s_v_tex}")
                     if abs(target_model.offset) > 1e-5:
                         o_str = f"{target_model.offset:+.4g}".rstrip('0').rstrip('.') if '.' in f"{target_model.offset:+.4g}" else f"{target_model.offset:+.4g}"
@@ -754,11 +761,11 @@ if HAS_DWAVE:
                             if not str(s_u).startswith('slack_') and not str(s_v).startswith('slack_'):
                                 b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
                                 if s_u == s_v:
-                                    s_u_tex = f"x_{{{s_u}}}" if len(str(s_u)) > 1 else str(s_u)
+                                    s_u_tex = _format_var_tex(s_u)
                                     latex_parts.append(f"{b_str} \, {s_u_tex}")
                                 else:
-                                    s_u_tex = f"x_{{{s_u}}}" if len(str(s_u)) > 1 else str(s_u)
-                                    s_v_tex = f"x_{{{s_v}}}" if len(str(s_v)) > 1 else str(s_v)
+                                    s_u_tex = _format_var_tex(s_u)
+                                    s_v_tex = _format_var_tex(s_v)
                                     latex_parts.append(f"{b_str} \, {s_u_tex} {s_v_tex}")
 
                 latex_formula = " ".join(latex_parts).strip()

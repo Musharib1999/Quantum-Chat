@@ -11,15 +11,25 @@ interface LatexMathProps {
   className?: string;
 }
 
+export function sanitizeLatex(raw: string): string {
+  let clean = (raw || "").trim();
+  // Normalize accidental double backslashes before LaTeX command words
+  clean = clean.replace(/\\([a-zA-Z]+)/g, "\\$1");
+  // Wrap any subscript content with underscores into \text{...} with escaped underscores to avoid Double Subscript errors
+  clean = clean.replace(/_\{([^}]+)\}/g, (m, inner) => {
+    if (inner.includes("\\text") || !inner.includes("_")) return m;
+    const escaped = inner.replace(/\\_/g, "_").replace(/_/g, "\\_");
+    return `_{\\text{${escaped}}}`;
+  });
+  return clean;
+}
+
 export function LatexMath({ math, inline = true, isDark = true, className = "" }: LatexMathProps) {
   const [html, setHtml] = useState<string>("");
 
   useEffect(() => {
     try {
-      let cleanMath = (math || "").trim();
-      // Normalize accidental double backslashes before LaTeX command words (e.g. \mathcal, \sum, \text)
-      cleanMath = cleanMath.replace(/\\([a-zA-Z]+)/g, (_, cmd) => "\\" + cmd);
-
+      const cleanMath = sanitizeLatex(math);
       const rendered = katex.renderToString(cleanMath, {
         displayMode: !inline,
         throwOnError: false,
