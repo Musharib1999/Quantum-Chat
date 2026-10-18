@@ -569,7 +569,11 @@ class SupervisorAgent:
                 update_fields = {}
                 for k, v in steps.items():
                     update_fields[f"workflowSteps.{k}"] = v
-                db.chatsessions.update_one({"_id": ObjectId(session_id)}, {"$set": update_fields})
+                try:
+                    s_filter = {"_id": ObjectId(session_id)}
+                except Exception:
+                    s_filter = {"$or": [{"sessionId": session_id}, {"title": session_id}]}
+                db.chatsessions.update_one(s_filter, {"$set": update_fields})
                 client.close()
             except Exception as e:
                 print(f"[MongoDB Update Error] Failed to update session {session_id}: {e}")
@@ -1014,7 +1018,11 @@ class SupervisorAgent:
                 update_fields = {}
                 for k, v in steps.items():
                     update_fields[f"workflowSteps.{k}"] = v
-                db.chatsessions.update_one({"_id": ObjectId(session_id)}, {"$set": update_fields})
+                try:
+                    s_filter = {"_id": ObjectId(session_id)}
+                except Exception:
+                    s_filter = {"$or": [{"sessionId": session_id}, {"title": session_id}]}
+                db.chatsessions.update_one(s_filter, {"$set": update_fields})
                 client.close()
             except Exception as e:
                 print(f"[MongoDB Update Error Stream] Failed to update session {session_id}: {e}")

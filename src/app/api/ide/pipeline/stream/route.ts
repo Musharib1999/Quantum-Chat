@@ -250,6 +250,31 @@ export async function POST(req: NextRequest) {
                   return;
                 }
                 receivedValidChunk = true;
+
+                // Guarantee complete event contract
+                if (data.event === 'complete' || data.step === 'complete') {
+                  data.step = 'complete';
+                  data.event = 'complete';
+                  data.status = 'done';
+                  data.title = 'Pipeline Complete';
+                  data.agent = 'SupervisorAgent';
+                }
+
+                // Map human-readable agent names for each pipeline step
+                const STEP_META: Record<string, { agent: string; title: string }> = {
+                  nlp: { agent: 'UnderstandingAgent', title: 'Understanding Agent' },
+                  reasoner: { agent: 'ConstraintVerificationAgent', title: 'Constraint Verification Agent' },
+                  suggestor: { agent: 'SolverStrategyAgent', title: 'Solver Strategy Decider' },
+                  solver: { agent: 'AutoQUBOCompiler', title: 'AutoQUBO Hamiltonian Compiler' },
+                  verifier: { agent: 'VerificationAgent', title: 'Mathematical Verifier' },
+                  explanation: { agent: 'ExplanationAgent', title: 'Business Translation Agent' },
+                };
+
+                if (data.step && STEP_META[data.step]) {
+                  if (!data.agent) data.agent = STEP_META[data.step].agent;
+                  if (!data.title) data.title = STEP_META[data.step].title;
+                }
+
                 sendEvent(data);
               } catch {
                 // ignore chunk errors

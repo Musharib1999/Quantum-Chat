@@ -328,6 +328,7 @@ async def run_optimization_pipeline_stream(
                 }
 
                 yield {
+                    "step": "complete",
                     "event": "complete",
                     "result": {
                         "dcc": getattr(workspace, "dcc_active", False),

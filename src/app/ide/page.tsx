@@ -1926,13 +1926,14 @@ export default function QuantumGuruStudioPage() {
           try {
             const data = JSON.parse(trimmed.slice(5).trim());
             const stepName = data.step;
+            const isComplete = stepName === "complete" || data.event === "complete";
 
             setDwaveCopilotMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id !== botMsgId) return msg;
                 const existingSteps = msg.pipelineSteps ? [...msg.pipelineSteps] : [];
 
-                if (stepName === "complete") {
+                if (isComplete) {
                   const res = data.result || {};
                   const stats = res.optimization_stats || {};
                   
@@ -1996,6 +1997,22 @@ export default function QuantumGuruStudioPage() {
           }
         }
       }
+
+      // Safety net: Guarantee completion when the stream finishes reading
+      setDwaveCopilotMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === botMsgId && msg.isStreaming
+            ? {
+                ...msg,
+                isStreaming: false,
+                pipelineSteps: msg.pipelineSteps?.map((s) => ({
+                  ...s,
+                  status: s.status === "running" ? ("done" as const) : s.status,
+                })),
+              }
+            : msg
+        )
+      );
     } catch (err: any) {
       setDwaveCopilotMessages((prev) =>
         prev.map((msg) =>
