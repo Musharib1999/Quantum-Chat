@@ -200,11 +200,17 @@ export function FormulationCanvas({
         >
           {customBqmFormula ? (
             <LatexMath math={`\\min_{\\mathbf{x} \\in \\{0, 1\\}^{${variables?.length || 1}}} \\quad \\mathcal{H}(\\mathbf{x}) = ${customBqmFormula}`} inline={false} isDark={isDark} />
-          ) : (
+          ) : isPortfolioProblem ? (
             <>
               <LatexMath math={objFormula} inline={false} isDark={isDark} />
               <LatexMath math={constraintsFormula} inline={false} isDark={isDark} />
             </>
+          ) : (
+            <div className="py-6 flex flex-col items-center justify-center text-center space-y-2">
+              <Sparkles className="w-6 h-6 text-zinc-500 opacity-60" />
+              <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>No Mathematical Model Formulated Yet</span>
+              <p className="text-[11px] max-w-sm" style={{ color: colors.textMuted }}>Execute your code or formulate an optimization problem in the Quantum AI Copilot to generate the Hamiltonian representation.</p>
+            </div>
           )}
         </div>
 
@@ -283,16 +289,20 @@ export function FormulationCanvas({
             <div className="p-3 rounded-lg border space-y-1.5" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
               <div className="flex items-center justify-between text-[11px]">
                 <span style={{ color: colors.textPrimary }}>Decision Variables</span>
-                <span className="font-mono text-[10px] text-zinc-400">{variables?.length || 1} Variable{(variables?.length || 1) === 1 ? "" : "s"}</span>
+                <span className="font-mono text-[10px] text-zinc-400">{variables?.length || 0} Variable{(variables?.length || 0) === 1 ? "" : "s"}</span>
               </div>
               <div className="flex flex-wrap gap-1.5 pt-0.5">
-                {(variables && variables.length > 0 ? variables : ["x"]).map((v, i) => (
-                  <span key={i} className={`text-xs font-mono px-2 py-0.5 rounded border font-semibold ${
-                    isDark ? "bg-white/[0.05] text-zinc-200 border-white/[0.08]" : "bg-slate-100 text-slate-800 border-slate-200"
-                  }`}>
-                    {v} ∈ &#123;0, 1&#125;
-                  </span>
-                ))}
+                {variables && variables.length > 0 ? (
+                  variables.map((v, i) => (
+                    <span key={i} className={`text-xs font-mono px-2 py-0.5 rounded border font-semibold ${
+                      isDark ? "bg-white/[0.05] text-zinc-200 border-white/[0.08]" : "bg-slate-100 text-slate-800 border-slate-200"
+                    }`}>
+                      {v} ∈ &#123;0, 1&#125;
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs font-mono text-zinc-500 italic">No variables compiled yet</span>
+                )}
               </div>
               <p className="text-[10px]" style={{ color: colors.textMuted }}>Active binary decision space for solver.</p>
             </div>

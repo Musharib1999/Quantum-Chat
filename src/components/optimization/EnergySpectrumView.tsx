@@ -44,17 +44,17 @@ export function EnergySpectrumView({
 
         <div className="flex items-center space-x-2 text-xs font-mono">
           <span className="px-2.5 py-1 rounded border text-[11px] font-semibold" style={{ backgroundColor: colors.bgPill, borderColor: colors.border, color: colors.textEmerald }}>
-            E_ground: {groundEnergy.toFixed(2)}
+            E_ground: {distribution.length > 0 ? groundEnergy.toFixed(2) : "--"}
           </span>
           <span className={`px-2.5 py-1 rounded border text-[11px] ${
             isDark ? "bg-white/[0.04] text-zinc-300 border-white/[0.08]" : "bg-slate-100 text-slate-700 border-slate-200"
           }`}>
-            Reads: {numReads}
+            Reads: {distribution.length > 0 ? numReads : 0}
           </span>
           <span className={`px-2.5 py-1 rounded border text-[11px] ${
             isDark ? "bg-white/[0.04] text-zinc-400 border-white/[0.08]" : "bg-slate-100 text-slate-500 border-slate-200"
           }`}>
-            Latency: {latencyMs.toFixed(0)}ms
+            Latency: {distribution.length > 0 ? `${latencyMs.toFixed(0)}ms` : "--"}
           </span>
         </div>
       </div>
@@ -120,7 +120,18 @@ export function EnergySpectrumView({
         </div>
 
         <div className="space-y-2">
-          {distribution.map((item, idx) => {
+          {distribution.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
+              <Activity className="w-9 h-9 text-zinc-500 opacity-60" />
+              <h4 className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
+                No Annealing Results Yet
+              </h4>
+              <p className="text-xs max-w-sm" style={{ color: colors.textMuted }}>
+                Execute your D-Wave model or formulate a problem with the Quantum AI Copilot to sample low-energy physical eigenstates.
+              </p>
+            </div>
+          ) : (
+            distribution.map((item, idx) => {
             const prob = ((item.num_occurrences / totalOccurrences) * 100);
             const isGround = idx === 0;
             const activeVars = Object.entries(item.sample)
@@ -176,7 +187,7 @@ export function EnergySpectrumView({
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
     </div>

@@ -445,7 +445,7 @@ export function CircuitCanvasView({
           </div>
 
           <pre className="overflow-x-auto custom-scrollbar text-xs leading-relaxed text-sky-400 font-mono select-text py-2">
-            {circuitAscii}
+            {circuitAscii || "No circuit compiled yet. Execute your code or place gates on the visual canvas."}
           </pre>
         </div>
       )}

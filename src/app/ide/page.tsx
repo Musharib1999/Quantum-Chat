@@ -931,17 +931,26 @@ export default function QuantumGuruStudioPage() {
         };
   });
 
-  const [qiskitCounts, setQiskitCounts] = useState<Record<string, number>>({
-    "1": 1024,
+  const [qiskitCounts, setQiskitCounts] = useState<Record<string, number>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const targetId = localStorage.getItem("quantum_ide_active_project_id");
+        if (targetId) {
+          const stored = localStorage.getItem(`quantum_ide_qiskit_result_${targetId}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.measurement_counts) return parsed.measurement_counts;
+          }
+        }
+      } catch (e) {}
+    }
+    return {};
   });
-  const [qiskitQubits, setQiskitQubits] = useState<number>(1);
-  const [qiskitDepth, setQiskitDepth] = useState<number>(2);
+  const [qiskitQubits, setQiskitQubits] = useState<number>(2);
+  const [qiskitDepth, setQiskitDepth] = useState<number>(0);
   const [qiskitShots, setQiskitShots] = useState<number>(1024);
-  const [circuitGates, setCircuitGates] = useState<any[]>([
-    { name: "x", qubit: 0, qubits: [0], step: 0, role: "single" },
-    { name: "measure", qubit: 0, qubits: [0], step: 1, role: "single" }
-  ]);
-  const [circuitAscii, setCircuitAscii] = useState<string>("     ┌───┐┌─┐\n  q: ┤ X ├┤M├\n     └───┘└╥┘\nc: 1/══════╩═\n           0 ");
+  const [circuitGates, setCircuitGates] = useState<any[]>([]);
+  const [circuitAscii, setCircuitAscii] = useState<string>("");
   const [isCircuitSynced, setIsCircuitSynced] = useState<boolean>(true);
 
   const [dwaveCopilotMessages, setDwaveCopilotMessages] = useState<CopilotMessage[]>(DWAVE_INITIAL_MESSAGES);
@@ -1135,6 +1144,12 @@ export default function QuantumGuruStudioPage() {
       setQiskitCode(loadedCode);
     }
 
+    // Clear console terminal and reset AI block upon project switch
+    setTerminalOutput("");
+    setShowTerminal(false);
+    setDwaveCopilotMessages([...DWAVE_INITIAL_MESSAGES]);
+    setQiskitCopilotMessages([...QISKIT_INITIAL_MESSAGES]);
+
     if (proj.id === "clean_energy_portfolio") {
       setSolverResult(DEFAULT_PORTFOLIO_RESULT);
     } else {
@@ -1153,8 +1168,32 @@ export default function QuantumGuruStudioPage() {
           variables: [],
           qubo_matrix: [],
           energy_distribution: [],
+          latex_formula: "",
         }
       );
+    }
+
+    if (proj.framework === "qiskit") {
+      let savedQiskit = null;
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem(`quantum_ide_qiskit_result_${proj.id}`);
+          if (stored) savedQiskit = JSON.parse(stored);
+        } catch (e) {}
+      }
+      if (savedQiskit) {
+        setQiskitCounts(savedQiskit.measurement_counts || {});
+        setCircuitGates(savedQiskit.circuit_gates || []);
+        setCircuitAscii(savedQiskit.circuit_ascii || "");
+        setQiskitQubits(savedQiskit.active_qubits || 2);
+        setQiskitDepth(savedQiskit.circuit_depth || 0);
+      } else {
+        setQiskitCounts({});
+        setCircuitGates([]);
+        setCircuitAscii("");
+        setQiskitQubits(2);
+        setQiskitDepth(0);
+      }
     }
 
     if (typeof window !== "undefined") {
@@ -1226,10 +1265,54 @@ export default function QuantumGuruStudioPage() {
     setActiveFile(targetFile);
     setHeroTab("code");
 
+    // 1. Reset AI block clean
+    setDwaveCopilotMessages([...DWAVE_INITIAL_MESSAGES]);
+    setQiskitCopilotMessages([...QISKIT_INITIAL_MESSAGES]);
+
+    // Common Console & Execution clean state
+    setTerminalOutput("");
+    setShowTerminal(false);
+    setIsRunningOrRecompiling(false);
+
     if (customProj.framework === "dwave") {
+      // 2. D-Wave Project Clean:
+      // a. Code editor
       setDwaveCode(initialCode);
+      // b. Model clean state
+      setMathParams({
+        budgetMax: 18.0,
+        yieldWeight: 1.0,
+        minDiversity: 2,
+        penaltyLambda: 3.5,
+        hasMutualExclusion: false,
+        hasCarbonCeiling: false,
+        isMarkowitz: false,
+      });
+      setSelectedMathSection("01");
+      setIsModelDirty(false);
+      // c. QUBO and Result clean state
+      setSolverResult({
+        energy: 0,
+        sample: {},
+        num_variables: 0,
+        variables: [],
+        qubo_matrix: [],
+        energy_distribution: [],
+        num_reads: 0,
+        latex_formula: "",
+      });
     } else {
+      // 3. Qiskit Project Clean:
+      // a. Code editor
       setQiskitCode(initialCode);
+      // b. Circuit canvas clean state
+      setCircuitGates([]);
+      setQiskitQubits(2);
+      setQiskitDepth(0);
+      setCircuitAscii("");
+      setIsCircuitSynced(true);
+      // c. Result clean state
+      setQiskitCounts({});
     }
 
     if (typeof window !== "undefined") {
@@ -1238,6 +1321,8 @@ export default function QuantumGuruStudioPage() {
         localStorage.setItem("quantum_ide_active_file", targetFile);
         localStorage.setItem("quantum_ide_hero_tab", "code");
         localStorage.setItem(`quantum_ide_code_${customProj.id}_${targetFile}`, initialCode);
+        localStorage.removeItem(`quantum_ide_result_${customProj.id}`);
+        localStorage.removeItem(`quantum_ide_qiskit_result_${customProj.id}`);
 
         const stored = localStorage.getItem("quantum_ide_custom_projects");
         const list: ProjectItem[] = stored ? JSON.parse(stored) : [];
@@ -1614,6 +1699,21 @@ export default function QuantumGuruStudioPage() {
             setQiskitDepth(data.circuit_depth);
           }
 
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(
+                `quantum_ide_qiskit_result_${activeProject.id}`,
+                JSON.stringify({
+                  measurement_counts: data.measurement_counts,
+                  circuit_gates: data.circuit_gates,
+                  circuit_ascii: data.circuit_ascii,
+                  active_qubits: data.active_qubits,
+                  circuit_depth: data.circuit_depth,
+                })
+              );
+            } catch (e) {}
+          }
+
           setTerminalOutput(
             `$ qiskit-aer --backend aer_simulator --shots ${execShots}\n` +
               `[SUCCESS] Simulation completed in ${dur.toFixed(1)}ms\n` +
@@ -1766,6 +1866,20 @@ export default function QuantumGuruStudioPage() {
         }
         if (data.measurement_counts) {
           setQiskitCounts(data.measurement_counts);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(
+                `quantum_ide_qiskit_result_${activeProject.id}`,
+                JSON.stringify({
+                  measurement_counts: data.measurement_counts,
+                  circuit_gates: data.circuit_gates,
+                  circuit_ascii: data.circuit_ascii,
+                  active_qubits: data.active_qubits,
+                  circuit_depth: data.circuit_depth,
+                })
+              );
+            } catch (e) {}
+          }
         }
 
         setQiskitCopilotMessages((prev) =>
@@ -2286,31 +2400,39 @@ export default function QuantumGuruStudioPage() {
                       </span>
                     </div>
 
-                    <div className="min-h-48 flex items-end justify-center space-x-6 pt-6 pb-2 border-b border-zinc-700/40">
-                      {Object.entries(qiskitCounts).map(([bit, count], idx) => {
-                        const pct = qiskitShots > 0 ? ((count / qiskitShots) * 100).toFixed(1) : "0.0";
-                        return (
-                          <div
-                            key={idx}
-                            className="flex flex-col items-center space-y-2 min-w-[60px] max-w-[120px]"
-                          >
-                            <div className="text-[11px] font-mono text-zinc-400 font-semibold">
-                              {pct}%
-                            </div>
+                    {Object.keys(qiskitCounts).length === 0 ? (
+                      <div className="min-h-48 flex flex-col items-center justify-center p-8 text-center space-y-2 border-b border-zinc-700/40">
+                        <Activity className="w-8 h-8 text-zinc-500 opacity-60" />
+                        <h4 className="text-sm font-semibold text-zinc-300">No Measurement Results Yet</h4>
+                        <p className="text-xs text-zinc-500 max-w-sm">Execute your Qiskit circuit or click "Run" to simulate statevector measurement histograms on AerSimulator.</p>
+                      </div>
+                    ) : (
+                      <div className="min-h-48 flex items-end justify-center space-x-6 pt-6 pb-2 border-b border-zinc-700/40">
+                        {Object.entries(qiskitCounts).map(([bit, count], idx) => {
+                          const pct = qiskitShots > 0 ? ((count / qiskitShots) * 100).toFixed(1) : "0.0";
+                          return (
                             <div
-                              className="w-12 rounded-t bg-sky-500 hover:brightness-110 transition-all shadow-sm shadow-sky-500/30"
-                              style={{ height: `${Math.max(parseFloat(pct) * 2, 8)}px` }}
-                            />
-                            <div className="text-xs font-mono font-bold text-zinc-200">
-                              |{bit}⟩
+                              key={idx}
+                              className="flex flex-col items-center space-y-2 min-w-[60px] max-w-[120px]"
+                            >
+                              <div className="text-[11px] font-mono text-zinc-400 font-semibold">
+                                {pct}%
+                              </div>
+                              <div
+                                className="w-12 rounded-t bg-sky-500 hover:brightness-110 transition-all shadow-sm shadow-sky-500/30"
+                                style={{ height: `${Math.max(parseFloat(pct) * 2, 8)}px` }}
+                              />
+                              <div className="text-xs font-mono font-bold text-zinc-200">
+                                |{bit}⟩
+                              </div>
+                              <div className="text-[10px] font-mono text-zinc-500">
+                                {count} shots
+                              </div>
                             </div>
-                            <div className="text-[10px] font-mono text-zinc-500">
-                              {count} shots
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
