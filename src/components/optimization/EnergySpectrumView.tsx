@@ -78,7 +78,7 @@ export function EnergySpectrumView({
                   Global Physical Ground State
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  100% Feasible
+                  Optimal Ground State
                 </span>
               </div>
               <div className="text-sm font-semibold pt-0.5" style={{ color: colors.textPrimary }}>

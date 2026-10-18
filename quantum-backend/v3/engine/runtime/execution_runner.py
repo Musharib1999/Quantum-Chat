@@ -699,8 +699,8 @@ if HAS_DWAVE:
                             if i != j:
                                 matrix[j][i] = round(float(bias), 4)
 
-                # Construct energy spectrum distribution (top 12 samples)
-                energy_dist = []
+                # Construct energy spectrum distribution (top 12 unique physical eigenstates aggregated)
+                bitstring_dict = {}
                 for s in target_sampleset.data(fields=['sample', 'energy', 'num_occurrences'], sorted_by='energy'):
                     clean_sample = {}
                     for k, v in s.sample.items():
@@ -709,14 +709,19 @@ if HAS_DWAVE:
                             clean_sample[str(var_label)] = int(v)
                     bitstring = "".join(str(clean_sample.get(v, 0)) for v in var_names)
                     s_energy = float(exec_globals.get("offset", exec_globals.get("qubo_offset", 0.0))) + float(s.energy) if ("offset" in exec_globals or "qubo_offset" in exec_globals) else float(s.energy)
-                    energy_dist.append({
-                        "energy": round(s_energy, 4),
-                        "sample": clean_sample,
-                        "num_occurrences": int(s.num_occurrences),
-                        "bitstring": bitstring
-                    })
-                    if len(energy_dist) >= 12:
-                        break
+                    s_energy = round(s_energy, 4)
+                    occ = int(s.num_occurrences) if hasattr(s, 'num_occurrences') and s.num_occurrences is not None else 1
+                    if bitstring in bitstring_dict:
+                        bitstring_dict[bitstring]["num_occurrences"] += occ
+                    else:
+                        bitstring_dict[bitstring] = {
+                            "energy": s_energy,
+                            "sample": clean_sample,
+                            "num_occurrences": occ,
+                            "bitstring": bitstring
+                        }
+                # Sort unique physical states by lowest energy first, then highest occurrence count
+                energy_dist = sorted(bitstring_dict.values(), key=lambda x: (x["energy"], -x["num_occurrences"]))[:12]
 
                 total_reads = int(sum(target_sampleset.record.num_occurrences)) if hasattr(target_sampleset, 'record') and 'num_occurrences' in target_sampleset.record.dtype.names else len(target_sampleset)
 

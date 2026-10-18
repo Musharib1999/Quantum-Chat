@@ -903,7 +903,29 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
             continue
             
         # Declarative Constraint Pattern Matching
-        if family == "uniqueness" or "unique" in name.lower() or ("assignment" in name.lower() and "fixed" not in name.lower() and family != "equality"):
+        is_col_constraint = (
+            family in ("coverage", "demand") or 
+            any(w in name.lower() for w in ("shift", "coverage", "col", "slot", "machine", "room"))
+        )
+
+        if is_col_constraint:
+            clean_v_name = primary_var.replace(" ", "_").replace("-", "_")
+            cmm.constraints.append(
+                CMMConstraint(
+                    name=name,
+                    quantifier="FORALL",
+                    quantifier_vars=["j"],
+                    quantifier_ranges=[set_j],
+                    left=Sum(
+                        expression=VarRef(var_name=clean_v_name, indices=["i", "j"]),
+                        index_vars=["i"],
+                        index_ranges=[set_i]
+                    ),
+                    op=op,
+                    right=Constant(value=rhs_val)
+                )
+            )
+        elif family == "uniqueness" or "unique" in name.lower() or ("assignment" in name.lower() and "fixed" not in name.lower() and family != "equality"):
             p = UniquenessPattern(name=name, var_name=primary_var, row_set=set_i, col_set=set_j, rhs_value=rhs_val)
             cmm.patterns.append(p)
             cmm.constraints.extend(compile_uniqueness(p, cmm))
