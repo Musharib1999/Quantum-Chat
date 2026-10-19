@@ -31,9 +31,29 @@ try:
     if not hasattr(qiskit, 'execute'):
         qiskit.execute = _compat_execute
 
+    _captured_qcs = []
+    _orig_qc_init = QuantumCircuit.__init__
+    def _hooked_qc_init(self, *args, **kwargs):
+        _orig_qc_init(self, *args, **kwargs)
+        _captured_qcs.append(self)
+    QuantumCircuit.__init__ = _hooked_qc_init
+
     _orig_aer_run = AerSimulator.run
     def _safe_aer_run(self, circuits, **kwargs):
-        if isinstance(circuits, QuantumCircuit) and getattr(circuits, "num_clbits", 0) == 0:
+        if isinstance(circuits, QuantumCircuit):
+            _captured_qcs.append(circuits)
+        elif isinstance(circuits, (list, tuple)):
+            for c in circuits:
+                if isinstance(c, QuantumCircuit):
+                    _captured_qcs.append(c)
+        is_sv = False
+        if isinstance(circuits, QuantumCircuit):
+            for instr in circuits.data:
+                op_name = getattr(instr.operation, "name", "")
+                if "statevector" in op_name:
+                    is_sv = True
+                    break
+        if isinstance(circuits, QuantumCircuit) and getattr(circuits, "num_clbits", 0) == 0 and not is_sv:
             c = circuits.copy()
             c.measure_all()
             return _orig_aer_run(self, c, **kwargs)
@@ -268,9 +288,29 @@ try:
     if not hasattr(qiskit, 'execute'):
         qiskit.execute = _compat_execute
 
+    _captured_qcs = []
+    _orig_qc_init = QuantumCircuit.__init__
+    def _hooked_qc_init(self, *args, **kwargs):
+        _orig_qc_init(self, *args, **kwargs)
+        _captured_qcs.append(self)
+    QuantumCircuit.__init__ = _hooked_qc_init
+
     _orig_aer_run = AerSimulator.run
     def _safe_aer_run(self, circuits, **kwargs):
-        if isinstance(circuits, QuantumCircuit) and getattr(circuits, "num_clbits", 0) == 0:
+        if isinstance(circuits, QuantumCircuit):
+            _captured_qcs.append(circuits)
+        elif isinstance(circuits, (list, tuple)):
+            for c in circuits:
+                if isinstance(c, QuantumCircuit):
+                    _captured_qcs.append(c)
+        is_sv = False
+        if isinstance(circuits, QuantumCircuit):
+            for instr in circuits.data:
+                op_name = getattr(instr.operation, "name", "")
+                if "statevector" in op_name:
+                    is_sv = True
+                    break
+        if isinstance(circuits, QuantumCircuit) and getattr(circuits, "num_clbits", 0) == 0 and not is_sv:
             c = circuits.copy()
             c.measure_all()
             return _orig_aer_run(self, c, **kwargs)
@@ -500,10 +540,22 @@ if HAS_AER:
     class SafeAerSimulator(AerSimulator):
         def run(self, circuits, **kwargs):
             if isinstance(circuits, QuantumCircuit):
-                if circuits.num_clbits == 0:
-                    c = circuits.copy()
-                    c.measure_all()
-                    return super().run(c, **kwargs)
+                _captured_qcs.append(circuits)
+            elif isinstance(circuits, (list, tuple)):
+                for c in circuits:
+                    if isinstance(c, QuantumCircuit):
+                        _captured_qcs.append(c)
+            is_sv = False
+            if isinstance(circuits, QuantumCircuit):
+                for instr in circuits.data:
+                    op_name = getattr(instr.operation, "name", "")
+                    if "statevector" in op_name:
+                        is_sv = True
+                        break
+            if isinstance(circuits, QuantumCircuit) and circuits.num_clbits == 0 and not is_sv:
+                c = circuits.copy()
+                c.measure_all()
+                return super().run(c, **kwargs)
             return super().run(circuits, **kwargs)
     exec_globals["AerSimulator"] = SafeAerSimulator
     try:
@@ -546,7 +598,11 @@ backend_used = "local"
 
 # 1. QuantumCircuit introspection: pick the most complete circuit (highest gate count/depth)
 all_qcs = [val for val in exec_globals.values() if isinstance(val, QuantumCircuit)]
-target_qc = max(all_qcs, key=lambda c: len(c.data)) if all_qcs else None
+all_qcs.extend([c for c in _captured_qcs if isinstance(c, QuantumCircuit)])
+
+non_empty = [c for c in all_qcs if len(c.data) > 0]
+candidates = non_empty if non_empty else all_qcs
+target_qc = max(reversed(candidates), key=lambda c: (len(c.data), c.depth(), c.num_qubits)) if candidates else None
 
 if target_qc is not None:
     backend_used = "qiskit_aer"
@@ -569,12 +625,40 @@ if target_qc is not None:
         counts = user_counts
     elif HAS_AER and target_qc.num_qubits <= 28:
         try:
-            meas_qc = target_qc.copy()
-            if meas_qc.num_clbits == 0:
-                meas_qc.measure_all()
+            meas_qc = QuantumCircuit(target_qc.num_qubits)
+            for instr in target_qc.data:
+                op_name = getattr(instr.operation, "name", "")
+                if not op_name.startswith("save_") and not op_name.startswith("set_"):
+                    q_indices = [target_qc.find_bit(q).index for q in instr.qubits]
+                    meas_qc.append(instr.operation, q_indices)
+            meas_qc.measure_all()
             sim = AerSimulator()
             result = sim.run(meas_qc, shots=__SHOTS_VAL__).result()
             counts = result.get_counts()
+        except Exception:
+            try:
+                meas_qc = target_qc.copy()
+                if meas_qc.num_clbits == 0:
+                    meas_qc.measure_all()
+                sim = AerSimulator()
+                result = sim.run(meas_qc, shots=__SHOTS_VAL__).result()
+                counts = result.get_counts()
+            except Exception:
+                pass
+
+# Check for optimization / VQE result in exec_globals (e.g. from scipy.optimize.minimize)
+for val in exec_globals.values():
+    if hasattr(val, "fun") and hasattr(val, "x"):
+        try:
+            opt_energy = float(val.fun)
+            opt_params = [round(float(p), 6) for p in val.x] if hasattr(val.x, "__iter__") else [round(float(val.x), 6)]
+            if opt_results is None:
+                opt_results = {
+                    "energy": opt_energy,
+                    "optimal_parameters": opt_params,
+                    "vqe_converged": getattr(val, "success", True)
+                }
+            break
         except Exception:
             pass
 
