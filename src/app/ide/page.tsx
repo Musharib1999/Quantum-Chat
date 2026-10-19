@@ -23,8 +23,12 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import {
   JOURNEY_101_MILESTONES,
+  JOURNEY_101_MODULES,
   getJourneyMilestone,
+  getJourneyModule,
   evaluateQuizResponse,
+  detectDepthRequest,
+  getTieredExplanation,
   isAskingForHint,
   isUncertainOrStuck,
   isWantingToSkipOrProceed,
@@ -949,16 +953,21 @@ export default function QuantumGuruStudioPage() {
   const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
   const [showAlgorithmStudioModal, setShowAlgorithmStudioModal] = useState<boolean>(false);
 
-  // 🎓 Quantum Journey 101 Sequential Milestone & Quiz State
+  // 🎓 Quantum Journey 101 Sequential Module & Quiz State
   const [journeyMilestoneId, setJourneyMilestoneId] = useState<number>(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("quantum_journey_101_milestone");
-        if (saved) return Math.min(4, Math.max(1, parseInt(saved, 10)));
+        if (saved !== null) {
+          const parsed = parseInt(saved, 10);
+          if (!isNaN(parsed)) return Math.min(6, Math.max(0, parsed));
+        }
       } catch (e) {}
     }
-    return 1;
+    return 0;
   });
+
+  const [userPrediction, setUserPrediction] = useState<string | null>(null);
 
   const [journeyStage, setJourneyStage] = useState<"explore" | "quiz" | "challenge" | "completed">(() => {
     if (typeof window !== "undefined") {
@@ -2288,10 +2297,17 @@ export default function QuantumGuruStudioPage() {
             const currentM = getJourneyMilestone(journeyMilestoneId);
             if (journeyStage === "explore") {
               const countsStr = JSON.stringify(data.measurement_counts || {});
+              let predictionFeedback = "";
+              if (userPrediction && currentM.evaluatePrediction) {
+                const predEval = currentM.evaluatePrediction(userPrediction);
+                predictionFeedback = `\n\n🎯 **Prediction Comparison:**\nYou predicted: *"${userPrediction}"*\n${predEval.feedback}\n`;
+                setUserPrediction(null);
+              }
+
               const debriefMsg: CopilotMessage = {
                 id: Date.now() + 5,
                 sender: "assistant",
-                text: `🎉 **Simulation Complete!**\n\nYour circuit executed with Aer simulator (\`${execShots}\` shots).\nRecorded Measurement Distribution:\n\`\`\`json\n${countsStr}\n\`\`\`\n\n${currentM.quizQuestion}`,
+                text: `🎉 **Simulation Complete!**\n\nYour circuit executed with Aer simulator (\`${execShots}\` shots).\nRecorded Measurement Distribution:\n\`\`\`json\n${countsStr}\n\`\`\`${predictionFeedback}\n\n${currentM.quizQuestion}`,
                 timestamp: "Just now",
               };
               setQiskitCopilotMessages((prev) => [...prev, debriefMsg]);
@@ -2342,7 +2358,7 @@ export default function QuantumGuruStudioPage() {
         setIsRunningOrRecompiling(false);
       }
     }
-  }, [framework, dwaveCode, qiskitCode, currentMatrix, mathParams, activeProject, activeFile]);
+  }, [framework, dwaveCode, qiskitCode, currentMatrix, mathParams, activeProject, activeFile, journeyMilestoneId, journeyStage, userPrediction]);
 
   const handleApplyPipelineCode = async (code: string, meta?: any) => {
     if (!code) return;
@@ -2434,17 +2450,18 @@ export default function QuantumGuruStudioPage() {
       } catch (e) {}
     }
     if (activeProject?.id === "quantum_journey_101") {
-      setJourneyMilestoneId(1);
+      setJourneyMilestoneId(0);
       setJourneyStage("explore");
-      const m1 = getJourneyMilestone(1);
-      setQiskitCode(m1.starterCode);
+      setUserPrediction(null);
+      const m0 = getJourneyMilestone(0);
+      setQiskitCode(m0.starterCode);
       setQiskitCounts({});
-      setTerminalOutput(`=== 🎓 Quantum Journey 101 Reset ===\nWorkspace reset to Milestone 1: Superposition.\n`);
+      setTerminalOutput(`=== 🎓 Quantum Journey 101 Reset ===\nWorkspace reset to Module 0: Quantum Foundations.\n`);
       if (typeof window !== "undefined") {
         try {
-          localStorage.setItem("quantum_journey_101_milestone", "1");
+          localStorage.setItem("quantum_journey_101_milestone", "0");
           localStorage.setItem("quantum_journey_101_stage", "explore");
-          localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, m1.starterCode);
+          localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, m0.starterCode);
         } catch (e) {}
       }
     }
@@ -2474,17 +2491,21 @@ export default function QuantumGuruStudioPage() {
       const isJourney = activeProject.id === "quantum_journey_101";
       if (isJourney) {
         const lower = text.trim().toLowerCase();
-        // 1. Next Milestone Transition
+        // 1. Next Module Transition
         if (
           lower.includes("next milestone") ||
           lower === "next" ||
           lower.includes("load milestone") ||
-          lower.includes("advance milestone")
+          lower.includes("advance milestone") ||
+          lower.includes("next module") ||
+          lower.includes("load module") ||
+          lower.includes("advance module")
         ) {
-          const nextId = Math.min(4, journeyMilestoneId + 1);
+          const nextId = Math.min(6, journeyMilestoneId + 1);
           const nextM = getJourneyMilestone(nextId);
           setJourneyMilestoneId(nextId);
           setJourneyStage("explore");
+          setUserPrediction(null);
           setQiskitCode(nextM.starterCode);
           setQiskitCounts({}); // Clean slate for results!
           setLatencyMs(0);
@@ -2516,28 +2537,60 @@ export default function QuantumGuruStudioPage() {
           lower === "reset" ||
           lower.includes("restart journey")
         ) {
-          const m1 = getJourneyMilestone(1);
-          setJourneyMilestoneId(1);
+          const m0 = getJourneyMilestone(0);
+          setJourneyMilestoneId(0);
           setJourneyStage("explore");
-          setQiskitCode(m1.starterCode);
+          setUserPrediction(null);
+          setQiskitCode(m0.starterCode);
           setQiskitCounts({});
           setLatencyMs(0);
-          setTerminalOutput(`=== 🎓 Quantum Journey 101 Reset ===\nWorkspace reset to Milestone 1: Superposition.\n`);
+          setTerminalOutput(`=== 🎓 Quantum Journey 101 Reset ===\nWorkspace reset to Module 0: Quantum Foundations.\n`);
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem("quantum_journey_101_milestone", "1");
+              localStorage.setItem("quantum_journey_101_milestone", "0");
               localStorage.setItem("quantum_journey_101_stage", "explore");
-              localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, m1.starterCode);
+              localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, m0.starterCode);
             } catch (e) {}
           }
           const resetMsg: CopilotMessage = {
             id: Date.now() + 2,
             sender: "assistant",
-            text: `🔄 **Quantum Journey Reset to Milestone 1**\n\n${m1.introPrompt}`,
+            text: `🔄 **Quantum Journey Reset to Module 0**\n\n${m0.introPrompt}`,
             timestamp: "Just now",
           };
           setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), resetMsg]);
           return;
+        }
+
+        // 3. Adaptive Depth Request (Intuition / Technical / Mathematical Derivation)
+        const depthRequest = detectDepthRequest(text);
+        if (depthRequest) {
+          const tieredText = getTieredExplanation(journeyMilestoneId, depthRequest);
+          const tieredMsg: CopilotMessage = {
+            id: Date.now() + 2,
+            sender: "assistant",
+            text: tieredText,
+            timestamp: "Just now",
+          };
+          setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), tieredMsg]);
+          return;
+        }
+
+        // 4. Explore Stage: Predict -> Execute -> Explain Loop
+        if (journeyStage === "explore") {
+          const currentM = getJourneyMilestone(journeyMilestoneId);
+          if (currentM.evaluatePrediction) {
+            setUserPrediction(text);
+            const predFeedback = currentM.evaluatePrediction(text);
+            const ackMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: `📝 **Hypothesis Recorded:**\n*"${text}"*\n\n${predFeedback.feedback}\n\n👉 Now click **▶ Run** (or press \`Shift+Enter\`) to execute on Aer and test your prediction!`,
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), ackMsg]);
+            return;
+          }
         }
 
         // 3. Empathetic Socratic Quiz & Help Handling
