@@ -2786,12 +2786,7 @@ export default function QuantumGuruStudioPage() {
                   <div className="flex items-center justify-between border-b pb-3.5 border-zinc-700/30">
                     <div className="flex items-center space-x-2.5">
                       <Clock className="w-4 h-4 text-sky-400" />
-                      <div>
-                        <h3 className="text-sm font-semibold">Execution Output History</h3>
-                        <p className="text-xs text-zinc-400">
-                          Chronological audit log of simulation runs, timestamps, and outputs
-                        </p>
-                      </div>
+                      <h3 className="text-sm font-semibold">Execution Output History</h3>
                     </div>
                     {executionHistory.length > 0 && (
                       <button
