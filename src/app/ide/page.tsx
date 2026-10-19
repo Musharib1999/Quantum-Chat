@@ -1724,75 +1724,132 @@ export default function QuantumGuruStudioPage() {
 
   const handleAddGateToCircuit = (gateName: string, qubit: number, targetQubit?: number, step?: number) => {
     const gateUpper = gateName.toUpperCase();
-    let codeSnippet = "";
 
-    switch (gateUpper) {
-      case "H":
-        codeSnippet = `qc.h(${qubit})`;
-        break;
-      case "X":
-        codeSnippet = `qc.x(${qubit})`;
-        break;
-      case "Y":
-        codeSnippet = `qc.y(${qubit})`;
-        break;
-      case "Z":
-        codeSnippet = `qc.z(${qubit})`;
-        break;
-      case "S":
-        codeSnippet = `qc.s(${qubit})`;
-        break;
-      case "T":
-        codeSnippet = `qc.t(${qubit})`;
-        break;
-      case "RX":
-        codeSnippet = `qc.rx(1.57, ${qubit})`;
-        break;
-      case "RY":
-        codeSnippet = `qc.ry(1.57, ${qubit})`;
-        break;
-      case "RZ":
-        codeSnippet = `qc.rz(1.57, ${qubit})`;
-        break;
-      case "CX":
-      case "CNOT":
-        codeSnippet = `qc.cx(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
-        break;
-      case "CZ":
-        codeSnippet = `qc.cz(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
-        break;
-      case "SWAP":
-        codeSnippet = `qc.swap(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
-        break;
-      case "M":
-      case "MEASURE":
-        codeSnippet = `qc.measure(${qubit}, ${qubit})`;
-        break;
-      case "BARRIER":
-      case "B":
-        codeSnippet = `qc.barrier()`;
-        break;
-      default:
-        codeSnippet = `qc.u(1.57, 0, 0, ${qubit})`;
-        break;
-    }
-
-    // Inject before measurement/simulation lines or append
+    // Intelligently find where QuantumCircuit is declared (global scope or inside ansatz/function)
     setQiskitCode((prevCode) => {
       const lines = prevCode.split("\n");
-      const insertIdx = lines.findIndex(
-        (l) =>
-          l.trim().startsWith("sim =") ||
-          l.trim().startsWith("sim.run") ||
-          l.trim().startsWith("qc.measure_all") ||
-          l.trim().startsWith("print(")
-      );
 
-      if (insertIdx !== -1) {
-        lines.splice(insertIdx, 0, codeSnippet);
+      // 1. Locate QuantumCircuit instantiation
+      let circuitDefIdx = -1;
+      let circuitVar = "qc";
+      let baseIndent = "";
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const match = line.match(/^(\s*)([a-zA-Z0-9_]+)\s*=\s*(?:[a-zA-Z0-9_]+\.)?QuantumCircuit\(/);
+        if (match) {
+          baseIndent = match[1];
+          circuitVar = match[2];
+          circuitDefIdx = i;
+          break;
+        }
+      }
+
+      // 2. Generate gate call with actual variable name
+      let gateCall = "";
+      switch (gateUpper) {
+        case "H":
+          gateCall = `${circuitVar}.h(${qubit})`;
+          break;
+        case "X":
+          gateCall = `${circuitVar}.x(${qubit})`;
+          break;
+        case "Y":
+          gateCall = `${circuitVar}.y(${qubit})`;
+          break;
+        case "Z":
+          gateCall = `${circuitVar}.z(${qubit})`;
+          break;
+        case "S":
+          gateCall = `${circuitVar}.s(${qubit})`;
+          break;
+        case "T":
+          gateCall = `${circuitVar}.t(${qubit})`;
+          break;
+        case "RX":
+          gateCall = `${circuitVar}.rx(1.57, ${qubit})`;
+          break;
+        case "RY":
+          gateCall = `${circuitVar}.ry(1.57, ${qubit})`;
+          break;
+        case "RZ":
+          gateCall = `${circuitVar}.rz(1.57, ${qubit})`;
+          break;
+        case "CX":
+        case "CNOT":
+          gateCall = `${circuitVar}.cx(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
+        case "CZ":
+          gateCall = `${circuitVar}.cz(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
+        case "SWAP":
+          gateCall = `${circuitVar}.swap(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
+        case "M":
+        case "MEASURE":
+          gateCall = `${circuitVar}.measure(${qubit}, ${qubit})`;
+          break;
+        case "BARRIER":
+        case "B":
+          gateCall = `${circuitVar}.barrier()`;
+          break;
+        default:
+          gateCall = `${circuitVar}.u(1.57, 0, 0, ${qubit})`;
+          break;
+      }
+
+      const formattedLine = `${baseIndent}${gateCall}`;
+
+      // 3. Insert inside the correct scope where the circuit exists
+      if (circuitDefIdx !== -1) {
+        let insertAt = circuitDefIdx + 1;
+        let lastGateIdx = -1;
+        let terminalIdx = -1;
+
+        for (let j = circuitDefIdx + 1; j < lines.length; j++) {
+          const l = lines[j];
+          const trimmed = l.trim();
+          if (!trimmed || trimmed.startsWith("#")) continue;
+
+          // Scope check: if indentation drops lower than baseIndent, the block ended
+          const currentIndent = l.match(/^(\s*)/)?.[1] || "";
+          if (baseIndent && currentIndent.length < baseIndent.length && trimmed.length > 0) {
+            break;
+          }
+
+          // Terminal statements on this circuit inside its scope
+          if (
+            trimmed.startsWith(`${circuitVar}.save_statevector`) ||
+            trimmed.startsWith(`${circuitVar}.measure_all`) ||
+            trimmed.startsWith(`${circuitVar}.measure`) ||
+            trimmed.startsWith(`return `) ||
+            trimmed.startsWith(`sim.run`)
+          ) {
+            terminalIdx = j;
+            break;
+          }
+
+          // Other gate on this circuit
+          if (trimmed.startsWith(`${circuitVar}.`)) {
+            lastGateIdx = j;
+          }
+        }
+
+        if (terminalIdx !== -1) {
+          insertAt = terminalIdx;
+        } else if (lastGateIdx !== -1) {
+          insertAt = lastGateIdx + 1;
+        } else {
+          insertAt = circuitDefIdx + 1;
+        }
+
+        lines.splice(insertAt, 0, formattedLine);
         return lines.join("\n");
       }
-      return prevCode.trimEnd() + "\n" + codeSnippet + "\n";
+
+      // Fallback: If no QuantumCircuit exists yet, initialize one
+      const preamble = `from qiskit import QuantumCircuit\nqc = QuantumCircuit(${Math.max(qubit + 1, 2)})\n`;
+      return preamble + `${formattedLine}\n` + prevCode;
     });
 
     // Update visual circuit state
