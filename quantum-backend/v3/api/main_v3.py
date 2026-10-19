@@ -844,18 +844,46 @@ try:
 except ImportError:
     from v3.engine.runtime.execution_runner import run_code_sandbox, CodeExecutionRequest, CodeExecutionResponse
 
+from starlette.concurrency import run_in_threadpool
+import asyncio
+import uuid
+
+# Concurrency Controller: Up to 4 simultaneous CPU-intensive quantum simulations (queued in memory for 20+ users)
+SIMULATION_SEMAPHORE = asyncio.Semaphore(4)
+_worker_slot_counter = 0
+
 @app.post("/v3/enterprise/ide/execute", response_model=CodeExecutionResponse)
 async def ide_code_execute_endpoint(req: CodeExecutionRequest):
     """
-    Direct high-performance execution of Qiskit circuits and D-Wave BQM/CQM models.
-    Returns stdout/stderr, counts, ASCII diagram, and interactive canvas gate list.
+    High-performance non-blocking execution of Qiskit circuits and D-Wave models.
+    Uses an async Semaphore(4) queue and worker threadpool to handle 20+ concurrent users smoothly.
+    Assigns a unique Simulator Run ID (SIM-AER-XXXX / SIM-DWAVE-XXXX) to every execution.
     """
+    global _worker_slot_counter
+    _worker_slot_counter = (_worker_slot_counter % 4) + 1
+    slot = _worker_slot_counter
+
+    backend_prefix = "AER" if (req.target_backend == "aer_simulator" or "qiskit" in (req.code or "")) else "DWAVE"
+    sim_id = f"SIM-{backend_prefix}-{uuid.uuid4().hex[:8].upper()}"
+
+    t_queue_0 = time.time()
     try:
-        return run_code_sandbox(req)
+        async with SIMULATION_SEMAPHORE:
+            queue_wait_ms = round((time.time() - t_queue_0) * 1000, 2)
+            res = await run_in_threadpool(
+                run_code_sandbox, 
+                req=req, 
+                simulator_id=sim_id, 
+                worker_slot=slot, 
+                queue_wait_ms=queue_wait_ms
+            )
+            return res
     except Exception as e:
         print(f"Error executing code in sandbox: {e}")
         return CodeExecutionResponse(
             success=False,
+            simulator_id=sim_id,
+            worker_slot=slot,
             error=str(e),
             stderr=str(e)
         )

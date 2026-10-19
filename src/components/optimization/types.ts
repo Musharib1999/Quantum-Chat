@@ -30,6 +30,7 @@ export interface OptimizationResults {
   cloud_rerouted?: boolean;
   qaoa_dual_compiled?: boolean;
   latex_formula?: string;
+  simulator_id?: string;
 }
 
 export interface PipelineStep {

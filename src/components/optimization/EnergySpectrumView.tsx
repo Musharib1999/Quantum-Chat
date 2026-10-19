@@ -12,6 +12,7 @@ export interface EnergySpectrumViewProps {
   numReads?: number;
   latencyMs?: number;
   variables: string[];
+  simulatorId?: string;
 }
 
 export function EnergySpectrumView({
@@ -22,6 +23,7 @@ export function EnergySpectrumView({
   numReads = 1000,
   latencyMs = 45,
   variables = [],
+  simulatorId,
 }: EnergySpectrumViewProps) {
   const totalOccurrences = distribution.reduce((sum, item) => sum + (item.num_occurrences || 1), 0) || 1;
   const bestState = distribution[0];
@@ -56,6 +58,13 @@ export function EnergySpectrumView({
           }`}>
             Latency: {distribution.length > 0 ? `${latencyMs.toFixed(0)}ms` : "--"}
           </span>
+          {simulatorId && (
+            <span className={`px-2.5 py-1 rounded border text-[11px] font-mono font-medium ${
+              isDark ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" : "bg-cyan-50 text-cyan-800 border-cyan-200"
+            }`}>
+              ID: {simulatorId}
+            </span>
+          )}
         </div>
       </div>
 

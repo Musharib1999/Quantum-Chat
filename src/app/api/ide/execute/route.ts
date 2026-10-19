@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(90000), // 90-second timeout to allow queued simulator jobs to finish
     });
 
     const data = await res.json();

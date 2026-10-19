@@ -943,6 +943,21 @@ export default function QuantumGuruStudioPage() {
         };
   });
 
+  const [qiskitSimulatorId, setQiskitSimulatorId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const targetId = localStorage.getItem("quantum_ide_active_project_id");
+        if (targetId) {
+          const stored = localStorage.getItem(`quantum_ide_qiskit_result_${targetId}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.simulator_id) return parsed.simulator_id;
+          }
+        }
+      } catch (e) {}
+    }
+    return "";
+  });
   const [qiskitCounts, setQiskitCounts] = useState<Record<string, number>>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -1199,12 +1214,14 @@ export default function QuantumGuruStudioPage() {
         setCircuitAscii(savedQiskit.circuit_ascii || "");
         setQiskitQubits(savedQiskit.active_qubits || 2);
         setQiskitDepth(savedQiskit.circuit_depth || 0);
+        setQiskitSimulatorId(savedQiskit.simulator_id || "");
       } else {
         setQiskitCounts({});
         setCircuitGates([]);
         setCircuitAscii("");
         setQiskitQubits(2);
         setQiskitDepth(0);
+        setQiskitSimulatorId("");
       }
     }
 
@@ -1325,6 +1342,7 @@ export default function QuantumGuruStudioPage() {
       setIsCircuitSynced(true);
       // c. Result clean state
       setQiskitCounts({});
+      setQiskitSimulatorId("");
     }
 
     if (typeof window !== "undefined") {
@@ -1646,10 +1664,12 @@ export default function QuantumGuruStudioPage() {
               .join(", ");
 
             const stdoutClean = data.stdout ? data.stdout.trim() : "";
+            const simIdFlag = data.simulator_id ? ` --job-id ${data.simulator_id}` : "";
             setTerminalOutput(
-              `$ dwave-anneal --backend simulated_annealing\n` +
+              `$ dwave-anneal --backend simulated_annealing${simIdFlag}\n` +
                 (stdoutClean ? `${stdoutClean}\n\n` : "") +
-                `[SUCCESS] Annealing simulation completed in ${dur.toFixed(1)}ms\n` +
+                `[SUCCESS] Annealing simulation completed in ${dur.toFixed(1)}ms (Worker Slot #${data.worker_slot || 1})\n` +
+                (data.simulator_id ? `⚡ Simulation ID: ${data.simulator_id}\n` : "") +
                 `⚡ Ground State Energy: ${opt.energy.toFixed(4)}\n` +
                 `⚡ Optimal Active Variables: [${chosen || "None"}]\n` +
                 `⚡ Sampled Eigenstates: ${opt.energy_distribution?.length || 0}\n`
@@ -1695,6 +1715,9 @@ export default function QuantumGuruStudioPage() {
         setLatencyMs(parseFloat(dur.toFixed(1)));
 
         if (data.success) {
+          if (data.simulator_id) {
+            setQiskitSimulatorId(data.simulator_id);
+          }
           if (data.measurement_counts && Object.keys(data.measurement_counts).length > 0) {
             setQiskitCounts(data.measurement_counts);
             const total = Object.values(data.measurement_counts as Record<string, number>).reduce((a, b) => a + b, 0);
@@ -1723,14 +1746,17 @@ export default function QuantumGuruStudioPage() {
                   circuit_ascii: data.circuit_ascii,
                   active_qubits: data.active_qubits,
                   circuit_depth: data.circuit_depth,
+                  simulator_id: data.simulator_id,
                 })
               );
             } catch (e) {}
           }
 
+          const qSimIdFlag = data.simulator_id ? ` --job-id ${data.simulator_id}` : "";
           setTerminalOutput(
-            `$ qiskit-aer --backend aer_simulator --shots ${execShots}\n` +
-              `[SUCCESS] Simulation completed in ${dur.toFixed(1)}ms\n` +
+            `$ qiskit-aer --backend aer_simulator --shots ${execShots}${qSimIdFlag}\n` +
+              `[SUCCESS] Simulation completed in ${dur.toFixed(1)}ms (Worker Slot #${data.worker_slot || 1})\n` +
+              (data.simulator_id ? `⚡ Simulation ID: ${data.simulator_id}\n` : "") +
               `Active Qubits: ${data.active_qubits ?? 1} | Depth: ${data.circuit_depth ?? 1}\n` +
               `Measurement Counts: ${JSON.stringify(data.measurement_counts || {})}\n` +
               (data.stdout ? `\n--- Standard Output ---\n${data.stdout}` : "") +
@@ -1890,6 +1916,7 @@ export default function QuantumGuruStudioPage() {
                   circuit_ascii: data.circuit_ascii,
                   active_qubits: data.active_qubits,
                   circuit_depth: data.circuit_depth,
+                  simulator_id: data.simulator_id,
                 })
               );
             } catch (e) {}
@@ -2391,6 +2418,7 @@ export default function QuantumGuruStudioPage() {
                     numReads={solverResult.num_reads || 300}
                     latencyMs={latencyMs}
                     variables={solverResult.variables || DEFAULT_VARIABLES}
+                    simulatorId={solverResult.simulator_id}
                   />
                 ) : (
                   <div
@@ -2409,9 +2437,16 @@ export default function QuantumGuruStudioPage() {
                           Simulated distribution over {qiskitShots} shots
                         </p>
                       </div>
-                      <span className="text-xs font-mono text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded border border-sky-500/20 font-medium">
-                        Total Shots: {qiskitShots}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        {qiskitSimulatorId && (
+                          <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded border border-cyan-500/20 font-medium">
+                            ID: {qiskitSimulatorId}
+                          </span>
+                        )}
+                        <span className="text-xs font-mono text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded border border-sky-500/20 font-medium">
+                          Total Shots: {qiskitShots}
+                        </span>
+                      </div>
                     </div>
 
                     {Object.keys(qiskitCounts).length === 0 ? (

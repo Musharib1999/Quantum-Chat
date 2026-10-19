@@ -1,3 +1,4 @@
+import uuid
 import ast
 import io
 import json
@@ -61,6 +62,9 @@ class CodeExecutionRequest(BaseModel):
 
 class CodeExecutionResponse(BaseModel):
     success: bool
+    simulator_id: Optional[str] = None
+    worker_slot: Optional[int] = None
+    queue_wait_ms: Optional[float] = 0.0
     stdout: str = ""
     stderr: str = ""
     execution_time_ms: float = 0.0
@@ -911,12 +915,16 @@ print("__QUANTUM_RESULT_END__")
 '''
 
 
-def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
-    """Execute code string inside an isolated subprocess with AST pre-checks and a 5.0-second hard timeout."""
+def run_code_sandbox(req: CodeExecutionRequest, simulator_id: Optional[str] = None, worker_slot: Optional[int] = None, queue_wait_ms: float = 0.0) -> CodeExecutionResponse:
+    """Execute code string inside an isolated subprocess with AST pre-checks, OpenMP thread caps, and Simulator ID tracking."""
     t0 = time.time()
     code = req.code or ""
     backend_used = req.target_backend or "local"
     shots = min(max(1, req.shots or 1024), MAX_SIMULATOR_SHOTS)
+
+    if not simulator_id:
+        backend_prefix = "AER" if (backend_used == "aer_simulator" or "qiskit" in code) else "DWAVE"
+        simulator_id = f"SIM-{backend_prefix}-{uuid.uuid4().hex[:8].upper()}"
 
     # 🛡️ Layer 1: AST Pre-Execution Security & Limit Validation
     try:
@@ -928,6 +936,9 @@ def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
     except SandboxSecurityError as sec_err:
         return CodeExecutionResponse(
             success=False,
+            simulator_id=simulator_id,
+            worker_slot=worker_slot,
+            queue_wait_ms=queue_wait_ms,
             stdout="",
             stderr=str(sec_err),
             execution_time_ms=round((time.time() - t0) * 1000, 2),
@@ -960,19 +971,30 @@ def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
                     with open(act_full, "w", encoding="utf-8") as fp:
                         fp.write(code)
 
+            run_env = os.environ.copy()
+            run_env["OMP_NUM_THREADS"] = "2"
+            run_env["OPENBLAS_NUM_THREADS"] = "2"
+            run_env["MKL_NUM_THREADS"] = "2"
+            run_env["VECLIB_MAXIMUM_THREADS"] = "2"
+            run_env["NUMEXPR_NUM_THREADS"] = "2"
+
             proc = subprocess.run(
                 [sys.executable, "-c", runner_script],
                 input=code,
                 capture_output=True,
                 text=True,
                 timeout=15.0,
-                cwd=tmp_workspace
+                cwd=tmp_workspace,
+                env=run_env
             )
     except subprocess.TimeoutExpired:
         exec_ms = round((time.time() - t0) * 1000, 2)
         timeout_msg = "ExecutionTimeoutError: Execution exceeded the 15.0-second safety threshold and was terminated. Infinite loops or runaway operations are prohibited."
         return CodeExecutionResponse(
             success=False,
+            simulator_id=simulator_id,
+            worker_slot=worker_slot,
+            queue_wait_ms=queue_wait_ms,
             stdout="",
             stderr=timeout_msg,
             execution_time_ms=exec_ms,
@@ -1002,6 +1024,9 @@ def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
             data = json.loads(json_content)
             return CodeExecutionResponse(
                 success=data.get("success", True),
+                simulator_id=simulator_id,
+                worker_slot=worker_slot,
+                queue_wait_ms=queue_wait_ms,
                 stdout=data.get("stdout", ""),
                 stderr=data.get("stderr", "") or proc.stderr or "",
                 execution_time_ms=data.get("sim_exec_ms", exec_ms),
@@ -1020,6 +1045,9 @@ def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
     # Fallback if sentinel missing
     return CodeExecutionResponse(
         success=(proc.returncode == 0),
+        simulator_id=simulator_id,
+        worker_slot=worker_slot,
+        queue_wait_ms=queue_wait_ms,
         stdout=proc.stdout,
         stderr=proc.stderr,
         execution_time_ms=exec_ms,
