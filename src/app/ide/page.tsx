@@ -25,6 +25,11 @@ import {
   JOURNEY_101_MILESTONES,
   getJourneyMilestone,
   evaluateQuizResponse,
+  isAskingForHint,
+  isUncertainOrStuck,
+  isWantingToSkipOrProceed,
+  getSupportiveTutorResponse,
+  buildJourneyTutorPrompt,
 } from "@/lib/quantumJourney101";
 import {
   StudioHeader,
@@ -2516,8 +2521,54 @@ export default function QuantumGuruStudioPage() {
           return;
         }
 
-        // 3. Quiz Answer Evaluation
+        // 3. Empathetic Socratic Quiz & Help Handling
         if (journeyStage === "quiz") {
+          // A. User wants to skip or see the explanation
+          if (isWantingToSkipOrProceed(text)) {
+            const revealRes = getSupportiveTutorResponse(journeyMilestoneId, "reveal");
+            setJourneyStage("challenge");
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem("quantum_journey_101_stage", "challenge");
+              } catch (e) {}
+            }
+            const revealMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: revealRes.message,
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), revealMsg]);
+            return;
+          }
+
+          // B. User is asking for a hint
+          if (isAskingForHint(text)) {
+            const hintRes = getSupportiveTutorResponse(journeyMilestoneId, "hint");
+            const hintMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: hintRes.message,
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), hintMsg]);
+            return;
+          }
+
+          // C. User says "I don't know", "no idea", or feels stuck
+          if (isUncertainOrStuck(text)) {
+            const stuckRes = getSupportiveTutorResponse(journeyMilestoneId, "stuck");
+            const stuckMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: stuckRes.message,
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), stuckMsg]);
+            return;
+          }
+
+          // D. Direct Quiz Answer Evaluation
           const evalRes = evaluateQuizResponse(journeyMilestoneId, text);
           const currentM = getJourneyMilestone(journeyMilestoneId);
           if (evalRes.passed) {
@@ -2540,7 +2591,7 @@ export default function QuantumGuruStudioPage() {
       }
 
       const userMessageToSend = isJourney
-        ? `[TUTOR MODE: You are Guru AI, an inspiring and patient Quantum Computing Professor & Socratic Lecturer guiding the user through Quantum Journey 101. Keep explanations conversational, crystal-clear, and encourage them to explore the Circuit Canvas, Monaco Editor, and Results tab. Check their circuit/code if they ask, give gentle hints without just dumping full solutions, and celebrate their learning milestones. Current code in editor:\n\`\`\`python\n${qiskitCode}\n\`\`\`\n]\n\nUser Question: ${text}`
+        ? buildJourneyTutorPrompt(journeyMilestoneId, journeyStage, qiskitCode, text)
         : text;
 
       try {

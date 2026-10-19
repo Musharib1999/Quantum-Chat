@@ -18,6 +18,9 @@ export interface JourneyMilestone {
   quizQuestion: string;
   quizAcceptKeywords: string[];
   quizExplanation: string;
+  hint: string;
+  friendlyAnalogy: string;
+  fallbackExplanation: string;
   challengeInstruction: string;
   validateChallenge: (
     counts: Record<string, number>,
@@ -58,7 +61,7 @@ qc.measure(0, 0)
     introPrompt: `Welcome to your **Quantum Journey 101**! 🚀 I am **Guru AI**, your personal quantum educator and pair-programmer.
 
 In classical computing, a bit is like a coin lying flat on a table: strictly 0 or 1. But in quantum computing, the **Hadamard (H) gate** sets the coin spinning in mid-air—putting qubit 0 into an equal 50/50 superposition:
-1991\vert\psi\rangle = \frac{\vert 0\rangle + \vert 1\rangle}{\sqrt{2}}1991
+$$\vert\psi\rangle = \frac{\vert 0\rangle + \vert 1\rangle}{\sqrt{2}}$$
 
 👉 **Your First Task:**
 1. Switch to the **Circuit Canvas** tab above to view your H gate and Measurement on wire \`q[0]\`.
@@ -86,8 +89,14 @@ In classical computing, a bit is like a coin lying flat on a table: strictly 0 o
     ],
 
     quizExplanation: `Spot on! 🎯 In quantum mechanics (governed by the **Born Rule**), the wavefunction amplitudes give probabilities:
-1991P(0) = |\alpha|^2 = 0.5, \quad P(1) = |\beta|^2 = 0.51991
+$$P(0) = |\alpha|^2 = 0.5, \quad P(1) = |\beta|^2 = 0.5$$
 Every measurement shot is an independent probabilistic collapse. Just like tossing a fair coin 1,024 times rarely gives exactly 512 heads and 512 tails, statistical sampling produces natural variance (shot noise) around the true 50% probability!`,
+
+    hint: "Think about whether quantum measurement is deterministic (like reading fixed data from a hard drive) or probabilistic (like sampling from a probability distribution over multiple independent shots).",
+
+    friendlyAnalogy: "Think of flipping a fair coin 1,024 times. Theoretically, heads has a 50% chance. But in real life, do you get exactly 512 heads every single time? Or does natural randomness cause small statistical fluctuations (like 508, 517, 511)?",
+
+    fallbackExplanation: "In quantum mechanics, the Hadamard gate puts the qubit into equal probability: 50% for |0⟩ and 50% for |1⟩. Because each measurement shot is an independent random collapse, statistical sampling noise naturally produces counts near 512 (e.g. 518 vs 506) rather than exactly 512 every single run.",
 
     challengeInstruction: `⚡ **Milestone 1 Hands-On Challenge:**
 Let's witness quantum determinism vs superposition!
@@ -167,19 +176,25 @@ qc.measure(0, 0)
     introPrompt: `Welcome to **Milestone 2: Quantum Bit & Phase Flips**! 🔄
 
 In classical computers, a NOT gate simply flips 0 to 1. In quantum computing, this is the **Pauli-X gate**:
-1991X\vert 0\rangle = \vert 1\rangle, \quad X\vert 1\rangle = \vert 0\rangle1991
+$$X\vert 0\rangle = \vert 1\rangle, \quad X\vert 1\rangle = \vert 0\rangle$$
 
 👉 **Step 1:** Click **▶ Run** to confirm that the X gate deterministically flips the initial $|0\rangle$ into state $|1\rangle$ with 100% certainty!`,
 
-    quizQuestion: `Now that you verified |0\rangle = |1\rangle$:
+    quizQuestion: `Now that you verified $X|0\rangle = |1\rangle$:
 
 🧠 **Quick Check:** In classical computing, there is only one way to flip a bit (0 ↔ 1). But in quantum computing, qubits can also have a **relative phase** ($\pm$). Which Pauli gate flips the quantum phase without changing the measurement probabilities: **Pauli-Y** or **Pauli-Z**?`,
 
     quizAcceptKeywords: ["z", "pauli-z", "pauli z", "phase"],
 
     quizExplanation: `Correct! 🎯 The **Pauli-Z gate** is the quantum phase-flip operator:
-1991Z\vert 0\rangle = \vert 0\rangle, \quad Z\vert 1\rangle = -\vert 1\rangle1991
-On the superposition state $|+\rangle$, applying $ turns it into $|-\rangle = \frac{|0\rangle - |1\rangle}{\sqrt{2}}$. The probabilities $|\pm 1/\sqrt{2}|^2 = 0.5$ are identical, but the relative phase is shifted by $\pi$ (180°)!`,
+$$Z\vert 0\rangle = \vert 0\rangle, \quad Z\vert 1\rangle = -\vert 1\rangle$$
+On the superposition state $|+\rangle$, applying $Z$ turns it into $|-\rangle = \frac{|0\rangle - |1\rangle}{\sqrt{2}}$. The probabilities $|\pm 1/\sqrt{2}|^2 = 0.5$ are identical, but the relative phase is shifted by $\pi$ (180°)!`,
+
+    hint: "Look closely at the gate names: Pauli-X is the bit-flip (flips 0 ↔ 1 along the X axis). Which Pauli gate corresponds to the Z axis and flips the phase of |1⟩ to -|1⟩?",
+
+    friendlyAnalogy: "Imagine a clock hand pointing at 12 o'clock (|0⟩). The Pauli-X gate flips the hand all the way to 6 o'clock (|1⟩)—a bit flip. But if the hand is pointing sideways at 3 o'clock (superposition), flipping its direction across the dial without changing its length is a phase flip—governed by Pauli-Z!",
+
+    fallbackExplanation: "The Pauli-Z gate flips the quantum phase without changing measurement probabilities ($Z|0\rangle = |0\rangle, Z|1\rangle = -|1\rangle$). On the $|+\rangle$ state, applying $Z$ produces $|-\rangle$, which has the exact same 50/50 measurement probabilities, but opposite internal phase!",
 
     challengeInstruction: `⚡ **Milestone 2 Hands-On Challenge:**
 Let's create the famous $|-\rangle$ state!
@@ -232,7 +247,7 @@ Let's create the famous $|-\rangle$ state!
     },
 
     completionMessage: `🌟 **Milestone 2 Completed: Quantum Phase Unlocked!**
-You've mastered single-qubit transformations ($, $, $).
+You've mastered single-qubit transformations ($X$, $Z$, $H$).
 
 Ready for the crown jewel of quantum mechanics: **Milestone 3 — Quantum Entanglement & Bell States**? Type **"Next Milestone"** or click below!`,
   },
@@ -272,7 +287,7 @@ qc.measure([0, 1], [0, 1])
     introPrompt: `Welcome to **Milestone 3: Spooky Action — Creating a Bell Pair**! 🌌
 
 When two qubits become **entangled**, they no longer possess independent states. Their joint wavefunction is:
-1991\vert\Phi^+\rangle = \frac{\vert 00\rangle + \vert 11\rangle}{\sqrt{2}}1991
+$$\vert\Phi^+\rangle = \frac{\vert 00\rangle + \vert 11\rangle}{\sqrt{2}}$$
 
 👉 **Step 1:** Notice your workspace has cleanly expanded to two wires: \`q[0]\` and \`q[1]\`. Click **▶ Run** (or press \`Shift+Enter\`) to execute 1,024 shots!`,
 
@@ -284,8 +299,14 @@ When two qubits become **entangled**, they no longer possess independent states.
 
     quizExplanation: `Exactly right! 🎯 Because the qubits are entangled in state $\frac{|00\rangle + |11\rangle}{\sqrt{2}}$, measuring qubit 0 as '1' collapses the entire joint state to $|11\rangle$. Qubit 1 is instantly guaranteed to be '1' with 100% certainty, no matter the physical distance between them! This is what Einstein famously called *"spooky action at a distance"*!`,
 
+    hint: "Look at the measured pairs: only '00' and '11' exist in the distribution. If the first digit (qubit 0) is definitely 1, what must the second digit (qubit 1) be?",
+
+    friendlyAnalogy: "Think of a pair of magic shoes in separate boxes. One is left, one is right. As soon as you open box 1 on Earth and find the left shoe, you instantly know box 2 on Mars contains the right shoe—even without opening it! In our Bell state, both qubits are synchronized into the exact same value.",
+
+    fallbackExplanation: "Because the two qubits are entangled in state $(|00\rangle + |11\rangle)/\sqrt{2}$, measuring qubit 0 as 1 collapses the joint state to $|11\rangle$. Qubit 1 is instantaneously guaranteed to be 1 as well! The states '01' and '10' have strictly zero probability.",
+
     challengeInstruction: `⚡ **Milestone 3 Hands-On Challenge:**
-Let's create an *anti-correlated* Bell state $|\Psi^+\rangle = \frac{|01\rangle + |10\rangle}{\sqrt{2}}0
+Let's create an *anti-correlated* Bell state $|\Psi^+\rangle = \frac{|01\rangle + |10\rangle}{\sqrt{2}}$!
 1. Add an **X gate** to wire \`q[1]\` *before* the CNOT (or in code: \`qc.x(1)\` right before \`qc.cx(0, 1)\`).
 2. Click **▶ Run**!
 3. Observe how the correlated outcomes swap to strictly opposite states ('01' and '10')!`,
@@ -364,7 +385,7 @@ qc.measure(0, 0)
 Here is the secret of quantum advantage: quantum states are **waves**. Waves can add together (constructive interference) or cancel each other out (destructive interference).
 
 Recall that the Hadamard matrix is its own inverse:
-1991H \cdot H = I \quad (\text{Identity})1991
+$$H \cdot H = I \quad (\text{Identity})$$
 
 👉 **Step 1:** Notice your workspace is reset to a clean 1-qubit wire with 1 Hadamard gate. Click **▶ Run** to verify the standard 50/50 superposition first!`,
 
@@ -386,10 +407,16 @@ Recall that the Hadamard matrix is its own inverse:
     ],
 
     quizExplanation: `Extraordinary indeed! 🎯 In quantum mechanics:
-1991H|0\rangle = \frac{|0\rangle + |1\rangle}{\sqrt{2}}1991
-Applying $ again:
-1991H\left(\frac{|0\rangle + |1\rangle}{\sqrt{2}}\right) = \frac{1}{2}(|0\rangle + |1\rangle) + \frac{1}{2}(|0\rangle - |1\rangle) = |0\rangle1991
+$$H|0\rangle = \frac{|0\rangle + |1\rangle}{\sqrt{2}}$$
+Applying $H$ again:
+$$H\left(\frac{|0\rangle + |1\rangle}{\sqrt{2}}\right) = \frac{1}{2}(|0\rangle + |1\rangle) + \frac{1}{2}(|0\rangle - |1\rangle) = |0\rangle$$
 The $|1\rangle$ amplitude cancels out completely ($+\frac{1}{2} - \frac{1}{2} = 0$), while the $|0\rangle$ amplitude doubles ($+\frac{1}{2} + \frac{1}{2} = 1$)! This is **destructive interference** in action!`,
+
+    hint: "Think about mathematical cancellation: the Hadamard gate has positive and negative signs in its matrix. Could two paths cancel each other out rather than staying random?",
+
+    friendlyAnalogy: "Think of sound waves or water ripples. If two wave crests meet, they get taller (constructive). If a crest meets a trough of equal height, they cancel out into flat stillness (destructive interference)! That is what the second H gate does to the |1⟩ component.",
+
+    fallbackExplanation: "The second Hadamard gate causes quantum wave interference: the $|1\rangle$ amplitudes cancel out completely due to opposite signs ($+\frac{1}{2} - \frac{1}{2} = 0$), while the $|0\rangle$ amplitudes add together ($+\frac{1}{2} + \frac{1}{2} = 1$). The state returns with 100% certainty to |0⟩!",
 
     challengeInstruction: `⚡ **Grand Finale Challenge:**
 Prove quantum wave interference with your own hands!
@@ -428,7 +455,7 @@ Prove quantum wave interference with your own hands!
     completionMessage: `🎓 **CONGRATULATIONS! You have graduated from Quantum Journey 101!**
 You now understand:
 1. **Superposition:** Qubits live in linear combinations of states with complex amplitudes.
-2. **Pauli Logic:** Bit-flips ($) and phase-flips ($) govern quantum rotations.
+2. **Pauli Logic:** Bit-flips ($X$) and phase-flips ($Z$) govern quantum rotations.
 3. **Entanglement:** Two qubits can share non-local correlations that defy classical physics.
 4. **Interference:** Constructive and destructive interference gives quantum algorithms their computational power.
 
@@ -462,4 +489,145 @@ export function evaluateQuizResponse(
     passed,
     explanation: milestone.quizExplanation,
   };
+}
+
+/**
+ * Detects if the user is explicitly asking for a hint or tip
+ */
+export function isAskingForHint(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return (
+    t.includes("hint") ||
+    t.includes("clue") ||
+    t.includes("guide me") ||
+    t.includes("give me a tip") ||
+    t.startsWith("what should i") ||
+    t === "?"
+  );
+}
+
+/**
+ * Detects if the user expresses uncertainty or is stuck ("I don't know", "no idea", etc.)
+ */
+export function isUncertainOrStuck(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  const patterns = [
+    "don't know",
+    "dont know",
+    "do not know",
+    "no idea",
+    "not sure",
+    "i'm stuck",
+    "im stuck",
+    "confused",
+    "idk",
+    "have no clue",
+    "dunno",
+    "not clear",
+    "help me",
+    "can't tell",
+    "cant tell",
+    "tell me",
+  ];
+  return patterns.some((p) => t.includes(p));
+}
+
+/**
+ * Detects if the user wants to skip the quiz, reveal the answer, or jump straight to the challenge
+ */
+export function isWantingToSkipOrProceed(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  const patterns = [
+    "tell me the answer",
+    "give up",
+    "skip",
+    "move on",
+    "continue",
+    "show challenge",
+    "go to challenge",
+    "jump to challenge",
+    "just tell me",
+    "what is the answer",
+    "show me",
+    "proceed",
+    "reveal",
+    "next step",
+  ];
+  return patterns.some((p) => t.includes(p));
+}
+
+/**
+ * Generates an empathetic, Socratic tutor response with friendly analogy or progressive hint
+ */
+export function getSupportiveTutorResponse(
+  milestoneId: number,
+  type: "hint" | "stuck" | "reveal"
+): { message: string; shouldAdvanceToChallenge: boolean } {
+  const m = getJourneyMilestone(milestoneId);
+  if (type === "hint") {
+    return {
+      message: `💡 **Here is a gentle hint:**
+
+${m.hint}
+
+*Give it a try, or say "Tell me" to see the full explanation and start the challenge!*`,
+      shouldAdvanceToChallenge: false,
+    };
+  }
+  if (type === "stuck") {
+    return {
+      message: `No worries at all! Quantum concepts can be counter-intuitive at first—even top physicists needed time for them to click! 🧠
+
+**Let's think of an everyday analogy:**
+${m.friendlyAnalogy}
+
+*What do you think? Feel free to give it a guess, ask for a hint, or say "Move on" to jump straight into the hands-on challenge!*`,
+      shouldAdvanceToChallenge: false,
+    };
+  }
+  // Reveal & advance to challenge
+  return {
+    message: `No problem at all! Here is the core intuition: 🎯
+
+${m.fallbackExplanation}
+
+---
+
+${m.challengeInstruction}`,
+    shouldAdvanceToChallenge: true,
+  };
+}
+
+/**
+ * Builds an enriched system prompt for the AI tutor with pedagogical guardrails
+ */
+export function buildJourneyTutorPrompt(
+  milestoneId: number,
+  stage: string,
+  code: string,
+  userMessage: string
+): string {
+  const m = getJourneyMilestone(milestoneId);
+  return `[TUTOR MODE: You are Guru AI, a warm, patient, and inspiring Quantum Computing Professor guiding the user through Quantum Journey 101 (${m.badge}: ${m.title}).
+
+Current Curriculum Context:
+- Active Milestone: ${m.badge} (${m.concept})
+- Learning Stage: ${stage}
+- Active Quiz Question: "${m.quizQuestion}"
+- Helpful Analogy: "${m.friendlyAnalogy}"
+- Hands-on Challenge: "${m.challengeInstruction}"
+
+Pedagogical Guardrails:
+1. SUPPORTIVENESS: Always be warm, encouraging, and patient. Never make the user feel tested or judged.
+2. ANALOGIES FIRST: Explain quantum principles using concrete physical analogies (coins, waves, compasses).
+3. COURSE BOUNDARIES (QUANTUM 101): If the user asks about advanced topics (e.g. Shor's algorithm, Grover's search, VQE, quantum error correction, or hardware engineering), acknowledge enthusiastically in 1 brief sentence ("Great question! We will explore that in Quantum 102/103!"), then gently pivot back to the active milestone on wire q[0].
+4. UNCERTAINTY HANDLING: If the user says "I don't know", "I'm stuck", or asks a question, give a gentle Socratic hint without dumping intimidating equations, and invite them to either try an answer or say "Move on" to start the coding challenge.
+
+Current code in editor:
+\`\`\`python
+${code}
+\`\`\`
+]
+
+User Message: ${userMessage}`;
 }
