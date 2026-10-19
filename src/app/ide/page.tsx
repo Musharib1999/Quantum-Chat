@@ -980,8 +980,34 @@ export default function QuantumGuruStudioPage() {
   const [circuitAscii, setCircuitAscii] = useState<string>("");
   const [isCircuitSynced, setIsCircuitSynced] = useState<boolean>(true);
 
-  const [dwaveCopilotMessages, setDwaveCopilotMessages] = useState<CopilotMessage[]>(DWAVE_INITIAL_MESSAGES);
-  const [qiskitCopilotMessages, setQiskitCopilotMessages] = useState<CopilotMessage[]>(QISKIT_INITIAL_MESSAGES);
+  const [dwaveCopilotMessages, setDwaveCopilotMessages] = useState<CopilotMessage[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("quantum_ide_chat_clean_energy_portfolio");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.map((m: any) => ({ ...m, isStreaming: false }));
+          }
+        }
+      } catch (e) {}
+    }
+    return DWAVE_INITIAL_MESSAGES;
+  });
+  const [qiskitCopilotMessages, setQiskitCopilotMessages] = useState<CopilotMessage[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("quantum_ide_chat_quantum_teleportation");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.map((m: any) => ({ ...m, isStreaming: false }));
+          }
+        }
+      } catch (e) {}
+    }
+    return QISKIT_INITIAL_MESSAGES;
+  });
   const copilotMessages = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
 
   // Compute Q-Matrix analytically based on current sliders
@@ -1064,6 +1090,26 @@ export default function QuantumGuruStudioPage() {
               setQiskitCode(savedCode);
             }
           }
+
+          // Restore chat from localStorage for the active project
+          let savedChat: CopilotMessage[] | null = null;
+          try {
+            const stored = localStorage.getItem(`quantum_ide_chat_${matched.id}`);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                savedChat = parsed.map((m: any) => ({ ...m, isStreaming: false }));
+              }
+            }
+          } catch (e) {}
+
+          if (savedChat) {
+            if (matched.framework === "dwave") {
+              setDwaveCopilotMessages(savedChat);
+            } else {
+              setQiskitCopilotMessages(savedChat);
+            }
+          }
         }
       }
     } catch (e) {
@@ -1091,6 +1137,17 @@ export default function QuantumGuruStudioPage() {
       console.warn("Failed to auto-save code to localStorage:", e);
     }
   }, [dwaveCode, qiskitCode, activeProject.id, activeFile, framework]);
+
+  // Real-time auto-save of copilot messages to localStorage per active project
+  useEffect(() => {
+    if (typeof window === "undefined" || !activeProject?.id) return;
+    try {
+      const msgs = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
+      localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(msgs));
+    } catch (e) {
+      console.warn("Failed to auto-save copilot messages to localStorage:", e);
+    }
+  }, [dwaveCopilotMessages, qiskitCopilotMessages, activeProject.id, framework]);
 
   const handleSelectHeroTab = (tab: HeroTabType) => {
     setHeroTab(tab);
@@ -1171,11 +1228,37 @@ export default function QuantumGuruStudioPage() {
       setQiskitCode(loadedCode);
     }
 
-    // Clear console terminal and reset AI block upon project switch
+    // Clear console terminal upon project switch
     setTerminalOutput("");
     setShowTerminal(false);
-    setDwaveCopilotMessages([...DWAVE_INITIAL_MESSAGES]);
-    setQiskitCopilotMessages([...QISKIT_INITIAL_MESSAGES]);
+
+    // Save outgoing project's copilot messages before switching
+    if (activeProject?.id) {
+      const currentMsgs = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
+      try {
+        localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(currentMsgs));
+      } catch (e) {}
+    }
+
+    // Restore or initialize AI Copilot messages for the target project
+    let savedChat: CopilotMessage[] | null = null;
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`quantum_ide_chat_${proj.id}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            savedChat = parsed.map((m: any) => ({ ...m, isStreaming: false }));
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (proj.framework === "dwave") {
+      setDwaveCopilotMessages(savedChat || [...DWAVE_INITIAL_MESSAGES]);
+    } else {
+      setQiskitCopilotMessages(savedChat || [...QISKIT_INITIAL_MESSAGES]);
+    }
 
     if (proj.id === "clean_energy_portfolio") {
       setSolverResult(DEFAULT_PORTFOLIO_RESULT);
@@ -1294,9 +1377,23 @@ export default function QuantumGuruStudioPage() {
     setActiveFile(targetFile);
     setHeroTab("code");
 
-    // 1. Reset AI block clean
+    // Save outgoing project's copilot messages before switching
+    if (activeProject?.id) {
+      const currentMsgs = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
+      try {
+        localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(currentMsgs));
+      } catch (e) {}
+    }
+
+    // 1. Reset AI block clean for the newly created project
+    const freshMessages = customProj.framework === "dwave" ? [...DWAVE_INITIAL_MESSAGES] : [...QISKIT_INITIAL_MESSAGES];
     setDwaveCopilotMessages([...DWAVE_INITIAL_MESSAGES]);
     setQiskitCopilotMessages([...QISKIT_INITIAL_MESSAGES]);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`quantum_ide_chat_${customProj.id}`, JSON.stringify(freshMessages));
+      } catch (e) {}
+    }
 
     // Common Console & Execution clean state
     setTerminalOutput("");
@@ -1418,6 +1515,7 @@ export default function QuantumGuruStudioPage() {
           const list: ProjectItem[] = JSON.parse(stored);
           localStorage.setItem("quantum_ide_custom_projects", JSON.stringify(list.filter(p => p.id !== projectId)));
         }
+        localStorage.removeItem(`quantum_ide_chat_${projectId}`);
       } catch (e) {}
     }
 
@@ -1844,6 +1942,20 @@ export default function QuantumGuruStudioPage() {
       setIsRunningOrRecompiling(false);
     }
   };
+
+  const handleClearChat = useCallback(() => {
+    const fresh = framework === "dwave" ? [...DWAVE_INITIAL_MESSAGES] : [...QISKIT_INITIAL_MESSAGES];
+    if (framework === "dwave") {
+      setDwaveCopilotMessages(fresh);
+    } else {
+      setQiskitCopilotMessages(fresh);
+    }
+    if (typeof window !== "undefined" && activeProject?.id) {
+      try {
+        localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(fresh));
+      } catch (e) {}
+    }
+  }, [framework, activeProject?.id]);
 
   const handleSendMessage = async (text: string) => {
     const userMsg: CopilotMessage = {
@@ -2544,6 +2656,7 @@ export default function QuantumGuruStudioPage() {
             onSelectSection={setSelectedMathSection}
             messages={copilotMessages}
             onSendMessage={handleSendMessage}
+            onClearChat={handleClearChat}
             onApplyMutualExclusion={handleToggleMutualExclusion}
             onApplyCircuitAction={handleRunOrRecompile}
             variables={solverResult.variables}

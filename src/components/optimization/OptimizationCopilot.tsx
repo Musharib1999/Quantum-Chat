@@ -13,6 +13,7 @@ import {
   Check,
   Layers,
   Cpu,
+  RotateCcw,
 } from "lucide-react";
 import { OptimizationSectionId, CopilotMessage, ThemeColors } from "./types";
 import { LatexMath } from "./LatexMath";
@@ -34,6 +35,7 @@ export interface OptimizationCopilotProps {
   variables?: string[];
   isPortfolioProblem?: boolean;
   onApplyCodeToEditor?: (code: string, meta?: any) => void;
+  onClearChat?: () => void;
 }
 
 export function OptimizationCopilot({
@@ -50,6 +52,7 @@ export function OptimizationCopilot({
   variables = [],
   isPortfolioProblem = true,
   onApplyCodeToEditor,
+  onClearChat,
 }: OptimizationCopilotProps) {
   const [input, setInput] = useState("");
   const [showSuggestionsPopover, setShowSuggestionsPopover] = useState<boolean>(false);
@@ -215,6 +218,16 @@ export function OptimizationCopilot({
             {isQiskit ? "Circuit Copilot" : "Optimization Copilot"}
           </h3>
         </div>
+        {onClearChat && (
+          <button
+            onClick={onClearChat}
+            title="Clear conversation for this project"
+            className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-md transition-colors border border-transparent hover:border-white/10 hover:bg-white/[0.06] text-slate-400 hover:text-slate-200"
+          >
+            <RotateCcw className="w-3 h-3 text-slate-400" />
+            <span>Clear</span>
+          </button>
+        )}
       </div>
 
       {/* ── CHAT STREAM (100% Height for Conversation) ── */}
