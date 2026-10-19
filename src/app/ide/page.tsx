@@ -22,6 +22,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
+  JOURNEY_101_MILESTONES,
+  getJourneyMilestone,
+  evaluateQuizResponse,
+} from "@/lib/quantumJourney101";
+import {
   StudioHeader,
   GuidedTourModal,
   ProjectExplorer,
@@ -155,28 +160,7 @@ print("Measurement Counts:", res.get_counts())`;
 
 const DWAVE_INITIAL_CODE = CLEAN_ENERGY_PORTFOLIO_CODE;
 
-const QUANTUM_JOURNEY_CODE = `# 🎓 Quantum Journey — Interactive 101
-# Milestone 1: The Magic of Quantum Superposition
-#
-# Goal: Put qubit 0 into equal superposition using a Hadamard (H) gate,
-# then observe how 1,024 measurements collapse into a 50/50 probability distribution.
-
-from qiskit import QuantumCircuit
-from qiskit_aer import AerSimulator
-
-# 1. Initialize a 1-qubit, 1-classical-bit quantum circuit
-qc = QuantumCircuit(1, 1)
-
-# 2. Apply Hadamard (H) gate to create equal superposition: (|0⟩ + |1⟩) / √2
-qc.h(0)
-
-# 3. Measurement collapses the quantum superposition into a classical bit
-qc.measure(0, 0)
-
-# 4. Simulate on Aer QPU simulator with 1024 shots
-sim = AerSimulator()
-res = sim.run(qc, shots=1024).result()
-print("Quantum 101 Measurement Counts:", res.get_counts())`;
+const QUANTUM_JOURNEY_CODE = JOURNEY_101_MILESTONES[0].starterCode;
 
 const QISKIT_INITIAL_CODE = `# Quantum Guru — Qiskit Quantum Teleportation Protocol
 from qiskit import QuantumCircuit
@@ -386,7 +370,7 @@ const QUANTUM_JOURNEY_INITIAL_MESSAGES: CopilotMessage[] = [
   {
     id: 1,
     sender: "assistant",
-    text: "Welcome to your Quantum Journey! 🚀 I am Guru AI, your personal quantum pair-programmer and mentor.\n\nIn classical computing, a bit is like a coin lying flat on a table: strictly 0 (heads) or 1 (tails). But in quantum computing, the Hadamard (H) gate sends the coin spinning in mid-air—putting qubit 0 into an equal 50/50 superposition where it is both 0 and 1 simultaneously until measured!\n\n👉 Milestone 1 Guided Challenge:\n1. Switch to the Circuit Canvas tab above to view your H gate on wire q[0].\n2. Click ▶ Run (or Shift+Enter) to simulate 1,024 shots.\n3. Check the Results tab to see the probability histogram!\n\nAsk me anything anytime: \"Why are counts near 500?\", \"What is a qubit?\", or \"Give me Milestone 2 (Entanglement)!\"",
+    text: JOURNEY_101_MILESTONES[0].introPrompt,
     timestamp: "Just now",
   },
 ];
@@ -948,6 +932,27 @@ export default function QuantumGuruStudioPage() {
   const [showProjectModal, setShowProjectModal] = useState<boolean>(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
   const [showAlgorithmStudioModal, setShowAlgorithmStudioModal] = useState<boolean>(false);
+
+  // 🎓 Quantum Journey 101 Sequential Milestone & Quiz State
+  const [journeyMilestoneId, setJourneyMilestoneId] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("quantum_journey_101_milestone");
+        if (saved) return Math.min(4, Math.max(1, parseInt(saved, 10)));
+      } catch (e) {}
+    }
+    return 1;
+  });
+
+  const [journeyStage, setJourneyStage] = useState<"explore" | "quiz" | "challenge" | "completed">(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("quantum_journey_101_stage");
+        if (saved === "quiz" || saved === "challenge" || saved === "completed") return saved;
+      } catch (e) {}
+    }
+    return "explore";
+  });
 
   // 🧭 Product Walkthrough Tour State
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
@@ -2253,6 +2258,57 @@ export default function QuantumGuruStudioPage() {
               (data.stdout ? `\n--- Standard Output ---\n${data.stdout}` : "") +
               (data.circuit_ascii ? `\n--- Circuit Diagram ---\n${data.circuit_ascii}` : "")
           );
+
+          // 🎓 Quantum Journey 101 AI Mentor Guidance on Execution
+          if (activeProject.id === "quantum_journey_101") {
+            const currentM = getJourneyMilestone(journeyMilestoneId);
+            if (journeyStage === "explore") {
+              const countsStr = JSON.stringify(data.measurement_counts || {});
+              const debriefMsg: CopilotMessage = {
+                id: Date.now() + 5,
+                sender: "assistant",
+                text: `🎉 **Simulation Complete!**\n\nYour circuit executed with Aer simulator (\`${execShots}\` shots).\nRecorded Measurement Distribution:\n\`\`\`json\n${countsStr}\n\`\`\`\n\n${currentM.quizQuestion}`,
+                timestamp: "Just now",
+              };
+              setQiskitCopilotMessages((prev) => [...prev, debriefMsg]);
+              setJourneyStage("quiz");
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem("quantum_journey_101_stage", "quiz");
+                } catch (e) {}
+              }
+            } else if (journeyStage === "challenge") {
+              const valResult = currentM.validateChallenge(
+                data.measurement_counts || {},
+                data.circuit_gates || [],
+                data.active_qubits || 1,
+                qiskitCode
+              );
+              if (valResult.passed) {
+                const passMsg: CopilotMessage = {
+                  id: Date.now() + 5,
+                  sender: "assistant",
+                  text: `${valResult.feedback}\n\n${currentM.completionMessage}`,
+                  timestamp: "Just now",
+                };
+                setQiskitCopilotMessages((prev) => [...prev, passMsg]);
+                setJourneyStage("completed");
+                if (typeof window !== "undefined") {
+                  try {
+                    localStorage.setItem("quantum_journey_101_stage", "completed");
+                  } catch (e) {}
+                }
+              } else {
+                const hintMsg: CopilotMessage = {
+                  id: Date.now() + 5,
+                  sender: "assistant",
+                  text: `💡 **Guru AI Assessment:**\n\n${valResult.feedback}`,
+                  timestamp: "Just now",
+                };
+                setQiskitCopilotMessages((prev) => [...prev, hintMsg]);
+              }
+            }
+          }
         } else {
           setTerminalOutput(`[STDERR] ${data.stderr || data.error || "Circuit execution error"}`);
         }
@@ -2353,6 +2409,21 @@ export default function QuantumGuruStudioPage() {
         localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(fresh));
       } catch (e) {}
     }
+    if (activeProject?.id === "quantum_journey_101") {
+      setJourneyMilestoneId(1);
+      setJourneyStage("explore");
+      const m1 = getJourneyMilestone(1);
+      setQiskitCode(m1.starterCode);
+      setQiskitCounts({});
+      setTerminalOutput(`=== 🎓 Quantum Journey 101 Reset ===\nWorkspace reset to Milestone 1: Superposition.\n`);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("quantum_journey_101_milestone", "1");
+          localStorage.setItem("quantum_journey_101_stage", "explore");
+          localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, m1.starterCode);
+        } catch (e) {}
+      }
+    }
   }, [framework, activeProject?.id]);
 
   const handleSendMessage = async (text: string) => {
@@ -2377,6 +2448,97 @@ export default function QuantumGuruStudioPage() {
       setQiskitCopilotMessages((prev) => [...prev, initialBotMsg]);
 
       const isJourney = activeProject.id === "quantum_journey_101";
+      if (isJourney) {
+        const lower = text.trim().toLowerCase();
+        // 1. Next Milestone Transition
+        if (
+          lower.includes("next milestone") ||
+          lower === "next" ||
+          lower.includes("load milestone") ||
+          lower.includes("advance milestone")
+        ) {
+          const nextId = Math.min(4, journeyMilestoneId + 1);
+          const nextM = getJourneyMilestone(nextId);
+          setJourneyMilestoneId(nextId);
+          setJourneyStage("explore");
+          setQiskitCode(nextM.starterCode);
+          setQiskitCounts({}); // Clean slate for results!
+          setLatencyMs(0);
+          setTerminalOutput(
+            `=== 🎓 Quantum Journey 101: ${nextM.badge} — ${nextM.title} ===\n` +
+            `Workspace refreshed with clean slate.\n` +
+            `Active Wires: ${nextM.qubits} | Ready for simulation.\n`
+          );
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("quantum_journey_101_milestone", String(nextId));
+              localStorage.setItem("quantum_journey_101_stage", "explore");
+              localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, nextM.starterCode);
+            } catch (e) {}
+          }
+          const transitionMsg: CopilotMessage = {
+            id: Date.now() + 2,
+            sender: "assistant",
+            text: `✨ **Workspace Refreshed for ${nextM.badge}: ${nextM.title}** ✨\n\n${nextM.introPrompt}`,
+            timestamp: "Just now",
+          };
+          setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), transitionMsg]);
+          return;
+        }
+
+        // 2. Reset Journey Command
+        if (
+          lower.includes("reset journey") ||
+          lower === "reset" ||
+          lower.includes("restart journey")
+        ) {
+          const m1 = getJourneyMilestone(1);
+          setJourneyMilestoneId(1);
+          setJourneyStage("explore");
+          setQiskitCode(m1.starterCode);
+          setQiskitCounts({});
+          setLatencyMs(0);
+          setTerminalOutput(`=== 🎓 Quantum Journey 101 Reset ===\nWorkspace reset to Milestone 1: Superposition.\n`);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("quantum_journey_101_milestone", "1");
+              localStorage.setItem("quantum_journey_101_stage", "explore");
+              localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, m1.starterCode);
+            } catch (e) {}
+          }
+          const resetMsg: CopilotMessage = {
+            id: Date.now() + 2,
+            sender: "assistant",
+            text: `🔄 **Quantum Journey Reset to Milestone 1**\n\n${m1.introPrompt}`,
+            timestamp: "Just now",
+          };
+          setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), resetMsg]);
+          return;
+        }
+
+        // 3. Quiz Answer Evaluation
+        if (journeyStage === "quiz") {
+          const evalRes = evaluateQuizResponse(journeyMilestoneId, text);
+          const currentM = getJourneyMilestone(journeyMilestoneId);
+          if (evalRes.passed) {
+            setJourneyStage("challenge");
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem("quantum_journey_101_stage", "challenge");
+              } catch (e) {}
+            }
+            const quizPassMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: `${evalRes.explanation}\n\n---\n\n${currentM.challengeInstruction}`,
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), quizPassMsg]);
+            return;
+          }
+        }
+      }
+
       const userMessageToSend = isJourney
         ? `[TUTOR MODE: You are Guru AI, an inspiring and patient Quantum Computing Professor & Socratic Lecturer guiding the user through Quantum Journey 101. Keep explanations conversational, crystal-clear, and encourage them to explore the Circuit Canvas, Monaco Editor, and Results tab. Check their circuit/code if they ask, give gentle hints without just dumping full solutions, and celebrate their learning milestones. Current code in editor:\n\`\`\`python\n${qiskitCode}\n\`\`\`\n]\n\nUser Question: ${text}`
         : text;
