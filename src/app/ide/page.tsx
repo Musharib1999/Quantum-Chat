@@ -2535,6 +2535,25 @@ export default function QuantumGuruStudioPage() {
     }
   };
 
+  const handleAutoFix = useCallback(async (customErrorText?: string) => {
+    const errText = customErrorText || terminalOutput || "";
+    if (!errText) return;
+
+    const cleanError = errText
+      .replace(/^\$ [^\n]+\n/, "")
+      .replace(/\[STDERR\]\s*/g, "")
+      .replace(/\[ERROR\]\s*/g, "")
+      .trim();
+
+    const repairPrompt = `I ran my quantum code and encountered this execution error:
+\`\`\`
+${cleanError}
+\`\`\`
+Please diagnose why this error occurred (such as variable scoping, undefined circuit references, or parameter mismatch), fix the Python code, and return the complete corrected drop-in code.`;
+
+    await handleSendMessage(repairPrompt);
+  }, [terminalOutput, handleSendMessage]);
+
   const handleToggleMutualExclusion = () => {
     setMathParams((prev) => ({
       ...prev,
@@ -2912,7 +2931,21 @@ export default function QuantumGuruStudioPage() {
                                 </div>
                               </div>
 
-                              <div className="flex items-center space-x-2 text-zinc-400">
+                              <div className="flex items-center space-x-2.5 text-zinc-400">
+                                {item.status === "error" && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAutoFix(item.stderr || item.stdout);
+                                    }}
+                                    className="flex items-center space-x-1 text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/25 transition-all cursor-pointer"
+                                    title="Auto-repair code with Guru AI"
+                                  >
+                                    <Sparkles className="w-2.5 h-2.5" />
+                                    <span>Auto-Fix</span>
+                                  </button>
+                                )}
                                 <span className="text-[11px] font-mono text-zinc-500">
                                   {isExpanded ? "Hide Output" : "View Output"}
                                 </span>
@@ -2976,6 +3009,7 @@ export default function QuantumGuruStudioPage() {
             showTerminal={showTerminal}
             onToggleTerminal={() => setShowTerminal((prev) => !prev)}
             terminalOutput={terminalOutput}
+            onAutoFix={() => handleAutoFix()}
             specs={
               framework === "qiskit"
                 ? {

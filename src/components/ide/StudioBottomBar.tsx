@@ -7,6 +7,8 @@ import {
   RotateCw,
   ChevronDown,
   ChevronUp,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 
 export interface StudioBottomBarProps {
@@ -18,6 +20,7 @@ export interface StudioBottomBarProps {
   showTerminal: boolean;
   onToggleTerminal: () => void;
   terminalOutput?: string;
+  onAutoFix?: () => void;
   specs?: {
     qubits?: number;
     depth?: number;
@@ -44,9 +47,20 @@ export function StudioBottomBar({
   showTerminal,
   onToggleTerminal,
   terminalOutput,
+  onAutoFix,
   specs,
 }: StudioBottomBarProps) {
   const isDwave = framework === "dwave";
+
+  const hasError = Boolean(
+    terminalOutput &&
+    (terminalOutput.includes("[STDERR]") ||
+     terminalOutput.includes("[ERROR]") ||
+     terminalOutput.includes("Traceback") ||
+     terminalOutput.includes("NameError") ||
+     terminalOutput.includes("SyntaxError") ||
+     terminalOutput.includes("Error:"))
+  );
 
   const valClass = isDark
     ? "text-zinc-200 font-medium"
@@ -203,7 +217,20 @@ export function StudioBottomBar({
             </button>
           )}
 
-          <span className={`select-none ${isDark ? "text-zinc-700" : "text-slate-300"}`}>|</span>
+          {hasError && onAutoFix && (
+            <>
+              <button
+                type="button"
+                onClick={onAutoFix}
+                className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-gradient-to-r from-amber-500/15 to-sky-500/15 hover:from-amber-500/25 hover:to-sky-500/25 border border-sky-500/35 text-sky-300 hover:text-white transition-all shadow-xs cursor-pointer animate-pulse"
+                title="Auto-repair code error with Guru Copilot"
+              >
+                <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+                <span>Auto-Fix with Guru AI</span>
+              </button>
+              <span className={`select-none ${isDark ? "text-zinc-700" : "text-slate-300"}`}>|</span>
+            </>
+          )}
 
           {/* Console Toggle Button */}
           <button
@@ -228,11 +255,36 @@ export function StudioBottomBar({
 
       {/* ── EXPANDED TERMINAL DRAWER ── */}
       {showTerminal && (
-        <div className="flex-1 p-3 font-mono text-[11px] overflow-auto text-emerald-400/90 whitespace-pre-wrap leading-relaxed select-text">
-          {terminalOutput ||
-            `$ Ready. Click "${
-              isDwave ? "Recompile" : "Run Circuit"
-            }" in the top toolbar to execute.`}
+        <div className="flex-1 p-3 font-mono text-[11px] overflow-auto flex flex-col justify-between leading-relaxed select-text">
+          <div className={`${hasError ? "text-rose-400/90" : "text-emerald-400/90"} whitespace-pre-wrap`}>
+            {terminalOutput ||
+              `$ Ready. Click "${
+                isDwave ? "Recompile" : "Run Circuit"
+              }" in the top toolbar to execute.`}
+          </div>
+
+          {hasError && onAutoFix && (
+            <div className={`mt-3 p-2.5 rounded-lg border flex items-center justify-between shrink-0 ${
+              isDark
+                ? "bg-[#14161F] border-rose-500/25 text-zinc-200"
+                : "bg-rose-50/70 border-rose-200 text-slate-800"
+            }`}>
+              <div className="flex items-center space-x-2 text-xs">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span className="font-sans text-xs">
+                  Execution error detected. Guru AI can diagnose and repair your code automatically.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onAutoFix}
+                className="flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold font-mono bg-sky-500 hover:bg-sky-400 text-black shadow-sm transition-all cursor-pointer shrink-0"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Auto-Fix with Guru AI</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
