@@ -6,12 +6,10 @@ import {
   ChevronDown,
   Plus,
   Play,
-  Zap,
   Cpu,
   LogIn,
   LogOut,
   RotateCw,
-  Sparkles,
   Activity,
   Folder,
   FileCode,
@@ -439,21 +437,7 @@ export function StudioHeader({
           </button>
         )}
 
-        {/* Tour Walkthrough Button */}
-        {onStartTour && (
-          <button
-            onClick={onStartTour}
-            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
-              isDark
-                ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-zinc-300 hover:text-white"
-                : "bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700 hover:text-slate-900"
-            }`}
-            title="Take Guided Product Tour"
-          >
-            <Compass className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="font-medium">Tour</span>
-          </button>
-        )}
+
 
         {/* Primary Action Button (Option A: High-Contrast Monochromatic Linear/Vercel style) */}
         <button
@@ -559,26 +543,7 @@ export function StudioHeader({
                       <span>Take Product Tour</span>
                     </button>
                   )}
-                  <Link
-                    href="/marketplace"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                      isDark ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white" : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
-                    }`}
-                  >
-                    <Zap className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Marketplace</span>
-                  </Link>
-                  <Link
-                    href="/quantum-assistant"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                      isDark ? "hover:bg-white/[0.06] text-zinc-300 hover:text-white" : "hover:bg-slate-100 text-slate-700 hover:text-slate-900"
-                    }`}
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Assistant</span>
-                  </Link>
+
                 </div>
 
                 {/* Sign Out Action */}
