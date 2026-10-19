@@ -155,6 +155,29 @@ print("Measurement Counts:", res.get_counts())`;
 
 const DWAVE_INITIAL_CODE = CLEAN_ENERGY_PORTFOLIO_CODE;
 
+const QUANTUM_JOURNEY_CODE = `# 🎓 Quantum Journey — Interactive 101
+# Milestone 1: The Magic of Quantum Superposition
+#
+# Goal: Put qubit 0 into equal superposition using a Hadamard (H) gate,
+# then observe how 1,024 measurements collapse into a 50/50 probability distribution.
+
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+# 1. Initialize a 1-qubit, 1-classical-bit quantum circuit
+qc = QuantumCircuit(1, 1)
+
+# 2. Apply Hadamard (H) gate to create equal superposition: (|0⟩ + |1⟩) / √2
+qc.h(0)
+
+# 3. Measurement collapses the quantum superposition into a classical bit
+qc.measure(0, 0)
+
+# 4. Simulate on Aer QPU simulator with 1024 shots
+sim = AerSimulator()
+res = sim.run(qc, shots=1024).result()
+print("Quantum 101 Measurement Counts:", res.get_counts())`;
+
 const QISKIT_INITIAL_CODE = `# Quantum Guru — Qiskit Quantum Teleportation Protocol
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
@@ -224,6 +247,16 @@ res = sim.run(qc, shots=2048).result()
 print("VQE H2 State Counts:", res.get_counts())`;
 
 const INITIAL_PROJECTS: ProjectItem[] = [
+  {
+    id: "quantum_journey_101",
+    title: "Quantum Journey — Interactive 101",
+    desc: "Guided hands-on exploration of qubits, superposition, entanglement & circuits with Guru AI.",
+    framework: "qiskit",
+    updated: "Just now",
+    files: ["journey.py", "circuit.qasm", "deployment.json"],
+    activeFile: "journey.py",
+    fileContents: { "journey.py": QUANTUM_JOURNEY_CODE },
+  },
   {
     id: "clean_energy_portfolio",
     title: "Clean Energy Portfolio",
@@ -304,6 +337,11 @@ const ENTERPRISE_PROJECT_TEMPLATES: Record<string, any> = {
       }
     }
   },
+  "quantum-journey": {
+    name: "Quantum Journey — Interactive 101",
+    backend: "aer_simulator",
+    files: { "journey.py": { lang: "python", content: QUANTUM_JOURNEY_CODE } }
+  },
   "my-quantum-project": {
     name: "Bell State & Teleportation",
     backend: "aer_simulator",
@@ -340,6 +378,15 @@ const DWAVE_INITIAL_MESSAGES: CopilotMessage[] = [
     id: 1,
     sender: "assistant",
     text: "Quantum Guru Studio initialized. I am your quantum formulation & optimization copilot. Ask me to adjust Lagrange multipliers, enforce mutual exclusion, or analyze eigenstate distributions.",
+    timestamp: "Just now",
+  },
+];
+
+const QUANTUM_JOURNEY_INITIAL_MESSAGES: CopilotMessage[] = [
+  {
+    id: 1,
+    sender: "assistant",
+    text: "Welcome to your Quantum Journey! 🚀 I am Guru AI, your personal quantum pair-programmer and mentor.\n\nIn classical computing, a bit is like a coin lying flat on a table: strictly 0 (heads) or 1 (tails). But in quantum computing, the Hadamard (H) gate sends the coin spinning in mid-air—putting qubit 0 into an equal 50/50 superposition where it is both 0 and 1 simultaneously until measured!\n\n👉 Milestone 1 Guided Challenge:\n1. Switch to the Circuit Canvas tab above to view your H gate on wire q[0].\n2. Click ▶ Run (or Shift+Enter) to simulate 1,024 shots.\n3. Check the Results tab to see the probability histogram!\n\nAsk me anything anytime: \"Why are counts near 500?\", \"What is a qubit?\", or \"Give me Milestone 2 (Entanglement)!\"",
     timestamp: "Just now",
   },
 ];
@@ -728,8 +775,11 @@ export default function QuantumGuruStudioPage() {
               localStorage.removeItem("quantum_ide_last_qiskit_code");
             } catch (e) {}
 
-            const ids = new Set(sanitizedList.map((p: any) => p.id));
-            return [...sanitizedList, ...INITIAL_PROJECTS.filter((p) => !ids.has(p.id))];
+            const journey = INITIAL_PROJECTS.find((p) => p.id === "quantum_journey_101")!;
+            const listWithoutJourney = sanitizedList.filter((p: any) => p.id !== "quantum_journey_101");
+            const ids = new Set(listWithoutJourney.map((p: any) => p.id));
+            const remainingInitial = INITIAL_PROJECTS.filter((p) => p.id !== "quantum_journey_101" && !ids.has(p.id));
+            return [journey, ...listWithoutJourney, ...remainingInitial];
           }
         }
       } catch (e) {}
@@ -885,13 +935,14 @@ export default function QuantumGuruStudioPage() {
       try {
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get("project") || params.get("projectId");
-        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id") || "quantum_teleportation";
-        const savedFile = localStorage.getItem("quantum_ide_active_file") || "teleportation.py";
+        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id") || "quantum_journey_101";
+        const savedFile = localStorage.getItem("quantum_ide_active_file") || (savedId === "quantum_journey_101" ? "journey.py" : "teleportation.py");
         const savedCode = localStorage.getItem(`quantum_ide_code_${savedId}_${savedFile}`);
         if (savedCode) return savedCode;
+        if (savedId === "quantum_journey_101") return QUANTUM_JOURNEY_CODE;
       } catch (e) {}
     }
-    return QISKIT_INITIAL_CODE;
+    return QUANTUM_JOURNEY_CODE;
   });
 
   const [showProjectModal, setShowProjectModal] = useState<boolean>(false);
@@ -1083,16 +1134,20 @@ export default function QuantumGuruStudioPage() {
   const [qiskitCopilotMessages, setQiskitCopilotMessages] = useState<CopilotMessage[]>(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("quantum_ide_chat_quantum_teleportation");
+        const activeId = new URLSearchParams(window.location.search).get("project") || localStorage.getItem("quantum_ide_active_project_id") || "quantum_journey_101";
+        const saved = localStorage.getItem(`quantum_ide_chat_${activeId}`);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             return parsed.map((m: any) => ({ ...m, isStreaming: false }));
           }
         }
+        if (activeId === "quantum_journey_101") {
+          return QUANTUM_JOURNEY_INITIAL_MESSAGES;
+        }
       } catch (e) {}
     }
-    return QISKIT_INITIAL_MESSAGES;
+    return QUANTUM_JOURNEY_INITIAL_MESSAGES;
   });
   const copilotMessages = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
 
@@ -1299,6 +1354,8 @@ export default function QuantumGuruStudioPage() {
     if (!loadedCode) {
       if (proj.id === "clean_energy_portfolio") {
         loadedCode = CLEAN_ENERGY_PORTFOLIO_CODE;
+      } else if (proj.id === "quantum_journey_101") {
+        loadedCode = QUANTUM_JOURNEY_CODE;
       } else if (proj.id === "quantum_teleportation") {
         loadedCode = QISKIT_INITIAL_CODE;
       } else if (proj.id === "maxcut_bipartite_graph") {
@@ -1344,6 +1401,8 @@ export default function QuantumGuruStudioPage() {
 
     if (proj.framework === "dwave") {
       setDwaveCopilotMessages(savedChat || [...DWAVE_INITIAL_MESSAGES]);
+    } else if (proj.id === "quantum_journey_101") {
+      setQiskitCopilotMessages(savedChat || [...QUANTUM_JOURNEY_INITIAL_MESSAGES]);
     } else {
       setQiskitCopilotMessages(savedChat || [...QISKIT_INITIAL_MESSAGES]);
     }
@@ -2278,7 +2337,12 @@ export default function QuantumGuruStudioPage() {
   };
 
   const handleClearChat = useCallback(() => {
-    const fresh = framework === "dwave" ? [...DWAVE_INITIAL_MESSAGES] : [...QISKIT_INITIAL_MESSAGES];
+    const fresh =
+      framework === "dwave"
+        ? [...DWAVE_INITIAL_MESSAGES]
+        : activeProject.id === "quantum_journey_101"
+        ? [...QUANTUM_JOURNEY_INITIAL_MESSAGES]
+        : [...QISKIT_INITIAL_MESSAGES];
     if (framework === "dwave") {
       setDwaveCopilotMessages(fresh);
     } else {
@@ -2312,13 +2376,18 @@ export default function QuantumGuruStudioPage() {
       };
       setQiskitCopilotMessages((prev) => [...prev, initialBotMsg]);
 
+      const isJourney = activeProject.id === "quantum_journey_101";
+      const userMessageToSend = isJourney
+        ? `[TUTOR MODE: You are Guru AI, an inspiring and patient Quantum Computing Professor & Socratic Lecturer guiding the user through Quantum Journey 101. Keep explanations conversational, crystal-clear, and encourage them to explore the Circuit Canvas, Monaco Editor, and Results tab. Check their circuit/code if they ask, give gentle hints without just dumping full solutions, and celebrate their learning milestones. Current code in editor:\n\`\`\`python\n${qiskitCode}\n\`\`\`\n]\n\nUser Question: ${text}`
+        : text;
+
       try {
         const resp = await fetch("/api/ide/agent/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             project_id: activeProject.id,
-            user_message: text,
+            user_message: userMessageToSend,
             active_file: activeFile,
             file_content: qiskitCode,
             target_backend: "aer_simulator",
