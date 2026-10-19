@@ -2565,7 +2565,7 @@ export default function QuantumGuruStudioPage() {
                           Qiskit Aer Statevector Measurement Counts
                         </h3>
                         <p className="text-xs text-zinc-400">
-                          Simulated distribution over {qiskitShots} shots
+                          Simulated measurement probability distribution
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
