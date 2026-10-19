@@ -828,7 +828,7 @@ if HAS_DWAVE:
                 def _format_var_tex(var_raw):
                     s = str(var_raw)
                     if "_" in s:
-                        escaped = s.replace("_", r"\_")
+                        escaped = s.replace("_", "\\\\_")
                         return f"x_{{{{\\text{{{escaped}}}}}}}"
                     return f"x_{{{s}}}" if len(s) > 1 else f"x_{s}"
 
@@ -840,7 +840,7 @@ if HAS_DWAVE:
                             if not str(s_v).startswith('slack_'):
                                 s_v_tex = _format_var_tex(s_v)
                                 b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
-                                latex_parts.append(f"{b_str} \, {s_v_tex}")
+                                latex_parts.append(f"{b_str} \\\\, {s_v_tex}")
                     for (u, v), bias in target_model.quadratic.items():
                         if abs(bias) > 1e-5:
                             s_u = v_map[u] if (v_map and isinstance(u, int) and u < len(v_map)) else str(u)
@@ -849,11 +849,11 @@ if HAS_DWAVE:
                                 b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
                                 if s_u == s_v:
                                     s_u_tex = _format_var_tex(s_u)
-                                    latex_parts.append(f"{b_str} \, {s_u_tex}")
+                                    latex_parts.append(f"{b_str} \\\\, {s_u_tex}")
                                 else:
                                     s_u_tex = _format_var_tex(s_u)
                                     s_v_tex = _format_var_tex(s_v)
-                                    latex_parts.append(f"{b_str} \, {s_u_tex} {s_v_tex}")
+                                    latex_parts.append(f"{b_str} \\\\, {s_u_tex} {s_v_tex}")
                     if abs(target_model.offset) > 1e-5:
                         o_str = f"{target_model.offset:+.4g}".rstrip('0').rstrip('.') if '.' in f"{target_model.offset:+.4g}" else f"{target_model.offset:+.4g}"
                         latex_parts.append(o_str)
@@ -866,11 +866,11 @@ if HAS_DWAVE:
                                 b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
                                 if s_u == s_v:
                                     s_u_tex = _format_var_tex(s_u)
-                                    latex_parts.append(f"{b_str} \, {s_u_tex}")
+                                    latex_parts.append(f"{b_str} \\\\, {s_u_tex}")
                                 else:
                                     s_u_tex = _format_var_tex(s_u)
                                     s_v_tex = _format_var_tex(s_v)
-                                    latex_parts.append(f"{b_str} \, {s_u_tex} {s_v_tex}")
+                                    latex_parts.append(f"{b_str} \\\\, {s_u_tex} {s_v_tex}")
 
                 latex_formula = " ".join(latex_parts).strip()
                 if latex_formula.startswith("+"):

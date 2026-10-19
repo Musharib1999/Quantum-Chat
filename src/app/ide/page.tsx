@@ -2816,10 +2816,16 @@ export default function QuantumGuruStudioPage() {
                                 )}
                                 {item.stderr && (
                                   <div>
-                                    <div className="text-[10px] font-mono uppercase tracking-wider text-rose-400 mb-1">
-                                      Error Output
+                                    <div className={`text-[10px] font-mono uppercase tracking-wider mb-1 ${
+                                      item.status === "success" ? "text-amber-400" : "text-rose-400"
+                                    }`}>
+                                      {item.status === "success" ? "Warnings / Diagnostics" : "Error Output"}
                                     </div>
-                                    <pre className="p-2.5 rounded bg-rose-950/20 font-mono text-xs text-rose-300 overflow-x-auto whitespace-pre-wrap max-h-48 border border-rose-500/20">
+                                    <pre className={`p-2.5 rounded font-mono text-xs overflow-x-auto whitespace-pre-wrap max-h-48 border ${
+                                      item.status === "success"
+                                        ? "bg-amber-950/20 text-amber-300 border-amber-500/20"
+                                        : "bg-rose-950/20 text-rose-300 border-rose-500/20"
+                                    }`}>
                                       {item.stderr}
                                     </pre>
                                   </div>
