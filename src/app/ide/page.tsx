@@ -375,6 +375,23 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
 
     if (opName === "delay") continue;
 
+    if (opName === "save_statevector" || opName.startsWith("save_")) {
+      const qIndices = Array.from({ length: numQubits }, (_, i) => i);
+      const currentStep = Math.max(0, ...qIndices.map((q) => stepTrack[q] ?? 0));
+      for (const q of qIndices) {
+        gates.push({
+          name: "|ψ⟩",
+          qubit: q,
+          qubits: qIndices,
+          step: currentStep,
+          role: "probe",
+          params: [],
+        });
+        stepTrack[q] = currentStep + 1;
+      }
+      continue;
+    }
+
     if (opName === "barrier") {
       const nums = Array.from(argsStr.matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
       const qIndices = nums.length > 0 ? nums : Array.from({ length: numQubits }, (_, i) => i);

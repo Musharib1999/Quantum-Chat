@@ -114,6 +114,8 @@ export function CircuitCanvasView({
           matrix[q][s] = { name: "M", gateIdx: idx };
         } else if (name === "BARRIER") {
           matrix[q][s] = { name: "B", gateIdx: idx };
+        } else if (name === "SAVE_STATEVECTOR" || name.startsWith("SAVE_") || name === "|Ψ⟩" || name === "|PSI>") {
+          matrix[q][s] = { name: "|ψ⟩", isProbe: true, gateIdx: idx };
         } else {
           matrix[q][s] = { name: name || "U", gateIdx: idx };
         }
@@ -364,6 +366,15 @@ export function CircuitCanvasView({
                               title="SWAP Gate"
                             >
                               ✕
+                            </div>
+                          ) : gate.name === "|ψ⟩" || gate.isProbe ? (
+                            <div
+                              className={`px-2 py-1 rounded border flex items-center justify-center font-mono font-bold shadow-xs transition-transform hover:scale-105 cursor-default ${
+                                isCompact ? "text-[10px] h-7 min-w-[32px]" : "text-[11px] h-8 min-w-[36px]"
+                              } bg-cyan-500/15 border-cyan-500/40 text-cyan-300`}
+                              title="Statevector Snapshot — Evaluates wavefunction |ψ⟩ at this step (qc.save_statevector)"
+                            >
+                              |ψ⟩
                             </div>
                           ) : (
                             <div
