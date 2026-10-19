@@ -360,11 +360,14 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
   const gates: any[] = [];
   const lines = code.split("\n");
 
+  // Detect user circuit variable name (e.g. qc = QuantumCircuit(...) or circuit = QuantumCircuit(...))
+  const varMatch = code.match(/([a-zA-Z0-9_]+)\s*=\s*QuantumCircuit/);
+  const primaryVar = varMatch ? varMatch[1] : "qc";
+  const qcCallRegex = new RegExp(`^(?:${primaryVar}|qc|circuit|circ|qcirc)\.([a-zA-Z0-9_]+)\((.*)\)`);
+
   for (const rawLine of lines) {
     const line = rawLine.replace(/#.*$/, "").trim();
-    if (!line.startsWith("qc.")) continue;
-
-    const callMatch = line.match(/^qc\.([a-zA-Z0-9_]+)\((.*)\)/);
+    const callMatch = line.match(qcCallRegex);
     if (!callMatch) continue;
 
     const opName = callMatch[1].toLowerCase();
@@ -545,21 +548,16 @@ function classifyOptimizationIntent(text: string): "CHAT" | "FORMULATE" {
   }
 
   // Tier 3: Optimization Problem Formulation Triggers
-  const optimizationTriggers = [
-    "formulate", "synthesize", "optimize", "minimise", "minimize", "maximise", "maximize",
-    "budget", "constraint", "constraints", "slack", "hamiltonian", "qubo",
-    "allocate", "allocation", "knapsack", "maxcut", "portfolio", "roster",
-    "penalty stiffness", "verma-lewis", "couplers", "penalty weight"
-  ];
+  const hasNumbersAndUnits = /\b\d+\s*(workers|shifts|hours|days|assets|plants|items|kg|mw|dollars|\$|cost|budget|variables|nodes|edges)/i.test(clean);
+  const hasConstrainedProblemStructure = /\b(minimize|maximize)\b.*\b(subject to|constraints?|budget|capacity)\b/i.test(clean) ||
+    /\b(knapsack|maxcut|max-cut|traveling salesperson|tsp|portfolio optimization|graph coloring|set cover)\b/i.test(clean);
 
-  const hasOptKeyword = optimizationTriggers.some((kw) => clean.includes(kw));
-  const hasNumbersAndUnits = /\b\d+\s*(workers|shifts|hours|days|assets|plants|items|kg|mw|dollars|\$|cost|budget)/i.test(clean);
-
-  if (hasOptKeyword || hasNumbersAndUnits || asksToFormulate) {
+  if (asksToFormulate || (hasNumbersAndUnits && hasConstrainedProblemStructure)) {
     return "FORMULATE";
   }
 
-  return clean.split(/\s+/).length <= 6 ? "CHAT" : "FORMULATE";
+  // Default to conversational CHAT to prevent general queries from breaking the mathematical formulation pipeline
+  return "CHAT";
 }
 
 export default function QuantumGuruStudioPage() {
@@ -695,7 +693,7 @@ export default function QuantumGuruStudioPage() {
               id: doc.projectId,
               title: doc.title || doc.projectId,
               desc: doc.desc || "Cloud project stored in MongoDB Atlas",
-              framework: (doc.templateKey === "qiskit" ? "qiskit" : "dwave") as FrameworkType,
+              framework: (doc.framework || (doc.templateKey === "qiskit" ? "qiskit" : "dwave")) as FrameworkType,
               updated: dateStr,
               files: fileNames.length > 0 ? fileNames : ["main.py"],
               activeFile: doc.activeFile || fileNames[0] || "main.py",
@@ -710,6 +708,20 @@ export default function QuantumGuruStudioPage() {
             const nonDuplicates = prev.filter((p) => !cloudIds.has(p.id));
             return [...cloudList, ...nonDuplicates];
           });
+
+          // Activate targeted project if specified in URL or last active session
+          if (typeof window !== "undefined") {
+            try {
+              const params = new URLSearchParams(window.location.search);
+              const targetId = params.get("project") || params.get("projectId") || localStorage.getItem("quantum_ide_active_project_id");
+              if (targetId) {
+                const matchedCloud = cloudList.find((p) => p.id === targetId);
+                if (matchedCloud && activeProject.id !== matchedCloud.id) {
+                  handleSelectProject(matchedCloud);
+                }
+              }
+            } catch (e) {}
+          }
         }
       } catch (err) {
         console.warn("Failed to load cloud projects:", err);
@@ -1356,6 +1368,7 @@ export default function QuantumGuruStudioPage() {
             title: customProj.title,
             desc: customProj.desc,
             templateKey: customProj.framework,
+            framework: customProj.framework,
             activeFile: targetFile,
             files: filesPayload,
           }),
@@ -1450,6 +1463,7 @@ export default function QuantumGuruStudioPage() {
             title: activeProject.title,
             desc: activeProject.desc,
             templateKey: activeProject.framework,
+            framework: activeProject.framework,
             activeFile: activeFile,
             files: filesPayload,
           }),

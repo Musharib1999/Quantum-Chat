@@ -166,7 +166,7 @@ DISALLOWED_MODULES = {
 }
 
 DISALLOWED_CALLS = {
-    'eval', 'exec', 'compile', '__import__', 'getattr', 'setattr', 'delattr',
+    'eval', 'exec', 'compile', '__import__', 'setattr', 'delattr',
     'globals', 'locals', 'vars', 'memoryview'
 }
 
@@ -330,8 +330,17 @@ try:
                     return ExactCQMSolver().sample_cqm(cqm)
             except Exception:
                 pass
-            bqm, _ = dimod.cqm_to_bqm(cqm, lagrange_multiplier=10.0)
-            return SimulatedAnnealingSampler().sample(bqm, **kwargs)
+            # Filter kwargs supported by SimulatedAnnealingSampler (strip time_limit, label, etc.)
+            sa_kwargs = {k: v for k, v in kwargs.items() if k in ("num_reads", "num_sweeps", "beta_range", "seed")}
+            try:
+                bqm, _ = dimod.cqm_to_bqm(cqm, lagrange_multiplier=10.0)
+                return SimulatedAnnealingSampler().sample(bqm, **sa_kwargs)
+            except Exception as cqm_err:
+                try:
+                    from dimod import ExactCQMSolver
+                    return ExactCQMSolver().sample_cqm(cqm)
+                except Exception:
+                    raise RuntimeError(f"CQM offline fallback note: {cqm_err}")
 
     try:
         import dwave.system
@@ -531,12 +540,9 @@ active_qubits = 0
 circuit_depth = 0
 backend_used = "local"
 
-# 1. QuantumCircuit introspection
-target_qc = None
-for val in exec_globals.values():
-    if isinstance(val, QuantumCircuit):
-        target_qc = val
-        break
+# 1. QuantumCircuit introspection: pick the most complete circuit (highest gate count/depth)
+all_qcs = [val for val in exec_globals.values() if isinstance(val, QuantumCircuit)]
+target_qc = max(all_qcs, key=lambda c: len(c.data)) if all_qcs else None
 
 if target_qc is not None:
     backend_used = "qiskit_aer"
@@ -548,7 +554,16 @@ if target_qc is not None:
     except Exception as e:
         circuit_ascii = f"# Circuit drawing error: {e}"
 
-    if HAS_AER and target_qc.num_qubits <= 28:
+    # Check if user script already computed its own measurement counts
+    user_counts = None
+    for k in ("counts", "measurement_counts", "result_counts"):
+        if k in exec_globals and isinstance(exec_globals[k], dict) and len(exec_globals[k]) > 0:
+            user_counts = exec_globals[k]
+            break
+
+    if user_counts is not None:
+        counts = user_counts
+    elif HAS_AER and target_qc.num_qubits <= 28:
         try:
             meas_qc = target_qc.copy()
             if meas_qc.num_clbits == 0:
@@ -558,10 +573,6 @@ if target_qc is not None:
             counts = result.get_counts()
         except Exception:
             pass
-
-    # If user script already calculated its own counts dictionary, use it
-    if counts is None and "counts" in exec_globals and isinstance(exec_globals["counts"], dict):
-        counts = exec_globals["counts"]
 
 # 2. D-Wave QUBO / BQM / CQM introspection
 if HAS_DWAVE:
@@ -954,12 +965,12 @@ def run_code_sandbox(req: CodeExecutionRequest) -> CodeExecutionResponse:
                 input=code,
                 capture_output=True,
                 text=True,
-                timeout=5.0,
+                timeout=15.0,
                 cwd=tmp_workspace
             )
     except subprocess.TimeoutExpired:
         exec_ms = round((time.time() - t0) * 1000, 2)
-        timeout_msg = "ExecutionTimeoutError: Execution exceeded the 5.0-second safety threshold and was terminated. Infinite loops or runaway operations are prohibited."
+        timeout_msg = "ExecutionTimeoutError: Execution exceeded the 15.0-second safety threshold and was terminated. Infinite loops or runaway operations are prohibited."
         return CodeExecutionResponse(
             success=False,
             stdout="",

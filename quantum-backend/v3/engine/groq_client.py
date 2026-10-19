@@ -33,7 +33,7 @@ async def call_groq(
     model: str = None,
 ) -> str:
     # For Groq on-demand free tier, OTPM limit is 1,000. Clamp max_tokens to 850 to prevent 429 rate limit.
-    effective_max_tokens = min(max_tokens, 750) if max_tokens > 100 else max_tokens
+    effective_max_tokens = min(max_tokens, 2048) if max_tokens > 100 else max_tokens
     """
     Call Groq completions API with OpenAI-compatible payload.
 
@@ -122,6 +122,12 @@ async def call_groq(
             message = parsed_error.get("error", {}).get("message", error_msg)
         except Exception:
             message = error_msg
+
+        # Fallback to standard Groq model if configured model alias is invalid or unavailable
+        if (e.code in (400, 404)) and model_name != "llama-3.3-70b-versatile":
+            print(f"[groq_client] Model '{model_name}' unavailable ({message}). Retrying with 'llama-3.3-70b-versatile'...")
+            return await call_groq(system=system, user=user, max_tokens=max_tokens, temperature=temperature, model="llama-3.3-70b-versatile")
+
         raise RuntimeError(f"Groq API Error {e.code}: {message}") from e
     except Exception as e:
         raise RuntimeError(f"Failed to communicate with Groq: {e}") from e

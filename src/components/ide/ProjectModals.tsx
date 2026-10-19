@@ -272,8 +272,11 @@ export function NewProjectModal({
         ? `# Quantum Guru — D-Wave Binary Quadratic Model Starter\nimport dimod\nfrom dwave.samplers import SimulatedAnnealingSampler\n\nbqm = dimod.BinaryQuadraticModel({'x': -1.0, 'y': -1.0}, {('x', 'y'): 2.0}, 0.0, dimod.BINARY)\nsampler = SimulatedAnnealingSampler()\nsampleset = sampler.sample(bqm, num_reads=100)\nprint("Optimal Decisions:", sampleset.first.sample)\n`
         : `# Quantum Guru — Qiskit Starter Circuit\nfrom qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\n\nqc = QuantumCircuit(2, 2)\nqc.h(0)\nqc.cx(0, 1)\nqc.measure([0, 1], [0, 1])\nsim = AerSimulator()\nres = sim.run(qc, shots=1024).result()\nprint("Measurement Counts:", res.get_counts())\n`;
 
+    const cleanSlug = finalName.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 32);
+    const uniqueId = `proj_${cleanSlug}_${Date.now().toString(36)}`;
+
     const newProj: ProjectItem = {
-      id: finalName.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+      id: uniqueId,
       title: finalName,
       desc: `Custom ${framework === "dwave" ? "D-Wave Annealing" : "Qiskit Gate Model"} quantum workspace.`,
       framework,

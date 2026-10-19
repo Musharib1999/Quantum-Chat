@@ -261,8 +261,22 @@ function LoginForm() {
                         </div>
 
                         {error && (
-                            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium text-center animate-in slide-in-from-top-2">
-                                {error}
+                            <div className={`p-3.5 rounded-xl text-xs font-medium text-center animate-in slide-in-from-top-2 border ${
+                                error.toLowerCase().includes("pending admin approval")
+                                    ? "bg-amber-50/90 border-amber-200 text-amber-900 leading-relaxed text-left"
+                                    : "bg-red-50 border-red-200 text-red-600"
+                            }`}>
+                                {error.toLowerCase().includes("pending admin approval") ? (
+                                    <div className="flex items-start gap-2">
+                                        <span className="text-base leading-none">⏳</span>
+                                        <div>
+                                            <p className="font-semibold text-amber-900">Account Pending Admin Approval</p>
+                                            <p className="text-[11px] text-amber-800/90 mt-0.5">Your registration was successful and is awaiting administrator review. You will be able to log in once an admin activates your account.</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    error
+                                )}
                             </div>
                         )}
 

@@ -6,6 +6,7 @@ const QuantumProjectSchema = new mongoose.Schema({
   title: { type: String, required: true },
   desc: { type: String, default: '' },
   templateKey: { type: String, default: 'optimization' },
+  framework: { type: String, enum: ['dwave', 'qiskit'], default: 'dwave' },
   activeFile: { type: String, default: 'main.py' },
   files: { 
     type: mongoose.Schema.Types.Mixed, 

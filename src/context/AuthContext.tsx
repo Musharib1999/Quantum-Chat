@@ -74,10 +74,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 // Fetch fresh user data from the backend to keep token limits synced
                 fetch(`/api/auth/me?email=${encodeURIComponent(parsed.email)}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.error) {
+                    .then(res => {
+                        if (res.status === 401) {
                             logout();
+                            return null;
+                        }
+                        if (!res.ok) return null; // Transient backend/network glitch: do not logout
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (!data) return;
+                        if (data.error) {
+                            if (data.status === 401 || data.error?.toLowerCase()?.includes("unauthorized") || data.error?.toLowerCase()?.includes("invalid session")) {
+                                logout();
+                            }
                             return;
                         }
 
@@ -141,13 +151,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('quantum_session');
         sessionStorage.removeItem('qg_session_tokens_used');
 
-        // Comprehensive cleanup: purge all cached user data, IDE projects, and chat sessions
+        // Clean up session and pipeline state, but PRESERVE user IDE projects and code (quantum_ide_*)!
         if (typeof window !== 'undefined') {
             const keysToRemove: string[] = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && (
-                    key.startsWith('quantum_ide_') ||
                     key.startsWith('quantum_chat_') ||
                     key.startsWith('qg_session_') ||
                     key.startsWith('session_') ||

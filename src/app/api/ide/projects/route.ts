@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { projectId, title, desc, templateKey, activeFile, files, runtimeMetrics, chatMessages } = body;
+    const { projectId, title, desc, templateKey, framework, activeFile, files, runtimeMetrics, chatMessages } = body;
 
     if (!projectId) {
       return NextResponse.json(
@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
       title: title || projectId,
       desc: desc || '',
       templateKey: templateKey || 'optimization',
+      framework: framework || (templateKey === 'qiskit' ? 'qiskit' : 'dwave'),
       activeFile: activeFile || 'main.py',
       files: files || {},
       runtimeMetrics: runtimeMetrics || {}
