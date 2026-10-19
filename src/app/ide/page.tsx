@@ -1895,24 +1895,32 @@ export default function QuantumGuruStudioPage() {
 
   const handleRemoveGateFromCircuit = (gateIndex: number) => {
     const gateToRemove = circuitGates[gateIndex];
+    const tgt = gateToRemove
+      ? (gateToRemove.target !== undefined ? gateToRemove.target : (gateToRemove.qubits && gateToRemove.qubits.length > 1 ? gateToRemove.qubits[1] : undefined))
+      : undefined;
+    const q = gateToRemove?.qubit;
+
     if (gateToRemove) {
       setQiskitCode((prevCode) => {
         const lines = prevCode.split("\n");
         const gateName = (gateToRemove.name || "").toLowerCase();
-        const q = gateToRemove.qubit;
-        const tgt = gateToRemove.target ?? (gateToRemove.qubits && gateToRemove.qubits.length > 1 ? gateToRemove.qubits[1] : undefined);
+        const isCx = gateName === "cx" || gateName === "cnot";
 
         // Find the line matching this gate from the bottom
         let removeIdx = -1;
         for (let i = lines.length - 1; i >= 0; i--) {
           const trimmed = lines[i].replace(/#.*$/, "").trim();
+          const nameMatch = isCx
+            ? (trimmed.includes(".cx") || trimmed.includes(".cnot"))
+            : trimmed.includes(`.${gateName}`);
+
           if (tgt !== undefined) {
-            if (trimmed.includes(`.${gateName}`) && trimmed.includes(String(q)) && trimmed.includes(String(tgt))) {
+            if (nameMatch && trimmed.includes(String(q)) && trimmed.includes(String(tgt))) {
               removeIdx = i;
               break;
             }
           } else {
-            if (trimmed.includes(`.${gateName}`) && trimmed.includes(String(q))) {
+            if (nameMatch && trimmed.includes(String(q))) {
               removeIdx = i;
               break;
             }
@@ -1927,7 +1935,21 @@ export default function QuantumGuruStudioPage() {
       });
     }
 
-    setCircuitGates((prev) => prev.filter((_, idx) => idx !== gateIndex));
+    setCircuitGates((prev) =>
+      prev.filter((g, idx) => {
+        if (idx === gateIndex) return false;
+        if (gateToRemove && tgt !== undefined && q !== undefined) {
+          if (
+            (g.name || "").toLowerCase() === (gateToRemove.name || "").toLowerCase() &&
+            g.step === gateToRemove.step &&
+            ((g.qubit === q && g.target === tgt) || (g.qubit === tgt && g.target === q))
+          ) {
+            return false;
+          }
+        }
+        return true;
+      })
+    );
     setIsCircuitSynced(true);
   };
 
