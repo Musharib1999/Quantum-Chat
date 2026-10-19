@@ -178,9 +178,9 @@ qc.measure(0, 0)
 In classical computers, a NOT gate simply flips 0 to 1. In quantum computing, this is the **Pauli-X gate**:
 > **X|0⟩ = |1⟩,  X|1⟩ = |0⟩**
 
-👉 **Step 1:** Click **▶ Run** to confirm that the X gate deterministically flips the initial $|0\rangle$ into state $|1\rangle$ with 100% certainty!`,
+👉 **Step 1:** Click **▶ Run** to confirm that the X gate deterministically flips the initial |0⟩ into state |1⟩ with 100% certainty!`,
 
-    quizQuestion: `Now that you verified $X|0\rangle = |1\rangle$:
+    quizQuestion: `Now that you verified **X|0⟩ = |1⟩**:
 
 🧠 **Quick Check:** In classical computing, there is only one way to flip a bit (0 ↔ 1). But in quantum computing, qubits can also have a **relative phase** ($\pm$). Which Pauli gate flips the quantum phase without changing the measurement probabilities: **Pauli-Y** or **Pauli-Z**?`,
 
@@ -194,10 +194,10 @@ On the superposition state **|+⟩**, applying **Z** turns it into **|-⟩ = (|0
 
     friendlyAnalogy: "Imagine a clock hand pointing at 12 o'clock (|0⟩). The Pauli-X gate flips the hand all the way to 6 o'clock (|1⟩)—a bit flip. But if the hand is pointing sideways at 3 o'clock (superposition), flipping its direction across the dial without changing its length is a phase flip—governed by Pauli-Z!",
 
-    fallbackExplanation: "The Pauli-Z gate flips the quantum phase without changing measurement probabilities ($Z|0\rangle = |0\rangle, Z|1\rangle = -|1\rangle$). On the $|+\rangle$ state, applying $Z$ produces $|-\rangle$, which has the exact same 50/50 measurement probabilities, but opposite internal phase!",
+    fallbackExplanation: "The Pauli-Z gate flips the quantum phase without changing measurement probabilities (Z|0⟩ = |0⟩, Z|1⟩ = -|1⟩). On the $|+\rangle$ state, applying $Z$ produces $|-\rangle$, which has the exact same 50/50 measurement probabilities, but opposite internal phase!",
 
     challengeInstruction: `⚡ **Milestone 2 Hands-On Challenge:**
-Let's create the famous $|-\rangle$ state!
+Let's create the famous **|-⟩** state!
 1. On the **Circuit Canvas**, add a **Hadamard (H)** gate immediately *after* the **X** gate on wire \`q[0]\` (so the sequence is: \`X -> H -> Measure\`).
 2. Click **▶ Run** to observe the measurement!`,
 
@@ -237,7 +237,7 @@ Let's create the famous $|-\rangle$ state!
         return {
           passed: true,
           feedback:
-            "🎉 **Challenge Mastered!** You successfully generated the $|-\rangle = \frac{|0\rangle - |1\rangle}{\sqrt{2}}$ state! Notice that both $|+\rangle$ and $|-\rangle$ look identical under standard Z-basis measurement (50/50), but their quantum phases are opposites!",
+            "🎉 **Challenge Mastered!** You successfully generated the **|-⟩ = (|0⟩ - |1⟩) / √2** state! Notice that both |+⟩ and |-⟩ look identical under standard Z-basis measurement (50/50), but their quantum phases are opposites!",
         };
       }
       return {
@@ -297,13 +297,13 @@ When two qubits become **entangled**, they no longer possess independent states.
 
     quizAcceptKeywords: ["1", "one", "|1>", "same", "definite"],
 
-    quizExplanation: `Exactly right! 🎯 Because the qubits are entangled in state **(|00⟩ + |11⟩) / √2**, measuring qubit 0 as '1' collapses the entire joint state to $|11\rangle$. Qubit 1 is instantly guaranteed to be '1' with 100% certainty, no matter the physical distance between them! This is what Einstein famously called *"spooky action at a distance"*!`,
+    quizExplanation: `Exactly right! 🎯 Because the qubits are entangled in state **(|00⟩ + |11⟩) / √2**, measuring qubit 0 as '1' collapses the entire joint state to **|11⟩**. Qubit 1 is instantly guaranteed to be '1' with 100% certainty, no matter the physical distance between them! This is what Einstein famously called *"spooky action at a distance"*!`,
 
     hint: "Look at the measured pairs: only '00' and '11' exist in the distribution. If the first digit (qubit 0) is definitely 1, what must the second digit (qubit 1) be?",
 
     friendlyAnalogy: "Think of a pair of magic shoes in separate boxes. One is left, one is right. As soon as you open box 1 on Earth and find the left shoe, you instantly know box 2 on Mars contains the right shoe—even without opening it! In our Bell state, both qubits are synchronized into the exact same value.",
 
-    fallbackExplanation: "Because the two qubits are entangled in state **(|00⟩ + |11⟩) / √2**, measuring qubit 0 as 1 collapses the joint state to $|11\rangle$. Qubit 1 is instantaneously guaranteed to be 1 as well! The states '01' and '10' have strictly zero probability.",
+    fallbackExplanation: "Because the two qubits are entangled in state **(|00⟩ + |11⟩) / √2**, measuring qubit 0 as 1 collapses the joint state to **|11⟩**. Qubit 1 is instantaneously guaranteed to be 1 as well! The states '01' and '10' have strictly zero probability.",
 
     challengeInstruction: `⚡ **Milestone 3 Hands-On Challenge:**
 Let's create an *anti-correlated* Bell state **|Ψ⁺⟩ = (|01⟩ + |10⟩) / √2**!
@@ -415,7 +415,7 @@ The **|1⟩** amplitudes cancel out completely (+½ - ½ = 0), while the **|0⟩
 
     friendlyAnalogy: "Think of sound waves or water ripples. If two wave crests meet, they get taller (constructive). If a crest meets a trough of equal height, they cancel out into flat stillness (destructive interference)! That is what the second H gate does to the |1⟩ component.",
 
-    fallbackExplanation: "The second Hadamard gate causes quantum wave interference: the $|1\rangle$ amplitudes cancel out completely due to opposite signs ($+\frac{1}{2} - \frac{1}{2} = 0$), while the $|0\rangle$ amplitudes add together ($+\frac{1}{2} + \frac{1}{2} = 1$). The state returns with 100% certainty to |0⟩!",
+    fallbackExplanation: "The second Hadamard gate causes quantum wave interference: the |1⟩ amplitudes cancel out completely due to opposite signs (+½ - ½ = 0), while the |0⟩ amplitudes add together (+½ + ½ = 1). The state returns with 100% certainty to |0⟩!",
 
     challengeInstruction: `⚡ **Grand Finale Challenge:**
 Prove quantum wave interference with your own hands!
@@ -476,17 +476,45 @@ export function getJourneyMilestone(id: number): JourneyMilestone {
 export function evaluateQuizResponse(
   milestoneId: number,
   userText: string
-): { passed: boolean; explanation: string } {
+): { passed: boolean; explanation: string; feedback: string } {
   const milestone = getJourneyMilestone(milestoneId);
-  const normalized = userText.toLowerCase();
+  const normalized = userText.trim().toLowerCase();
 
   const passed = milestone.quizAcceptKeywords.some((kw) =>
     normalized.includes(kw.toLowerCase())
   );
 
+  let feedback = "";
+  if (!passed) {
+    if (milestoneId === 1) {
+      feedback = "Almost! Think about flipping a coin: even though heads has a 50% theoretical probability, why don't you get exactly 512 heads every single time in real life? (Hint: natural random variance / statistical shot noise!). Give it another try, or say 'Move on' to start the hands-on challenge!";
+    } else if (milestoneId === 2) {
+      if (
+        normalized.includes("x") ||
+        normalized === "px" ||
+        normalized.includes("not")
+      ) {
+        feedback = "Close guess! But **Pauli-X (PX)** is the **bit-flip** (NOT) gate: it turns |0⟩ into |1⟩. The question asks which gate flips the **quantum phase (±)** without changing probabilities: **Pauli-Y** or **Pauli-Z**? Try typing **Z**!";
+      } else if (normalized.includes("y") || normalized === "py") {
+        feedback = "Super close! Pauli-Y flips both bit and phase. The pure phase-flip operator that only affects the phase of |1⟩ without flipping bits is **Pauli-Z**! Try typing **Z** to confirm!";
+      } else {
+        feedback = "Think about the coordinate axes: X is the bit-flip (|0⟩ ↔ |1⟩), while Z is the phase-flip (|+⟩ ↔ |-⟩)! Which Pauli gate flips phase: **Pauli-Y** or **Pauli-Z**?";
+      }
+    } else if (milestoneId === 3) {
+      if (normalized.includes("0") || normalized === "zero") {
+        feedback = "Careful! In this Bell state (|00⟩ + |11⟩)/√2, both qubits are entangled into identical values (either both 0 or both 1). If qubit 0 was measured as 1, what must qubit 1 be? Give it another try!";
+      } else {
+        feedback = "Remember that the two qubits in state (|00⟩ + |11⟩)/√2 are perfectly synchronized. If qubit 0 is measured as 1, what must qubit 1 be?";
+      }
+    } else if (milestoneId === 4) {
+      feedback = "Remember that in quantum computing, H · H = I (Identity)! The wave amplitudes cancel out destructively. What state does the qubit return to with 100% certainty: |0⟩ or |1⟩?";
+    }
+  }
+
   return {
     passed,
     explanation: milestone.quizExplanation,
+    feedback,
   };
 }
 

@@ -261,10 +261,12 @@ class QuantumAgent:
         yield await self.stream.publish(thought)
 
 
+        is_journey = project_id == "quantum_journey_101" or "journey" in project_id
+
         # =========================================================================
         # 1. 📈 PHASE 2: AUTONOMOUS QUBO & COMBINATORIAL OPTIMIZATION PIPELINE
         # =========================================================================
-        if is_optimization_synthesis_request(user_message, project_id, target_backend):
+        if not is_journey and is_optimization_synthesis_request(user_message, project_id, target_backend):
             async for event in handle_optimization_synthesis(
                 self.stream,
                 self.runtime,
@@ -280,7 +282,7 @@ class QuantumAgent:
 
         from .qiskit_synthesizer import is_circuit_synthesis_request, synthesize_qiskit_circuit
 
-        if is_circuit_synthesis_request(user_message):
+        if not is_journey and is_circuit_synthesis_request(user_message):
             # 1. Pre-built Tool: tools.algo.classify_algorithm
             yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.algo.classify_algorithm"))
             t0 = time.time()
@@ -400,7 +402,7 @@ class QuantumAgent:
         # =========================================================================
         # 2. 🧪 CHEMISTRY PIPELINE
         # =========================================================================
-        has_chem_build = is_execution_request or any(k in msg_l for k in ["chem", "vqe", "molecule", "h2", "lih", "c3h6o", "c2h4o2", "c2h5oh", "ansatz", "build", "create", "synthesize", "generate", "code", "run", "simulate"])
+        has_chem_build = not is_journey and (is_execution_request or any(k in msg_l for k in ["chem", "vqe", "molecule", "h2", "lih", "c3h6o", "c2h4o2", "c2h5oh", "ansatz", "build", "create", "synthesize", "generate", "code", "run", "simulate"]))
         if domain == "chemistry" and has_chem_build:
             mol_key, mol_data = extract_molecule_info(user_message)
             mol_name = mol_data["name"]
@@ -493,7 +495,7 @@ if __name__ == "__main__":
         # =========================================================================
         # 3. 🧠 QML PIPELINE
         # =========================================================================
-        has_qml_build = is_execution_request or any(k in msg_l for k in ["qml", "classifier", "kernel", "qsvm", "vqc", "build", "create", "synthesize", "generate", "code", "train", "run"])
+        has_qml_build = not is_journey and (is_execution_request or any(k in msg_l for k in ["qml", "classifier", "kernel", "qsvm", "vqc", "build", "create", "synthesize", "generate", "code", "train", "run"]))
         if domain == "qml" and has_qml_build:
             target_f = "qml_classifier.py" if "qml_classifier.py" in active_file or "qml" in project_id else "main.py"
             qml_code = """# Quantum Guru - Variational Quantum Classifier (VQC & ZZFeatureMap)

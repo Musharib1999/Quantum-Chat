@@ -374,6 +374,9 @@ const DWAVE_INITIAL_MESSAGES: CopilotMessage[] = [
 // Helper to cleanse any previously cached corrupted LaTeX strings from localStorage
 function sanitizeCachedChatText(text: string): string {
   if (!text) return "";
+  if (text.includes("CAS-VQE") || text.includes("Target Molecule")) {
+    return "Close guess! But **Pauli-X (PX)** is the **bit-flip** (NOT) gate: it turns |0⟩ into |1⟩. The question asks which gate flips the **quantum phase (±)** without changing probabilities: **Pauli-Y** or **Pauli-Z**? Try typing **Z**!";
+  }
   return text
     .replace(/\$\$[\s\S]*?(?:vert|ertpsi|rac\{)[\s\S]*?\$\$/gi, "> **|ψ⟩ = (|0⟩ + |1⟩) / √2**")
     .replace(/\$\$\vert[\s\S]*?\$\$/gi, "> **|ψ⟩ = (|0⟩ + |1⟩) / √2**");
@@ -2601,6 +2604,15 @@ export default function QuantumGuruStudioPage() {
               timestamp: "Just now",
             };
             setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), quizPassMsg]);
+            return;
+          } else if (evalRes.feedback) {
+            const feedbackMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: evalRes.feedback,
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), feedbackMsg]);
             return;
           }
         }
