@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import type { OnMount, BeforeMount } from "@monaco-editor/react";
+import Editor, { loader, type OnMount, type BeforeMount } from "@monaco-editor/react";
 
-// Dynamically import Monaco Editor without SSR to prevent hydration mismatches
-const Editor = dynamic(() => import("@monaco-editor/react"), {
-  ssr: false,
-  loading: () => null,
-});
+// Pre-warm Monaco script and language tokenizer in browser cache immediately
+if (typeof window !== "undefined") {
+  loader.init().catch(() => {});
+}
 
 interface StudioCodeEditorProps {
   isDark: boolean;
@@ -25,6 +23,7 @@ interface StudioCodeEditorProps {
   onToggleTerminal?: () => void;
   onToggleTheme?: () => void;
   specs?: any;
+  isVisible?: boolean;
 }
 
 export function StudioCodeEditor({
@@ -34,6 +33,7 @@ export function StudioCodeEditor({
   activeFile,
   framework = "qiskit",
   onRun,
+  isVisible = true,
 }: StudioCodeEditorProps) {
   const [isEditorMounted, setIsEditorMounted] = useState(false);
   const editorRef = useRef<any>(null);
@@ -43,6 +43,15 @@ export function StudioCodeEditor({
   useEffect(() => {
     onRunRef.current = onRun;
   }, [onRun]);
+
+  // When tab becomes visible, recalculate dimensions instantly
+  useEffect(() => {
+    if (isVisible && editorRef.current) {
+      requestAnimationFrame(() => {
+        editorRef.current?.layout();
+      });
+    }
+  }, [isVisible]);
 
   // Determine file language
   const language = React.useMemo(() => {

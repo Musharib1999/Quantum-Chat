@@ -2429,10 +2429,11 @@ export default function QuantumGuruStudioPage() {
               isDark ? "bg-[#090A0D]" : "bg-[#FAFBFC]"
             }`}
           >
-            {/* 1. CODE TAB */}
-            {heroTab === "code" && (
+            {/* 1. CODE TAB - Preserved in DOM for instant 0ms tab switching & background pre-warming */}
+            <div className={`w-full h-full flex-1 flex flex-col ${heroTab === "code" ? "" : "hidden"}`}>
               <StudioCodeEditor
                 isDark={isDark}
+                isVisible={heroTab === "code"}
                 onToggleTheme={handleToggleTheme}
                 code={framework === "dwave" ? dwaveCode : qiskitCode}
                 onChange={(val) => {
@@ -2479,7 +2480,7 @@ export default function QuantumGuruStudioPage() {
                       }
                 }
               />
-            )}
+            </div>
 
             {/* 2. FORMULATION TAB (KaTeX Sliders) */}
             {heroTab === "formulation" && framework === "dwave" && (
