@@ -1953,6 +1953,21 @@ export default function QuantumGuruStudioPage() {
     setIsCircuitSynced(true);
   };
 
+  const handleSyncCodeAndCircuit = useCallback(() => {
+    if (framework === "dwave") {
+      setIsModelDirty(false);
+      setIsCircuitSynced(true);
+      return;
+    }
+
+    // Explicit manual sync: parse editor Python code into visual schematic tiles without execution
+    const parsed = parseQiskitCodeToCircuit(qiskitCode);
+    setCircuitGates(parsed.gates);
+    setQiskitQubits(parsed.numQubits);
+    setQiskitDepth(parsed.depth);
+    setIsCircuitSynced(true);
+  }, [framework, qiskitCode]);
+
   const handleRunOrRecompile = useCallback(async () => {
     setIsRunningOrRecompiling(true);
     setShowTerminal(true);
@@ -2706,7 +2721,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
         onOpenAlgorithmStudio={() => setShowAlgorithmStudioModal(true)}
         onOpenDataConnectors={() => setIsDataConnectorsOpen(true)}
         isSynced={isCircuitSynced}
-        onSync={handleRunOrRecompile}
+        onSync={handleSyncCodeAndCircuit}
         isRunningOrRecompiling={isRunningOrRecompiling}
         onRunOrRecompile={handleRunOrRecompile}
         isModelDirty={isModelDirty}
@@ -3087,7 +3102,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
             onToggleTheme={handleToggleTheme}
             framework={framework}
             isSynced={isCircuitSynced}
-            onSync={handleRunOrRecompile}
+            onSync={handleSyncCodeAndCircuit}
             showTerminal={showTerminal}
             onToggleTerminal={() => setShowTerminal((prev) => !prev)}
             terminalOutput={terminalOutput}
