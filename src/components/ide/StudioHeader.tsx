@@ -16,7 +16,6 @@ import {
   FileJson,
   FileText,
   Check,
-  Share2,
   Compass,
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
@@ -421,21 +420,7 @@ export function StudioHeader({
           </button>
         )}
 
-        {/* Data Connectors Button (Refined Neutral Ghost Pill) */}
-        {onOpenDataConnectors && isDwave && (
-          <button
-            onClick={onOpenDataConnectors}
-            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
-              isDark
-                ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-zinc-300 hover:text-white"
-                : "bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700 hover:text-slate-900"
-            }`}
-            title="Open Data Ingress and Egress Connectors"
-          >
-            <Share2 className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="font-medium hidden sm:inline">Data Connectors</span>
-          </button>
-        )}
+
 
 
 
