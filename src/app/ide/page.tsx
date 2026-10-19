@@ -582,6 +582,7 @@ function classifyOptimizationIntent(text: string): "CHAT" | "FORMULATE" {
 
 interface ExecutionHistoryItem {
   id: string;
+  projectId?: string;
   timestamp: string;
   formattedDate: string;
   framework: "dwave" | "qiskit";
@@ -601,7 +602,23 @@ export default function QuantumGuruStudioPage() {
   }, []);
 
   const [codeSnapshots, setCodeSnapshots] = useState<string[]>([]);
-  const [executionHistory, setExecutionHistory] = useState<ExecutionHistoryItem[]>([]);
+  const [executionHistory, setExecutionHistory] = useState<ExecutionHistoryItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlId = params.get("project") || params.get("projectId");
+        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id") || "clean_energy_portfolio";
+        const stored = localStorage.getItem(`quantum_ide_history_${savedId}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            return parsed.filter((item: any) => !item.projectId || item.projectId === savedId);
+          }
+        }
+      } catch (e) {}
+    }
+    return [];
+  });
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   const handleClearHistory = () => {
@@ -800,6 +817,23 @@ export default function QuantumGuruStudioPage() {
   });
 
   const framework = activeProject.framework;
+
+// Synchronize Execution History whenever active project switches
+  useEffect(() => {
+    if (typeof window !== "undefined" && activeProject?.id) {
+      try {
+        const stored = localStorage.getItem(`quantum_ide_history_${activeProject.id}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setExecutionHistory(parsed.filter((item: any) => !item.projectId || item.projectId === activeProject.id));
+            return;
+          }
+        }
+      } catch (e) {}
+      setExecutionHistory([]);
+    }
+  }, [activeProject?.id]);
 
   const [heroTab, setHeroTab] = useState<HeroTabType>(() => {
     if (typeof window !== "undefined") {
@@ -1354,6 +1388,24 @@ export default function QuantumGuruStudioPage() {
       }
     }
 
+    // Restore project-isolated Execution History
+    if (typeof window !== "undefined") {
+      try {
+        const storedHistory = localStorage.getItem(`quantum_ide_history_${proj.id}`);
+        if (storedHistory) {
+          const parsed = JSON.parse(storedHistory);
+          const filtered = Array.isArray(parsed)
+            ? parsed.filter((item: any) => !item.projectId || item.projectId === proj.id)
+            : [];
+          setExecutionHistory(filtered);
+        } else {
+          setExecutionHistory([]);
+        }
+      } catch (e) {
+        setExecutionHistory([]);
+      }
+    }
+
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("quantum_ide_active_project_id", proj.id);
@@ -1445,6 +1497,7 @@ export default function QuantumGuruStudioPage() {
     setTerminalOutput("");
     setShowTerminal(false);
     setIsRunningOrRecompiling(false);
+    setExecutionHistory([]);
 
     if (customProj.framework === "dwave") {
       // 2. D-Wave Project Clean:
@@ -1562,6 +1615,7 @@ export default function QuantumGuruStudioPage() {
           localStorage.setItem("quantum_ide_custom_projects", JSON.stringify(list.filter(p => p.id !== projectId)));
         }
         localStorage.removeItem(`quantum_ide_chat_${projectId}`);
+        localStorage.removeItem(`quantum_ide_history_${projectId}`);
       } catch (e) {}
     }
 
@@ -1826,8 +1880,10 @@ export default function QuantumGuruStudioPage() {
             );
           }
           const now = new Date();
+          const curProjId = activeProject.id;
           const dItem: ExecutionHistoryItem = {
             id: data.simulator_id || `DW-${Date.now()}`,
+            projectId: curProjId,
             timestamp: now.toISOString(),
             formattedDate: now.toLocaleString(undefined, {
               month: "short",
@@ -1848,13 +1904,20 @@ export default function QuantumGuruStudioPage() {
             stderr: data.stderr || "",
             jobId: data.simulator_id,
           };
-          setExecutionHistory((prev) => {
-            const updated = [dItem, ...prev.slice(0, 19)];
+          let curHist: ExecutionHistoryItem[] = [];
+          if (typeof window !== "undefined") {
             try {
-              localStorage.setItem(`quantum_ide_history_${activeProject.id}`, JSON.stringify(updated));
+              const raw = localStorage.getItem(`quantum_ide_history_${curProjId}`);
+              if (raw) curHist = JSON.parse(raw);
             } catch {}
-            return updated;
-          });
+          }
+          const updatedDwave = [dItem, ...curHist.filter((x: any) => !x.projectId || x.projectId === curProjId).slice(0, 19)];
+          setExecutionHistory(updatedDwave);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(`quantum_ide_history_${curProjId}`, JSON.stringify(updatedDwave));
+            } catch {}
+          }
 
           setIsModelDirty(false);
           // NOTE: User's code in the editor is preserved 100%! Never overwrite dwaveCode!
@@ -1928,8 +1991,10 @@ export default function QuantumGuruStudioPage() {
           }
 
           const now = new Date();
+          const curProjId = activeProject.id;
           const qItem: ExecutionHistoryItem = {
             id: data.simulator_id || `SIM-${Date.now()}`,
+            projectId: curProjId,
             timestamp: now.toISOString(),
             formattedDate: now.toLocaleString(undefined, {
               month: "short",
@@ -1950,13 +2015,20 @@ export default function QuantumGuruStudioPage() {
             stderr: data.stderr || "",
             jobId: data.simulator_id,
           };
-          setExecutionHistory((prev) => {
-            const updated = [qItem, ...prev.slice(0, 19)];
+          let curHist: ExecutionHistoryItem[] = [];
+          if (typeof window !== "undefined") {
             try {
-              localStorage.setItem(`quantum_ide_history_${activeProject.id}`, JSON.stringify(updated));
+              const raw = localStorage.getItem(`quantum_ide_history_${curProjId}`);
+              if (raw) curHist = JSON.parse(raw);
             } catch {}
-            return updated;
-          });
+          }
+          const updatedQiskit = [qItem, ...curHist.filter((x: any) => !x.projectId || x.projectId === curProjId).slice(0, 19)];
+          setExecutionHistory(updatedQiskit);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(`quantum_ide_history_${curProjId}`, JSON.stringify(updatedQiskit));
+            } catch {}
+          }
 
           const qSimIdFlag = data.simulator_id ? ` --job-id ${data.simulator_id}` : "";
           setTerminalOutput(
