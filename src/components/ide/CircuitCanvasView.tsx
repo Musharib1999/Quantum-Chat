@@ -127,23 +127,23 @@ export function CircuitCanvasView({
 
   // Single Qubit Gates list for Square Modal
   const singleQubitGates = [
-    { name: "H", label: "Hadamard", color: "bg-indigo-500/15 border-indigo-500/40 text-indigo-400" },
-    { name: "X", label: "Pauli-X (NOT)", color: "bg-rose-500/15 border-rose-500/40 text-rose-400" },
-    { name: "Y", label: "Pauli-Y", color: "bg-emerald-500/15 border-emerald-500/40 text-emerald-400" },
-    { name: "Z", label: "Pauli-Z", color: "bg-sky-500/15 border-sky-500/40 text-sky-400" },
-    { name: "S", label: "Phase (S)", color: "bg-purple-500/15 border-purple-500/40 text-purple-400" },
-    { name: "T", label: "Phase (T)", color: "bg-fuchsia-500/15 border-fuchsia-500/40 text-fuchsia-400" },
-    { name: "RX", label: "Rx(π/2)", color: "bg-amber-500/15 border-amber-500/40 text-amber-400" },
-    { name: "RY", label: "Ry(π/2)", color: "bg-amber-500/15 border-amber-500/40 text-amber-400" },
-    { name: "RZ", label: "Rz(π/2)", color: "bg-amber-500/15 border-amber-500/40 text-amber-400" },
-    { name: "M", label: "Measure", color: "bg-amber-500/20 border-amber-500/50 text-amber-400" },
-    { name: "BARRIER", label: "Sync Barrier", color: "bg-zinc-500/20 border-zinc-500/50 text-zinc-300" },
+    { name: "H", label: "Hadamard", accent: "text-sky-400" },
+    { name: "X", label: "Pauli-X", accent: "text-rose-400" },
+    { name: "Y", label: "Pauli-Y", accent: "text-emerald-400" },
+    { name: "Z", label: "Pauli-Z", accent: "text-cyan-400" },
+    { name: "S", label: "Phase (S)", accent: "text-violet-400" },
+    { name: "T", label: "Phase (T)", accent: "text-purple-400" },
+    { name: "RX", label: "Rx(π/2)", accent: "text-amber-400" },
+    { name: "RY", label: "Ry(π/2)", accent: "text-amber-400" },
+    { name: "RZ", label: "Rz(π/2)", accent: "text-amber-400" },
+    { name: "M", label: "Measure", accent: "text-emerald-400" },
+    { name: "BARRIER", label: "Barrier", accent: "text-zinc-400" },
   ];
 
   const twoQubitGates = [
-    { name: "CX", label: "CNOT (CX)", color: "bg-sky-500/20 border-sky-500/40 text-sky-400" },
-    { name: "CZ", label: "Controlled-Z", color: "bg-indigo-500/20 border-indigo-500/40 text-indigo-400" },
-    { name: "SWAP", label: "Swap Qubits", color: "bg-rose-500/20 border-rose-500/40 text-rose-400" },
+    { name: "CX", label: "CNOT (CX)", desc: "Controlled-NOT", accent: "text-sky-400" },
+    { name: "CZ", label: "Controlled-Z", desc: "Phase-Flip Control", accent: "text-violet-400" },
+    { name: "SWAP", label: "Swap Qubits", desc: "State Exchange", accent: "text-rose-400" },
   ];
 
   const handleSelectSingleGate = (gateName: string) => {
@@ -461,33 +461,38 @@ export function CircuitCanvasView({
         </div>
       )}
 
-      {/* ── SQUARE GATE SELECTOR MODAL / POPOVER ── */}
+      {/* ── SQUARE GATE SELECTOR MODAL / POPOVER (Classy & Refined) ── */}
       {selectedSlot && (
-        <div className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div
-            className={`w-full max-w-sm rounded-2xl border shadow-2xl overflow-hidden font-sans transition-all animate-in zoom-in-95 duration-150 ${
+            className={`w-full max-w-[420px] rounded-xl border shadow-2xl overflow-hidden font-sans transition-all animate-in zoom-in-95 duration-150 ${
               isDark
-                ? "bg-[#0E0F14] border-white/[0.12] text-zinc-100 shadow-black/90"
+                ? "bg-[#0D0F14] border-white/[0.1] text-zinc-100 shadow-black/95"
                 : "bg-white border-slate-200 text-slate-900 shadow-xl"
             }`}
           >
             {/* Modal Header */}
             <div
-              className={`px-4.5 py-3 border-b flex items-center justify-between shrink-0 ${
-                isDark ? "border-white/[0.08] bg-[#12131A]" : "border-slate-200 bg-slate-50"
+              className={`px-4.5 py-3.5 border-b flex items-center justify-between shrink-0 ${
+                isDark ? "border-white/[0.07] bg-[#101218]" : "border-slate-200 bg-slate-50"
               }`}
             >
-              <div className="flex items-center space-x-2 min-w-0">
-                <div className="w-6 h-6 rounded-md bg-sky-500/15 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/25">
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/20">
                   <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-xs">
-                    Place Gate · Wire q[{selectedSlot.qubit}]
+                  <h4 className="font-semibold text-xs tracking-tight">
+                    Place Quantum Gate
                   </h4>
-                  <p className={`text-[10px] ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
-                    Time Slot: Step {selectedSlot.step}
-                  </p>
+                  <div className="flex items-center space-x-2 mt-0.5">
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 font-medium">
+                      Wire q[{selectedSlot.qubit}]
+                    </span>
+                    <span className="text-[10px] font-mono text-zinc-400">
+                      Slot {selectedSlot.step}
+                    </span>
+                  </div>
                 </div>
               </div>
               <button
@@ -496,7 +501,7 @@ export function CircuitCanvasView({
                   setSelectedSlot(null);
                   setSelectedTwoQubitGate(null);
                 }}
-                className={`p-1 rounded-md transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                   isDark
                     ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.06]"
                     : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
@@ -507,12 +512,12 @@ export function CircuitCanvasView({
             </div>
 
             {/* Modal Body: Single vs Two-Qubit selection */}
-            <div className="p-4 space-y-4 font-mono">
+            <div className="p-4.5 space-y-4">
               {!selectedTwoQubitGate ? (
                 <>
                   {/* Section 1: Single Qubit Gates */}
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold block">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">
                       Single-Qubit Gates
                     </span>
                     <div className="grid grid-cols-4 gap-2">
@@ -521,10 +526,16 @@ export function CircuitCanvasView({
                           key={gate.name}
                           type="button"
                           onClick={() => handleSelectSingleGate(gate.name)}
-                          className={`p-2 rounded-xl border flex flex-col items-center justify-center space-y-0.5 transition-all hover:scale-105 cursor-pointer shadow-xs ${gate.color}`}
+                          className={`h-14 rounded-lg border flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer group ${
+                            isDark
+                              ? "bg-[#13151D] border-white/[0.07] hover:border-sky-500/50 hover:bg-[#181B26]"
+                              : "bg-slate-50 border-slate-200 hover:border-sky-500 hover:bg-sky-50/50"
+                          }`}
                         >
-                          <span className="font-bold text-sm">{gate.name}</span>
-                          <span className="text-[9px] opacity-75 font-sans truncate w-full text-center">
+                          <span className={`font-mono font-bold text-sm ${gate.accent}`}>
+                            {gate.name}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-sans tracking-tight truncate w-full text-center px-1">
                             {gate.label}
                           </span>
                         </button>
@@ -533,8 +544,8 @@ export function CircuitCanvasView({
                   </div>
 
                   {/* Section 2: Two-Qubit Entangling Gates */}
-                  <div className="space-y-1.5 pt-1">
-                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold block">
+                  <div className="space-y-2 pt-1">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">
                       Two-Qubit Gates (Control → Target)
                     </span>
                     <div className="grid grid-cols-3 gap-2">
@@ -543,10 +554,16 @@ export function CircuitCanvasView({
                           key={gate.name}
                           type="button"
                           onClick={() => setSelectedTwoQubitGate(gate.name)}
-                          className={`p-2.5 rounded-xl border flex flex-col items-center justify-center space-y-0.5 transition-all hover:scale-105 cursor-pointer shadow-xs ${gate.color}`}
+                          className={`h-14 rounded-lg border flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer group ${
+                            isDark
+                              ? "bg-[#13151D] border-white/[0.07] hover:border-indigo-500/50 hover:bg-[#181B26]"
+                              : "bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50"
+                          }`}
                         >
-                          <span className="font-bold text-sm">{gate.name}</span>
-                          <span className="text-[9px] opacity-75 font-sans truncate w-full text-center">
+                          <span className={`font-mono font-bold text-sm ${gate.accent}`}>
+                            {gate.name}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-sans tracking-tight truncate w-full text-center px-1">
                             {gate.label}
                           </span>
                         </button>
@@ -558,24 +575,24 @@ export function CircuitCanvasView({
                 /* Two-Qubit Target Selector */
                 <div className="space-y-3 animate-in fade-in duration-100">
                   <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
-                    <span className="text-xs font-semibold text-sky-400">
+                    <span className="text-xs font-semibold text-sky-400 font-mono">
                       Select Target Qubit for {selectedTwoQubitGate}:
                     </span>
                     <button
                       type="button"
                       onClick={() => setSelectedTwoQubitGate(null)}
-                      className="text-[10px] text-zinc-400 hover:text-zinc-200 underline cursor-pointer"
+                      className="text-[11px] text-zinc-400 hover:text-zinc-200 underline cursor-pointer"
                     >
                       Back
                     </button>
                   </div>
 
-                  <p className="text-[11px] text-zinc-400 font-sans leading-relaxed">
-                    Control qubit is fixed to <strong className="text-sky-400">q[{selectedSlot.qubit}]</strong>.
-                    Choose the target qubit wire:
+                  <p className="text-xs text-zinc-400 font-sans leading-relaxed">
+                    Control is wire <strong className="text-sky-400 font-mono">q[{selectedSlot.qubit}]</strong>.
+                    Choose target wire:
                   </p>
 
-                  <div className="grid grid-cols-5 gap-1.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
+                  <div className="grid grid-cols-5 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-0.5">
                     {Array.from({ length: nQubits }).map((_, targetQ) => {
                       const isSelf = targetQ === selectedSlot.qubit;
                       return (
@@ -584,11 +601,11 @@ export function CircuitCanvasView({
                           disabled={isSelf}
                           type="button"
                           onClick={() => handleSelectTwoQubitGateTarget(targetQ)}
-                          className={`p-2 rounded-lg border text-center text-xs font-bold transition-all cursor-pointer ${
+                          className={`h-10 rounded-lg border text-center text-xs font-mono font-bold transition-all cursor-pointer ${
                             isSelf
-                              ? "opacity-25 border-zinc-800 text-zinc-600 cursor-not-allowed"
+                              ? "opacity-20 border-zinc-800 text-zinc-600 cursor-not-allowed"
                               : isDark
-                              ? "bg-white/[0.05] border-white/[0.1] text-zinc-200 hover:bg-sky-500/20 hover:border-sky-500 hover:text-white"
+                              ? "bg-[#13151D] border-white/[0.07] text-zinc-200 hover:bg-sky-500/15 hover:border-sky-500/50 hover:text-white"
                               : "bg-slate-100 border-slate-300 text-slate-800 hover:bg-sky-100 hover:border-sky-500 hover:text-sky-800"
                           }`}
                         >
@@ -603,18 +620,24 @@ export function CircuitCanvasView({
 
             {/* Modal Footer */}
             <div
-              className={`px-4 py-2.5 border-t flex items-center justify-between text-[11px] font-mono shrink-0 ${
-                isDark ? "border-white/[0.08] bg-[#12131A] text-zinc-400" : "border-slate-200 bg-slate-50 text-slate-600"
+              className={`px-4.5 py-3 border-t flex items-center justify-between text-xs shrink-0 ${
+                isDark ? "border-white/[0.07] bg-[#101218] text-zinc-400" : "border-slate-200 bg-slate-50 text-slate-600"
               }`}
             >
-              <span>Updates main.py in Monaco editor</span>
+              <span className="text-[11px] text-zinc-500 font-sans">
+                Updates main.py in Monaco editor
+              </span>
               <button
                 type="button"
                 onClick={() => {
                   setSelectedSlot(null);
                   setSelectedTwoQubitGate(null);
                 }}
-                className="text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                className={`px-3 py-1 rounded-md text-xs font-medium border transition-colors cursor-pointer ${
+                  isDark
+                    ? "border-white/[0.08] hover:bg-white/[0.06] text-zinc-300"
+                    : "border-slate-200 hover:bg-slate-100 text-slate-700"
+                }`}
               >
                 Cancel
               </button>
