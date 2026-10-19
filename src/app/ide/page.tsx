@@ -2423,7 +2423,9 @@ export default function QuantumGuruStudioPage() {
           {/* Active Hero Tab Viewport (Full Height) */}
           
           <div
-            className={`flex-1 overflow-y-auto ${
+            className={`flex-1 flex flex-col min-h-0 ${
+              heroTab === "code" ? "overflow-hidden" : "overflow-y-auto"
+            } ${
               isDark ? "bg-[#090A0D]" : "bg-[#FAFBFC]"
             }`}
           >
