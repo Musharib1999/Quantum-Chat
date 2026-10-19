@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   Folder,
+  Clock,
+  Trash2,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -577,6 +580,20 @@ function classifyOptimizationIntent(text: string): "CHAT" | "FORMULATE" {
   return "CHAT";
 }
 
+interface ExecutionHistoryItem {
+  id: string;
+  timestamp: string;
+  formattedDate: string;
+  framework: "dwave" | "qiskit";
+  status: "success" | "error";
+  latencyMs: number;
+  shots?: number;
+  summary: string;
+  stdout?: string;
+  stderr?: string;
+  jobId?: string;
+}
+
 export default function QuantumGuruStudioPage() {
   const [mounted, setMounted] = useState<boolean>(false);
   useEffect(() => {
@@ -584,6 +601,18 @@ export default function QuantumGuruStudioPage() {
   }, []);
 
   const [codeSnapshots, setCodeSnapshots] = useState<string[]>([]);
+  const [executionHistory, setExecutionHistory] = useState<ExecutionHistoryItem[]>([]);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
+
+  const handleClearHistory = () => {
+    setExecutionHistory([]);
+    if (typeof window !== "undefined" && activeProject?.id) {
+      try {
+        localStorage.removeItem(`quantum_ide_history_${activeProject.id}`);
+      } catch {}
+    }
+  };
+
   const [targetBackend, setTargetBackend] = useState<string>("dwave_simulated_annealing");
   const { user, isAuthenticated, logout } = useAuth();
 
@@ -1796,6 +1825,37 @@ export default function QuantumGuruStudioPage() {
                 (data.stdout ? `\n${data.stdout}` : "")
             );
           }
+          const now = new Date();
+          const dItem: ExecutionHistoryItem = {
+            id: data.simulator_id || `DW-${Date.now()}`,
+            timestamp: now.toISOString(),
+            formattedDate: now.toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            }),
+            framework: "dwave",
+            status: "success",
+            latencyMs: parseFloat(dur.toFixed(1)),
+            shots: 1024,
+            summary: data.optimization_results
+              ? `Energy: ${data.optimization_results.energy?.toFixed(4)} • ${Object.keys(data.optimization_results.sample || {}).length} vars`
+              : "D-Wave Simulated Annealing executed",
+            stdout: data.stdout || "",
+            stderr: data.stderr || "",
+            jobId: data.simulator_id,
+          };
+          setExecutionHistory((prev) => {
+            const updated = [dItem, ...prev.slice(0, 19)];
+            try {
+              localStorage.setItem(`quantum_ide_history_${activeProject.id}`, JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+
           setIsModelDirty(false);
           // NOTE: User's code in the editor is preserved 100%! Never overwrite dwaveCode!
         } else {
@@ -1866,6 +1926,37 @@ export default function QuantumGuruStudioPage() {
               );
             } catch (e) {}
           }
+
+          const now = new Date();
+          const qItem: ExecutionHistoryItem = {
+            id: data.simulator_id || `SIM-${Date.now()}`,
+            timestamp: now.toISOString(),
+            formattedDate: now.toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            }),
+            framework: "qiskit",
+            status: "success",
+            latencyMs: parseFloat(dur.toFixed(1)),
+            shots: execShots,
+            summary: data.measurement_counts && Object.keys(data.measurement_counts).length > 0
+              ? `${Object.keys(data.measurement_counts).length} states measured • ${execShots} shots`
+              : (data.active_qubits ? `${data.active_qubits} qubits • depth ${data.circuit_depth ?? 1}` : "Qiskit Aer Simulator executed"),
+            stdout: data.stdout || "",
+            stderr: data.stderr || "",
+            jobId: data.simulator_id,
+          };
+          setExecutionHistory((prev) => {
+            const updated = [qItem, ...prev.slice(0, 19)];
+            try {
+              localStorage.setItem(`quantum_ide_history_${activeProject.id}`, JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
 
           const qSimIdFlag = data.simulator_id ? ` --job-id ${data.simulator_id}` : "";
           setTerminalOutput(
@@ -2570,11 +2661,6 @@ export default function QuantumGuruStudioPage() {
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {qiskitSimulatorId && (
-                          <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded border border-cyan-500/20 font-medium">
-                            ID: {qiskitSimulatorId}
-                          </span>
-                        )}
                         <span className="text-xs font-mono text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded border border-sky-500/20 font-medium">
                           Total Shots: {qiskitShots}
                         </span>
@@ -2616,6 +2702,136 @@ export default function QuantumGuruStudioPage() {
                     )}
                   </div>
                 )}
+
+                {/* ── EXECUTION OUTPUT HISTORY AUDIT LOG ── */}
+                <div
+                  className={`rounded-xl border p-6 space-y-4 ${
+                    isDark
+                      ? "bg-[#0E0F13] border-white/[0.08]"
+                      : "bg-white border-[#D5DDE7] shadow-sm"
+                  }`}
+                >
+                  <div className="flex items-center justify-between border-b pb-3.5 border-zinc-700/30">
+                    <div className="flex items-center space-x-2.5">
+                      <Clock className="w-4 h-4 text-sky-400" />
+                      <div>
+                        <h3 className="text-sm font-semibold">Execution Output History</h3>
+                        <p className="text-xs text-zinc-400">
+                          Chronological audit log of simulation runs, timestamps, and outputs
+                        </p>
+                      </div>
+                    </div>
+                    {executionHistory.length > 0 && (
+                      <button
+                        onClick={handleClearHistory}
+                        className="text-[11px] font-mono text-zinc-400 hover:text-rose-400 transition-colors flex items-center space-x-1 px-2 py-1 rounded hover:bg-rose-500/10 cursor-pointer"
+                        title="Clear execution history"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Clear Log</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {executionHistory.length === 0 ? (
+                    <div className="py-8 text-center space-y-1.5">
+                      <p className="text-xs text-zinc-500">No execution history recorded yet for this project.</p>
+                      <p className="text-[11px] text-zinc-600">Run code from the Code tab or click Recompile to simulate and log execution outputs.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {executionHistory.map((item) => {
+                        const isExpanded = expandedHistoryId === item.id;
+                        return (
+                          <div
+                            key={item.id}
+                            className={`rounded-lg border transition-all overflow-hidden ${
+                              isDark
+                                ? "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"
+                                : "bg-slate-50/70 border-slate-200 hover:border-slate-300"
+                            }`}
+                          >
+                            <div
+                              onClick={() => setExpandedHistoryId(isExpanded ? null : item.id)}
+                              className="p-3.5 flex items-center justify-between cursor-pointer select-none"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <span
+                                  className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                                    item.status === "success"
+                                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                      : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                  }`}
+                                >
+                                  {item.status}
+                                </span>
+                                <div className="space-y-0.5">
+                                  <div className="text-xs font-medium text-zinc-200 flex items-center space-x-2">
+                                    <span>{item.summary}</span>
+                                    {item.jobId && (
+                                      <span className="text-[10px] font-mono text-zinc-500">
+                                        ({item.jobId})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-zinc-400 font-mono flex items-center space-x-3">
+                                    <span className="text-zinc-300">{item.formattedDate}</span>
+                                    <span>•</span>
+                                    <span>{item.latencyMs}ms</span>
+                                    {item.shots && (
+                                      <>
+                                        <span>•</span>
+                                        <span>{item.shots} shots</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center space-x-2 text-zinc-400">
+                                <span className="text-[11px] font-mono text-zinc-500">
+                                  {isExpanded ? "Hide Output" : "View Output"}
+                                </span>
+                                <ChevronDown
+                                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                    isExpanded ? "rotate-180 text-sky-400" : ""
+                                  }`}
+                                />
+                              </div>
+                            </div>
+
+                            {isExpanded && (
+                              <div className="px-3.5 pb-3.5 pt-1 border-t border-white/[0.04] space-y-2">
+                                {item.stdout ? (
+                                  <div>
+                                    <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+                                      Standard Output
+                                    </div>
+                                    <pre className="p-2.5 rounded bg-black/40 font-mono text-xs text-zinc-300 overflow-x-auto whitespace-pre-wrap max-h-48 border border-white/[0.04]">
+                                      {item.stdout}
+                                    </pre>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-zinc-500 italic pt-1">No stdout console output captured for this run.</p>
+                                )}
+                                {item.stderr && (
+                                  <div>
+                                    <div className="text-[10px] font-mono uppercase tracking-wider text-rose-400 mb-1">
+                                      Error Output
+                                    </div>
+                                    <pre className="p-2.5 rounded bg-rose-950/20 font-mono text-xs text-rose-300 overflow-x-auto whitespace-pre-wrap max-h-48 border border-rose-500/20">
+                                      {item.stderr}
+                                    </pre>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
