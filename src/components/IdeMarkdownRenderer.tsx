@@ -20,6 +20,13 @@ function KaTeXMathInner({ math, displayMode = false, isDark = true }: { math: st
         displayMode,
         throwOnError: false
       });
+      if (rendered.includes('class="katex-error"')) {
+        return (
+          <code className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${isDark ? 'bg-zinc-800 text-sky-300' : 'bg-slate-100 text-slate-800'}`}>
+            {cleanMath.replace(/\\([a-zA-Z]+)/g, '$1')}
+          </code>
+        );
+      }
       return (
         <span 
           dangerouslySetInnerHTML={{ __html: rendered }} 

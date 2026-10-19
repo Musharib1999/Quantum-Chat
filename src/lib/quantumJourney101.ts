@@ -61,7 +61,7 @@ qc.measure(0, 0)
     introPrompt: `Welcome to your **Quantum Journey 101**! 🚀 I am **Guru AI**, your personal quantum educator and pair-programmer.
 
 In classical computing, a bit is like a coin lying flat on a table: strictly 0 or 1. But in quantum computing, the **Hadamard (H) gate** sets the coin spinning in mid-air—putting qubit 0 into an equal 50/50 superposition:
-$$\vert\psi\rangle = \frac{\vert 0\rangle + \vert 1\rangle}{\sqrt{2}}$$
+> **|ψ⟩ = (|0⟩ + |1⟩) / √2**
 
 👉 **Your First Task:**
 1. Switch to the **Circuit Canvas** tab above to view your H gate and Measurement on wire \`q[0]\`.
@@ -89,7 +89,7 @@ $$\vert\psi\rangle = \frac{\vert 0\rangle + \vert 1\rangle}{\sqrt{2}}$$
     ],
 
     quizExplanation: `Spot on! 🎯 In quantum mechanics (governed by the **Born Rule**), the wavefunction amplitudes give probabilities:
-$$P(0) = |\alpha|^2 = 0.5, \quad P(1) = |\beta|^2 = 0.5$$
+**P(0) = 50%, P(1) = 50%**
 Every measurement shot is an independent probabilistic collapse. Just like tossing a fair coin 1,024 times rarely gives exactly 512 heads and 512 tails, statistical sampling produces natural variance (shot noise) around the true 50% probability!`,
 
     hint: "Think about whether quantum measurement is deterministic (like reading fixed data from a hard drive) or probabilistic (like sampling from a probability distribution over multiple independent shots).",
@@ -176,7 +176,7 @@ qc.measure(0, 0)
     introPrompt: `Welcome to **Milestone 2: Quantum Bit & Phase Flips**! 🔄
 
 In classical computers, a NOT gate simply flips 0 to 1. In quantum computing, this is the **Pauli-X gate**:
-$$X\vert 0\rangle = \vert 1\rangle, \quad X\vert 1\rangle = \vert 0\rangle$$
+> **X|0⟩ = |1⟩,  X|1⟩ = |0⟩**
 
 👉 **Step 1:** Click **▶ Run** to confirm that the X gate deterministically flips the initial $|0\rangle$ into state $|1\rangle$ with 100% certainty!`,
 
@@ -187,8 +187,8 @@ $$X\vert 0\rangle = \vert 1\rangle, \quad X\vert 1\rangle = \vert 0\rangle$$
     quizAcceptKeywords: ["z", "pauli-z", "pauli z", "phase"],
 
     quizExplanation: `Correct! 🎯 The **Pauli-Z gate** is the quantum phase-flip operator:
-$$Z\vert 0\rangle = \vert 0\rangle, \quad Z\vert 1\rangle = -\vert 1\rangle$$
-On the superposition state $|+\rangle$, applying $Z$ turns it into $|-\rangle = \frac{|0\rangle - |1\rangle}{\sqrt{2}}$. The probabilities $|\pm 1/\sqrt{2}|^2 = 0.5$ are identical, but the relative phase is shifted by $\pi$ (180°)!`,
+> **Z|0⟩ = |0⟩,  Z|1⟩ = -|1⟩**
+On the superposition state **|+⟩**, applying **Z** turns it into **|-⟩ = (|0⟩ - |1⟩) / √2**. The probabilities are still 50/50, but the internal quantum phase is shifted by 180°!`,
 
     hint: "Look closely at the gate names: Pauli-X is the bit-flip (flips 0 ↔ 1 along the X axis). Which Pauli gate corresponds to the Z axis and flips the phase of |1⟩ to -|1⟩?",
 
@@ -287,7 +287,7 @@ qc.measure([0, 1], [0, 1])
     introPrompt: `Welcome to **Milestone 3: Spooky Action — Creating a Bell Pair**! 🌌
 
 When two qubits become **entangled**, they no longer possess independent states. Their joint wavefunction is:
-$$\vert\Phi^+\rangle = \frac{\vert 00\rangle + \vert 11\rangle}{\sqrt{2}}$$
+> **|Φ⁺⟩ = (|00⟩ + |11⟩) / √2**
 
 👉 **Step 1:** Notice your workspace has cleanly expanded to two wires: \`q[0]\` and \`q[1]\`. Click **▶ Run** (or press \`Shift+Enter\`) to execute 1,024 shots!`,
 
@@ -297,16 +297,16 @@ $$\vert\Phi^+\rangle = \frac{\vert 00\rangle + \vert 11\rangle}{\sqrt{2}}$$
 
     quizAcceptKeywords: ["1", "one", "|1>", "same", "definite"],
 
-    quizExplanation: `Exactly right! 🎯 Because the qubits are entangled in state $\frac{|00\rangle + |11\rangle}{\sqrt{2}}$, measuring qubit 0 as '1' collapses the entire joint state to $|11\rangle$. Qubit 1 is instantly guaranteed to be '1' with 100% certainty, no matter the physical distance between them! This is what Einstein famously called *"spooky action at a distance"*!`,
+    quizExplanation: `Exactly right! 🎯 Because the qubits are entangled in state **(|00⟩ + |11⟩) / √2**, measuring qubit 0 as '1' collapses the entire joint state to $|11\rangle$. Qubit 1 is instantly guaranteed to be '1' with 100% certainty, no matter the physical distance between them! This is what Einstein famously called *"spooky action at a distance"*!`,
 
     hint: "Look at the measured pairs: only '00' and '11' exist in the distribution. If the first digit (qubit 0) is definitely 1, what must the second digit (qubit 1) be?",
 
     friendlyAnalogy: "Think of a pair of magic shoes in separate boxes. One is left, one is right. As soon as you open box 1 on Earth and find the left shoe, you instantly know box 2 on Mars contains the right shoe—even without opening it! In our Bell state, both qubits are synchronized into the exact same value.",
 
-    fallbackExplanation: "Because the two qubits are entangled in state $(|00\rangle + |11\rangle)/\sqrt{2}$, measuring qubit 0 as 1 collapses the joint state to $|11\rangle$. Qubit 1 is instantaneously guaranteed to be 1 as well! The states '01' and '10' have strictly zero probability.",
+    fallbackExplanation: "Because the two qubits are entangled in state **(|00⟩ + |11⟩) / √2**, measuring qubit 0 as 1 collapses the joint state to $|11\rangle$. Qubit 1 is instantaneously guaranteed to be 1 as well! The states '01' and '10' have strictly zero probability.",
 
     challengeInstruction: `⚡ **Milestone 3 Hands-On Challenge:**
-Let's create an *anti-correlated* Bell state $|\Psi^+\rangle = \frac{|01\rangle + |10\rangle}{\sqrt{2}}$!
+Let's create an *anti-correlated* Bell state **|Ψ⁺⟩ = (|01⟩ + |10⟩) / √2**!
 1. Add an **X gate** to wire \`q[1]\` *before* the CNOT (or in code: \`qc.x(1)\` right before \`qc.cx(0, 1)\`).
 2. Click **▶ Run**!
 3. Observe how the correlated outcomes swap to strictly opposite states ('01' and '10')!`,
@@ -336,7 +336,7 @@ Let's create an *anti-correlated* Bell state $|\Psi^+\rangle = \frac{|01\rangle 
         return {
           passed: true,
           feedback:
-            "🎉 **Challenge Mastered!** You just created the $|\Psi^+\rangle = \frac{|01\rangle + |10\rangle}{\sqrt{2}}$ Bell state! Now, measuring qubit 0 as 0 guarantees qubit 1 is 1, and vice versa—perfect quantum anti-correlation!",
+            "🎉 **Challenge Mastered!** You just created the **|Ψ⁺⟩ = (|01⟩ + |10⟩) / √2** Bell state! Now, measuring qubit 0 as 0 guarantees qubit 1 is 1, and vice versa—perfect quantum anti-correlation!",
         };
       }
       return {
@@ -385,7 +385,7 @@ qc.measure(0, 0)
 Here is the secret of quantum advantage: quantum states are **waves**. Waves can add together (constructive interference) or cancel each other out (destructive interference).
 
 Recall that the Hadamard matrix is its own inverse:
-$$H \cdot H = I \quad (\text{Identity})$$
+> **H · H = I (Identity)**
 
 👉 **Step 1:** Notice your workspace is reset to a clean 1-qubit wire with 1 Hadamard gate. Click **▶ Run** to verify the standard 50/50 superposition first!`,
 
@@ -407,10 +407,9 @@ $$H \cdot H = I \quad (\text{Identity})$$
     ],
 
     quizExplanation: `Extraordinary indeed! 🎯 In quantum mechanics:
-$$H|0\rangle = \frac{|0\rangle + |1\rangle}{\sqrt{2}}$$
-Applying $H$ again:
-$$H\left(\frac{|0\rangle + |1\rangle}{\sqrt{2}}\right) = \frac{1}{2}(|0\rangle + |1\rangle) + \frac{1}{2}(|0\rangle - |1\rangle) = |0\rangle$$
-The $|1\rangle$ amplitude cancels out completely ($+\frac{1}{2} - \frac{1}{2} = 0$), while the $|0\rangle$ amplitude doubles ($+\frac{1}{2} + \frac{1}{2} = 1$)! This is **destructive interference** in action!`,
+First H: **H|0⟩ = (|0⟩ + |1⟩) / √2**
+Second H: **H((|0⟩ + |1⟩) / √2) = |0⟩**
+The **|1⟩** amplitudes cancel out completely (+½ - ½ = 0), while the **|0⟩** amplitudes add together (+½ + ½ = 1)! This is **destructive interference** in action!`,
 
     hint: "Think about mathematical cancellation: the Hadamard gate has positive and negative signs in its matrix. Could two paths cancel each other out rather than staying random?",
 

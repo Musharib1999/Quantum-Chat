@@ -371,6 +371,14 @@ const DWAVE_INITIAL_MESSAGES: CopilotMessage[] = [
   },
 ];
 
+// Helper to cleanse any previously cached corrupted LaTeX strings from localStorage
+function sanitizeCachedChatText(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\$\$[\s\S]*?(?:vert|ertpsi|rac\{)[\s\S]*?\$\$/gi, "> **|ψ⟩ = (|0⟩ + |1⟩) / √2**")
+    .replace(/\$\$\vert[\s\S]*?\$\$/gi, "> **|ψ⟩ = (|0⟩ + |1⟩) / √2**");
+}
+
 const QUANTUM_JOURNEY_INITIAL_MESSAGES: CopilotMessage[] = [
   {
     id: 1,
@@ -1149,7 +1157,11 @@ export default function QuantumGuruStudioPage() {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed.map((m: any) => ({ ...m, isStreaming: false }));
+            return parsed.map((m: any) => ({
+              ...m,
+              isStreaming: false,
+              text: sanitizeCachedChatText(m.text || ""),
+            }));
           }
         }
         if (activeId === "quantum_journey_101") {
@@ -1403,7 +1415,11 @@ export default function QuantumGuruStudioPage() {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            savedChat = parsed.map((m: any) => ({ ...m, isStreaming: false }));
+            savedChat = parsed.map((m: any) => ({
+              ...m,
+              isStreaming: false,
+              text: sanitizeCachedChatText(m.text || ""),
+            }));
           }
         }
       } catch (e) {}
