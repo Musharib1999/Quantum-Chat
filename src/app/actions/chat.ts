@@ -151,7 +151,7 @@ export async function chatWithQuantumAI(
     }
 
     // Sanitize prompt
-    const sanitizedPrompt = prompt.replace(/[{}]/g, '').trim();
+    const sanitizedPrompt = prompt.trim();
 
     // 1. Token limit check
     if (activeUserEmail) {

@@ -52,7 +52,7 @@ export default async function SharedLabPage({ params }: { params: Promise<{ id: 
             This shared simulation link may have expired or is set to private.
           </p>
           <Link 
-            href="/quantum-assistant" 
+            href="/ide" 
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -82,7 +82,7 @@ export default async function SharedLabPage({ params }: { params: Promise<{ id: 
 
         <div className="flex items-center gap-3">
           <Link
-            href={`/quantum-assistant?remix=${session.shareId}`}
+            href={`/ide?remix=${session.shareId}`}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             <Sparkles className="w-4 h-4 text-blue-200" />

@@ -923,7 +923,7 @@ export default function QuantumGuruStudioPage() {
         const savedFile = localStorage.getItem("quantum_ide_active_file") || "main.py";
         const savedCode = localStorage.getItem(`quantum_ide_code_${savedId}_${savedFile}`);
         if (savedCode) {
-          if (savedId !== "clean_energy_portfolio" && (savedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection") || savedCode.includes("from qubo_matrix import get_qubo_model"))) {
+          if (savedId !== "clean_energy_portfolio" && savedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection")) {
             return NEW_DWAVE_STARTER_CODE;
           }
           return savedCode;
@@ -1251,7 +1251,7 @@ export default function QuantumGuruStudioPage() {
           }
 
           // Check if custom project has cross-contaminated portfolio code
-          if (matched.id !== "clean_energy_portfolio" && savedCode && (savedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection") || savedCode.includes("from qubo_matrix import get_qubo_model"))) {
+          if (matched.id !== "clean_energy_portfolio" && savedCode && savedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection")) {
             savedCode = matched.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
             try {
               localStorage.setItem(`quantum_ide_code_${matched.id}_${initialFile}`, savedCode);
@@ -1336,6 +1336,22 @@ export default function QuantumGuruStudioPage() {
   };
 
   const handleSelectFile = (file: string) => {
+    // Flush current in-memory edits before switching files
+    const curCode = framework === "dwave" ? dwaveCode : qiskitCode;
+    if (activeFile && curCode) {
+      setActiveProject((prev) => ({
+        ...prev,
+        fileContents: {
+          ...(prev.fileContents || {}),
+          [activeFile]: curCode,
+        },
+      }));
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, curCode);
+        } catch (e) {}
+      }
+    }
     setActiveFile(file);
     let loadedCode = "";
     if (typeof window !== "undefined") {
@@ -1376,7 +1392,7 @@ export default function QuantumGuruStudioPage() {
       loadedCode = proj.fileContents[targetFile];
     }
     // Check for contamination in custom projects
-    if (proj.id !== "clean_energy_portfolio" && loadedCode && (loadedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection") || loadedCode.includes("from qubo_matrix import get_qubo_model"))) {
+    if (proj.id !== "clean_energy_portfolio" && loadedCode && loadedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection")) {
       loadedCode = proj.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
       if (typeof window !== "undefined") {
         try {
@@ -3105,21 +3121,33 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
   // Health Metrics
   const totalCost = useMemo(() => {
     const s = solverResult.sample;
-    let cost = 0;
-    DEFAULT_VARIABLES.forEach((v, idx) => {
-      if (s[v] === 1) cost += ASSET_COSTS[idx];
-    });
-    return cost;
-  }, [solverResult.sample]);
+    if (!s || Object.keys(s).length === 0) return 0;
+    const isCleanEnergy = activeProject.id === "clean_energy_portfolio" || 
+      (solverResult.variables && solverResult.variables.includes("Wind_A") && solverResult.variables.includes("Solar_B"));
+    if (isCleanEnergy) {
+      let cost = 0;
+      DEFAULT_VARIABLES.forEach((v, idx) => {
+        if (s[v] === 1) cost += ASSET_COSTS[idx];
+      });
+      return cost;
+    }
+    return typeof solverResult.energy === "number" ? Math.abs(solverResult.energy) : Object.values(s).filter((v) => v === 1).length;
+  }, [solverResult.sample, solverResult.energy, solverResult.variables, activeProject.id]);
 
   const totalScore = useMemo(() => {
     const s = solverResult.sample;
-    let score = 0;
-    DEFAULT_VARIABLES.forEach((v, idx) => {
-      if (s[v] === 1) score += ASSET_YIELDS[idx];
-    });
-    return score;
-  }, [solverResult.sample]);
+    if (!s || Object.keys(s).length === 0) return 0;
+    const isCleanEnergy = activeProject.id === "clean_energy_portfolio" || 
+      (solverResult.variables && solverResult.variables.includes("Wind_A") && solverResult.variables.includes("Solar_B"));
+    if (isCleanEnergy) {
+      let score = 0;
+      DEFAULT_VARIABLES.forEach((v, idx) => {
+        if (s[v] === 1) score += ASSET_YIELDS[idx];
+      });
+      return score;
+    }
+    return Object.values(s).filter((v) => v === 1).length * 10;
+  }, [solverResult.sample, solverResult.variables, activeProject.id]);
 
   if (!mounted) {
     return (

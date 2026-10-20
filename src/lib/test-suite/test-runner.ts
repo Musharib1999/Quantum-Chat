@@ -79,28 +79,28 @@ export async function runSingleTest(def: TestCaseDefinition): Promise<TestResult
             }
 
             case 'nav_assistant_page': {
-                const res = await fetch('/quantum-assistant');
+                const res = await fetch('/ide');
                 const passed = res.status === 200;
                 return {
                     id: def.id,
                     status: passed ? 'passed' : 'failed',
                     durationMs: Date.now() - t0,
                     assertions: [
-                        { name: 'Quantum Assistant renders HTTP 200', passed, expected: 200, actual: res.status }
+                        { name: 'Quantum Studio IDE renders HTTP 200', passed, expected: 200, actual: res.status }
                     ],
                     response: { status: res.status }
                 };
             }
 
             case 'nav_capabilities_page': {
-                const res = await fetch('/quantum-assistant/capabilities');
+                const res = await fetch('/ide?framework=dwave');
                 const passed = res.status === 200;
                 return {
                     id: def.id,
                     status: passed ? 'passed' : 'failed',
                     durationMs: Date.now() - t0,
                     assertions: [
-                        { name: 'Capabilities catalog renders HTTP 200', passed, expected: 200, actual: res.status }
+                        { name: 'Quantum Studio D-Wave renders HTTP 200', passed, expected: 200, actual: res.status }
                     ],
                     response: { status: res.status }
                 };
