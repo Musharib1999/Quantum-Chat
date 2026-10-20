@@ -123,10 +123,16 @@ async def call_groq(
         except Exception:
             message = error_msg
 
-        # Fallback to standard Groq model if configured model alias is invalid or unavailable
-        if (e.code in (400, 404)) and model_name != "llama-3.3-70b-versatile":
-            print(f"[groq_client] Model '{model_name}' unavailable ({message}). Retrying with 'llama-3.3-70b-versatile'...")
-            return await call_groq(system=system, user=user, max_tokens=max_tokens, temperature=temperature, model="llama-3.3-70b-versatile")
+        # Fallback if rate limited (429) or model unavailable (400, 404)
+        if e.code == 429 and model_name != "openai/gpt-oss-120b":
+            print(f"[groq_client] Rate limited on '{model_name}'. Retrying with 'openai/gpt-oss-120b'...")
+            import asyncio
+            await asyncio.sleep(1.0)
+            return await call_groq(system=system, user=user, max_tokens=max_tokens, temperature=temperature, model="openai/gpt-oss-120b")
+
+        if (e.code in (400, 404)) and model_name != "openai/gpt-oss-120b":
+            print(f"[groq_client] Model '{model_name}' unavailable ({message}). Retrying with 'openai/gpt-oss-120b'...")
+            return await call_groq(system=system, user=user, max_tokens=max_tokens, temperature=temperature, model="openai/gpt-oss-120b")
 
         raise RuntimeError(f"Groq API Error {e.code}: {message}") from e
     except Exception as e:

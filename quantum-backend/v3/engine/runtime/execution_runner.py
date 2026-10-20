@@ -517,25 +517,38 @@ if HAS_DWAVE:
         pass
 
     import types
-    qm_mod = types.ModuleType("qubo_matrix")
-    def get_qubo_model(budget=18, penalty_lambda=3.5, **kwargs):
-        var_names = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"]
-        Q = {
-            ("Wind_A", "Wind_A"): -11.25,
-            ("Wind_A", "Solar_B"): 15.7,
-            ("Wind_A", "Battery_C"): 7.7,
-            ("Wind_A", "Hydro_D"): 9.9,
-            ("Solar_B", "Solar_B"): -9.5,
-            ("Solar_B", "Battery_C"): 5.1,
-            ("Solar_B", "Hydro_D"): 7.7,
-            ("Battery_C", "Battery_C"): -18.0,
-            ("Battery_C", "Hydro_D"): 6.6,
-            ("Hydro_D", "Hydro_D"): -50.8,
-        }
-        return Q, var_names, penalty_lambda, -62.2
-    qm_mod.get_qubo_model = get_qubo_model
-    sys.modules["qubo_matrix"] = qm_mod
-    exec_globals["get_qubo_model"] = get_qubo_model
+    qm_file = os.path.join(_ws_cwd, "qubo_matrix.py")
+    if os.path.exists(qm_file):
+        try:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("qubo_matrix", qm_file)
+            if spec and spec.loader:
+                qm_mod = importlib.util.module_from_spec(spec)
+                sys.modules["qubo_matrix"] = qm_mod
+                spec.loader.exec_module(qm_mod)
+                if hasattr(qm_mod, "get_qubo_model"):
+                    exec_globals["get_qubo_model"] = qm_mod.get_qubo_model
+        except Exception:
+            pass
+
+    if "qubo_matrix" not in sys.modules:
+        qm_mod = types.ModuleType("qubo_matrix")
+        def get_qubo_model(budget=18, penalty_lambda=3.5, **kwargs):
+            var_names = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"]
+            n = len(var_names)
+            Q_arr = np.zeros((n, n), dtype=float)
+            couplings = {
+                (0, 0): -11.25, (0, 1): 15.7, (0, 2): 7.7, (0, 3): 9.9,
+                (1, 1): -9.5,   (1, 2): 5.1, (1, 3): 7.7,
+                (2, 2): -18.0,  (2, 3): 6.6,
+                (3, 3): -50.8,
+            }
+            for (i, j), val in couplings.items():
+                Q_arr[i, j] = val
+            return Q_arr, var_names, penalty_lambda, -62.2
+        qm_mod.get_qubo_model = get_qubo_model
+        sys.modules["qubo_matrix"] = qm_mod
+        exec_globals["get_qubo_model"] = get_qubo_model
 if HAS_AER:
     class SafeAerSimulator(AerSimulator):
         def run(self, circuits, **kwargs):

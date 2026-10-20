@@ -741,8 +741,7 @@ export default function QuantumGuruStudioPage() {
               if (p.id !== "clean_energy_portfolio") {
                 const mainContent = p.fileContents?.["main.py"] || "";
                 const isContaminated =
-                  mainContent.includes("# Quantum Guru — Clean Energy Portfolio Selection") ||
-                  mainContent.includes("from qubo_matrix import get_qubo_model");
+                  mainContent.includes("# Quantum Guru — Clean Energy Portfolio Selection");
 
                 const updatedContents = { ...p.fileContents };
                 if (isContaminated) {
@@ -752,11 +751,10 @@ export default function QuantumGuruStudioPage() {
                   } catch (e) {}
                 }
 
-                // If qubo_matrix.py was auto-added by old template bug, remove it
                 let updatedFiles = Array.isArray(p.files) ? [...p.files] : ["main.py"];
                 if (updatedFiles.includes("qubo_matrix.py")) {
                   const quboContent = p.fileContents?.["qubo_matrix.py"] || "";
-                  if (!quboContent || quboContent.includes("def get_qubo_model") || quboContent.trim() === "# qubo_matrix.py") {
+                  if (quboContent.includes("Wind_A") && isContaminated) {
                     updatedFiles = updatedFiles.filter((f: string) => f !== "qubo_matrix.py");
                     delete updatedContents["qubo_matrix.py"];
                     try {
@@ -2082,6 +2080,11 @@ export default function QuantumGuruStudioPage() {
             code: dwaveCode,
             target_backend: "dwave_simulated_annealing",
             shots: 1024,
+            project_files: {
+              ...(activeProject.fileContents || {}),
+              [activeFile]: dwaveCode,
+            },
+            file_name: activeFile,
           }),
         });
 
@@ -2198,6 +2201,11 @@ export default function QuantumGuruStudioPage() {
             code: qiskitCode,
             target_backend: "aer_simulator",
             shots: execShots,
+            project_files: {
+              ...(activeProject.fileContents || {}),
+              [activeFile]: qiskitCode,
+            },
+            file_name: activeFile,
           }),
         });
 
@@ -2366,13 +2374,21 @@ export default function QuantumGuruStudioPage() {
   const handleApplyPipelineCode = async (code: string, meta?: any) => {
     if (!code) return;
     setDwaveCode(code);
-    setActiveProject((prev) => ({
-      ...prev,
-      fileContents: {
+    setActiveProject((prev) => {
+      const newFiles = meta?.qubo_code && !prev.files.includes("qubo_matrix.py")
+        ? [...prev.files, "qubo_matrix.py"]
+        : prev.files;
+      const newContents = {
         ...(prev.fileContents || {}),
         [activeFile]: code,
-      },
-    }));
+        ...(meta?.qubo_code ? { "qubo_matrix.py": meta.qubo_code } : {}),
+      };
+      return {
+        ...prev,
+        files: newFiles,
+        fileContents: newContents,
+      };
+    });
     try {
       localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, code);
     } catch {}
@@ -2396,8 +2412,13 @@ export default function QuantumGuruStudioPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code,
-          target: "dwave_simulated_annealing",
-          num_reads: 5000,
+          target_backend: "dwave_simulated_annealing",
+          shots: 1024,
+          project_files: {
+            ...(activeProject.fileContents || {}),
+            [activeFile]: code,
+          },
+          file_name: activeFile,
         }),
       });
       const data = await resp.json();

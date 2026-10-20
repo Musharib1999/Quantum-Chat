@@ -142,16 +142,52 @@ async def solve_dynamic_optimization_problem(
         constraints_list = [f"Max-Cut Bipartite Partition: {len(edges)} edges across {len(var_names)} nodes (0 slack qubits)"]
         constraint_exprs = []
 
-    # Case B: Constrained Combinatorial Optimization (Portfolio, Knapsack, Project Selection)
+    # Case B: Constrained Combinatorial Optimization (Assignment, Portfolio, Knapsack, General)
     else:
-        system_prompt = """You are the Quantum Guru Optimization Formulator. Given an optimization problem description, extract the formulation and return a STRICT JSON object:
+        system_prompt = """You are the Quantum Guru Optimization Formulator. Given an optimization problem description, extract the formulation into a STRICT JSON object without markdown or commentary.
+Format:
+{
+  "problem_name": "Warehouse Robot Assignment",
+  "objective_sense": "MINIMIZE",
+  "decision_variables": ["Robot_A_Order_1", "Robot_A_Order_2", "Robot_A_Order_3", "Robot_B_Order_1", "Robot_B_Order_2", "Robot_B_Order_3", "Robot_C_Order_1", "Robot_C_Order_2", "Robot_C_Order_3"],
+  "objective_weights": {
+    "Robot_A_Order_1": 4.0, "Robot_A_Order_2": 2.0, "Robot_A_Order_3": 8.0,
+    "Robot_B_Order_1": 6.0, "Robot_B_Order_2": 5.0, "Robot_B_Order_3": 3.0,
+    "Robot_C_Order_1": 3.0, "Robot_C_Order_2": 7.0, "Robot_C_Order_3": 4.0
+  },
+  "equality_constraints": [
+    {"name": "Robot_A_single_order", "coefficients": {"Robot_A_Order_1": 1.0, "Robot_A_Order_2": 1.0, "Robot_A_Order_3": 1.0}, "rhs": 1.0},
+    {"name": "Robot_B_single_order", "coefficients": {"Robot_B_Order_1": 1.0, "Robot_B_Order_2": 1.0, "Robot_B_Order_3": 1.0}, "rhs": 1.0},
+    {"name": "Robot_C_single_order", "coefficients": {"Robot_C_Order_1": 1.0, "Robot_C_Order_2": 1.0, "Robot_C_Order_3": 1.0}, "rhs": 1.0},
+    {"name": "Order_1_single_robot", "coefficients": {"Robot_A_Order_1": 1.0, "Robot_B_Order_1": 1.0, "Robot_C_Order_1": 1.0}, "rhs": 1.0},
+    {"name": "Order_2_single_robot", "coefficients": {"Robot_A_Order_2": 1.0, "Robot_B_Order_2": 1.0, "Robot_C_Order_2": 1.0}, "rhs": 1.0},
+    {"name": "Order_3_single_robot", "coefficients": {"Robot_A_Order_3": 1.0, "Robot_B_Order_3": 1.0, "Robot_C_Order_3": 1.0}, "rhs": 1.0}
+  ],
+  "inequality_constraints": [],
+  "fixed_variables": {"Robot_A_Order_3": 0, "Robot_C_Order_2": 0},
+  "mutual_exclusions": [["Robot_C_Order_1", "Robot_C_Order_3"]],
+  "dependencies": [],
+  "constraints_summary": [
+    "Every robot must fulfil exactly one order",
+    "Every order must be assigned to exactly one robot",
+    "Robot A cannot fulfil Order 3 (insufficient battery)",
+    "Robot C must fulfil either Order 1 or Order 3, but not both",
+    "Minimize total assignment cost"
+  ]
+}
+
+Or for Portfolio / Selection:
 {
   "problem_name": "Clean Energy Project Selection",
-  "decision_variables": ["Solar_Farm_A", "Wind_Farm_B", "Wind_Farm_C", "Battery_Storage_D"],
-  "costs": {"Solar_Farm_A": 8.0, "Wind_Farm_B": 7.0, "Wind_Farm_C": 5.0, "Battery_Storage_D": 6.0},
-  "scores": {"Solar_Farm_A": 40.0, "Wind_Farm_B": 45.0, "Wind_Farm_C": 30.0, "Battery_Storage_D": 35.0},
-  "budget": 20.0,
   "objective_sense": "MAXIMIZE",
+  "decision_variables": ["Solar_Farm_A", "Wind_Farm_B", "Wind_Farm_C", "Battery_Storage_D"],
+  "objective_weights": {"Solar_Farm_A": 40.0, "Wind_Farm_B": 45.0, "Wind_Farm_C": 30.0, "Battery_Storage_D": 35.0},
+  "costs": {"Solar_Farm_A": 8.0, "Wind_Farm_B": 7.0, "Wind_Farm_C": 5.0, "Battery_Storage_D": 6.0},
+  "equality_constraints": [],
+  "inequality_constraints": [
+    {"name": "budget", "coefficients": {"Solar_Farm_A": 8.0, "Wind_Farm_B": 7.0, "Wind_Farm_C": 5.0, "Battery_Storage_D": 6.0}, "rhs": 20.0, "op": "<="}
+  ],
+  "fixed_variables": {},
   "mutual_exclusions": [["Solar_Farm_A", "Wind_Farm_C"]],
   "dependencies": [["Battery_Storage_D", "Wind_Farm_B"]],
   "constraints_summary": [
@@ -163,67 +199,163 @@ async def solve_dynamic_optimization_problem(
         parsed_ok = False
         try:
             raw_res = await call_primary(system=system_prompt, user=user_msg, max_tokens=2048)
-            m = re.search(r'\{.*\}', raw_res, re.DOTALL)
+            clean_res = re.sub(r"//.*", "", raw_res)
+            clean_res = re.sub(r"/\*[\s\S]*?\*/", "", clean_res)
+            m = re.search(r"\{[\s\S]*\}", clean_res)
             if m:
                 llm_data = json.loads(m.group(0))
-                prob_title = llm_data.get("problem_name", "Clean Energy Portfolio Optimization")
-                var_names = llm_data.get("decision_variables", llm_data.get("variables", ["Solar_Farm_A", "Wind_Farm_B", "Wind_Farm_C", "Battery_Storage_D"]))
-                costs_map = {v: float(c) for v, c in llm_data.get("costs", {}).items() if v in var_names}
-                scores_map = {v: float(s) for v, s in llm_data.get("scores", {}).items() if v in var_names}
+                prob_title = llm_data.get("problem_name", "Combinatorial Optimization")
+                raw_sense = str(llm_data.get("objective_sense", "MAXIMIZE")).upper()
+                obj_sense = "MINIMIZE" if "MIN" in raw_sense else "MAXIMIZE"
+                var_names = llm_data.get("decision_variables", llm_data.get("variables", []))
+                
+                weights_map = {v: float(w) for v, w in (llm_data.get("objective_weights") or llm_data.get("costs") or llm_data.get("scores") or {}).items() if v in var_names}
                 for v in var_names:
-                    costs_map.setdefault(v, 5.0)
-                    scores_map.setdefault(v, 30.0)
-                budget_val = float(llm_data.get("budget", 20.0))
+                    weights_map.setdefault(v, 1.0)
+                    
+                costs_map = {v: float(c) for v, c in (llm_data.get("costs") or weights_map).items() if v in var_names}
+                scores_map = {v: float(s) for v, s in (llm_data.get("scores") or weights_map).items() if v in var_names}
+
+                eq_constraints = llm_data.get("equality_constraints", [])
+                ineq_constraints = llm_data.get("inequality_constraints", [])
+
+                raw_budget = llm_data.get("budget")
+                budget_val = 0.0
+                if raw_budget is not None:
+                    try:
+                        b_cand = float(raw_budget)
+                        if b_cand > 0:
+                            budget_val = b_cand
+                            if not ineq_constraints and costs_map:
+                                ineq_constraints.append({
+                                    "name": "budget",
+                                    "coefficients": costs_map,
+                                    "rhs": budget_val,
+                                    "op": "<="
+                                })
+                    except (TypeError, ValueError):
+                        pass
+
                 exclusions = [tuple(pair) for pair in llm_data.get("mutual_exclusions", []) if len(pair) == 2]
                 dependencies = [tuple(pair) for pair in llm_data.get("dependencies", []) if len(pair) == 2]
-                constraints_list = llm_data.get("constraints_summary", [
-                    f"Total investment limit: Cost <= ${budget_val:.1f}M",
-                    "Mutual exclusion verified",
-                    "Grid balancing dependency satisfied"
-                ])
-                parsed_ok = True
-        except Exception:
+                fixed_vars = {k: int(v) for k, v in (llm_data.get("fixed_variables") or {}).items() if k in var_names}
+
+                constraints_list = llm_data.get("constraints_summary", [])
+                if not constraints_list:
+                    if eq_constraints:
+                        constraints_list.append(f"{len(eq_constraints)} equality constraints satisfied")
+                    if ineq_constraints:
+                        constraints_list.append(f"{len(ineq_constraints)} inequality constraints satisfied")
+                    if exclusions:
+                        constraints_list.append(f"{len(exclusions)} mutual exclusion rules satisfied")
+                    if fixed_vars:
+                        constraints_list.append(f"{len(fixed_vars)} fixed variable assignments satisfied")
+
+                if var_names and (weights_map or eq_constraints or ineq_constraints):
+                    parsed_ok = True
+        except Exception as e:
+            print(f"[optimization_agent] LLM formulation failed: {e}")
             parsed_ok = False
 
         if not parsed_ok:
-            var_matches = re.findall(r'(?:Solar\s+Farm|Wind\s+Farm|Battery\s+Storage|Warehouse|Asset|Project|Candidate|Facility|Node)\s+([A-Za-z0-9_]+)', user_msg, re.IGNORECASE)
-            if not var_matches:
-                var_names = ["Solar_Farm_A", "Wind_Farm_B", "Wind_Farm_C", "Battery_Storage_D"]
+            is_assignment_prob = any(k in user_msg.lower() for k in ["robot", "warehouse", "order", "assign"])
+            if is_assignment_prob:
+                prob_title = "Warehouse Robot Order Assignment"
+                obj_sense = "MINIMIZE"
+                robots = ["Robot_A", "Robot_B", "Robot_C"]
+                orders = ["Order_1", "Order_2", "Order_3"]
+                var_names = [f"{r}_{o}" for r in robots for o in orders]
+                
+                cost_table = {
+                    ("Robot_A", "Order_1"): 4.0, ("Robot_A", "Order_2"): 2.0, ("Robot_A", "Order_3"): 8.0,
+                    ("Robot_B", "Order_1"): 6.0, ("Robot_B", "Order_2"): 5.0, ("Robot_B", "Order_3"): 3.0,
+                    ("Robot_C", "Order_1"): 3.0, ("Robot_C", "Order_2"): 7.0, ("Robot_C", "Order_3"): 4.0,
+                }
+                weights_map = {f"{r}_{o}": cost_table[(r, o)] for r in robots for o in orders}
+                costs_map = dict(weights_map)
+                scores_map = {v: -w for v, w in weights_map.items()}
+                
+                eq_constraints = []
+                for r in robots:
+                    eq_constraints.append({
+                        "name": f"{r}_single_order",
+                        "coefficients": {f"{r}_{o}": 1.0 for o in orders},
+                        "rhs": 1.0
+                    })
+                for o in orders:
+                    eq_constraints.append({
+                        "name": f"{o}_single_robot",
+                        "coefficients": {f"{r}_{o}": 1.0 for r in robots},
+                        "rhs": 1.0
+                    })
+                ineq_constraints = []
+                fixed_vars = {"Robot_A_Order_3": 0, "Robot_C_Order_2": 0}
+                exclusions = [("Robot_C_Order_1", "Robot_C_Order_3")]
+                dependencies = []
+                budget_val = 0.0
+                constraints_list = [
+                    "Every robot must fulfil exactly one order",
+                    "Every order must be assigned to exactly one robot",
+                    "Robot A cannot fulfil Order 3 (insufficient battery)",
+                    "Robot C must fulfil either Order 1 or Order 3, but not both",
+                    "Minimize total assignment cost"
+                ]
             else:
-                var_names = [f"Project_{v}" if not any(k in v for k in ["Farm", "Storage", "Warehouse"]) else v for v in var_matches]
-                var_names = list(dict.fromkeys(var_names))
+                var_matches = re.findall(r"(?:Solar\s+Farm|Wind\s+Farm|Battery\s+Storage|Asset|Project|Candidate|Facility|Node)\s+([A-Za-z0-9_]+)", user_msg, re.IGNORECASE)
+                if not var_matches:
+                    var_names = ["Solar_Farm_A", "Wind_Farm_B", "Wind_Farm_C", "Battery_Storage_D"]
+                else:
+                    var_names = [f"Project_{v}" if not any(k in v for k in ["Farm", "Storage"]) else v for v in var_matches]
+                    var_names = list(dict.fromkeys(var_names))
 
-            costs_map = {v: 5.0 + (i * 2.0) for i, v in enumerate(var_names)}
-            scores_map = {v: 30.0 + (i * 5.0) for i, v in enumerate(var_names)}
+                costs_map = {v: 5.0 + (i * 2.0) for i, v in enumerate(var_names)}
+                scores_map = {v: 30.0 + (i * 5.0) for i, v in enumerate(var_names)}
+                weights_map = dict(scores_map)
+                obj_sense = "MAXIMIZE"
 
-            b_match = re.search(r'budget\s*(?:of|is|:)?\s*\$?(\d+(?:\.\d+)?)', user_msg, re.IGNORECASE)
-            budget_val = float(b_match.group(1)) if b_match else 20.0
+                b_match = re.search(r"budget\s*(?:of|is|:)?\s*\$?(\d+(?:\.\d+)?)", user_msg, re.IGNORECASE)
+                budget_val = float(b_match.group(1)) if b_match else 20.0
 
-            prob_title = "Clean Energy Portfolio Optimization" if any(k in user_msg.lower() for k in ["solar", "wind", "energy", "clean"]) else "Combinatorial Optimization"
-            exclusions = [(var_names[0], var_names[2])] if len(var_names) >= 3 else []
-            dependencies = [(var_names[3], var_names[1])] if len(var_names) >= 4 else []
-            constraints_list = [
-                f"Total investment limit: Cost <= ${budget_val:.1f}M",
-                f"Mutual exclusion: {var_names[0]} and {var_names[2]} cannot both be selected" if exclusions else "No exclusion constraints",
-                f"Grid balancing dependency: {var_names[3]} requires {var_names[1]}" if dependencies else "No dependency constraints"
-            ]
+                prob_title = "Clean Energy Portfolio Optimization" if any(k in user_msg.lower() for k in ["solar", "wind", "energy", "clean"]) else "Combinatorial Optimization"
+                exclusions = [(var_names[0], var_names[2])] if len(var_names) >= 3 else []
+                dependencies = [(var_names[3], var_names[1])] if len(var_names) >= 4 else []
+                fixed_vars = {}
+                eq_constraints = []
+                ineq_constraints = [{
+                    "name": "budget",
+                    "coefficients": costs_map,
+                    "rhs": budget_val,
+                    "op": "<="
+                }]
+                constraints_list = [
+                    f"Total investment limit: Cost <= ${budget_val:.1f}M",
+                    f"Mutual exclusion: {var_names[0]} and {var_names[2]} cannot both be selected" if exclusions else "No exclusion constraints",
+                    f"Grid balancing dependency: {var_names[3]} requires {var_names[1]}" if dependencies else "No dependency constraints"
+                ]
 
-        constraint_exprs = [{
-            "name": "budget",
-            "coefficients": costs_map,
-            "rhs": budget_val,
-            "sense": "<="
-        }]
+        constraint_exprs = []
+        for c in eq_constraints:
+            constraint_exprs.append({
+                "name": c.get("name", "eq"),
+                "coefficients": c.get("coefficients", {}),
+                "rhs": float(c.get("rhs", 1.0)),
+                "sense": "=="
+            })
+        for c in ineq_constraints:
+            constraint_exprs.append({
+                "name": c.get("name", "ineq"),
+                "coefficients": c.get("coefficients", {}),
+                "rhs": float(c.get("rhs", 0.0)),
+                "sense": c.get("op", "<=")
+            })
+
         req = OptAlgebraicSlackQUBORequest(
             decision_variables=var_names,
-            objective_weights=scores_map,
-            objective_sense="MAXIMIZE",
-            inequality_constraints=[{
-                "name": "budget",
-                "coefficients": costs_map,
-                "rhs": budget_val,
-                "op": "<="
-            }],
+            objective_weights=weights_map,
+            objective_sense=obj_sense,
+            equality_constraints=eq_constraints,
+            inequality_constraints=ineq_constraints,
+            fixed_variables=fixed_vars,
             mutual_exclusions=exclusions,
             dependencies=dependencies,
             penalty_lambda=50.0
@@ -354,7 +486,12 @@ n = len(variable_names)
 Q_dict = {{}}
 for i in range(n):
     for j in range(i, n):
-        val = float(Q_matrix[i, j])
+        if hasattr(Q_matrix, "shape"):
+            val = float(Q_matrix[i, j])
+        elif isinstance(Q_matrix, dict):
+            val = float(Q_matrix.get((variable_names[i], variable_names[j]), Q_matrix.get((i, j), 0.0)))
+        else:
+            val = float(Q_matrix[i][j])
         if abs(val) > 1e-6:
             Q_dict[(variable_names[i], variable_names[j])] = val
 
@@ -533,6 +670,23 @@ async def handle_optimization_synthesis(
         lines_removed=max(0, old_l - new_l) if old_l > 0 else 0,
         total_lines=new_l,
         summary=f"Generated {prob_name} in {target_f} ({len(var_names)} variables)"
+    ))
+
+    # Mutate qubo_matrix.py in workspace
+    yield await stream.publish(CodeEditAction(
+        project_id=project_id,
+        file_path="qubo_matrix.py",
+        replacement_content=qubo_code,
+        rationale=f"Generated Q-matrix module for {prob_name}"
+    ))
+    q_lines = len(qubo_code.strip().splitlines())
+    yield await stream.publish(CodeEditObservation(
+        project_id=project_id,
+        file_path="qubo_matrix.py",
+        lines_added=q_lines,
+        lines_removed=0,
+        total_lines=q_lines,
+        summary=f"Synthesized symmetric Q-matrix module in qubo_matrix.py ({len(var_names)}x{len(var_names)})"
     ))
 
     if not is_execution_request:

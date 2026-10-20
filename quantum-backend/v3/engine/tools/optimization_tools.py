@@ -348,8 +348,49 @@ def compile_algebraic_slack_qubo(req: OptAlgebraicSlackQUBORequest) -> OptAlgebr
             cell_derivations[f"({j_idx},{j_idx})"] = f"Dependency Linear Cost: +λ * {target}"
             cell_derivations[f"({low},{high})"] = f"Dependency Coupling: -λ * {required} * {target}"
 
-    # 5. Add Inequality Quadratic Expansions: lambda * (sum C_i x_i + sum 2^k s_k - rhs)^2
     total_offset = 0.0
+
+    # 4b. Add Equality Quadratic Expansions: lambda * (sum A_i x_i - rhs)^2 (Exact, 0 Slack Qubits)
+    for c in getattr(req, "equality_constraints", []) or []:
+        c_name = c.get("name", "eq")
+        coefs = c.get("coefficients", {})
+        rhs = float(c.get("rhs", c.get("right", 1.0)))
+        total_offset += float(lam * (rhs ** 2))
+
+        eq_terms = {}
+        for vn, w in coefs.items():
+            if vn in all_var_to_idx:
+                eq_terms[all_var_to_idx[vn]] = float(w)
+
+        # Expand: (sum a_i x_i - rhs)^2 = sum a_i^2 x_i + 2 sum a_i a_j x_i x_j - 2 rhs sum a_i x_i
+        for idx, ai in eq_terms.items():
+            lin_val = lam * (ai ** 2 - 2.0 * rhs * ai)
+            Q[idx, idx] += lin_val
+            cell_derivations[f"({idx},{idx})"] = f"Equality Constraint '{c_name}' Linear Penalty: +{lin_val:.2f}"
+
+        eq_indices = list(eq_terms.keys())
+        for a_idx in range(len(eq_indices)):
+            for b_idx in range(a_idx + 1, len(eq_indices)):
+                i = eq_indices[a_idx]
+                j = eq_indices[b_idx]
+                row, col = sorted([i, j])
+                quad_val = 2.0 * lam * eq_terms[i] * eq_terms[j]
+                Q[row, col] += quad_val
+                cell_derivations[f"({row},{col})"] = f"Equality Constraint '{c_name}' Cross-Coupling: +{quad_val:.2f}"
+
+    # 4c. Add Fixed Variables
+    for f_var, f_val in (getattr(req, "fixed_variables", {}) or {}).items():
+        if f_var in all_var_to_idx:
+            idx = all_var_to_idx[f_var]
+            if f_val == 0:
+                Q[idx, idx] += lam * 2.5
+                cell_derivations[f"({idx},{idx})"] = f"Fixed Variable {f_var}=0 Penalty: +{lam*2.5:.2f}"
+            else:
+                Q[idx, idx] -= lam * 2.5
+                total_offset += lam * 2.5
+                cell_derivations[f"({idx},{idx})"] = f"Fixed Variable {f_var}=1 Penalty: -{lam*2.5:.2f}"
+
+    # 5. Add Inequality Quadratic Expansions: lambda * (sum C_i x_i + sum 2^k s_k - rhs)^2
     for c in req.inequality_constraints:
         c_name = c.get("name", "ineq")
         coefs = c.get("coefficients", {})
