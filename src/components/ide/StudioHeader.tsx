@@ -17,6 +17,7 @@ import {
   FileText,
   Check,
   Compass,
+  Bug,
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
 
@@ -46,6 +47,7 @@ interface StudioHeaderProps {
   isSyncing?: boolean;
   onOpenDataConnectors?: () => void;
   onStartTour?: () => void;
+  onOpenReportIssue?: () => void;
 }
 
 export function StudioHeader({
@@ -70,6 +72,7 @@ export function StudioHeader({
   onAddFile,
   onOpenDataConnectors,
   onStartTour,
+  onOpenReportIssue,
 }: StudioHeaderProps) {
   const isDwave = activeProject.framework === "dwave";
   const [isFileDropdownOpen, setIsFileDropdownOpen] = useState(false);
@@ -453,6 +456,22 @@ export function StudioHeader({
           </span>
         </button>
 
+        {/* Quick Report Issue Button */}
+        {onOpenReportIssue && (
+          <button
+            onClick={onOpenReportIssue}
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
+              isDark
+                ? "bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/20 text-amber-400 hover:text-amber-300"
+                : "bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 hover:text-amber-900"
+            }`}
+            title="Report Issue / Bug (Auto-captures code & diagnostics)"
+          >
+            <Bug className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline font-medium text-[11px]">Report Issue</span>
+          </button>
+        )}
+
         <div className={`h-4 w-[1px] ${isDark ? "bg-zinc-700/50" : "bg-slate-200"}`} />
 
         {/* User / Session Badge & Logout Dropdown */}
@@ -514,6 +533,21 @@ export function StudioHeader({
 
                 {/* Navigation Links */}
                 <div className="p-1 space-y-0.5">
+                  {onOpenReportIssue && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onOpenReportIssue();
+                      }}
+                      className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left ${
+                        isDark ? "hover:bg-white/[0.06] text-amber-300 hover:text-amber-200" : "hover:bg-amber-50 text-amber-700 hover:text-amber-800"
+                      }`}
+                    >
+                      <Bug className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Report Issue / Bug</span>
+                    </button>
+                  )}
+
                   {onStartTour && (
                     <button
                       onClick={() => {

@@ -14,6 +14,7 @@ import LLMSettingsManager from '../../../components/admin/LLMSettingsManager';
 import HardwareManager from '../../../components/admin/HardwareManager';
 import SystemLogViewer from '../../../components/admin/SystemLogViewer';
 import AcademyManager from '../../../components/admin/AcademyManager';
+import IssueReportsViewer from '../../../components/admin/IssueReportsViewer';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
@@ -66,6 +67,7 @@ export default function AdminDashboard() {
                     {activeTab === 'hardware' && <HardwareManager />}
                     {activeTab === 'users' && <UserManager />}
                     {activeTab === 'academy' && <AcademyManager />}
+                    {activeTab === 'issues' && <IssueReportsViewer />}
                 </div>
             </div>
 

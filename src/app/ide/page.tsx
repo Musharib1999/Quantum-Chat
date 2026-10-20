@@ -52,6 +52,7 @@ import {
   HeroTabType,
 } from "@/components/ide";
 import { DataConnectorsModal } from "@/components/optimization/DataConnectorsModal";
+import IssueReportModal from "@/components/IssueReportModal";
 import {
   FormulationCanvas,
   QMatrixHeatmap,
@@ -951,6 +952,10 @@ export default function QuantumGuruStudioPage() {
   const [showProjectModal, setShowProjectModal] = useState<boolean>(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
   const [showAlgorithmStudioModal, setShowAlgorithmStudioModal] = useState<boolean>(false);
+  const [showIssueModal, setShowIssueModal] = useState<boolean>(false);
+  const [issueDefaultCategory, setIssueDefaultCategory] = useState<
+    "code_execution" | "ai_synthesis" | "ui_editor" | "journey" | "performance" | "other"
+  >("code_execution");
 
   // 🎓 Quantum Journey 101 Sequential Module & Quiz State
   const [journeyMilestoneId, setJourneyMilestoneId] = useState<number>(() => {
@@ -3190,6 +3195,10 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
       {/* ── TOP CALM PRECISION HEADER ── */}
       <StudioHeader
         onStartTour={handleStartTour}
+        onOpenReportIssue={() => {
+          setIssueDefaultCategory("code_execution");
+          setShowIssueModal(true);
+        }}
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
         activeProject={activeProject}
@@ -3702,6 +3711,37 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
         onClose={() => setShowAlgorithmStudioModal(false)}
         onCreateProjectFromAlgorithm={handleCreateProjectFromAlgorithm}
         isDark={isDark}
+      />
+
+      {/* 🐞 Issue & Flow Diagnostics Reporting Modal */}
+      <IssueReportModal
+        isOpen={showIssueModal}
+        onClose={() => setShowIssueModal(false)}
+        defaultCategory={issueDefaultCategory}
+        userEmail={user?.email}
+        flowContext={{
+          route: typeof window !== "undefined" ? window.location.pathname + window.location.search : "/ide",
+          framework: activeProject.framework,
+          projectId: activeProject.id,
+          projectTitle: activeProject.title,
+          activeFile: activeFile,
+          activeTab: heroTab,
+          codeSnippet: activeProject.framework === "dwave" ? dwaveCode : qiskitCode,
+          projectFiles: activeProject.fileContents,
+          lastExecution: {
+            success: solverResult?.sample ? true : !terminalOutput.includes("Traceback"),
+            stdout: terminalOutput,
+            stderr: terminalOutput.includes("Traceback") || terminalOutput.includes("[STDERR]") ? terminalOutput : "",
+            simulatorId: qiskitSimulatorId || undefined,
+            backendUsed: activeProject.framework === "dwave" ? "dwave_simulated_annealing" : "aer_simulator",
+            activeQubits: solverResult?.num_variables || undefined,
+          },
+          recentChatMessages: copilotMessages.slice(-5).map((m: CopilotMessage) => ({
+            sender: m.sender,
+            text: m.text,
+            timestamp: m.timestamp,
+          })),
+        }}
       />
 
       {/* 🧭 Guided Product Walkthrough Tour Modal */}

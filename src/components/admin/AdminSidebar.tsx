@@ -117,6 +117,11 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                             active={activeTab === 'system_logs'}
                             onClick={() => handleNav('system_logs')}
                         />
+                        <SidebarLink
+                            label="Issue Reports"
+                            active={activeTab === 'issues'}
+                            onClick={() => handleNav('issues')}
+                        />
                     </div>
                 </nav>
             </aside>
