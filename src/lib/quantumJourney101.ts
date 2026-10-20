@@ -905,9 +905,71 @@ export function isAskingForHint(text: string): boolean {
 }
 
 /**
+ * Detects if the user wants an explanation, wants to learn/understand, reveal the answer, skip, or proceed to the challenge.
+ * This takes PRIORITY over general uncertainty (e.g. "I'm not sure, but I want to know").
+ */
+export function isWantingToSkipOrProceed(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  const patterns = [
+    "want to know",
+    "wanna know",
+    "want to learn",
+    "want to understand",
+    "wanna understand",
+    "tell me",
+    "explain",
+    "explain it",
+    "teach me",
+    "how does it work",
+    "why does it work",
+    "why is that",
+    "how come",
+    "tell me the answer",
+    "give up",
+    "skip",
+    "move on",
+    "continue",
+    "show challenge",
+    "go to challenge",
+    "jump to challenge",
+    "just tell me",
+    "what is the answer",
+    "what's the answer",
+    "show me",
+    "proceed",
+    "reveal",
+    "next step",
+  ];
+  return patterns.some((p) => t.includes(p));
+}
+
+/**
+ * Checks if the user explicitly expressed genuine curiosity / desire to learn
+ * (e.g. "I want to know", "curious", "explain it to me", "teach me")
+ */
+export function isCuriousKnowledgeRequest(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  const patterns = [
+    "want to know",
+    "wanna know",
+    "want to learn",
+    "want to understand",
+    "wanna understand",
+    "curious",
+    "teach me",
+    "explain",
+    "why is that",
+    "how come",
+  ];
+  return patterns.some((p) => t.includes(p));
+}
+
+/**
  * Detects if the user expresses uncertainty or is stuck ("I don't know", "no idea", etc.)
+ * Note: If the user also expressed a desire to know/learn, desire takes priority!
  */
 export function isUncertainOrStuck(text: string): boolean {
+  if (isWantingToSkipOrProceed(text)) return false;
   const t = text.trim().toLowerCase();
   const patterns = [
     "don't know",
@@ -925,41 +987,16 @@ export function isUncertainOrStuck(text: string): boolean {
     "help me",
     "can't tell",
     "cant tell",
-    "tell me",
   ];
   return patterns.some((p) => t.includes(p));
 }
 
 /**
- * Detects if the user wants to skip the quiz, reveal the answer, or jump straight to the challenge
- */
-export function isWantingToSkipOrProceed(text: string): boolean {
-  const t = text.trim().toLowerCase();
-  const patterns = [
-    "tell me the answer",
-    "give up",
-    "skip",
-    "move on",
-    "continue",
-    "show challenge",
-    "go to challenge",
-    "jump to challenge",
-    "just tell me",
-    "what is the answer",
-    "show me",
-    "proceed",
-    "reveal",
-    "next step",
-  ];
-  return patterns.some((p) => t.includes(p));
-}
-
-/**
- * Generates an empathetic, Socratic tutor response with friendly analogy or progressive hint
+ * Generates an empathetic, Socratic tutor response with friendly analogy, progressive hint, or curious reveal
  */
 export function getSupportiveTutorResponse(
   moduleId: number,
-  type: "hint" | "stuck" | "reveal"
+  type: "hint" | "stuck" | "reveal" | "curious" | "escalate"
 ): { message: string; shouldAdvanceToChallenge: boolean } {
   const m = getJourneyModule(moduleId);
   if (type === "hint") {
@@ -979,8 +1016,32 @@ ${m.hint}
 **Let's think of an everyday analogy:**
 ${m.friendlyAnalogy}
 
-*What do you think? Feel free to give it a guess, ask for a hint, or say "Move on" to jump straight into the hands-on challenge!*`,
+*What do you think? Feel free to give it a guess, ask for a hint, or say "Tell me" to jump straight into the hands-on challenge!*`,
       shouldAdvanceToChallenge: false,
+    };
+  }
+  if (type === "curious") {
+    return {
+      message: `I love that curiosity! 🎯 That is exactly what makes quantum mechanics so fascinating. Here is how it works:
+
+${m.fallbackExplanation}
+
+---
+
+${m.challengeInstruction}`,
+      shouldAdvanceToChallenge: true,
+    };
+  }
+  if (type === "escalate") {
+    return {
+      message: `No worries at all! Quantum mechanics is best learned with hands-on circuits rather than pure guesswork. Here is the answer and the physics behind it: 🚀
+
+${m.fallbackExplanation}
+
+---
+
+${m.challengeInstruction}`,
+      shouldAdvanceToChallenge: true,
     };
   }
   // Reveal & advance to challenge

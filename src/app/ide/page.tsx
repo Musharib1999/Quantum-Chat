@@ -32,6 +32,7 @@ import {
   isAskingForHint,
   isUncertainOrStuck,
   isWantingToSkipOrProceed,
+  isCuriousKnowledgeRequest,
   getSupportiveTutorResponse,
   buildJourneyTutorPrompt,
 } from "@/lib/quantumJourney101";
@@ -968,6 +969,7 @@ export default function QuantumGuruStudioPage() {
   });
 
   const [userPrediction, setUserPrediction] = useState<string | null>(null);
+  const [quizHelpCount, setQuizHelpCount] = useState<number>(0);
 
   const [journeyStage, setJourneyStage] = useState<"explore" | "quiz" | "challenge" | "completed">(() => {
     if (typeof window !== "undefined") {
@@ -2312,6 +2314,7 @@ export default function QuantumGuruStudioPage() {
               };
               setQiskitCopilotMessages((prev) => [...prev, debriefMsg]);
               setJourneyStage("quiz");
+              setQuizHelpCount(0);
               if (typeof window !== "undefined") {
                 try {
                   localStorage.setItem("quantum_journey_101_stage", "quiz");
@@ -2453,6 +2456,7 @@ export default function QuantumGuruStudioPage() {
       setJourneyMilestoneId(0);
       setJourneyStage("explore");
       setUserPrediction(null);
+      setQuizHelpCount(0);
       const m0 = getJourneyMilestone(0);
       setQiskitCode(m0.starterCode);
       setQiskitCounts({});
@@ -2506,6 +2510,7 @@ export default function QuantumGuruStudioPage() {
           setJourneyMilestoneId(nextId);
           setJourneyStage("explore");
           setUserPrediction(null);
+          setQuizHelpCount(0);
           setQiskitCode(nextM.starterCode);
           setQiskitCounts({}); // Clean slate for results!
           setLatencyMs(0);
@@ -2541,6 +2546,7 @@ export default function QuantumGuruStudioPage() {
           setJourneyMilestoneId(0);
           setJourneyStage("explore");
           setUserPrediction(null);
+          setQuizHelpCount(0);
           setQiskitCode(m0.starterCode);
           setQiskitCounts({});
           setLatencyMs(0);
@@ -2593,12 +2599,17 @@ export default function QuantumGuruStudioPage() {
           }
         }
 
-        // 3. Empathetic Socratic Quiz & Help Handling
+        // 5. Empathetic Socratic Quiz & Help Handling (With Precedence & Progressive Escalation)
         if (journeyStage === "quiz") {
-          // A. User wants to skip or see the explanation
+          // A. User wants to learn / see explanation / skip / proceed (Takes priority over uncertainty!)
           if (isWantingToSkipOrProceed(text)) {
-            const revealRes = getSupportiveTutorResponse(journeyMilestoneId, "reveal");
+            const isCurious = isCuriousKnowledgeRequest(text);
+            const revealRes = getSupportiveTutorResponse(
+              journeyMilestoneId,
+              isCurious ? "curious" : "reveal"
+            );
             setJourneyStage("challenge");
+            setQuizHelpCount(0);
             if (typeof window !== "undefined") {
               try {
                 localStorage.setItem("quantum_journey_101_stage", "challenge");
@@ -2616,7 +2627,28 @@ export default function QuantumGuruStudioPage() {
 
           // B. User is asking for a hint
           if (isAskingForHint(text)) {
+            if (quizHelpCount >= 1) {
+              // Progressive Escalation: User already received a hint or analogy; escalate to reveal & challenge!
+              const escRes = getSupportiveTutorResponse(journeyMilestoneId, "escalate");
+              setJourneyStage("challenge");
+              setQuizHelpCount(0);
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem("quantum_journey_101_stage", "challenge");
+                } catch (e) {}
+              }
+              const escMsg: CopilotMessage = {
+                id: Date.now() + 2,
+                sender: "assistant",
+                text: escRes.message,
+                timestamp: "Just now",
+              };
+              setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), escMsg]);
+              return;
+            }
+
             const hintRes = getSupportiveTutorResponse(journeyMilestoneId, "hint");
+            setQuizHelpCount((prev) => prev + 1);
             const hintMsg: CopilotMessage = {
               id: Date.now() + 2,
               sender: "assistant",
@@ -2629,7 +2661,29 @@ export default function QuantumGuruStudioPage() {
 
           // C. User says "I don't know", "no idea", or feels stuck
           if (isUncertainOrStuck(text)) {
+            if (quizHelpCount >= 1) {
+              // Progressive Escalation: User has already expressed uncertainty once or seen the analogy!
+              // Do NOT repeat the analogy verbatim. Escalate to explanation and advance!
+              const escRes = getSupportiveTutorResponse(journeyMilestoneId, "escalate");
+              setJourneyStage("challenge");
+              setQuizHelpCount(0);
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem("quantum_journey_101_stage", "challenge");
+                } catch (e) {}
+              }
+              const escMsg: CopilotMessage = {
+                id: Date.now() + 2,
+                sender: "assistant",
+                text: escRes.message,
+                timestamp: "Just now",
+              };
+              setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), escMsg]);
+              return;
+            }
+
             const stuckRes = getSupportiveTutorResponse(journeyMilestoneId, "stuck");
+            setQuizHelpCount((prev) => prev + 1);
             const stuckMsg: CopilotMessage = {
               id: Date.now() + 2,
               sender: "assistant",
@@ -2645,6 +2699,7 @@ export default function QuantumGuruStudioPage() {
           const currentM = getJourneyMilestone(journeyMilestoneId);
           if (evalRes.passed) {
             setJourneyStage("challenge");
+            setQuizHelpCount(0);
             if (typeof window !== "undefined") {
               try {
                 localStorage.setItem("quantum_journey_101_stage", "challenge");
@@ -2653,12 +2708,17 @@ export default function QuantumGuruStudioPage() {
             const quizPassMsg: CopilotMessage = {
               id: Date.now() + 2,
               sender: "assistant",
-              text: `${evalRes.explanation}\n\n---\n\n${currentM.challengeInstruction}`,
+              text: `${evalRes.explanation}
+
+---
+
+${currentM.challengeInstruction}`,
               timestamp: "Just now",
             };
             setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), quizPassMsg]);
             return;
           } else if (evalRes.feedback) {
+            setQuizHelpCount((prev) => prev + 1);
             const feedbackMsg: CopilotMessage = {
               id: Date.now() + 2,
               sender: "assistant",
