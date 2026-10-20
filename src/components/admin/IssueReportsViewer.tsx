@@ -399,9 +399,10 @@ export default function IssueReportsViewer() {
             {selectedIssue && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
                     <div 
-                        className="relative w-full max-w-4xl max-h-[92vh] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100"
+                        className="relative w-full max-w-4xl max-h-[92vh] bg-[#0B0D13]/95 border border-white/[0.12] ring-1 ring-white/[0.05] shadow-[0_0_50px_-10px_rgba(6,182,212,0.15)] rounded-2xl flex flex-col overflow-hidden text-zinc-100"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
                             <div className="flex items-center gap-3">

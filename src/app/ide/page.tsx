@@ -3718,6 +3718,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
         isOpen={showIssueModal}
         onClose={() => setShowIssueModal(false)}
         defaultCategory={issueDefaultCategory}
+        isDark={isDark}
         userEmail={user?.email}
         flowContext={{
           route: typeof window !== "undefined" ? window.location.pathname + window.location.search : "/ide",
