@@ -456,18 +456,18 @@ export function StudioHeader({
           </span>
         </button>
 
-        {/* Quick Report Issue Button */}
+        {/* Quick Report Issue Button (Matching Studio Theme) */}
         {onOpenReportIssue && (
           <button
             onClick={onOpenReportIssue}
             className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
               isDark
-                ? "bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/20 text-amber-400 hover:text-amber-300"
-                : "bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 hover:text-amber-900"
+                ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-zinc-300 hover:text-white"
+                : "bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700 hover:text-slate-900"
             }`}
             title="Report Issue / Bug (Auto-captures code & diagnostics)"
           >
-            <Bug className="w-3.5 h-3.5 text-amber-400" />
+            <Bug className="w-3.5 h-3.5 text-zinc-400" />
             <span className="hidden sm:inline font-medium text-[11px]">Report Issue</span>
           </button>
         )}
