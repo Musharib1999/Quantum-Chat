@@ -702,8 +702,12 @@ if HAS_DWAVE:
 
     # Check for Q_matrix (numpy 2D array) and variable_names from qubo_matrix.py
     if target_model is None:
-        q_mat = exec_globals.get("Q") or exec_globals.get("Q_matrix")
-        v_names = exec_globals.get("variable_map") or exec_globals.get("variable_names")
+        q_mat = exec_globals.get("Q")
+        if q_mat is None:
+            q_mat = exec_globals.get("Q_matrix")
+        v_names = exec_globals.get("variable_map")
+        if v_names is None:
+            v_names = exec_globals.get("variable_names")
         if (q_mat is None or v_names is None) and "qubo_matrix" in sys.modules:
             try:
                 import qubo_matrix
@@ -731,7 +735,9 @@ if HAS_DWAVE:
 
     # If target_model is a dict with integer keys and variable_map is available, map to named BQM
     if isinstance(target_model, dict):
-        v_map = exec_globals.get('variable_map') or exec_globals.get('variable_names')
+        v_map = exec_globals.get('variable_map')
+        if v_map is None:
+            v_map = exec_globals.get('variable_names')
         if v_map and isinstance(v_map, (list, tuple)):
             try:
                 named_q = {}
@@ -770,7 +776,9 @@ if HAS_DWAVE:
                 best = target_sampleset.first
                 
                 # Determine variable names
-                v_map = exec_globals.get('variable_map') or exec_globals.get('variable_names')
+                v_map = exec_globals.get('variable_map')
+                if v_map is None:
+                    v_map = exec_globals.get('variable_names')
                 v_map = list(v_map) if isinstance(v_map, (list, tuple)) else None
 
                 if v_map:
