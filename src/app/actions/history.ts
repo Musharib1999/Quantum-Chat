@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import dbConnect from '@/lib/db';
 import ChatSession from '@/models/ChatSession';
 import UserSession from '@/models/UserSession';
-import { Message } from '@/hooks/useQuantumChat';
+import { Message } from '@/types/chat';
 
 async function getSessionUserEmail(): Promise<string | null> {
     try {

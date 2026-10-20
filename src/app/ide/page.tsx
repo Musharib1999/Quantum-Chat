@@ -1668,6 +1668,11 @@ export default function QuantumGuruStudioPage() {
         localStorage.setItem("quantum_ide_active_file", targetFile);
         localStorage.setItem("quantum_ide_hero_tab", "code");
         localStorage.setItem(`quantum_ide_code_${customProj.id}_${targetFile}`, initialCode);
+        if (customProj.fileContents) {
+          Object.entries(customProj.fileContents).forEach(([fn, content]) => {
+            localStorage.setItem(`quantum_ide_code_${customProj.id}_${fn}`, content);
+          });
+        }
         localStorage.removeItem(`quantum_ide_result_${customProj.id}`);
         localStorage.removeItem(`quantum_ide_qiskit_result_${customProj.id}`);
 
@@ -1688,7 +1693,7 @@ export default function QuantumGuruStudioPage() {
           filesPayload[f] = {
             name: f,
             lang: f.endsWith(".py") ? "python" : f.endsWith(".json") ? "json" : "text",
-            content: f === targetFile ? initialCode : `# ${f}`,
+            content: customProj.fileContents?.[f] || (f === targetFile ? initialCode : `# ${f}`),
           };
         });
 
