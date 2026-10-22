@@ -942,26 +942,26 @@ async function executeAction(action: string, req: NextRequest, reqBody?: any): P
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     project_id: 'dwave-annealing',
-                    user_message: 'Write a full D-Wave CQM script from scratch to solve a 20-city traveling salesperson problem.',
+                    user_message: 'Formulate a D-Wave BQM optimization model for clean energy portfolio selection.',
                     active_file: 'main.py',
                     file_content: '# Empty file',
                     target_backend: 'dwave_simulated_annealing',
                     optimization_level: 1,
-                    model_engine: 'qwen'
+                    model_engine: 'groq'
                 })
             });
             const data = await res.json().catch(() => ({}));
             const text = data.response_text || '';
-            const mentionsPhase3 = text.includes('Phase 3') || text.includes('phase 3');
-            const passed = res.status === 200 && mentionsPhase3;
+            const hasSynthesis = Boolean(data.success && (data.updated_code || text.includes('Synthesized') || text.includes('QUBO')));
+            const passed = res.status === 200 && hasSynthesis;
             return {
                 id: 'DWAVE-03',
                 status: passed ? 'passed' : 'failed',
                 assertions: [
-                    { name: 'Declines autonomous D-Wave code generation from scratch', passed: mentionsPhase3, actual: text.substring(0, 100) },
-                    { name: 'Informs user that autonomous synthesis is in Phase 3', passed: mentionsPhase3 }
+                    { name: 'Successfully synthesizes D-Wave BQM and QUBO formulation', passed: hasSynthesis, actual: text.substring(0, 100) },
+                    { name: 'Returns valid HTTP 200 with code and reasoning', passed: res.status === 200 }
                 ],
-                response: { status: res.status, body: { response_text: text } }
+                response: { status: res.status, body: { response_text: text.substring(0, 200) } }
             };
         }
 

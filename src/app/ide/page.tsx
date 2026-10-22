@@ -2417,6 +2417,9 @@ export default function QuantumGuruStudioPage() {
     });
     try {
       localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, code);
+      if (meta?.qubo_code) {
+        localStorage.setItem(`quantum_ide_code_${activeProject.id}_qubo_matrix.py`, meta.qubo_code);
+      }
     } catch {}
 
     setDwaveCopilotMessages((prev) =>
@@ -3014,6 +3017,7 @@ ${currentM.challengeInstruction}`,
                         variables: res.variable_map,
                         q_size: stats.q_size,
                         q_nnz: stats.q_nnz,
+                        qubo_code: res.qubo_code,
                       });
                     }, 150);
                   }
