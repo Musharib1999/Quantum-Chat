@@ -330,7 +330,7 @@ export function OptimizationCopilot({
               }
             >
               {msg.sender === "user" ? (
-                <p className="leading-relaxed break-words [word-break:break-word] overflow-wrap-anywhere">{msg.text}</p>
+                <p className="text-[13.5px] leading-relaxed break-words [word-break:break-word] overflow-wrap-anywhere">{msg.text}</p>
               ) : (
                 <div className="w-full min-w-0 overflow-hidden leading-relaxed">
                   <IdeMarkdownRenderer content={msg.text} isDark={isDark} />
@@ -624,7 +624,7 @@ export function OptimizationCopilot({
                   ? "Ask about gates, circuits, entanglement, or Aer simulation..."
                   : "Ask about QUBO formulation, penalties, or slack variables..."
               }
-              className={`w-full p-2.5 bg-transparent text-xs font-mono outline-none resize-none leading-relaxed placeholder-zinc-500 ${
+              className={`w-full p-2.5 bg-transparent text-[13px] font-mono outline-none resize-none leading-relaxed placeholder-zinc-500 ${
                 isDark ? "text-zinc-200" : "text-slate-900"
               }`}
             />

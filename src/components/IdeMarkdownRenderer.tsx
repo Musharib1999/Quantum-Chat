@@ -127,7 +127,7 @@ function CodeBlock({ code, language, isDark }: { code: string; language?: string
 
   return (
     <div className={`my-2 rounded-lg overflow-hidden border ${isDark ? 'border-zinc-800 bg-zinc-950' : 'border-slate-300 bg-slate-900 text-slate-100 shadow-sm'}`}>
-      <div className={`flex items-center justify-between px-3 py-1 border-b text-[10px] font-mono select-none ${isDark ? 'bg-zinc-900/80 border-zinc-800 text-zinc-400' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>
+      <div className={`flex items-center justify-between px-3 py-1 border-b text-[11px] font-mono select-none ${isDark ? 'bg-zinc-900/80 border-zinc-800 text-zinc-400' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>
         <span>{language || 'python'}</span>
         <button
           onClick={handleCopy}
@@ -138,7 +138,7 @@ function CodeBlock({ code, language, isDark }: { code: string; language?: string
           <span>{copied ? 'Copied' : 'Copy'}</span>
         </button>
       </div>
-      <pre className="p-2.5 text-[11px] font-mono leading-relaxed overflow-x-auto text-slate-100">
+      <pre className="p-2.5 text-[12.5px] font-mono leading-relaxed overflow-x-auto text-slate-100">
         <code>{code}</code>
       </pre>
     </div>
@@ -154,19 +154,19 @@ function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendere
   if (!content) return null;
 
   return (
-    <div className={`text-xs leading-relaxed font-sans space-y-2 select-text ${isDark ? 'text-zinc-200' : 'text-slate-800'}`}>
+    <div className={`text-[13.5px] leading-relaxed font-sans space-y-2 select-text ${isDark ? 'text-zinc-200' : 'text-slate-800'}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className={`text-sm font-bold mt-3 mb-1.5 font-heading tracking-wide border-b pb-1 ${
+            <h1 className={`text-[15px] font-bold mt-3 mb-1.5 font-heading tracking-wide border-b pb-1 ${
               isDark ? 'text-sky-400 border-zinc-800' : 'text-sky-800 border-slate-200'
             }`}>
               {processMathInChildren(children, isDark)}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className={`text-xs font-bold mt-2.5 mb-1 font-heading tracking-wide flex items-center gap-1.5 ${
+            <h2 className={`text-[14px] font-semibold mt-2.5 mb-1 font-heading tracking-wide flex items-center gap-1.5 ${
               isDark ? 'text-sky-300' : 'text-sky-700'
             }`}>
               <span className={`w-1.5 h-1.5 rounded-full inline-block ${isDark ? 'bg-sky-400' : 'bg-sky-600'}`} />
@@ -174,7 +174,7 @@ function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendere
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className={`text-xs font-semibold mt-2 mb-1 ${isDark ? 'text-zinc-200' : 'text-slate-900'}`}>
+            <h3 className={`text-[13px] font-semibold mt-2 mb-1 ${isDark ? 'text-zinc-200' : 'text-slate-900'}`}>
               {processMathInChildren(children, isDark)}
             </h3>
           ),
@@ -209,7 +209,7 @@ function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendere
             </li>
           ),
           blockquote: ({ children }) => (
-            <blockquote className={`border-l-2 pl-2.5 py-1.5 my-2 rounded-r italic ${
+            <blockquote className={`border-l-2 pl-2.5 py-1.5 my-2 rounded-r italic text-[13px] ${
               isDark ? 'border-sky-500/60 bg-sky-500/10 text-zinc-300' : 'border-sky-600 bg-sky-50 text-slate-800'
             }`}>
               {processMathInChildren(children, isDark)}
@@ -222,7 +222,7 @@ function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendere
               return <CodeBlock code={codeStr} language={match ? match[1] : 'python'} isDark={isDark} />;
             }
             return (
-              <code className={`px-1.5 py-0.5 rounded text-[11px] font-mono border ${
+              <code className={`px-1.5 py-0.5 rounded text-[12.5px] font-mono border ${
                 isDark 
                   ? 'bg-zinc-800/70 border-zinc-700/60 text-sky-300' 
                   : 'bg-sky-50 border-sky-200 text-sky-800 font-semibold'
@@ -233,7 +233,7 @@ function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendere
           },
           table: ({ children }) => (
             <div className={`overflow-x-auto my-2 rounded border ${isDark ? 'border-zinc-800' : 'border-slate-200'}`}>
-              <table className="w-full text-left text-xs">{children}</table>
+              <table className="w-full text-left text-[12.5px]">{children}</table>
             </div>
           ),
           thead: ({ children }) => (
