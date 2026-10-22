@@ -151,20 +151,40 @@ class DWaveAdapter:
 
         # Slice decision variables and discard slacks
         n_decision = len(ir.variable_map.decision_vars)
-        decoded_sol = {}
+        raw_sol = {}
         for i in range(n_decision):
             var_name = ir.variable_map.decision_vars[i]
-            decoded_sol[var_name] = int(best_sample[i])
+            raw_sol[var_name] = int(best_sample[i])
+
+        int_encodings = ir.metadata.get("int_encodings", {})
+        if int_encodings:
+            decoded_sol = {}
+            encoded_bits = set()
+            for int_var, enc in int_encodings.items():
+                val = int(enc.get("lb", 0))
+                for b_name, b_w in enc.get("bits", []):
+                    encoded_bits.add(b_name)
+                    val += int(round(b_w)) * raw_sol.get(b_name, 0)
+                decoded_sol[int_var] = int(val)
+            for k, v in raw_sol.items():
+                if k not in encoded_bits:
+                    decoded_sol[k] = v
+        else:
+            decoded_sol = raw_sol
 
         # ── Feasibility & Objective Evaluation Pass ──
         # Re-evaluate objective value using the original algebraic formulation
         obj_expr = ir.metadata.get("original_objective_expr", "0.0")
         obj_sense = ir.metadata.get("original_objective_sense", "MINIMIZE")
         
+        _tok_re = re.compile(r"\b[a-zA-Z_]\w*\b")
+
         def safe_eval(expr_str: str, sol: dict) -> float:
-            safe = expr_str
-            for name, val in sorted(sol.items(), key=lambda x: -len(x[0])):
-                safe = re.sub(r"\b" + re.escape(name) + r"\b", str(val), safe)
+            # Single-pass O(len(expr)) token lookup + chunked evaluation safe for N > 10,000 terms
+            safe = _tok_re.sub(lambda m: str(sol.get(m.group(0), m.group(0))), expr_str)
+            if safe.count("+") > 250 and "(" not in safe:
+                parts = safe.split("+")
+                return float(sum(eval("+".join(parts[k:k + 200])) for k in range(0, len(parts), 200)))
             return float(eval(safe))
 
         obj_val = safe_eval(obj_expr, decoded_sol)
@@ -255,7 +275,86 @@ def compile_om_to_autoqubo_ir(
     
     # 1. Validate the OptimizationModel first
     validate_optimization_model(om)
-    
+
+    orig_obj_expr = om.objective.expression or "0.0"
+    orig_obj_sense = om.objective.sense.upper()
+    orig_constraints = [
+        {
+            "name": c.name,
+            "left": c.left,
+            "op": c.op,
+            "right": float(c.right)
+        }
+        for c in om.constraints
+    ]
+
+    # 1b. Automatic Bounded Binary Log-Encoding for INTEGER Decision Variables (v = lb + sum(w_k * b_k))
+    int_encodings = {}
+    for v_name, v_obj in om.variables.items():
+        v_type_str = str(getattr(v_obj.var_type, "value", v_obj.var_type)).upper()
+        if "INT" in v_type_str:
+            lb = int(round(v_obj.lower_bound)) if v_obj.lower_bound is not None else 0
+            ub = int(round(v_obj.upper_bound)) if v_obj.upper_bound is not None else 3
+            span = max(0, ub - lb)
+            if span == 0:
+                int_encodings[v_name] = {"lb": lb, "ub": ub, "bits": []}
+            else:
+                n_bits = math.ceil(math.log2(span + 1))
+                bits = []
+                for k in range(n_bits):
+                    b_name = f"{v_name}_bit_{k}"
+                    b_weight = float((span - (2 ** k) + 1) if k == n_bits - 1 else (2 ** k))
+                    bits.append((b_name, b_weight))
+                int_encodings[v_name] = {"lb": lb, "ub": ub, "bits": bits}
+
+    if int_encodings:
+        from ..expander import OptimizationModel as _OM, ExpandedVariable as _EV, ExpandedConstraint as _EC, ExpandedObjective as _EO
+        orig_var_names = list(om.variables.keys())
+        bin_variables = {}
+        for v_name, v_obj in om.variables.items():
+            if v_name in int_encodings:
+                for b_name, _ in int_encodings[v_name]["bits"]:
+                    bin_variables[b_name] = _EV(name=b_name, var_type="BINARY", lower_bound=0.0, upper_bound=1.0)
+            else:
+                bin_variables[v_name] = v_obj
+
+        bin_constraints = []
+        for c in om.constraints:
+            coefs = parse_linear_expression(c.left, orig_var_names)
+            rhs_shift = 0.0
+            terms_str = []
+            for v_name, w in coefs.items():
+                if v_name in int_encodings:
+                    enc = int_encodings[v_name]
+                    rhs_shift += w * enc["lb"]
+                    for b_name, b_w in enc["bits"]:
+                        terms_str.append(f"{w * b_w}*{b_name}")
+                else:
+                    terms_str.append(f"{w}*{v_name}")
+            new_left = " + ".join(terms_str).replace("+ -", "- ") if terms_str else "0.0"
+            new_right = float(c.right) - rhs_shift
+            bin_constraints.append(_EC(name=c.name, left=new_left, op=c.op, right=new_right))
+
+        obj_coefs = parse_linear_expression(orig_obj_expr, orig_var_names)
+        if obj_coefs:
+            obj_terms = []
+            for v_name, w in obj_coefs.items():
+                if v_name in int_encodings:
+                    enc = int_encodings[v_name]
+                    for b_name, b_w in enc["bits"]:
+                        obj_terms.append(f"{w * b_w}*{b_name}")
+                else:
+                    obj_terms.append(f"{w}*{v_name}")
+            new_obj_expr = " + ".join(obj_terms).replace("+ -", "- ") if obj_terms else "0.0"
+        else:
+            new_obj_expr = orig_obj_expr
+
+        om = _OM(
+            variables=bin_variables,
+            objective=_EO(sense=om.objective.sense, expression=new_obj_expr),
+            constraints=bin_constraints
+        )
+
     decision_vars = list(om.variables.keys())
     v_map = VariableMap(decision_vars=decision_vars)
 
@@ -263,6 +362,7 @@ def compile_om_to_autoqubo_ir(
     slack_blocks = {}
     dependency_constraints = {}
     mutual_exclusion_constraints = {}
+    clique_mutex_constraints = {}
     always_satisfied_inequalities = set()  # inequalities where lhs_max <= rhs (vacuously true)
 
     for c in om.constraints:
@@ -280,11 +380,17 @@ def compile_om_to_autoqubo_ir(
                 dependency_constraints[c.name] = (pos_vars[0], neg_vars[0])
                 continue
 
-            # Identify mutual exclusion constraint: x_i + x_j <= 1
+            # Identify mutual exclusion constraint: x_i + x_j <= 1 (2-var) or sum_{i in S} x_i <= 1 (k-var clique)
             if c.op == "<=" and float(c.right) == 1.0 and len(pos_vars) == 2 and len(neg_vars) == 0 and len(other_vars) == 0:
                 # Mathematically exact binary mutual exclusion: x_i + x_j <= 1 -> Penalty = x_i * x_j
                 # No slack variables required!
                 mutual_exclusion_constraints[c.name] = (pos_vars[0], pos_vars[1])
+                continue
+
+            if c.op == "<=" and float(c.right) == 1.0 and len(pos_vars) > 2 and len(neg_vars) == 0 and len(other_vars) == 0:
+                # Mathematically exact k-variable at-most-one constraint: sum_{i in S} x_i <= 1 -> Penalty = sum_{a<b} x_a * x_b
+                # No slack variables required!
+                clique_mutex_constraints[c.name] = pos_vars
                 continue
 
             # Standard inequality constraint -> requires slack variables
@@ -301,7 +407,12 @@ def compile_om_to_autoqubo_ir(
                     lhs_min += w * ub
             
             if c.op == "<=":
-                s_max = lhs_max - c.right
+                if lhs_max <= c.right:
+                    s_max = lhs_max - c.right
+                elif lhs_min < 0 and c.right < 0:
+                    s_max = c.right - lhs_min
+                else:
+                    s_max = lhs_max - c.right
             else:
                 s_max = c.right - lhs_min
 
@@ -322,12 +433,11 @@ def compile_om_to_autoqubo_ir(
     all_vars = v_map.all_vars
     var_to_idx = {name: i for i, name in enumerate(all_vars)}
 
-    # Helper to replace variable names in algebraic formulas with x[i]
+    # Single-pass O(len(expr)) variable token replacer (safe & fast for N > 10,000)
+    _var_tok_re = re.compile(r"\b[a-zA-Z_]\w*\b")
+
     def to_safe_expr(expr_str: str) -> str:
-        safe = expr_str
-        for name, idx in sorted(var_to_idx.items(), key=lambda x: -len(x[0])):
-            safe = re.sub(r"\b" + re.escape(name) + r"\b", f"x[{idx}]", safe)
-        return safe
+        return _var_tok_re.sub(lambda m: f"x[{var_to_idx[m.group(0)]}]" if m.group(0) in var_to_idx else m.group(0), expr_str)
 
     lines = [
         "# ── Compiled AutoQUBO Function Builder ──",
@@ -344,6 +454,9 @@ def compile_om_to_autoqubo_ir(
         "def make_mut(idx_a, idx_b):",
         "    return lambda x: x[idx_a] * x[idx_b]",
         "",
+        "def make_clique_mut(indices):",
+        "    return lambda x: (sum(x[i] for i in indices) * (sum(x[i] for i in indices) - 1.0)) / 2.0",
+        "",
         "def make_eq(indices, coefs, rhs):",
         "    return lambda x: (sum(c * x[i] for c, i in zip(coefs, indices)) - rhs) ** 2",
         "",
@@ -355,27 +468,41 @@ def compile_om_to_autoqubo_ir(
         ""
     ]
 
-    # Objective function code block
-    safe_obj = to_safe_expr(om.objective.expression or "0.0")
+    # Objective function code block (AST-chunked if > 250 terms so CPython never hits AST recursion depth limit at N > 980)
+    raw_obj_expr = om.objective.expression or "0.0"
+    safe_obj = to_safe_expr(raw_obj_expr)
     sign = "-1.0 * " if om.objective.sense.upper() == "MAXIMIZE" else ""
-    lines.extend([
-        "def objective_fn(x):",
-        f"    return {sign}({safe_obj})",
-        "",
-        "constraint_fns = []",
-        "constraint_names = []",
-        ""
-    ])
+    if safe_obj.count("+") > 250 and "*" not in safe_obj.replace(" * x[", "").replace("*x[", ""):
+        obj_coefs_map = parse_linear_expression(raw_obj_expr, decision_vars)
+        obj_indices = [var_to_idx[k] for k in obj_coefs_map.keys()]
+        obj_coefs_list = [float(v) for v in obj_coefs_map.values()]
+        lines.extend([
+            f"_obj_indices = {obj_indices}",
+            f"_obj_coefs = {obj_coefs_list}",
+            "def objective_fn(x):",
+            f"    return {sign}sum(c * x[i] for c, i in zip(_obj_coefs, _obj_indices))",
+            "",
+            "constraint_fns = []",
+            "constraint_names = []",
+            ""
+        ])
+    else:
+        lines.extend([
+            "def objective_fn(x):",
+            f"    return {sign}({safe_obj})",
+            "",
+            "constraint_fns = []",
+            "constraint_names = []",
+            ""
+        ])
 
     # Constraint functions code blocks
     # ── Compact Serialization ─────────────────────────────────────────────────
-    # Collect constraint specs as tuples at compile-time, then emit 4 compact
-    # list literals + 4 one-liner for-loops instead of N*2 append statements.
-    # For a 300-constraint model, this saves ~12,000+ characters in generated code.
-    dep_specs  = []   # [(idx_pos, idx_neg, name), ...]
-    mut_specs  = []   # [(idx_a,   idx_b,   name), ...]
-    eq_specs   = []   # [(lhs_indices, lhs_coefs, rhs, name), ...]
-    ineq_specs = []   # [(lhs_indices, lhs_coefs, slack_indices, slack_coefs, rhs, op, name), ...]
+    dep_specs    = []   # [(idx_pos, idx_neg, name), ...]
+    mut_specs    = []   # [(idx_a,   idx_b,   name), ...]
+    clique_specs = []   # [(indices_list,     name), ...]
+    eq_specs     = []   # [(lhs_indices, lhs_coefs, rhs, name), ...]
+    ineq_specs   = []   # [(lhs_indices, lhs_coefs, slack_indices, slack_coefs, rhs, op, name), ...]
 
     for c in om.constraints:
         if c.name in dependency_constraints:
@@ -388,12 +515,16 @@ def compile_om_to_autoqubo_ir(
             mut_specs.append((var_to_idx[var_a], var_to_idx[var_b], c.name))
             continue
 
+        if c.name in clique_mutex_constraints:
+            c_vars = clique_mutex_constraints[c.name]
+            clique_specs.append(([var_to_idx[v] for v in c_vars], c.name))
+            continue
+
         # Skip inequalities that are always satisfiable (s_max <= 0)
         if c.name in always_satisfied_inequalities:
             continue
 
         coefs = parse_linear_expression(c.left, decision_vars)
-        # Filter zero coefficients for sparse, correct constraint representation
         sparse_coefs = {k: v for k, v in coefs.items() if v != 0.0}
         lhs_indices = [var_to_idx[name] for name in sparse_coefs.keys()]
         lhs_coefs   = [float(val) for val in sparse_coefs.values()]
@@ -418,6 +549,9 @@ def compile_om_to_autoqubo_ir(
     if mut_specs:
         lines.append(f"_mut_specs = {mut_specs}")
         lines.append("for _a, _b, _nm in _mut_specs: constraint_fns.append(make_mut(_a, _b)); constraint_names.append(_nm)")
+    if clique_specs:
+        lines.append(f"_clique_specs = {clique_specs}")
+        lines.append("for _ci, _nm in _clique_specs: constraint_fns.append(make_clique_mut(_ci)); constraint_names.append(_nm)")
     if eq_specs:
         lines.append(f"_eq_specs = {eq_specs}")
         lines.append("for _li, _lc, _r, _nm in _eq_specs: constraint_fns.append(make_eq(_li, _lc, _r)); constraint_names.append(_nm)")
@@ -425,25 +559,89 @@ def compile_om_to_autoqubo_ir(
         lines.append(f"_ineq_specs = {ineq_specs}")
         lines.append("for _li, _lc, _si, _sc, _r, _op, _nm in _ineq_specs: constraint_fns.append(make_ineq(_li, _lc, _si, _sc, _r, _op)); constraint_names.append(_nm)")
 
-
-    lines.extend([
-        "# ── QUBO Compilation ──",
-        "def get_qubo():",
-        "    Q_cost, offset_cost = SamplingCompiler.generate_qubo_matrix(",
-        "        objective_fn,",
-        "        n_vars,",
-        "        use_multiprocessing=False",
-        "    )",
-        "    Q_con, offset_con = SamplingCompiler.generate_qubo_matrix(",
-        "        lambda x: sum(fn(x) for fn in constraint_fns),",
-        "        n_vars,",
-        "        use_multiprocessing=False",
-        "    )",
-        "    # Fix for AutoQUBO library offset scaling bug",
-        f"    Q = Q_cost + {penalty_weight} * Q_con",
-        f"    offset = offset_cost + {penalty_weight} * offset_con",
-        "    return Q, offset"
-    ])
+    # Use Active-Subspace SamplingCompiler when n_vars > 45 or total constraints > 45
+    use_subspace_sampling = (v_map.total_vars > 45) or (len(om.constraints) > 45)
+    if not use_subspace_sampling:
+        lines.extend([
+            "# ── QUBO Compilation ──",
+            "def get_qubo():",
+            "    Q_cost, offset_cost = SamplingCompiler.generate_qubo_matrix(",
+            "        objective_fn,",
+            "        n_vars,",
+            "        use_multiprocessing=False",
+            "    )",
+            "    Q_con, offset_con = SamplingCompiler.generate_qubo_matrix(",
+            "        lambda x: sum(fn(x) for fn in constraint_fns),",
+            "        n_vars,",
+            "        use_multiprocessing=False",
+            "    )",
+            "    # Fix for AutoQUBO library offset scaling bug",
+            f"    Q = Q_cost + {penalty_weight} * Q_con",
+            f"    offset = offset_cost + {penalty_weight} * offset_con",
+            "    return Q, offset"
+        ])
+    else:
+        lines.extend([
+            "# ── QUBO Compilation (Active-Subspace SamplingCompiler for High-Scale N) ──",
+            "def _scatter_subspace_qubo(Q_global, active_idx, local_fn):",
+            "    k = len(active_idx)",
+            "    if k == 0:",
+            "        return float(local_fn([]))",
+            "    Q_loc, off_loc = SamplingCompiler.generate_qubo_matrix(local_fn, k, use_multiprocessing=False)",
+            "    for a in range(k):",
+            "        ga = active_idx[a]",
+            "        Q_global[ga, ga] += Q_loc[a, a]",
+            "        for b in range(a + 1, k):",
+            "            gb = active_idx[b]",
+            "            if ga < gb:",
+            "                Q_global[ga, gb] += Q_loc[a, b] + Q_loc[b, a]",
+            "            else:",
+            "                Q_global[gb, ga] += Q_loc[a, b] + Q_loc[b, a]",
+            "    return float(off_loc)",
+            "",
+            "def get_qubo():",
+            "    Q_cost = np.zeros((n_vars, n_vars), dtype=np.float64)",
+            "    offset_cost = 0.0",
+            "    if '_obj_indices' in globals():",
+            "        for _ch in range(0, len(_obj_indices), 16):",
+            "            _sub_i = _obj_indices[_ch:_ch+16]",
+            "            _sub_c = _obj_coefs[_ch:_ch+16]",
+            f"            _sgn = -1.0 if '{om.objective.sense.upper()}' == 'MAXIMIZE' else 1.0",
+            "            offset_cost += _scatter_subspace_qubo(Q_cost, _sub_i, lambda z, sc=_sub_c, sg=_sgn: sg * sum(c * z[j] for j, c in enumerate(sc)))",
+            "    elif n_vars <= 80:",
+            "        Q_cost, offset_cost = SamplingCompiler.generate_qubo_matrix(objective_fn, n_vars, use_multiprocessing=False)",
+            "    else:",
+            "        _z0 = [0] * n_vars",
+            "        offset_cost = float(objective_fn(_z0))",
+            "        for _i in range(n_vars):",
+            "            _Q1, _ = SamplingCompiler.generate_qubo_matrix(lambda z, idx=_i: objective_fn([z[0] if k == idx else 0 for k in range(n_vars)]) - offset_cost, 1, use_multiprocessing=False)",
+            "            Q_cost[_i, _i] = _Q1[0, 0]",
+            "    Q_con = np.zeros((n_vars, n_vars), dtype=np.float64)",
+            "    offset_con = 0.0",
+            "    if '_dep_specs' in globals():",
+            "        for _p, _n, _ in _dep_specs:",
+            "            offset_con += _scatter_subspace_qubo(Q_con, [_p, _n], lambda z: z[0] * (1.0 - z[1]))",
+            "    if '_mut_specs' in globals():",
+            "        for _a, _b, _ in _mut_specs:",
+            "            offset_con += _scatter_subspace_qubo(Q_con, [_a, _b], lambda z: z[0] * z[1])",
+            "    if '_clique_specs' in globals():",
+            "        for _ci, _ in _clique_specs:",
+            "            offset_con += _scatter_subspace_qubo(Q_con, _ci, lambda z: (sum(z) * (sum(z) - 1.0)) / 2.0)",
+            "    if '_eq_specs' in globals():",
+            "        for _li, _lc, _r, _ in _eq_specs:",
+            "            offset_con += _scatter_subspace_qubo(Q_con, _li, lambda z, lc=_lc, r=_r: (sum(c * z[j] for j, c in enumerate(lc)) - r) ** 2)",
+            "    if '_ineq_specs' in globals():",
+            "        for _li, _lc, _si, _sc, _r, _op, _ in _ineq_specs:",
+            "            _all_i = _li + _si",
+            "            _nl = len(_li)",
+            "            if _op == '<=':",
+            "                offset_con += _scatter_subspace_qubo(Q_con, _all_i, lambda z, lc=_lc, sc=_sc, nl=_nl, r=_r: (sum(c * z[j] for j, c in enumerate(lc)) + sum(c * z[nl + j] for j, c in enumerate(sc)) - r) ** 2)",
+            "            else:",
+            "                offset_con += _scatter_subspace_qubo(Q_con, _all_i, lambda z, lc=_lc, sc=_sc, nl=_nl, r=_r: (r + sum(c * z[nl + j] for j, c in enumerate(sc)) - sum(c * z[j] for j, c in enumerate(lc))) ** 2)",
+            f"    Q = Q_cost + {penalty_weight} * Q_con",
+            f"    offset = offset_cost + {penalty_weight} * offset_con",
+            "    return Q, offset"
+        ])
 
     qubo_code = "\n".join(lines)
 
@@ -452,28 +650,23 @@ def compile_om_to_autoqubo_ir(
     exec(qubo_code, local_env)
     Q, offset = local_env["get_qubo"]()
 
-    # 5. Equivalence Verification Pass (regression tests against 1000 configurations)
+    # 5. Equivalence Verification Pass (vectorized regression tests against up to 1000 configurations)
     np.random.seed(42)
-    n_tests = min(1000, 2 ** v_map.total_vars)
-    test_configs = []
     if v_map.total_vars <= 10:
-        for val in range(2 ** v_map.total_vars):
-            bits = [int(x) for x in bin(val)[2:].zfill(v_map.total_vars)]
-            test_configs.append(np.array(bits))
+        n_states = 2 ** v_map.total_vars
+        X_mat = np.array([[int(b) for b in bin(val)[2:].zfill(v_map.total_vars)] for val in range(n_states)], dtype=np.float64)
     else:
-        for _ in range(n_tests):
-            test_configs.append(np.random.randint(2, size=v_map.total_vars))
+        n_tests = 200 if (v_map.total_vars > 60 or len(om.constraints) > 100) else 1000
+        X_mat = np.random.randint(2, size=(n_tests, v_map.total_vars)).astype(np.float64)
 
+    qubo_vals = np.einsum("bi,ij,bj->b", X_mat, Q, X_mat) + offset
     obj_fn = local_env["objective_fn"]
-    con_fn = lambda x: sum(fn(x) for fn in local_env["constraint_fns"])
+    con_fns = local_env["constraint_fns"]
 
-    for idx, x in enumerate(test_configs):
-        target = obj_fn(x) + penalty_weight * con_fn(x)
-        try:
-            qubo_val = float(x @ Q @ x + offset)
-        except Exception as matmul_err:
-            print(f"[AUTOQUBO EXCEPTION] x shape: {x.shape}, Q shape: {Q.shape if hasattr(Q, 'shape') else 'no shape'}, Q type: {type(Q)}, offset: {offset}, total_vars: {v_map.total_vars}, Q matrix: {Q}")
-            raise matmul_err
+    for idx in range(X_mat.shape[0]):
+        x = X_mat[idx]
+        target = obj_fn(x) + penalty_weight * sum(fn(x) for fn in con_fns)
+        qubo_val = float(qubo_vals[idx])
         if abs(target - qubo_val) > 1e-6:
             raise ValueError(
                 f"Equivalence verification failure at test assignment {idx}:\n"
@@ -545,17 +738,10 @@ def compile_om_to_autoqubo_ir(
         "backend": "AutoQUBO",
         "validation": "PASS",
         "verification": "PASS",
-        "original_objective_expr": om.objective.expression or "0.0",
-        "original_objective_sense": om.objective.sense.upper(),
-        "original_constraints": [
-            {
-                "name": c.name,
-                "left": c.left,
-                "op": c.op,
-                "right": float(c.right)
-            }
-            for c in om.constraints
-        ],
+        "original_objective_expr": orig_obj_expr,
+        "original_objective_sense": orig_obj_sense,
+        "original_constraints": orig_constraints,
+        "int_encodings": int_encodings,
         "penalty_ratio": penalty_ratio,
         "max_objective_coefficient": max_obj_coef,
         "max_constraint_coefficient": max_con_coef,

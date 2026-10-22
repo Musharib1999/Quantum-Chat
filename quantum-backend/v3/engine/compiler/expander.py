@@ -208,19 +208,57 @@ def compile_mutual_exclusion(p: MutualExclusionPattern, cmm: CanonicalMathematic
         )
     ]
 
+def _build_balanced_sum(terms: List[Expr]) -> Expr:
+    """Build a balanced binary addition tree of depth ceil(log2(N)) to prevent RecursionError at N > 980."""
+    if not terms:
+        return Constant(value=0.0)
+    layer = list(terms)
+    while len(layer) > 1:
+        next_layer = []
+        for i in range(0, len(layer), 2):
+            if i + 1 < len(layer):
+                next_layer.append(BinaryOp(left=layer[i], op="+", right=layer[i + 1]))
+            else:
+                next_layer.append(layer[i])
+        layer = next_layer
+    return layer[0]
+
 def get_expr_degree(expr) -> int:
-    if isinstance(expr, Constant):
+    """Iterative post-order AST degree calculator (safe for arbitrary tree depth N > 10,000)."""
+    if expr is None:
         return 0
-    elif isinstance(expr, VarRef):
-        return 1
-    elif isinstance(expr, Sum):
-        return get_expr_degree(expr.expression)
-    elif isinstance(expr, BinaryOp):
-        if expr.op in ["+", "-"]:
-            return max(get_expr_degree(expr.left), get_expr_degree(expr.right))
-        elif expr.op == "*":
-            return get_expr_degree(expr.left) + get_expr_degree(expr.right)
-    return 0
+    stack = [(expr, False)]
+    degrees = {}
+    while stack:
+        node, visited = stack.pop()
+        nid = id(node)
+        if isinstance(node, Constant):
+            degrees[nid] = 0
+        elif isinstance(node, (VarRef, ParamRef)):
+            degrees[nid] = 1 if isinstance(node, VarRef) else 0
+        elif isinstance(node, Sum):
+            if visited:
+                degrees[nid] = degrees.get(id(node.expression), 0)
+            else:
+                stack.append((node, True))
+                stack.append((node.expression, False))
+        elif isinstance(node, BinaryOp):
+            if visited:
+                dl = degrees.get(id(node.left), 0)
+                dr = degrees.get(id(node.right), 0)
+                if node.op in ["+", "-"]:
+                    degrees[nid] = max(dl, dr)
+                elif node.op == "*":
+                    degrees[nid] = dl + dr
+                else:
+                    degrees[nid] = max(dl, dr)
+            else:
+                stack.append((node, True))
+                stack.append((node.right, False))
+                stack.append((node.left, False))
+        else:
+            degrees[nid] = 0
+    return degrees.get(id(expr), 0)
 
 def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
     """
@@ -321,7 +359,7 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
             left = parse_json_expr(node.get("left"), clean_v_name, index_sets)
             right = parse_json_expr(node.get("right"), clean_v_name, index_sets)
             return BinaryOp(left=left, op=op, right=right)
-        elif n_type in ("aggregate", "linear_terms", "coefficients"):
+        elif n_type in ("aggregate", "coefficients") or (n_type == "linear_terms" and "terms" not in node):
             raw_id = node.get("var_id", clean_v_name)
             norm_id = raw_id.lower().replace("_", "").replace(" ", "")
             var_name = var_id_to_name.get(norm_id, clean_v_name)
@@ -425,10 +463,7 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
                     terms.append(BinaryOp(left=Constant(value=float(val)), op="*", right=x_ref))
             if not terms:
                 return Constant(value=0.0)
-            expr = terms[0]
-            for term in terms[1:]:
-                expr = BinaryOp(left=expr, op="+", right=term)
-            return expr
+            return _build_balanced_sum(terms)
         elif n_type == "quadratic":
             raw_id = node.get("var_id", clean_v_name)
             norm_id = raw_id.lower().replace("_", "").replace(" ", "")
@@ -493,10 +528,7 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
             
             if not terms:
                 return Constant(value=0.0)
-            expr = terms[0]
-            for term in terms[1:]:
-                expr = BinaryOp(left=expr, op="+", right=term)
-            return expr
+            return _build_balanced_sum(terms)
         elif n_type == "quadratic_terms":
             node["type"] = "quadratic"
             return parse_json_expr(node, clean_v_name, index_sets)
@@ -577,10 +609,7 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
                     terms.append(BinaryOp(left=Constant(value=coeff), op="*", right=x_ref))
             if not terms:
                 return Constant(value=0.0)
-            expr = terms[0]
-            for term in terms[1:]:
-                expr = BinaryOp(left=expr, op="+", right=term)
-            return expr
+            return _build_balanced_sum(terms)
         return Constant(value=0.0)
     
     # 0.5 Parse derived variables and functions
@@ -607,7 +636,12 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
 
     # 1. Parse parameters and infer sets
     raw_params = spec.get("parameters", {})
+    var_registry_check = spec.get("variable_registry", spec.get("variables", []))
+    p_text_lower = spec.get("problem_text", "").lower() if spec.get("problem_text") else ""
     for k, v in raw_params.items():
+        if not var_registry_check and p_text_lower and k.lower() in ("entities_count", "slots_count"):
+            # Defer generic placeholder counts to domain-aware fallback below
+            continue
         if isinstance(v, int) and v > 0 and (k.endswith("s_count") or k.endswith("s")):
             # Infer a Set from count
             set_name = k.replace("_count", "").capitalize()
@@ -616,7 +650,6 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
             cmm.parameters[k] = CMMParameter(name=k, value=v)
             
     # Fallback default sets if not inferred
-    p_text_lower = spec.get("problem_text", "").lower() if spec.get("problem_text") else ""
     default_row = "Items"
     default_col = "Slots"
     if "nurse" in p_text_lower or "hospital" in p_text_lower:
@@ -636,8 +669,10 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
         default_col = "Machines"
 
     if not cmm.sets:
-        cmm.sets[default_row] = CMMSet(name=default_row, elements=list(range(spec.get("entities_count", 5))))
-        cmm.sets[default_col] = CMMSet(name=default_col, elements=list(range(spec.get("slots_count", 3))))
+        ent_cnt = raw_params.get("entities_count", spec.get("entities_count", 5))
+        slot_cnt = raw_params.get("slots_count", spec.get("slots_count", 3))
+        cmm.sets[default_row] = CMMSet(name=default_row, elements=list(range(ent_cnt)))
+        cmm.sets[default_col] = CMMSet(name=default_col, elements=list(range(slot_cnt)))
 
     # 2. Parse variables
     var_registry = spec.get("variable_registry", spec.get("variables", []))
@@ -647,7 +682,7 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
         cmm.variables["x"] = CMMVariable(name="x", var_type=VarType.BINARY, index_sets=fallback_sets)
     else:
         for var in var_registry:
-            name = var.get("name", "x")
+            name = var.get("name", "x").replace(" ", "_").replace("-", "_")
             raw_type = var.get("type", var.get("domain", "BINARY"))
             if not raw_type:
                 raw_type = "BINARY"
@@ -742,21 +777,23 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
 
     # 3. Parse constraints
     const_registry = spec.get("constraint_registry", [])
-    primary_var = list(cmm.variables.keys())[0] if cmm.variables else "x"
-    clean_v_name = primary_var.replace(" ", "_").replace("-", "_")
-    var_obj = cmm.variables[primary_var] if primary_var in cmm.variables else None
-    
-    # Get dimensions
-    var_dims = [3, 3] # fallback
-    if var_registry and "dimensions" in var_registry[0]:
-        var_dims = var_registry[0]["dimensions"]
-    elif var_obj and var_obj.index_sets:
-        var_dims = [len(cmm.sets[s].elements) for s in var_obj.index_sets]
+    default_primary_var = list(cmm.variables.keys())[0] if cmm.variables else "x"
         
     for idx, c in enumerate(const_registry):
         name = c.get("name", f"constraint_{idx}")
         family = c.get("family", "other")
         op = c.get("operator", "<=")
+
+        # Resolve per-constraint variable if var_id is explicitly specified on constraint or lhs
+        c_raw_vid = c.get("var_id") or (c.get("lhs", {}).get("var_id") if isinstance(c.get("lhs"), dict) else None)
+        if c_raw_vid:
+            c_norm_vid = str(c_raw_vid).lower().replace("_", "").replace(" ", "")
+            primary_var = var_id_to_name.get(c_norm_vid, default_primary_var)
+        else:
+            primary_var = default_primary_var
+        clean_v_name = primary_var.replace(" ", "_").replace("-", "_")
+        var_obj = cmm.variables.get(primary_var)
+        var_dims = [len(cmm.sets[s].elements) for s in var_obj.index_sets] if (var_obj and var_obj.index_sets) else [3, 3]
         
         # Parse Quantifier from JSON spec (supports both forall object and standard index lists)
         forall_obj = c.get("forall")
@@ -879,11 +916,11 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
         set_i = index_sets[0] if len(index_sets) >= 1 else "Jobs"
         set_j = index_sets[1] if len(index_sets) >= 2 else "Machines"
         
-        if len(index_sets) < 2:
-            # 1D or Scalar variable constraint -> Parse directly to avoid 2D bipartite set crashes
+        if len(index_sets) != 2 or (lhs_type in ("linear_terms", "binary_op", "quadratic") and family == "other" and "cannot be assigned" not in name.lower() and "vacation" not in name.lower() and "unavailable" not in name.lower() and "maintenance" not in name.lower() and "availability" not in name.lower()):
+            # 1D, Scalar, 3D+ Tensor, or explicit algebraic linear_terms/binary_op/quadratic constraint -> Parse directly
             left_node = parse_json_expr(lhs_obj, clean_v_name, index_sets)
             if isinstance(left_node, Constant) and left_node.value == 0.0:
-                left_node = VarRef(var_name=clean_v_name, indices=[0])
+                left_node = VarRef(var_name=clean_v_name, indices=[0] * max(1, len(index_sets)))
                 
             right_node = parse_json_expr(rhs_obj, clean_v_name, index_sets)
             if isinstance(right_node, Constant) and right_node.value == 0.0 and rhs_val != 0.0:
@@ -1116,7 +1153,10 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
             expr_node = obj.get("expression")
             if expr_node:
                 try:
-                    parsed_expr = parse_json_expr(expr_node, primary_var, var_obj.index_sets if var_obj else [])
+                    obj_vid = expr_node.get("var_id") if isinstance(expr_node, dict) else None
+                    obj_vname = var_id_to_name.get(str(obj_vid).lower().replace("_", "").replace(" ", ""), primary_var) if obj_vid else primary_var
+                    obj_vobj = cmm.variables.get(obj_vname, var_obj)
+                    parsed_expr = parse_json_expr(expr_node, obj_vname, obj_vobj.index_sets if obj_vobj else [])
                     if combined_expr is None:
                         combined_expr = parsed_expr
                     else:
@@ -1151,20 +1191,29 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
         expression=combined_expr
     )
         
-    # Compiler Assertions (Strong checks on CMM references)
-    for c in cmm.constraints:
-        def check_var(node):
+    # Compiler Assertions (Strong iterative checks on CMM references, safe for N > 10,000)
+    def _norm_v(s: str) -> str:
+        return s.lower().replace("_", "").replace(" ", "").replace("-", "")
+    norm_vars = {_norm_v(kv) for kv in cmm.variables}
+
+    def check_var(root):
+        if root is None:
+            return
+        stack = [root]
+        while stack:
+            node = stack.pop()
             if isinstance(node, VarRef):
-                def norm(s):
-                    return s.lower().replace("_", "").replace(" ", "").replace("-", "")
-                norm_name = norm(node.var_name)
-                norm_vars = [norm(kv) for kv in cmm.variables]
-                assert norm_name in norm_vars, f"Variable '{node.var_name}' not defined in model variables registry"
+                assert _norm_v(node.var_name) in norm_vars, f"Variable '{node.var_name}' not defined in model variables registry"
             elif isinstance(node, BinaryOp):
-                check_var(node.left)
-                check_var(node.right)
+                if node.right is not None:
+                    stack.append(node.right)
+                if node.left is not None:
+                    stack.append(node.left)
             elif isinstance(node, Sum):
-                check_var(node.expression)
+                if node.expression is not None:
+                    stack.append(node.expression)
+
+    for c in cmm.constraints:
         check_var(c.left)
         check_var(c.right)
         
@@ -1280,12 +1329,16 @@ class BaseBuilder:
                 if expr.op in ("+", "-"):
                     # Flatten addition/subtraction chain to avoid nested parentheses limit
                     terms = []
-                    def collect_add_sub(node, sign=1):
-                        if isinstance(node, BinaryOp) and node.op in ("+", "-"):
-                            collect_add_sub(node.left, sign)
-                            collect_add_sub(node.right, sign if node.op == "+" else -sign)
-                        else:
-                            terms.append((node, sign))
+                    def collect_add_sub(root, init_sign=1):
+                        stack = [(root, init_sign)]
+                        while stack:
+                            node, sign = stack.pop()
+                            if isinstance(node, BinaryOp) and node.op in ("+", "-"):
+                                r_sign = sign if node.op == "+" else -sign
+                                stack.append((node.right, r_sign))
+                                stack.append((node.left, sign))
+                            else:
+                                terms.append((node, sign))
                     collect_add_sub(expr)
                     parts = []
                     for i, (term, s) in enumerate(terms):
@@ -1318,12 +1371,20 @@ class BaseBuilder:
 
         # 2. Expand Constraints
         def has_variables(expr: Expr) -> bool:
-            if isinstance(expr, VarRef):
-                return True
-            elif isinstance(expr, BinaryOp):
-                return has_variables(expr.left) or has_variables(expr.right)
-            elif isinstance(expr, Sum):
-                return has_variables(expr.expression)
+            if expr is None:
+                return False
+            stack = [expr]
+            while stack:
+                node = stack.pop()
+                if isinstance(node, VarRef):
+                    return True
+                elif isinstance(node, BinaryOp):
+                    if node.right is not None:
+                        stack.append(node.right)
+                    if node.left is not None:
+                        stack.append(node.left)
+                elif isinstance(node, Sum) and node.expression is not None:
+                    stack.append(node.expression)
             return False
 
         for c in cmm.constraints:
@@ -1854,3 +1915,423 @@ def check_self_consistency(spec: dict, om: OptimizationModel) -> List[str]:
                     errors.append(f"Self-consistency check failure: Variable '{mv.name}' was declared as integer in JSON but compiled as binary.")
                     
     return errors
+
+
+def ingest_structured_data_to_spec(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Deterministic Structured-Data Ingestion Adapter (Stage 2 Bypass).
+    Translates structured enterprise/construction management tables (e.g. Primavera P6 /
+    Procore / ERP JSON with tasks, durations, Finish-to-Start time lags, safety exclusions,
+    blackout windows, and integer crane/equipment zone allocations) directly into a canonical
+    `problem_specification` ready for Stage 3 (`parse_spec_to_cmm`).
+    """
+    if "variable_registry" in data or "constraint_registry" in data:
+        return data
+
+    # ── ERP Vertical 1: Workforce Management (WFM — Kronos / UKG / Workday) ──
+    if "workforce_roster" in data or "employees" in data:
+        wfm = data.get("workforce_roster", data)
+        employees = wfm.get("employees", [])
+        shifts = wfm.get("shifts", [])
+        n_emp = len(employees)
+        n_shf = len(shifts)
+        v_name = wfm.get("variable_name", "roster")
+        emp_map = {str(e.get("id", e.get("name", i))): i for i, e in enumerate(employees)}
+        shf_map = {str(s.get("id", s.get("name", j))): j for j, s in enumerate(shifts)}
+
+        c_reg = []
+        # 1. Shift staffing coverage (== required_staff or >= min_staff)
+        for j, s in enumerate(shifts):
+            req = s.get("required_staff")
+            min_s = s.get("min_staff")
+            if req is not None or min_s is not None:
+                op_s = "==" if req is not None else ">="
+                val_s = float(req if req is not None else min_s)
+                terms = [{"var_id": "v_wfm", "indices": [i, j], "coefficient": 1.0} for i in range(n_emp)]
+                c_reg.append({
+                    "name": f"shift_{j}_coverage",
+                    "var_id": "v_wfm",
+                    "family": "other",
+                    "operator": op_s,
+                    "lhs": {"type": "linear_terms", "var_id": "v_wfm", "terms": terms},
+                    "rhs": {"type": "constant", "value": val_s}
+                })
+
+        # 2. Employee max shifts, PTO blackouts
+        for i, emp in enumerate(employees):
+            max_shf = emp.get("max_shifts")
+            if max_shf is not None and int(max_shf) < n_shf:
+                terms = [{"var_id": "v_wfm", "indices": [i, j], "coefficient": 1.0} for j in range(n_shf)]
+                c_reg.append({
+                    "name": f"emp_{i}_max_shifts",
+                    "var_id": "v_wfm",
+                    "family": "other",
+                    "operator": "<=",
+                    "lhs": {"type": "linear_terms", "var_id": "v_wfm", "terms": terms},
+                    "rhs": {"type": "constant", "value": float(max_shf)}
+                })
+            for pto in emp.get("pto_shifts", []):
+                sj = shf_map[str(pto)] if str(pto) in shf_map else int(pto)
+                c_reg.append({
+                    "name": f"emp_{i}_pto_shift_{sj}",
+                    "var_id": "v_wfm",
+                    "family": "other",
+                    "operator": "==",
+                    "lhs": {"type": "linear_terms", "var_id": "v_wfm", "terms": [{"var_id": "v_wfm", "indices": [i, sj], "coefficient": 1.0}]},
+                    "rhs": {"type": "constant", "value": 0.0}
+                })
+
+        # 3. Rest-period / Clopening bans (Zero-Slack Pairwise Mutex)
+        for b_idx, pair in enumerate(wfm.get("clopening_bans", [])):
+            s1 = shf_map[str(pair[0])] if str(pair[0]) in shf_map else int(pair[0])
+            s2 = shf_map[str(pair[1])] if str(pair[1]) in shf_map else int(pair[1])
+            for i in range(n_emp):
+                c_reg.append({
+                    "name": f"clopening_ban_{b_idx}_emp_{i}",
+                    "var_id": "v_wfm",
+                    "family": "other",
+                    "operator": "<=",
+                    "lhs": {"type": "linear_terms", "var_id": "v_wfm", "terms": [
+                        {"var_id": "v_wfm", "indices": [i, s1], "coefficient": 1.0},
+                        {"var_id": "v_wfm", "indices": [i, s2], "coefficient": 1.0}
+                    ]},
+                    "rhs": {"type": "constant", "value": 1.0}
+                })
+
+        # 4. Sliding-window max consecutive shifts
+        max_consec = wfm.get("max_consecutive_shifts")
+        if max_consec is not None and int(max_consec) < n_shf:
+            k_win = int(max_consec)
+            for i in range(n_emp):
+                for start_j in range(n_shf - k_win):
+                    terms = [{"var_id": "v_wfm", "indices": [i, start_j + offset_j], "coefficient": 1.0} for offset_j in range(k_win + 1)]
+                    c_reg.append({
+                        "name": f"consec_limit_emp_{i}_win_{start_j}",
+                        "var_id": "v_wfm",
+                        "family": "other",
+                        "operator": "<=",
+                        "lhs": {"type": "linear_terms", "var_id": "v_wfm", "terms": terms},
+                        "rhs": {"type": "constant", "value": float(k_win)}
+                    })
+
+        wfm_coeffs = []
+        for emp in employees:
+            cbs = emp.get("cost_by_shift", [10.0] * n_shf)
+            wfm_coeffs.extend(float(c) for c in cbs)
+
+        return {
+            "problem_family": "SCHEDULING",
+            "parameters": {"employees_count": n_emp, "shifts_count": n_shf},
+            "variable_registry": [{"id": "v_wfm", "name": v_name, "type": "BINARY", "dimensions": ["Employees", "Shifts"]}],
+            "constraint_registry": c_reg,
+            "objectives": [{"sense": wfm.get("sense", "MINIMIZE"), "expression": {"type": "linear_terms", "var_id": "v_wfm", "coefficients": wfm_coeffs}}]
+        }
+
+    # ── ERP Vertical 2: Logistics & Fleet TMS (SAP TM / Oracle OTM) ──
+    if "logistics_dispatch" in data or "orders" in data:
+        tms = data.get("logistics_dispatch", data)
+        orders = tms.get("orders", [])
+        vehicles = tms.get("vehicles", [])
+        n_ord = len(orders)
+        n_veh = len(vehicles)
+        v_name = tms.get("variable_name", "dispatch")
+        ord_map = {str(o.get("id", o.get("name", i))): i for i, o in enumerate(orders)}
+        veh_map = {str(v.get("id", v.get("name", j))): j for j, v in enumerate(vehicles)}
+
+        c_reg = [{
+            "name": "order_single_dispatch",
+            "var_id": "v_tms",
+            "family": "uniqueness",
+            "operator": "==",
+            "rhs": {"type": "constant", "value": 1.0}
+        }]
+
+        # Vehicle payload capacities
+        for j, veh in enumerate(vehicles):
+            cap = veh.get("capacity")
+            if cap is not None:
+                terms = [{"var_id": "v_tms", "indices": [i, j], "coefficient": float(orders[i].get("weight", 1.0))} for i in range(n_ord)]
+                c_reg.append({
+                    "name": f"vehicle_{j}_payload_cap",
+                    "var_id": "v_tms",
+                    "family": "other",
+                    "operator": "<=",
+                    "lhs": {"type": "linear_terms", "var_id": "v_tms", "terms": terms},
+                    "rhs": {"type": "constant", "value": float(cap)}
+                })
+
+        # Hazmat / Incompatible cargo exclusions on same vehicle (Zero-Slack Mutex)
+        for ex_idx, pair in enumerate(tms.get("incompatible_pairs", [])):
+            o1 = ord_map[str(pair[0])] if str(pair[0]) in ord_map else int(pair[0])
+            o2 = ord_map[str(pair[1])] if str(pair[1]) in ord_map else int(pair[1])
+            for j in range(n_veh):
+                c_reg.append({
+                    "name": f"hazmat_mutex_{ex_idx}_veh_{j}",
+                    "var_id": "v_tms",
+                    "family": "other",
+                    "operator": "<=",
+                    "lhs": {"type": "linear_terms", "var_id": "v_tms", "terms": [
+                        {"var_id": "v_tms", "indices": [o1, j], "coefficient": 1.0},
+                        {"var_id": "v_tms", "indices": [o2, j], "coefficient": 1.0}
+                    ]},
+                    "rhs": {"type": "constant", "value": 1.0}
+                })
+
+        # Time-window / vehicle-order restrictions (Zero-Slack Equality == 0.0)
+        for b_idx, blk in enumerate(tms.get("blocked_assignments", [])):
+            oi = ord_map[str(blk["order"])] if str(blk["order"]) in ord_map else int(blk["order"])
+            vj = veh_map[str(blk["vehicle"])] if str(blk["vehicle"]) in veh_map else int(blk["vehicle"])
+            c_reg.append({
+                "name": f"blocked_ord_{oi}_veh_{vj}_{b_idx}",
+                "var_id": "v_tms",
+                "family": "other",
+                "operator": "==",
+                "lhs": {"type": "linear_terms", "var_id": "v_tms", "terms": [{"var_id": "v_tms", "indices": [oi, vj], "coefficient": 1.0}]},
+                "rhs": {"type": "constant", "value": 0.0}
+            })
+
+        cost_mat = tms.get("cost_matrix", [])
+        flat_costs = [float(x) for row in cost_mat for x in (row if isinstance(row, list) else [row])] if cost_mat else [10.0] * (n_ord * n_veh)
+        return {
+            "problem_family": "ASSIGNMENT",
+            "parameters": {"orders_count": n_ord, "vehicles_count": n_veh},
+            "variable_registry": [{"id": "v_tms", "name": v_name, "type": "BINARY", "dimensions": ["Orders", "Vehicles"]}],
+            "constraint_registry": c_reg,
+            "objectives": [{"sense": tms.get("sense", "MINIMIZE"), "expression": {"type": "linear_terms", "var_id": "v_tms", "coefficients": flat_costs}}]
+        }
+
+    # ── ERP Vertical 3: Supply Chain & Multi-Echelon Network (SAP IBP / NetSuite) ──
+    if "supply_chain_network" in data or "warehouses" in data:
+        scm = data.get("supply_chain_network", data)
+        warehouses = scm.get("warehouses", [])
+        retailers = scm.get("retailers", [])
+        n_wh = len(warehouses)
+        n_ret = len(retailers)
+
+        # Fixed-Charge Warehouse Opening + Retailer Sourcing (Cross-Tensor Dependency x_{w,r} - y_w <= 0)
+        v_reg = [
+            {"id": "v_ship", "name": "ship", "type": "BINARY", "dimensions": ["Warehouses", "Retailers"]},
+            {"id": "v_open", "name": "wh_open", "type": "BINARY", "dimensions": ["Warehouses"]}
+        ]
+        c_reg = []
+        # Each retailer sourced by exactly 1 warehouse
+        for r in range(n_ret):
+            terms = [{"var_id": "v_ship", "indices": [w, r], "coefficient": 1.0} for w in range(n_wh)]
+            c_reg.append({
+                "name": f"retailer_{r}_sourcing",
+                "var_id": "v_ship",
+                "family": "other",
+                "operator": "==",
+                "lhs": {"type": "linear_terms", "var_id": "v_ship", "terms": terms},
+                "rhs": {"type": "constant", "value": 1.0}
+            })
+        # Linking constraint: ship_{w, r} - wh_open_w <= 0.0 (Zero-Slack Binary Dependency!)
+        for w in range(n_wh):
+            for r in range(n_ret):
+                c_reg.append({
+                    "name": f"link_wh_{w}_ret_{r}",
+                    "var_id": "v_ship",
+                    "family": "other",
+                    "operator": "<=",
+                    "lhs": {"type": "linear_terms", "var_id": "v_ship", "terms": [
+                        {"var_id": "v_ship", "indices": [w, r], "coefficient": 1.0},
+                        {"var_id": "v_open", "indices": [w], "coefficient": -1.0}
+                    ]},
+                    "rhs": {"type": "constant", "value": 0.0}
+                })
+
+        ship_costs = [float(x) for w in warehouses for x in w.get("shipping_costs", [10.0] * n_ret)]
+        open_costs = [float(w.get("open_cost", 20.0)) for w in warehouses]
+        return {
+            "problem_family": "ALLOCATION",
+            "parameters": {"warehouses_count": n_wh, "retailers_count": n_ret},
+            "variable_registry": v_reg,
+            "constraint_registry": c_reg,
+            "objectives": [
+                {"sense": "MINIMIZE", "expression": {"type": "linear_terms", "var_id": "v_ship", "coefficients": ship_costs}},
+                {"sense": "MINIMIZE", "expression": {"type": "linear_terms", "var_id": "v_open", "coefficients": open_costs}}
+            ]
+        }
+
+    # ── ERP Vertical 4: Factory / Manufacturing MES & Job-Shop ERP (SAP PP / Opcenter) ──
+    if "manufacturing_job_shop" in data or "operations" in data:
+        mes = data.get("manufacturing_job_shop", data)
+        mapped = {
+            "tasks": mes.get("operations", []),
+            "time_horizon": mes.get("time_slots", mes.get("time_horizon", 4)),
+            "schedule_var_name": mes.get("variable_name", "op_start"),
+            "precedence": mes.get("routing_precedence", mes.get("precedence", [])),
+            "safety_exclusions": mes.get("machine_conflicts", []),
+            "blackouts": [
+                {"task": mw.get("operation", mw.get("task")), "day": mw.get("slot", mw.get("day", 0))}
+                for mw in mes.get("maintenance_windows", [])
+            ],
+            "equipment_zones": mes.get("batch_lots", {}),
+            "sense": mes.get("sense", "MINIMIZE")
+        }
+        return ingest_structured_data_to_spec(mapped)
+
+
+    tasks = data.get("tasks", data.get("activities", []))
+    horizon = int(data.get("time_horizon", data.get("days", 4)))
+    precedence = data.get("precedence", data.get("finish_to_start", []))
+    safety_exclusions = data.get("safety_exclusions", data.get("exclusions", []))
+    blackouts = data.get("blackouts", data.get("unavailable_slots", []))
+    equipment_zones = data.get("equipment_zones", data.get("integer_resources", []))
+
+    parameters: Dict[str, Any] = {}
+    variable_registry: List[Dict[str, Any]] = []
+    constraint_registry: List[Dict[str, Any]] = []
+    objectives: List[Dict[str, Any]] = []
+
+    task_id_to_idx: Dict[str, int] = {}
+
+    if tasks:
+        n_tasks = len(tasks)
+        parameters["tasks_count"] = n_tasks
+        parameters["days_count"] = horizon
+        variable_registry.append({
+            "id": "v_sched",
+            "name": data.get("schedule_var_name", "task_start"),
+            "type": "BINARY",
+            "dimensions": ["Tasks", "Days"],
+            "description": "Binary start indicator x_{task, day} in {0, 1}"
+        })
+
+        for idx, t in enumerate(tasks):
+            t_id = t.get("id", t.get("name", f"task_{idx}"))
+            task_id_to_idx[str(t_id)] = idx
+
+        # 1. Each task starts on exactly one day (Uniqueness)
+        constraint_registry.append({
+            "name": "each_task_starts_once",
+            "var_id": "v_sched",
+            "family": "uniqueness",
+            "operator": "==",
+            "rhs": {"type": "constant", "value": 1.0}
+        })
+
+        # 2. Finish-to-Start Time-Lag Precedence: sum(t * x_{pred, t}) - sum(t * x_{succ, t}) <= -lag
+        for p_idx, rule in enumerate(precedence):
+            pred_key = str(rule.get("predecessor", rule.get("from")))
+            succ_key = str(rule.get("successor", rule.get("to")))
+            p_i = task_id_to_idx[pred_key] if pred_key in task_id_to_idx else int(pred_key)
+            s_i = task_id_to_idx[succ_key] if succ_key in task_id_to_idx else int(succ_key)
+            default_lag = tasks[p_i].get("duration", 1) if p_i < len(tasks) else 1
+            lag = float(rule.get("lag", default_lag))
+
+            terms = []
+            for d in range(horizon):
+                if d > 0:
+                    terms.append({"var_id": "v_sched", "indices": [p_i, d], "coefficient": float(d)})
+                    terms.append({"var_id": "v_sched", "indices": [s_i, d], "coefficient": -float(d)})
+
+            constraint_registry.append({
+                "name": f"fs_lag_{pred_key}_to_{succ_key}_{p_idx}",
+                "var_id": "v_sched",
+                "family": "other",
+                "operator": "<=",
+                "lhs": {"type": "linear_terms", "var_id": "v_sched", "terms": terms},
+                "rhs": {"type": "constant", "value": -lag}
+            })
+
+        # 3. Site Safety / Concurrent Zone Exclusions (Zero-Slack Clique Mutex)
+        for ex_idx, ex in enumerate(safety_exclusions):
+            ex_tasks = [task_id_to_idx[str(tk)] if str(tk) in task_id_to_idx else int(tk) for tk in ex.get("tasks", [])]
+            ex_days = ex.get("days", list(range(horizon)))
+            for d in ex_days:
+                terms = [{"var_id": "v_sched", "indices": [ti, int(d)], "coefficient": 1.0} for ti in ex_tasks]
+                constraint_registry.append({
+                    "name": f"safety_mutex_{ex_idx}_day_{d}",
+                    "var_id": "v_sched",
+                    "family": "other",
+                    "operator": "<=",
+                    "lhs": {"type": "linear_terms", "var_id": "v_sched", "terms": terms},
+                    "rhs": {"type": "constant", "value": 1.0}
+                })
+
+        # 4. Weather / Inspection Blackouts (Zero-Slack Equality == 0.0)
+        for b_idx, blk in enumerate(blackouts):
+            tk = str(blk.get("task"))
+            ti = task_id_to_idx[tk] if tk in task_id_to_idx else int(tk)
+            d = int(blk.get("day", 0))
+            constraint_registry.append({
+                "name": f"blackout_{tk}_day_{d}_{b_idx}",
+                "var_id": "v_sched",
+                "family": "other",
+                "operator": "==",
+                "lhs": {"type": "linear_terms", "var_id": "v_sched", "terms": [{"var_id": "v_sched", "indices": [ti, d], "coefficient": 1.0}]},
+                "rhs": {"type": "constant", "value": 0.0}
+            })
+
+        # 5. Schedule Cost / Early-Start Objective
+        sched_coeffs = []
+        for idx, t in enumerate(tasks):
+            c_day = t.get("cost_by_day", t.get("cost_by_slot"))
+            if c_day and len(c_day) == horizon:
+                sched_coeffs.extend(float(x) for x in c_day)
+            else:
+                base_w = float(t.get("daily_penalty", 1.0))
+                sched_coeffs.extend(base_w * float(d + 1) for d in range(horizon))
+
+        objectives.append({
+            "sense": data.get("sense", "MINIMIZE"),
+            "expression": {"type": "linear_terms", "var_id": "v_sched", "coefficients": sched_coeffs}
+        })
+
+    # Optional Integer Equipment / Crane Zone Allocation Table
+    if equipment_zones:
+        zones = equipment_zones.get("zones", [])
+        n_zones = len(zones)
+        max_per_zone = int(equipment_zones.get("max_per_zone", 3))
+        min_per_zone = int(equipment_zones.get("min_per_zone", 0))
+        eq_name = equipment_zones.get("name", "cranes")
+        parameters["zones_count"] = n_zones
+
+        variable_registry.append({
+            "id": "v_equip",
+            "name": eq_name,
+            "type": "INTEGER",
+            "dimensions": ["Zones"],
+            "lower_bound": float(min_per_zone),
+            "upper_bound": float(max_per_zone),
+            "description": f"Integer count of {eq_name} allocated per zone"
+        })
+
+        for z_idx, z in enumerate(zones):
+            min_req = z.get("min_required")
+            if min_req is not None and float(min_req) > float(min_per_zone):
+                constraint_registry.append({
+                    "name": f"zone_{z_idx}_min_{eq_name}",
+                    "var_id": "v_equip",
+                    "family": "other",
+                    "operator": ">=",
+                    "lhs": {"type": "linear_terms", "var_id": "v_equip", "terms": [{"var_id": "v_equip", "indices": [z_idx], "coefficient": 1.0}]},
+                    "rhs": {"type": "constant", "value": float(min_req)}
+                })
+
+        total_fleet = equipment_zones.get("total_fleet")
+        fleet_op = equipment_zones.get("fleet_operator", "==")
+        if total_fleet is not None:
+            constraint_registry.append({
+                "name": f"total_{eq_name}_fleet",
+                "var_id": "v_equip",
+                "family": "other",
+                "operator": fleet_op,
+                "lhs": {"type": "linear_terms", "var_id": "v_equip", "coefficients": [1.0] * n_zones},
+                "rhs": {"type": "constant", "value": float(total_fleet)}
+            })
+
+        zone_costs = [float(z.get("cost_per_unit", 10.0)) for z in zones]
+        objectives.append({
+            "sense": data.get("sense", "MINIMIZE"),
+            "expression": {"type": "linear_terms", "var_id": "v_equip", "coefficients": zone_costs}
+        })
+
+    return {
+        "problem_family": data.get("problem_family", "SCHEDULING" if tasks else "ALLOCATION"),
+        "parameters": parameters,
+        "variable_registry": variable_registry,
+        "constraint_registry": constraint_registry,
+        "objectives": objectives
+    }
