@@ -35,6 +35,7 @@ import {
   isCuriousKnowledgeRequest,
   getSupportiveTutorResponse,
   buildJourneyTutorPrompt,
+  getChallengeHint,
 } from "@/lib/quantumJourney101";
 import {
   StudioHeader,
@@ -957,7 +958,7 @@ export default function QuantumGuruStudioPage() {
     "code_execution" | "ai_synthesis" | "ui_editor" | "journey" | "performance" | "other"
   >("code_execution");
 
-  // 🎓 Quantum Journey 101 Sequential Module & Quiz State
+  // Quantum Journey 101 Sequential Module & Quiz State
   const [journeyMilestoneId, setJourneyMilestoneId] = useState<number>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -973,6 +974,7 @@ export default function QuantumGuruStudioPage() {
 
   const [userPrediction, setUserPrediction] = useState<string | null>(null);
   const [quizHelpCount, setQuizHelpCount] = useState<number>(0);
+  const [challengeHintCount, setChallengeHintCount] = useState<number>(0);
 
   const [journeyStage, setJourneyStage] = useState<"explore" | "quiz" | "challenge" | "completed">(() => {
     if (typeof window !== "undefined") {
@@ -984,7 +986,7 @@ export default function QuantumGuruStudioPage() {
     return "explore";
   });
 
-  // 🧭 Product Walkthrough Tour State
+  // Product Walkthrough Tour State
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [tourStep, setTourStep] = useState<number>(0);
 
@@ -2328,7 +2330,7 @@ export default function QuantumGuruStudioPage() {
               (data.circuit_ascii ? `\n--- Circuit Diagram ---\n${data.circuit_ascii}` : "")
           );
 
-          // 🎓 Quantum Journey 101 AI Mentor Guidance on Execution
+          // Quantum Journey 101 AI Mentor Guidance on Execution
           if (activeProject.id === "quantum_journey_101") {
             const currentM = getJourneyMilestone(journeyMilestoneId);
             if (journeyStage === "explore") {
@@ -2336,14 +2338,14 @@ export default function QuantumGuruStudioPage() {
               let predictionFeedback = "";
               if (userPrediction && currentM.evaluatePrediction) {
                 const predEval = currentM.evaluatePrediction(userPrediction);
-                predictionFeedback = `\n\n🎯 **Prediction Comparison:**\nYou predicted: *"${userPrediction}"*\n${predEval.feedback}\n`;
+                predictionFeedback = `\n\n**Prediction Comparison:**\nYou predicted: *"${userPrediction}"*\n${predEval.feedback}\n`;
                 setUserPrediction(null);
               }
 
               const debriefMsg: CopilotMessage = {
                 id: Date.now() + 5,
                 sender: "assistant",
-                text: `🎉 **Simulation Complete!**\n\nYour circuit executed with Aer simulator (\`${execShots}\` shots).\nRecorded Measurement Distribution:\n\`\`\`json\n${countsStr}\n\`\`\`${predictionFeedback}\n\n${currentM.quizQuestion}`,
+                text: `**Simulation Complete**\n\nYour circuit executed with Aer simulator (\`${execShots}\` shots).\nRecorded Measurement Distribution:\n\`\`\`json\n${countsStr}\n\`\`\`${predictionFeedback}\n\n${currentM.quizQuestion}`,
                 timestamp: "Just now",
               };
               setQiskitCopilotMessages((prev) => [...prev, debriefMsg]);
@@ -2379,7 +2381,7 @@ export default function QuantumGuruStudioPage() {
                 const hintMsg: CopilotMessage = {
                   id: Date.now() + 5,
                   sender: "assistant",
-                  text: `💡 **Guru AI Assessment:**\n\n${valResult.feedback}`,
+                  text: `**Guru AI Assessment:**\n\n${valResult.feedback}`,
                   timestamp: "Just now",
                 };
                 setQiskitCopilotMessages((prev) => [...prev, hintMsg]);
@@ -2510,7 +2512,7 @@ export default function QuantumGuruStudioPage() {
       const m0 = getJourneyMilestone(0);
       setQiskitCode(m0.starterCode);
       setQiskitCounts({});
-      setTerminalOutput(`=== 🎓 Quantum Journey 101 Reset ===\nWorkspace reset to Module 0: Quantum Foundations.\n`);
+      setTerminalOutput(`=== Quantum Journey 101 Reset ===\nWorkspace reset to Module 0: Quantum Foundations.\n`);
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("quantum_journey_101_milestone", "0");
@@ -2561,11 +2563,12 @@ export default function QuantumGuruStudioPage() {
           setJourneyStage("explore");
           setUserPrediction(null);
           setQuizHelpCount(0);
+          setChallengeHintCount(0);
           setQiskitCode(nextM.starterCode);
           setQiskitCounts({}); // Clean slate for results!
           setLatencyMs(0);
           setTerminalOutput(
-            `=== 🎓 Quantum Journey 101: ${nextM.badge} — ${nextM.title} ===\n` +
+            `=== Quantum Journey 101: ${nextM.badge} — ${nextM.title} ===\n` +
             `Workspace refreshed with clean slate.\n` +
             `Active Wires: ${nextM.qubits} | Ready for simulation.\n`
           );
@@ -2579,7 +2582,7 @@ export default function QuantumGuruStudioPage() {
           const transitionMsg: CopilotMessage = {
             id: Date.now() + 2,
             sender: "assistant",
-            text: `✨ **Workspace Refreshed for ${nextM.badge}: ${nextM.title}** ✨\n\n${nextM.introPrompt}`,
+            text: `**Workspace Refreshed for ${nextM.badge}: ${nextM.title}**\n\n${nextM.introPrompt}`,
             timestamp: "Just now",
           };
           setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), transitionMsg]);
@@ -2597,10 +2600,11 @@ export default function QuantumGuruStudioPage() {
           setJourneyStage("explore");
           setUserPrediction(null);
           setQuizHelpCount(0);
+          setChallengeHintCount(0);
           setQiskitCode(m0.starterCode);
           setQiskitCounts({});
           setLatencyMs(0);
-          setTerminalOutput(`=== 🎓 Quantum Journey 101 Reset ===\nWorkspace reset to Module 0: Quantum Foundations.\n`);
+          setTerminalOutput(`=== Quantum Journey 101 Reset ===\nWorkspace reset to Module 0: Quantum Foundations.\n`);
           if (typeof window !== "undefined") {
             try {
               localStorage.setItem("quantum_journey_101_milestone", "0");
@@ -2611,10 +2615,133 @@ export default function QuantumGuruStudioPage() {
           const resetMsg: CopilotMessage = {
             id: Date.now() + 2,
             sender: "assistant",
-            text: `🔄 **Quantum Journey Reset to Module 0**\n\n${m0.introPrompt}`,
+            text: `**Quantum Journey Reset to Module 0**\n\n${m0.introPrompt}`,
             timestamp: "Just now",
           };
           setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), resetMsg]);
+          return;
+        }
+
+        // Stage Chip Handler: Run Aer Simulator
+        if (lower.includes("run aer simulator")) {
+          handleRunOrRecompile();
+          const runMsg: CopilotMessage = {
+            id: Date.now() + 2,
+            sender: "assistant",
+            text: "Triggered Aer simulator execution on the circuit.",
+            timestamp: "Just now",
+          };
+          setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), runMsg]);
+          return;
+        }
+
+        // Stage Chip Handler: Reset Starter Code for active module
+        if (
+          lower.includes("reset starter code") ||
+          lower.includes("reset code") ||
+          lower.includes("reset this module")
+        ) {
+          const currentM = getJourneyMilestone(journeyMilestoneId);
+          setQiskitCode(currentM.starterCode);
+          setQiskitCounts({});
+          setChallengeHintCount(0);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, currentM.starterCode);
+            } catch (e) {}
+          }
+          const resetModuleMsg: CopilotMessage = {
+            id: Date.now() + 2,
+            sender: "assistant",
+            text: `Restored starter code for **${currentM.badge}: ${currentM.title}**.\n\nYou can now start fresh on this challenge.`,
+            timestamp: "Just now",
+          };
+          setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), resetModuleMsg]);
+          return;
+        }
+
+        // Stage Chip Handler: Validate My Circuit
+        if (
+          lower.includes("validate my circuit") ||
+          lower.includes("validate circuit")
+        ) {
+          const currentM = getJourneyMilestone(journeyMilestoneId);
+          const hasCounts = Object.keys(qiskitCounts).length > 0;
+          if (!hasCounts) {
+            const failMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: "Your circuit has not been executed yet. Click **Run** (or press `Shift+Enter`) to simulate on Aer first, then we can validate your results.",
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), failMsg]);
+            return;
+          }
+          const valResult = currentM.validateChallenge(
+            qiskitCounts,
+            circuitGates || [],
+            currentM.qubits,
+            qiskitCode
+          );
+          if (valResult.passed) {
+            setJourneyStage("completed");
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem("quantum_journey_101_stage", "completed");
+              } catch (e) {}
+            }
+            const passMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: `${valResult.feedback}\n\n${currentM.completionMessage}`,
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), passMsg]);
+            return;
+          } else {
+            const failMsg: CopilotMessage = {
+              id: Date.now() + 2,
+              sender: "assistant",
+              text: valResult.feedback,
+              timestamp: "Just now",
+            };
+            setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), failMsg]);
+            return;
+          }
+        }
+
+        // Stage Chip Handler: Socratic Hint for Challenge
+        if (
+          lower.includes("socratic hint") ||
+          (journeyStage === "challenge" && (isAskingForHint(text) || lower.includes("hint")))
+        ) {
+          const nextLevel = challengeHintCount + 1;
+          setChallengeHintCount(nextLevel);
+          const hint = getChallengeHint(journeyMilestoneId, nextLevel);
+          const hintMsg: CopilotMessage = {
+            id: Date.now() + 2,
+            sender: "assistant",
+            text: `**Socratic Challenge Hint (Level ${Math.min(nextLevel, 2)}):**\n\n${hint}`,
+            timestamp: "Just now",
+          };
+          setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), hintMsg]);
+          return;
+        }
+
+        // Explanatory Question: What does state |+⟩ mean?
+        if (
+          lower.includes("what does state |+⟩ mean") ||
+          lower.includes("what does state |+> mean") ||
+          lower.includes("what does |+⟩ mean") ||
+          lower.includes("what is state |+⟩")
+        ) {
+          const plusMsg: CopilotMessage = {
+            id: Date.now() + 2,
+            sender: "assistant",
+            text: `### Quantum State |+⟩ (Plus State)\n\nThe state **|+⟩** represents an equal superposition state on the Bloch sphere equator:\n\n$$|+⟩ = \\frac{|0⟩ + |1⟩}{\\sqrt{2}}$$\n\n**Key Characteristics:**\n- **Creation:** Applying a Hadamard gate ($H$) to ground state $|0⟩$: $H|0⟩ = |+⟩$.\n- **Measurement Probabilities:** By the Born rule, measuring along the computational Z-basis yields:\n  - $P(0) = |\\frac{1}{\\sqrt{2}}|^2 = 50\\%$\n  - $P(1) = |\\frac{1}{\\sqrt{2}}|^2 = 50\\%$\n- **Relative Phase:** Positive ($+1$). Its orthogonal counterpart is $|-⟩ = \\frac{|0⟩ - |1⟩}{\\sqrt{2}}$, which has relative phase $-1$.`,
+            timestamp: "Just now",
+          };
+          setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== botMsgId), plusMsg]);
           return;
         }
 
@@ -3649,6 +3776,9 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
             variables={solverResult.variables}
             isPortfolioProblem={isPortfolio}
             onApplyCodeToEditor={handleApplyPipelineCode}
+            isJourney={activeProject.id === "quantum_journey_101"}
+            journeyStage={journeyStage}
+            journeyMilestoneId={journeyMilestoneId}
             solutionHealth={{
               title: activeProject.title,
               cost: totalCost,
@@ -3717,7 +3847,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
         isDark={isDark}
       />
 
-      {/* 🐞 Issue & Flow Diagnostics Reporting Modal */}
+      {/* Issue & Flow Diagnostics Reporting Modal */}
       <IssueReportModal
         isOpen={showIssueModal}
         onClose={() => setShowIssueModal(false)}
@@ -3749,7 +3879,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
         }}
       />
 
-      {/* 🧭 Guided Product Walkthrough Tour Modal */}
+      {/* Guided Product Walkthrough Tour Modal */}
       <GuidedTourModal
         isOpen={isTourActive}
         onClose={handleEndTour}

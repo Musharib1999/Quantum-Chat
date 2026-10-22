@@ -735,7 +735,7 @@ async function executeAction(action: string, req: NextRequest, reqBody?: any): P
             const data = await res.json().catch(() => ({}));
             const text = (data.response || '').trim();
             const lastChar = text.slice(-1);
-            const endsWithCleanPunctuation = ['.', '!', '?', '`', ')', '>', '\n'].includes(lastChar);
+            const endsWithCleanPunctuation = ['.', '!', '?', '`', ')', '>', '\n', '*', ']', '"', "'", '$', '}', ':', ';'].includes(lastChar);
             const passed = res.status === 200 && endsWithCleanPunctuation;
             return {
                 id: 'LLM-10',

@@ -100,7 +100,7 @@ export const JOURNEY_101_MODULES: JourneyModule[] = [
     badge: "Module 0/6",
     concept: "Bits vs Qubits, Dirac Ket Notation, Statevectors",
     qubits: 1,
-    starterCode: `# 🎓 Quantum Journey 101 — Module 0: Quantum Foundations
+    starterCode: `# Quantum Journey 101 — Module 0: Quantum Foundations
 # Goal: Understand how a qubit is initialized and represented.
 # In quantum physics, every state is written in Dirac bra-ket notation: |ψ⟩.
 # A fresh qubit always starts in the ground state: |0⟩.
@@ -116,7 +116,7 @@ qc.measure(0, 0)
     initialGates: [
       { name: "measure", qubit: 0, qubits: [0], step: 0, role: "measure" },
     ],
-    introPrompt: `Welcome to **Quantum Journey 101: Module 0 — Quantum Foundations**! 🎓 I am **Guru AI**, your quantum pair-programmer.
+    introPrompt: `Welcome to **Quantum Journey 101: Module 0 — Quantum Foundations**. I am **Guru AI**, your quantum pair-programmer.
 
 In classical computing, the fundamental unit of information is the **bit** (strictly \`0\` or \`1\`). 
 In quantum computing, our unit is the **qubit** (quantum bit). We write states using Dirac ket notation:
@@ -124,7 +124,7 @@ In quantum computing, our unit is the **qubit** (quantum bit). We write states u
 
 A qubit begins in the ground state **\`|0⟩\`**.
 
-👉 **Predict & Run:**
+**Predict & Run:**
 Before clicking **▶ Run**, look at the code. With no gates applied to wire \`q[0]\`, what percentage of 1,024 shots will measure as \`0\`?
 *(Type your prediction below, or press ▶ Run to test!)*`,
 
@@ -153,14 +153,14 @@ Before clicking **▶ Run**, look at the code. With no gates applied to wire \`q
       };
     },
 
-    quizQuestion: "🧠 **Quick Check:** In Dirac notation, why do we write states inside a ket symbol like `|0⟩` instead of just writing the number `0`?",
+    quizQuestion: "**Quick Check:** In Dirac notation, why do we write states inside a ket symbol like `|0⟩` instead of just writing the number `0`?",
     quizAcceptKeywords: ["vector", "state", "quantum", "direction", "amplitude", "dirac", "basis"],
-    quizExplanation: "Exactly! 🎯 The ket `|0⟩` denotes a quantum state vector in Hilbert space with magnitude and direction, distinguishing it from the classical scalar number 0.",
+    quizExplanation: "Exactly! The ket `|0⟩` denotes a quantum state vector in Hilbert space with magnitude and direction, distinguishing it from the classical scalar number 0.",
     hint: "Think about mathematical objects: is `|0⟩` a simple scalar number, or a vector pointing in a quantum state space?",
     friendlyAnalogy: "Writing `0` is like writing a number on a paper. Writing `|0⟩` is like drawing an arrow pointing North on a 3D compass!",
     fallbackExplanation: "The ket symbol `|0⟩` represents a state vector in quantum state space, reminding us that quantum states can be rotated, scaled by complex amplitudes, and interfered like waves.",
 
-    challengeInstruction: `⚡ **Module 0 Challenge:**
+    challengeInstruction: `**Module 0 Challenge:**
 1. Switch to the **Circuit Canvas** tab to see your bare wire with a Measurement gate.
 2. Click **▶ Run** (or press \`Shift+Enter\`) to execute 1,024 shots.
 3. Confirm that the Results drawer displays exactly 100% counts in \`{"0": 1024}\`!`,
@@ -171,7 +171,7 @@ Before clicking **▶ Run**, look at the code. With no gates applied to wire \`q
       if (total > 0 && c0 / total >= 0.99) {
         return {
           passed: true,
-          feedback: "🎉 **Module 0 Mastered!** Look at that: exactly 1,024 counts in |0⟩. You now understand state initialization and the Dirac notation |0⟩!",
+          feedback: "**Module 0 Mastered!** Look at that: exactly 1,024 counts in |0⟩. You now understand state initialization and the Dirac notation |0⟩!",
         };
       }
       return {
@@ -180,7 +180,7 @@ Before clicking **▶ Run**, look at the code. With no gates applied to wire \`q
       };
     },
 
-    completionMessage: `🌟 **Module 0 Completed: Foundations Unlocked!**
+    completionMessage: `**Module 0 Completed: Foundations Unlocked**
 You know what a qubit is, how it is initialized, and how Dirac kets work.
 
 Ready for **Module 1: Superposition & The Born Rule**? Type **"Next"** or click below!`,
@@ -194,7 +194,7 @@ Ready for **Module 1: Superposition & The Born Rule**? Type **"Next"** or click 
     badge: "Module 1/6",
     concept: "Hadamard (H) Gate, Born Rule, Shot Noise & Statistical Sampling",
     qubits: 1,
-    starterCode: `# 🎓 Quantum Journey 101 — Module 1: Superposition & The Born Rule
+    starterCode: `# Quantum Journey 101 — Module 1: Superposition & The Born Rule
 # Goal: Put qubit 0 into equal superposition using a Hadamard (H) gate,
 # then observe how 1,024 measurements collapse into a ~50/50 probability distribution.
 
@@ -213,14 +213,14 @@ qc.measure(0, 0)
       { name: "h", qubit: 0, qubits: [0], step: 0, role: "single" },
       { name: "measure", qubit: 0, qubits: [0], step: 1, role: "measure" },
     ],
-    introPrompt: `Welcome to **Module 1: Quantum Superposition & The Born Rule**! 🚀
+    introPrompt: `Welcome to **Module 1: Quantum Superposition & The Born Rule**.
 
 Now we transform the qubit from classical certainty into a quantum state. The **Hadamard (H) gate** rotates the statevector from the North Pole down to the equator of the Bloch sphere:
 > **|ψ⟩ = (|0⟩ + |1⟩) / √2**
 
 This is equal superposition.
 
-👉 **Predict & Run:**
+**Predict & Run:**
 Before pressing ▶ Run: out of 1,024 measurement shots, how will the counts be distributed between '0' and '1'?
 *(Type your prediction below, or press ▶ Run to test!)*`,
 
@@ -249,16 +249,16 @@ Before pressing ▶ Run: out of 1,024 measurement shots, how will the counts be 
       };
     },
 
-    quizQuestion: "🧠 **Quick Check:** Look at your histogram: counts hover around ~512 on '0' and ~512 on '1', but are rarely *exactly* 512. Why does a quantum simulator produce ~512 instead of exactly 512 every time?",
+    quizQuestion: "**Quick Check:** Look at your histogram: counts hover around ~512 on '0' and ~512 on '1', but are rarely *exactly* 512. Why does a quantum simulator produce ~512 instead of exactly 512 every time?",
     quizAcceptKeywords: ["random", "probab", "statistic", "sample", "sampling", "shot", "noise", "coin", "variance", "fluctuat", "born", "collapse"],
-    quizExplanation: "Spot on! 🎯 Under the Born rule, every measurement shot is an independent probabilistic collapse. Just like tossing a fair coin 1,024 times produces natural statistical sampling fluctuations (shot noise) around 512, finite quantum measurements fluctuate around the 50% probability!",
+    quizExplanation: "Spot on! Under the Born rule, every measurement shot is an independent probabilistic collapse. Just like tossing a fair coin 1,024 times produces natural statistical sampling fluctuations (shot noise) around 512, finite quantum measurements fluctuate around the 50% probability!",
     hint: "Think about flipping a fair coin 1,024 times in real life: do you get exactly 512 heads every single time?",
     friendlyAnalogy: "If you flip a regular coin 1,024 times, you expect roughly 50% heads. But natural statistical sampling noise causes small fluctuations (like 508, 517, 511).",
     fallbackExplanation: "In quantum mechanics, the Hadamard gate puts the qubit into equal probability amplitudes. Because each measurement shot is an independent random collapse, statistical sampling noise naturally produces counts near 512 rather than exactly 512.",
 
-    challengeInstruction: `⚡ **Module 1 Challenge:**
+    challengeInstruction: `**Module 1 Challenge:**
 Let's prove quantum determinism vs superposition with your own hands!
-1. On the **Circuit Canvas**, hover over the **H** gate and click **✕** to delete it (or comment out \`qc.h(0)\` in the code).
+1. On the **Circuit Canvas**, hover over the **H** gate and click the delete button to remove it (or comment out \`qc.h(0)\` in the code).
 2. Click **▶ Run** again!
 3. Watch the histogram collapse back from 50/50 superposition to **100% deterministic |0⟩**!`,
 
@@ -272,13 +272,13 @@ Let's prove quantum determinism vs superposition with your own hands!
       if (total > 0 && zeroCount / total >= 0.95) {
         return {
           passed: true,
-          feedback: "🎉 **Challenge Mastered!** Without the H gate, the qubit collapses to |0⟩ with 100% certainty. You have proven the difference between classical determinism and quantum superposition!",
+          feedback: "**Challenge Mastered!** Without the H gate, the qubit collapses to |0⟩ with 100% certainty. You have proven the difference between classical determinism and quantum superposition!",
         };
       }
       return { passed: false, feedback: "Make sure no gates precede the measurement, then click ▶ Run." };
     },
 
-    completionMessage: `🌟 **Module 1 Completed: Superposition Mastered!**
+    completionMessage: `**Module 1 Completed: Superposition Mastered**
 You understand the Born rule, probability amplitudes, and shot noise.
 
 Ready for **Module 2: Quantum Gates & Phase (Pauli X, Y, Z)**? Type **"Next"** or click below!`,
@@ -292,7 +292,7 @@ Ready for **Module 2: Quantum Gates & Phase (Pauli X, Y, Z)**? Type **"Next"** o
     badge: "Module 2/6",
     concept: "Pauli-X (NOT), Pauli-Z (Phase), Global vs Relative Phase, |+⟩ vs |-⟩",
     qubits: 1,
-    starterCode: `# 🎓 Quantum Journey 101 — Module 2: Quantum Gates & Phase
+    starterCode: `# Quantum Journey 101 — Module 2: Quantum Gates & Phase
 # Goal: Master quantum state manipulation using Pauli gates.
 # Pauli-X performs a bit-flip: X|0⟩ = |1⟩.
 # Then explore what happens when X meets H to create the |-⟩ state!
@@ -312,7 +312,7 @@ qc.measure(0, 0)
       { name: "x", qubit: 0, qubits: [0], step: 0, role: "single" },
       { name: "measure", qubit: 0, qubits: [0], step: 1, role: "measure" },
     ],
-    introPrompt: `Welcome to **Module 2: Quantum Gates & Phase**! 🔄
+    introPrompt: `Welcome to **Module 2: Quantum Gates & Phase**.
 
 In classical computing, there is only one way to alter a bit: the NOT gate (0 ↔ 1).
 In quantum computing, this is the **Pauli-X gate**:
@@ -321,7 +321,7 @@ In quantum computing, this is the **Pauli-X gate**:
 But quantum states also have an internal **phase angle**. The **Pauli-Z gate** flips the phase without changing measurement probabilities:
 > **Z|0⟩ = |0⟩,  Z|1⟩ = -|1⟩**
 
-👉 **Step 1:** Click **▶ Run** to confirm that the X gate deterministically flips the initial |0⟩ into state |1⟩ with 100% certainty!`,
+**Step 1:** Click **▶ Run** to confirm that the X gate deterministically flips the initial |0⟩ into state |1⟩ with 100% certainty!`,
 
     tiers: {
       intuition:
@@ -342,14 +342,14 @@ But quantum states also have an internal **phase angle**. The **Pauli-Z gate** f
       return { isAccurate: false, feedback: "Recall that Pauli-X is the quantum NOT gate. It flips |0⟩ to |1⟩! Run the circuit to verify!" };
     },
 
-    quizQuestion: "🧠 **Quick Check:** Now that you verified X|0⟩ = |1⟩: Which Pauli gate flips the quantum relative phase (±) without changing measurement probabilities: **Pauli-Y** or **Pauli-Z**?",
+    quizQuestion: "**Quick Check:** Now that you verified X|0⟩ = |1⟩: Which Pauli gate flips the quantum relative phase (±) without changing measurement probabilities: **Pauli-Y** or **Pauli-Z**?",
     quizAcceptKeywords: ["z", "pauli-z", "pauli z", "phase"],
-    quizExplanation: "Correct! 🎯 The **Pauli-Z gate** is the pure phase-flip operator: Z|0⟩ = |0⟩, Z|1⟩ = -|1⟩. On |+⟩, it creates |-⟩ = (|0⟩ - |1⟩)/√2. The measurement probabilities remain 50/50, but the relative phase is inverted by 180°!",
+    quizExplanation: "Correct! The **Pauli-Z gate** is the pure phase-flip operator: Z|0⟩ = |0⟩, Z|1⟩ = -|1⟩. On |+⟩, it creates |-⟩ = (|0⟩ - |1⟩)/√2. The measurement probabilities remain 50/50, but the relative phase is inverted by 180°!",
     hint: "Think about the coordinate axes: X is bit flip along the X axis. Which gate corresponds to the Z axis and flips the phase of |1⟩ to -|1⟩?",
     friendlyAnalogy: "A bit-flip turns a coin upside down (heads ↔ tails). A phase-flip spins the coin around without flipping its face!",
     fallbackExplanation: "The Pauli-Z gate flips the quantum phase without changing measurement probabilities. On state |+⟩, applying Z produces |-⟩, which has the identical 50/50 measurement probabilities, but opposite internal phase!",
 
-    challengeInstruction: `⚡ **Module 2 Challenge:**
+    challengeInstruction: `**Module 2 Challenge:**
 Let's create the famous **|-⟩** state!
 1. On the **Circuit Canvas**, add a **Hadamard (H)** gate immediately *after* the **X** gate on wire \`q[0]\` (sequence: \`X -> H -> Measure\`).
 2. Click **▶ Run** to observe the measurement!`,
@@ -368,13 +368,13 @@ Let's create the famous **|-⟩** state!
       if (total > 0 && c0 > 0.35 * total && c1 > 0.35 * total) {
         return {
           passed: true,
-          feedback: "🎉 **Challenge Mastered!** You successfully generated the **|-⟩ = (|0⟩ - |1⟩) / √2** state! Notice that both |+⟩ and |-⟩ measure 50/50 in the computational basis, but their quantum phases are opposites!",
+          feedback: "**Challenge Mastered!** You successfully generated the **|-⟩ = (|0⟩ - |1⟩) / √2** state! Notice that both |+⟩ and |-⟩ measure 50/50 in the computational basis, but their quantum phases are opposites!",
         };
       }
       return { passed: false, feedback: "Run the circuit with shots=1024 to verify the superposition distribution." };
     },
 
-    completionMessage: `🌟 **Module 2 Completed: Quantum Phase Mastered!**
+    completionMessage: `**Module 2 Completed: Quantum Phase Mastered**
 You understand Pauli-X bit flips, Pauli-Z phase flips, and the |-⟩ state.
 
 Ready for **Module 3: Entanglement & Bell States**? Type **"Next"** or click below!`,
@@ -388,7 +388,7 @@ Ready for **Module 3: Entanglement & Bell States**? Type **"Next"** or click bel
     badge: "Module 3/6",
     concept: "Two Qubits, Controlled-NOT (CNOT / CX), Entanglement & Correlations",
     qubits: 2,
-    starterCode: `# 🎓 Quantum Journey 101 — Module 3: Bell State Entanglement
+    starterCode: `# Quantum Journey 101 — Module 3: Bell State Entanglement
 # Goal: Create the maximally entangled Bell state: |Φ+⟩ = (|00⟩ + |11⟩)/√2
 # Observe Einstein's "Spooky Action at a Distance" where measuring qubit 0
 # instantaneously dictates the outcome of qubit 1!
@@ -413,14 +413,14 @@ qc.measure([0, 1], [0, 1])
       { name: "measure", qubit: 0, qubits: [0], step: 2, role: "measure" },
       { name: "measure", qubit: 1, qubits: [1], step: 2, role: "measure" },
     ],
-    introPrompt: `Welcome to **Module 3: Spooky Action — Creating a Bell Pair**! 🌌
+    introPrompt: `Welcome to **Module 3: Spooky Action — Creating a Bell Pair**.
 
 When two qubits become **entangled**, they no longer possess separate, individual identities. Their joint wavefunction is:
 > **|Φ⁺⟩ = (|00⟩ + |11⟩) / √2**
 
 Neither qubit alone has a definite state, but they share a synchronized quantum bond.
 
-👉 **Step 1:** Notice your workspace has cleanly expanded to two wires: \`q[0]\` and \`q[1]\`. Click **▶ Run** (or press \`Shift+Enter\`) to execute 1,024 shots!`,
+**Step 1:** Notice your workspace has cleanly expanded to two wires: \`q[0]\` and \`q[1]\`. Click **▶ Run** (or press \`Shift+Enter\`) to execute 1,024 shots!`,
 
     tiers: {
       intuition:
@@ -441,14 +441,14 @@ Neither qubit alone has a definite state, but they share a synchronized quantum 
       return { isAccurate: false, feedback: "In this Bell state, q[1] is flipped if and only if q[0] is 1. That means the qubits can only be '00' or '11'! Click ▶ Run to verify!" };
     },
 
-    quizQuestion: "🧠 **Quick Check:** In your results, '00' has ~50% and '11' has ~50%, while '01' and '10' have 0%. If an astronaut measures qubit 0 on Earth and finds it to be '1', what is the state of qubit 1 on Mars *before* it is measured?",
+    quizQuestion: "**Quick Check:** In your results, '00' has ~50% and '11' has ~50%, while '01' and '10' have 0%. If an astronaut measures qubit 0 on Earth and finds it to be '1', what is the state of qubit 1 on Mars *before* it is measured?",
     quizAcceptKeywords: ["1", "one", "|1>", "same", "definite"],
-    quizExplanation: "Exactly right! 🎯 Because the qubits are entangled in state (|00⟩ + |11⟩)/√2, measuring qubit 0 as 1 collapses the entire joint state to **|11⟩**. Qubit 1 is instantaneously guaranteed to be 1 with 100% certainty!",
+    quizExplanation: "Exactly right! Because the qubits are entangled in state (|00⟩ + |11⟩)/√2, measuring qubit 0 as 1 collapses the entire joint state to **|11⟩**. Qubit 1 is instantaneously guaranteed to be 1 with 100% certainty!",
     hint: "Look at the measured pairs: only '00' and '11' exist. If the first digit is definitely 1, what must the second digit be?",
     friendlyAnalogy: "Like two coins welded back-to-back: if one shows heads, the other is guaranteed to show heads!",
     fallbackExplanation: "Because the two qubits are entangled in state (|00⟩ + |11⟩)/√2, measuring qubit 0 as 1 collapses the joint state to |11⟩. Qubit 1 is instantaneously guaranteed to be 1 as well! The states '01' and '10' have strictly zero probability.",
 
-    challengeInstruction: `⚡ **Module 3 Challenge:**
+    challengeInstruction: `**Module 3 Challenge:**
 Let's create an *anti-correlated* Bell state **|Ψ⁺⟩ = (|01⟩ + |10⟩) / √2**!
 1. Add an **X gate** to wire \`q[1]\` *before* the CNOT (or in code: \`qc.x(1)\` right before \`qc.cx(0, 1)\`).
 2. Click **▶ Run**!
@@ -465,13 +465,13 @@ Let's create an *anti-correlated* Bell state **|Ψ⁺⟩ = (|01⟩ + |10⟩) / �
       if (total > 0 && (c01 + c10) / total >= 0.85 && c00 + c11 <= 0.15 * total) {
         return {
           passed: true,
-          feedback: "🎉 **Challenge Mastered!** You just created the **|Ψ⁺⟩ = (|01⟩ + |10⟩) / √2** Bell state! Now measuring qubit 0 as 0 guarantees qubit 1 is 1, and vice versa—perfect quantum anti-correlation!",
+          feedback: "**Challenge Mastered!** You just created the **|Ψ⁺⟩ = (|01⟩ + |10⟩) / √2** Bell state! Now measuring qubit 0 as 0 guarantees qubit 1 is 1, and vice versa—perfect quantum anti-correlation!",
         };
       }
       return { passed: false, feedback: "Make sure you added an X gate on q[1] before the CNOT, then click ▶ Run." };
     },
 
-    completionMessage: `🌟 **Module 3 Completed: Quantum Entanglement Mastered!**
+    completionMessage: `**Module 3 Completed: Quantum Entanglement Mastered**
 You understand Bell states, CNOT operations, and non-local correlations.
 
 Ready for **Module 4: Quantum Wave Interference**? Type **"Next"** or click below!`,
@@ -485,7 +485,7 @@ Ready for **Module 4: Quantum Wave Interference**? Type **"Next"** or click belo
     badge: "Module 4/6",
     concept: "Constructive vs Destructive Interference, Wave Mechanics, Reversibility",
     qubits: 1,
-    starterCode: `# 🎓 Quantum Journey 101 — Module 4: Wave Interference
+    starterCode: `# Quantum Journey 101 — Module 4: Wave Interference
 # Goal: Demystify quantum computing!
 # Quantum computing is NOT just random coin tossing.
 # Unlike classical probability, quantum amplitudes can be negative,
@@ -506,14 +506,14 @@ qc.measure(0, 0)
       { name: "h", qubit: 0, qubits: [0], step: 0, role: "single" },
       { name: "measure", qubit: 0, qubits: [0], step: 1, role: "measure" },
     ],
-    introPrompt: `Welcome to **Module 4: Quantum Wave Interference**! 🌊
+    introPrompt: `Welcome to **Module 4: Quantum Wave Interference**.
 
 Here is the secret of quantum advantage: quantum states are **waves**. Waves can add together (constructive interference) or cancel each other out (destructive interference).
 
 Recall that the Hadamard matrix is its own inverse:
 > **H · H = I (Identity)**
 
-👉 **Step 1:** Notice your workspace is reset to a clean 1-qubit wire with 1 Hadamard gate. Click **▶ Run** to verify the standard 50/50 superposition first!`,
+**Step 1:** Notice your workspace is reset to a clean 1-qubit wire with 1 Hadamard gate. Click **▶ Run** to verify the standard 50/50 superposition first!`,
 
     tiers: {
       intuition:
@@ -534,14 +534,14 @@ Recall that the Hadamard matrix is its own inverse:
       return { isAccurate: false, feedback: "In classical probability it would stay random, but quantum amplitudes interfere! Press ▶ Run with two H gates to see what happens!" };
     },
 
-    quizQuestion: "🧠 **Quick Check:** What is the fundamental difference between classical probability and quantum amplitudes that allows destructive interference to happen?",
+    quizQuestion: "**Quick Check:** What is the fundamental difference between classical probability and quantum amplitudes that allows destructive interference to happen?",
     quizAcceptKeywords: ["negative", "sign", "phase", "complex", "cancel", "wave", "opposite"],
-    quizExplanation: "Correct! 🎯 Classical probabilities are always positive real numbers (they can only add up). Quantum amplitudes can have negative signs or complex phases, allowing them to subtract and cancel out completely!",
+    quizExplanation: "Correct! Classical probabilities are always positive real numbers (they can only add up). Quantum amplitudes can have negative signs or complex phases, allowing them to subtract and cancel out completely!",
     hint: "Think about arithmetic: can two positive numbers ever add up to zero? What property must an amplitude have to cancel out another amplitude?",
     friendlyAnalogy: "Like positive and negative numbers (+5 and -5 = 0), or water waves meeting peak-to-trough!",
     fallbackExplanation: "The second Hadamard gate causes quantum wave interference: the |1⟩ amplitudes cancel out completely due to opposite signs (+½ - ½ = 0), while the |0⟩ amplitudes add together (+½ + ½ = 1). The state returns with 100% certainty to |0⟩!",
 
-    challengeInstruction: `⚡ **Module 4 Challenge:**
+    challengeInstruction: `**Module 4 Challenge:**
 Prove quantum wave interference with your own hands!
 1. In the **Circuit Canvas**, click empty slot 1 on wire \`q[0]\` and add a second **H** gate (or in code: add a second \`qc.h(0)\` before the measurement).
 2. Click **▶ Run**!
@@ -557,13 +557,13 @@ Prove quantum wave interference with your own hands!
       if (total > 0 && c0 / total >= 0.95) {
         return {
           passed: true,
-          feedback: "🏆 **Interference Mastered!** Look at that: 100% deterministic collapse to |0⟩! You have proven with physical simulation that quantum computing is based on wave interference!",
+          feedback: "**Interference Mastered!** Look at that: 100% deterministic collapse to |0⟩! You have proven with physical simulation that quantum computing is based on wave interference!",
         };
       }
       return { passed: false, feedback: "Make sure two H gates precede the measurement, then click ▶ Run." };
     },
 
-    completionMessage: `🌟 **Module 4 Completed: Wave Interference Mastered!**
+    completionMessage: `**Module 4 Completed: Wave Interference Mastered**
 You understand constructive reinforcement, destructive cancellation, and reversibility.
 
 Ready for **Module 5: Measurement & Register Mapping**? Type **"Next"** or click below!`,
@@ -577,7 +577,7 @@ Ready for **Module 5: Measurement & Register Mapping**? Type **"Next"** or click
     badge: "Module 5/6",
     concept: "Computational (Z) vs Diagonal (X) Bases, Qiskit Little-Endian Register Ordering",
     qubits: 2,
-    starterCode: `# 🎓 Quantum Journey 101 — Module 5: Measurement & Register Mapping
+    starterCode: `# Quantum Journey 101 — Module 5: Measurement & Register Mapping
 # Goal: Master how quantum statevectors translate into classical bitstrings.
 # In Qiskit, multi-qubit bitstrings are stored in little-endian order: |q1 q0⟩.
 # Let's verify how wire assignments map to measurement results!
@@ -598,13 +598,13 @@ qc.measure([0, 1], [0, 1])
       { name: "measure", qubit: 0, qubits: [0], step: 1, role: "measure" },
       { name: "measure", qubit: 1, qubits: [1], step: 1, role: "measure" },
     ],
-    introPrompt: `Welcome to **Module 5: Measurement Bases & Register Mapping**! 📐
+    introPrompt: `Welcome to **Module 5: Measurement Bases & Register Mapping**.
 
 In quantum software engineering, understanding how qubits map to output bitstrings is vital.
 In Qiskit, measurement bitstrings follow **little-endian ordering**:
 > **\`|q₁ q₀⟩\` (qubit 0 is the rightmost digit, qubit 1 is on the left)**
 
-👉 **Step 1:** We placed an X gate on \`q[0]\` and left \`q[1]\` untouched in state \`|0⟩\`. Click **▶ Run** to see what bitstring appears!`,
+**Step 1:** We placed an X gate on \`q[0]\` and left \`q[1]\` untouched in state \`|0⟩\`. Click **▶ Run** to see what bitstring appears!`,
 
     tiers: {
       intuition:
@@ -625,14 +625,14 @@ In Qiskit, measurement bitstrings follow **little-endian ordering**:
       return { isAccurate: false, feedback: "Common trap! Many expect '10', but Qiskit places q[0] on the right (|q1 q0⟩). Press ▶ Run to see '01'!" };
     },
 
-    quizQuestion: "🧠 **Quick Check:** In Qiskit's |q1 q0⟩ format, if we want to measure the bitstring '10' with 100% certainty, which qubit wire must we apply the X gate to: **q[0]** or **q[1]**?",
+    quizQuestion: "**Quick Check:** In Qiskit's |q1 q0⟩ format, if we want to measure the bitstring '10' with 100% certainty, which qubit wire must we apply the X gate to: **q[0]** or **q[1]**?",
     quizAcceptKeywords: ["q[1]", "q1", "qubit 1", "1", "second"],
-    quizExplanation: "Correct! 🎯 In |q1 q0⟩, the first character is qubit 1. Applying X to q[1] sets q[1] = 1 and q[0] = 0, giving the bitstring '10'!",
+    quizExplanation: "Correct! In |q1 q0⟩, the first character is qubit 1. Applying X to q[1] sets q[1] = 1 and q[0] = 0, giving the bitstring '10'!",
     hint: "Remember that qubit 0 is the rightmost digit, and qubit 1 is the leftmost digit (|q1 q0⟩).",
     friendlyAnalogy: "Like the tens digit on a digital clock: the left digit is the second position!",
     fallbackExplanation: "Because Qiskit uses little-endian ordering |q1 q0⟩, the leftmost digit is qubit 1. Applying X to q[1] produces '10'.",
 
-    challengeInstruction: `⚡ **Module 5 Challenge:**
+    challengeInstruction: `**Module 5 Challenge:**
 Modify the circuit to measure the bitstring **'10'** with 100% certainty!
 1. Remove the X gate from wire \`q[0]\` and place it on wire \`q[1]\` (or in code: \`qc.x(1)\`).
 2. Click **▶ Run**!
@@ -644,13 +644,13 @@ Modify the circuit to measure the bitstring **'10'** with 100% certainty!
       if (total > 0 && c10 / total >= 0.95) {
         return {
           passed: true,
-          feedback: "🎉 **Challenge Mastered!** You measured '10' with 100% certainty! You now understand little-endian register mapping in Qiskit!",
+          feedback: "**Challenge Mastered!** You measured '10' with 100% certainty! You now understand little-endian register mapping in Qiskit!",
         };
       }
       return { passed: false, feedback: "Make sure wire q[1] has the X gate and wire q[0] has no gates before measurement, then click ▶ Run." };
     },
 
-    completionMessage: `🌟 **Module 5 Completed: Register Mapping Mastered!**
+    completionMessage: `**Module 5 Completed: Register Mapping Mastered**
 You understand measurement projections, classical registers, and Qiskit ordering.
 
 Ready for the **Module 6: Capstone Challenge**? Type **"Next"** or click below!`,
@@ -664,7 +664,7 @@ Ready for the **Module 6: Capstone Challenge**? Type **"Next"** or click below!`
     badge: "Module 6/6",
     concept: "Independent Circuit Synthesis: Bell State Creation + Quantum Phase Encoding",
     qubits: 2,
-    starterCode: `# 🎓 Quantum Journey 101 — Module 6: Capstone Challenge
+    starterCode: `# Quantum Journey 101 — Module 6: Capstone Challenge
 # Synthesize an unseen protocol combining:
 # 1. Superposition (H gate)
 # 2. Entanglement (CNOT gate)
@@ -695,7 +695,7 @@ qc.measure([0, 1], [0, 1])
       { name: "measure", qubit: 0, qubits: [0], step: 2, role: "measure" },
       { name: "measure", qubit: 1, qubits: [1], step: 2, role: "measure" },
     ],
-    introPrompt: `Welcome to the **Module 6: Capstone Challenge**! 🏆
+    introPrompt: `Welcome to the **Module 6: Capstone Challenge**.
 
 This is your final test. Throughout this journey, you've learned:
 - **Superposition** ($H$)
@@ -708,7 +708,7 @@ Now, you will build an unseen quantum protocol independently:
 You will encode a quantum phase into an entangled channel to create the **|Φ⁻⟩ Bell state**:
 > **|Φ⁻⟩ = (|00⟩ - |11⟩) / √2**
 
-👉 **Your Mission:**
+**Your Mission:**
 In Circuit Canvas or Editor, add a **Pauli-Z gate** to wire \`q[0]\` *after* the CNOT gate (or in code: \`qc.z(0)\` after \`qc.cx(0, 1)\`), then click **▶ Run**!`,
 
     tiers: {
@@ -730,14 +730,14 @@ In Circuit Canvas or Editor, add a **Pauli-Z gate** to wire \`q[0]\` *after* the
       return { isAccurate: false, feedback: "Remember that Z is a phase-flip gate: it changes amplitudes from (+) to (-), but squared probabilities remain 50/50! Press ▶ Run to see!" };
     },
 
-    quizQuestion: "🧠 **Capstone Question:** If Alice and Bob share a |Φ⁺⟩ pair, and Alice applies a Z gate to her qubit, can Bob determine that Alice applied the Z gate just by looking at his raw measurement counts in isolation?",
+    quizQuestion: "**Capstone Question:** If Alice and Bob share a |Φ⁺⟩ pair, and Alice applies a Z gate to her qubit, can Bob determine that Alice applied the Z gate just by looking at his raw measurement counts in isolation?",
     quizAcceptKeywords: ["no", "never", "cannot", "can't", "impossible", "no-communication"],
-    quizExplanation: "Brilliant! 🎯 Bob cannot detect it in isolation—his counts remain 50/50 random (No-Communication Theorem). They must combine their measurement results to detect the quantum correlation!",
+    quizExplanation: "Brilliant! Bob cannot detect it in isolation—his counts remain 50/50 random (No-Communication Theorem). They must combine their measurement results to detect the quantum correlation!",
     hint: "Recall the No-Communication Theorem: does measuring or manipulating an entangled qubit allow Bob to see changes without classical communication?",
     friendlyAnalogy: "Like writing a secret message with invisible ink: Bob cannot read it until Alice gives him the special UV flashlight (classical communication)!",
     fallbackExplanation: "Under the No-Communication Theorem, local unitary operations like Z do not alter the reduced density matrix of Bob's qubit. Bob measures 50/50 regardless.",
 
-    challengeInstruction: `⚡ **Grand Capstone Execution:**
+    challengeInstruction: `**Grand Capstone Execution:**
 1. In the **Circuit Canvas**, add a **Z** gate to wire \`q[0]\` immediately after the CNOT gate (or add \`qc.z(0)\` after \`qc.cx(0, 1)\`).
 2. Click **▶ Run**!
 3. Verify that the simulation executes, validating your complete mastery of Quantum Journey 101!`,
@@ -760,13 +760,13 @@ In Circuit Canvas or Editor, add a **Pauli-Z gate** to wire \`q[0]\` *after* the
       if (total > 0 && (c00 + c11) / total >= 0.85) {
         return {
           passed: true,
-          feedback: "🏆 **CONGRATULATIONS! CAPSTONE PROTOCOL VERIFIED!** You created the |Φ⁻⟩ Bell state by combining superposition, entanglement, and phase encoding! You have successfully graduated from Quantum Journey 101!",
+          feedback: "**Capstone Protocol Verified!** You created the |Φ⁻⟩ Bell state by combining superposition, entanglement, and phase encoding! You have successfully graduated from Quantum Journey 101!",
         };
       }
       return { passed: false, feedback: "Make sure both qubits are measured after the Z gate, then click ▶ Run." };
     },
 
-    completionMessage: `🎓 **CONGRATULATIONS, GRADUATE! You have officially completed Quantum Journey 101!**
+    completionMessage: `**Program Complete: Quantum Journey 101 Graduation**
 
 You have mastered the foundational core of quantum information science:
 1. **Quantum Foundations:** Statevectors, Dirac kets, and Hilbert space initialization.
@@ -777,7 +777,7 @@ You have mastered the foundational core of quantum information science:
 6. **Measurement & Registers:** Qiskit little-endian register mapping.
 7. **Capstone Synthesis:** Independent protocol creation and phase manipulation.
 
-🚀 **Next Step:** You are now fully prepared to enter **Quantum 102: Circuits & Algorithms** (Deutsch-Jozsa, Grover's Search, and Quantum Teleportation)!`,
+**Next Step:** You are now fully prepared to enter **Quantum 102: Circuits & Algorithms** (Deutsch-Jozsa, Grover's Search, and Quantum Teleportation)!`,
   },
 ];
 
@@ -840,7 +840,7 @@ export function evaluateQuizResponse(
     return {
       passed: false,
       explanation: moduleItem.quizExplanation,
-      feedback: `⚠️ **Concept Diagnostic Insight:**
+      feedback: `**Concept Diagnostic Insight:**
 *${misconception.concept}*
 
 ${misconception.counterExample}
@@ -1001,7 +1001,7 @@ export function getSupportiveTutorResponse(
   const m = getJourneyModule(moduleId);
   if (type === "hint") {
     return {
-      message: `💡 **Here is a gentle hint:**
+      message: `**Hint:**
 
 ${m.hint}
 
@@ -1011,7 +1011,7 @@ ${m.hint}
   }
   if (type === "stuck") {
     return {
-      message: `No worries at all! Quantum concepts can be counter-intuitive at first—even top physicists needed time for them to click! 🧠
+      message: `No worries at all! Quantum concepts can be counter-intuitive at first—even top physicists needed time for them to click!
 
 **Let's think of an everyday analogy:**
 ${m.friendlyAnalogy}
@@ -1022,7 +1022,7 @@ ${m.friendlyAnalogy}
   }
   if (type === "curious") {
     return {
-      message: `I love that curiosity! 🎯 That is exactly what makes quantum mechanics so fascinating. Here is how it works:
+      message: `Great question! That is exactly what makes quantum mechanics so fascinating. Here is how it works:
 
 ${m.fallbackExplanation}
 
@@ -1034,7 +1034,7 @@ ${m.challengeInstruction}`,
   }
   if (type === "escalate") {
     return {
-      message: `No worries at all! Quantum mechanics is best learned with hands-on circuits rather than pure guesswork. Here is the answer and the physics behind it: 🚀
+      message: `No worries at all! Quantum mechanics is best learned with hands-on circuits rather than pure guesswork. Here is the answer and the physics behind it:
 
 ${m.fallbackExplanation}
 
@@ -1046,7 +1046,7 @@ ${m.challengeInstruction}`,
   }
   // Reveal & advance to challenge
   return {
-    message: `No problem at all! Here is the core intuition: 🎯
+    message: `No problem at all! Here is the core intuition:
 
 ${m.fallbackExplanation}
 
@@ -1066,29 +1066,66 @@ export function getTieredExplanation(
 ): string {
   const m = getJourneyModule(moduleId);
   if (tier === "math") {
-    return `### 📐 Mathematical Derivation: ${m.title}
+    return `### Mathematical Derivation: ${m.title}
 
 ${m.tiers.math}
 
 *Want to test this on the canvas? Press ▶ Run or ask for 'Intuition'!*`;
   }
   if (tier === "technical") {
-    return `### ⚙️ Technical Formulation: ${m.title}
+    return `### Technical Formulation: ${m.title}
 
 ${m.tiers.technical}
 
 *You can also ask for 'Show Math' or 'Show Analogy'!*`;
   }
-  return `### 💡 Everyday Analogy: ${m.title}
+  return `### Everyday Analogy: ${m.title}
 
 ${m.tiers.intuition}
 
 *Ready to see the math? Reply 'Show Math' or 'Show Technical'!*`;
 }
 
+
 /**
- * Builds an enriched system prompt for the AI tutor with pedagogical guardrails
+ * Progressive hints for the hands-on coding challenge stage
  */
+export function getChallengeHint(moduleId: number, hintLevel: number = 1): string {
+  const hints: Record<number, string[]> = {
+    0: [
+      "You need an operation that flips a qubit from state |0⟩ to state |1⟩.",
+      "The Pauli-X gate performs a bit-flip. In Qiskit, write `qc.x(0)` before measurement.",
+    ],
+    1: [
+      "The challenge asks to make the qubit collapse deterministically to |0⟩ instead of a 50/50 superposition.",
+      "The Hadamard gate `qc.h(0)` creates the superposition. Delete or comment out the `qc.h(0)` line.",
+    ],
+    2: [
+      "The |-⟩ state is (|0⟩ - |1⟩)/√2. First create superposition, then flip the phase.",
+      "Apply a Hadamard gate first (`qc.h(0)`), followed by a Pauli-Z phase-flip (`qc.z(0)`).",
+    ],
+    3: [
+      "The target Bell state is |Ψ⁺⟩ = (|01⟩ + |10⟩)/√2 with anti-correlated outcomes.",
+      "Apply a Pauli-X gate to qubit 1 (`qc.x(1)`) or qubit 0 (`qc.x(0)`) right before the CNOT (`qc.cx(0, 1)`).",
+    ],
+    4: [
+      "Quantum wave interference requires applying two consecutive Hadamard transforms (H² = I).",
+      "Add a second Hadamard gate `qc.h(0)` immediately after the first one to produce complete constructive interference to |0⟩.",
+    ],
+    5: [
+      "In Qiskit's little-endian ordering |q1 q0⟩, measuring '10' requires qubit 1 to be in state |1⟩ and qubit 0 in state |0⟩.",
+      "Apply a Pauli-X gate to qubit 1 with `qc.x(1)` instead of qubit 0.",
+    ],
+    6: [
+      "To transform |Φ⁺⟩ = (|00⟩ + |11⟩)/√2 into |Φ⁻⟩ = (|00⟩ - |11⟩)/√2, flip the phase of the |11⟩ state.",
+      "Apply a Pauli-Z gate `qc.z(0)` (or `qc.z(1)`) after the CNOT gate, keeping H and CX intact.",
+    ],
+  };
+  const list = hints[moduleId] || ["Review the challenge directive in the instructions above."];
+  const idx = Math.min(Math.max(0, hintLevel - 1), list.length - 1);
+  return list[idx];
+}
+
 export function buildJourneyTutorPrompt(
   moduleId: number,
   stage: string,

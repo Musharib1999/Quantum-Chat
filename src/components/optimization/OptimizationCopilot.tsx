@@ -36,6 +36,9 @@ export interface OptimizationCopilotProps {
   isPortfolioProblem?: boolean;
   onApplyCodeToEditor?: (code: string, meta?: any) => void;
   onClearChat?: () => void;
+  isJourney?: boolean;
+  journeyStage?: "explore" | "quiz" | "challenge" | "completed";
+  journeyMilestoneId?: number;
 }
 
 export function OptimizationCopilot({
@@ -53,6 +56,9 @@ export function OptimizationCopilot({
   isPortfolioProblem = true,
   onApplyCodeToEditor,
   onClearChat,
+  isJourney = false,
+  journeyStage = "explore",
+  journeyMilestoneId = 0,
 }: OptimizationCopilotProps) {
   const [input, setInput] = useState("");
   const [showSuggestionsPopover, setShowSuggestionsPopover] = useState<boolean>(false);
@@ -81,8 +87,68 @@ export function OptimizationCopilot({
     setShowSuggestionsPopover(false);
   };
 
-  // Dynamic Prompt Options
-  const prompts = isQiskit
+  // Dynamic Prompt Options (Context-Aware for Journey & Studio)
+  const prompts = isJourney
+    ? journeyStage === "explore"
+      ? [
+          {
+            label: "What does state |+⟩ mean?",
+            query: "What does state |+⟩ mean?",
+          },
+          {
+            label: "Show Dirac notation",
+            query: "Show Dirac notation",
+          },
+          {
+            label: "Run Aer Simulator",
+            query: "Run Aer Simulator",
+          },
+        ]
+      : journeyStage === "quiz"
+      ? [
+          {
+            label: "Give me a hint",
+            query: "Give me a hint",
+          },
+          {
+            label: "Explain with an analogy",
+            query: "Explain with an analogy",
+          },
+          {
+            label: "Skip to Challenge",
+            query: "Skip to Challenge",
+          },
+        ]
+      : journeyStage === "challenge"
+      ? [
+          {
+            label: "Validate my circuit",
+            query: "Validate my circuit",
+          },
+          {
+            label: "Socratic Hint Level 1",
+            query: "Socratic Hint Level 1",
+          },
+          {
+            label: "Reset starter code",
+            query: "Reset starter code",
+          },
+        ]
+      : [
+          {
+            label: "Next module",
+            query: "Next module",
+          },
+          {
+            label: "Explain key takeaways",
+            query: "Summarize the key mathematical takeaways of this completed module.",
+          },
+          {
+            label: "Restart journey",
+            query: "Restart journey",
+          },
+        ]
+    : isQiskit
     ? [
         {
           label: "Explain Bob's conditional X and Z correction gates",
@@ -481,7 +547,7 @@ export function OptimizationCopilot({
                       : "bg-white border-slate-200 hover:border-sky-400 hover:bg-sky-50/50 text-slate-800 shadow-xs"
                   }`}
                 >
-                  <span className="text-amber-400 text-xs shrink-0">💡</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0" />
                   <span className="font-mono text-[11px] leading-tight truncate">
                     {p.label}
                   </span>
@@ -512,6 +578,26 @@ export function OptimizationCopilot({
         style={{ borderColor: colors.border, backgroundColor: colors.bgSection3 }}
       >
         {/* Suggestions popover hidden per user request */}
+
+        {/* Journey Stage-Aware Quick Action Chips */}
+        {isJourney && prompts.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {prompts.map((p, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleChipClick(p.query)}
+                className={`px-2.5 py-1 rounded-md border text-[11px] font-mono transition-all cursor-pointer ${
+                  isDark
+                    ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] hover:border-zinc-500 text-zinc-300 hover:text-white"
+                    : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 hover:text-slate-900"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-1.5">
           <div
