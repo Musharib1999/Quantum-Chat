@@ -2342,20 +2342,34 @@ export default function QuantumGuruStudioPage() {
                 setUserPrediction(null);
               }
 
-              const debriefMsg: CopilotMessage = {
-                id: Date.now() + 5,
-                sender: "assistant",
-                text: `**Simulation Complete**\n\nYour circuit executed with Aer simulator (\`${execShots}\` shots).\nRecorded Measurement Distribution:\n\`\`\`json\n${countsStr}\n\`\`\`${predictionFeedback}\n\n${currentM.quizQuestion}`,
-                timestamp: "Just now",
-              };
-              setQiskitCopilotMessages((prev) => [...prev, debriefMsg]);
-              setJourneyStage("quiz");
-              setQuizHelpCount(0);
-              if (typeof window !== "undefined") {
-                try {
-                  localStorage.setItem("quantum_journey_101_stage", "quiz");
-                } catch (e) {}
-              }
+              const debriefLoadingId = Date.now() + 4;
+              setQiskitCopilotMessages((prev) => [
+                ...prev,
+                {
+                  id: debriefLoadingId,
+                  sender: "assistant",
+                  text: "Analyzing circuit and reasoning with Quantum Guru Copilot...",
+                  timestamp: "Just now",
+                  isStreaming: true,
+                },
+              ]);
+
+              setTimeout(() => {
+                const debriefMsg: CopilotMessage = {
+                  id: debriefLoadingId,
+                  sender: "assistant",
+                  text: `**Simulation Complete**\n\nYour circuit executed with Aer simulator (\`${execShots}\` shots).\nRecorded Measurement Distribution:\n\`\`\`json\n${countsStr}\n\`\`\`${predictionFeedback}\n\n${currentM.quizQuestion}`,
+                  timestamp: "Just now",
+                };
+                setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== debriefLoadingId), debriefMsg]);
+                setJourneyStage("quiz");
+                setQuizHelpCount(0);
+                if (typeof window !== "undefined") {
+                  try {
+                    localStorage.setItem("quantum_journey_101_stage", "quiz");
+                  } catch (e) {}
+                }
+              }, 500);
             } else if (journeyStage === "challenge") {
               const valResult = currentM.validateChallenge(
                 data.measurement_counts || {},
@@ -2363,29 +2377,44 @@ export default function QuantumGuruStudioPage() {
                 data.active_qubits || 1,
                 qiskitCode
               );
-              if (valResult.passed) {
-                const passMsg: CopilotMessage = {
-                  id: Date.now() + 5,
+
+              const challengeLoadingId = Date.now() + 4;
+              setQiskitCopilotMessages((prev) => [
+                ...prev,
+                {
+                  id: challengeLoadingId,
                   sender: "assistant",
-                  text: `${valResult.feedback}\n\n${currentM.completionMessage}`,
+                  text: "Analyzing circuit and reasoning with Quantum Guru Copilot...",
                   timestamp: "Just now",
-                };
-                setQiskitCopilotMessages((prev) => [...prev, passMsg]);
-                setJourneyStage("completed");
-                if (typeof window !== "undefined") {
-                  try {
-                    localStorage.setItem("quantum_journey_101_stage", "completed");
-                  } catch (e) {}
+                  isStreaming: true,
+                },
+              ]);
+
+              setTimeout(() => {
+                if (valResult.passed) {
+                  const passMsg: CopilotMessage = {
+                    id: challengeLoadingId,
+                    sender: "assistant",
+                    text: `${valResult.feedback}\n\n${currentM.completionMessage}`,
+                    timestamp: "Just now",
+                  };
+                  setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== challengeLoadingId), passMsg]);
+                  setJourneyStage("completed");
+                  if (typeof window !== "undefined") {
+                    try {
+                      localStorage.setItem("quantum_journey_101_stage", "completed");
+                    } catch (e) {}
+                  }
+                } else {
+                  const hintMsg: CopilotMessage = {
+                    id: challengeLoadingId,
+                    sender: "assistant",
+                    text: `**Guru AI Assessment:**\n\n${valResult.feedback}`,
+                    timestamp: "Just now",
+                  };
+                  setQiskitCopilotMessages((prev) => [...prev.filter((m) => m.id !== challengeLoadingId), hintMsg]);
                 }
-              } else {
-                const hintMsg: CopilotMessage = {
-                  id: Date.now() + 5,
-                  sender: "assistant",
-                  text: `**Guru AI Assessment:**\n\n${valResult.feedback}`,
-                  timestamp: "Just now",
-                };
-                setQiskitCopilotMessages((prev) => [...prev, hintMsg]);
-              }
+              }, 500);
             }
           }
         } else {
@@ -2546,6 +2575,9 @@ export default function QuantumGuruStudioPage() {
 
       const isJourney = activeProject.id === "quantum_journey_101";
       if (isJourney) {
+        // 500ms reasoning delay with pulsing typing indicator
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         const lower = text.trim().toLowerCase();
         // 1. Next Module Transition
         if (

@@ -331,6 +331,17 @@ export function OptimizationCopilot({
             >
               {msg.sender === "user" ? (
                 <p className="text-[13.5px] leading-relaxed break-words [word-break:break-word] overflow-wrap-anywhere">{msg.text}</p>
+              ) : msg.isStreaming && (!msg.text || msg.text === "Analyzing circuit and reasoning with Quantum Guru Copilot..." || msg.text === "Thinking...") ? (
+                <div className="flex items-center space-x-2.5 py-1 px-0.5 select-none">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse [animation-delay:-0.3s]" />
+                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse [animation-delay:-0.15s]" />
+                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                  </div>
+                  <span className={`text-[12px] font-mono tracking-tight ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
+                    Guru AI is reasoning...
+                  </span>
+                </div>
               ) : (
                 <div className="w-full min-w-0 overflow-hidden leading-relaxed">
                   <IdeMarkdownRenderer content={msg.text} isDark={isDark} />
