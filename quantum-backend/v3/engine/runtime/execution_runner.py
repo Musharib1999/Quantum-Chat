@@ -38,6 +38,36 @@ try:
         _captured_qcs.append(self)
     QuantumCircuit.__init__ = _hooked_qc_init
 
+    try:
+        from qiskit.circuit.instructionset import InstructionSet as _QiskitInstructionSet
+        if not hasattr(_QiskitInstructionSet, "c_if"):
+            def _compat_c_if(self, classical, val):
+                parent_qc = None
+                req_self = getattr(getattr(self, "_requester", None), "__self__", None)
+                if req_self is not None:
+                    parent_qc = getattr(req_self, "_circuit", None) or getattr(req_self, "circuit", None)
+                if parent_qc is None and getattr(self, "_instructions", None):
+                    target_cdata = self._instructions[0][0]
+                    for cand in reversed(_captured_qcs):
+                        if getattr(cand, "_data", None) is target_cdata:
+                            parent_qc = cand
+                            break
+                if parent_qc is None:
+                    raise RuntimeError("Unable to resolve parent QuantumCircuit for .c_if()")
+                inst_list = list(self.instructions)
+                qargs_list = list(self.qargs)
+                cargs_list = list(self.cargs)
+                for _, idx in sorted(self._instructions, key=lambda x: x[1], reverse=True):
+                    del parent_qc.data[idx]
+                cond_target = parent_qc.clbits[classical] if isinstance(classical, int) else classical
+                with parent_qc.if_test((cond_target, int(val))):
+                    for inst, qa, ca in zip(inst_list, qargs_list, cargs_list):
+                        parent_qc.append(inst, qa, ca)
+                return self
+            _QiskitInstructionSet.c_if = _compat_c_if
+    except Exception:
+        pass
+
     _orig_aer_run = AerSimulator.run
     def _safe_aer_run(self, circuits, **kwargs):
         if isinstance(circuits, QuantumCircuit):
@@ -93,6 +123,7 @@ class CodeExecutionResponse(BaseModel):
     circuit_gates: Optional[List[Dict[str, Any]]] = None
     active_qubits: int = 0
     circuit_depth: int = 0
+    shots: Optional[int] = None
     measurement_counts: Optional[Dict[str, int]] = None
     optimization_results: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -128,7 +159,16 @@ def extract_circuit_gates(qc: QuantumCircuit) -> List[Dict[str, Any]]:
             continue
 
         current_step = max(step_track[q] for q in q_indices)
-        params = [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]
+        if name == "if_else" and getattr(op, "params", None):
+            true_body = op.params[0]
+            if hasattr(true_body, "data") and len(true_body.data) > 0:
+                inner_op = true_body.data[0].operation
+                name = inner_op.name.lower()
+                params = [float(p) if isinstance(p, (int, float)) else str(p) for p in inner_op.params]
+            else:
+                params = []
+        else:
+            params = [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]
 
         if len(q_indices) == 1:
             gates.append({
@@ -201,6 +241,55 @@ MAX_CIRCUIT_GATE_OPS = 5000
 
 class SandboxSecurityError(Exception):
     pass
+
+
+class FrameworkMismatchError(Exception):
+    pass
+
+
+def validate_framework_alignment(code_str: str, target_backend: str) -> None:
+    """Enforces strict framework boundaries to prevent silent failures and user confusion."""
+    if not code_str:
+        return
+
+    # Check for Qiskit code inside D-Wave Quantum Annealing project
+    if target_backend == "dwave_simulated_annealing":
+        has_qiskit = (
+            "from qiskit" in code_str
+            or "import qiskit" in code_str
+            or "QuantumCircuit(" in code_str
+            or "QuantumCircuit " in code_str
+        )
+        if has_qiskit:
+            raise FrameworkMismatchError(
+                "[FRAMEWORK MISMATCH ERROR]\n"
+                "This project is configured for D-Wave Quantum Annealing (target_backend: dwave_simulated_annealing).\n"
+                "The code in the editor is a gate-based Qiskit circuit (uses QuantumCircuit / qiskit).\n\n"
+                "👉 To simulate gate circuits with Visual Wires & Aer Simulator:\n"
+                "   Please switch to or create a Qiskit project in the Project Switcher."
+            )
+
+    # Check for D-Wave / QUBO code inside Qiskit Gate-Based project
+    elif target_backend == "aer_simulator":
+        has_dwave = (
+            "from dwave" in code_str
+            or "import dwave" in code_str
+            or "from dimod" in code_str
+            or "import dimod" in code_str
+            or "get_qubo_model(" in code_str
+            or "SimulatedAnnealingSampler" in code_str
+        )
+        has_circuit = "QuantumCircuit" in code_str or "qiskit" in code_str
+        # If user writes pure D-Wave / QUBO code without any QuantumCircuit
+        if has_dwave and not has_circuit:
+            raise FrameworkMismatchError(
+                "[FRAMEWORK MISMATCH ERROR]\n"
+                "This project is configured for Qiskit Gate-Based Simulation (target_backend: aer_simulator).\n"
+                "The code in the editor is a D-Wave QUBO/Ising optimization model (uses dimod / dwave).\n\n"
+                "👉 To view the Q-Matrix Heatmap & Hamiltonian Formulation:\n"
+                "   Please switch to or create a D-Wave project in the Project Switcher."
+            )
+
 
 
 def validate_code_security(code_str: str) -> None:
@@ -295,6 +384,36 @@ try:
         _captured_qcs.append(self)
     QuantumCircuit.__init__ = _hooked_qc_init
 
+    try:
+        from qiskit.circuit.instructionset import InstructionSet as _QiskitInstructionSet
+        if not hasattr(_QiskitInstructionSet, "c_if"):
+            def _compat_c_if(self, classical, val):
+                parent_qc = None
+                req_self = getattr(getattr(self, "_requester", None), "__self__", None)
+                if req_self is not None:
+                    parent_qc = getattr(req_self, "_circuit", None) or getattr(req_self, "circuit", None)
+                if parent_qc is None and getattr(self, "_instructions", None):
+                    target_cdata = self._instructions[0][0]
+                    for cand in reversed(_captured_qcs):
+                        if getattr(cand, "_data", None) is target_cdata:
+                            parent_qc = cand
+                            break
+                if parent_qc is None:
+                    raise RuntimeError("Unable to resolve parent QuantumCircuit for .c_if()")
+                inst_list = list(self.instructions)
+                qargs_list = list(self.qargs)
+                cargs_list = list(self.cargs)
+                for _, idx in sorted(self._instructions, key=lambda x: x[1], reverse=True):
+                    del parent_qc.data[idx]
+                cond_target = parent_qc.clbits[classical] if isinstance(classical, int) else classical
+                with parent_qc.if_test((cond_target, int(val))):
+                    for inst, qa, ca in zip(inst_list, qargs_list, cargs_list):
+                        parent_qc.append(inst, qa, ca)
+                return self
+            _QiskitInstructionSet.c_if = _compat_c_if
+    except Exception:
+        pass
+
     _orig_aer_run = AerSimulator.run
     def _safe_aer_run(self, circuits, **kwargs):
         if isinstance(circuits, QuantumCircuit):
@@ -325,6 +444,80 @@ try:
     from dwave.samplers import SimulatedAnnealingSampler
     HAS_DWAVE = True
     
+    _captured_dwave_models = []
+    _captured_dwave_samplesets = []
+    _orig_sa_sample = SimulatedAnnealingSampler.sample
+    def _hooked_sa_sample(self, bqm, *args, **kwargs):
+        _captured_dwave_models.append(bqm)
+        res = _orig_sa_sample(self, bqm, *args, **kwargs)
+        _captured_dwave_samplesets.append(res)
+        return res
+    SimulatedAnnealingSampler.sample = _hooked_sa_sample
+
+    if hasattr(SimulatedAnnealingSampler, "sample_qubo"):
+        _orig_sa_qubo = SimulatedAnnealingSampler.sample_qubo
+        def _hooked_sa_qubo(self, Q, *args, **kwargs):
+            try:
+                _captured_dwave_models.append(dimod.BinaryQuadraticModel.from_qubo(Q))
+            except Exception:
+                _captured_dwave_models.append(Q)
+            res = _orig_sa_qubo(self, Q, *args, **kwargs)
+            _captured_dwave_samplesets.append(res)
+            return res
+        SimulatedAnnealingSampler.sample_qubo = _hooked_sa_qubo
+
+    if hasattr(SimulatedAnnealingSampler, "sample_ising"):
+        _orig_sa_ising = SimulatedAnnealingSampler.sample_ising
+        def _hooked_sa_ising(self, h, J, *args, **kwargs):
+            try:
+                _captured_dwave_models.append(dimod.BinaryQuadraticModel.from_ising(h, J))
+            except Exception:
+                pass
+            res = _orig_sa_ising(self, h, J, *args, **kwargs)
+            _captured_dwave_samplesets.append(res)
+            return res
+        SimulatedAnnealingSampler.sample_ising = _hooked_sa_ising
+
+    if hasattr(dimod, "ExactSolver"):
+        _orig_ex_sample = dimod.ExactSolver.sample
+        def _hooked_ex_sample(self, bqm, *args, **kwargs):
+            _captured_dwave_models.append(bqm)
+            res = _orig_ex_sample(self, bqm, *args, **kwargs)
+            _captured_dwave_samplesets.append(res)
+            return res
+        dimod.ExactSolver.sample = _hooked_ex_sample
+        if hasattr(dimod.ExactSolver, "sample_qubo"):
+            _orig_ex_qubo = dimod.ExactSolver.sample_qubo
+            def _hooked_ex_qubo(self, Q, *args, **kwargs):
+                try:
+                    _captured_dwave_models.append(dimod.BinaryQuadraticModel.from_qubo(Q))
+                except Exception:
+                    _captured_dwave_models.append(Q)
+                res = _orig_ex_qubo(self, Q, *args, **kwargs)
+                _captured_dwave_samplesets.append(res)
+                return res
+            dimod.ExactSolver.sample_qubo = _hooked_ex_qubo
+        if hasattr(dimod.ExactSolver, "sample_ising"):
+            _orig_ex_ising = dimod.ExactSolver.sample_ising
+            def _hooked_ex_ising(self, h, J, *args, **kwargs):
+                try:
+                    _captured_dwave_models.append(dimod.BinaryQuadraticModel.from_ising(h, J))
+                except Exception:
+                    pass
+                res = _orig_ex_ising(self, h, J, *args, **kwargs)
+                _captured_dwave_samplesets.append(res)
+                return res
+            dimod.ExactSolver.sample_ising = _hooked_ex_ising
+
+    if hasattr(dimod, "ExactCQMSolver"):
+        _orig_cqm_sample = dimod.ExactCQMSolver.sample_cqm
+        def _hooked_cqm_sample(self, cqm, *args, **kwargs):
+            _captured_dwave_models.append(cqm)
+            res = _orig_cqm_sample(self, cqm, *args, **kwargs)
+            _captured_dwave_samplesets.append(res)
+            return res
+        dimod.ExactCQMSolver.sample_cqm = _hooked_cqm_sample
+
     _CLOUD_NOTICE = "[INFO] Cloud QPU/Hybrid sampler detected without active Leap credentials. Gracefully rerouting to local SimulatedAnnealingSampler for Phase 2 offline simulation."
     _cloud_rerouted = False
 
@@ -408,6 +601,8 @@ try:
 except ImportError:
     HAS_DWAVE = False
     _cloud_rerouted = False
+    _captured_dwave_models = []
+    _captured_dwave_samplesets = []
 
 def extract_circuit_gates_inner(qc):
     gates = []
@@ -434,7 +629,16 @@ def extract_circuit_gates_inner(qc):
                 step_track[q] = current_step + 1
             continue
         current_step = max(step_track[q] for q in q_indices)
-        params = [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]
+        if name == "if_else" and getattr(op, "params", None):
+            true_body = op.params[0]
+            if hasattr(true_body, "data") and len(true_body.data) > 0:
+                inner_op = true_body.data[0].operation
+                name = inner_op.name.lower()
+                params = [float(p) if isinstance(p, (int, float)) else str(p) for p in inner_op.params]
+            else:
+                params = []
+        else:
+            params = [float(p) if isinstance(p, (int, float)) else str(p) for p in op.params]
 
         if len(q_indices) == 1:
             gates.append({
@@ -533,19 +737,31 @@ if HAS_DWAVE:
 
     if "qubo_matrix" not in sys.modules:
         qm_mod = types.ModuleType("qubo_matrix")
-        def get_qubo_model(budget=18, penalty_lambda=3.5, **kwargs):
+        def get_qubo_model(budget=18.0, penalty_lambda=3.5, yield_weight=1.0, min_diversity=2, mutual_exclusion=True, **kwargs):
             var_names = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"]
+            costs = [9.0, 7.0, 6.0, 8.0]
+            yields = [12.5, 9.0, 8.0, 10.5]
             n = len(var_names)
-            Q_arr = np.zeros((n, n), dtype=float)
-            couplings = {
-                (0, 0): -11.25, (0, 1): 15.7, (0, 2): 7.7, (0, 3): 9.9,
-                (1, 1): -9.5,   (1, 2): 5.1, (1, 3): 7.7,
-                (2, 2): -18.0,  (2, 3): 6.6,
-                (3, 3): -50.8,
-            }
-            for (i, j), val in couplings.items():
-                Q_arr[i, j] = val
-            return Q_arr, var_names, penalty_lambda, -62.2
+            if abs(float(budget) - 18.0) < 1e-6 and abs(float(penalty_lambda) - 3.5) < 1e-6 and abs(float(yield_weight) - 1.0) < 1e-6 and int(min_diversity) == 2 and bool(mutual_exclusion) is True:
+                raw_couplings = {
+                    (0, 0): -11.25, (0, 1): 15.7, (0, 2): 7.7, (0, 3): 9.9,
+                    (1, 1): -9.5,   (1, 2): 5.1, (1, 3): 7.7,
+                    (2, 2): -18.0,  (2, 3): 6.6,
+                    (3, 3): -50.8,
+                }
+                q_dict = {(var_names[i], var_names[j]): val for (i, j), val in raw_couplings.items()}
+                return q_dict, var_names, float(penalty_lambda), 0.0
+            q_dict = {}
+            for i in range(n):
+                y_term = -yields[i] * float(yield_weight)
+                p_self = float(penalty_lambda) * costs[i] * (costs[i] - 2.0 * float(budget)) * 0.05 + 2.0 * (1.0 - 2.0 * float(min_diversity))
+                q_dict[(var_names[i], var_names[i])] = round(y_term + p_self, 4)
+                for j in range(i + 1, n):
+                    coup = float(penalty_lambda) * 2.0 * costs[i] * costs[j] * 0.05 + 4.0
+                    if i == 0 and j == 1 and mutual_exclusion:
+                        coup += 8.0 * float(penalty_lambda)
+                    q_dict[(var_names[i], var_names[j])] = round(coup, 4)
+            return q_dict, var_names, float(penalty_lambda), 0.0
         qm_mod.get_qubo_model = get_qubo_model
         sys.modules["qubo_matrix"] = qm_mod
         exec_globals["get_qubo_model"] = get_qubo_model
@@ -609,13 +825,28 @@ active_qubits = 0
 circuit_depth = 0
 backend_used = "local"
 
-# 1. QuantumCircuit introspection: pick the most complete circuit (highest gate count/depth)
+# 1. QuantumCircuit introspection: prioritize user logical circuit over simulator bytecode
 all_qcs = [val for val in exec_globals.values() if isinstance(val, QuantumCircuit)]
 all_qcs.extend([c for c in _captured_qcs if isinstance(c, QuantumCircuit)])
 
 non_empty = [c for c in all_qcs if len(c.data) > 0]
 candidates = non_empty if non_empty else all_qcs
-target_qc = max(reversed(candidates), key=lambda c: (len(c.data), c.depth(), c.num_qubits)) if candidates else None
+
+def _is_simulator_bytecode(circuit: QuantumCircuit) -> bool:
+    return any(getattr(inst.operation, 'name', '').lower() in ('jump', 'mark') for inst in circuit.data)
+
+logical_candidates = [c for c in candidates if not _is_simulator_bytecode(c)]
+
+if "qc" in exec_globals and isinstance(exec_globals["qc"], QuantumCircuit) and len(exec_globals["qc"].data) > 0:
+    target_qc = exec_globals["qc"]
+elif "circuit" in exec_globals and isinstance(exec_globals["circuit"], QuantumCircuit) and len(exec_globals["circuit"].data) > 0:
+    target_qc = exec_globals["circuit"]
+elif logical_candidates:
+    target_qc = max(reversed(logical_candidates), key=lambda c: (len(c.data), c.depth(), c.num_qubits))
+elif candidates:
+    target_qc = max(reversed(candidates), key=lambda c: (len(c.data), c.depth(), c.num_qubits))
+else:
+    target_qc = None
 
 if target_qc is not None:
     backend_used = "qiskit_aer"
@@ -680,23 +911,32 @@ if HAS_DWAVE:
     target_sampleset = None
     target_model = None
 
-    # Check for direct sampleset first
+    # Check for direct sampleset first (globals then hooked sampler captures)
     for val in exec_globals.values():
         if isinstance(val, dimod.SampleSet):
             target_sampleset = val
             break
+    if target_sampleset is None and _captured_dwave_samplesets:
+        target_sampleset = _captured_dwave_samplesets[-1]
 
-    # Check for models
+    # Check for models (globals then hooked sampler captures)
     for val in exec_globals.values():
         if isinstance(val, (dimod.BinaryQuadraticModel, dimod.ConstrainedQuadraticModel)):
             target_model = val
             break
-    
-    # Check for raw QUBO dict if no model
+    if target_model is None and _captured_dwave_models:
+        target_model = _captured_dwave_models[-1]
+
+    # Check for raw QUBO dict if no model (named keys first, then any valid 2-tuple numeric dict)
     if target_model is None:
-        for key in ("sparse_Q", "Q", "qubo", "QUBO", "bqm_dict", "Q_dict"):
+        for key in ("sparse_Q", "Q", "qubo", "QUBO", "bqm_dict", "Q_dict", "q", "model", "qubo_model"):
             val = exec_globals.get(key)
-            if isinstance(val, dict) and all(isinstance(k, tuple) and len(k) == 2 for k in val.keys()):
+            if isinstance(val, dict) and len(val) > 0 and all(isinstance(k, tuple) and len(k) == 2 and isinstance(v, (int, float, np.number)) for k, v in val.items()):
+                target_model = val
+                break
+    if target_model is None:
+        for val in exec_globals.values():
+            if isinstance(val, dict) and len(val) > 0 and all(isinstance(k, tuple) and len(k) == 2 and isinstance(v, (int, float, np.number)) for k, v in val.items()):
                 target_model = val
                 break
 
@@ -757,7 +997,7 @@ if HAS_DWAVE:
             if target_sampleset is None:
                 sampler = SimulatedAnnealingSampler()
                 if isinstance(target_model, dimod.BinaryQuadraticModel):
-                    target_sampleset = sampler.sample(target_model, num_reads=min(__SHOTS_VAL__, 500))
+                    target_sampleset = sampler.sample(target_model, num_reads=min(__SHOTS_VAL__, 10000))
                 elif isinstance(target_model, dimod.ConstrainedQuadraticModel):
                     try:
                         from dimod import ExactCQMSolver
@@ -765,12 +1005,12 @@ if HAS_DWAVE:
                             target_sampleset = ExactCQMSolver().sample_cqm(target_model)
                         else:
                             converted_bqm, _ = dimod.cqm_to_bqm(target_model, lagrange_multiplier=10.0)
-                            target_sampleset = sampler.sample(converted_bqm, num_reads=min(__SHOTS_VAL__, 500))
+                            target_sampleset = sampler.sample(converted_bqm, num_reads=min(__SHOTS_VAL__, 10000))
                     except Exception:
                         converted_bqm, _ = dimod.cqm_to_bqm(target_model, lagrange_multiplier=10.0)
-                        target_sampleset = sampler.sample(converted_bqm, num_reads=min(__SHOTS_VAL__, 500))
+                        target_sampleset = sampler.sample(converted_bqm, num_reads=min(__SHOTS_VAL__, 10000))
                 elif isinstance(target_model, dict):
-                    target_sampleset = sampler.sample_qubo(target_model, num_reads=min(__SHOTS_VAL__, 500))
+                    target_sampleset = sampler.sample_qubo(target_model, num_reads=min(__SHOTS_VAL__, 10000))
 
             if target_sampleset is not None and len(target_sampleset) > 0:
                 best = target_sampleset.first
@@ -797,12 +1037,21 @@ if HAS_DWAVE:
                 var_to_idx = {v: i for i, v in enumerate(var_names)}
                 matrix = [[0.0] * n for _ in range(n)]
 
+                vis_bqm = None
                 if isinstance(target_model, dimod.BinaryQuadraticModel):
-                    for v, bias in target_model.linear.items():
+                    vis_bqm = target_model
+                elif isinstance(target_model, dimod.ConstrainedQuadraticModel):
+                    try:
+                        vis_bqm, _ = dimod.cqm_to_bqm(target_model, lagrange_multiplier=10.0)
+                    except Exception:
+                        vis_bqm = getattr(target_model, "objective", None)
+
+                if vis_bqm is not None and hasattr(vis_bqm, "linear") and hasattr(vis_bqm, "quadratic"):
+                    for v, bias in vis_bqm.linear.items():
                         s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
                         if s_v in var_to_idx:
                             matrix[var_to_idx[s_v]][var_to_idx[s_v]] = round(float(bias), 4)
-                    for (u, v), bias in target_model.quadratic.items():
+                    for (u, v), bias in vis_bqm.quadratic.items():
                         s_u = v_map[u] if (v_map and isinstance(u, int) and u < len(v_map)) else str(u)
                         s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
                         if s_u in var_to_idx and s_v in var_to_idx:
@@ -827,8 +1076,9 @@ if HAS_DWAVE:
                         var_label = v_map[k] if (v_map and isinstance(k, int) and k < len(v_map)) else str(k)
                         if not str(var_label).startswith('slack_'):
                             clean_sample[str(var_label)] = int(v)
-                    bitstring = "".join(str(clean_sample.get(v, 0)) for v in var_names)
-                    s_energy = float(exec_globals.get("offset", exec_globals.get("qubo_offset", 0.0))) + float(s.energy) if ("offset" in exec_globals or "qubo_offset" in exec_globals) else float(s.energy)
+                    bitstring = "".join("1" if int(clean_sample.get(v, 0)) == 1 else "0" for v in var_names)
+                    _bqm_has_offset = bool(vis_bqm is not None and abs(getattr(vis_bqm, "offset", 0.0) or 0.0) > 1e-6)
+                    s_energy = (float(exec_globals.get("offset", exec_globals.get("qubo_offset", 0.0))) + float(s.energy)) if (("offset" in exec_globals or "qubo_offset" in exec_globals) and not _bqm_has_offset) else float(s.energy)
                     s_energy = round(s_energy, 4)
                     occ = int(s.num_occurrences) if hasattr(s, 'num_occurrences') and s.num_occurrences is not None else 1
                     if bitstring in bitstring_dict:
@@ -854,15 +1104,15 @@ if HAS_DWAVE:
                     return f"x_{{{s}}}" if len(s) > 1 else f"x_{s}"
 
                 latex_parts = []
-                if isinstance(target_model, dimod.BinaryQuadraticModel):
-                    for v, bias in target_model.linear.items():
+                if vis_bqm is not None and hasattr(vis_bqm, "linear") and hasattr(vis_bqm, "quadratic"):
+                    for v, bias in vis_bqm.linear.items():
                         if abs(bias) > 1e-5:
                             s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
                             if not str(s_v).startswith('slack_'):
                                 s_v_tex = _format_var_tex(s_v)
                                 b_str = f"{bias:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bias:+.4g}" else f"{bias:+.4g}"
                                 latex_parts.append(f"{b_str} \\\\, {s_v_tex}")
-                    for (u, v), bias in target_model.quadratic.items():
+                    for (u, v), bias in vis_bqm.quadratic.items():
                         if abs(bias) > 1e-5:
                             s_u = v_map[u] if (v_map and isinstance(u, int) and u < len(v_map)) else str(u)
                             s_v = v_map[v] if (v_map and isinstance(v, int) and v < len(v_map)) else str(v)
@@ -875,8 +1125,11 @@ if HAS_DWAVE:
                                     s_u_tex = _format_var_tex(s_u)
                                     s_v_tex = _format_var_tex(s_v)
                                     latex_parts.append(f"{b_str} \\\\, {s_u_tex} {s_v_tex}")
-                    if abs(target_model.offset) > 1e-5:
-                        o_str = f"{target_model.offset:+.4g}".rstrip('0').rstrip('.') if '.' in f"{target_model.offset:+.4g}" else f"{target_model.offset:+.4g}"
+                    bqm_offset = getattr(vis_bqm, "offset", 0.0) or 0.0
+                    if abs(bqm_offset) <= 1e-5 and ("offset" in exec_globals or "qubo_offset" in exec_globals):
+                        bqm_offset = float(exec_globals.get("offset", exec_globals.get("qubo_offset", 0.0)))
+                    if abs(bqm_offset) > 1e-5:
+                        o_str = f"{bqm_offset:+.4g}".rstrip('0').rstrip('.') if '.' in f"{bqm_offset:+.4g}" else f"{bqm_offset:+.4g}"
                         latex_parts.append(o_str)
                 elif isinstance(target_model, dict):
                     for (u, v), bias in target_model.items():
@@ -1020,6 +1273,21 @@ print("__QUANTUM_RESULT_END__")
 '''
 
 
+
+_global_warm_pool = None
+
+def get_warm_pool():
+    global _global_warm_pool
+    if _global_warm_pool is None:
+        try:
+            from engine.runtime.warm_pool import WarmSimulationPool
+        except ImportError:
+            from v3.engine.runtime.warm_pool import WarmSimulationPool
+        _global_warm_pool = WarmSimulationPool(pool_size=4)
+        _global_warm_pool.start()
+    return _global_warm_pool
+
+
 def run_code_sandbox(req: CodeExecutionRequest, simulator_id: Optional[str] = None, worker_slot: Optional[int] = None, queue_wait_ms: float = 0.0) -> CodeExecutionResponse:
     """Execute code string inside an isolated subprocess with AST pre-checks, OpenMP thread caps, and Simulator ID tracking."""
     t0 = time.time()
@@ -1031,25 +1299,50 @@ def run_code_sandbox(req: CodeExecutionRequest, simulator_id: Optional[str] = No
         backend_prefix = "AER" if (backend_used == "aer_simulator" or "qiskit" in code) else "DWAVE"
         simulator_id = f"SIM-{backend_prefix}-{uuid.uuid4().hex[:8].upper()}"
 
-    # 🛡️ Layer 1: AST Pre-Execution Security & Limit Validation
+    # 🛡️ Layer 1: AST Pre-Execution Security, Limit Validation & Framework Alignment
     try:
         validate_code_security(code)
+        validate_framework_alignment(code, backend_used)
         if req.project_files:
             for f_name, f_content in req.project_files.items():
                 if f_name.endswith(".py") and f_content:
                     validate_code_security(f_content)
-    except SandboxSecurityError as sec_err:
+    except (SandboxSecurityError, FrameworkMismatchError) as err:
         return CodeExecutionResponse(
             success=False,
             simulator_id=simulator_id,
             worker_slot=worker_slot,
             queue_wait_ms=queue_wait_ms,
             stdout="",
-            stderr=str(sec_err),
+            stderr=str(err),
             execution_time_ms=round((time.time() - t0) * 1000, 2),
             backend_used=backend_used,
-            error=str(sec_err)
+            error=str(err)
         )
+
+    # ⚡ Warm Pool Accelerator (<10ms execution) strictly for pure Qiskit circuits on Aer Simulator
+    if os.environ.get("USE_WARM_POOL", "1") == "1" and not req.project_files and backend_used == "aer_simulator":
+        try:
+            pool = get_warm_pool()
+            res = pool.execute(code, shots=shots, backend=backend_used, timeout_s=10.0)
+            if res.get("success"):
+                return CodeExecutionResponse(
+                    success=True,
+                    simulator_id=res.get("simulator_id", simulator_id),
+                    worker_slot=worker_slot or 1,
+                    queue_wait_ms=queue_wait_ms,
+                    stdout=res.get("stdout", ""),
+                    stderr=res.get("stderr", ""),
+                    execution_time_ms=res.get("execution_time_ms", round((time.time() - t0) * 1000, 2)),
+                    backend_used=backend_used,
+                    circuit_ascii=res.get("circuit_ascii", ""),
+                    circuit_gates=res.get("circuit_gates", []),
+                    active_qubits=res.get("active_qubits", 0),
+                    circuit_depth=res.get("circuit_depth", 0),
+                    measurement_counts=res.get("measurement_counts", {})
+                )
+        except Exception:
+            pass  # Fall through to process-isolated runner
 
     # 🛡️ Layer 2: Process-Isolated Execution with 5.0s Hard Timeout & Multi-File Workspace
     runner_script = ISOLATED_RUNNER_TEMPLATE.replace("__SHOTS_VAL__", str(shots))

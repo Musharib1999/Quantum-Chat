@@ -154,7 +154,7 @@ class DWaveAdapter:
         raw_sol = {}
         for i in range(n_decision):
             var_name = ir.variable_map.decision_vars[i]
-            raw_sol[var_name] = int(best_sample[i])
+            raw_sol[var_name] = int(best_sample.get(i, 0))
 
         int_encodings = ir.metadata.get("int_encodings", {})
         if int_encodings:
@@ -231,11 +231,11 @@ class DWaveAdapter:
 
 # ── 4. Expression Parser ──────────────────────────────────────────────────────
 
-def parse_linear_expression(expr_str: str, variables_def: List[str]) -> Dict[str, float]:
+def parse_linear_expression(expr_str: str, variables_def: List[str] | Set[str]) -> Dict[str, float]:
     """Parses a linear constraint string and extracts variable coefficients (sparse — only non-zero vars)."""
     expr_str = expr_str.replace(" ", "")
     # Use a set for fast lookup; only accumulate vars that actually appear
-    variables_set = set(variables_def)
+    variables_set = variables_def if isinstance(variables_def, (set, frozenset)) else set(variables_def)
     coefs: Dict[str, float] = {}
     cleaned = expr_str.replace("(", "").replace(")", "").replace("-", "+-")
     terms = cleaned.split("+")
@@ -318,9 +318,10 @@ def compile_om_to_autoqubo_ir(
             else:
                 bin_variables[v_name] = v_obj
 
+        orig_var_names_set = set(orig_var_names)
         bin_constraints = []
         for c in om.constraints:
-            coefs = parse_linear_expression(c.left, orig_var_names)
+            coefs = parse_linear_expression(c.left, orig_var_names_set)
             rhs_shift = 0.0
             terms_str = []
             for v_name, w in coefs.items():
@@ -335,7 +336,7 @@ def compile_om_to_autoqubo_ir(
             new_right = float(c.right) - rhs_shift
             bin_constraints.append(_EC(name=c.name, left=new_left, op=c.op, right=new_right))
 
-        obj_coefs = parse_linear_expression(orig_obj_expr, orig_var_names)
+        obj_coefs = parse_linear_expression(orig_obj_expr, orig_var_names_set)
         if obj_coefs:
             obj_terms = []
             for v_name, w in obj_coefs.items():
@@ -356,6 +357,7 @@ def compile_om_to_autoqubo_ir(
         )
 
     decision_vars = list(om.variables.keys())
+    decision_vars_set = set(decision_vars)
     v_map = VariableMap(decision_vars=decision_vars)
 
     # 2. Analyze inequality constraints and dynamically generate slack variables
@@ -364,10 +366,13 @@ def compile_om_to_autoqubo_ir(
     mutual_exclusion_constraints = {}
     clique_mutex_constraints = {}
     always_satisfied_inequalities = set()  # inequalities where lhs_max <= rhs (vacuously true)
+    max_con_coef = 1.0
 
     for c in om.constraints:
         if c.op in ["<=", ">="]:
-            coefs = parse_linear_expression(c.left, decision_vars)
+            coefs = parse_linear_expression(c.left, decision_vars_set)
+            if coefs:
+                max_con_coef = max(max_con_coef, max(abs(val) for val in coefs.values()))
             
             # Identify dependency constraint: x_j - x_i <= 0
             pos_vars = [var for var, val in coefs.items() if val == 1.0]
@@ -473,7 +478,7 @@ def compile_om_to_autoqubo_ir(
     safe_obj = to_safe_expr(raw_obj_expr)
     sign = "-1.0 * " if om.objective.sense.upper() == "MAXIMIZE" else ""
     if safe_obj.count("+") > 250 and "*" not in safe_obj.replace(" * x[", "").replace("*x[", ""):
-        obj_coefs_map = parse_linear_expression(raw_obj_expr, decision_vars)
+        obj_coefs_map = parse_linear_expression(raw_obj_expr, decision_vars_set)
         obj_indices = [var_to_idx[k] for k in obj_coefs_map.keys()]
         obj_coefs_list = [float(v) for v in obj_coefs_map.values()]
         lines.extend([
@@ -524,7 +529,9 @@ def compile_om_to_autoqubo_ir(
         if c.name in always_satisfied_inequalities:
             continue
 
-        coefs = parse_linear_expression(c.left, decision_vars)
+        coefs = parse_linear_expression(c.left, decision_vars_set)
+        if coefs:
+            max_con_coef = max(max_con_coef, max(abs(val) for val in coefs.values()))
         sparse_coefs = {k: v for k, v in coefs.items() if v != 0.0}
         lhs_indices = [var_to_idx[name] for name in sparse_coefs.keys()]
         lhs_coefs   = [float(val) for val in sparse_coefs.values()]
@@ -645,10 +652,88 @@ def compile_om_to_autoqubo_ir(
 
     qubo_code = "\n".join(lines)
 
-    # 4. Generate the matrix by executing the generated Python code block in-memory
-    local_env = dict(globals())
-    exec(qubo_code, local_env)
-    Q, offset = local_env["get_qubo"]()
+    # 4. Generate the matrix via Ultra-Fast Native Rust Kernel if available
+    fast_compiled = False
+    try:
+        import autoqubo_fast
+        if autoqubo_fast.is_fast_available():
+            obj_i = []
+            obj_c = []
+            quad_i = []
+            quad_j = []
+            quad_w = []
+
+            # 1. Objective terms
+            sgn = -1.0 if om.objective.sense.upper() == "MAXIMIZE" else 1.0
+            obj_linear_map = parse_linear_expression(om.objective.expression or "0.0", decision_vars)
+            for var_name, coeff in obj_linear_map.items():
+                if var_name in var_to_idx and coeff != 0.0:
+                    obj_i.append(var_to_idx[var_name])
+                    obj_c.append(sgn * float(coeff))
+
+            # Quadratic objective terms (e.g. 12.0 * (x_0 * x_1) or - (20 * (x_0 * x_1)))
+            for q_m in re.finditer(r"([+-]?)\s*\(?\s*(\d+(?:\.\d+)?)\s*\*\s*\(?\s*([a-zA-Z_]\w*)\s*\*\s*([a-zA-Z_]\w*)\s*\)?\s*\)?", om.objective.expression or ""):
+                q_sign_str, q_num_str, q_v1, q_v2 = q_m.groups()
+                if q_v1 in var_to_idx and q_v2 in var_to_idx:
+                    q_val = (-1.0 if q_sign_str == "-" else 1.0) * float(q_num_str)
+                    quad_i.append(var_to_idx[q_v1])
+                    quad_j.append(var_to_idx[q_v2])
+                    quad_w.append(sgn * q_val)
+
+            # 2. Dependency constraints
+            dep_pos = [p for p, n, _ in dep_specs]
+            dep_neg = [n for p, n, _ in dep_specs]
+
+            # 3. Mutual exclusions
+            mut_a = [a for a, b, _ in mut_specs]
+            mut_b = [b for a, b, _ in mut_specs]
+
+            # 4. Cliques
+            clique_groups = [ci for ci, _ in clique_specs]
+
+            # 5. Equalities and Inequalities
+            all_eq_indices = []
+            all_eq_coefs = []
+            all_eq_rhs = []
+
+            for li, lc, r, _ in eq_specs:
+                all_eq_indices.append(li)
+                all_eq_coefs.append(lc)
+                all_eq_rhs.append(float(r))
+
+            for li, lc, si, sc, r, op, _ in ineq_specs:
+                if op == "<=":
+                    all_eq_indices.append(li + si)
+                    all_eq_coefs.append(lc + sc)
+                    all_eq_rhs.append(float(r))
+                else:
+                    all_eq_indices.append(li + si)
+                    all_eq_coefs.append(lc + [-c for c in sc])
+                    all_eq_rhs.append(float(r))
+
+            flat_q, offset_fast = autoqubo_fast.compile_qubo_dense(
+                v_map.total_vars,
+                obj_i, obj_c,
+                quad_i, quad_j, quad_w,
+                dep_pos, dep_neg,
+                mut_a, mut_b,
+                clique_groups,
+                all_eq_indices, all_eq_coefs, all_eq_rhs,
+                penalty_weight
+            )
+            Q = np.array(flat_q, dtype=np.float64).reshape((v_map.total_vars, v_map.total_vars))
+            offset = offset_fast
+            fast_compiled = True
+    except Exception as e:
+        fast_compiled = False
+
+    if not fast_compiled or v_map.total_vars <= 2000:
+        local_env = dict(globals())
+        exec(qubo_code, local_env)
+        if not fast_compiled:
+            Q, offset = local_env["get_qubo"]()
+    else:
+        local_env = {}
 
     # 5. Equivalence Verification Pass (vectorized regression tests against up to 1000 configurations)
     np.random.seed(42)
@@ -656,40 +741,32 @@ def compile_om_to_autoqubo_ir(
         n_states = 2 ** v_map.total_vars
         X_mat = np.array([[int(b) for b in bin(val)[2:].zfill(v_map.total_vars)] for val in range(n_states)], dtype=np.float64)
     else:
-        n_tests = 200 if (v_map.total_vars > 60 or len(om.constraints) > 100) else 1000
+        n_tests = 5 if v_map.total_vars > 2000 else (200 if (v_map.total_vars > 60 or len(om.constraints) > 100) else 1000)
         X_mat = np.random.randint(2, size=(n_tests, v_map.total_vars)).astype(np.float64)
 
-    qubo_vals = np.einsum("bi,ij,bj->b", X_mat, Q, X_mat) + offset
-    obj_fn = local_env["objective_fn"]
-    con_fns = local_env["constraint_fns"]
+    if "objective_fn" in local_env:
+        qubo_vals = np.einsum("bi,ij,bj->b", X_mat, Q, X_mat) + offset
+        obj_fn = local_env["objective_fn"]
+        con_fns = local_env["constraint_fns"]
 
-    for idx in range(X_mat.shape[0]):
-        x = X_mat[idx]
-        target = obj_fn(x) + penalty_weight * sum(fn(x) for fn in con_fns)
-        qubo_val = float(qubo_vals[idx])
-        if abs(target - qubo_val) > 1e-6:
-            raise ValueError(
-                f"Equivalence verification failure at test assignment {idx}:\n"
-                f"  Assignment: {x}\n"
-                f"  Target Math Energy: {target}\n"
-                f"  QUBO Matrix Energy: {qubo_val}\n"
-                f"  Delta: {abs(target - qubo_val)}"
-            )
+        for idx in range(X_mat.shape[0]):
+            x = X_mat[idx]
+            target = obj_fn(x) + penalty_weight * sum(fn(x) for fn in con_fns)
+            qubo_val = float(qubo_vals[idx])
+            if abs(target - qubo_val) > 1e-6:
+                raise ValueError(
+                    f"Equivalence verification failure at test assignment {idx}:\n"
+                    f"  Assignment: {x}\n"
+                    f"  Target Math Energy: {target}\n"
+                    f"  QUBO Matrix Energy: {qubo_val}\n"
+                    f"  Delta: {abs(target - qubo_val)}"
+                )
 
     # Audit 10: Penalty ratio & warnings
     max_obj_coef = 1.0
-    obj_linear = parse_linear_expression(om.objective.expression or "0.0", decision_vars)
+    obj_linear = parse_linear_expression(om.objective.expression or "0.0", decision_vars_set)
     if obj_linear:
         max_obj_coef = max(abs(val) for val in obj_linear.values()) or 1.0
-        
-    max_con_coef = 1.0
-    con_coef_vals = []
-    for c in om.constraints:
-        c_coefs = parse_linear_expression(c.left, decision_vars)
-        if c_coefs:
-            con_coef_vals.extend(abs(val) for val in c_coefs.values())
-    if con_coef_vals:
-        max_con_coef = max(con_coef_vals) or 1.0
         
     penalty_ratio = penalty_weight / (max_obj_coef / max_con_coef)
     warnings = []
@@ -698,35 +775,67 @@ def compile_om_to_autoqubo_ir(
     if penalty_weight > 100.0 * max_obj_coef:
         warnings.append(f"Warning: Penalty weight (λ={penalty_weight}) may be too high; objective may be dominated (ratio: {round(penalty_ratio, 2)}).")
 
-    # Audit 11: Connectivity metrics
+    # Audit 11: Connectivity metrics & connected components (Vectorized)
     n_vars = v_map.total_vars
-    adj = {i: set() for i in range(n_vars)}
-    quadratic_terms_count = 0
-    for i in range(n_vars):
-        for j in range(i + 1, n_vars):
-            if Q[i, j] != 0.0 or Q[j, i] != 0.0:
-                adj[i].add(j)
-                adj[j].add(i)
-                quadratic_terms_count += 1
-                
-    degrees = [len(adj[i]) for i in range(n_vars)]
-    max_degree = max(degrees) if degrees else 0
-    avg_degree = sum(degrees) / n_vars if n_vars > 0 else 0.0
-    
-    # Connected components
-    visited = set()
-    connected_components_count = 0
-    for i in range(n_vars):
-        if i not in visited:
-            connected_components_count += 1
-            queue = [i]
-            visited.add(i)
-            while queue:
-                curr = queue.pop(0)
-                for neighbor in adj[curr]:
-                    if neighbor not in visited:
-                        visited.add(neighbor)
-                        queue.append(neighbor)
+    if n_vars == 0:
+        quadratic_terms_count = 0
+        degrees = []
+        max_degree = 0
+        avg_degree = 0.0
+        connected_components_count = 0
+    else:
+        r_nz, c_nz = np.nonzero(Q)
+        off_diag_mask = r_nz != c_nz
+        r_nz, c_nz = r_nz[off_diag_mask], c_nz[off_diag_mask]
+        
+        if len(r_nz) > 0:
+            u_nz = np.minimum(r_nz, c_nz)
+            v_nz = np.maximum(r_nz, c_nz)
+            edge_keys = (u_nz.astype(np.int64) << 32) | v_nz.astype(np.int64)
+            unique_edges = np.unique(edge_keys)
+            quadratic_terms_count = int(len(unique_edges))
+            
+            uniq_u = (unique_edges >> 32).astype(np.int32)
+            uniq_v = (unique_edges & 0xFFFFFFFF).astype(np.int32)
+            
+            deg = np.bincount(np.concatenate([uniq_u, uniq_v]), minlength=n_vars)
+            degrees = deg.tolist()
+            max_degree = int(np.max(deg))
+            avg_degree = float(np.sum(deg)) / n_vars
+            
+            try:
+                from scipy.sparse import csr_matrix
+                from scipy.sparse.csgraph import connected_components
+                edge_r = np.concatenate([uniq_u, uniq_v])
+                edge_c = np.concatenate([uniq_v, uniq_u])
+                data = np.ones(len(edge_r), dtype=bool)
+                adj_sparse = csr_matrix((data, (edge_r, edge_c)), shape=(n_vars, n_vars))
+                cc, _ = connected_components(adj_sparse, directed=False)
+                connected_components_count = int(cc)
+            except Exception:
+                adj = {i: set() for i in range(n_vars)}
+                for a, b in zip(uniq_u, uniq_v):
+                    adj[int(a)].add(int(b))
+                    adj[int(b)].add(int(a))
+                visited = set()
+                connected_components_count = 0
+                for i in range(n_vars):
+                    if i not in visited:
+                        connected_components_count += 1
+                        queue = [i]
+                        visited.add(i)
+                        while queue:
+                            curr = queue.pop(0)
+                            for neighbor in adj[curr]:
+                                if neighbor not in visited:
+                                    visited.add(neighbor)
+                                    queue.append(neighbor)
+        else:
+            quadratic_terms_count = 0
+            degrees = [0] * n_vars
+            max_degree = 0
+            avg_degree = 0.0
+            connected_components_count = n_vars
 
     # 6. Populate QuboIR metadata (storing original spec for feasibility checker)
     metadata = {

@@ -60,6 +60,10 @@ def is_optimization_synthesis_request(
     if any(k in msg_l for k in ["rm -rf", "drop table", "hacked", "overwrite system"]):
         return False
 
+    # Reject framework mismatch error queries from triggering optimization synthesis
+    if "[framework mismatch error]" in msg_l or "framework mismatch" in msg_l:
+        return False
+
     opt_keywords = [
         "portfolio", "qubo", "maxcut", "max-cut", "tsp", "traveling salesman", "traveling salesperson",
         "knapsack", "facility", "routing", "scheduling", "dwave", "d-wave", "annealing",

@@ -1,32 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import QuantumProject from '@/models/QuantumProject';
-import User from '@/models/User';
 import { verifyUserSession } from '@/lib/auth';
 
 /**
- * Resiliently resolves the user email from session cookie, query param, or header
+ * Resolves the user email ONLY from the verified HttpOnly session cookie.
+ *
+ * Previously this also trusted an `?email=` query param and an `x-user-email` header, which let
+ * any caller read, overwrite or delete another user's projects just by naming their email.
+ * Those fallbacks are removed; the front-end still sends them, but they are now ignored.
  */
 async function resolveUserEmail(req: NextRequest): Promise<string | null> {
-  // 1. Check verified session cookie first
-  const sessionEmail = await verifyUserSession(req);
-  if (sessionEmail) return sessionEmail;
-
-  // 2. Check query param fallback (e.g., ?email=ms@qc.guru)
-  const queryEmail = req.nextUrl.searchParams.get('email');
-  if (queryEmail) {
-    const user = await User.findOne({ email: queryEmail }).lean();
-    if (user) return user.email;
-  }
-
-  // 3. Check custom header fallback
-  const headerEmail = req.headers.get('x-user-email');
-  if (headerEmail) {
-    const user = await User.findOne({ email: headerEmail }).lean();
-    if (user) return user.email;
-  }
-
-  return null;
+  return verifyUserSession(req);
 }
 
 export async function GET(req: NextRequest) {

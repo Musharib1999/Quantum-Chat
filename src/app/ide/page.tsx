@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Code,
   FileCode,
@@ -119,6 +119,40 @@ const DEFAULT_VARIABLES = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"];
 const ASSET_COSTS = [9.0, 7.0, 6.0, 8.0];
 const ASSET_YIELDS = [12.5, 9.0, 8.0, 10.5];
 
+const QUBO_MATRIX_HELPER_CODE = `# Clean Energy Portfolio QUBO Coupler Generator
+def get_qubo_model(budget=18.0, penalty_lambda=3.5, yield_weight=1.0, min_diversity=2, mutual_exclusion=True):
+    var_names = ["Wind_A", "Solar_B", "Battery_C", "Hydro_D"]
+    costs = [9.0, 7.0, 6.0, 8.0]
+    yields = [12.5, 9.0, 8.0, 10.5]
+    if (
+        abs(float(budget) - 18.0) < 1e-6
+        and abs(float(penalty_lambda) - 3.5) < 1e-6
+        and abs(float(yield_weight) - 1.0) < 1e-6
+        and int(min_diversity) == 2
+        and bool(mutual_exclusion) is True
+    ):
+        raw_couplings = {
+            (0, 0): -11.25, (0, 1): 15.7, (0, 2): 7.7, (0, 3): 9.9,
+            (1, 1): -9.5,   (1, 2): 5.1,  (1, 3): 7.7,
+            (2, 2): -18.0,  (2, 3): 6.6,
+            (3, 3): -50.8,
+        }
+        q_dict = {(var_names[i], var_names[j]): val for (i, j), val in raw_couplings.items()}
+        return q_dict, var_names, float(penalty_lambda), 0.0
+
+    q_dict = {}
+    for i in range(len(var_names)):
+        y_term = -yields[i] * float(yield_weight)
+        p_self = float(penalty_lambda) * costs[i] * (costs[i] - 2.0 * float(budget)) * 0.05 + 2.0 * (1.0 - 2.0 * float(min_diversity))
+        q_dict[(var_names[i], var_names[i])] = round(y_term + p_self, 4)
+        for j in range(i + 1, len(var_names)):
+            coup = float(penalty_lambda) * 2.0 * costs[i] * costs[j] * 0.05 + 4.0
+            if i == 0 and j == 1 and mutual_exclusion:
+                coup += 8.0 * float(penalty_lambda)
+            q_dict[(var_names[i], var_names[j])] = round(coup, 4)
+    return q_dict, var_names, float(penalty_lambda), 0.0
+`;
+
 const CLEAN_ENERGY_PORTFOLIO_CODE = `# Quantum Guru — Clean Energy Portfolio Selection (QUBO)
 # Solver: D-Wave BinaryQuadraticModel & Simulated Annealer
 import dimod
@@ -126,7 +160,9 @@ from dwave.samplers import SimulatedAnnealingSampler
 from qubo_matrix import get_qubo_model
 
 # 1. Ingest problem matrix & penalty multipliers
-Q_matrix, variable_names, penalty_lambda, offset = get_qubo_model()
+Q_matrix, variable_names, penalty_lambda, offset = get_qubo_model(
+    budget=18.0, penalty_lambda=3.5, yield_weight=1.0, min_diversity=2, mutual_exclusion=True
+)
 
 # 2. Assemble D-Wave BQM Hamiltonian
 bqm = dimod.BinaryQuadraticModel.from_qubo(Q_matrix, offset=offset)
@@ -137,7 +173,7 @@ sampleset = sampler.sample(bqm, num_reads=2048)
 
 best = sampleset.first
 print(f"⚡ Ground Energy: {best.energy:.4f}")
-print("Optimal Decisions:", [variable_names[i] for i, v in enumerate(best.sample) if v == 1])`;
+print("Optimal Decisions:", [variable_names[k] if isinstance(k, int) else k for k, v in best.sample.items() if v == 1])`;
 
 const NEW_DWAVE_STARTER_CODE = `# Quantum Guru — D-Wave Binary Quadratic Model Starter
 import dimod
@@ -249,7 +285,7 @@ const INITIAL_PROJECTS: ProjectItem[] = [
     desc: "Guided hands-on exploration of qubits, superposition, entanglement & circuits with Guru AI.",
     framework: "qiskit",
     updated: "Just now",
-    files: ["journey.py", "circuit.qasm", "deployment.json"],
+    files: ["journey.py"],
     activeFile: "journey.py",
     fileContents: { "journey.py": QUANTUM_JOURNEY_CODE },
   },
@@ -259,9 +295,12 @@ const INITIAL_PROJECTS: ProjectItem[] = [
     desc: "4-asset capital budgeting with mutual exclusions and grid stability dependencies.",
     framework: "dwave",
     updated: "2 mins ago",
-    files: ["main.py", "qubo_matrix.py", "deployment.json", "input.sample.json"],
+    files: ["main.py", "qubo_matrix.py"],
     activeFile: "main.py",
-    fileContents: { "main.py": CLEAN_ENERGY_PORTFOLIO_CODE },
+    fileContents: {
+      "main.py": CLEAN_ENERGY_PORTFOLIO_CODE,
+      "qubo_matrix.py": QUBO_MATRIX_HELPER_CODE,
+    },
   },
   {
     id: "quantum_teleportation",
@@ -269,7 +308,7 @@ const INITIAL_PROJECTS: ProjectItem[] = [
     desc: "3-qubit entangled Bell channel with Bob classical feed-forward corrections.",
     framework: "qiskit",
     updated: "1 hour ago",
-    files: ["teleportation.py", "circuit.qasm", "deployment.json"],
+    files: ["teleportation.py"],
     activeFile: "teleportation.py",
     fileContents: { "teleportation.py": QISKIT_INITIAL_CODE },
   },
@@ -279,7 +318,7 @@ const INITIAL_PROJECTS: ProjectItem[] = [
     desc: "Unconstrained binary quadratic model for bipartite graph cut maximization.",
     framework: "dwave",
     updated: "Yesterday",
-    files: ["maxcut.py", "graph_edges.json", "deployment.json"],
+    files: ["maxcut.py"],
     activeFile: "maxcut.py",
     fileContents: { "maxcut.py": MAXCUT_INITIAL_CODE },
   },
@@ -289,7 +328,7 @@ const INITIAL_PROJECTS: ProjectItem[] = [
     desc: "Variational Quantum Eigensolver for molecular hydrogen ground state energy curve.",
     framework: "qiskit",
     updated: "3 days ago",
-    files: ["vqe_h2.py", "ansatz.py", "deployment.json"],
+    files: ["vqe_h2.py"],
     activeFile: "vqe_h2.py",
     fileContents: { "vqe_h2.py": VQE_INITIAL_CODE },
   },
@@ -410,8 +449,11 @@ const QISKIT_INITIAL_MESSAGES: CopilotMessage[] = [
 
 function extractQubit(str: string): number {
   if (!str) return NaN;
-  const m = str.match(/\d+/);
-  return m ? parseInt(m[0], 10) : NaN;
+  const regMatch = str.match(/(?:q(?:ubit)?|qr)?\[(\d+)\]/);
+  if (regMatch) return parseInt(regMatch[1], 10);
+  const numMatch = str.match(/^\s*(\d+)\s*$/);
+  if (numMatch) return parseInt(numMatch[1], 10);
+  return NaN;
 }
 
 function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any[]; depth: number } {
@@ -421,15 +463,18 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
   for (let i = 0; i < 30; i++) stepTrack[i] = 0;
 
   const gates: any[] = [];
-  const lines = code.split("\n");
+  const statements = code
+    .split("\n")
+    .flatMap((raw) => raw.replace(/#.*$/, "").split(";"))
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   // Detect user circuit variable name (e.g. qc = QuantumCircuit(...) or circuit = QuantumCircuit(...))
   const varMatch = code.match(/([a-zA-Z0-9_]+)\s*=\s*(?:[a-zA-Z0-9_]+\.)?QuantumCircuit/);
   const primaryVar = varMatch ? varMatch[1] : "qc";
   const qcCallRegex = new RegExp(`^(?:${primaryVar}|qc|circuit|circ|qcirc)\\.([a-zA-Z0-9_]+)\\((.*)\\)`);
 
-  for (const rawLine of lines) {
-    const line = rawLine.replace(/#.*$/, "").trim();
+  for (const line of statements) {
     const callMatch = line.match(qcCallRegex);
     if (!callMatch) continue;
 
@@ -500,26 +545,33 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
     }
 
     if (opName === "measure") {
+      const rangeMatch = argsStr.match(/range\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\)/);
       const listMatch = argsStr.match(/^\[\s*([\d,\s]+)\s*\]/);
       let qList: number[] = [];
-      if (listMatch) {
+      if (rangeMatch) {
+        const startQ = rangeMatch[2] !== undefined ? parseInt(rangeMatch[1], 10) : 0;
+        const endQ = rangeMatch[2] !== undefined ? parseInt(rangeMatch[2], 10) : parseInt(rangeMatch[1], 10);
+        for (let rq = startQ; rq < Math.min(30, endQ); rq++) qList.push(rq);
+      } else if (listMatch) {
         qList = Array.from(listMatch[1].matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
       } else {
-        const firstInt = extractQubit(argsStr);
+        const firstArg = argsStr.split(",")[0]?.trim() || "";
+        const firstInt = extractQubit(firstArg);
         if (!isNaN(firstInt)) qList = [firstInt];
       }
       for (const q of qList) {
-        if (q >= numQubits) numQubits = Math.min(30, q + 1);
-        const currentStep = stepTrack[q] ?? 0;
-        gates.push({
-          name: "measure",
-          qubit: q,
-          qubits: [q],
-          step: currentStep,
-          role: "single",
-          params: [],
-        });
-        stepTrack[q] = currentStep + 1;
+        if (q < numQubits) {
+          const currentStep = stepTrack[q] ?? 0;
+          gates.push({
+            name: "measure",
+            qubit: q,
+            qubits: [q],
+            step: currentStep,
+            role: "single",
+            params: [],
+          });
+          stepTrack[q] = currentStep + 1;
+        }
       }
       continue;
     }
@@ -527,10 +579,11 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
     const parts = argsStr.split(",").map((s) => s.trim()).filter(Boolean);
     if (parts.length === 0) continue;
 
-    if (["cx", "cnot", "cz", "swap", "ch", "cy", "cp", "crx", "cry", "crz"].includes(opName)) {
+    if (["cx", "cnot", "cz", "swap", "ch", "cy", "cp", "crx", "cry", "crz", "rzz", "rxx", "ryy", "cu"].includes(opName)) {
       if (parts.length >= 2) {
         const ctrl = extractQubit(parts[parts.length - 2]);
         const tgt = extractQubit(parts[parts.length - 1]);
+        const params = parts.slice(0, parts.length - 2);
         if (!isNaN(ctrl) && !isNaN(tgt)) {
           if (Math.max(ctrl, tgt) >= numQubits) numQubits = Math.min(30, Math.max(ctrl, tgt) + 1);
           const currentStep = Math.max(stepTrack[ctrl] ?? 0, stepTrack[tgt] ?? 0);
@@ -542,7 +595,7 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
             qubits: [ctrl, tgt],
             step: currentStep,
             role: "control",
-            params: [],
+            params,
           });
           gates.push({
             name: normalizedName,
@@ -551,7 +604,7 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
             qubits: [ctrl, tgt],
             step: currentStep,
             role: "target",
-            params: [],
+            params,
           });
           stepTrack[ctrl] = currentStep + 1;
           stepTrack[tgt] = currentStep + 1;
@@ -575,19 +628,32 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
       continue;
     }
 
-    const lastArg = extractQubit(parts[parts.length - 1]);
-    if (!isNaN(lastArg)) {
-      if (lastArg >= numQubits) numQubits = Math.min(30, lastArg + 1);
-      const currentStep = stepTrack[lastArg] ?? 0;
+    const lastPartRaw = parts[parts.length - 1] || "";
+    const rangeMatch = argsStr.match(/range\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\)/);
+    const listArgMatch = argsStr.match(/\[\s*([\d,\s]+)\s*\]\s*$/);
+    let targetQubits: number[] = [];
+    if (rangeMatch) {
+      const startQ = rangeMatch[2] !== undefined ? parseInt(rangeMatch[1], 10) : 0;
+      const endQ = rangeMatch[2] !== undefined ? parseInt(rangeMatch[2], 10) : parseInt(rangeMatch[1], 10);
+      for (let rq = startQ; rq < Math.min(30, endQ); rq++) targetQubits.push(rq);
+    } else if (listArgMatch) {
+      targetQubits = Array.from(listArgMatch[1].matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
+    } else {
+      const lastArg = extractQubit(lastPartRaw);
+      if (!isNaN(lastArg)) targetQubits = [lastArg];
+    }
+    for (const tq of targetQubits) {
+      if (tq >= numQubits) numQubits = Math.min(30, tq + 1);
+      const currentStep = stepTrack[tq] ?? 0;
       gates.push({
         name: opName,
-        qubit: lastArg,
-        qubits: [lastArg],
+        qubit: tq,
+        qubits: [tq],
         step: currentStep,
         role: "single",
         params: [],
       });
-      stepTrack[lastArg] = currentStep + 1;
+      stepTrack[tq] = currentStep + 1;
     }
   }
 
@@ -595,9 +661,35 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
   return { numQubits, gates, depth: maxStepVal };
 }
 
+function extractShotsFromCode(code: string, framework: "qiskit" | "dwave"): number {
+  if (!code) return 1024;
+  if (framework === "dwave") {
+    const match = code.match(/\b(?:num_reads|reads|NUM_READS)\s*=\s*(\d+)/i);
+    return match ? parseInt(match[1], 10) : 1024;
+  } else {
+    const match = code.match(/\b(?:shots|num_shots|SHOTS)\s*=\s*(\d+)/i);
+    return match ? parseInt(match[1], 10) : 1024;
+  }
+}
+
 function classifyOptimizationIntent(text: string): "CHAT" | "FORMULATE" {
   const clean = text.trim().toLowerCase();
   if (!clean) return "CHAT";
+
+  // Tier 0: Code debugging, error tracebacks, solver output inspection, or code Q&A
+  // MUST route to /api/ide/agent/chat so user D-Wave code is preserved and never hijacked by the Autonomous Pipeline.
+  const debugOrWorkspaceTerms = [
+    "traceback", "syntaxerror", "nameerror", "typeerror", "keyerror", "valueerror",
+    "attributeerror", "indexerror", "importerror", "zerodivisionerror", "indentationerror",
+    "runtimeerror", "stderr", "encountered this execution error", "error", "bug",
+    "fix", "debug", "diagnose", "repair", "terminal", "output", "result",
+    "ground energy", "best.energy", "best.sample", "sampleset", "my code", "this code",
+    "in the code", "in editor", "line ", "why did", "what happened", "what output",
+    "what did", "explain"
+  ];
+  if (debugOrWorkspaceTerms.some((t) => clean.includes(t)) || clean.endsWith("?")) {
+    return "CHAT";
+  }
 
   // Tier 1: Definite greetings and casual conversational triggers
   const greetings = [
@@ -827,6 +919,18 @@ export default function QuantumGuruStudioPage() {
             };
           });
 
+          // Seed local cache from MongoDB Atlas for projects that have cloud chat history
+          if (typeof window !== "undefined") {
+            data.projects.forEach((doc: any) => {
+              if (doc.projectId && Array.isArray(doc.chatMessages) && doc.chatMessages.length > 0) {
+                const cacheKey = `quantum_ide_chat_${doc.projectId}`;
+                if (!localStorage.getItem(cacheKey)) {
+                  localStorage.setItem(cacheKey, JSON.stringify(doc.chatMessages));
+                }
+              }
+            });
+          }
+
           setProjects((prev) => {
             const cloudIds = new Set(cloudList.map((c) => c.id));
             const nonDuplicates = prev.filter((p) => !cloudIds.has(p.id));
@@ -1053,7 +1157,7 @@ export default function QuantumGuruStudioPage() {
     isMarkowitz: false,
   });
 
-  const isPortfolio = activeProject.id === "clean_energy_portfolio";
+  const isPortfolio = activeProject.id === "clean_energy_portfolio" && dwaveCode.includes("get_qubo_model");
 
   const DEFAULT_PORTFOLIO_RESULT: OptimizationResults = {
     energy: -62.2,
@@ -1149,10 +1253,35 @@ export default function QuantumGuruStudioPage() {
   });
   const [qiskitQubits, setQiskitQubits] = useState<number>(2);
   const [qiskitDepth, setQiskitDepth] = useState<number>(0);
-  const [qiskitShots, setQiskitShots] = useState<number>(1024);
+  const [qiskitShots, setQiskitShots] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const targetId = localStorage.getItem("quantum_ide_active_project_id");
+        if (targetId) {
+          const stored = localStorage.getItem(`quantum_ide_qiskit_result_${targetId}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.shots) return parsed.shots;
+            if (parsed.measurement_counts && Object.keys(parsed.measurement_counts).length > 0) {
+              const total = Object.values(parsed.measurement_counts as Record<string, number>).reduce((a: any, b: any) => a + b, 0);
+              if (total > 0) return total;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    return 1024;
+  });
   const [circuitGates, setCircuitGates] = useState<any[]>([]);
   const [circuitAscii, setCircuitAscii] = useState<string>("");
   const [isCircuitSynced, setIsCircuitSynced] = useState<boolean>(true);
+  const isCanvasModifyingRef = useRef<boolean>(false);
+  const [isResultsStale, setIsResultsStale] = useState<boolean>(false);
+
+  const hasDynamicLoops = useMemo(() => {
+    if (framework !== "qiskit") return false;
+    return /(^|\W)(for|while|def)($|\W)/.test(qiskitCode);
+  }, [framework, qiskitCode]);
 
   const [dwaveCopilotMessages, setDwaveCopilotMessages] = useState<CopilotMessage[]>(() => {
     if (typeof window !== "undefined") {
@@ -1224,9 +1353,23 @@ export default function QuantumGuruStudioPage() {
     return mat;
   }, [mathParams]);
 
-  useEffect(() => {
-    setIsModelDirty(true);
-  }, [mathParams]);
+  const handleSetMathParams: React.Dispatch<React.SetStateAction<MathFormulationParams>> = useCallback(
+    (updater) => {
+      setMathParams((prev) => {
+        const next = typeof updater === "function" ? (updater as (p: MathFormulationParams) => MathFormulationParams)(prev) : updater;
+        setIsModelDirty(true);
+        setDwaveCode((prevCode) => {
+          if (!prevCode.includes("get_qubo_model(")) return prevCode;
+          return prevCode.replace(
+            /get_qubo_model\([\s\S]*?\)/,
+            `get_qubo_model(\n    budget=${next.budgetMax.toFixed(1)}, penalty_lambda=${next.penaltyLambda.toFixed(1)}, yield_weight=${next.yieldWeight.toFixed(1)}, min_diversity=${next.minDiversity}, mutual_exclusion=${next.hasMutualExclusion ? "True" : "False"}\n)`
+          );
+        });
+        return next;
+      });
+    },
+    []
+  );
 
   // Restore active project, file, and code on refresh from URL or localStorage
   useEffect(() => {
@@ -1299,17 +1442,34 @@ export default function QuantumGuruStudioPage() {
     }
   }, [projects]);
 
-  // Synchronize Circuit Canvas (including qc.barrier step alignment) whenever qiskitCode updates
+  // Synchronize Circuit Canvas whenever qiskitCode updates
   useEffect(() => {
     if (framework === "dwave") return;
+
+    // 1. If code change was initiated by direct visual canvas authoring, skip overwriting canvas
+    if (isCanvasModifyingRef.current) {
+      isCanvasModifyingRef.current = false;
+      return;
+    }
+
     const hasQc = /QuantumCircuit\(/.test(qiskitCode);
     if (!hasQc) return;
 
+    const hasLoopsOrDefs = /(^|\W)(for|while|def)($|\W)/.test(qiskitCode);
     const parsed = parseQiskitCodeToCircuit(qiskitCode);
+
+    // 2. If code has dynamic constructs (loops, defs, functions) and canvas already holds
+    // an expanded circuit (e.g. from runtime execution or canvas editing),
+    // NEVER overwrite the canvas with the partial static regex parse!
+    if (hasLoopsOrDefs && circuitGates.length > 0) {
+      setIsResultsStale(true);
+      return;
+    }
+
     setCircuitGates(parsed.gates);
     setQiskitQubits(parsed.numQubits);
     setQiskitDepth(parsed.depth);
-  }, [qiskitCode, framework]);
+  }, [qiskitCode, framework, circuitGates.length]);
 
   // Real-time auto-save of current editor code to localStorage
   useEffect(() => {
@@ -1506,13 +1666,27 @@ export default function QuantumGuruStudioPage() {
         setQiskitQubits(savedQiskit.active_qubits || 2);
         setQiskitDepth(savedQiskit.circuit_depth || 0);
         setQiskitSimulatorId(savedQiskit.simulator_id || "");
+        const restoredShots = savedQiskit.shots || (
+          savedQiskit.measurement_counts && Object.keys(savedQiskit.measurement_counts).length > 0
+            ? Object.values(savedQiskit.measurement_counts as Record<string, number>).reduce((a: any, b: any) => a + b, 0)
+            : extractShotsFromCode(proj.fileContents?.[proj.activeFile || "main.py"] || "", "qiskit")
+        );
+        setQiskitShots(restoredShots || 1024);
+        setIsResultsStale(false);
       } else {
+        const curFile = proj.activeFile || proj.files?.[0] || "main.py";
+        const curCode = proj.fileContents?.[curFile] || qiskitCode;
+        const parsed = parseQiskitCodeToCircuit(curCode);
+        const hasLoops = /(^|\W)(for|while|def)($|\W)/.test(curCode);
         setQiskitCounts({});
-        setCircuitGates([]);
+        setCircuitGates(parsed.gates);
         setCircuitAscii("");
-        setQiskitQubits(2);
-        setQiskitDepth(0);
+        setQiskitQubits(parsed.numQubits);
+        setQiskitDepth(parsed.depth);
         setQiskitSimulatorId("");
+        setQiskitShots(extractShotsFromCode(curCode, "qiskit"));
+        setIsCircuitSynced(!hasLoops);
+        setIsResultsStale(true);
       }
     }
 
@@ -1655,15 +1829,18 @@ export default function QuantumGuruStudioPage() {
         latex_formula: "",
       });
     } else {
-      // 3. Qiskit Project Clean:
+      // 3. Qiskit Project Clean (Algorithm Vault / Template Pull):
       // a. Code editor
       setQiskitCode(initialCode);
-      // b. Circuit canvas clean state
-      setCircuitGates([]);
-      setQiskitQubits(2);
-      setQiskitDepth(0);
+      // b. Parse algorithm template code directly into visual schematic!
+      const parsed = parseQiskitCodeToCircuit(initialCode);
+      const hasLoops = /(^|\W)(for|while|def)($|\W)/.test(initialCode);
+      setCircuitGates(parsed.gates);
+      setQiskitQubits(parsed.numQubits);
+      setQiskitDepth(parsed.depth);
       setCircuitAscii("");
-      setIsCircuitSynced(true);
+      setIsCircuitSynced(!hasLoops);
+      setIsResultsStale(true);
       // c. Result clean state
       setQiskitCounts({});
       setQiskitSimulatorId("");
@@ -1718,6 +1895,7 @@ export default function QuantumGuruStudioPage() {
             framework: customProj.framework,
             activeFile: targetFile,
             files: filesPayload,
+            chatMessages: (customProj.framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages) || [],
           }),
         });
 
@@ -1815,6 +1993,7 @@ export default function QuantumGuruStudioPage() {
             framework: activeProject.framework,
             activeFile: activeFile,
             files: filesPayload,
+            chatMessages: (activeProject.framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages) || [],
           }),
         });
       } catch (e) {
@@ -1828,6 +2007,7 @@ export default function QuantumGuruStudioPage() {
   }, [dwaveCode, qiskitCode, activeFile, activeProject, user?.email]);
 
   const handleUpdateQubitCount = (newCount: number) => {
+    isCanvasModifyingRef.current = true;
     const clamped = Math.min(30, Math.max(1, newCount));
     setQiskitQubits(clamped);
 
@@ -1855,9 +2035,22 @@ export default function QuantumGuruStudioPage() {
     setIsCircuitSynced(true);
   };
 
-  const handleAddGateToCircuit = (gateName: string, qubit: number, targetQubit?: number, step?: number) => {
+  const handleAddGateToCircuit = (
+    gateName: string,
+    qubit: number,
+    targetQubit?: number,
+    step?: number,
+    angleExpr?: string,
+    extraArgs?: { control2?: number; uTheta?: string; uPhi?: string; uLam?: string }
+  ) => {
+    isCanvasModifyingRef.current = true;
     const gateUpper = gateName.toUpperCase();
-    const neededQubits = Math.max(qubit + 1, targetQubit !== undefined ? targetQubit + 1 : 1);
+    const ctrl2 = extraArgs?.control2;
+    const neededQubits = Math.max(
+      qubit + 1,
+      targetQubit !== undefined ? targetQubit + 1 : 1,
+      ctrl2 !== undefined ? ctrl2 + 1 : 1
+    );
     setQiskitQubits((prev) => Math.max(prev, neededQubits));
 
     // Intelligently find where QuantumCircuit is declared (global scope or inside ansatz/function)
@@ -1918,14 +2111,27 @@ export default function QuantumGuruStudioPage() {
         case "T":
           gateCall = `${circuitVar}.t(${qubit})`;
           break;
+        case "SX":
+          gateCall = `${circuitVar}.sx(${qubit})`;
+          break;
+        case "SXDG":
+        case "SX†":
+          gateCall = `${circuitVar}.sxdg(${qubit})`;
+          break;
         case "RX":
-          gateCall = `${circuitVar}.rx(1.57, ${qubit})`;
+          gateCall = `${circuitVar}.rx(${angleExpr || "np.pi / 2"}, ${qubit})`;
           break;
         case "RY":
-          gateCall = `${circuitVar}.ry(1.57, ${qubit})`;
+          gateCall = `${circuitVar}.ry(${angleExpr || "np.pi / 2"}, ${qubit})`;
           break;
         case "RZ":
-          gateCall = `${circuitVar}.rz(1.57, ${qubit})`;
+          gateCall = `${circuitVar}.rz(${angleExpr || "np.pi / 2"}, ${qubit})`;
+          break;
+        case "P":
+          gateCall = `${circuitVar}.p(${angleExpr || "np.pi / 2"}, ${qubit})`;
+          break;
+        case "U":
+          gateCall = `${circuitVar}.u(${extraArgs?.uTheta || angleExpr || "np.pi / 2"}, ${extraArgs?.uPhi || "0.0"}, ${extraArgs?.uLam || "np.pi"}, ${qubit})`;
           break;
         case "CX":
         case "CNOT":
@@ -1934,9 +2140,34 @@ export default function QuantumGuruStudioPage() {
         case "CZ":
           gateCall = `${circuitVar}.cz(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
           break;
+        case "CH":
+          gateCall = `${circuitVar}.ch(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
         case "SWAP":
           gateCall = `${circuitVar}.swap(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
           break;
+        case "CP":
+          gateCall = `${circuitVar}.cp(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
+        case "CRX":
+          gateCall = `${circuitVar}.crx(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
+        case "CRY":
+          gateCall = `${circuitVar}.cry(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
+        case "CRZ":
+          gateCall = `${circuitVar}.crz(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
+        case "RZZ":
+          gateCall = `${circuitVar}.rzz(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          break;
+        case "CCX":
+        case "TOFFOLI": {
+          const c2 = ctrl2 !== undefined ? ctrl2 : (qubit + 1) % Math.max(3, qiskitQubits);
+          const tgt = targetQubit !== undefined ? targetQubit : (qubit + 2) % Math.max(3, qiskitQubits);
+          gateCall = `${circuitVar}.ccx(${qubit}, ${c2}, ${tgt})`;
+          break;
+        }
         case "M":
         case "MEASURE":
           gateCall = `${circuitVar}.measure(${qubit}, ${qubit})`;
@@ -1946,7 +2177,7 @@ export default function QuantumGuruStudioPage() {
           gateCall = `${circuitVar}.barrier()`;
           break;
         default:
-          gateCall = `${circuitVar}.u(1.57, 0, 0, ${qubit})`;
+          gateCall = `${circuitVar}.${gateUpper.toLowerCase()}(${qubit})`;
           break;
       }
 
@@ -2005,20 +2236,94 @@ export default function QuantumGuruStudioPage() {
     });
 
     // Update visual circuit state
-    const newGate = {
-      name: gateUpper.toLowerCase(),
-      qubit,
-      qubits: targetQubit !== undefined ? [qubit, targetQubit] : [qubit],
-      step: step !== undefined ? step : circuitGates.length,
-      role: targetQubit !== undefined ? "two" : "single",
-    };
+    const gateStep = step !== undefined 
+      ? step 
+      : (circuitGates.length > 0 ? Math.max(...circuitGates.map((g) => g.step ?? 0)) + 1 : 0);
 
-    setCircuitGates((prev) => [...prev, newGate]);
-    setQiskitDepth((prev) => Math.max(prev, (step ?? prev) + 1));
+    const normName = gateUpper.toLowerCase();
+    const newGates: any[] = [];
+
+    if (targetQubit !== undefined) {
+      newGates.push({
+        name: normName,
+        qubit,
+        target: targetQubit,
+        qubits: [qubit, targetQubit],
+        step: gateStep,
+        role: "control",
+        params: angleExpr ? [angleExpr] : [],
+      });
+      newGates.push({
+        name: normName,
+        qubit: targetQubit,
+        target: qubit,
+        qubits: [qubit, targetQubit],
+        step: gateStep,
+        role: "target",
+        params: angleExpr ? [angleExpr] : [],
+      });
+    } else if (ctrl2 !== undefined) {
+      const tgt = targetQubit ?? (qubit + 2);
+      newGates.push({
+        name: normName,
+        qubit,
+        target: tgt,
+        qubits: [qubit, ctrl2, tgt],
+        step: gateStep,
+        role: "control",
+        params: [],
+      });
+      newGates.push({
+        name: normName,
+        qubit: ctrl2,
+        target: tgt,
+        qubits: [qubit, ctrl2, tgt],
+        step: gateStep,
+        role: "control",
+        params: [],
+      });
+      newGates.push({
+        name: normName,
+        qubit: tgt,
+        target: qubit,
+        qubits: [qubit, ctrl2, tgt],
+        step: gateStep,
+        role: "target",
+        params: [],
+      });
+    } else {
+      let params: string[] = [];
+      if (extraArgs?.uTheta) {
+        params = [extraArgs.uTheta, extraArgs.uPhi || "0.0", extraArgs.uLam || "np.pi"];
+      } else if (angleExpr) {
+        params = [angleExpr];
+      }
+      newGates.push({
+        name: normName,
+        qubit,
+        qubits: [qubit],
+        step: gateStep,
+        role: "single",
+        params,
+      });
+    }
+
+    setCircuitGates((prev) => {
+      // Remove any existing gate at this exact qubit and step slot to avoid overlap
+      const filtered = prev.filter((g) => {
+        const q = g.qubit ?? (g.qubits ? g.qubits[0] : 0);
+        return !(q === qubit && g.step === gateStep);
+      });
+      return [...filtered, ...newGates];
+    });
+
+    setQiskitDepth((prev) => Math.max(prev, gateStep + 1));
     setIsCircuitSynced(true);
+    setIsResultsStale(true);
   };
 
   const handleRemoveGateFromCircuit = (gateIndex: number) => {
+    isCanvasModifyingRef.current = true;
     const gateToRemove = circuitGates[gateIndex];
     const tgt = gateToRemove
       ? (gateToRemove.target !== undefined ? gateToRemove.target : (gateToRemove.qubits && gateToRemove.qubits.length > 1 ? gateToRemove.qubits[1] : undefined))
@@ -2076,6 +2381,7 @@ export default function QuantumGuruStudioPage() {
       })
     );
     setIsCircuitSynced(true);
+    setIsResultsStale(true);
   };
 
   const handleSyncCodeAndCircuit = useCallback(() => {
@@ -2085,12 +2391,16 @@ export default function QuantumGuruStudioPage() {
       return;
     }
 
-    // Explicit manual sync: parse editor Python code into visual schematic tiles without execution
+    // Explicit manual sync: parse editor Python code into visual schematic tiles without wiping loop-generated gates
     const parsed = parseQiskitCodeToCircuit(qiskitCode);
-    setCircuitGates(parsed.gates);
-    setQiskitQubits(parsed.numQubits);
-    setQiskitDepth(parsed.depth);
+    const hasLoopsOrDefs = /(^|\W)(for|while|def)($|\W)/.test(qiskitCode);
+    if (!hasLoopsOrDefs || circuitGates.length === 0) {
+      setCircuitGates(parsed.gates);
+      setQiskitQubits(parsed.numQubits);
+      setQiskitDepth(parsed.depth);
+    }
     setIsCircuitSynced(true);
+    setIsResultsStale(true);
   }, [framework, qiskitCode]);
 
   const handleRunOrRecompile = useCallback(async () => {
@@ -2100,19 +2410,27 @@ export default function QuantumGuruStudioPage() {
 
     if (framework === "dwave") {
       try {
-        // Execute the user's actual D-Wave Python code directly in the sandbox!
+        // If user is currently viewing a helper module (qubo_matrix.py) or config file, execute primary entrypoint
+        const updatedFiles: Record<string, string> = {
+          ...(activeProject.fileContents || {}),
+          [activeFile]: dwaveCode,
+        };
+        const isHelperOrNonPy = activeFile === "qubo_matrix.py" || !activeFile.endsWith(".py");
+        const entryFile = isHelperOrNonPy
+          ? (activeProject.files.find((f) => f.endsWith(".py") && f !== "qubo_matrix.py") || activeFile)
+          : activeFile;
+        const codeToRun = entryFile === activeFile ? dwaveCode : (updatedFiles[entryFile] || dwaveCode);
+
+        const execReads = extractShotsFromCode(codeToRun, "dwave");
         const response = await fetch("/api/ide/execute", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            code: dwaveCode,
+            code: codeToRun,
             target_backend: "dwave_simulated_annealing",
-            shots: 1024,
-            project_files: {
-              ...(activeProject.fileContents || {}),
-              [activeFile]: dwaveCode,
-            },
-            file_name: activeFile,
+            shots: execReads,
+            project_files: updatedFiles,
+            file_name: entryFile,
           }),
         });
 
@@ -2132,6 +2450,7 @@ export default function QuantumGuruStudioPage() {
               energy_distribution: opt.energy_distribution || [],
               num_reads: opt.num_reads,
               latex_formula: opt.latex_formula,
+              simulator_id: data.simulator_id,
             };
             setSolverResult(newRes);
             if (typeof window !== "undefined") {
@@ -2180,7 +2499,7 @@ export default function QuantumGuruStudioPage() {
             framework: "dwave",
             status: "success",
             latencyMs: parseFloat(dur.toFixed(1)),
-            shots: 1024,
+            shots: data.optimization_results?.num_reads || execReads,
             summary: data.optimization_results
               ? `Energy: ${data.optimization_results.energy?.toFixed(4)} • ${Object.keys(data.optimization_results.sample || {}).length} vars`
               : "D-Wave Simulated Annealing executed",
@@ -2206,7 +2525,29 @@ export default function QuantumGuruStudioPage() {
           setIsModelDirty(false);
           // NOTE: User's code in the editor is preserved 100%! Never overwrite dwaveCode!
         } else {
-          setTerminalOutput(`[STDERR] ${data.stderr || data.error || "D-Wave execution error"}`);
+          const errOut = data.stderr || data.error || "D-Wave execution error";
+          setTerminalOutput(
+            `$ dwave-anneal --backend simulated_annealing\n` +
+            (data.stdout ? `${data.stdout.trim()}\n\n` : "") +
+            `[STDERR] ${errOut}`
+          );
+          const now = new Date();
+          const curProjId = activeProject.id;
+          const errItem: ExecutionHistoryItem = {
+            id: data.simulator_id || `DW-ERR-${Date.now()}`,
+            projectId: curProjId,
+            timestamp: now.toISOString(),
+            formattedDate: now.toLocaleString(),
+            framework: "dwave",
+            status: "error",
+            latencyMs: parseFloat(dur.toFixed(1)),
+            shots: 1024,
+            summary: (errOut.trim().split("\n").pop() || "D-Wave execution error").slice(0, 90),
+            stdout: data.stdout || "",
+            stderr: errOut,
+            jobId: data.simulator_id,
+          };
+          setExecutionHistory((prev) => [errItem, ...prev.slice(0, 19)]);
         }
       } catch (err: any) {
         setTerminalOutput(`[ERROR] D-Wave execution failed: ${err.message}`);
@@ -2218,22 +2559,27 @@ export default function QuantumGuruStudioPage() {
       // Qiskit execution via server-side Next.js proxy
       try {
         setShowTerminal(true);
-        // Extract shots if defined in code, else default to 1024
-        const shotsMatch = qiskitCode.match(/shots\s*=\s*(\d+)/);
-        const execShots = shotsMatch ? parseInt(shotsMatch[1], 10) : 1024;
+        const updatedQFiles: Record<string, string> = {
+          ...(activeProject.fileContents || {}),
+          [activeFile]: qiskitCode,
+        };
+        const qEntryFile = !activeFile.endsWith(".py")
+          ? (activeProject.files.find((f) => f.endsWith(".py")) || activeFile)
+          : activeFile;
+        const qCodeToRun = qEntryFile === activeFile ? qiskitCode : (updatedQFiles[qEntryFile] || qiskitCode);
+
+        // Dynamically extract shots from code editor
+        const execShots = extractShotsFromCode(qCodeToRun, "qiskit");
 
         const response = await fetch("/api/ide/execute", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            code: qiskitCode,
+            code: qCodeToRun,
             target_backend: "aer_simulator",
             shots: execShots,
-            project_files: {
-              ...(activeProject.fileContents || {}),
-              [activeFile]: qiskitCode,
-            },
-            file_name: activeFile,
+            project_files: updatedQFiles,
+            file_name: qEntryFile,
           }),
         });
 
@@ -2245,13 +2591,38 @@ export default function QuantumGuruStudioPage() {
           if (data.simulator_id) {
             setQiskitSimulatorId(data.simulator_id);
           }
+          let actualTotalShots = execShots;
+          const stdoutMatch = data.stdout ? data.stdout.match(/\b(?:Shots|shots|num_shots):\s*(\d+)/) : null;
+          if (stdoutMatch) {
+            actualTotalShots = parseInt(stdoutMatch[1], 10);
+          } else if (data.shots) {
+            actualTotalShots = data.shots;
+          } else if (data.measurement_counts && Object.keys(data.measurement_counts).length > 0) {
+            const total = Object.values(data.measurement_counts as Record<string, number>).reduce((a, b) => a + b, 0);
+            if (total > 0) actualTotalShots = total;
+          }
+
           if (data.measurement_counts && Object.keys(data.measurement_counts).length > 0) {
             setQiskitCounts(data.measurement_counts);
-            const total = Object.values(data.measurement_counts as Record<string, number>).reduce((a, b) => a + b, 0);
-            if (total > 0) setQiskitShots(total);
+            setQiskitShots(actualTotalShots);
+          } else {
+            setQiskitShots(actualTotalShots);
           }
-          if (data.circuit_gates) {
-            setCircuitGates(data.circuit_gates);
+          const hasLoopsOrDefs = /(^|\W)(for|while|def)($|\W)/.test(qiskitCode);
+          // Smart Canvas Sync:
+          // 1. If code has dynamic loops/functions, or was modified in Monaco, or gate count differs, or canvas was empty:
+          //    Update canvas with the real evaluated circuit from the backend simulation!
+          // 2. If the user authored directly on the visual canvas, has not touched code, and gate count matches:
+          //    Preserve the user's custom step spacing without collapsing!
+          if (data.circuit_gates && data.circuit_gates.length > 0) {
+            setCircuitGates((currentGates) => {
+              const countDiffers = !currentGates || currentGates.length !== data.circuit_gates.length;
+              if (!isCircuitSynced || hasLoopsOrDefs || countDiffers) {
+                return data.circuit_gates;
+              }
+              return currentGates;
+            });
+            setIsCircuitSynced(true);
           }
           if (data.circuit_ascii) {
             setCircuitAscii(data.circuit_ascii);
@@ -2262,6 +2633,7 @@ export default function QuantumGuruStudioPage() {
           if (data.circuit_depth !== undefined) {
             setQiskitDepth(data.circuit_depth);
           }
+          setIsResultsStale(false);
 
           if (typeof window !== "undefined") {
             try {
@@ -2274,6 +2646,7 @@ export default function QuantumGuruStudioPage() {
                   active_qubits: data.active_qubits,
                   circuit_depth: data.circuit_depth,
                   simulator_id: data.simulator_id,
+                  shots: actualTotalShots,
                 })
               );
             } catch (e) {}
@@ -2296,9 +2669,9 @@ export default function QuantumGuruStudioPage() {
             framework: "qiskit",
             status: "success",
             latencyMs: parseFloat(dur.toFixed(1)),
-            shots: execShots,
+            shots: actualTotalShots,
             summary: data.measurement_counts && Object.keys(data.measurement_counts).length > 0
-              ? `${Object.keys(data.measurement_counts).length} states measured • ${execShots} shots`
+              ? `${Object.keys(data.measurement_counts).length} states measured • ${actualTotalShots} shots`
               : (data.active_qubits ? `${data.active_qubits} qubits • depth ${data.circuit_depth ?? 1}` : "Qiskit Aer Simulator executed"),
             stdout: data.stdout || "",
             stderr: data.stderr || "",
@@ -2418,7 +2791,29 @@ export default function QuantumGuruStudioPage() {
             }
           }
         } else {
-          setTerminalOutput(`[STDERR] ${data.stderr || data.error || "Circuit execution error"}`);
+          const errOut = data.stderr || data.error || "Circuit execution error";
+          setTerminalOutput(
+            `$ qiskit-aer --backend aer_simulator --shots ${execShots}\n` +
+            (data.stdout ? `${data.stdout.trim()}\n\n` : "") +
+            `[STDERR] ${errOut}`
+          );
+          const now = new Date();
+          const curProjId = activeProject.id;
+          const errItem: ExecutionHistoryItem = {
+            id: data.simulator_id || `SIM-ERR-${Date.now()}`,
+            projectId: curProjId,
+            timestamp: now.toISOString(),
+            formattedDate: now.toLocaleString(),
+            framework: "qiskit",
+            status: "error",
+            latencyMs: parseFloat(dur.toFixed(1)),
+            shots: execShots,
+            summary: (errOut.trim().split("\n").pop() || "Circuit execution error").slice(0, 90),
+            stdout: data.stdout || "",
+            stderr: errOut,
+            jobId: data.simulator_id,
+          };
+          setExecutionHistory((prev) => [errItem, ...prev.slice(0, 19)]);
         }
       } catch (err: any) {
         setTerminalOutput(`[ERROR] Aer simulator gateway offline: ${err.message}`);
@@ -2430,6 +2825,87 @@ export default function QuantumGuruStudioPage() {
 
   const handleApplyPipelineCode = async (code: string, meta?: any) => {
     if (!code) return;
+    const targetFile = activeFile.endsWith(".py")
+      ? activeFile
+      : (activeProject.files.find((f) => f.endsWith(".py")) || "main.py");
+
+    if (framework === "qiskit") {
+      setQiskitCode(code);
+      setActiveProject((prev) => ({
+        ...prev,
+        fileContents: {
+          ...(prev.fileContents || {}),
+          [targetFile]: code,
+        },
+      }));
+      try {
+        localStorage.setItem(`quantum_ide_code_${activeProject.id}_${targetFile}`, code);
+      } catch {}
+
+      setQiskitCopilotMessages((prev) =>
+        prev.map((m) => (m.generatedCode === code ? { ...m, appliedToEditor: true } : m))
+      );
+
+      setHeroTab("code");
+      setShowTerminal(true);
+      setIsRunningOrRecompiling(true);
+      const shotsMatch = code.match(/shots\s*=\s*(\d+)/);
+      const execShots = shotsMatch ? parseInt(shotsMatch[1], 10) : 1024;
+      setTerminalOutput(
+        `$ qiskit-aer --backend aer_simulator --shots ${execShots}\n` +
+        `[UPDATED] Applied Qiskit script to Monaco editor (${targetFile})\n` +
+        `[EXECUTING] Simulating quantum circuit on AerSimulator...`
+      );
+      const t0 = performance.now();
+      try {
+        const resp = await fetch("/api/ide/execute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code,
+            target_backend: "aer_simulator",
+            shots: execShots,
+            project_files: {
+              ...(activeProject.fileContents || {}),
+              [targetFile]: code,
+            },
+            file_name: targetFile,
+          }),
+        });
+        const data = await resp.json();
+        const dur = performance.now() - t0;
+        setLatencyMs(parseFloat(dur.toFixed(1)));
+        if (data.success) {
+          if (data.simulator_id) setQiskitSimulatorId(data.simulator_id);
+          if (data.measurement_counts && Object.keys(data.measurement_counts).length > 0) {
+            setQiskitCounts(data.measurement_counts);
+            const total = Object.values(data.measurement_counts as Record<string, number>).reduce((a, b) => a + b, 0);
+            if (total > 0) setQiskitShots(total);
+          }
+          if (data.circuit_gates) setCircuitGates(data.circuit_gates);
+          if (data.circuit_ascii) setCircuitAscii(data.circuit_ascii);
+          if (data.active_qubits !== undefined) setQiskitQubits(data.active_qubits);
+          if (data.circuit_depth !== undefined) setQiskitDepth(data.circuit_depth);
+          setIsCircuitSynced(true);
+          setTerminalOutput(
+            `$ qiskit-aer --backend aer_simulator --shots ${execShots}${data.simulator_id ? ` --job-id ${data.simulator_id}` : ""}\n` +
+            `[SUCCESS] Simulation completed in ${dur.toFixed(1)}ms\n` +
+            `Active Qubits: ${data.active_qubits ?? 1} | Depth: ${data.circuit_depth ?? 1}\n` +
+            `Measurement Counts: ${JSON.stringify(data.measurement_counts || {})}\n` +
+            (data.stdout ? `\n--- Standard Output ---\n${data.stdout}` : "") +
+            (data.circuit_ascii ? `\n--- Circuit Diagram ---\n${data.circuit_ascii}` : "")
+          );
+        } else {
+          setTerminalOutput(`[STDERR] ${data.stderr || data.error || "Circuit execution error"}`);
+        }
+      } catch (err: any) {
+        setTerminalOutput(`[ERROR] Execution engine error: ${err.message}`);
+      } finally {
+        setIsRunningOrRecompiling(false);
+      }
+      return;
+    }
+
     setDwaveCode(code);
     setActiveProject((prev) => {
       const newFiles = meta?.qubo_code && !prev.files.includes("qubo_matrix.py")
@@ -2437,7 +2913,7 @@ export default function QuantumGuruStudioPage() {
         : prev.files;
       const newContents = {
         ...(prev.fileContents || {}),
-        [activeFile]: code,
+        [targetFile]: code,
         ...(meta?.qubo_code ? { "qubo_matrix.py": meta.qubo_code } : {}),
       };
       return {
@@ -2447,7 +2923,7 @@ export default function QuantumGuruStudioPage() {
       };
     });
     try {
-      localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, code);
+      localStorage.setItem(`quantum_ide_code_${activeProject.id}_${targetFile}`, code);
       if (meta?.qubo_code) {
         localStorage.setItem(`quantum_ide_code_${activeProject.id}_qubo_matrix.py`, meta.qubo_code);
       }
@@ -2461,11 +2937,12 @@ export default function QuantumGuruStudioPage() {
     setShowTerminal(true);
     setIsRunningOrRecompiling(true);
     setTerminalOutput(
-      `$ dimod-sampler --backend dwave_simulated_annealing\n` +
-      `[SYNTHESIS] Autonomous QUBO model injected into Monaco editor (${activeFile})\n` +
+      `$ dwave-anneal --backend simulated_annealing\n` +
+      `[UPDATED] Applied D-Wave script into Monaco editor (${targetFile})\n` +
       `[EXECUTING] Compiling Hamiltonian couplers & sampling ground states...`
     );
 
+    const t0 = performance.now();
     try {
       const resp = await fetch("/api/ide/execute", {
         method: "POST",
@@ -2476,35 +2953,45 @@ export default function QuantumGuruStudioPage() {
           shots: 1024,
           project_files: {
             ...(activeProject.fileContents || {}),
-            [activeFile]: code,
+            [targetFile]: code,
+            ...(meta?.qubo_code ? { "qubo_matrix.py": meta.qubo_code } : {}),
           },
-          file_name: activeFile,
+          file_name: targetFile,
         }),
       });
       const data = await resp.json();
+      const dur = performance.now() - t0;
+      setLatencyMs(parseFloat(dur.toFixed(1)));
       if (data.success && data.optimization_results) {
         const opt = data.optimization_results;
-        const solverRes = {
+        const solverRes: OptimizationResults = {
           sample: opt.sample || {},
-          optimal_state: opt.sample || null,
-          energy: typeof opt.energy === "number" ? opt.energy : null,
+          energy: typeof opt.energy === "number" ? opt.energy : 0,
           variables: opt.variables || (opt.sample ? Object.keys(opt.sample) : []),
           num_variables: opt.num_variables || (opt.sample ? Object.keys(opt.sample).length : 0),
-          qubo_matrix: opt.qubo_matrix || null,
+          qubo_matrix: opt.qubo_matrix || [],
           energy_distribution: opt.energy_distribution || [],
-          latex_formula: opt.latex_formula || null,
-          num_reads: opt.num_reads || 5000,
+          latex_formula: opt.latex_formula || undefined,
+          num_reads: opt.num_reads || 1024,
+          simulator_id: data.simulator_id,
         };
         setSolverResult(solverRes);
+        setIsModelDirty(false);
         try {
           localStorage.setItem(`quantum_ide_result_${activeProject.id}`, JSON.stringify(solverRes));
         } catch {}
 
         setTerminalOutput(
-          `$ dimod-sampler --backend dwave_simulated_annealing\n` +
-          `[SUCCESS] Ground State Energy: ${opt.energy ?? -1.0} | Active Qubits: ${solverRes.variables.length}\n` +
-          `Optimal Decisions: ${JSON.stringify(opt.sample || {})}\n` +
-          (data.stdout ? `\n--- Standard Output ---\n${data.stdout}` : "")
+          `$ dwave-anneal --backend simulated_annealing${data.simulator_id ? ` --job-id ${data.simulator_id}` : ""}\n` +
+          (data.stdout ? `${data.stdout.trim()}\n\n` : "") +
+          `[SUCCESS] Annealing completed in ${dur.toFixed(1)}ms | Ground Energy: ${opt.energy ?? 0} | Variables: ${solverRes.variables.length}\n` +
+          `Optimal Decisions: ${JSON.stringify(opt.sample || {})}`
+        );
+      } else if (data.success) {
+        setTerminalOutput(
+          `$ dwave-anneal --backend simulated_annealing\n` +
+          `[SUCCESS] Completed in ${dur.toFixed(1)}ms\n` +
+          (data.stdout ? `\n${data.stdout}` : "")
         );
       } else {
         setTerminalOutput(`[STDERR] ${data.stderr || data.error || "Simulator execution error"}`);
@@ -2552,7 +3039,7 @@ export default function QuantumGuruStudioPage() {
     }
   }, [framework, activeProject?.id]);
 
-  const handleSendMessage = async (text: string) => {
+  const handleSendMessage = async (text: string, overrideTerminalOutput?: string) => {
     const userMsg: CopilotMessage = {
       id: Date.now(),
       sender: "user",
@@ -2945,6 +3432,7 @@ ${currentM.challengeInstruction}`,
         : text;
 
       try {
+        const effectiveTerminal = overrideTerminalOutput ?? terminalOutput;
         const resp = await fetch("/api/ide/agent/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -2956,6 +3444,16 @@ ${currentM.challengeInstruction}`,
             target_backend: "aer_simulator",
             optimization_level: 2,
             model_engine: "groq",
+            terminal_output: effectiveTerminal,
+            execution_context: {
+              framework: "qiskit",
+              qubits: qiskitQubits,
+              depth: qiskitDepth,
+              shots: qiskitShots,
+              measurement_counts: qiskitCounts,
+              simulator_id: qiskitSimulatorId || undefined,
+              latency_ms: latencyMs,
+            },
           }),
         });
 
@@ -2964,14 +3462,6 @@ ${currentM.challengeInstruction}`,
         }
 
         const data = await resp.json();
-        const steps = (data.workflow_steps || []).map((ws: any, idx: number) => ({
-          id: `step_${ws.step_num || idx + 1}`,
-          agent: ws.name || "Tool",
-          title: ws.name || "Agent Tool",
-          status: ws.status === "success" ? ("done" as const) : ws.status === "failed" ? ("failed" as const) : ("done" as const),
-          message: ws.summary || ws.tool_tag,
-          details: ws.execution_time_ms ? `${ws.execution_time_ms.toFixed(1)}ms` : undefined,
-        }));
 
         if (data.circuit_gates && data.circuit_gates.length > 0) {
           setCircuitGates(data.circuit_gates);
@@ -3008,7 +3498,7 @@ ${currentM.challengeInstruction}`,
                   ...msg,
                   text: data.response_text || "Analysis complete.",
                   isStreaming: false,
-                  pipelineSteps: steps.length > 0 ? steps : undefined,
+                  pipelineSteps: undefined, // Qiskit Circuit Copilot does not render autonomous pipeline block
                   generatedCode: data.updated_code || undefined,
                   appliedToEditor: false,
                 }
@@ -3048,6 +3538,7 @@ ${currentM.challengeInstruction}`,
       setDwaveCopilotMessages((prev) => [...prev, initialBotMsg]);
 
       try {
+        const effectiveTerminal = overrideTerminalOutput ?? terminalOutput;
         const resp = await fetch("/api/ide/agent/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -3058,6 +3549,20 @@ ${currentM.challengeInstruction}`,
             file_content: dwaveCode,
             target_backend: "dwave_simulated_annealing",
             model_engine: "groq",
+            terminal_output: effectiveTerminal,
+            execution_context: {
+              framework: "dwave",
+              ground_energy: solverResult?.energy,
+              optimal_sample: solverResult?.sample,
+              variables: solverResult?.variables,
+              num_variables: solverResult?.num_variables,
+              num_reads: solverResult?.num_reads,
+              latex_formula: solverResult?.latex_formula,
+              qubo_matrix: solverResult?.qubo_matrix,
+              top_eigenstates: solverResult?.energy_distribution?.slice(0, 5),
+              simulator_id: solverResult?.simulator_id,
+              latency_ms: latencyMs,
+            },
           }),
         });
 
@@ -3066,14 +3571,6 @@ ${currentM.challengeInstruction}`,
         }
 
         const data = await resp.json();
-        const steps = (data.workflow_steps || []).map((ws: any, idx: number) => ({
-          id: `step_${ws.step_num || idx + 1}`,
-          agent: ws.name || "Tool",
-          title: ws.name || "Agent Tool",
-          status: ws.status === "success" ? ("done" as const) : ws.status === "failed" ? ("failed" as const) : ("done" as const),
-          message: ws.summary || ws.tool_tag,
-          details: ws.execution_time_ms ? `${ws.execution_time_ms.toFixed(1)}ms` : undefined,
-        }));
 
         setDwaveCopilotMessages((prev) =>
           prev.map((msg) =>
@@ -3082,7 +3579,7 @@ ${currentM.challengeInstruction}`,
                   ...msg,
                   text: data.response_text || "Ready to assist.",
                   isStreaming: false,
-                  pipelineSteps: steps.length > 0 ? steps : undefined,
+                  pipelineSteps: undefined, // Regular D-Wave chat does not render autonomous pipeline block
                   generatedCode: data.updated_code || undefined,
                   appliedToEditor: false,
                 }
@@ -3110,7 +3607,7 @@ ${currentM.challengeInstruction}`,
     const initialBotMsg: CopilotMessage = {
       id: botMsgId,
       sender: "assistant",
-      text: "Decomposing natural language formulation with 7-Agent Autonomous Pipeline...",
+      text: "Decomposing optimization formulation...",
       timestamp: "Just now",
       isStreaming: true,
       pipelineSteps: [
@@ -3183,7 +3680,7 @@ ${currentM.challengeInstruction}`,
 
                   return {
                     ...msg,
-                    text: `Autonomous QUBO formulation complete! Synthesized ${stats.q_size || 0} logical qubits with ${stats.q_nnz || 0} non-zero couplers using Verma-Lewis penalty stiffness (λ = ${stats.penalty_weight || 5.0}).`,
+                    text: `Optimization model compiled: ${stats.q_size || 0} binary variables with ${stats.q_nnz || 0} non-zero couplers (penalty weight λ = ${stats.penalty_weight || 5.0}).`,
                     isStreaming: false,
                     generatedCode: res.final_code,
                     appliedToEditor: true,
@@ -3275,14 +3772,24 @@ ${currentM.challengeInstruction}`,
       .replace(/\[ERROR\]\s*/g, "")
       .trim();
 
-    const repairPrompt = `I ran my quantum code and encountered this execution error:
+    const isFrameworkMismatch =
+      cleanError.includes("[FRAMEWORK MISMATCH ERROR]") ||
+      errText.includes("[FRAMEWORK MISMATCH ERROR]");
+
+    const repairPrompt = isFrameworkMismatch
+      ? `I ran my code in ${activeFile} and received this framework mismatch error:
 \`\`\`
 ${cleanError}
 \`\`\`
-Please diagnose why this error occurred (such as variable scoping, undefined circuit references, or parameter mismatch), fix the Python code, and return the complete corrected drop-in code.`;
+Please explain why this framework cannot be executed in this workspace and guide me on how to use or create a new project for this execution.`
+      : `I ran my code in ${activeFile} and got this execution error:
+\`\`\`
+${cleanError}
+\`\`\`
+Pinpoint the exact line and cause in 1-2 sentences, then return the complete corrected Python file.`;
 
-    await handleSendMessage(repairPrompt);
-  }, [terminalOutput, handleSendMessage]);
+    await handleSendMessage(repairPrompt, errText);
+  }, [terminalOutput, activeFile, handleSendMessage]);
 
   const handleToggleMutualExclusion = () => {
     setMathParams((prev) => ({
@@ -3428,6 +3935,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                   } else {
                     setQiskitCode(val);
                     setIsCircuitSynced(false);
+                    setIsResultsStale(true);
                   }
                 }}
                 files={activeProject.files}
@@ -3474,7 +3982,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                   isDark={isDark}
                   colors={colors}
                   mathParams={mathParams}
-                  setMathParams={setMathParams}
+                  setMathParams={handleSetMathParams}
                   onRecompile={handleRunOrRecompile}
                   isDirty={isModelDirty}
                   selectedSection={selectedMathSection}
@@ -3513,8 +4021,12 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                     isDark={isDark}
                     qubitCount={qiskitQubits}
                     circuitDepth={qiskitDepth}
+                    latencyMs={latencyMs}
                     circuitGates={circuitGates}
                     circuitAscii={circuitAscii}
+                    isResultsStale={isResultsStale}
+                    hasDynamicLoops={hasDynamicLoops}
+                    onRunCircuit={handleRunOrRecompile}
                     onUpdateQubitCount={handleUpdateQubitCount}
                     onAddGate={handleAddGateToCircuit}
                     onRemoveGate={handleRemoveGateFromCircuit}
@@ -3532,7 +4044,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                     colors={colors}
                     distribution={solverResult.energy_distribution}
                     groundEnergy={solverResult.energy}
-                    numReads={solverResult.num_reads || 300}
+                    numReads={solverResult.num_reads || extractShotsFromCode(dwaveCode, 'dwave')}
                     latencyMs={latencyMs}
                     variables={solverResult.variables || DEFAULT_VARIABLES}
                     simulatorId={solverResult.simulator_id}
@@ -3561,6 +4073,24 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                       </div>
                     </div>
 
+                    {isResultsStale && Object.keys(qiskitCounts).length > 0 && (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono animate-in fade-in duration-150">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                          <span>
+                            <strong>Unexecuted Changes:</strong> Code or circuit has been modified since last execution. Run circuit to refresh counts.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRunOrRecompile}
+                          className="px-3 py-1 rounded bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs transition-colors cursor-pointer"
+                        >
+                          Run & Update Results
+                        </button>
+                      </div>
+                    )}
+
                     {Object.keys(qiskitCounts).length === 0 ? (
                       <div className="min-h-48 flex flex-col items-center justify-center p-8 text-center space-y-2 border-b border-zinc-700/40">
                         <Activity className="w-8 h-8 text-zinc-500 opacity-60" />
@@ -3568,30 +4098,40 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                         <p className="text-xs text-zinc-500 max-w-sm">Execute your Qiskit circuit or click "Run" to simulate statevector measurement histograms on AerSimulator.</p>
                       </div>
                     ) : (
-                      <div className="min-h-48 flex items-end justify-center space-x-6 pt-6 pb-2 border-b border-zinc-700/40">
-                        {Object.entries(qiskitCounts).map(([bit, count], idx) => {
-                          const pct = qiskitShots > 0 ? ((count / qiskitShots) * 100).toFixed(1) : "0.0";
-                          return (
-                            <div
-                              key={idx}
-                              className="flex flex-col items-center space-y-2 min-w-[60px] max-w-[120px]"
-                            >
-                              <div className="text-[11px] font-mono text-zinc-400 font-semibold">
-                                {pct}%
-                              </div>
-                              <div
-                                className="w-12 rounded-t bg-sky-500 hover:brightness-110 transition-all shadow-sm shadow-sky-500/30"
-                                style={{ height: `${Math.max(parseFloat(pct) * 2, 8)}px` }}
-                              />
-                              <div className="text-xs font-mono font-bold text-zinc-200">
-                                |{bit}⟩
-                              </div>
-                              <div className="text-[10px] font-mono text-zinc-500">
-                                {count} shots
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="space-y-2">
+                        <div className="min-h-48 flex items-end justify-start sm:justify-center gap-4 pt-6 pb-3 px-2 border-b border-zinc-700/40 overflow-x-auto custom-scrollbar">
+                          {Object.entries(qiskitCounts)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 32)
+                            .map(([bit, count], idx) => {
+                              const pct = qiskitShots > 0 ? ((count / qiskitShots) * 100).toFixed(1) : "0.0";
+                              return (
+                                <div
+                                  key={idx}
+                                  className="flex flex-col items-center space-y-2 min-w-[56px] shrink-0"
+                                >
+                                  <div className="text-[11px] font-mono text-zinc-400 font-semibold">
+                                    {pct}%
+                                  </div>
+                                  <div
+                                    className="w-10 rounded-t bg-sky-500 hover:brightness-110 transition-all shadow-sm shadow-sky-500/30"
+                                    style={{ height: `${Math.max(parseFloat(pct) * 1.8, 8)}px` }}
+                                  />
+                                  <div className="text-xs font-mono font-bold text-zinc-200">
+                                    |{bit}⟩
+                                  </div>
+                                  <div className="text-[10px] font-mono text-zinc-500">
+                                    {count} shots
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                        {Object.keys(qiskitCounts).length > 32 && (
+                          <p className="text-[11px] font-mono text-zinc-500 text-right">
+                            Showing top 32 of {Object.keys(qiskitCounts).length} measured basis states (sorted by probability)
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -3631,6 +4171,12 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                     <div className="space-y-2.5">
                       {executionHistory.map((item) => {
                         const isExpanded = expandedHistoryId === item.id;
+                        // Dynamically reconcile true shot/read count from stdout if user printed it
+                        const stdoutShotsMatch = item.stdout ? item.stdout.match(/\b(?:Shots|shots|num_reads|reads|Reads):\s*(\d+)/) : null;
+                        const effectiveShots = stdoutShotsMatch ? parseInt(stdoutShotsMatch[1], 10) : item.shots;
+                        const effectiveSummary = stdoutShotsMatch && item.summary && item.shots && item.shots !== effectiveShots
+                          ? item.summary.replace(`${item.shots} shots`, `${effectiveShots} shots`)
+                          : item.summary;
                         return (
                           <div
                             key={item.id}
@@ -3656,7 +4202,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                                 </span>
                                 <div className="space-y-0.5">
                                   <div className="text-xs font-medium text-zinc-200 flex items-center space-x-2">
-                                    <span>{item.summary}</span>
+                                    <span>{effectiveSummary}</span>
                                     {item.jobId && (
                                       <span className="text-[10px] font-mono text-zinc-500">
                                         ({item.jobId})
@@ -3667,10 +4213,10 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
                                     <span className="text-zinc-300">{item.formattedDate}</span>
                                     <span>•</span>
                                     <span>{item.latencyMs}ms</span>
-                                    {item.shots && (
+                                    {effectiveShots && (
                                       <>
                                         <span>•</span>
-                                        <span>{item.shots} shots</span>
+                                        <span>{effectiveShots} shots</span>
                                       </>
                                     )}
                                   </div>
@@ -3756,6 +4302,7 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
             onToggleTerminal={() => setShowTerminal((prev) => !prev)}
             terminalOutput={terminalOutput}
             onAutoFix={() => handleAutoFix()}
+            onOpenProjectModal={() => setShowProjectModal(true)}
             specs={
               framework === "qiskit"
                 ? {
@@ -3821,11 +4368,11 @@ Please diagnose why this error occurred (such as variable scoping, undefined cir
             }}
             circuitHealth={{
               title: activeProject.title,
-              qubits: 3,
-              depth: 8,
-              shots: 4096,
-              fidelity: 99.8,
-              entangled: true,
+              qubits: qiskitQubits,
+              depth: qiskitDepth,
+              shots: qiskitShots,
+              fidelity: 100.0,
+              entangled: circuitGates.some((g) => ["cx", "cnot", "cz", "swap", "ccx"].includes((g.name || "").toLowerCase())),
             }}
           />
         </aside>

@@ -135,9 +135,8 @@ function CodeBlockRunner({ code, language, suggestedSolver, onExecute, onUpdateE
     const handleCodeExecution = async () => {
         if (onExecute) onExecute();
         try {
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8002';
             const executionCode = code.replace(/sampling_compiler/g, "autoqubo");
-            const res = await fetch(`${backendUrl}/v2/execute`, {
+            const res = await fetch("/api/developer/execute", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: executionCode })

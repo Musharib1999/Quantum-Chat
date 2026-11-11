@@ -192,7 +192,7 @@ export function AlgorithmStudioModal({
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                All (26)
+                All ({algorithms.length})
               </button>
               <button
                 type="button"
@@ -208,7 +208,7 @@ export function AlgorithmStudioModal({
                 }`}
               >
                 <Cpu className="w-3 h-3" />
-                <span>D-Wave (12)</span>
+                <span>D-Wave ({algorithms.filter((a) => (a.primaryFramework || a.framework) === "dwave").length})</span>
               </button>
               <button
                 type="button"
@@ -224,7 +224,7 @@ export function AlgorithmStudioModal({
                 }`}
               >
                 <Layers className="w-3 h-3" />
-                <span>Qiskit (14)</span>
+                <span>Qiskit ({algorithms.filter((a) => (a.primaryFramework || a.framework) === "qiskit").length})</span>
               </button>
             </div>
           </div>

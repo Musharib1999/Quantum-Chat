@@ -99,7 +99,7 @@ export function FormulationCanvas({
 
         <div className="flex items-center space-x-3">
           <span className="text-[11px] font-mono" style={{ color: colors.textMuted }}>
-            {isPortfolioProblem ? "42 Variables" : `${variables && variables.length > 0 ? variables.length : 1} Variable${variables && variables.length === 1 ? "" : "s"}`} · Advantage QPU
+            {`${variables && variables.length > 0 ? variables.length : (isPortfolioProblem ? 4 : 1)} Variable${variables && variables.length === 1 ? "" : "s"}`} · Simulated Annealer
           </span>
           <button
             onClick={handleCopy}

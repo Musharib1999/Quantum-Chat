@@ -7,11 +7,33 @@ import sys
 import time
 import httpx
 import json
+from contextlib import asynccontextmanager
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Union, Dict, Any, List
+
+try:
+    from gateway_security.service_auth import (
+        verify_token,
+        AuthConfig,
+        AuthError,
+        is_public_path,
+        HEADER_NAME as AUTH_HEADER_NAME,
+    )
+    from gateway_security.quota_manager import quota_manager
+except ImportError:
+    from v3.api.gateway_security.service_auth import (
+        verify_token,
+        AuthConfig,
+        AuthError,
+        is_public_path,
+        HEADER_NAME as AUTH_HEADER_NAME,
+    )
+    from v3.api.gateway_security.quota_manager import quota_manager
 
 # Add parent directory to path so config imports resolve properly
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -64,11 +86,36 @@ import asyncio as _asyncio
 # Limits simultaneous optimization pipeline executions to prevent RunPod
 # VRAM saturation. Tune via MAX_PIPELINE_SLOTS env var.
 # A100 80GB (FP8): 8 slots. A100 40GB (FP8): 4 slots. L40S: 3 slots.
-_MAX_SLOTS = int(os.environ.get("MAX_PIPELINE_SLOTS", "1"))
+_MAX_SLOTS = int(os.environ.get("MAX_PIPELINE_SLOTS", "4"))
 pipeline_semaphore = _asyncio.Semaphore(_MAX_SLOTS)
 
 # Engine URL for internal proxying
 ENGINE_URL = os.environ.get("QUANTUM_ENGINE_URL", "http://localhost:8003")
+
+# =========================================================================
+# SHARED CONNECTION POOL & LIFESPAN
+# =========================================================================
+_shared_client: Optional[httpx.AsyncClient] = None
+
+def get_http_client() -> httpx.AsyncClient:
+    global _shared_client
+    if _shared_client is None or _shared_client.is_closed:
+        _shared_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(180.0, connect=10.0),
+            limits=httpx.Limits(max_keepalive_connections=25, max_connections=100)
+        )
+    return _shared_client
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Eagerly initialize connection pool on startup
+    get_http_client()
+    if db_client:
+        quota_manager.set_db(db_client)
+    yield
+    global _shared_client
+    if _shared_client and not _shared_client.is_closed:
+        await _shared_client.aclose()
 
 # =========================================================================
 # APP SETUP
@@ -77,6 +124,7 @@ app = FastAPI(
     title="OptiOS API Gateway",
     description="Decoupled API gateway routing user requests to the local services.",
     version="2.0.0",
+    lifespan=lifespan,
 )
 
 # CORS: restricted to known frontend origins.
@@ -97,6 +145,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def gateway_auth_and_quota_middleware(request: Request, call_next):
+    # Public endpoints (health, root, CORS preflight) pass through unconditionally
+    if is_public_path(request.url.path, request.method):
+        return await call_next(request)
+
+    auth_config = AuthConfig.from_env()
+    if auth_config.enforce:
+        token = request.headers.get(AUTH_HEADER_NAME)
+        if not token:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Unauthorized: missing X-Gateway-Auth service token."}
+            )
+        try:
+            identity = verify_token(token, auth_config.secrets)
+            request.state.identity = identity
+        except AuthError as e:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": f"Unauthorized: {e.message}"}
+            )
+
+    return await call_next(request)
+
 
 # =========================================================================
 # REQUEST / RESPONSE MODELS
@@ -538,7 +612,7 @@ async def direct_model_stream(request: DirectModelRequest, background_tasks: Bac
     async def event_generator():
         async with pipeline_semaphore:
             try:
-                async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0), verify=False) as client:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0)) as client:
                     async with client.stream(
                         "POST",
                         f"{ENGINE_URL}/engine/direct-model/stream",
@@ -578,7 +652,7 @@ async def gate_model_stream(request: GateModelRequest, background_tasks: Backgro
     async def event_generator():
         async with pipeline_semaphore:
             try:
-                async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0), verify=False) as client:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0)) as client:
                     async with client.stream(
                         "POST",
                         f"{ENGINE_URL}/engine/gate-model/stream",
@@ -784,6 +858,10 @@ class IDEAgentChatRequest(BaseModel):
     optimization_level: int = 2
     model_engine: str = "groq"
     history: list[dict[str, str]] = Field(default_factory=list)
+    terminal_output: str = ""
+    execution_context: Dict[str, Any] = Field(default_factory=dict)
+    terminal_output: str = ""
+    execution_context: Dict[str, Any] = Field(default_factory=dict)
 
 from engine.agent import global_quantum_agent
 from fastapi.responses import StreamingResponse
@@ -803,7 +881,9 @@ async def ide_agent_chat_endpoint(req: IDEAgentChatRequest):
             file_content=req.file_content,
             target_backend=req.target_backend,
             optimization_level=req.optimization_level,
-            model_engine=req.model_engine
+            model_engine=req.model_engine,
+            terminal_output=req.terminal_output,
+            execution_context=req.execution_context
         )
         return res
     except Exception as e:
@@ -825,7 +905,9 @@ async def ide_agent_stream_endpoint(req: IDEAgentChatRequest):
                 file_content=req.file_content,
                 target_backend=req.target_backend,
                 optimization_level=req.optimization_level,
-                model_engine=req.model_engine
+                model_engine=req.model_engine,
+                terminal_output=req.terminal_output,
+                execution_context=req.execution_context
             ):
                 data = json.dumps(event.model_dump())
                 yield f"data: {data}\n\n"
@@ -849,18 +931,18 @@ import asyncio
 import uuid
 
 # Concurrency Controller: Up to 4 simultaneous CPU-intensive quantum simulations (queued in memory for 20+ users)
-SIMULATION_SEMAPHORE = asyncio.Semaphore(4)
+SIMULATION_SEMAPHORE = asyncio.Semaphore(8)
 _worker_slot_counter = 0
 
 @app.post("/v3/enterprise/ide/execute", response_model=CodeExecutionResponse)
 async def ide_code_execute_endpoint(req: CodeExecutionRequest):
     """
     High-performance non-blocking execution of Qiskit circuits and D-Wave models.
-    Uses an async Semaphore(4) queue and worker threadpool to handle 20+ concurrent users smoothly.
+    Uses an async Semaphore(8) queue and worker threadpool to handle concurrent users smoothly.
     Assigns a unique Simulator Run ID (SIM-AER-XXXX / SIM-DWAVE-XXXX) to every execution.
     """
     global _worker_slot_counter
-    _worker_slot_counter = (_worker_slot_counter % 4) + 1
+    _worker_slot_counter = (_worker_slot_counter % 8) + 1
     slot = _worker_slot_counter
 
     backend_prefix = "AER" if (req.target_backend == "aer_simulator" or "qiskit" in (req.code or "")) else "DWAVE"

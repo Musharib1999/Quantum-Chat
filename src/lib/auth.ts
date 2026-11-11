@@ -4,6 +4,11 @@ import dbConnect from './db';
 import UserSession from '../models/UserSession';
 import User from '../models/User';
 
+export interface SessionIdentity {
+    email: string;
+    role: string;
+}
+
 /**
  * Creates a new user session in the database.
  */
@@ -19,15 +24,21 @@ export async function createUserSession(email: string): Promise<string> {
 }
 
 /**
- * Validates the user session cookie in the incoming request.
- * Returns the user's email if valid, or null if unauthorized.
+ * Resolves the verified identity (email + role) from the `user_session` cookie on a request.
+ * Returns null if the session is missing, unknown, unapproved or expired.
  */
-export async function verifyUserSession(req: NextRequest): Promise<string | null> {
+export async function resolveSession(req: NextRequest): Promise<SessionIdentity | null> {
+    return resolveSessionFromToken(req.cookies.get('user_session')?.value);
+}
+
+/**
+ * Same checks as `resolveSession`, for callers that only have the raw cookie value
+ * (e.g. server actions reading `cookies()` from next/headers).
+ */
+export async function resolveSessionFromToken(sessionToken: string | null | undefined): Promise<SessionIdentity | null> {
     try {
         await dbConnect();
-        
-        // Read session token from cookie
-        const sessionToken = req.cookies.get('user_session')?.value;
+
         if (!sessionToken) {
             return null;
         }
@@ -50,9 +61,18 @@ export async function verifyUserSession(req: NextRequest): Promise<string | null
             return null;
         }
 
-        return session.email;
+        return { email: session.email, role: user.role || 'user' };
     } catch (e) {
         console.error("[verifyUserSession] Auth check failed:", e);
         return null;
     }
+}
+
+/**
+ * Validates the user session cookie in the incoming request.
+ * Returns the user's email if valid, or null if unauthorized.
+ */
+export async function verifyUserSession(req: NextRequest): Promise<string | null> {
+    const identity = await resolveSession(req);
+    return identity ? identity.email : null;
 }

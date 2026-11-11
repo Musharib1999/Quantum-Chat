@@ -21,6 +21,7 @@ export interface StudioBottomBarProps {
   onToggleTerminal: () => void;
   terminalOutput?: string;
   onAutoFix?: () => void;
+  onOpenProjectModal?: () => void;
   specs?: {
     qubits?: number;
     depth?: number;
@@ -48,9 +49,14 @@ export function StudioBottomBar({
   onToggleTerminal,
   terminalOutput,
   onAutoFix,
+  onOpenProjectModal,
   specs,
 }: StudioBottomBarProps) {
   const isDwave = framework === "dwave";
+
+  const isFrameworkMismatch = Boolean(
+    terminalOutput && terminalOutput.includes("[FRAMEWORK MISMATCH ERROR]")
+  );
 
   const hasError = Boolean(
     terminalOutput &&
@@ -124,7 +130,7 @@ export function StudioBottomBar({
                 </span>
                 <span className={isDark ? "text-zinc-700" : "text-slate-300"}>·</span>
                 <span>
-                  Fidelity: <strong suppressHydrationWarning className={valClass}>{(specs?.fidelity ?? 99.8).toFixed(1)}%</strong>
+                  Mode: <strong suppressHydrationWarning className={valClass}>Aer Exact</strong>
                 </span>
                 <span className={isDark ? "text-zinc-700" : "text-slate-300"}>·</span>
                 <span>
@@ -182,7 +188,7 @@ export function StudioBottomBar({
             title="Active Simulation Engine"
           >
             <span className="font-medium">
-              {isDwave ? "D-Wave QPU" : "Qiskit Aer Sim"}
+              {isDwave ? "D-Wave Sim Annealer" : "Qiskit Aer Sim"}
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5 shrink-0" />
           </div>
@@ -223,10 +229,10 @@ export function StudioBottomBar({
                 type="button"
                 onClick={onAutoFix}
                 className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-gradient-to-r from-amber-500/15 to-sky-500/15 hover:from-amber-500/25 hover:to-sky-500/25 border border-sky-500/35 text-sky-300 hover:text-white transition-all shadow-xs cursor-pointer animate-pulse"
-                title="Auto-repair code error with Guru Copilot"
+                title={isFrameworkMismatch ? "Diagnose framework mismatch with Guru AI" : "Auto-repair code error with Guru Copilot"}
               >
                 <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
-                <span>Auto-Fix with Guru AI</span>
+                <span>{isFrameworkMismatch ? "Fix with Guru AI" : "Auto-Fix with Guru AI"}</span>
               </button>
               <span className={`select-none ${isDark ? "text-zinc-700" : "text-slate-300"}`}>|</span>
             </>
@@ -259,30 +265,50 @@ export function StudioBottomBar({
           <div className={`${hasError ? "text-rose-400/90" : "text-emerald-400/90"} whitespace-pre-wrap`}>
             {terminalOutput ||
               `$ Ready. Click "${
-                isDwave ? "Recompile" : "Run Circuit"
+                isDwave ? "Run Solver" : "Run Circuit"
               }" in the top toolbar to execute.`}
           </div>
 
           {hasError && onAutoFix && (
             <div className={`mt-3 p-2.5 rounded-lg border flex items-center justify-between shrink-0 ${
               isDark
-                ? "bg-[#14161F] border-rose-500/25 text-zinc-200"
-                : "bg-rose-50/70 border-rose-200 text-slate-800"
+                ? isFrameworkMismatch
+                  ? "bg-[#14161F] border-amber-500/30 text-zinc-200"
+                  : "bg-[#14161F] border-rose-500/25 text-zinc-200"
+                : isFrameworkMismatch
+                  ? "bg-amber-50/80 border-amber-200 text-slate-800"
+                  : "bg-rose-50/70 border-rose-200 text-slate-800"
             }`}>
               <div className="flex items-center space-x-2 text-xs">
-                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <AlertTriangle className={`w-4 h-4 shrink-0 ${isFrameworkMismatch ? "text-amber-400" : "text-rose-400"}`} />
                 <span className="font-sans text-xs">
-                  Execution error detected. Guru AI can diagnose and repair your code automatically.
+                  {isFrameworkMismatch
+                    ? isDwave
+                      ? "Framework mismatch: This workspace is aligned for D-Wave Annealing, not Qiskit."
+                      : "Framework mismatch: This workspace is aligned for Qiskit Aer Simulator, not D-Wave."
+                    : "Execution error detected. Guru AI can diagnose and repair your code automatically."}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={onAutoFix}
-                className="flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold font-mono bg-sky-500 hover:bg-sky-400 text-black shadow-sm transition-all cursor-pointer shrink-0"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Auto-Fix with Guru AI</span>
-              </button>
+              <div className="flex items-center space-x-2 shrink-0">
+                {isFrameworkMismatch && onOpenProjectModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenProjectModal}
+                    className="flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold font-mono bg-amber-500 hover:bg-amber-400 text-black shadow-sm transition-all cursor-pointer shrink-0"
+                    title="Switch to or create a matching project"
+                  >
+                    <span>Switch Project</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onAutoFix}
+                  className="flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold font-mono bg-sky-500 hover:bg-sky-400 text-black shadow-sm transition-all cursor-pointer shrink-0"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Fix with Guru AI</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

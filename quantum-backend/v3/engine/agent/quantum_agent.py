@@ -89,7 +89,9 @@ class QuantumAgent:
         file_content: str = "",
         target_backend: str = "aer_simulator",
         optimization_level: int = 2,
-        model_engine: str = "groq"
+        model_engine: str = "groq",
+        terminal_output: str = "",
+        execution_context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         events_emitted = []
         async for event in self.run_stream(
@@ -99,7 +101,9 @@ class QuantumAgent:
             file_content=file_content,
             target_backend=target_backend,
             optimization_level=optimization_level,
-            model_engine=model_engine
+            model_engine=model_engine,
+            terminal_output=terminal_output,
+            execution_context=execution_context
         ):
             events_emitted.append(event)
 
@@ -211,7 +215,9 @@ class QuantumAgent:
         file_content: str = "",
         target_backend: str = "aer_simulator",
         optimization_level: int = 2,
-        model_engine: str = "groq"
+        model_engine: str = "groq",
+        terminal_output: str = "",
+        execution_context: Optional[Dict[str, Any]] = None
     ) -> AsyncGenerator[Event, None]:
         user_action = UserMessageAction(
             project_id=project_id,
@@ -237,6 +243,119 @@ class QuantumAgent:
             "run program", "execute program", "simulate circuit", "run simulation",
             "execute code", "run the code", "run this", "execute this", "solve now", "run vqe", "run solver"
         ])
+
+        # =========================================================================
+        # 🛡️ STRICT FRAMEWORK ECOSYSTEM ALIGNMENT ENFORCEMENT
+        # =========================================================================
+        import re as _re
+        is_dwave_backend = (
+            "dwave" in target_backend.lower()
+            or "anneal" in target_backend.lower()
+            or "dwave" in project_id.lower()
+        )
+        is_qiskit_backend = not is_dwave_backend
+
+        _debug_or_fix_terms = [
+            "traceback", "syntaxerror", "nameerror", "typeerror", "indexerror",
+            "valueerror", "keyerror", "attributeerror", "circuiterror", "importerror",
+            "zerodivisionerror", "indentationerror", "runtimeerror", "executiontimeouterror",
+            "encountered this execution error", "got this execution error", "execution error",
+            "framework mismatch", "framework mismatch error", "mismatch error",
+            "fix this", "fix the", "fix my",
+            "debug", "diagnose", "repair", "why did", "why does", "why is",
+            "what happened", "what went wrong", "help me fix", "explain this error",
+            "explain the error", "error in", "got an error", "failing", "failed"
+        ]
+        is_code_fix_request = any(t in msg_l for t in _debug_or_fix_terms) or (
+            bool(_re.search(r'\b(fix|debug|repair|correct)\b', msg_l)) and
+            (bool(file_content.strip()) or bool(terminal_output.strip()))
+        )
+
+        has_framework_mismatch_error = (
+            "[FRAMEWORK MISMATCH ERROR]" in user_message
+            or "[FRAMEWORK MISMATCH ERROR]" in terminal_output
+            or "framework mismatch error" in msg_l
+            or "framework mismatch" in msg_l
+        )
+
+        has_qiskit_code = bool(
+            _re.search(r'\b(QuantumCircuit|qiskit|AerSimulator|QuantumRegister|ClassicalRegister)\b', file_content)
+        )
+        has_dwave_code = bool(
+            _re.search(r'\b(dimod|dwave|BinaryQuadraticModel|ConstrainedQuadraticModel|ExactSolver|SimulatedAnnealingSampler|EmbeddingComposite)\b', file_content)
+        )
+
+        # -------------------------------------------------------------------------
+        # Case 1: D-Wave Workspace receiving Qiskit Code or Circuit Request
+        # -------------------------------------------------------------------------
+        if is_dwave_backend:
+            is_qiskit_named_circuit = bool(
+                _re.search(r'\b(bell|ghz|grover|qft|teleport|teleportation|qrng|bernstein|vazirani|deutsch|jozsa|superdense|w-state|qpe|phase estimation|quantumcircuit)\b', msg_l)
+            )
+            if (
+                has_framework_mismatch_error
+                or (has_qiskit_code and (is_code_fix_request or is_execution_request or any(k in msg_l for k in ["run", "circuit", "fix", "error", "traceback", "why"])))
+                or (is_qiskit_named_circuit and any(k in msg_l for k in ["build", "create", "generate", "synthesize", "make", "implement", "circuit"]))
+            ):
+                thought = AgentThoughtAction(
+                    project_id=project_id,
+                    thought="Framework Mismatch Detected: This ecosystem is strictly aligned for D-Wave Quantum Annealing. Refusing Qiskit gate execution/synthesis.",
+                    intent_domain="framework_boundary"
+                )
+                yield await self.stream.publish(thought)
+
+                denial_text = (
+                    "### ⚠️ Framework Mismatch Error\n\n"
+                    "This ecosystem is strictly aligned for the **D-Wave Quantum Annealing simulator** (`dwave-ocean-sdk` / `dimod` / QUBO / Ising models).\n\n"
+                    "The code in your editor or request is a gate-based quantum circuit (**Qiskit / `QuantumCircuit`**). "
+                    "Gate-model quantum circuits cannot be executed, simulated, or auto-repaired in this D-Wave workspace.\n\n"
+                    "👉 **Action Required**:\n"
+                    "Please use or create a new project for Qiskit-based execution. "
+                    "You can switch to an existing Qiskit project (such as *Quantum Teleportation* or *Quantum Journey 101*) "
+                    "or create a new Qiskit project in the **Project Switcher** (top toolbar)."
+                )
+                yield await self.stream.publish(FinalResponseAction(
+                    project_id=project_id,
+                    response_text=denial_text,
+                    scientific_verdict="Framework mismatch: Execution denied. Ecosystem is strictly aligned for D-Wave Quantum Annealing."
+                ))
+                return
+
+        # -------------------------------------------------------------------------
+        # Case 2: Qiskit Workspace receiving D-Wave Code or Annealing Request
+        # -------------------------------------------------------------------------
+        if is_qiskit_backend:
+            is_dwave_named_model = bool(
+                _re.search(r'\b(qubo|ising|bqm|cqm|binaryquadraticmodel|constrainedquadraticmodel|dwave|dimod)\b', msg_l)
+            )
+            if (
+                has_framework_mismatch_error
+                or (has_dwave_code and (is_code_fix_request or is_execution_request or any(k in msg_l for k in ["run", "qubo", "fix", "error", "traceback", "why"])))
+                or (is_dwave_named_model and any(k in msg_l for k in ["formulate", "solve", "qubo", "annealing", "model"]))
+            ):
+                thought = AgentThoughtAction(
+                    project_id=project_id,
+                    thought="Framework Mismatch Detected: This ecosystem is strictly aligned for Qiskit Aer Simulator. Refusing D-Wave annealing execution/synthesis.",
+                    intent_domain="framework_boundary"
+                )
+                yield await self.stream.publish(thought)
+
+                denial_text = (
+                    "### ⚠️ Framework Mismatch Error\n\n"
+                    "This ecosystem is strictly aligned for the **Qiskit Aer Simulator** (gate-based quantum circuits with qubits, gates, and measurements).\n\n"
+                    "The code in your editor or request is a quantum annealing optimization model (**D-Wave Ocean SDK / `dimod` / QUBO / BQM**). "
+                    "Annealing optimization models cannot be executed, simulated, or auto-repaired in this Qiskit circuit workspace.\n\n"
+                    "👉 **Action Required**:\n"
+                    "Please use or create a new project for D-Wave-based execution. "
+                    "You can switch to an existing D-Wave project (such as *Portfolio Optimization (QUBO)*) "
+                    "or create a new D-Wave project in the **Project Switcher** (top toolbar)."
+                )
+                yield await self.stream.publish(FinalResponseAction(
+                    project_id=project_id,
+                    response_text=denial_text,
+                    scientific_verdict="Framework mismatch: Execution denied. Ecosystem is strictly aligned for Qiskit Aer Simulator."
+                ))
+                return
 
         # Archetype & Domain Identification
         if any(k in msg_l for k in ["portfolio", "qubo", "maxcut", "tsp", "knapsack", "asset", "warehouse", "cost", "coverage", "budget", "schedule", "facility", "route", "optimize", "selection", "solar", "wind", "energy", "investment"]):

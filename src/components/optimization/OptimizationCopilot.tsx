@@ -41,6 +41,265 @@ export interface OptimizationCopilotProps {
   journeyMilestoneId?: number;
 }
 
+// Splits markdown text into logical lines while keeping multi-line $$...$$ or \[...\] math blocks intact
+function splitIntoLogicalLines(text: string): string[] {
+  if (!text) return [];
+  const rawLines = text.split("\n");
+  const logicalLines: string[] = [];
+  let inDisplayMath = false;
+  let mathBuffer: string[] = [];
+
+  for (const line of rawLines) {
+    const trimmed = line.trim();
+    const dollarCount = (line.match(/\$\$/g) || []).length;
+    if (!inDisplayMath) {
+      if ((dollarCount === 1) || (trimmed.startsWith("\\[") && !trimmed.endsWith("\\]"))) {
+        inDisplayMath = true;
+        mathBuffer = [line];
+      } else {
+        logicalLines.push(line);
+      }
+    } else {
+      mathBuffer.push(line);
+      if (dollarCount >= 1 || trimmed.endsWith("\\]")) {
+        inDisplayMath = false;
+        logicalLines.push(mathBuffer.join("\n"));
+        mathBuffer = [];
+      }
+    }
+  }
+  if (mathBuffer.length > 0) {
+    logicalLines.push(mathBuffer.join("\n"));
+  }
+  return logicalLines;
+}
+
+function LiveWorkingTrace({ isQiskit, isDark, onTick }: { isQiskit: boolean; isDark: boolean; onTick?: () => void }) {
+  const steps = isQiskit
+    ? [
+        "Inspecting active editor buffer & line numbers...",
+        "Reading AerSimulator stdout, stderr & measurement counts...",
+        "Checking Qiskit 2.x gate syntax & state transitions...",
+        "Synthesizing pinpointed diagnosis & solution...",
+      ]
+    : [
+        "Inspecting active editor buffer & line numbers...",
+        "Reading solver stdout, traceback & BQM/QUBO telemetry...",
+        "Verifying objective biases & quadratic penalty couplers...",
+        "Synthesizing pinpointed diagnosis & solution...",
+      ];
+
+  const [visibleCount, setVisibleCount] = useState(1);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisibleCount((prev) => {
+        if (prev < steps.length) {
+          if (onTick) onTick();
+          return prev + 1;
+        }
+        return prev;
+      });
+    }, 420);
+    return () => clearInterval(timer);
+  }, [steps.length, onTick]);
+
+  return (
+    <div className="py-1 px-0.5 space-y-1.5 select-none font-mono text-[11px]">
+      {steps.slice(0, visibleCount).map((stepText, idx) => {
+        const isCurrent = idx === visibleCount - 1;
+        return (
+          <div
+            key={idx}
+            className={`flex items-center space-x-2 transition-opacity duration-150 ${
+              isCurrent
+                ? isDark
+                  ? "text-sky-300"
+                  : "text-sky-700 font-medium"
+                : isDark
+                ? "text-zinc-400"
+                : "text-slate-500"
+            }`}
+          >
+            {isCurrent ? (
+              <Loader2 className="w-3 h-3 text-sky-400 animate-spin shrink-0" />
+            ) : (
+              <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+            )}
+            <span className="truncate">{stepText}</span>
+            {isCurrent && (
+              <span className="inline-block w-1.5 h-3 bg-sky-400 animate-pulse shrink-0" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProgressiveAiResponse({
+  msg,
+  isDark,
+  isQiskit,
+  shouldAnimate,
+  onComplete,
+  onTickScroll,
+  onApplyCodeToEditor,
+}: {
+  msg: CopilotMessage;
+  isDark: boolean;
+  isQiskit: boolean;
+  shouldAnimate: boolean;
+  onComplete: () => void;
+  onTickScroll: () => void;
+  onApplyCodeToEditor?: (code: string, meta?: any) => void;
+}) {
+  const proseLines = React.useMemo(() => splitIntoLogicalLines(msg.text || ""), [msg.text]);
+  const codeLines = React.useMemo(
+    () => (msg.generatedCode ? msg.generatedCode.split("\n") : []),
+    [msg.generatedCode]
+  );
+
+  const [visibleProseCount, setVisibleProseCount] = useState<number>(() =>
+    shouldAnimate ? Math.min(1, proseLines.length) : proseLines.length
+  );
+  const [visibleCodeCount, setVisibleCodeCount] = useState<number>(() =>
+    shouldAnimate ? 0 : codeLines.length
+  );
+  const codePreRef = useRef<HTMLPreElement | null>(null);
+
+  useEffect(() => {
+    if (!shouldAnimate) {
+      setVisibleProseCount(proseLines.length);
+      setVisibleCodeCount(codeLines.length);
+      return;
+    }
+
+    if (visibleProseCount < proseLines.length) {
+      const t = setTimeout(() => {
+        setVisibleProseCount((c) => Math.min(proseLines.length, c + 1));
+        onTickScroll();
+      }, 75);
+      return () => clearTimeout(t);
+    }
+
+    if (codeLines.length > 0 && visibleCodeCount < codeLines.length) {
+      const t = setTimeout(() => {
+        setVisibleCodeCount((c) => Math.min(codeLines.length, c + 1));
+        if (codePreRef.current) {
+          codePreRef.current.scrollTop = codePreRef.current.scrollHeight;
+        }
+        onTickScroll();
+      }, 35);
+      return () => clearTimeout(t);
+    }
+
+    onComplete();
+  }, [
+    shouldAnimate,
+    visibleProseCount,
+    visibleCodeCount,
+    proseLines.length,
+    codeLines.length,
+    onComplete,
+    onTickScroll,
+  ]);
+
+  const isPrintingProse = shouldAnimate && visibleProseCount < proseLines.length;
+  const isPrintingCode =
+    shouldAnimate &&
+    visibleProseCount >= proseLines.length &&
+    codeLines.length > 0 &&
+    visibleCodeCount < codeLines.length;
+
+  const displayedProse = shouldAnimate
+    ? proseLines.slice(0, visibleProseCount).join("\n")
+    : msg.text;
+  const displayedCode = shouldAnimate
+    ? codeLines.slice(0, Math.max(1, visibleCodeCount)).join("\n")
+    : msg.generatedCode;
+
+  return (
+    <>
+      <div className="w-full min-w-0 overflow-hidden leading-relaxed">
+        <IdeMarkdownRenderer content={displayedProse} isDark={isDark} />
+        {isPrintingProse && (
+          <div className="flex items-center space-x-1.5 pt-1 font-mono text-[10px] text-sky-400/90 select-none">
+            <span className="inline-block w-1.5 h-3 bg-sky-400 animate-pulse" />
+            <span>
+              Printing line {visibleProseCount}/{proseLines.length}...
+            </span>
+          </div>
+        )}
+      </div>
+
+      {msg.generatedCode && (!shouldAnimate || visibleProseCount >= proseLines.length) && (
+        <div className="space-y-2 pt-2 w-full min-w-0">
+          <div
+            className="p-2.5 rounded-lg border space-y-2"
+            style={{
+              backgroundColor: isDark ? "#0A0B0E" : "#F1F5F9",
+              borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "#CBD5E1",
+            }}
+          >
+            <div className="flex items-center justify-between text-[11px] font-mono">
+              <span className="text-zinc-300 font-semibold flex items-center space-x-1.5">
+                <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{isQiskit ? "Updated Qiskit Script" : "Updated D-Wave Script"}</span>
+              </span>
+              {isPrintingCode ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center space-x-1">
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                  <span>
+                    Line {visibleCodeCount}/{codeLines.length}
+                  </span>
+                </span>
+              ) : msg.formulationMeta?.q_size ? (
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                  {msg.formulationMeta.q_size} Qubits
+                </span>
+              ) : null}
+            </div>
+
+            <pre
+              ref={codePreRef}
+              className="p-2 rounded bg-black/40 text-[10px] font-mono text-zinc-300 max-h-36 overflow-y-auto custom-scrollbar whitespace-pre leading-relaxed border border-white/[0.05]"
+            >
+              {displayedCode}
+              {isPrintingCode && (
+                <span className="inline-block w-1.5 h-3 ml-0.5 bg-emerald-400 animate-pulse align-middle" />
+              )}
+            </pre>
+
+            <button
+              onClick={() =>
+                onApplyCodeToEditor && onApplyCodeToEditor(msg.generatedCode!, msg.formulationMeta)
+              }
+              className={`w-full py-2 px-3 rounded-lg font-semibold text-xs transition-all flex items-center justify-center space-x-2 shadow-md ${
+                msg.appliedToEditor
+                  ? "bg-emerald-600 text-white shadow-emerald-500/20"
+                  : "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-500/20"
+              }`}
+            >
+              {msg.appliedToEditor ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Injected into Monaco Editor & Running</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-3.5 h-3.5 fill-current" />
+                  <span>Apply to Monaco Editor & Run</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function OptimizationCopilot({
   isDark = true,
   colors,
@@ -64,15 +323,33 @@ export function OptimizationCopilot({
   const [showSuggestionsPopover, setShowSuggestionsPopover] = useState<boolean>(false);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const mountTimeRef = useRef<number>(Date.now());
+  const animatedMsgIdsRef = useRef<Set<number>>(new Set());
+  const completedMsgIdsRef = useRef<Set<number>>(
+    new Set(messages.map((m) => m.id))
+  );
 
   const isQiskit = framework === "qiskit";
 
-  // Auto-scroll chat on new messages
-  useEffect(() => {
+  const scrollToBottom = React.useCallback(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [messages, isThinking]);
+  }, []);
+
+  // Track messages that started streaming or arrived after mount so they print line-by-line once
+  useEffect(() => {
+    messages.forEach((m) => {
+      if (m.sender === "assistant") {
+        if (m.isStreaming) {
+          animatedMsgIdsRef.current.add(m.id);
+        } else if (m.id > mountTimeRef.current && !completedMsgIdsRef.current.has(m.id)) {
+          animatedMsgIdsRef.current.add(m.id);
+        }
+      }
+    });
+    scrollToBottom();
+  }, [messages, isThinking, scrollToBottom]);
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -332,24 +609,26 @@ export function OptimizationCopilot({
               {msg.sender === "user" ? (
                 <p className="text-[13.5px] leading-relaxed break-words [word-break:break-word] overflow-wrap-anywhere">{msg.text}</p>
               ) : msg.isStreaming && (!msg.text || msg.text === "Analyzing circuit and reasoning with Quantum Guru Copilot..." || msg.text === "Thinking...") ? (
-                <div className="flex items-center space-x-2.5 py-1 px-0.5 select-none">
-                  <div className="flex items-center space-x-1.5">
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse [animation-delay:-0.3s]" />
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse [animation-delay:-0.15s]" />
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-                  </div>
-                  <span className={`text-[12px] font-mono tracking-tight ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
-                    Guru AI is reasoning...
-                  </span>
-                </div>
+                <LiveWorkingTrace isQiskit={isQiskit} isDark={isDark} onTick={scrollToBottom} />
               ) : (
-                <div className="w-full min-w-0 overflow-hidden leading-relaxed">
-                  <IdeMarkdownRenderer content={msg.text} isDark={isDark} />
-                </div>
+                <ProgressiveAiResponse
+                  msg={msg}
+                  isDark={isDark}
+                  isQiskit={isQiskit}
+                  shouldAnimate={
+                    animatedMsgIdsRef.current.has(msg.id) &&
+                    !completedMsgIdsRef.current.has(msg.id)
+                  }
+                  onComplete={() => {
+                    completedMsgIdsRef.current.add(msg.id);
+                  }}
+                  onTickScroll={scrollToBottom}
+                  onApplyCodeToEditor={onApplyCodeToEditor}
+                />
               )}
 
-              {/* Live Autonomous Multi-Agent Reasoning Pipeline */}
-              {msg.pipelineSteps && msg.pipelineSteps.length > 0 && (
+              {/* Live Autonomous Multi-Agent Reasoning Pipeline (Scoped strictly to Autonomous QUBO Formulation) */}
+              {!isQiskit && msg.pipelineSteps && msg.pipelineSteps.length > 0 && (
                 <div className="space-y-2 pt-2 w-full min-w-0">
                   <div
                     className="p-2.5 rounded-lg border space-y-2"
@@ -361,7 +640,7 @@ export function OptimizationCopilot({
                     <div className="flex items-center justify-between text-[11px] font-mono border-b pb-1.5" style={{ borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#E2E8F0" }}>
                       <span className="font-semibold text-sky-400 flex items-center space-x-1.5">
                         <Bot className="w-3.5 h-3.5" />
-                        <span>7-Agent Autonomous Pipeline</span>
+                        <span>Autonomous Optimization Engine</span>
                       </span>
                       <span className="text-[10px] text-zinc-400">
                         {msg.isStreaming ? (
@@ -394,7 +673,6 @@ export function OptimizationCopilot({
                               <span className="font-semibold font-mono text-[10px]" style={{ color: colors.textPrimary }}>
                                 {step.title}
                               </span>
-                              <span className="text-[9px] font-mono text-zinc-500">[{step.agent}]</span>
                             </div>
                             {step.message && (
                               <p className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
@@ -414,55 +692,7 @@ export function OptimizationCopilot({
                 </div>
               )}
 
-              {/* Generated Python Code & Bidirectional Editor Injection */}
-              {msg.generatedCode && (
-                <div className="space-y-2 pt-2 w-full min-w-0">
-                  <div
-                    className="p-2.5 rounded-lg border space-y-2"
-                    style={{
-                      backgroundColor: isDark ? "#0A0B0E" : "#F1F5F9",
-                      borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "#CBD5E1",
-                    }}
-                  >
-                    <div className="flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-zinc-300 font-semibold flex items-center space-x-1.5">
-                        <Code2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>{isQiskit ? "Synthesized Qiskit Script" : "Synthesized QUBO Script"}</span>
-                      </span>
-                      {msg.formulationMeta?.q_size && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                          {msg.formulationMeta.q_size} Qubits
-                        </span>
-                      )}
-                    </div>
 
-                    <pre className="p-2 rounded bg-black/40 text-[10px] font-mono text-zinc-300 max-h-36 overflow-y-auto custom-scrollbar whitespace-pre leading-relaxed border border-white/[0.05]">
-                      {msg.generatedCode}
-                    </pre>
-
-                    <button
-                      onClick={() => onApplyCodeToEditor && onApplyCodeToEditor(msg.generatedCode!, msg.formulationMeta)}
-                      className={`w-full py-2 px-3 rounded-lg font-semibold text-xs transition-all flex items-center justify-center space-x-2 shadow-md ${
-                        msg.appliedToEditor
-                          ? "bg-emerald-600 text-white shadow-emerald-500/20"
-                          : "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-500/20"
-                      }`}
-                    >
-                      {msg.appliedToEditor ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Injected into Monaco Editor & Running</span>
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="w-3.5 h-3.5 fill-current" />
-                          <span>Apply to Monaco Editor & Run</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* KaTeX Math Formula Bubble (Bounded width & horizontal scroll) */}
               {msg.mathFormula && (
@@ -576,8 +806,8 @@ export function OptimizationCopilot({
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
             <span>
               {isQiskit
-                ? "Qwen-27B analyzing circuit gate matrix..."
-                : "Qwen-27B formulating penalty Hamiltonian..."}
+                ? "Guru AI analyzing circuit & simulator telemetry..."
+                : "Guru AI analyzing Hamiltonian & solver output..."}
             </span>
           </div>
         )}

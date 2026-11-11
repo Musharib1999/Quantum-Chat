@@ -72,6 +72,10 @@ def is_circuit_synthesis_request(message: str) -> bool:
     if any(k in msg_l for k in MALICIOUS_KEYWORDS):
         return False
 
+    # Reject framework mismatch error queries or execution tracebacks
+    if '[framework mismatch error]' in msg_l or 'framework mismatch' in msg_l:
+        return False
+
     # 2. Check for explicit question / explanatory inquiry
     is_question = (
         any(msg_l.startswith(k) for k in PURE_QA_KEYWORDS) or

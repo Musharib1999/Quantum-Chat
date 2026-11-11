@@ -1,93 +1,90 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import { getBackendUrl } from '@/lib/backend';
+import { gatewayAuth } from '@/lib/gatewayAuth';
+import Hardware from '@/models/Hardware';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * API route to execute python code locally on the server.
- * Used by CodeBlockRunner when users click "Execute Code" in the chat interface.
+ * Proxies code execution requests from CodeBlockRunner to the Python backend sandbox
+ * (/v2/execute) with authenticated gateway headers and sandbox guardrails.
  */
 export async function POST(req: NextRequest) {
     try {
-        const { verifyUserSession } = await import('@/lib/auth');
-        const email = await verifyUserSession(req);
-        if (!email) {
-            return NextResponse.json({ success: false, error: "Unauthorized - user session required" }, { status: 401 });
+        const authRes = await gatewayAuth(req);
+        if (!authRes.ok) {
+            return authRes.response;
         }
 
         const { code } = await req.json();
+        if (!code || !code.trim()) {
+            return NextResponse.json({ success: false, error: "No code provided for execution." }, { status: 400 });
+        }
 
         // Introspect code to determine the target provider
         const isDWave = code.includes('dwave') || code.includes('neal') || code.includes('dimod');
-        const { default: Hardware } = await import('@/models/Hardware');
         
-        if (isDWave) {
-            // Check D-Wave service status
-            const dwaveService = await Hardware.findOne({ provider: 'dwave' });
-            if (dwaveService && (dwaveService.status === 'Offline' || dwaveService.status === 'Maintenance')) {
-                return NextResponse.json({
-                    success: false,
-                    output: "",
-                    error: `D-Wave solver service is currently disabled by administrator (status: ${dwaveService.status}).`
-                }, { status: 503 });
-            }
-        } else {
-            // Check Qiskit service status
-            const qiskitService = await Hardware.findOne({ provider: 'ibm' });
-            if (qiskitService && (qiskitService.status === 'Offline' || qiskitService.status === 'Maintenance')) {
-                return NextResponse.json({
-                    success: false,
-                    output: "",
-                    error: `Qiskit simulation service is currently disabled by administrator (status: ${qiskitService.status}).`
-                }, { status: 503 });
-            }
-        }
-        if (!code) {
-            return NextResponse.json({ success: false, error: "No code provided" }, { status: 400 });
-        }
-
-        // Create a temporary file name in the project scratch directory
-        const tempDir = path.join(process.cwd(), 'scratch');
-        if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-        }
-        const tempFile = path.join(tempDir, `exec_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.py`);
-        
-        // Write the code to the temp file
-        fs.writeFileSync(tempFile, code);
-
-        // Run python3 on the temp file
-        return new Promise<NextResponse>((resolve) => {
-            exec(`python3 ${tempFile}`, (error, stdout, stderr) => {
-                // Delete the temp file
-                try {
-                    if (fs.existsSync(tempFile)) {
-                        fs.unlinkSync(tempFile);
-                    }
-                } catch (e) {
-                    console.error("Failed to delete temp file:", e);
-                }
-
-                if (error) {
-                    resolve(NextResponse.json({
+        try {
+            if (isDWave) {
+                const dwaveService = await Hardware.findOne({ provider: 'dwave' });
+                if (dwaveService && (dwaveService.status === 'Offline' || dwaveService.status === 'Maintenance')) {
+                    return NextResponse.json({
                         success: false,
-                        output: stdout,
-                        error: stderr || error.message
-                    }));
-                } else {
-                    resolve(NextResponse.json({
-                        success: true,
-                        output: stdout,
-                        error: stderr || ""
-                    }));
+                        output: "",
+                        error: `D-Wave solver service is currently disabled by administrator (status: ${dwaveService.status}).`
+                    }, { status: 503 });
                 }
-            });
+            } else {
+                const qiskitService = await Hardware.findOne({ provider: 'ibm' });
+                if (qiskitService && (qiskitService.status === 'Offline' || qiskitService.status === 'Maintenance')) {
+                    return NextResponse.json({
+                        success: false,
+                        output: "",
+                        error: `Qiskit simulation service is currently disabled by administrator (status: ${qiskitService.status}).`
+                    }, { status: 503 });
+                }
+            }
+        } catch (dbErr) {
+            // Non-fatal if DB check glitches
+        }
+
+        const backendUrl = getBackendUrl();
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...authRes.headers
+        };
+
+        const res = await fetch(`${backendUrl}/v2/execute`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                code,
+                email: authRes.identity?.email || null
+            }),
+            signal: AbortSignal.timeout(45000),
+        });
+
+        if (!res.ok) {
+            const errText = await res.text();
+            return NextResponse.json(
+                { success: false, output: "", error: `Execution engine error (${res.status}): ${errText}` },
+                { status: res.status }
+            );
+        }
+
+        const data = await res.json();
+        return NextResponse.json({
+            success: data.success ?? true,
+            output: data.output || "",
+            error: data.error || null
         });
 
     } catch (e: any) {
-        console.error("[/api/developer/execute] Error:", e);
-        return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+        console.error("[/api/developer/execute] Proxy error:", e);
+        return NextResponse.json({
+            success: false,
+            output: "",
+            error: e.message || "Failed to reach execution backend"
+        }, { status: 500 });
     }
 }
