@@ -22,6 +22,12 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
+  getActiveUserKey,
+  getScopedIdeItem,
+  setScopedIdeItem,
+  removeScopedIdeItem,
+} from "@/lib/ideStorage";
+import {
   JOURNEY_101_MILESTONES,
   JOURNEY_101_MODULES,
   getJourneyMilestone,
@@ -757,10 +763,11 @@ export default function QuantumGuruStudioPage() {
   const [executionHistory, setExecutionHistory] = useState<ExecutionHistoryItem[]>(() => {
     if (typeof window !== "undefined") {
       try {
+        const uKey = getActiveUserKey();
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get("project") || params.get("projectId");
-        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id") || "clean_energy_portfolio";
-        const stored = localStorage.getItem(`quantum_ide_history_${savedId}`);
+        const savedId = urlId || getScopedIdeItem("active_project_id", uKey) || "clean_energy_portfolio";
+        const stored = getScopedIdeItem(`history_${savedId}`, uKey);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
@@ -777,13 +784,106 @@ export default function QuantumGuruStudioPage() {
     setExecutionHistory([]);
     if (typeof window !== "undefined" && activeProject?.id) {
       try {
-        localStorage.removeItem(`quantum_ide_history_${activeProject.id}`);
+        removeScopedIdeItem(`history_${activeProject.id}`, userKey);
       } catch {}
     }
   };
 
   const [targetBackend, setTargetBackend] = useState<string>("dwave_simulated_annealing");
   const { user, isAuthenticated, logout } = useAuth();
+  const userKey = useMemo(() => getActiveUserKey(user?.email), [user?.email]);
+
+  // Reactive User-Switch Isolation: When active user changes (login, logout, account switch),
+  // immediately reload the workspace to that user's isolated storage context.
+  const prevUserKeyRef = useRef<string>(userKey);
+  useEffect(() => {
+    if (prevUserKeyRef.current !== userKey) {
+      prevUserKeyRef.current = userKey;
+
+      // 1. Restore/load custom projects for this userKey
+      const localCustom = getScopedIdeItem("custom_projects", userKey);
+      const customList: ProjectItem[] = localCustom ? JSON.parse(localCustom) : [];
+      const journey = INITIAL_PROJECTS.find((p) => p.id === "quantum_journey_101")!;
+      const listWithoutJourney = customList.filter((p: any) => p.id !== "quantum_journey_101");
+      const ids = new Set(listWithoutJourney.map((p: any) => p.id));
+      const remainingInitial = INITIAL_PROJECTS.filter((p) => p.id !== "quantum_journey_101" && !ids.has(p.id));
+      const allProjects = [journey, ...listWithoutJourney, ...remainingInitial];
+      setProjects(allProjects);
+
+      // 2. Determine active project for this userKey
+      const savedProjId = getScopedIdeItem("active_project_id", userKey);
+      const nextProj = (savedProjId && allProjects.find((p) => p.id === savedProjId)) || INITIAL_PROJECTS[0];
+      setActiveProject(nextProj);
+
+      // 3. Determine active file & code for this userKey
+      const nextFile = getScopedIdeItem("active_file", userKey) || nextProj.activeFile || nextProj.files?.[0] || "main.py";
+      setActiveFile(nextFile);
+
+      const nextCode = getScopedIdeItem(`code_${nextProj.id}_${nextFile}`, userKey);
+      if (nextProj.framework === "dwave") {
+        setDwaveCode(nextCode || (nextProj.id === "clean_energy_portfolio" ? CLEAN_ENERGY_PORTFOLIO_CODE : NEW_DWAVE_STARTER_CODE));
+      } else {
+        setQiskitCode(nextCode || (nextProj.id === "quantum_journey_101" ? QUANTUM_JOURNEY_CODE : QISKIT_INITIAL_CODE));
+      }
+
+      // 4. Determine hero tab
+      const nextTab = (getScopedIdeItem("hero_tab", userKey) as HeroTabType) || "code";
+      setHeroTab(nextTab);
+
+      // 5. Restore chat messages for this userKey
+      const nextChat = getScopedIdeItem(`chat_${nextProj.id}`, userKey);
+      if (nextChat) {
+        try {
+          const parsed = JSON.parse(nextChat);
+          if (nextProj.framework === "dwave") setDwaveCopilotMessages(parsed);
+          else setQiskitCopilotMessages(parsed);
+        } catch {}
+      } else {
+        if (nextProj.framework === "dwave") setDwaveCopilotMessages([...DWAVE_INITIAL_MESSAGES]);
+        else if (nextProj.id === "quantum_journey_101") setQiskitCopilotMessages([...QUANTUM_JOURNEY_INITIAL_MESSAGES]);
+        else setQiskitCopilotMessages([...QISKIT_INITIAL_MESSAGES]);
+      }
+
+      // 6. Restore execution history for this userKey
+      const nextHistory = getScopedIdeItem(`history_${nextProj.id}`, userKey);
+      setExecutionHistory(nextHistory ? JSON.parse(nextHistory) : []);
+
+      // 7. Restore solver results
+      const nextRes = getScopedIdeItem(`result_${nextProj.id}`, userKey);
+      setSolverResult(nextRes ? JSON.parse(nextRes) : (nextProj.id === "clean_energy_portfolio" ? DEFAULT_PORTFOLIO_RESULT : {
+        energy: 0,
+        sample: {},
+        num_variables: 0,
+        variables: [],
+        qubo_matrix: [],
+        energy_distribution: [],
+        latex_formula: "",
+      }));
+
+      // 8. Restore Qiskit results
+      const nextQiskitRes = getScopedIdeItem(`qiskit_result_${nextProj.id}`, userKey);
+      if (nextQiskitRes) {
+        try {
+          const parsedQ = JSON.parse(nextQiskitRes);
+          setQiskitCounts(parsedQ.measurement_counts || {});
+          setCircuitGates(parsedQ.circuit_gates || []);
+          setCircuitAscii(parsedQ.circuit_ascii || "");
+          setQiskitQubits(parsedQ.active_qubits || 2);
+          setQiskitDepth(parsedQ.circuit_depth || 0);
+          setQiskitSimulatorId(parsedQ.simulator_id || "");
+        } catch {}
+      } else {
+        setQiskitCounts({});
+        setCircuitGates([]);
+        setCircuitAscii("");
+        setQiskitSimulatorId("");
+      }
+
+      // 9. Reset terminal
+      setTerminalOutput("");
+      setShowTerminal(false);
+    }
+  }, [userKey]);
 
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const isDark = theme === "dark";
@@ -826,7 +926,8 @@ export default function QuantumGuruStudioPage() {
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
     if (typeof window !== "undefined") {
       try {
-        const localCustom = localStorage.getItem("quantum_ide_custom_projects");
+        const uKey = getActiveUserKey();
+        const localCustom = getScopedIdeItem("custom_projects", uKey);
         if (localCustom) {
           const parsed = JSON.parse(localCustom);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -841,7 +942,7 @@ export default function QuantumGuruStudioPage() {
                 if (isContaminated) {
                   updatedContents["main.py"] = p.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
                   try {
-                    localStorage.setItem(`quantum_ide_code_${p.id}_main.py`, updatedContents["main.py"]);
+                    setScopedIdeItem(`code_${p.id}_main.py`, uKey, updatedContents["main.py"]);
                   } catch (e) {}
                 }
 
@@ -852,7 +953,7 @@ export default function QuantumGuruStudioPage() {
                     updatedFiles = updatedFiles.filter((f: string) => f !== "qubo_matrix.py");
                     delete updatedContents["qubo_matrix.py"];
                     try {
-                      localStorage.removeItem(`quantum_ide_code_${p.id}_qubo_matrix.py`);
+                      removeScopedIdeItem(`code_${p.id}_qubo_matrix.py`, uKey);
                     } catch (e) {}
                   }
                 }
@@ -867,9 +968,7 @@ export default function QuantumGuruStudioPage() {
             });
 
             try {
-              localStorage.setItem("quantum_ide_custom_projects", JSON.stringify(sanitizedList));
-              localStorage.removeItem("quantum_ide_last_dwave_code");
-              localStorage.removeItem("quantum_ide_last_qiskit_code");
+              setScopedIdeItem("custom_projects", uKey, JSON.stringify(sanitizedList));
             } catch (e) {}
 
             const journey = INITIAL_PROJECTS.find((p) => p.id === "quantum_journey_101")!;
@@ -923,9 +1022,8 @@ export default function QuantumGuruStudioPage() {
           if (typeof window !== "undefined") {
             data.projects.forEach((doc: any) => {
               if (doc.projectId && Array.isArray(doc.chatMessages) && doc.chatMessages.length > 0) {
-                const cacheKey = `quantum_ide_chat_${doc.projectId}`;
-                if (!localStorage.getItem(cacheKey)) {
-                  localStorage.setItem(cacheKey, JSON.stringify(doc.chatMessages));
+                if (!getScopedIdeItem(`chat_${doc.projectId}`, userKey)) {
+                  setScopedIdeItem(`chat_${doc.projectId}`, userKey, JSON.stringify(doc.chatMessages));
                 }
               }
             });
@@ -941,7 +1039,7 @@ export default function QuantumGuruStudioPage() {
           if (typeof window !== "undefined") {
             try {
               const params = new URLSearchParams(window.location.search);
-              const targetId = params.get("project") || params.get("projectId") || localStorage.getItem("quantum_ide_active_project_id");
+              const targetId = params.get("project") || params.get("projectId") || getScopedIdeItem("active_project_id", userKey);
               if (targetId) {
                 const matchedCloud = cloudList.find((p) => p.id === targetId);
                 if (matchedCloud && activeProject.id !== matchedCloud.id) {
@@ -966,11 +1064,12 @@ export default function QuantumGuruStudioPage() {
   const [activeProject, setActiveProject] = useState<ProjectItem>(() => {
     if (typeof window !== "undefined") {
       try {
+        const uKey = getActiveUserKey();
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get("project") || params.get("projectId");
-        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id");
+        const savedId = urlId || getScopedIdeItem("active_project_id", uKey);
         if (savedId) {
-          const localCustom = localStorage.getItem("quantum_ide_custom_projects");
+          const localCustom = getScopedIdeItem("custom_projects", uKey);
           const customList: ProjectItem[] = localCustom ? JSON.parse(localCustom) : [];
           const all = [...customList, ...INITIAL_PROJECTS];
           const matched = all.find((p) => p.id === savedId);
@@ -987,7 +1086,7 @@ export default function QuantumGuruStudioPage() {
   useEffect(() => {
     if (typeof window !== "undefined" && activeProject?.id) {
       try {
-        const stored = localStorage.getItem(`quantum_ide_history_${activeProject.id}`);
+        const stored = getScopedIdeItem(`history_${activeProject.id}`, userKey);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
@@ -1003,7 +1102,8 @@ export default function QuantumGuruStudioPage() {
   const [heroTab, setHeroTab] = useState<HeroTabType>(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedTab = localStorage.getItem("quantum_ide_hero_tab") as HeroTabType | null;
+        const uKey = getActiveUserKey();
+        const savedTab = getScopedIdeItem("hero_tab", uKey) as HeroTabType | null;
         if (savedTab) return savedTab;
       } catch (e) {}
     }
@@ -1013,7 +1113,8 @@ export default function QuantumGuruStudioPage() {
   const [activeFile, setActiveFile] = useState<string>(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedFile = localStorage.getItem("quantum_ide_active_file");
+        const uKey = getActiveUserKey();
+        const savedFile = getScopedIdeItem("active_file", uKey);
         if (savedFile && activeProject.files?.includes(savedFile)) return savedFile;
       } catch (e) {}
     }
@@ -1023,11 +1124,12 @@ export default function QuantumGuruStudioPage() {
   const [dwaveCode, setDwaveCode] = useState<string>(() => {
     if (typeof window !== "undefined") {
       try {
+        const uKey = getActiveUserKey();
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get("project") || params.get("projectId");
-        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id") || "clean_energy_portfolio";
-        const savedFile = localStorage.getItem("quantum_ide_active_file") || "main.py";
-        const savedCode = localStorage.getItem(`quantum_ide_code_${savedId}_${savedFile}`);
+        const savedId = urlId || getScopedIdeItem("active_project_id", uKey) || "clean_energy_portfolio";
+        const savedFile = getScopedIdeItem("active_file", uKey) || "main.py";
+        const savedCode = getScopedIdeItem(`code_${savedId}_${savedFile}`, uKey);
         if (savedCode) {
           if (savedId !== "clean_energy_portfolio" && savedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection")) {
             return NEW_DWAVE_STARTER_CODE;
@@ -1042,11 +1144,12 @@ export default function QuantumGuruStudioPage() {
   const [qiskitCode, setQiskitCode] = useState<string>(() => {
     if (typeof window !== "undefined") {
       try {
+        const uKey = getActiveUserKey();
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get("project") || params.get("projectId");
-        const savedId = urlId || localStorage.getItem("quantum_ide_active_project_id") || "quantum_journey_101";
-        const savedFile = localStorage.getItem("quantum_ide_active_file") || (savedId === "quantum_journey_101" ? "journey.py" : "teleportation.py");
-        const savedCode = localStorage.getItem(`quantum_ide_code_${savedId}_${savedFile}`);
+        const savedId = urlId || getScopedIdeItem("active_project_id", uKey) || "quantum_journey_101";
+        const savedFile = getScopedIdeItem("active_file", uKey) || (savedId === "quantum_journey_101" ? "journey.py" : "teleportation.py");
+        const savedCode = getScopedIdeItem(`code_${savedId}_${savedFile}`, uKey);
         if (savedCode) return savedCode;
         if (savedId === "quantum_journey_101") return QUANTUM_JOURNEY_CODE;
       } catch (e) {}
@@ -1066,7 +1169,8 @@ export default function QuantumGuruStudioPage() {
   const [journeyMilestoneId, setJourneyMilestoneId] = useState<number>(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("quantum_journey_101_milestone");
+        const uKey = getActiveUserKey();
+        const saved = getScopedIdeItem("journey_101_milestone", uKey);
         if (saved !== null) {
           const parsed = parseInt(saved, 10);
           if (!isNaN(parsed)) return Math.min(6, Math.max(0, parsed));
@@ -1083,7 +1187,8 @@ export default function QuantumGuruStudioPage() {
   const [journeyStage, setJourneyStage] = useState<"explore" | "quiz" | "challenge" | "completed">(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("quantum_journey_101_stage");
+        const uKey = getActiveUserKey();
+        const saved = getScopedIdeItem("journey_101_stage", uKey);
         if (saved === "quiz" || saved === "challenge" || saved === "completed") return saved;
       } catch (e) {}
     }
@@ -1201,11 +1306,12 @@ export default function QuantumGuruStudioPage() {
   const [solverResult, setSolverResult] = useState<OptimizationResults>(() => {
     if (typeof window !== "undefined") {
       try {
-        const targetId = localStorage.getItem("quantum_ide_active_project_id") || "clean_energy_portfolio";
+        const uKey = getActiveUserKey();
+        const targetId = getScopedIdeItem("active_project_id", uKey) || "clean_energy_portfolio";
         if (targetId === "clean_energy_portfolio") {
           return DEFAULT_PORTFOLIO_RESULT;
         }
-        const stored = localStorage.getItem(`quantum_ide_result_${targetId}`);
+        const stored = getScopedIdeItem(`result_${targetId}`, uKey);
         if (stored) return JSON.parse(stored);
       } catch (e) {}
     }
@@ -1224,9 +1330,10 @@ export default function QuantumGuruStudioPage() {
   const [qiskitSimulatorId, setQiskitSimulatorId] = useState<string>(() => {
     if (typeof window !== "undefined") {
       try {
-        const targetId = localStorage.getItem("quantum_ide_active_project_id");
+        const uKey = getActiveUserKey();
+        const targetId = getScopedIdeItem("active_project_id", uKey);
         if (targetId) {
-          const stored = localStorage.getItem(`quantum_ide_qiskit_result_${targetId}`);
+          const stored = getScopedIdeItem(`qiskit_result_${targetId}`, uKey);
           if (stored) {
             const parsed = JSON.parse(stored);
             if (parsed.simulator_id) return parsed.simulator_id;
@@ -1239,9 +1346,10 @@ export default function QuantumGuruStudioPage() {
   const [qiskitCounts, setQiskitCounts] = useState<Record<string, number>>(() => {
     if (typeof window !== "undefined") {
       try {
-        const targetId = localStorage.getItem("quantum_ide_active_project_id");
+        const uKey = getActiveUserKey();
+        const targetId = getScopedIdeItem("active_project_id", uKey);
         if (targetId) {
-          const stored = localStorage.getItem(`quantum_ide_qiskit_result_${targetId}`);
+          const stored = getScopedIdeItem(`qiskit_result_${targetId}`, uKey);
           if (stored) {
             const parsed = JSON.parse(stored);
             if (parsed.measurement_counts) return parsed.measurement_counts;
@@ -1256,9 +1364,10 @@ export default function QuantumGuruStudioPage() {
   const [qiskitShots, setQiskitShots] = useState<number>(() => {
     if (typeof window !== "undefined") {
       try {
-        const targetId = localStorage.getItem("quantum_ide_active_project_id");
+        const uKey = getActiveUserKey();
+        const targetId = getScopedIdeItem("active_project_id", uKey);
         if (targetId) {
-          const stored = localStorage.getItem(`quantum_ide_qiskit_result_${targetId}`);
+          const stored = getScopedIdeItem(`qiskit_result_${targetId}`, uKey);
           if (stored) {
             const parsed = JSON.parse(stored);
             if (parsed.shots) return parsed.shots;
@@ -1286,7 +1395,8 @@ export default function QuantumGuruStudioPage() {
   const [dwaveCopilotMessages, setDwaveCopilotMessages] = useState<CopilotMessage[]>(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("quantum_ide_chat_clean_energy_portfolio");
+        const uKey = getActiveUserKey();
+        const saved = getScopedIdeItem("chat_clean_energy_portfolio", uKey);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -1300,8 +1410,9 @@ export default function QuantumGuruStudioPage() {
   const [qiskitCopilotMessages, setQiskitCopilotMessages] = useState<CopilotMessage[]>(() => {
     if (typeof window !== "undefined") {
       try {
-        const activeId = new URLSearchParams(window.location.search).get("project") || localStorage.getItem("quantum_ide_active_project_id") || "quantum_journey_101";
-        const saved = localStorage.getItem(`quantum_ide_chat_${activeId}`);
+        const uKey = getActiveUserKey();
+        const activeId = new URLSearchParams(window.location.search).get("project") || getScopedIdeItem("active_project_id", uKey) || "quantum_journey_101";
+        const saved = getScopedIdeItem(`chat_${activeId}`, uKey);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -1377,9 +1488,9 @@ export default function QuantumGuruStudioPage() {
     try {
       const params = new URLSearchParams(window.location.search);
       const urlProjectId = params.get("project") || params.get("projectId");
-      const savedProjectId = urlProjectId || localStorage.getItem("quantum_ide_active_project_id");
-      const savedFile = localStorage.getItem("quantum_ide_active_file");
-      const savedTab = localStorage.getItem("quantum_ide_hero_tab") as HeroTabType | null;
+      const savedProjectId = urlProjectId || getScopedIdeItem("active_project_id", userKey);
+      const savedFile = getScopedIdeItem("active_file", userKey);
+      const savedTab = getScopedIdeItem("hero_tab", userKey) as HeroTabType | null;
 
       if (savedProjectId) {
         const matched = projects.find((p) => p.id === savedProjectId);
@@ -1395,7 +1506,7 @@ export default function QuantumGuruStudioPage() {
           }
 
           // Restore code from localStorage or project fileContents
-          let savedCode = localStorage.getItem(`quantum_ide_code_${matched.id}_${initialFile}`);
+          let savedCode = getScopedIdeItem(`code_${matched.id}_${initialFile}`, userKey);
           if (!savedCode && matched.fileContents && matched.fileContents[initialFile]) {
             savedCode = matched.fileContents[initialFile];
           }
@@ -1404,7 +1515,7 @@ export default function QuantumGuruStudioPage() {
           if (matched.id !== "clean_energy_portfolio" && savedCode && savedCode.includes("# Quantum Guru — Clean Energy Portfolio Selection")) {
             savedCode = matched.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
             try {
-              localStorage.setItem(`quantum_ide_code_${matched.id}_${initialFile}`, savedCode);
+              setScopedIdeItem(`code_${matched.id}_${initialFile}`, userKey, savedCode);
             } catch (e) {}
           }
 
@@ -1419,7 +1530,7 @@ export default function QuantumGuruStudioPage() {
           // Restore chat from localStorage for the active project
           let savedChat: CopilotMessage[] | null = null;
           try {
-            const stored = localStorage.getItem(`quantum_ide_chat_${matched.id}`);
+            const stored = getScopedIdeItem(`chat_${matched.id}`, userKey);
             if (stored) {
               const parsed = JSON.parse(stored);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -1471,33 +1582,33 @@ export default function QuantumGuruStudioPage() {
     setQiskitDepth(parsed.depth);
   }, [qiskitCode, framework, circuitGates.length]);
 
-  // Real-time auto-save of current editor code to localStorage
+  // Real-time auto-save of current editor code to user-scoped storage
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const currentCode = framework === "dwave" ? dwaveCode : qiskitCode;
-      localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, currentCode);
+      setScopedIdeItem(`code_${activeProject.id}_${activeFile}`, userKey, currentCode);
     } catch (e) {
-      console.warn("Failed to auto-save code to localStorage:", e);
+      console.warn("Failed to auto-save code to user storage:", e);
     }
-  }, [dwaveCode, qiskitCode, activeProject.id, activeFile, framework]);
+  }, [dwaveCode, qiskitCode, activeProject.id, activeFile, framework, userKey]);
 
-  // Real-time auto-save of copilot messages to localStorage per active project
+  // Real-time auto-save of copilot messages to user-scoped storage per active project
   useEffect(() => {
     if (typeof window === "undefined" || !activeProject?.id) return;
     try {
       const msgs = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
-      localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(msgs));
+      setScopedIdeItem(`chat_${activeProject.id}`, userKey, JSON.stringify(msgs));
     } catch (e) {
-      console.warn("Failed to auto-save copilot messages to localStorage:", e);
+      console.warn("Failed to auto-save copilot messages to user storage:", e);
     }
-  }, [dwaveCopilotMessages, qiskitCopilotMessages, activeProject.id, framework]);
+  }, [dwaveCopilotMessages, qiskitCopilotMessages, activeProject.id, framework, userKey]);
 
   const handleSelectHeroTab = (tab: HeroTabType) => {
     setHeroTab(tab);
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("quantum_ide_hero_tab", tab);
+        setScopedIdeItem("hero_tab", userKey, tab);
       } catch (e) {}
     }
   };
@@ -1515,7 +1626,7 @@ export default function QuantumGuruStudioPage() {
       }));
       if (typeof window !== "undefined") {
         try {
-          localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, curCode);
+          setScopedIdeItem(`code_${activeProject.id}_${activeFile}`, userKey, curCode);
         } catch (e) {}
       }
     }
@@ -1523,8 +1634,8 @@ export default function QuantumGuruStudioPage() {
     let loadedCode = "";
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("quantum_ide_active_file", file);
-        loadedCode = localStorage.getItem(`quantum_ide_code_${activeProject.id}_${file}`) || "";
+        setScopedIdeItem("active_file", userKey, file);
+        loadedCode = getScopedIdeItem(`code_${activeProject.id}_${file}`, userKey) || "";
       } catch (e) {}
     }
     if (!loadedCode && activeProject.fileContents && activeProject.fileContents[file]) {
@@ -1552,7 +1663,7 @@ export default function QuantumGuruStudioPage() {
     let loadedCode = "";
     if (typeof window !== "undefined") {
       try {
-        loadedCode = localStorage.getItem(`quantum_ide_code_${proj.id}_${targetFile}`) || "";
+        loadedCode = getScopedIdeItem(`code_${proj.id}_${targetFile}`, userKey) || "";
       } catch (e) {}
     }
     if (!loadedCode && proj.fileContents && proj.fileContents[targetFile]) {
@@ -1563,7 +1674,7 @@ export default function QuantumGuruStudioPage() {
       loadedCode = proj.framework === "dwave" ? NEW_DWAVE_STARTER_CODE : NEW_QISKIT_STARTER_CODE;
       if (typeof window !== "undefined") {
         try {
-          localStorage.setItem(`quantum_ide_code_${proj.id}_${targetFile}`, loadedCode);
+          setScopedIdeItem(`code_${proj.id}_${targetFile}`, userKey, loadedCode);
         } catch (e) {}
       }
     }
@@ -1598,7 +1709,7 @@ export default function QuantumGuruStudioPage() {
     if (activeProject?.id) {
       const currentMsgs = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
       try {
-        localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(currentMsgs));
+        setScopedIdeItem(`chat_${activeProject.id}`, userKey, JSON.stringify(currentMsgs));
       } catch (e) {}
     }
 
@@ -1606,7 +1717,7 @@ export default function QuantumGuruStudioPage() {
     let savedChat: CopilotMessage[] | null = null;
     if (typeof window !== "undefined") {
       try {
-        const stored = localStorage.getItem(`quantum_ide_chat_${proj.id}`);
+        const stored = getScopedIdeItem(`chat_${proj.id}`, userKey);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -1634,7 +1745,7 @@ export default function QuantumGuruStudioPage() {
       let savedRes = null;
       if (typeof window !== "undefined") {
         try {
-          const stored = localStorage.getItem(`quantum_ide_result_${proj.id}`);
+          const stored = getScopedIdeItem(`result_${proj.id}`, userKey);
           if (stored) savedRes = JSON.parse(stored);
         } catch (e) {}
       }
@@ -1655,7 +1766,7 @@ export default function QuantumGuruStudioPage() {
       let savedQiskit = null;
       if (typeof window !== "undefined") {
         try {
-          const stored = localStorage.getItem(`quantum_ide_qiskit_result_${proj.id}`);
+          const stored = getScopedIdeItem(`qiskit_result_${proj.id}`, userKey);
           if (stored) savedQiskit = JSON.parse(stored);
         } catch (e) {}
       }
@@ -1693,7 +1804,7 @@ export default function QuantumGuruStudioPage() {
     // Restore project-isolated Execution History
     if (typeof window !== "undefined") {
       try {
-        const storedHistory = localStorage.getItem(`quantum_ide_history_${proj.id}`);
+        const storedHistory = getScopedIdeItem(`history_${proj.id}`, userKey);
         if (storedHistory) {
           const parsed = JSON.parse(storedHistory);
           const filtered = Array.isArray(parsed)
@@ -1710,9 +1821,9 @@ export default function QuantumGuruStudioPage() {
 
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("quantum_ide_active_project_id", proj.id);
-        localStorage.setItem("quantum_ide_active_file", targetFile);
-        localStorage.setItem("quantum_ide_hero_tab", targetTab);
+        setScopedIdeItem("active_project_id", userKey, proj.id);
+        setScopedIdeItem("active_file", userKey, targetFile);
+        setScopedIdeItem("hero_tab", userKey, targetTab);
         window.history.replaceState(null, "", `/ide?project=${encodeURIComponent(proj.id)}`);
       } catch (e) {}
     }
@@ -1781,7 +1892,7 @@ export default function QuantumGuruStudioPage() {
     if (activeProject?.id) {
       const currentMsgs = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
       try {
-        localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(currentMsgs));
+        setScopedIdeItem(`chat_${activeProject.id}`, userKey, JSON.stringify(currentMsgs));
       } catch (e) {}
     }
 
@@ -1791,7 +1902,7 @@ export default function QuantumGuruStudioPage() {
     setQiskitCopilotMessages([...QISKIT_INITIAL_MESSAGES]);
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(`quantum_ide_chat_${customProj.id}`, JSON.stringify(freshMessages));
+        setScopedIdeItem(`chat_${customProj.id}`, userKey, JSON.stringify(freshMessages));
       } catch (e) {}
     }
 
@@ -1848,21 +1959,21 @@ export default function QuantumGuruStudioPage() {
 
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("quantum_ide_active_project_id", customProj.id);
-        localStorage.setItem("quantum_ide_active_file", targetFile);
-        localStorage.setItem("quantum_ide_hero_tab", "code");
-        localStorage.setItem(`quantum_ide_code_${customProj.id}_${targetFile}`, initialCode);
+        setScopedIdeItem("active_project_id", userKey, customProj.id);
+        setScopedIdeItem("active_file", userKey, targetFile);
+        setScopedIdeItem("hero_tab", userKey, "code");
+        setScopedIdeItem(`code_${customProj.id}_${targetFile}`, userKey, initialCode);
         if (customProj.fileContents) {
           Object.entries(customProj.fileContents).forEach(([fn, content]) => {
-            localStorage.setItem(`quantum_ide_code_${customProj.id}_${fn}`, content);
+            setScopedIdeItem(`code_${customProj.id}_${fn}`, userKey, content);
           });
         }
-        localStorage.removeItem(`quantum_ide_result_${customProj.id}`);
-        localStorage.removeItem(`quantum_ide_qiskit_result_${customProj.id}`);
+        removeScopedIdeItem(`result_${customProj.id}`, userKey);
+        removeScopedIdeItem(`qiskit_result_${customProj.id}`, userKey);
 
-        const stored = localStorage.getItem("quantum_ide_custom_projects");
+        const stored = getScopedIdeItem("custom_projects", userKey);
         const list: ProjectItem[] = stored ? JSON.parse(stored) : [];
-        localStorage.setItem("quantum_ide_custom_projects", JSON.stringify([customProj, ...list.filter(p => p.id !== customProj.id)]));
+        setScopedIdeItem("custom_projects", userKey, JSON.stringify([customProj, ...list.filter(p => p.id !== customProj.id)]));
 
         window.history.replaceState(null, "", `/ide?project=${encodeURIComponent(customProj.id)}`);
       } catch (e) {}
@@ -1920,13 +2031,15 @@ export default function QuantumGuruStudioPage() {
 
     if (typeof window !== "undefined") {
       try {
-        const stored = localStorage.getItem("quantum_ide_custom_projects");
+        const stored = getScopedIdeItem("custom_projects", userKey);
         if (stored) {
           const list: ProjectItem[] = JSON.parse(stored);
-          localStorage.setItem("quantum_ide_custom_projects", JSON.stringify(list.filter(p => p.id !== projectId)));
+          setScopedIdeItem("custom_projects", userKey, JSON.stringify(list.filter(p => p.id !== projectId)));
         }
-        localStorage.removeItem(`quantum_ide_chat_${projectId}`);
-        localStorage.removeItem(`quantum_ide_history_${projectId}`);
+        removeScopedIdeItem(`chat_${projectId}`, userKey);
+        removeScopedIdeItem(`history_${projectId}`, userKey);
+        removeScopedIdeItem(`result_${projectId}`, userKey);
+        removeScopedIdeItem(`qiskit_result_${projectId}`, userKey);
       } catch (e) {}
     }
 
@@ -2455,7 +2568,7 @@ export default function QuantumGuruStudioPage() {
             setSolverResult(newRes);
             if (typeof window !== "undefined") {
               try {
-                localStorage.setItem(`quantum_ide_result_${activeProject.id}`, JSON.stringify(newRes));
+                setScopedIdeItem(`result_${activeProject.id}`, userKey, JSON.stringify(newRes));
               } catch (e) {}
             }
 
@@ -2510,7 +2623,7 @@ export default function QuantumGuruStudioPage() {
           let curHist: ExecutionHistoryItem[] = [];
           if (typeof window !== "undefined") {
             try {
-              const raw = localStorage.getItem(`quantum_ide_history_${curProjId}`);
+              const raw = getScopedIdeItem(`history_${curProjId}`, userKey);
               if (raw) curHist = JSON.parse(raw);
             } catch {}
           }
@@ -2518,7 +2631,7 @@ export default function QuantumGuruStudioPage() {
           setExecutionHistory(updatedDwave);
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem(`quantum_ide_history_${curProjId}`, JSON.stringify(updatedDwave));
+              setScopedIdeItem(`history_${curProjId}`, userKey, JSON.stringify(updatedDwave));
             } catch {}
           }
 
@@ -2637,8 +2750,9 @@ export default function QuantumGuruStudioPage() {
 
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem(
-                `quantum_ide_qiskit_result_${activeProject.id}`,
+              setScopedIdeItem(
+                `qiskit_result_${activeProject.id}`,
+                userKey,
                 JSON.stringify({
                   measurement_counts: data.measurement_counts,
                   circuit_gates: data.circuit_gates,
@@ -2680,7 +2794,7 @@ export default function QuantumGuruStudioPage() {
           let curHist: ExecutionHistoryItem[] = [];
           if (typeof window !== "undefined") {
             try {
-              const raw = localStorage.getItem(`quantum_ide_history_${curProjId}`);
+              const raw = getScopedIdeItem(`history_${curProjId}`, userKey);
               if (raw) curHist = JSON.parse(raw);
             } catch {}
           }
@@ -2688,7 +2802,7 @@ export default function QuantumGuruStudioPage() {
           setExecutionHistory(updatedQiskit);
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem(`quantum_ide_history_${curProjId}`, JSON.stringify(updatedQiskit));
+              setScopedIdeItem(`history_${curProjId}`, userKey, JSON.stringify(updatedQiskit));
             } catch {}
           }
 
@@ -2739,7 +2853,7 @@ export default function QuantumGuruStudioPage() {
                 setQuizHelpCount(0);
                 if (typeof window !== "undefined") {
                   try {
-                    localStorage.setItem("quantum_journey_101_stage", "quiz");
+                    setScopedIdeItem("journey_101_stage", userKey, "quiz");
                   } catch (e) {}
                 }
               }, 500);
@@ -2775,7 +2889,7 @@ export default function QuantumGuruStudioPage() {
                   setJourneyStage("completed");
                   if (typeof window !== "undefined") {
                     try {
-                      localStorage.setItem("quantum_journey_101_stage", "completed");
+                      setScopedIdeItem("journey_101_stage", userKey, "completed");
                     } catch (e) {}
                   }
                 } else {
@@ -2839,7 +2953,7 @@ export default function QuantumGuruStudioPage() {
         },
       }));
       try {
-        localStorage.setItem(`quantum_ide_code_${activeProject.id}_${targetFile}`, code);
+        setScopedIdeItem(`code_${activeProject.id}_${targetFile}`, userKey, code);
       } catch {}
 
       setQiskitCopilotMessages((prev) =>
@@ -2923,9 +3037,9 @@ export default function QuantumGuruStudioPage() {
       };
     });
     try {
-      localStorage.setItem(`quantum_ide_code_${activeProject.id}_${targetFile}`, code);
+      setScopedIdeItem(`code_${activeProject.id}_${targetFile}`, userKey, code);
       if (meta?.qubo_code) {
-        localStorage.setItem(`quantum_ide_code_${activeProject.id}_qubo_matrix.py`, meta.qubo_code);
+        setScopedIdeItem(`code_${activeProject.id}_qubo_matrix.py`, userKey, meta.qubo_code);
       }
     } catch {}
 
@@ -2978,7 +3092,7 @@ export default function QuantumGuruStudioPage() {
         setSolverResult(solverRes);
         setIsModelDirty(false);
         try {
-          localStorage.setItem(`quantum_ide_result_${activeProject.id}`, JSON.stringify(solverRes));
+          setScopedIdeItem(`result_${activeProject.id}`, userKey, JSON.stringify(solverRes));
         } catch {}
 
         setTerminalOutput(
@@ -3017,7 +3131,7 @@ export default function QuantumGuruStudioPage() {
     }
     if (typeof window !== "undefined" && activeProject?.id) {
       try {
-        localStorage.setItem(`quantum_ide_chat_${activeProject.id}`, JSON.stringify(fresh));
+        setScopedIdeItem(`chat_${activeProject.id}`, userKey, JSON.stringify(fresh));
       } catch (e) {}
     }
     if (activeProject?.id === "quantum_journey_101") {
@@ -3031,9 +3145,9 @@ export default function QuantumGuruStudioPage() {
       setTerminalOutput(`=== Quantum Journey 101 Reset ===\nWorkspace reset to Module 0: Quantum Foundations.\n`);
       if (typeof window !== "undefined") {
         try {
-          localStorage.setItem("quantum_journey_101_milestone", "0");
-          localStorage.setItem("quantum_journey_101_stage", "explore");
-          localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, m0.starterCode);
+          setScopedIdeItem("journey_101_milestone", userKey, "0");
+          setScopedIdeItem("journey_101_stage", userKey, "explore");
+          setScopedIdeItem(`code_${activeProject.id}_${activeFile}`, userKey, m0.starterCode);
         } catch (e) {}
       }
     }
@@ -3093,9 +3207,9 @@ export default function QuantumGuruStudioPage() {
           );
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem("quantum_journey_101_milestone", String(nextId));
-              localStorage.setItem("quantum_journey_101_stage", "explore");
-              localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, nextM.starterCode);
+              setScopedIdeItem("journey_101_milestone", userKey, String(nextId));
+              setScopedIdeItem("journey_101_stage", userKey, "explore");
+              setScopedIdeItem(`code_${activeProject.id}_${activeFile}`, userKey, nextM.starterCode);
             } catch (e) {}
           }
           const transitionMsg: CopilotMessage = {
@@ -3126,9 +3240,9 @@ export default function QuantumGuruStudioPage() {
           setTerminalOutput(`=== Quantum Journey 101 Reset ===\nWorkspace reset to Module 0: Quantum Foundations.\n`);
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem("quantum_journey_101_milestone", "0");
-              localStorage.setItem("quantum_journey_101_stage", "explore");
-              localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, m0.starterCode);
+              setScopedIdeItem("journey_101_milestone", userKey, "0");
+              setScopedIdeItem("journey_101_stage", userKey, "explore");
+              setScopedIdeItem(`code_${activeProject.id}_${activeFile}`, userKey, m0.starterCode);
             } catch (e) {}
           }
           const resetMsg: CopilotMessage = {
@@ -3166,7 +3280,7 @@ export default function QuantumGuruStudioPage() {
           setChallengeHintCount(0);
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem(`quantum_ide_code_${activeProject.id}_${activeFile}`, currentM.starterCode);
+              setScopedIdeItem(`code_${activeProject.id}_${activeFile}`, userKey, currentM.starterCode);
             } catch (e) {}
           }
           const resetModuleMsg: CopilotMessage = {
@@ -3206,7 +3320,7 @@ export default function QuantumGuruStudioPage() {
             setJourneyStage("completed");
             if (typeof window !== "undefined") {
               try {
-                localStorage.setItem("quantum_journey_101_stage", "completed");
+                setScopedIdeItem("journey_101_stage", userKey, "completed");
               } catch (e) {}
             }
             const passMsg: CopilotMessage = {
@@ -3308,7 +3422,7 @@ export default function QuantumGuruStudioPage() {
             setQuizHelpCount(0);
             if (typeof window !== "undefined") {
               try {
-                localStorage.setItem("quantum_journey_101_stage", "challenge");
+                setScopedIdeItem("journey_101_stage", userKey, "challenge");
               } catch (e) {}
             }
             const revealMsg: CopilotMessage = {
@@ -3330,7 +3444,7 @@ export default function QuantumGuruStudioPage() {
               setQuizHelpCount(0);
               if (typeof window !== "undefined") {
                 try {
-                  localStorage.setItem("quantum_journey_101_stage", "challenge");
+                  setScopedIdeItem("journey_101_stage", userKey, "challenge");
                 } catch (e) {}
               }
               const escMsg: CopilotMessage = {
@@ -3365,7 +3479,7 @@ export default function QuantumGuruStudioPage() {
               setQuizHelpCount(0);
               if (typeof window !== "undefined") {
                 try {
-                  localStorage.setItem("quantum_journey_101_stage", "challenge");
+                  setScopedIdeItem("journey_101_stage", userKey, "challenge");
                 } catch (e) {}
               }
               const escMsg: CopilotMessage = {
@@ -3398,7 +3512,7 @@ export default function QuantumGuruStudioPage() {
             setQuizHelpCount(0);
             if (typeof window !== "undefined") {
               try {
-                localStorage.setItem("quantum_journey_101_stage", "challenge");
+                setScopedIdeItem("journey_101_stage", userKey, "challenge");
               } catch (e) {}
             }
             const quizPassMsg: CopilotMessage = {
@@ -3476,8 +3590,9 @@ ${currentM.challengeInstruction}`,
           setQiskitCounts(data.measurement_counts);
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem(
-                `quantum_ide_qiskit_result_${activeProject.id}`,
+              setScopedIdeItem(
+                `qiskit_result_${activeProject.id}`,
+                userKey,
                 JSON.stringify({
                   measurement_counts: data.measurement_counts,
                   circuit_gates: data.circuit_gates,
