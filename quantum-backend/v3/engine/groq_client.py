@@ -61,7 +61,9 @@ async def call_groq(
             {"role": "user", "content": user}
         ],
         "max_tokens": effective_max_tokens,
-        "temperature": temperature
+        "temperature": max(temperature, 0.2),
+        "frequency_penalty": 0.3,
+        "presence_penalty": 0.1
     }
 
     # Suppress reasoning tokens for Qwen models on Groq to save output tokens and avoid rate limits
