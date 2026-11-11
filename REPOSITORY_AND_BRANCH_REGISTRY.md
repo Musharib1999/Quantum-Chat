@@ -12,7 +12,8 @@ All platform development is tracked across three primary GitHub remotes. Continu
 
 | Remote Alias | Repository URL | Purpose | Tracking Status |
 | :--- | :--- | :--- | :--- |
-| **`railway`** | `https://github.com/musharibsep-eng/Quantum-Guru-09-09-2026.git` | Production deployment target for Railway CI/CD & backend API | Synchronized |
+| **`railway`** | `https://github.com/ms8809444-arch/Quantum-guru--11-11-2026.git` | Production deployment target for Railway CI/CD & backend API | Synchronized (main & phase-2) |
+| **`railway-legacy`** | `https://github.com/musharibsep-eng/Quantum-Guru-09-09-2026.git` | Prior Railway production repository archive | Legacy Archive |
 | **`quantum-chat`** | `https://github.com/Musharib1999/Quantum-Chat.git` | Primary team source repository & Next.js frontend code | Synchronized |
 | **`origin`** | `https://github.com/Musharib1999/QuantumGuru_Version2_09_11_2026.git` | Upstream platform master archive & reference snapshot | Secondary Archive |
 
