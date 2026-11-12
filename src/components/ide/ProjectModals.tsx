@@ -279,8 +279,8 @@ bqm = dimod.BinaryQuadraticModel(dimod.BINARY)
         : `# Quantum Guru — Blank Quantum Circuit
 from qiskit import QuantumCircuit
 
-# Initialize a clean 1-qubit circuit (add gates in canvas or editor)
-qc = QuantumCircuit(1)
+# Initialize a clean 1-qubit, 1-classical-bit circuit (add gates in canvas or editor)
+qc = QuantumCircuit(1, 1)
 `;
 
     const cleanSlug = finalName.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 32);

@@ -195,8 +195,8 @@ bqm = dimod.BinaryQuadraticModel(dimod.BINARY)`;
 const NEW_QISKIT_STARTER_CODE = `# Quantum Guru — Blank Quantum Circuit
 from qiskit import QuantumCircuit
 
-# Initialize a clean 1-qubit circuit (add gates in canvas or editor)
-qc = QuantumCircuit(1)`;
+# Initialize a clean 1-qubit, 1-classical-bit circuit (add gates in canvas or editor)
+qc = QuantumCircuit(1, 1)`;
 
 const DWAVE_INITIAL_CODE = CLEAN_ENERGY_PORTFOLIO_CODE;
 
@@ -1524,6 +1524,11 @@ export default function QuantumGuruStudioPage() {
     return 1024;
   });
   const [circuitGates, setCircuitGates] = useState<any[]>([]);
+  const circuitGatesLengthRef = useRef<number>(0);
+  useEffect(() => {
+    circuitGatesLengthRef.current = circuitGates.length;
+  }, [circuitGates.length]);
+
   const [circuitAscii, setCircuitAscii] = useState<string>("");
   const [isCircuitSynced, setIsCircuitSynced] = useState<boolean>(true);
   const isCanvasModifyingRef = useRef<boolean>(false);
@@ -1708,13 +1713,14 @@ export default function QuantumGuruStudioPage() {
     const hasQc = /QuantumCircuit\(/.test(qiskitCode);
     if (!hasQc) return;
 
-    const hasLoopsOrDefs = /(^|\W)(for|while|def)($|\W)/.test(qiskitCode);
     const parsed = parseQiskitCodeToCircuit(qiskitCode);
+    const hasDynamicConstructs =
+      /(^|\W)(for|while|def|append|compose|QuantumRegister|Parameter|QFT)($|\W)/.test(qiskitCode) ||
+      circuitGatesLengthRef.current > parsed.gates.length;
 
-    // 2. If code has dynamic constructs (loops, defs, functions) and canvas already holds
-    // an expanded circuit (e.g. from runtime execution or canvas editing),
-    // NEVER overwrite the canvas with the partial static regex parse!
-    if (hasLoopsOrDefs && circuitGates.length > 0) {
+    // 2. If code has dynamic constructs or canvas already holds runtime-expanded gates,
+    // NEVER overwrite the canvas with the partial static regex parse! (C5 fix)
+    if (hasDynamicConstructs && circuitGatesLengthRef.current > 0) {
       setIsResultsStale(true);
       return;
     }
@@ -1722,7 +1728,7 @@ export default function QuantumGuruStudioPage() {
     setCircuitGates(parsed.gates);
     setQiskitQubits(parsed.numQubits);
     setQiskitDepth(parsed.depth);
-  }, [qiskitCode, framework, circuitGates.length]);
+  }, [qiskitCode, framework]);
 
   // Tracking refs to prevent A2 cross-account writes during user transition
   const lastSavedUserKeyRef = useRef<string>(userKey);
@@ -2420,6 +2426,9 @@ export default function QuantumGuruStudioPage() {
     }
 
     isCanvasModifyingRef.current = true;
+    setTimeout(() => {
+      isCanvasModifyingRef.current = false;
+    }, 300);
     setQiskitQubits(clamped);
 
     // Update QuantumCircuit(N, N) initialization & prune out-of-range gate statements
@@ -2444,7 +2453,7 @@ export default function QuantumGuruStudioPage() {
             if (comma && nC !== undefined) {
               return `${prefix}${clamped}${comma}${clamped}`;
             }
-            return `${prefix}${clamped}`;
+            return `${prefix}${clamped}, ${clamped}`;
           }
         );
       } else {
@@ -2520,6 +2529,9 @@ export default function QuantumGuruStudioPage() {
     extraArgs?: { control2?: number; uTheta?: string; uPhi?: string; uLam?: string }
   ) => {
     isCanvasModifyingRef.current = true;
+    setTimeout(() => {
+      isCanvasModifyingRef.current = false;
+    }, 300);
     const gateUpper = gateName.toUpperCase();
     const ctrl2 = extraArgs?.control2;
 
@@ -2571,7 +2583,7 @@ export default function QuantumGuruStudioPage() {
         }
       }
 
-      // Auto-expand QuantumCircuit qubit count if user placed gate on higher wire
+      // Auto-expand QuantumCircuit qubit and classical register count if needed (B9)
       if (circuitDefIdx !== -1) {
         lines[circuitDefIdx] = lines[circuitDefIdx].replace(
           /(QuantumCircuit\(\s*)(\d+)(?:(\s*,\s*)(\d+))?/,
@@ -2582,6 +2594,9 @@ export default function QuantumGuruStudioPage() {
               const curC = parseInt(nC, 10);
               const newC = Math.max(curC, newQ);
               return `${prefix}${newQ}${comma}${newC}`;
+            }
+            if (gateUpper === "M" || gateUpper === "MEASURE") {
+              return `${prefix}${newQ}, ${newQ}`;
             }
             return `${prefix}${newQ}`;
           }
@@ -2837,100 +2852,121 @@ export default function QuantumGuruStudioPage() {
   };
 
   const handleRemoveGateFromCircuit = (gateIndex: number) => {
-    isCanvasModifyingRef.current = true;
     const gateToRemove = circuitGates[gateIndex];
-    const tgt = gateToRemove
-      ? (gateToRemove.target !== undefined ? gateToRemove.target : (gateToRemove.qubits && gateToRemove.qubits.length > 1 ? gateToRemove.qubits[1] : undefined))
-      : undefined;
-    const q = gateToRemove?.qubit;
-    const targetStep = gateToRemove?.step;
+    if (!gateToRemove) return;
 
-    if (gateToRemove) {
-      setQiskitCode((prevCode) => {
-        const lines = prevCode.split("\n");
-        let circuitVar = "qc";
-        for (const l of lines) {
-          const match = l.match(/^(\s*)([a-zA-Z0-9_]+)\s*=\s*(?:[a-zA-Z0-9_]+\.)?QuantumCircuit\(/);
-          if (match) {
-            circuitVar = match[2];
-            break;
-          }
+    isCanvasModifyingRef.current = true;
+    setTimeout(() => {
+      isCanvasModifyingRef.current = false;
+    }, 300);
+
+    const q = gateToRemove.qubit;
+    const tgt = gateToRemove.target !== undefined
+      ? gateToRemove.target
+      : (gateToRemove.qubits && gateToRemove.qubits.length > 1 ? gateToRemove.qubits[1] : undefined);
+    const targetStep = gateToRemove.step;
+    const gateUpper = (gateToRemove.name || "").toUpperCase();
+    const toRemoveQubits: number[] = gateToRemove.qubits && gateToRemove.qubits.length > 0
+      ? gateToRemove.qubits
+      : (tgt !== undefined && q !== undefined ? [q, tgt] : (q !== undefined ? [q] : []));
+
+    // 1. Update Python code by removing matching gate line
+    setQiskitCode((prevCode) => {
+      const lines = prevCode.split("\n");
+      let circuitVar = "qc";
+      for (const l of lines) {
+        const match = l.match(/^(\s*)([a-zA-Z0-9_]+)\s*=\s*(?:[a-zA-Z0-9_]+\.)?QuantumCircuit\(/);
+        if (match) {
+          circuitVar = match[2];
+          break;
+        }
+      }
+
+      const isCx = gateUpper === "CX" || gateUpper === "CNOT";
+      const isCcx = gateUpper === "CCX" || gateUpper === "TOFFOLI";
+
+      const wireSteps: Record<number, number> = {};
+      for (let w = 0; w < 30; w++) wireSteps[w] = 0;
+      let removeIdx = -1;
+
+      for (let i = 0; i < lines.length; i++) {
+        const parsed = parseQiskitLineQubits(lines[i], circuitVar, qiskitQubits);
+        if (!parsed) continue;
+
+        const lineQubits = parsed.qubits.length > 0 ? parsed.qubits : [0];
+        const curStep = Math.max(0, ...lineQubits.map((w) => wireSteps[w] ?? 0));
+        const opUpper = parsed.op.toUpperCase();
+
+        const nameMatches = isCx
+          ? (opUpper === "CX" || opUpper === "CNOT")
+          : isCcx
+          ? (opUpper === "CCX" || opUpper === "TOFFOLI")
+          : (opUpper === gateUpper || (gateUpper === "M" && opUpper === "MEASURE") || (gateUpper === "MEASURE" && opUpper === "MEASURE"));
+
+        const qubitMatches = toRemoveQubits.length > 0
+          ? (toRemoveQubits.every((wq: number) => lineQubits.includes(wq)))
+          : (lineQubits.includes(q));
+
+        if (nameMatches && qubitMatches && (targetStep === undefined || curStep === targetStep)) {
+          removeIdx = i;
+          break;
         }
 
-        const gateName = (gateToRemove.name || "").toLowerCase();
-        const isCx = gateName === "cx" || gateName === "cnot";
+        for (const w of lineQubits) {
+          wireSteps[w] = curStep + 1;
+        }
+      }
 
-        const wireSteps: Record<number, number> = {};
-        for (let w = 0; w < 30; w++) wireSteps[w] = 0;
-        let removeIdx = -1;
-
-        for (let i = 0; i < lines.length; i++) {
-          const parsed = parseQiskitLineQubits(lines[i], circuitVar);
+      // Fallback: scan from bottom if step matching didn't catch
+      if (removeIdx === -1) {
+        for (let i = lines.length - 1; i >= 0; i--) {
+          const parsed = parseQiskitLineQubits(lines[i], circuitVar, qiskitQubits);
           if (!parsed) continue;
-
           const lineQubits = parsed.qubits.length > 0 ? parsed.qubits : [0];
-          const curStep = Math.max(0, ...lineQubits.map((w) => wireSteps[w] ?? 0));
-
+          const opUpper = parsed.op.toUpperCase();
           const nameMatches = isCx
-            ? (parsed.op === "cx" || parsed.op === "cnot")
-            : (parsed.op === gateName || (gateName === "measure" && parsed.op === "measure") || (gateName === "m" && parsed.op === "measure"));
-
-          const qubitMatches = tgt !== undefined
-            ? (lineQubits.includes(q) && lineQubits.includes(tgt))
-            : (lineQubits.length === 1 && lineQubits[0] === q);
-
-          if (nameMatches && qubitMatches && (targetStep === undefined || curStep === targetStep)) {
+            ? (opUpper === "CX" || opUpper === "CNOT")
+            : isCcx
+            ? (opUpper === "CCX" || opUpper === "TOFFOLI")
+            : (opUpper === gateUpper || (gateUpper === "M" && opUpper === "MEASURE") || (gateUpper === "MEASURE" && opUpper === "MEASURE"));
+          const qubitMatches = toRemoveQubits.length > 0
+            ? (toRemoveQubits.every((wq: number) => lineQubits.includes(wq)))
+            : (lineQubits.includes(q));
+          if (nameMatches && qubitMatches) {
             removeIdx = i;
             break;
           }
-
-          for (const w of lineQubits) {
-            wireSteps[w] = curStep + 1;
-          }
         }
+      }
 
-        // Fallback: scan from bottom
-        if (removeIdx === -1) {
-          for (let i = lines.length - 1; i >= 0; i--) {
-            const parsed = parseQiskitLineQubits(lines[i], circuitVar);
-            if (!parsed) continue;
-            const lineQubits = parsed.qubits.length > 0 ? parsed.qubits : [0];
-            const nameMatches = isCx
-              ? (parsed.op === "cx" || parsed.op === "cnot")
-              : (parsed.op === gateName || (gateName === "measure" && parsed.op === "measure") || (gateName === "m" && parsed.op === "measure"));
-            const qubitMatches = tgt !== undefined
-              ? (lineQubits.includes(q) && lineQubits.includes(tgt))
-              : (lineQubits.includes(q));
-            if (nameMatches && qubitMatches) {
-              removeIdx = i;
-              break;
-            }
-          }
-        }
+      if (removeIdx !== -1) {
+        lines.splice(removeIdx, 1);
+        return lines.join("\n");
+      }
+      isCanvasModifyingRef.current = false;
+      return prevCode;
+    });
 
-        if (removeIdx !== -1) {
-          lines.splice(removeIdx, 1);
-          return lines.join("\n");
-        }
-        return prevCode;
-      });
-    }
-
+    // 2. Remove all related visual tiles from circuitGates state without leaving orphan controls (B5 fix)
     setCircuitGates((prev) =>
       prev.filter((g, idx) => {
         if (idx === gateIndex) return false;
-        if (gateToRemove && tgt !== undefined && q !== undefined) {
-          if (
-            (g.name || "").toLowerCase() === (gateToRemove.name || "").toLowerCase() &&
-            g.step === gateToRemove.step &&
-            ((g.qubit === q && g.target === tgt) || (g.qubit === tgt && g.target === q))
-          ) {
+        const gUpper = (g.name || "").toUpperCase();
+        if (gUpper === gateUpper && g.step === targetStep) {
+          const gQubits = g.qubits && g.qubits.length > 0
+            ? g.qubits
+            : (g.target !== undefined && g.qubit !== undefined ? [g.qubit, g.target] : [g.qubit]);
+          const sameQubits = toRemoveQubits.length > 0 &&
+            toRemoveQubits.length === gQubits.length &&
+            toRemoveQubits.every((wq: number) => gQubits.includes(wq));
+          if (sameQubits) {
             return false;
           }
         }
         return true;
       })
     );
+
     setIsCircuitSynced(true);
     setIsResultsStale(true);
   };
@@ -2943,8 +2979,8 @@ export default function QuantumGuruStudioPage() {
 
     // Explicit manual sync: parse editor Python code into visual schematic tiles without wiping loop-generated gates
     const parsed = parseQiskitCodeToCircuit(qiskitCode);
-    const hasLoopsOrDefs = /(^|\W)(for|while|def)($|\W)/.test(qiskitCode);
-    if (!hasLoopsOrDefs || circuitGates.length === 0) {
+    const hasDynamic = /(^|\W)(for|while|def|append|compose|QuantumRegister|Parameter|QFT)($|\W)/.test(qiskitCode);
+    if (!hasDynamic || circuitGatesLengthRef.current === 0) {
       setCircuitGates(parsed.gates);
       setQiskitQubits(parsed.numQubits);
       setQiskitDepth(parsed.depth);
@@ -2987,6 +3023,28 @@ export default function QuantumGuruStudioPage() {
         const data = await response.json();
         const dur = performance.now() - t0;
         setLatencyMs(parseFloat(dur.toFixed(1)));
+
+        // Guard against C4 project switch race condition:
+        const curProjId = activeProject.id;
+        if (activeProjectIdRef.current !== curProjId) {
+          if (data.success && data.optimization_results && typeof window !== "undefined") {
+            try {
+              const opt = data.optimization_results;
+              setScopedIdeItem(`result_${curProjId}`, userKey, JSON.stringify({
+                energy: opt.energy,
+                sample: opt.sample,
+                num_variables: opt.num_variables || Object.keys(opt.sample).length,
+                variables: opt.variables || Object.keys(opt.sample),
+                qubo_matrix: opt.qubo_matrix || [],
+                energy_distribution: opt.energy_distribution || [],
+                num_reads: opt.num_reads,
+                latex_formula: opt.latex_formula,
+                simulator_id: data.simulator_id,
+              }));
+            } catch (e) {}
+          }
+          return;
+        }
 
         if (data.success) {
           if (data.optimization_results) {
@@ -3136,6 +3194,24 @@ export default function QuantumGuruStudioPage() {
         const data = await response.json();
         const dur = performance.now() - t0;
         setLatencyMs(parseFloat(dur.toFixed(1)));
+
+        // Guard against C4 project switch race condition:
+        const curProjId = activeProject.id;
+        if (activeProjectIdRef.current !== curProjId) {
+          if (data.success && typeof window !== "undefined") {
+            try {
+              setScopedIdeItem(`qiskit_result_${curProjId}`, userKey, JSON.stringify({
+                measurement_counts: data.measurement_counts || {},
+                circuit_gates: data.circuit_gates || [],
+                circuit_ascii: data.circuit_ascii || "",
+                active_qubits: data.active_qubits || 2,
+                circuit_depth: data.circuit_depth || 0,
+                simulator_id: data.simulator_id || "",
+              }));
+            } catch (e) {}
+          }
+          return;
+        }
 
         if (data.success) {
           if (data.simulator_id) {
