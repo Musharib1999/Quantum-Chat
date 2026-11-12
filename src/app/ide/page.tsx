@@ -26,6 +26,10 @@ import {
   getScopedIdeItem,
   setScopedIdeItem,
   removeScopedIdeItem,
+  purgeLegacyUnscopedIdeKeys,
+  broadcastIdeEvent,
+  subscribeIdeBroadcast,
+  subscribeStorageError,
 } from "@/lib/ideStorage";
 import {
   JOURNEY_101_MILESTONES,
@@ -852,9 +856,17 @@ export default function QuantumGuruStudioPage() {
   // Reactive User-Switch Isolation: When active user changes (login, logout, account switch),
   // immediately reload the workspace to that user's isolated storage context.
   const prevUserKeyRef = useRef<string>(userKey);
+  const isUserHydratingRef = useRef<boolean>(false);
+
+  // A1: Purge legacy unscoped keys on initial mount to guarantee no stale browser residue
+  useEffect(() => {
+    purgeLegacyUnscopedIdeKeys();
+  }, []);
+
   useEffect(() => {
     if (prevUserKeyRef.current !== userKey) {
       prevUserKeyRef.current = userKey;
+      isUserHydratingRef.current = true;
 
       // 1. Restore/load custom projects for this userKey
       const localCustom = getScopedIdeItem("custom_projects", userKey);
@@ -938,6 +950,12 @@ export default function QuantumGuruStudioPage() {
       // 9. Reset terminal
       setTerminalOutput("");
       setShowTerminal(false);
+
+      // Release hydration lock once new user state commits
+      const hydrateTimer = setTimeout(() => {
+        isUserHydratingRef.current = false;
+      }, 150);
+      return () => clearTimeout(hydrateTimer);
     }
   }, [userKey]);
 
@@ -971,12 +989,61 @@ export default function QuantumGuruStudioPage() {
 
   const handleLogout = () => {
     try {
+      broadcastIdeEvent("AUTH_CHANGED", { userKey: "guest" });
+      purgeLegacyUnscopedIdeKeys();
       logout();
     } catch (e) {
       console.error("Logout error", e);
     }
     window.location.replace("/login");
   };
+
+  // A5 & A4: Storage error banner state & Multi-tab real-time listener
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Listen for storage quota / write errors (A5)
+    const unsubStorageErr = subscribeStorageError((err) => {
+      setStorageWarning(err.message);
+    });
+
+    // Cross-tab broadcast listener (A4)
+    const unsubBroadcast = subscribeIdeBroadcast((type, payload) => {
+      if (type === "AUTH_CHANGED") {
+        // Another tab switched account or logged out: reload to maintain strict isolation
+        window.location.reload();
+      } else if (type === "PROJECTS_CHANGED" && payload?.userKey === userKey) {
+        // Another tab added/removed a project for this same user: refresh projects list
+        const localCustom = getScopedIdeItem("custom_projects", userKey);
+        if (localCustom) {
+          try {
+            const customList: ProjectItem[] = JSON.parse(localCustom);
+            const journey = INITIAL_PROJECTS.find((p) => p.id === "quantum_journey_101")!;
+            const listWithoutJourney = customList.filter((p: any) => p.id !== "quantum_journey_101");
+            const ids = new Set(listWithoutJourney.map((p: any) => p.id));
+            const remainingInitial = INITIAL_PROJECTS.filter((p) => p.id !== "quantum_journey_101" && !ids.has(p.id));
+            setProjects([journey, ...listWithoutJourney, ...remainingInitial]);
+          } catch (e) {}
+        }
+      }
+    });
+
+    // Cross-tab storage event (fires on session change in other tabs)
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === "quantum_session") {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      unsubStorageErr();
+      unsubBroadcast();
+      window.removeEventListener("storage", handleStorageEvent);
+    };
+  }, [userKey]);
 
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
@@ -1045,7 +1112,7 @@ export default function QuantumGuruStudioPage() {
       if (!user?.email) return;
       try {
         setIsSyncing(true);
-        const res = await fetch(`/api/ide/projects?email=${encodeURIComponent(user.email)}`);
+        const res = await fetch(`/api/ide/projects`);
         const data = await res.json();
         if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
           const cloudList: ProjectItem[] = data.projects.map((doc: any) => {
@@ -1638,9 +1705,18 @@ export default function QuantumGuruStudioPage() {
     setQiskitDepth(parsed.depth);
   }, [qiskitCode, framework, circuitGates.length]);
 
+  // Tracking refs to prevent A2 cross-account writes during user transition
+  const lastSavedUserKeyRef = useRef<string>(userKey);
+  const lastSavedUserKeyForChatRef = useRef<string>(userKey);
+
   // Real-time auto-save of current editor code to user-scoped storage
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Guard against A2 race condition: do not write while hydrating or during user switch
+    if (isUserHydratingRef.current || lastSavedUserKeyRef.current !== userKey) {
+      lastSavedUserKeyRef.current = userKey;
+      return;
+    }
     try {
       const currentCode = framework === "dwave" ? dwaveCode : qiskitCode;
       setScopedIdeItem(`code_${activeProject.id}_${activeFile}`, userKey, currentCode);
@@ -1652,6 +1728,10 @@ export default function QuantumGuruStudioPage() {
   // Real-time auto-save of copilot messages to user-scoped storage per active project
   useEffect(() => {
     if (typeof window === "undefined" || !activeProject?.id) return;
+    if (isUserHydratingRef.current || lastSavedUserKeyForChatRef.current !== userKey) {
+      lastSavedUserKeyForChatRef.current = userKey;
+      return;
+    }
     try {
       const msgs = framework === "dwave" ? dwaveCopilotMessages : qiskitCopilotMessages;
       setScopedIdeItem(`chat_${activeProject.id}`, userKey, JSON.stringify(msgs));
@@ -2129,6 +2209,7 @@ export default function QuantumGuruStudioPage() {
         const stored = getScopedIdeItem("custom_projects", userKey);
         const list: ProjectItem[] = stored ? JSON.parse(stored) : [];
         setScopedIdeItem("custom_projects", userKey, JSON.stringify([customProj, ...list.filter(p => p.id !== customProj.id)]));
+        broadcastIdeEvent("PROJECTS_CHANGED", { userKey });
 
         window.history.replaceState(null, "", `/ide?project=${encodeURIComponent(customProj.id)}`);
       } catch (e) {}
@@ -2147,11 +2228,10 @@ export default function QuantumGuruStudioPage() {
           };
         });
 
-        await fetch(`/api/ide/projects?email=${encodeURIComponent(user.email)}`, {
+        await fetch(`/api/ide/projects`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-user-email": user.email,
           },
           body: JSON.stringify({
             projectId: customProj.id,
@@ -2190,6 +2270,7 @@ export default function QuantumGuruStudioPage() {
         if (stored) {
           const list: ProjectItem[] = JSON.parse(stored);
           setScopedIdeItem("custom_projects", userKey, JSON.stringify(list.filter(p => p.id !== projectId)));
+          broadcastIdeEvent("PROJECTS_CHANGED", { userKey });
         }
         removeScopedIdeItem(`chat_${projectId}`, userKey);
         removeScopedIdeItem(`history_${projectId}`, userKey);
@@ -2206,10 +2287,9 @@ export default function QuantumGuruStudioPage() {
     if (user?.email && target.isCustom) {
       try {
         setIsSyncing(true);
-        await fetch(`/api/ide/projects?projectId=${encodeURIComponent(projectId)}&email=${encodeURIComponent(user.email)}`, {
+        await fetch(`/api/ide/projects?projectId=${encodeURIComponent(projectId)}`, {
           method: "DELETE",
           headers: {
-            "x-user-email": user.email,
           },
         });
       } catch (err) {
@@ -2247,11 +2327,10 @@ export default function QuantumGuruStudioPage() {
           },
         };
 
-        await fetch(`/api/ide/projects?email=${encodeURIComponent(user.email)}`, {
+        await fetch(`/api/ide/projects`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-user-email": user.email,
           },
           body: JSON.stringify({
             projectId: activeProject.id,
@@ -4271,6 +4350,22 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
         isDark ? "bg-[#090A0D] text-slate-100" : "bg-[#F1F5F9] text-[#172033]"
       }`}
     >
+      {/* ── STORAGE QUOTA / ACCESS WARNING BANNER (A5) ── */}
+      {storageWarning && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-1.5 flex items-center justify-between text-xs text-amber-300 font-sans z-50 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{storageWarning}</span>
+          </div>
+          <button
+            onClick={() => setStorageWarning(null)}
+            className="text-amber-400 hover:text-white text-xs px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* ── TOP CALM PRECISION HEADER ── */}
       <StudioHeader
         onStartTour={handleStartTour}
