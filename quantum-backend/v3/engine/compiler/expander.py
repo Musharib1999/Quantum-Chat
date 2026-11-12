@@ -1711,10 +1711,42 @@ def _unused_original_expand_cmm_to_om(cmm: CanonicalMathematicalModel, problem_t
         constraints=expanded_constraints
     )
 
+def parse_linear_constraint_terms(expr_str: str) -> tuple:
+    """
+    Parses a linear expression string (e.g. '2.5*x_0 - 3.0*x_1 + 4.2')
+    into a dictionary of variable coefficients and a constant offset.
+    """
+    import re
+    expr = expr_str.replace(" ", "").replace("(", "").replace(")", "")
+    if not expr.startswith("+") and not expr.startswith("-"):
+        expr = "+" + expr
+    
+    tokens = re.findall(r"([+-])([^+-]+)", expr)
+    coeffs = {}
+    const = 0.0
+    for sign, body in tokens:
+        s = 1.0 if sign == "+" else -1.0
+        if "*" in body:
+            parts = body.split("*", 1)
+            try:
+                c_val = float(parts[0])
+                v_name = parts[1]
+                coeffs[v_name] = coeffs.get(v_name, 0.0) + s * c_val
+            except ValueError:
+                coeffs[body] = coeffs.get(body, 0.0) + s * 1.0
+        else:
+            try:
+                const += s * float(body)
+            except ValueError:
+                coeffs[body] = coeffs.get(body, 0.0) + s * 1.0
+    return coeffs, const
+
+
 def validate_optimization_model(om: OptimizationModel, cmm: Optional[CanonicalMathematicalModel] = None) -> dict:
     """
     Deterministically validates variable scopes, domains, and checks for basic
     mathematical infeasibilities (e.g. contradictory lower/upper bounds).
+    Performs algebraic interval arithmetic presolve across linear constraints.
     If CMM is provided, performs flow-based and capacity feasibility analysis.
     """
     errors = []
@@ -1754,6 +1786,68 @@ def validate_optimization_model(om: OptimizationModel, cmm: Optional[CanonicalMa
     for var_name, (mn, mx) in bounds.items():
         if mn > mx:
             errors.append(f"Contradictory constraints on '{var_name}': must be at least {mn} but at most {mx}.")
+
+    # Algebraic interval arithmetic presolver across multi-term linear constraints
+    import math
+    for c in om.constraints:
+        try:
+            rhs_val = float(c.right)
+        except (ValueError, TypeError):
+            continue
+
+        coeffs, const = parse_linear_constraint_terms(c.left)
+        if not coeffs:
+            continue
+
+        L = const
+        U = const
+        all_vars_known = True
+
+        for v_name, a in coeffs.items():
+            if v_name in om.variables:
+                v = om.variables[v_name]
+                v_lb = v.lower_bound if v.lower_bound is not None else (0.0 if v.var_type == "BINARY" else 0.0)
+                v_ub = v.upper_bound if v.upper_bound is not None else (1.0 if v.var_type == "BINARY" else float("inf"))
+                if a > 0:
+                    L += a * v_lb
+                    U += a * v_ub if v_ub != float("inf") else float("inf")
+                else:
+                    L += a * v_ub if v_ub != float("inf") else -float("inf")
+                    U += a * v_lb
+            else:
+                all_vars_known = False
+
+        if not all_vars_known:
+            continue
+
+        c_name = getattr(c, "name", "unnamed_constraint")
+        op = c.op.strip()
+
+        if op == "<=":
+            if L > rhs_val + 1e-7:
+                errors.append(
+                    f"Provably infeasible constraint '{c_name}': LHS minimum achievable value ({round(L, 3)}) strictly exceeds upper bound {rhs_val}."
+                )
+            else:
+                delta = rhs_val - L
+                if delta >= 0 and delta != float("inf"):
+                    setattr(c, "_slack_capacity", delta)
+                    setattr(c, "_slack_bits", math.floor(math.log2(delta)) + 1 if delta > 0 else 0)
+        elif op == ">=":
+            if U < rhs_val - 1e-7:
+                errors.append(
+                    f"Provably infeasible constraint '{c_name}': LHS maximum achievable value ({round(U, 3)}) is strictly below lower bound {rhs_val}."
+                )
+            else:
+                delta = U - rhs_val
+                if delta >= 0 and delta != float("inf"):
+                    setattr(c, "_slack_capacity", delta)
+                    setattr(c, "_slack_bits", math.floor(math.log2(delta)) + 1 if delta > 0 else 0)
+        elif op in ("==", "="):
+            if (rhs_val < L - 1e-7) or (rhs_val > U + 1e-7):
+                errors.append(
+                    f"Provably infeasible equality constraint '{c_name}': Target value {rhs_val} falls outside reachable interval [{round(L, 3)}, {round(U, 3)}]."
+                )
             
     # Bipartite flow-based and capacity validator
     if cmm and cmm.patterns:

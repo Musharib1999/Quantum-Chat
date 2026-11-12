@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
                 model_text: problem,
                 penalty_choice,
                 session_id,
-                run_solver: false,
+                run_solver: true,
               }),
             });
 
@@ -64,6 +64,8 @@ export async function POST(req: NextRequest) {
             let parsedObjective: any = null;
             let qMatrixData: any = null;
             let quboCode = '';
+            let simulatorData: any = null;
+            let outputData: any = null;
 
             while (true) {
               const { done, value } = await reader.read();
@@ -148,6 +150,35 @@ export async function POST(req: NextRequest) {
                     }
                   } else if (step === 'qubo_code') {
                     quboCode = data.code || '';
+                  } else if (step === 'simulator') {
+                    if (data.status === 'running') {
+                      sendEvent({
+                        step: 'simulator',
+                        agent: 'DWaveSimulator',
+                        title: 'D-Wave Annealing Sampler',
+                        status: 'running',
+                        message: data.message || 'Executing quantum annealing simulation...',
+                      });
+                    } else if (data.status === 'done') {
+                      simulatorData = data;
+                      sendEvent({
+                        step: 'simulator',
+                        agent: 'DWaveSimulator',
+                        title: 'D-Wave Annealing Sampler',
+                        status: 'done',
+                        message: `Simulation converged: Energy = ${typeof data.energy === 'number' ? data.energy.toFixed(4) : data.energy}, Feasible = ${data.feasible ? 'YES' : 'NO'}.`,
+                      });
+                    }
+                  } else if (step === 'output') {
+                    outputData = data;
+                    sendEvent({
+                      step: 'explanation',
+                      agent: 'ExplanationAgent',
+                      title: 'Business & Telemetry Explanation',
+                      status: 'done',
+                      message: 'Solution verified and business interpretation synthesized.',
+                      value: data.output_text,
+                    });
                   } else if (step === 'error') {
                     sendEvent({
                       step: 'solver',
@@ -190,6 +221,13 @@ export async function POST(req: NextRequest) {
                 },
                 qubo_matrix_summary: qMatrixData?.q_preview || [],
                 variable_map: qMatrixData?.variable_map || parsedVariables,
+                execution_result: {
+                  feasible: outputData?.feasible ?? simulatorData?.feasible ?? true,
+                  energy: outputData?.energy ?? simulatorData?.energy ?? 0.0,
+                  solution: outputData?.solution ?? {},
+                  selected_variables: outputData?.selected_variables ?? [],
+                  interpretation: outputData?.output_text || '',
+                },
               },
             });
 
@@ -266,6 +304,7 @@ export async function POST(req: NextRequest) {
                   reasoner: { agent: 'ConstraintVerificationAgent', title: 'Constraint Verification Agent' },
                   suggestor: { agent: 'SolverStrategyAgent', title: 'Solver Strategy Decider' },
                   solver: { agent: 'AutoQUBOCompiler', title: 'AutoQUBO Hamiltonian Compiler' },
+                  simulator: { agent: 'DWaveSimulator', title: 'D-Wave Annealing Sampler' },
                   verifier: { agent: 'VerificationAgent', title: 'Mathematical Verifier' },
                   explanation: { agent: 'ExplanationAgent', title: 'Business Translation Agent' },
                 };

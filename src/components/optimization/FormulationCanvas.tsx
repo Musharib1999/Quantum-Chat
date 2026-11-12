@@ -410,29 +410,29 @@ export function FormulationCanvas({
           )}
         </div>
 
-        {/* Penalty Multiplier Slider (Portfolio) OR Coupler Characteristics (Custom) */}
-        {isPortfolioProblem ? (
-          <div className="p-3.5 rounded-lg border space-y-2" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold" style={{ color: colors.textPrimary }}>Penalty Multiplier Stiffness (λ)</span>
-              <span className="font-mono font-bold text-amber-400">{penaltyLambda.toFixed(1)}x</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <input
-                type="range"
-                min="1.0"
-                max="10.0"
-                step="0.5"
-                value={penaltyLambda}
-                onChange={(e) => setMathParams(prev => ({ ...prev, penaltyLambda: parseFloat(e.target.value) }))}
-                className="w-full accent-zinc-400 cursor-pointer"
-              />
-            </div>
-            <p className="text-[10px]" style={{ color: colors.textMuted }}>
-              Ensures infeasible states are strictly elevated above the physical ground state energy.
-            </p>
+        {/* Universal Penalty Multiplier Stiffness Slider (Portfolio & Custom) */}
+        <div className="p-3.5 rounded-lg border space-y-2" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold" style={{ color: colors.textPrimary }}>Penalty Multiplier Stiffness (λ)</span>
+            <span className="font-mono font-bold text-amber-400">{penaltyLambda.toFixed(1)}x</span>
           </div>
-        ) : (
+          <div className="flex items-center space-x-3">
+            <input
+              type="range"
+              min="1.0"
+              max="25.0"
+              step="0.5"
+              value={penaltyLambda}
+              onChange={(e) => setMathParams(prev => ({ ...prev, penaltyLambda: parseFloat(e.target.value) }))}
+              className="w-full accent-amber-400 cursor-pointer"
+            />
+          </div>
+          <p className="text-[10px]" style={{ color: colors.textMuted }}>
+            Higher λ ensures constraint violations are elevated strictly above the physical ground state energy.
+          </p>
+        </div>
+
+        {!isPortfolioProblem && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
             <div className="p-3 rounded-lg border space-y-1" style={{ backgroundColor: colors.bgSection2, borderColor: colors.border }}>
               <span className="text-[11px] font-semibold block" style={{ color: colors.textPrimary }}>Linear Bias Terms (Q_ii)</span>

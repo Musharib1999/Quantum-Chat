@@ -63,6 +63,7 @@ import {
   HeroTabType,
 } from "@/components/ide";
 import { DataConnectorsModal } from "@/components/optimization/DataConnectorsModal";
+import { DeploySolutionModal } from "@/components/optimization/DeploySolutionModal";
 import IssueReportModal from "@/components/IssueReportModal";
 import {
   FormulationCanvas,
@@ -1572,6 +1573,7 @@ export default function QuantumGuruStudioPage() {
     }
   }, []);
   const [isDataConnectorsOpen, setIsDataConnectorsOpen] = useState<boolean>(false);
+  const [isDeployModalOpen, setIsDeployModalOpen] = useState<boolean>(false);
 
   const [isModelDirty, setIsModelDirty] = useState<boolean>(false);
   const [isRunningOrRecompiling, setIsRunningOrRecompiling] = useState<boolean>(false);
@@ -4511,7 +4513,12 @@ ${currentM.challengeInstruction}`,
                 if (isComplete) {
                   const res = data.result || {};
                   const stats = res.optimization_stats || {};
-                  
+                  const execRes = res.execution_result || data.execution_result || {};
+                  const interpretationText = execRes.interpretation || (data.value && typeof data.value === "string" ? data.value : null);
+                  const displayText = interpretationText
+                    ? interpretationText
+                    : `Optimization model compiled: ${stats.q_size || 0} binary variables with ${stats.q_nnz || 0} non-zero couplers (penalty weight λ = ${stats.penalty_weight || 5.0}).`;
+
                   if (res.final_code) {
                     setTimeout(() => {
                       handleApplyPipelineCode(res.final_code, {
@@ -4525,11 +4532,12 @@ ${currentM.challengeInstruction}`,
 
                   return {
                     ...msg,
-                    text: `Optimization model compiled: ${stats.q_size || 0} binary variables with ${stats.q_nnz || 0} non-zero couplers (penalty weight λ = ${stats.penalty_weight || 5.0}).`,
+                    text: displayText,
                     isStreaming: false,
                     generatedCode: res.final_code,
                     appliedToEditor: true,
                     mathFormula: res.latex_model || undefined,
+                    executionResult: execRes,
                     formulationMeta: {
                       objectiveSense: stats.objective_sense,
                       variables: res.variable_map,
@@ -4564,7 +4572,7 @@ ${currentM.challengeInstruction}`,
                 return {
                   ...msg,
                   pipelineSteps: existingSteps,
-                  text: data.message ? `Agent Reasoning: ${data.message}` : msg.text,
+                  text: (stepName === "explanation" && data.value) ? data.value : (data.message ? `Agent Reasoning: ${data.message}` : msg.text),
                 };
               })
             );
@@ -4737,6 +4745,7 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
         onOpenNewProjectModal={() => setShowNewProjectModal(true)}
         onOpenAlgorithmStudio={() => setShowAlgorithmStudioModal(true)}
         onOpenDataConnectors={() => setIsDataConnectorsOpen(true)}
+        onOpenDeployModal={() => setIsDeployModalOpen(true)}
         isSynced={isCircuitSynced}
         onSync={handleSyncCodeAndCircuit}
         isRunningOrRecompiling={isRunningOrRecompiling}
@@ -5249,6 +5258,17 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
         onSendToPipeline={(problemText) => {
           handleSendMessage(problemText);
         }}
+      />
+
+      {/* Deploy Solution Modal (Microservice REST Showcase) */}
+      <DeploySolutionModal
+        isOpen={isDeployModalOpen}
+        onClose={() => setIsDeployModalOpen(false)}
+        isDark={isDark}
+        projectId={activeProject.id}
+        projectName={activeProject.title}
+        variables={solverResult.variables}
+        penaltyLambda={mathParams.penaltyLambda}
       />
 
       {/* Project Switcher Modal */}

@@ -18,6 +18,7 @@ import {
   Check,
   Compass,
   Bug,
+  Globe,
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
 
@@ -48,6 +49,7 @@ interface StudioHeaderProps {
   onOpenDataConnectors?: () => void;
   onStartTour?: () => void;
   onOpenReportIssue?: () => void;
+  onOpenDeployModal?: () => void;
 }
 
 export function StudioHeader({
@@ -73,6 +75,7 @@ export function StudioHeader({
   onOpenDataConnectors,
   onStartTour,
   onOpenReportIssue,
+  onOpenDeployModal,
 }: StudioHeaderProps) {
   const isDwave = activeProject.framework === "dwave";
   const [isFileDropdownOpen, setIsFileDropdownOpen] = useState(false);
@@ -487,6 +490,23 @@ export function StudioHeader({
               : "Run Circuit"}
           </span>
         </button>
+
+        {/* Deploy Microservice Action Button */}
+        {isDwave && onOpenDeployModal && (
+          <button
+            id="tour-deploy-action"
+            onClick={onOpenDeployModal}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold font-mono border transition-all cursor-pointer ${
+              isDark
+                ? "bg-sky-500/10 hover:bg-sky-500/20 border-sky-500/30 text-sky-400 hover:text-sky-300 active:scale-[0.98]"
+                : "bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-700 hover:text-sky-900 active:scale-[0.98]"
+            }`}
+            title="Deploy Optimization Model as Production REST Microservice"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Deploy</span>
+          </button>
+        )}
 
         <div className={`h-4 w-[1px] ${isDark ? "bg-zinc-700/50" : "bg-slate-200"}`} />
 

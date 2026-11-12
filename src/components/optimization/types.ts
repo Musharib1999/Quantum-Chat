@@ -67,6 +67,13 @@ export interface CopilotMessage {
   generatedCode?: string;
   appliedToEditor?: boolean;
   formulationMeta?: FormulationMeta;
+  executionResult?: {
+    feasible?: boolean;
+    energy?: number;
+    solution?: Record<string, number>;
+    selected_variables?: string[];
+    interpretation?: string;
+  };
   isStreaming?: boolean;
 }
 
