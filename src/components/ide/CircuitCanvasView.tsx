@@ -76,6 +76,26 @@ export function CircuitCanvasView({
   const nQubits = Math.min(30, Math.max(1, qubitCount || 1));
   const isCompact = nQubits > 10;
 
+  // Local state for qubit count to prevent mid-typing drops (B1 fix)
+  const [localQubits, setLocalQubits] = useState<string>(String(nQubits));
+
+  React.useEffect(() => {
+    setLocalQubits(String(nQubits));
+  }, [nQubits]);
+
+  const commitQubitCount = () => {
+    const parsed = parseInt(localQubits, 10);
+    if (!isNaN(parsed)) {
+      const clamped = Math.min(30, Math.max(1, parsed));
+      setLocalQubits(String(clamped));
+      if (clamped !== nQubits && onUpdateQubitCount) {
+        onUpdateQubitCount(clamped);
+      }
+    } else {
+      setLocalQubits(String(nQubits));
+    }
+  };
+
   const handleCopyAscii = () => {
     if (circuitAscii && typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(circuitAscii);
@@ -333,21 +353,48 @@ export function CircuitCanvasView({
             }`}
           >
             <span className="text-zinc-500 text-[10px] uppercase font-semibold">Qubits:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.max(1, nQubits - 1);
+                if (next !== nQubits && onUpdateQubitCount) onUpdateQubitCount(next);
+              }}
+              disabled={nQubits <= 1}
+              className="text-zinc-400 hover:text-zinc-200 disabled:opacity-25 text-xs px-0.5 select-none transition-colors"
+              title="Decrease qubits"
+            >
+              -
+            </button>
             <input
               type="number"
               min={1}
               max={30}
-              value={nQubits}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                if (!isNaN(val) && val >= 1 && val <= 30 && onUpdateQubitCount) {
-                  onUpdateQubitCount(val);
+              value={localQubits}
+              onChange={(e) => setLocalQubits(e.target.value)}
+              onBlur={commitQubitCount}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  commitQubitCount();
+                  (e.target as HTMLInputElement).blur();
                 }
               }}
               className={`w-8 bg-transparent text-center font-bold focus:outline-hidden ${
                 isDark ? "text-zinc-100" : "text-slate-900"
               }`}
+              title="Type qubit count and press Enter or click away"
             />
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.min(30, nQubits + 1);
+                if (next !== nQubits && onUpdateQubitCount) onUpdateQubitCount(next);
+              }}
+              disabled={nQubits >= 30}
+              className="text-zinc-400 hover:text-zinc-200 disabled:opacity-25 text-xs px-0.5 select-none transition-colors"
+              title="Increase qubits"
+            >
+              +
+            </button>
             <span className="text-zinc-500 text-[10px]">/ 30</span>
           </div>
 

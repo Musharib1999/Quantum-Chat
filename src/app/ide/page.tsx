@@ -448,13 +448,22 @@ function extractQubit(str: string): number {
   return NaN;
 }
 
-function parseQiskitLineQubits(line: string, circuitVar: string): { op: string; qubits: number[]; isTerminal: boolean } | null {
+function parseQiskitLineQubits(
+  line: string,
+  circuitVar: string,
+  circuitQubits: number = 30
+): { op: string; qubits: number[]; isTerminal: boolean } | null {
   const trimmed = line.replace(/#.*$/, "").trim();
   if (!trimmed) return null;
 
   const prefix = `${circuitVar}.`;
   if (!trimmed.startsWith(prefix)) {
-    if (trimmed.startsWith("return ") || trimmed.startsWith("sim.run")) {
+    if (
+      trimmed.startsWith("return ") ||
+      trimmed.startsWith("sim.run") ||
+      trimmed.startsWith("res =") ||
+      trimmed.startsWith("job =")
+    ) {
       return { op: "return", qubits: [], isTerminal: true };
     }
     return null;
@@ -466,15 +475,17 @@ function parseQiskitLineQubits(line: string, circuitVar: string): { op: string; 
   const op = callMatch[1].toLowerCase();
   const argsStr = callMatch[2].trim();
 
+  // True terminal execution lines that cannot have gates placed after them
   if (op === "save_statevector" || op.startsWith("save_") || op === "measure_all") {
     return { op, qubits: [], isTerminal: true };
   }
 
+  // Mid-circuit or terminal measurement: measurements ARE gates with step tracking (B2 fix)
   if (op === "measure") {
     const listMatch = argsStr.match(/^\[\s*([\d,\s]+)\s*\]/);
     if (listMatch) {
       const qList = Array.from(listMatch[1].matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
-      return { op, qubits: qList, isTerminal: true };
+      return { op, qubits: qList, isTerminal: false };
     }
     const rangeMatch = argsStr.match(/range\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\)/);
     if (rangeMatch) {
@@ -482,16 +493,18 @@ function parseQiskitLineQubits(line: string, circuitVar: string): { op: string; 
       const endQ = rangeMatch[2] !== undefined ? parseInt(rangeMatch[2], 10) : parseInt(rangeMatch[1], 10);
       const qList: number[] = [];
       for (let rq = startQ; rq < endQ; rq++) qList.push(rq);
-      return { op, qubits: qList, isTerminal: true };
+      return { op, qubits: qList, isTerminal: false };
     }
     const firstArg = argsStr.split(",")[0]?.trim() || "";
     const q = extractQubit(firstArg);
-    return { op, qubits: isNaN(q) ? [] : [q], isTerminal: true };
+    return { op, qubits: isNaN(q) ? [] : [q], isTerminal: false };
   }
 
+  // Barrier: if bare qc.barrier(), spans ALL circuit qubits (B2 fix)
   if (op === "barrier") {
     const nums = Array.from(argsStr.matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
-    return { op, qubits: nums, isTerminal: false };
+    const qs = nums.length > 0 ? nums : Array.from({ length: circuitQubits }, (_, i) => i);
+    return { op, qubits: qs, isTerminal: false };
   }
 
   const parts = argsStr.split(",").map((s) => s.trim()).filter(Boolean);
@@ -857,6 +870,7 @@ export default function QuantumGuruStudioPage() {
   // immediately reload the workspace to that user's isolated storage context.
   const prevUserKeyRef = useRef<string>(userKey);
   const isUserHydratingRef = useRef<boolean>(false);
+  const vaultDryRunAbortRef = useRef<AbortController | null>(null);
 
   // A1: Purge legacy unscoped keys on initial mount to guarantee no stale browser residue
   useEffect(() => {
@@ -1202,6 +1216,11 @@ export default function QuantumGuruStudioPage() {
     }
     return INITIAL_PROJECTS[0];
   });
+
+  const activeProjectIdRef = useRef<string>(activeProject.id);
+  useEffect(() => {
+    activeProjectIdRef.current = activeProject.id;
+  }, [activeProject.id]);
 
   const framework = activeProject.framework;
 
@@ -1935,22 +1954,29 @@ export default function QuantumGuruStudioPage() {
         setIsCircuitSynced(!hasLoops);
         setIsResultsStale(true);
 
-        // If this is an algorithm vault project with dynamic/loop constructs and no cached gates, compile in background
+        // If this is an algorithm vault project with dynamic/loop constructs and no cached gates, compile in background (C1 fix)
         if (proj.id.startsWith("algo_") && hasLoops && parsed.gates.length === 0) {
           try {
+            if (vaultDryRunAbortRef.current) vaultDryRunAbortRef.current.abort();
+            const controller = new AbortController();
+            vaultDryRunAbortRef.current = controller;
+            const targetProjId = proj.id;
+
             fetch("/api/ide/execute", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 code: curCode,
                 target_backend: "aer_simulator",
-                shots: extractShotsFromCode(curCode, "qiskit"),
+                shots: Math.min(256, extractShotsFromCode(curCode, "qiskit")),
                 project_files: { [curFile]: curCode },
                 file_name: curFile,
               }),
+              signal: controller.signal,
             })
               .then((r) => r.json())
               .then((data) => {
+                if (activeProjectIdRef.current !== targetProjId) return;
                 if (data && data.success && data.circuit_gates && data.circuit_gates.length > 0) {
                   setCircuitGates(data.circuit_gates);
                   if (data.active_qubits !== undefined) setQiskitQubits(data.active_qubits);
@@ -1959,7 +1985,9 @@ export default function QuantumGuruStudioPage() {
                   setIsCircuitSynced(true);
                 }
               })
-              .catch(() => {});
+              .catch((err) => {
+                if (err.name === "AbortError") return;
+              });
           } catch (e) {}
         }
       }
@@ -2102,21 +2130,29 @@ export default function QuantumGuruStudioPage() {
         latex_formula: "",
       });
 
-      // If from Algorithm Vault, fire background dry-run compile
+      // If from Algorithm Vault, fire background dry-run compile (C1 & C2 fix)
       if (isVault) {
         try {
+          if (vaultDryRunAbortRef.current) vaultDryRunAbortRef.current.abort();
+          const controller = new AbortController();
+          vaultDryRunAbortRef.current = controller;
+          const targetProjId = customProj.id;
+
           fetch("/api/ide/execute", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               code: initialCode,
-              target_backend: "dwave_sa",
+              target_backend: "dwave_simulated_annealing",
+              shots: 500,
               project_files: { [targetFile]: initialCode },
               file_name: targetFile,
             }),
+            signal: controller.signal,
           })
             .then((r) => r.json())
             .then((data) => {
+              if (activeProjectIdRef.current !== targetProjId) return;
               if (data && data.optimization_results) {
                 const opt = data.optimization_results;
                 setSolverResult((prev) => ({
@@ -2125,12 +2161,16 @@ export default function QuantumGuruStudioPage() {
                   variables: opt.variables || prev.variables,
                   latex_formula: opt.latex_formula || prev.latex_formula,
                   energy_distribution: opt.energy_distribution || prev.energy_distribution,
-                  energy: opt.ground_energy !== undefined ? opt.ground_energy : prev.energy,
-                  sample: opt.optimal_sample || prev.sample,
+                  energy: opt.energy !== undefined ? opt.energy : (opt.ground_energy !== undefined ? opt.ground_energy : prev.energy),
+                  sample: opt.sample || opt.optimal_sample || prev.sample,
+                  num_variables: opt.num_variables || prev.num_variables,
+                  num_reads: opt.num_reads || prev.num_reads,
                 }));
               }
             })
-            .catch(() => {});
+            .catch((err) => {
+              if (err.name === "AbortError") return;
+            });
         } catch (e) {}
       }
     } else {
@@ -2147,10 +2187,15 @@ export default function QuantumGuruStudioPage() {
       setQiskitCounts({});
       setQiskitSimulatorId("");
 
-      // If derived from Algorithm Vault, fire fast background dry-run compile to map full ansatz/loop gates to canvas
+      // If derived from Algorithm Vault, fire fast background dry-run compile to map full ansatz/loop gates to canvas (C1 fix)
       if (isVault) {
         try {
-          const shots = extractShotsFromCode(initialCode, "qiskit");
+          if (vaultDryRunAbortRef.current) vaultDryRunAbortRef.current.abort();
+          const controller = new AbortController();
+          vaultDryRunAbortRef.current = controller;
+          const targetProjId = customProj.id;
+          const shots = Math.min(256, extractShotsFromCode(initialCode, "qiskit"));
+
           fetch("/api/ide/execute", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2161,9 +2206,11 @@ export default function QuantumGuruStudioPage() {
               project_files: { [targetFile]: initialCode },
               file_name: targetFile,
             }),
+            signal: controller.signal,
           })
             .then((r) => r.json())
             .then((data) => {
+              if (activeProjectIdRef.current !== targetProjId) return;
               if (data && data.success && data.circuit_gates && data.circuit_gates.length > 0) {
                 setCircuitGates(data.circuit_gates);
                 if (data.active_qubits !== undefined) setQiskitQubits(data.active_qubits);
@@ -2354,8 +2401,25 @@ export default function QuantumGuruStudioPage() {
   }, [dwaveCode, qiskitCode, activeFile, activeProject, user?.email]);
 
   const handleUpdateQubitCount = (newCount: number) => {
-    isCanvasModifyingRef.current = true;
     const clamped = Math.min(30, Math.max(1, newCount));
+    if (clamped === qiskitQubits) return;
+
+    // Guard against accidental code destruction on wire reduction (B1 guard)
+    if (clamped < qiskitQubits) {
+      const hasOutOfRangeGates = circuitGates.some((g) => {
+        const q = g.qubit ?? (g.qubits ? g.qubits[0] : 0);
+        const tgt = g.qubits && g.qubits.length > 1 ? g.qubits[1] : q;
+        return q >= clamped || tgt >= clamped;
+      });
+      if (hasOutOfRangeGates && typeof window !== "undefined") {
+        const ok = window.confirm(
+          `Reducing wire count to ${clamped} will delete gates placed on wires ${clamped} and above from your Python code. Proceed?`
+        );
+        if (!ok) return;
+      }
+    }
+
+    isCanvasModifyingRef.current = true;
     setQiskitQubits(clamped);
 
     // Update QuantumCircuit(N, N) initialization & prune out-of-range gate statements
@@ -2640,7 +2704,7 @@ export default function QuantumGuruStudioPage() {
             break;
           }
 
-          const parsed = parseQiskitLineQubits(trimmed, circuitVar);
+          const parsed = parseQiskitLineQubits(trimmed, circuitVar, Math.max(qiskitQubits, neededQubits));
           if (!parsed) {
             if (trimmed.startsWith("return ") || trimmed.startsWith("sim.run")) {
               if (firstTerminalIdx === -1) firstTerminalIdx = j;
