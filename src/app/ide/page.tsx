@@ -181,36 +181,18 @@ best = sampleset.first
 print(f"⚡ Ground Energy: {best.energy:.4f}")
 print("Optimal Decisions:", [variable_names[k] if isinstance(k, int) else k for k, v in best.sample.items() if v == 1])`;
 
-const NEW_DWAVE_STARTER_CODE = `# Quantum Guru — D-Wave Binary Quadratic Model Starter
+const NEW_DWAVE_STARTER_CODE = `# Quantum Guru — Blank D-Wave Project
 import dimod
 from dwave.samplers import SimulatedAnnealingSampler
 
-# Define a binary quadratic model (BQM)
-# Example: Minimize objective E(x, y) = -x - y + 2xy
-bqm = dimod.BinaryQuadraticModel({'x': -1.0, 'y': -1.0}, {('x', 'y'): 2.0}, 0.0, dimod.BINARY)
+# Initialize a clean Binary Quadratic Model (BQM)
+bqm = dimod.BinaryQuadraticModel(dimod.BINARY)`;
 
-# Solve using Simulated Annealing
-sampler = SimulatedAnnealingSampler()
-sampleset = sampler.sample(bqm, num_reads=100)
-
-best = sampleset.first
-print("Optimal Decisions:", best.sample)
-print(f"⚡ Ground Energy: {best.energy:.4f}")`;
-
-const NEW_QISKIT_STARTER_CODE = `# Quantum Guru — Qiskit Starter Circuit
+const NEW_QISKIT_STARTER_CODE = `# Quantum Guru — Blank Quantum Circuit
 from qiskit import QuantumCircuit
-from qiskit_aer import AerSimulator
 
-# Create a 2-qubit Bell state circuit
-qc = QuantumCircuit(2, 2)
-qc.h(0)
-qc.cx(0, 1)
-qc.measure([0, 1], [0, 1])
-
-# Execute on Aer simulator
-sim = AerSimulator()
-res = sim.run(qc, shots=1024).result()
-print("Measurement Counts:", res.get_counts())`;
+# Initialize a clean 1-qubit circuit (add gates in canvas or editor)
+qc = QuantumCircuit(1)`;
 
 const DWAVE_INITIAL_CODE = CLEAN_ENERGY_PORTFOLIO_CODE;
 
@@ -1860,7 +1842,7 @@ export default function QuantumGuruStudioPage() {
         setIsResultsStale(false);
       } else {
         const curFile = proj.activeFile || proj.files?.[0] || "main.py";
-        const curCode = proj.fileContents?.[curFile] || qiskitCode;
+        const curCode = loadedCode || proj.fileContents?.[curFile] || NEW_QISKIT_STARTER_CODE;
         const parsed = parseQiskitCodeToCircuit(curCode);
         const hasLoops = /(^|\W)(for|while|def)($|\W)/.test(curCode);
         setQiskitCounts({});
@@ -1872,6 +1854,34 @@ export default function QuantumGuruStudioPage() {
         setQiskitShots(extractShotsFromCode(curCode, "qiskit"));
         setIsCircuitSynced(!hasLoops);
         setIsResultsStale(true);
+
+        // If this is an algorithm vault project with dynamic/loop constructs and no cached gates, compile in background
+        if (proj.id.startsWith("algo_") && hasLoops && parsed.gates.length === 0) {
+          try {
+            fetch("/api/ide/execute", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                code: curCode,
+                target_backend: "aer_simulator",
+                shots: extractShotsFromCode(curCode, "qiskit"),
+                project_files: { [curFile]: curCode },
+                file_name: curFile,
+              }),
+            })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data && data.success && data.circuit_gates && data.circuit_gates.length > 0) {
+                  setCircuitGates(data.circuit_gates);
+                  if (data.active_qubits !== undefined) setQiskitQubits(data.active_qubits);
+                  if (data.circuit_depth !== undefined) setQiskitDepth(data.circuit_depth);
+                  if (data.circuit_ascii) setCircuitAscii(data.circuit_ascii);
+                  setIsCircuitSynced(true);
+                }
+              })
+              .catch(() => {});
+          } catch (e) {}
+        }
       }
     }
 
@@ -1941,10 +1951,11 @@ export default function QuantumGuruStudioPage() {
       isCustom: true,
       cloudSynced: false,
     };
-    handleCreateProject(newProj);
+    handleCreateProject(newProj, true);
   };
 
-  const handleCreateProject = async (newProj: ProjectItem) => {
+  const handleCreateProject = async (newProj: ProjectItem, isFromVault: boolean = false) => {
+    const isVault = isFromVault || newProj.id.startsWith("algo_");
     const targetFile = newProj.activeFile || newProj.files?.[0] || "main.py";
     const initialCode =
       newProj.fileContents?.[targetFile] ||
@@ -1988,9 +1999,7 @@ export default function QuantumGuruStudioPage() {
 
     if (customProj.framework === "dwave") {
       // 2. D-Wave Project Clean:
-      // a. Code editor
       setDwaveCode(initialCode);
-      // b. Model clean state
       setMathParams({
         budgetMax: 18.0,
         yieldWeight: 1.0,
@@ -2002,7 +2011,6 @@ export default function QuantumGuruStudioPage() {
       });
       setSelectedMathSection("01");
       setIsModelDirty(false);
-      // c. QUBO and Result clean state
       setSolverResult({
         energy: 0,
         sample: {},
@@ -2013,11 +2021,41 @@ export default function QuantumGuruStudioPage() {
         num_reads: 0,
         latex_formula: "",
       });
+
+      // If from Algorithm Vault, fire background dry-run compile
+      if (isVault) {
+        try {
+          fetch("/api/ide/execute", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code: initialCode,
+              target_backend: "dwave_sa",
+              project_files: { [targetFile]: initialCode },
+              file_name: targetFile,
+            }),
+          })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data && data.optimization_results) {
+                const opt = data.optimization_results;
+                setSolverResult((prev) => ({
+                  ...prev,
+                  qubo_matrix: opt.qubo_matrix || prev.qubo_matrix,
+                  variables: opt.variables || prev.variables,
+                  latex_formula: opt.latex_formula || prev.latex_formula,
+                  energy_distribution: opt.energy_distribution || prev.energy_distribution,
+                  energy: opt.ground_energy !== undefined ? opt.ground_energy : prev.energy,
+                  sample: opt.optimal_sample || prev.sample,
+                }));
+              }
+            })
+            .catch(() => {});
+        } catch (e) {}
+      }
     } else {
-      // 3. Qiskit Project Clean (Algorithm Vault / Template Pull):
-      // a. Code editor
+      // 3. Qiskit Project Clean:
       setQiskitCode(initialCode);
-      // b. Parse algorithm template code directly into visual schematic!
       const parsed = parseQiskitCodeToCircuit(initialCode);
       const hasLoops = /(^|\W)(for|while|def)($|\W)/.test(initialCode);
       setCircuitGates(parsed.gates);
@@ -2026,9 +2064,52 @@ export default function QuantumGuruStudioPage() {
       setCircuitAscii("");
       setIsCircuitSynced(!hasLoops);
       setIsResultsStale(true);
-      // c. Result clean state
       setQiskitCounts({});
       setQiskitSimulatorId("");
+
+      // If derived from Algorithm Vault, fire fast background dry-run compile to map full ansatz/loop gates to canvas
+      if (isVault) {
+        try {
+          const shots = extractShotsFromCode(initialCode, "qiskit");
+          fetch("/api/ide/execute", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code: initialCode,
+              target_backend: "aer_simulator",
+              shots,
+              project_files: { [targetFile]: initialCode },
+              file_name: targetFile,
+            }),
+          })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data && data.success && data.circuit_gates && data.circuit_gates.length > 0) {
+                setCircuitGates(data.circuit_gates);
+                if (data.active_qubits !== undefined) setQiskitQubits(data.active_qubits);
+                if (data.circuit_depth !== undefined) setQiskitDepth(data.circuit_depth);
+                if (data.circuit_ascii) setCircuitAscii(data.circuit_ascii);
+                setIsCircuitSynced(true);
+                if (typeof window !== "undefined") {
+                  try {
+                    setScopedIdeItem(
+                      `qiskit_result_${customProj.id}`,
+                      userKey,
+                      JSON.stringify({
+                        measurement_counts: data.measurement_counts || {},
+                        circuit_gates: data.circuit_gates,
+                        circuit_ascii: data.circuit_ascii,
+                        active_qubits: data.active_qubits,
+                        circuit_depth: data.circuit_depth,
+                      })
+                    );
+                  } catch (e) {}
+                }
+              }
+            })
+            .catch(() => {});
+        } catch (e) {}
+      }
     }
 
     if (typeof window !== "undefined") {

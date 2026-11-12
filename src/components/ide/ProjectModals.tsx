@@ -269,8 +269,19 @@ export function NewProjectModal({
     const targetFile = "main.py";
     const initialCode =
       framework === "dwave"
-        ? `# Quantum Guru — D-Wave Binary Quadratic Model Starter\nimport dimod\nfrom dwave.samplers import SimulatedAnnealingSampler\n\nbqm = dimod.BinaryQuadraticModel({'x': -1.0, 'y': -1.0}, {('x', 'y'): 2.0}, 0.0, dimod.BINARY)\nsampler = SimulatedAnnealingSampler()\nsampleset = sampler.sample(bqm, num_reads=100)\nprint("Optimal Decisions:", sampleset.first.sample)\n`
-        : `# Quantum Guru — Qiskit Starter Circuit\nfrom qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\n\nqc = QuantumCircuit(2, 2)\nqc.h(0)\nqc.cx(0, 1)\nqc.measure([0, 1], [0, 1])\nsim = AerSimulator()\nres = sim.run(qc, shots=1024).result()\nprint("Measurement Counts:", res.get_counts())\n`;
+        ? `# Quantum Guru — Blank D-Wave Project
+import dimod
+from dwave.samplers import SimulatedAnnealingSampler
+
+# Initialize a clean Binary Quadratic Model (BQM)
+bqm = dimod.BinaryQuadraticModel(dimod.BINARY)
+`
+        : `# Quantum Guru — Blank Quantum Circuit
+from qiskit import QuantumCircuit
+
+# Initialize a clean 1-qubit circuit (add gates in canvas or editor)
+qc = QuantumCircuit(1)
+`;
 
     const cleanSlug = finalName.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 32);
     const uniqueId = `proj_${cleanSlug}_${Date.now().toString(36)}`;
