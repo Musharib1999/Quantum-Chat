@@ -68,6 +68,35 @@ try:
     except Exception:
         pass
 
+    try:
+        from qiskit.circuit import Qubit as _QiskitQubit, Clbit as _QiskitClbit
+        def _max_idx(rep):
+            if isinstance(rep, int):
+                return rep
+            elif isinstance(rep, (list, tuple, range)):
+                nums = [x for x in rep if isinstance(x, int)]
+                return max(nums) if nums else -1
+            return -1
+
+        _orig_qbit_conv = QuantumCircuit._qbit_argument_conversion
+        def _safe_qbit_conv(self, qubit_representation):
+            m = _max_idx(qubit_representation)
+            if m >= self.num_qubits:
+                self.add_bits([_QiskitQubit() for _ in range(m + 1 - self.num_qubits)])
+            return _orig_qbit_conv(self, qubit_representation)
+        QuantumCircuit._qbit_argument_conversion = _safe_qbit_conv
+
+        if hasattr(QuantumCircuit, '_cbit_argument_conversion'):
+            _orig_cbit_conv = QuantumCircuit._cbit_argument_conversion
+            def _safe_cbit_conv(self, clbit_representation):
+                m = _max_idx(clbit_representation)
+                if m >= self.num_clbits:
+                    self.add_bits([_QiskitClbit() for _ in range(m + 1 - self.num_clbits)])
+                return _orig_cbit_conv(self, clbit_representation)
+            QuantumCircuit._cbit_argument_conversion = _safe_cbit_conv
+    except Exception:
+        pass
+
     _orig_aer_run = AerSimulator.run
     def _safe_aer_run(self, circuits, **kwargs):
         if isinstance(circuits, QuantumCircuit):
@@ -411,6 +440,35 @@ try:
                         parent_qc.append(inst, qa, ca)
                 return self
             _QiskitInstructionSet.c_if = _compat_c_if
+    except Exception:
+        pass
+
+    try:
+        from qiskit.circuit import Qubit as _QiskitQubit, Clbit as _QiskitClbit
+        def _max_idx(rep):
+            if isinstance(rep, int):
+                return rep
+            elif isinstance(rep, (list, tuple, range)):
+                nums = [x for x in rep if isinstance(x, int)]
+                return max(nums) if nums else -1
+            return -1
+
+        _orig_qbit_conv = QuantumCircuit._qbit_argument_conversion
+        def _safe_qbit_conv(self, qubit_representation):
+            m = _max_idx(qubit_representation)
+            if m >= self.num_qubits:
+                self.add_bits([_QiskitQubit() for _ in range(m + 1 - self.num_qubits)])
+            return _orig_qbit_conv(self, qubit_representation)
+        QuantumCircuit._qbit_argument_conversion = _safe_qbit_conv
+
+        if hasattr(QuantumCircuit, '_cbit_argument_conversion'):
+            _orig_cbit_conv = QuantumCircuit._cbit_argument_conversion
+            def _safe_cbit_conv(self, clbit_representation):
+                m = _max_idx(clbit_representation)
+                if m >= self.num_clbits:
+                    self.add_bits([_QiskitClbit() for _ in range(m + 1 - self.num_clbits)])
+                return _orig_cbit_conv(self, clbit_representation)
+            QuantumCircuit._cbit_argument_conversion = _safe_cbit_conv
     except Exception:
         pass
 

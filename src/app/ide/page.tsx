@@ -462,6 +462,80 @@ function extractQubit(str: string): number {
   return NaN;
 }
 
+function parseQiskitLineQubits(line: string, circuitVar: string): { op: string; qubits: number[]; isTerminal: boolean } | null {
+  const trimmed = line.replace(/#.*$/, "").trim();
+  if (!trimmed) return null;
+
+  const prefix = `${circuitVar}.`;
+  if (!trimmed.startsWith(prefix)) {
+    if (trimmed.startsWith("return ") || trimmed.startsWith("sim.run")) {
+      return { op: "return", qubits: [], isTerminal: true };
+    }
+    return null;
+  }
+
+  const callMatch = trimmed.match(new RegExp(`^${circuitVar}\\.([a-zA-Z0-9_]+)\\((.*)\\)`));
+  if (!callMatch) return null;
+
+  const op = callMatch[1].toLowerCase();
+  const argsStr = callMatch[2].trim();
+
+  if (op === "save_statevector" || op.startsWith("save_") || op === "measure_all") {
+    return { op, qubits: [], isTerminal: true };
+  }
+
+  if (op === "measure") {
+    const listMatch = argsStr.match(/^\[\s*([\d,\s]+)\s*\]/);
+    if (listMatch) {
+      const qList = Array.from(listMatch[1].matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
+      return { op, qubits: qList, isTerminal: true };
+    }
+    const rangeMatch = argsStr.match(/range\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\)/);
+    if (rangeMatch) {
+      const startQ = rangeMatch[2] !== undefined ? parseInt(rangeMatch[1], 10) : 0;
+      const endQ = rangeMatch[2] !== undefined ? parseInt(rangeMatch[2], 10) : parseInt(rangeMatch[1], 10);
+      const qList: number[] = [];
+      for (let rq = startQ; rq < endQ; rq++) qList.push(rq);
+      return { op, qubits: qList, isTerminal: true };
+    }
+    const firstArg = argsStr.split(",")[0]?.trim() || "";
+    const q = extractQubit(firstArg);
+    return { op, qubits: isNaN(q) ? [] : [q], isTerminal: true };
+  }
+
+  if (op === "barrier") {
+    const nums = Array.from(argsStr.matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
+    return { op, qubits: nums, isTerminal: false };
+  }
+
+  const parts = argsStr.split(",").map((s) => s.trim()).filter(Boolean);
+  if (["cx", "cnot", "cz", "swap", "ch", "cy", "cp", "crx", "cry", "crz", "rzz", "rxx", "ryy", "cu"].includes(op)) {
+    if (parts.length >= 2) {
+      const ctrl = extractQubit(parts[parts.length - 2]);
+      const tgt = extractQubit(parts[parts.length - 1]);
+      const qs = [ctrl, tgt].filter((q) => !isNaN(q));
+      return { op, qubits: qs, isTerminal: false };
+    }
+  }
+
+  if (["ccx", "toffoli", "cswap"].includes(op) && parts.length >= 3) {
+    const c1 = extractQubit(parts[parts.length - 3]);
+    const c2 = extractQubit(parts[parts.length - 2]);
+    const tgt = extractQubit(parts[parts.length - 1]);
+    const qs = [c1, c2, tgt].filter((q) => !isNaN(q));
+    return { op, qubits: qs, isTerminal: false };
+  }
+
+  if (parts.length > 0) {
+    const lastArg = extractQubit(parts[parts.length - 1]);
+    if (!isNaN(lastArg)) {
+      return { op, qubits: [lastArg], isTerminal: false };
+    }
+  }
+
+  return { op, qubits: [], isTerminal: false };
+}
+
 function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any[]; depth: number } {
   const qcMatch = code.match(/QuantumCircuit\(\s*(\d+)/);
   let numQubits = qcMatch ? Math.min(30, Math.max(1, parseInt(qcMatch[1], 10))) : 2;
@@ -2124,19 +2198,84 @@ export default function QuantumGuruStudioPage() {
     const clamped = Math.min(30, Math.max(1, newCount));
     setQiskitQubits(clamped);
 
-    // Update QuantumCircuit(N, N) initialization in Python code
+    // Update QuantumCircuit(N, N) initialization & prune out-of-range gate statements
     setQiskitCode((prevCode) => {
-      let updated = prevCode;
-      const qcRegex = /QuantumCircuit\(\s*\d+\s*(?:,\s*\d+\s*)?\)/;
-      if (qcRegex.test(updated)) {
-        updated = updated.replace(qcRegex, `QuantumCircuit(${clamped}, ${clamped})`);
-      } else {
-        updated = `from qiskit import QuantumCircuit\nqc = QuantumCircuit(${clamped}, ${clamped})\n` + updated;
+      const lines = prevCode.split("\n");
+
+      let circuitVar = "qc";
+      let circuitDefIdx = -1;
+      for (let i = 0; i < lines.length; i++) {
+        const match = lines[i].match(/^(\s*)([a-zA-Z0-9_]+)\s*=\s*(?:[a-zA-Z0-9_]+\.)?QuantumCircuit\(/);
+        if (match) {
+          circuitVar = match[2];
+          circuitDefIdx = i;
+          break;
+        }
       }
-      return updated;
+
+      if (circuitDefIdx !== -1) {
+        lines[circuitDefIdx] = lines[circuitDefIdx].replace(
+          /(QuantumCircuit\(\s*)(\d+)(?:(\s*,\s*)(\d+))?/,
+          (m, prefix, nQ, comma, nC) => {
+            if (comma && nC !== undefined) {
+              return `${prefix}${clamped}${comma}${clamped}`;
+            }
+            return `${prefix}${clamped}`;
+          }
+        );
+      } else {
+        const qcRegex = /QuantumCircuit\(\s*\d+\s*(?:,\s*\d+\s*)?\)/;
+        if (qcRegex.test(prevCode)) {
+          return prevCode.replace(qcRegex, `QuantumCircuit(${clamped}, ${clamped})`);
+        } else {
+          return `from qiskit import QuantumCircuit\nqc = QuantumCircuit(${clamped}, ${clamped})\n` + prevCode;
+        }
+      }
+
+      // Prune gates and adjust measurements targeting deleted qubits (index >= clamped)
+      const prunedLines: string[] = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (i <= circuitDefIdx) {
+          prunedLines.push(line);
+          continue;
+        }
+
+        const parsed = parseQiskitLineQubits(line, circuitVar);
+        if (!parsed) {
+          prunedLines.push(line);
+          continue;
+        }
+
+        // If line references qubits >= clamped, handle or prune
+        if (parsed.qubits.length > 0 && parsed.qubits.some((q) => q >= clamped)) {
+          if (parsed.op === "measure") {
+            const validQubits = parsed.qubits.filter((q) => q < clamped);
+            if (validQubits.length === 0) {
+              continue;
+            } else if (validQubits.length === 1) {
+              const q0 = validQubits[0];
+              const indent = line.match(/^(\s*)/)?.[1] || "";
+              prunedLines.push(`${indent}${circuitVar}.measure(${q0}, ${q0})`);
+              continue;
+            } else {
+              const indent = line.match(/^(\s*)/)?.[1] || "";
+              const qListStr = `[${validQubits.join(", ")}]`;
+              prunedLines.push(`${indent}${circuitVar}.measure(${qListStr}, ${qListStr})`);
+              continue;
+            }
+          }
+          // Out of range gate: prune line from Python code
+          continue;
+        }
+
+        prunedLines.push(line);
+      }
+
+      return prunedLines.join("\n");
     });
 
-    // Prune gates that now exceed the new qubit capacity
+    // Prune gates that now exceed the new qubit capacity in visual state
     setCircuitGates((prev) =>
       prev.filter((g) => {
         const q = g.qubit ?? (g.qubits ? g.qubits[0] : 0);
@@ -2159,14 +2298,36 @@ export default function QuantumGuruStudioPage() {
     isCanvasModifyingRef.current = true;
     const gateUpper = gateName.toUpperCase();
     const ctrl2 = extraArgs?.control2;
+
+    const isTwoQubit = ["CX", "CNOT", "CZ", "CH", "SWAP", "CP", "CRX", "CRY", "CRZ", "RZZ"].includes(gateUpper);
+    const isThreeQubit = ["CCX", "TOFFOLI"].includes(gateUpper);
+
+    const effectiveTarget = isTwoQubit
+      ? (targetQubit !== undefined ? targetQubit : (qubit === 0 ? 1 : 0))
+      : targetQubit;
+
+    const effectiveCtrl2 = isThreeQubit
+      ? (ctrl2 !== undefined ? ctrl2 : (qubit === 1 ? 0 : 1))
+      : ctrl2;
+
+    const effectiveThreeQubitTarget = isThreeQubit
+      ? (targetQubit !== undefined ? targetQubit : 2)
+      : undefined;
+
     const neededQubits = Math.max(
       qubit + 1,
-      targetQubit !== undefined ? targetQubit + 1 : 1,
-      ctrl2 !== undefined ? ctrl2 + 1 : 1
+      effectiveTarget !== undefined ? effectiveTarget + 1 : 1,
+      effectiveCtrl2 !== undefined ? effectiveCtrl2 + 1 : 1,
+      effectiveThreeQubitTarget !== undefined ? effectiveThreeQubitTarget + 1 : 1
     );
     setQiskitQubits((prev) => Math.max(prev, neededQubits));
 
-    // Intelligently find where QuantumCircuit is declared (global scope or inside ansatz/function)
+    // Desired visual & logical step slot
+    const gateStep = step !== undefined 
+      ? step 
+      : (circuitGates.length > 0 ? Math.max(...circuitGates.map((g) => g.step ?? 0)) + 1 : 0);
+
+    // Intelligently find where QuantumCircuit is declared & insert gate at exact step slot
     setQiskitCode((prevCode) => {
       const lines = prevCode.split("\n");
 
@@ -2248,37 +2409,35 @@ export default function QuantumGuruStudioPage() {
           break;
         case "CX":
         case "CNOT":
-          gateCall = `${circuitVar}.cx(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.cx(${qubit}, ${effectiveTarget})`;
           break;
         case "CZ":
-          gateCall = `${circuitVar}.cz(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.cz(${qubit}, ${effectiveTarget})`;
           break;
         case "CH":
-          gateCall = `${circuitVar}.ch(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.ch(${qubit}, ${effectiveTarget})`;
           break;
         case "SWAP":
-          gateCall = `${circuitVar}.swap(${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.swap(${qubit}, ${effectiveTarget})`;
           break;
         case "CP":
-          gateCall = `${circuitVar}.cp(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.cp(${angleExpr || "np.pi / 2"}, ${qubit}, ${effectiveTarget})`;
           break;
         case "CRX":
-          gateCall = `${circuitVar}.crx(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.crx(${angleExpr || "np.pi / 2"}, ${qubit}, ${effectiveTarget})`;
           break;
         case "CRY":
-          gateCall = `${circuitVar}.cry(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.cry(${angleExpr || "np.pi / 2"}, ${qubit}, ${effectiveTarget})`;
           break;
         case "CRZ":
-          gateCall = `${circuitVar}.crz(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.crz(${angleExpr || "np.pi / 2"}, ${qubit}, ${effectiveTarget})`;
           break;
         case "RZZ":
-          gateCall = `${circuitVar}.rzz(${angleExpr || "np.pi / 2"}, ${qubit}, ${targetQubit ?? (qubit + 1) % qiskitQubits})`;
+          gateCall = `${circuitVar}.rzz(${angleExpr || "np.pi / 2"}, ${qubit}, ${effectiveTarget})`;
           break;
         case "CCX":
         case "TOFFOLI": {
-          const c2 = ctrl2 !== undefined ? ctrl2 : (qubit + 1) % Math.max(3, qiskitQubits);
-          const tgt = targetQubit !== undefined ? targetQubit : (qubit + 2) % Math.max(3, qiskitQubits);
-          gateCall = `${circuitVar}.ccx(${qubit}, ${c2}, ${tgt})`;
+          gateCall = `${circuitVar}.ccx(${qubit}, ${effectiveCtrl2}, ${effectiveThreeQubitTarget})`;
           break;
         }
         case "M":
@@ -2296,47 +2455,68 @@ export default function QuantumGuruStudioPage() {
 
       const formattedLine = `${baseIndent}${gateCall}`;
 
-      // 3. Insert inside the correct scope where the circuit exists
+      // 3. Insert inside the correct scope where the circuit exists at exact step slot
       if (circuitDefIdx !== -1) {
-        let insertAt = circuitDefIdx + 1;
+        const wireSteps: Record<number, number> = {};
+        for (let w = 0; w < 30; w++) wireSteps[w] = 0;
+
+        const gateQubits = [qubit];
+        if (effectiveTarget !== undefined) gateQubits.push(effectiveTarget);
+        if (effectiveCtrl2 !== undefined) gateQubits.push(effectiveCtrl2);
+        if (effectiveThreeQubitTarget !== undefined) gateQubits.push(effectiveThreeQubitTarget);
+
+        let insertAt = -1;
+        let firstTerminalIdx = -1;
         let lastGateIdx = -1;
-        let terminalIdx = -1;
 
         for (let j = circuitDefIdx + 1; j < lines.length; j++) {
           const l = lines[j];
           const trimmed = l.trim();
           if (!trimmed || trimmed.startsWith("#")) continue;
 
-          // Scope check: if indentation drops lower than baseIndent, the block ended
+          // Scope check: if indentation drops lower than baseIndent, block ended
           const currentIndent = l.match(/^(\s*)/)?.[1] || "";
           if (baseIndent && currentIndent.length < baseIndent.length && trimmed.length > 0) {
             break;
           }
 
-          // Terminal statements on this circuit inside its scope
-          if (
-            trimmed.startsWith(`${circuitVar}.save_statevector`) ||
-            trimmed.startsWith(`${circuitVar}.measure_all`) ||
-            trimmed.startsWith(`${circuitVar}.measure`) ||
-            trimmed.startsWith(`return `) ||
-            trimmed.startsWith(`sim.run`)
-          ) {
-            terminalIdx = j;
+          const parsed = parseQiskitLineQubits(trimmed, circuitVar);
+          if (!parsed) {
+            if (trimmed.startsWith("return ") || trimmed.startsWith("sim.run")) {
+              if (firstTerminalIdx === -1) firstTerminalIdx = j;
+              break;
+            }
+            continue;
+          }
+
+          if (parsed.isTerminal) {
+            if (firstTerminalIdx === -1) firstTerminalIdx = j;
+            continue;
+          }
+
+          lastGateIdx = j;
+          const lineQubits = parsed.qubits.length > 0 ? parsed.qubits : [0];
+          const currentLineStep = Math.max(0, ...lineQubits.map((w) => wireSteps[w] ?? 0));
+          const sharesQubit = lineQubits.some((w) => gateQubits.includes(w));
+
+          if (sharesQubit && currentLineStep >= gateStep) {
+            insertAt = j;
             break;
           }
 
-          // Other gate on this circuit
-          if (trimmed.startsWith(`${circuitVar}.`)) {
-            lastGateIdx = j;
+          for (const w of lineQubits) {
+            wireSteps[w] = currentLineStep + 1;
           }
         }
 
-        if (terminalIdx !== -1) {
-          insertAt = terminalIdx;
-        } else if (lastGateIdx !== -1) {
-          insertAt = lastGateIdx + 1;
-        } else {
-          insertAt = circuitDefIdx + 1;
+        if (insertAt === -1) {
+          if (firstTerminalIdx !== -1) {
+            insertAt = firstTerminalIdx;
+          } else if (lastGateIdx !== -1) {
+            insertAt = lastGateIdx + 1;
+          } else {
+            insertAt = circuitDefIdx + 1;
+          }
         }
 
         lines.splice(insertAt, 0, formattedLine);
@@ -2344,53 +2524,50 @@ export default function QuantumGuruStudioPage() {
       }
 
       // Fallback: If no QuantumCircuit exists yet, initialize one
-      const preamble = `from qiskit import QuantumCircuit\nqc = QuantumCircuit(${Math.max(qubit + 1, 2)})\n`;
+      const preamble = `from qiskit import QuantumCircuit\nqc = QuantumCircuit(${Math.max(neededQubits, 2)})\n`;
       return preamble + `${formattedLine}\n` + prevCode;
     });
 
     // Update visual circuit state
-    const gateStep = step !== undefined 
-      ? step 
-      : (circuitGates.length > 0 ? Math.max(...circuitGates.map((g) => g.step ?? 0)) + 1 : 0);
-
     const normName = gateUpper.toLowerCase();
     const newGates: any[] = [];
 
-    if (targetQubit !== undefined) {
+    if (isTwoQubit && effectiveTarget !== undefined) {
       newGates.push({
         name: normName,
         qubit,
-        target: targetQubit,
-        qubits: [qubit, targetQubit],
+        target: effectiveTarget,
+        qubits: [qubit, effectiveTarget],
         step: gateStep,
         role: "control",
         params: angleExpr ? [angleExpr] : [],
       });
       newGates.push({
         name: normName,
-        qubit: targetQubit,
+        qubit: effectiveTarget,
         target: qubit,
-        qubits: [qubit, targetQubit],
+        qubits: [qubit, effectiveTarget],
         step: gateStep,
         role: "target",
         params: angleExpr ? [angleExpr] : [],
       });
-    } else if (ctrl2 !== undefined) {
-      const tgt = targetQubit ?? (qubit + 2);
+    } else if (isThreeQubit && effectiveCtrl2 !== undefined && effectiveThreeQubitTarget !== undefined) {
+      const tgt = effectiveThreeQubitTarget;
+      const c2 = effectiveCtrl2;
       newGates.push({
         name: normName,
         qubit,
         target: tgt,
-        qubits: [qubit, ctrl2, tgt],
+        qubits: [qubit, c2, tgt],
         step: gateStep,
         role: "control",
         params: [],
       });
       newGates.push({
         name: normName,
-        qubit: ctrl2,
+        qubit: c2,
         target: tgt,
-        qubits: [qubit, ctrl2, tgt],
+        qubits: [qubit, c2, tgt],
         step: gateStep,
         role: "control",
         params: [],
@@ -2399,7 +2576,7 @@ export default function QuantumGuruStudioPage() {
         name: normName,
         qubit: tgt,
         target: qubit,
-        qubits: [qubit, ctrl2, tgt],
+        qubits: [qubit, c2, tgt],
         step: gateStep,
         role: "target",
         params: [],
@@ -2442,28 +2619,65 @@ export default function QuantumGuruStudioPage() {
       ? (gateToRemove.target !== undefined ? gateToRemove.target : (gateToRemove.qubits && gateToRemove.qubits.length > 1 ? gateToRemove.qubits[1] : undefined))
       : undefined;
     const q = gateToRemove?.qubit;
+    const targetStep = gateToRemove?.step;
 
     if (gateToRemove) {
       setQiskitCode((prevCode) => {
         const lines = prevCode.split("\n");
+        let circuitVar = "qc";
+        for (const l of lines) {
+          const match = l.match(/^(\s*)([a-zA-Z0-9_]+)\s*=\s*(?:[a-zA-Z0-9_]+\.)?QuantumCircuit\(/);
+          if (match) {
+            circuitVar = match[2];
+            break;
+          }
+        }
+
         const gateName = (gateToRemove.name || "").toLowerCase();
         const isCx = gateName === "cx" || gateName === "cnot";
 
-        // Find the line matching this gate from the bottom
+        const wireSteps: Record<number, number> = {};
+        for (let w = 0; w < 30; w++) wireSteps[w] = 0;
         let removeIdx = -1;
-        for (let i = lines.length - 1; i >= 0; i--) {
-          const trimmed = lines[i].replace(/#.*$/, "").trim();
-          const nameMatch = isCx
-            ? (trimmed.includes(".cx") || trimmed.includes(".cnot"))
-            : trimmed.includes(`.${gateName}`);
 
-          if (tgt !== undefined) {
-            if (nameMatch && trimmed.includes(String(q)) && trimmed.includes(String(tgt))) {
-              removeIdx = i;
-              break;
-            }
-          } else {
-            if (nameMatch && trimmed.includes(String(q))) {
+        for (let i = 0; i < lines.length; i++) {
+          const parsed = parseQiskitLineQubits(lines[i], circuitVar);
+          if (!parsed) continue;
+
+          const lineQubits = parsed.qubits.length > 0 ? parsed.qubits : [0];
+          const curStep = Math.max(0, ...lineQubits.map((w) => wireSteps[w] ?? 0));
+
+          const nameMatches = isCx
+            ? (parsed.op === "cx" || parsed.op === "cnot")
+            : (parsed.op === gateName || (gateName === "measure" && parsed.op === "measure") || (gateName === "m" && parsed.op === "measure"));
+
+          const qubitMatches = tgt !== undefined
+            ? (lineQubits.includes(q) && lineQubits.includes(tgt))
+            : (lineQubits.length === 1 && lineQubits[0] === q);
+
+          if (nameMatches && qubitMatches && (targetStep === undefined || curStep === targetStep)) {
+            removeIdx = i;
+            break;
+          }
+
+          for (const w of lineQubits) {
+            wireSteps[w] = curStep + 1;
+          }
+        }
+
+        // Fallback: scan from bottom
+        if (removeIdx === -1) {
+          for (let i = lines.length - 1; i >= 0; i--) {
+            const parsed = parseQiskitLineQubits(lines[i], circuitVar);
+            if (!parsed) continue;
+            const lineQubits = parsed.qubits.length > 0 ? parsed.qubits : [0];
+            const nameMatches = isCx
+              ? (parsed.op === "cx" || parsed.op === "cnot")
+              : (parsed.op === gateName || (gateName === "measure" && parsed.op === "measure") || (gateName === "m" && parsed.op === "measure"));
+            const qubitMatches = tgt !== undefined
+              ? (lineQubits.includes(q) && lineQubits.includes(tgt))
+              : (lineQubits.includes(q));
+            if (nameMatches && qubitMatches) {
               removeIdx = i;
               break;
             }
@@ -2496,7 +2710,6 @@ export default function QuantumGuruStudioPage() {
     setIsCircuitSynced(true);
     setIsResultsStale(true);
   };
-
   const handleSyncCodeAndCircuit = useCallback(() => {
     if (framework === "dwave") {
       setIsModelDirty(false);
