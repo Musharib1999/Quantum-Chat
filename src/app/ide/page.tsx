@@ -439,19 +439,22 @@ const QISKIT_INITIAL_MESSAGES: CopilotMessage[] = [
 ];
 
 
-function extractQubit(str: string): number {
+function extractQubit(str: string, varMap?: Record<string, number>): number {
   if (!str) return NaN;
-  const regMatch = str.match(/(?:q(?:ubit)?|qr)?\[(\d+)\]/);
+  const trimmed = str.trim();
+  const regMatch = trimmed.match(/(?:q(?:ubit)?|qr)?\[(\d+)\]/);
   if (regMatch) return parseInt(regMatch[1], 10);
-  const numMatch = str.match(/^\s*(\d+)\s*$/);
+  const numMatch = trimmed.match(/^\s*(\d+)\s*$/);
   if (numMatch) return parseInt(numMatch[1], 10);
+  if (varMap && varMap[trimmed] !== undefined) return varMap[trimmed];
   return NaN;
 }
 
 function parseQiskitLineQubits(
   line: string,
   circuitVar: string,
-  circuitQubits: number = 30
+  circuitQubits: number = 30,
+  varMap?: Record<string, number>
 ): { op: string; qubits: number[]; isTerminal: boolean } | null {
   const trimmed = line.replace(/#.*$/, "").trim();
   if (!trimmed) return null;
@@ -496,7 +499,14 @@ function parseQiskitLineQubits(
       return { op, qubits: qList, isTerminal: false };
     }
     const firstArg = argsStr.split(",")[0]?.trim() || "";
-    const q = extractQubit(firstArg);
+    const q = extractQubit(firstArg, varMap);
+    return { op, qubits: isNaN(q) ? [] : [q], isTerminal: false };
+  }
+
+  // Reset
+  if (op === "reset") {
+    const firstArg = argsStr.split(",")[0]?.trim() || "";
+    const q = extractQubit(firstArg, varMap);
     return { op, qubits: isNaN(q) ? [] : [q], isTerminal: false };
   }
 
@@ -510,23 +520,23 @@ function parseQiskitLineQubits(
   const parts = argsStr.split(",").map((s) => s.trim()).filter(Boolean);
   if (["cx", "cnot", "cz", "swap", "ch", "cy", "cp", "crx", "cry", "crz", "rzz", "rxx", "ryy", "cu"].includes(op)) {
     if (parts.length >= 2) {
-      const ctrl = extractQubit(parts[parts.length - 2]);
-      const tgt = extractQubit(parts[parts.length - 1]);
+      const ctrl = extractQubit(parts[parts.length - 2], varMap);
+      const tgt = extractQubit(parts[parts.length - 1], varMap);
       const qs = [ctrl, tgt].filter((q) => !isNaN(q));
       return { op, qubits: qs, isTerminal: false };
     }
   }
 
   if (["ccx", "toffoli", "cswap"].includes(op) && parts.length >= 3) {
-    const c1 = extractQubit(parts[parts.length - 3]);
-    const c2 = extractQubit(parts[parts.length - 2]);
-    const tgt = extractQubit(parts[parts.length - 1]);
+    const c1 = extractQubit(parts[parts.length - 3], varMap);
+    const c2 = extractQubit(parts[parts.length - 2], varMap);
+    const tgt = extractQubit(parts[parts.length - 1], varMap);
     const qs = [c1, c2, tgt].filter((q) => !isNaN(q));
     return { op, qubits: qs, isTerminal: false };
   }
 
   if (parts.length > 0) {
-    const lastArg = extractQubit(parts[parts.length - 1]);
+    const lastArg = extractQubit(parts[parts.length - 1], varMap);
     if (!isNaN(lastArg)) {
       return { op, qubits: [lastArg], isTerminal: false };
     }
@@ -535,22 +545,155 @@ function parseQiskitLineQubits(
   return { op, qubits: [], isTerminal: false };
 }
 
+function splitPythonStatements(code: string): string[] {
+  const statements: string[] = [];
+  let currentStmt = "";
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inTripleSingle = false;
+  let inTripleDouble = false;
+  let parenDepth = 0;
+  let bracketDepth = 0;
+  let braceDepth = 0;
+  let i = 0;
+
+  while (i < code.length) {
+    const ch = code[i];
+    const next3 = code.slice(i, i + 3);
+
+    if (!inSingleQuote && !inDoubleQuote) {
+      if (next3 === "'''") {
+        inTripleSingle = !inTripleSingle;
+        currentStmt += next3;
+        i += 3;
+        continue;
+      }
+      if (next3 === '"""') {
+        inTripleDouble = !inTripleDouble;
+        currentStmt += next3;
+        i += 3;
+        continue;
+      }
+    }
+
+    if (inTripleSingle || inTripleDouble) {
+      currentStmt += ch;
+      i++;
+      continue;
+    }
+
+    if (ch === "'" && !inDoubleQuote && (i === 0 || code[i - 1] !== "\\")) {
+      inSingleQuote = !inSingleQuote;
+      currentStmt += ch;
+      i++;
+      continue;
+    }
+    if (ch === '"' && !inSingleQuote && (i === 0 || code[i - 1] !== "\\")) {
+      inDoubleQuote = !inDoubleQuote;
+      currentStmt += ch;
+      i++;
+      continue;
+    }
+
+    if (inSingleQuote || inDoubleQuote) {
+      currentStmt += ch;
+      i++;
+      continue;
+    }
+
+    // Comment: ignore until end of line
+    if (ch === "#") {
+      while (i < code.length && code[i] !== "\n") {
+        i++;
+      }
+      continue;
+    }
+
+    // Bracket & parenthesis tracking
+    if (ch === "(") parenDepth++;
+    else if (ch === ")" && parenDepth > 0) parenDepth--;
+    else if (ch === "[") bracketDepth++;
+    else if (ch === "]" && bracketDepth > 0) bracketDepth--;
+    else if (ch === "{") braceDepth++;
+    else if (ch === "}" && braceDepth > 0) braceDepth--;
+
+    const isInsideGroup = parenDepth > 0 || bracketDepth > 0 || braceDepth > 0;
+    if ((ch === ";" || ch === "\n") && !isInsideGroup) {
+      const trimmed = currentStmt.trim();
+      if (trimmed) statements.push(trimmed);
+      currentStmt = "";
+      i++;
+      continue;
+    }
+
+    if (ch === "\n" && isInsideGroup) {
+      currentStmt += " ";
+      i++;
+      continue;
+    }
+
+    currentStmt += ch;
+    i++;
+  }
+
+  const lastTrimmed = currentStmt.trim();
+  if (lastTrimmed) statements.push(lastTrimmed);
+
+  return statements;
+}
+
 function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any[]; depth: number } {
-  const qcMatch = code.match(/QuantumCircuit\(\s*(\d+)/);
-  let numQubits = qcMatch ? Math.min(30, Math.max(1, parseInt(qcMatch[1], 10))) : 2;
+  const statements = splitPythonStatements(code);
+  const varMap: Record<string, number> = {};
+
+  // First pass: extract integer constants & QuantumRegister sizes
+  for (const stmt of statements) {
+    const intAssign = stmt.match(/^([a-zA-Z_]\w*)\s*=\s*(\d+)$/);
+    if (intAssign) {
+      varMap[intAssign[1]] = parseInt(intAssign[2], 10);
+      continue;
+    }
+    const qregAssign = stmt.match(/^([a-zA-Z_]\w*)\s*=\s*(?:[a-zA-Z_]\w*\.)?QuantumRegister\(\s*(\d+|[a-zA-Z_]\w*)/);
+    if (qregAssign) {
+      const val = qregAssign[2];
+      const parsed = parseInt(val, 10);
+      if (!isNaN(parsed)) {
+        varMap[qregAssign[1]] = parsed;
+      } else if (varMap[val] !== undefined) {
+        varMap[qregAssign[1]] = varMap[val];
+      }
+    }
+  }
+
+  // Detect user circuit variable name & initial qubit count
+  let primaryVar = "qc";
+  let numQubits = 2;
+  for (const stmt of statements) {
+    const qcMatch = stmt.match(/([a-zA-Z0-9_]+)\s*=\s*(?:[a-zA-Z0-9_]+\.)?QuantumCircuit\((.*)\)/);
+    if (qcMatch) {
+      primaryVar = qcMatch[1];
+      const argsRaw = qcMatch[2].trim();
+      const firstArg = argsRaw.split(",")[0]?.trim() || "";
+      const parsedNum = parseInt(firstArg, 10);
+      if (!isNaN(parsedNum)) {
+        numQubits = Math.min(30, Math.max(1, parsedNum));
+      } else if (varMap[firstArg] !== undefined) {
+        numQubits = Math.min(30, Math.max(1, varMap[firstArg]));
+      }
+      break;
+    }
+  }
+
+  // Fallback if not matched in statements
+  if (numQubits === 2) {
+    const fallbackMatch = code.match(/QuantumCircuit\(\s*(\d+)/);
+    if (fallbackMatch) numQubits = Math.min(30, Math.max(1, parseInt(fallbackMatch[1], 10)));
+  }
+
   const stepTrack: Record<number, number> = {};
   for (let i = 0; i < 30; i++) stepTrack[i] = 0;
 
   const gates: any[] = [];
-  const statements = code
-    .split("\n")
-    .flatMap((raw) => raw.replace(/#.*$/, "").split(";"))
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  // Detect user circuit variable name (e.g. qc = QuantumCircuit(...) or circuit = QuantumCircuit(...))
-  const varMatch = code.match(/([a-zA-Z0-9_]+)\s*=\s*(?:[a-zA-Z0-9_]+\.)?QuantumCircuit/);
-  const primaryVar = varMatch ? varMatch[1] : "qc";
   const qcCallRegex = new RegExp(`^(?:${primaryVar}|qc|circuit|circ|qcirc)\\.([a-zA-Z0-9_]+)\\((.*)\\)`);
 
   for (const line of statements) {
@@ -635,7 +778,7 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
         qList = Array.from(listMatch[1].matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
       } else {
         const firstArg = argsStr.split(",")[0]?.trim() || "";
-        const firstInt = extractQubit(firstArg);
+        const firstInt = extractQubit(firstArg, varMap);
         if (!isNaN(firstInt)) qList = [firstInt];
       }
       for (const q of qList) {
@@ -655,13 +798,51 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
       continue;
     }
 
+    if (opName === "reset") {
+      const firstArg = argsStr.split(",")[0]?.trim() || "";
+      const q = extractQubit(firstArg, varMap);
+      if (!isNaN(q)) {
+        if (q >= numQubits) numQubits = Math.min(30, q + 1);
+        const currentStep = stepTrack[q] ?? 0;
+        gates.push({
+          name: "reset",
+          qubit: q,
+          qubits: [q],
+          step: currentStep,
+          role: "single",
+          params: [],
+        });
+        stepTrack[q] = currentStep + 1;
+      }
+      continue;
+    }
+
+    if (opName === "id" || opName === "i") {
+      const firstArg = argsStr.split(",")[0]?.trim() || "";
+      const q = extractQubit(firstArg, varMap);
+      if (!isNaN(q)) {
+        if (q >= numQubits) numQubits = Math.min(30, q + 1);
+        const currentStep = stepTrack[q] ?? 0;
+        gates.push({
+          name: "id",
+          qubit: q,
+          qubits: [q],
+          step: currentStep,
+          role: "single",
+          params: [],
+        });
+        stepTrack[q] = currentStep + 1;
+      }
+      continue;
+    }
+
     const parts = argsStr.split(",").map((s) => s.trim()).filter(Boolean);
     if (parts.length === 0) continue;
 
     if (["cx", "cnot", "cz", "swap", "ch", "cy", "cp", "crx", "cry", "crz", "rzz", "rxx", "ryy", "cu"].includes(opName)) {
       if (parts.length >= 2) {
-        const ctrl = extractQubit(parts[parts.length - 2]);
-        const tgt = extractQubit(parts[parts.length - 1]);
+        const ctrl = extractQubit(parts[parts.length - 2], varMap);
+        const tgt = extractQubit(parts[parts.length - 1], varMap);
         const params = parts.slice(0, parts.length - 2);
         if (!isNaN(ctrl) && !isNaN(tgt)) {
           if (Math.max(ctrl, tgt) >= numQubits) numQubits = Math.min(30, Math.max(ctrl, tgt) + 1);
@@ -693,9 +874,9 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
     }
 
     if (["ccx", "toffoli", "cswap"].includes(opName) && parts.length >= 3) {
-      const c1 = extractQubit(parts[parts.length - 3]);
-      const c2 = extractQubit(parts[parts.length - 2]);
-      const tgt = extractQubit(parts[parts.length - 1]);
+      const c1 = extractQubit(parts[parts.length - 3], varMap);
+      const c2 = extractQubit(parts[parts.length - 2], varMap);
+      const tgt = extractQubit(parts[parts.length - 1], varMap);
       if (!isNaN(c1) && !isNaN(c2) && !isNaN(tgt)) {
         const qIndices = [c1, c2, tgt];
         const currentStep = Math.max(...qIndices.map((q) => stepTrack[q] ?? 0));
@@ -706,6 +887,9 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
       }
       continue;
     }
+
+    const isParamSingle = ["rx", "ry", "rz", "p", "phase", "u", "u1", "u2", "u3"].includes(opName);
+    const gateParams = isParamSingle && parts.length > 1 ? parts.slice(0, parts.length - 1) : [];
 
     const lastPartRaw = parts[parts.length - 1] || "";
     const rangeMatch = argsStr.match(/range\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\)/);
@@ -718,7 +902,7 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
     } else if (listArgMatch) {
       targetQubits = Array.from(listArgMatch[1].matchAll(/\b(\d+)\b/g)).map((m) => parseInt(m[1], 10));
     } else {
-      const lastArg = extractQubit(lastPartRaw);
+      const lastArg = extractQubit(lastPartRaw, varMap);
       if (!isNaN(lastArg)) targetQubits = [lastArg];
     }
     for (const tq of targetQubits) {
@@ -730,9 +914,19 @@ function parseQiskitCodeToCircuit(code: string): { numQubits: number; gates: any
         qubits: [tq],
         step: currentStep,
         role: "single",
-        params: [],
+        params: gateParams,
       });
       stepTrack[tq] = currentStep + 1;
+    }
+  }
+
+  // Adjust numQubits if any gate reached a higher index
+  if (gates.length > 0) {
+    const highestQubitUsed = Math.max(
+      ...gates.flatMap((g) => (g.qubits && g.qubits.length > 0 ? g.qubits : [g.qubit ?? 0]))
+    );
+    if (highestQubitUsed >= numQubits) {
+      numQubits = Math.min(30, highestQubitUsed + 1);
     }
   }
 
@@ -2558,10 +2752,29 @@ export default function QuantumGuruStudioPage() {
     );
     setQiskitQubits((prev) => Math.max(prev, neededQubits));
 
-    // Desired visual & logical step slot
-    const gateStep = step !== undefined 
+    const participatingQubits = [qubit];
+    if (effectiveTarget !== undefined) participatingQubits.push(effectiveTarget);
+    if (effectiveCtrl2 !== undefined) participatingQubits.push(effectiveCtrl2);
+    if (effectiveThreeQubitTarget !== undefined) participatingQubits.push(effectiveThreeQubitTarget);
+
+    // Collision Resolution: Ensure no participating wire is already occupied at gateStep (B4 fix)
+    const requestedStep = step !== undefined 
       ? step 
       : (circuitGates.length > 0 ? Math.max(...circuitGates.map((g) => g.step ?? 0)) + 1 : 0);
+
+    let gateStep = requestedStep;
+    while (true) {
+      const isOccupied = circuitGates.some((g) => {
+        const s = g.step ?? 0;
+        if (s !== gateStep) return false;
+        const gWires = g.qubits && g.qubits.length > 0
+          ? g.qubits
+          : [g.qubit ?? 0, ...(g.target !== undefined ? [g.target] : [])];
+        return participatingQubits.some((w) => gWires.includes(w));
+      });
+      if (!isOccupied) break;
+      gateStep++;
+    }
 
     // Intelligently find where QuantumCircuit is declared & insert gate at exact step slot
     setQiskitCode((prevCode) => {
@@ -2838,10 +3051,14 @@ export default function QuantumGuruStudioPage() {
     }
 
     setCircuitGates((prev) => {
-      // Remove any existing gate at this exact qubit and step slot to avoid overlap
+      // Remove any existing gate at any participating qubit and step slot to avoid overlap (B4 fix)
       const filtered = prev.filter((g) => {
-        const q = g.qubit ?? (g.qubits ? g.qubits[0] : 0);
-        return !(q === qubit && g.step === gateStep);
+        const s = g.step ?? 0;
+        if (s !== gateStep) return true;
+        const gWires = g.qubits && g.qubits.length > 0
+          ? g.qubits
+          : [g.qubit ?? 0, ...(g.target !== undefined ? [g.target] : [])];
+        return !participatingQubits.some((w) => gWires.includes(w));
       });
       return [...filtered, ...newGates];
     });

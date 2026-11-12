@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Layers,
   Activity,
@@ -223,6 +223,8 @@ export function CircuitCanvasView({
           }
         } else if (name === "MEASURE") {
           matrix[q][s] = { name: "M", gateIdx: idx };
+        } else if (name === "RESET") {
+          matrix[q][s] = { name: "RESET", gateIdx: idx };
         } else if (name === "BARRIER") {
           matrix[q][s] = { name: "B", gateIdx: idx };
         } else if (name === "SAVE_STATEVECTOR" || name.startsWith("SAVE_") || name === "|Ψ⟩" || name === "|PSI>") {
@@ -237,6 +239,20 @@ export function CircuitCanvasView({
 
     return { maxStep: totalSteps, grid: matrix, gateIndexMap: gIndexMap };
   }, [circuitGates, nQubits, extraSteps]);
+
+  // Helper to find the earliest non-colliding time step where all specified wires are free (B4 fix)
+  const getFirstFreeStepForWires = useCallback(
+    (wires: number[], startStep: number): number => {
+      let s = startStep;
+      while (s < maxStep + 20) {
+        const hasCollision = wires.some((w) => grid[w]?.[s] !== null && grid[w]?.[s] !== undefined);
+        if (!hasCollision) return s;
+        s++;
+      }
+      return s;
+    },
+    [grid, maxStep]
+  );
 
   // Single Qubit Gates list for Square Modal
   const singleQubitGates = [
@@ -297,11 +313,12 @@ export function CircuitCanvasView({
   const handleSelectTwoQubitGateTarget = (targetQubit: number) => {
     if (!selectedSlot || !selectedTwoQubitGate) return;
     const isParam = ["CP", "CRX", "CRY", "CRZ", "RZZ"].includes(selectedTwoQubitGate.toUpperCase());
+    const freeStep = getFirstFreeStepForWires([selectedSlot.qubit, targetQubit], selectedSlot.step);
     onAddGate?.(
       selectedTwoQubitGate,
       selectedSlot.qubit,
       targetQubit,
-      selectedSlot.step,
+      freeStep,
       isParam ? rotationAngleExpr : undefined
     );
     closeModal();
@@ -309,7 +326,8 @@ export function CircuitCanvasView({
 
   const handleConfirmCcxGate = (targetQubit: number) => {
     if (!selectedSlot || ccxControl2 === null) return;
-    onAddGate?.("CCX", selectedSlot.qubit, targetQubit, selectedSlot.step, undefined, {
+    const freeStep = getFirstFreeStepForWires([selectedSlot.qubit, ccxControl2, targetQubit], selectedSlot.step);
+    onAddGate?.("CCX", selectedSlot.qubit, targetQubit, freeStep, undefined, {
       control2: ccxControl2,
     });
     closeModal();
@@ -676,6 +694,15 @@ export function CircuitCanvasView({
                                   >
                                     |ψ⟩
                                   </div>
+                                ) : gate.name === "RESET" ? (
+                                  <div
+                                    className={`px-2 py-1 rounded border flex items-center justify-center font-mono font-bold shadow-xs transition-transform hover:scale-105 cursor-default ${
+                                      isCompact ? "text-[10px] h-7 min-w-[30px]" : "text-[11px] h-8 min-w-[34px]"
+                                    } bg-zinc-800/90 border-zinc-600 text-zinc-200`}
+                                    title="Reset Qubit to |0⟩ (qc.reset)"
+                                  >
+                                    |0⟩
+                                  </div>
                                 ) : (
                                   /* Standard single-qubit badges */
                                   <div
@@ -700,6 +727,11 @@ export function CircuitCanvasView({
                                         ? "bg-zinc-800/95 border-zinc-700 text-zinc-100"
                                         : "bg-slate-50 border-slate-300 text-slate-800"
                                     }`}
+                                    title={
+                                      gate.params && gate.params.length > 0
+                                        ? `${gate.name}(${gate.params.join(", ")})`
+                                        : `${gate.name} Gate`
+                                    }
                                   >
                                     {gate.name}
                                   </div>
@@ -945,21 +977,36 @@ export function CircuitCanvasView({
                       <div className="grid grid-cols-5 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-0.5">
                         {Array.from({ length: nQubits }).map((_, tgtQ) => {
                           const isInvalid = tgtQ === selectedSlot.qubit || tgtQ === ccxControl2;
+                          const freeStep = isInvalid || !selectedSlot
+                            ? (selectedSlot?.step ?? 0)
+                            : getFirstFreeStepForWires([selectedSlot.qubit, ccxControl2, tgtQ], selectedSlot.step);
+                          const isDelayed = !isInvalid && selectedSlot && freeStep > selectedSlot.step;
+
                           return (
                             <button
                               key={tgtQ}
                               disabled={isInvalid}
                               type="button"
                               onClick={() => handleConfirmCcxGate(tgtQ)}
-                              className={`h-10 rounded-lg border text-center text-xs font-mono font-bold transition-all cursor-pointer ${
+                              className={`h-10 rounded-lg border text-center text-xs font-mono font-bold transition-all cursor-pointer flex flex-col items-center justify-center ${
                                 isInvalid
                                   ? "opacity-20 border-zinc-800 text-zinc-600 cursor-not-allowed"
                                   : isDark
                                   ? "bg-[#13151D] border-white/[0.07] text-zinc-200 hover:bg-emerald-500/15 hover:border-emerald-500/50 hover:text-white"
                                   : "bg-slate-100 border-slate-300 text-slate-800 hover:bg-emerald-100 hover:border-emerald-500 hover:text-emerald-800"
                               }`}
+                              title={
+                                isInvalid
+                                  ? "Qubit cannot be both control and target"
+                                  : isDelayed
+                                  ? `Wire q[${tgtQ}] is busy at step ${selectedSlot?.step}. Gate will be placed at step ${freeStep} where all 3 wires are free.`
+                                  : `Place Toffoli target on q[${tgtQ}] at step ${selectedSlot?.step}`
+                              }
                             >
-                              q[{tgtQ}]
+                              <span>q[{tgtQ}]</span>
+                              {isDelayed && (
+                                <span className="text-[9px] text-amber-400 font-normal leading-none">→ s{freeStep}</span>
+                              )}
                             </button>
                           );
                         })}
@@ -1035,21 +1082,36 @@ export function CircuitCanvasView({
                   <div className="grid grid-cols-5 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-0.5">
                     {Array.from({ length: nQubits }).map((_, targetQ) => {
                       const isSelf = targetQ === selectedSlot.qubit;
+                      const freeStep = isSelf || !selectedSlot
+                        ? (selectedSlot?.step ?? 0)
+                        : getFirstFreeStepForWires([selectedSlot.qubit, targetQ], selectedSlot.step);
+                      const isDelayed = !isSelf && selectedSlot && freeStep > selectedSlot.step;
+
                       return (
                         <button
                           key={targetQ}
                           disabled={isSelf}
                           type="button"
                           onClick={() => handleSelectTwoQubitGateTarget(targetQ)}
-                          className={`h-10 rounded-lg border text-center text-xs font-mono font-bold transition-all cursor-pointer ${
+                          className={`h-10 rounded-lg border text-center text-xs font-mono font-bold transition-all cursor-pointer flex flex-col items-center justify-center ${
                             isSelf
                               ? "opacity-20 border-zinc-800 text-zinc-600 cursor-not-allowed"
                               : isDark
                               ? "bg-[#13151D] border-white/[0.07] text-zinc-200 hover:bg-sky-500/15 hover:border-sky-500/50 hover:text-white"
                               : "bg-slate-100 border-slate-300 text-slate-800 hover:bg-sky-100 hover:border-sky-500 hover:text-sky-800"
                           }`}
+                          title={
+                            isSelf
+                              ? "Control and target cannot be the same wire"
+                              : isDelayed
+                              ? `Wire q[${targetQ}] is busy at step ${selectedSlot?.step}. Gate will be placed at step ${freeStep} where both wires are free.`
+                              : `Place ${selectedTwoQubitGate} on target q[${targetQ}] at step ${selectedSlot?.step}`
+                          }
                         >
-                          q[{targetQ}]
+                          <span>q[{targetQ}]</span>
+                          {isDelayed && (
+                            <span className="text-[9px] text-amber-400 font-normal leading-none">→ s{freeStep}</span>
+                          )}
                         </button>
                       );
                     })}
