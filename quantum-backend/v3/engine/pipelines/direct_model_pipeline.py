@@ -19,7 +19,7 @@ Penalty map (user-facing labels → internal):
 import json
 import re
 import asyncio
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Optional, Any, Union
 
 from ..qwen_client import call_qwen
 from ..compiler.expander import (
@@ -31,7 +31,7 @@ from ..compiler.backends.autoqubo_backend import (
 
 # ── Penalty weight resolver ────────────────────────────────────────────────────
 
-def resolve_penalty_weight(penalty_choice: int, om: OptimizationModel) -> float:
+def resolve_penalty_weight(penalty_choice: Any, om: OptimizationModel) -> float:
     """
     Compute the penalty λ for the selected proposed penalty.
     Proposed Penalty 1: simple sum of objective coefficients.
@@ -42,6 +42,16 @@ def resolve_penalty_weight(penalty_choice: int, om: OptimizationModel) -> float:
     Proposed Penalty 6: Active Density
     """
     try:
+        if penalty_choice is not None:
+            try:
+                f_val = float(penalty_choice)
+                if isinstance(penalty_choice, float) and penalty_choice not in (1, 2, 3, 4, 5, 6):
+                    return round(f_val, 4)
+                if f_val > 6 or f_val <= 0:
+                    return round(f_val, 4)
+            except (ValueError, TypeError):
+                pass
+
         import re
         import math
 
@@ -322,7 +332,8 @@ def build_om_from_ir(ir: dict) -> OptimizationModel:
 
 async def run_direct_model_pipeline_stream(
     model_text: str,
-    penalty_choice: int = 3,
+    penalty_choice: Union[int, float] = 3,
+    penalty_lambda: Optional[float] = None,
     num_reads: int = 5000,
     email: Optional[str] = None,
     session_id: Optional[str] = None,
@@ -386,12 +397,19 @@ async def run_direct_model_pipeline_stream(
     await asyncio.sleep(0.1)
 
     # ── Stage 2: Compute penalty & compile Q matrix ───────────────────────────
-    if penalty_choice not in (1, 2, 3, 4, 5, 6):
+    if penalty_lambda is not None:
+        penalty_weight = float(penalty_lambda)
+        penalty_label = f"Custom λ={penalty_weight}"
+    elif isinstance(penalty_choice, float) and penalty_choice not in (1, 2, 3, 4, 5, 6):
         penalty_weight = float(penalty_choice)
+        penalty_label = f"Custom λ={penalty_weight}"
+    elif penalty_choice not in (1, 2, 3, 4, 5, 6):
+        penalty_weight = float(penalty_choice)
+        penalty_label = f"Custom λ={penalty_weight}"
     else:
         penalty_weight = resolve_penalty_weight(penalty_choice, om)
-    penalty_labels = {1: "Proposed Penalty 1 (Sum)", 2: "Proposed Penalty 2 (Moderate)", 3: "Proposed Penalty 3 (Verma-Lewis)", 4: "Adaptive L2 Norm", 5: "Lagrange Ratio", 6: "Active Density"}
-    penalty_label = penalty_labels.get(penalty_choice, f"Custom λ={penalty_weight}")
+        penalty_labels = {1: "Proposed Penalty 1 (Sum)", 2: "Proposed Penalty 2 (Moderate)", 3: "Proposed Penalty 3 (Verma-Lewis)", 4: "Adaptive L2 Norm", 5: "Lagrange Ratio", 6: "Active Density"}
+        penalty_label = penalty_labels.get(penalty_choice, f"Custom λ={penalty_weight}")
 
     yield {
         "step": "q_matrix",
@@ -537,5 +555,8 @@ async def run_direct_model_pipeline_stream(
         "selected_variables": selected,
         "q_size": q_size,
         "penalty_label": penalty_label,
+        "penalty_weight": penalty_weight,
+        "objective_value": result.get("objective_value"),
+        "num_reads": num_reads,
     }
 

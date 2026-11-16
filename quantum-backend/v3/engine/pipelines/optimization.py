@@ -3,6 +3,7 @@ Optimization Pipeline — QuantumGuru Engine v3 (Multi-Agent V7 Core)
 Routes to SupervisorAgent orchestrator for E2E execution.
 """
 import json
+from typing import Optional
 from .multi_agent import SupervisorAgent
 
 def format_q_matrix_preview(Q, variable_map) -> str:
@@ -48,13 +49,14 @@ async def run_optimization_pipeline(
     session_id: str = None,
     email: str = None,
     penalty_choice: int = 3,
+    penalty_lambda: Optional[float] = None,
 ) -> dict:
     """
     Full QuantumGuru v7 multi-agent optimization pipeline.
     """
     try:
         supervisor = SupervisorAgent()
-        workspace = await supervisor.execute(problem, mode, session_id, email=email, penalty_choice=penalty_choice)
+        workspace = await supervisor.execute(problem, mode, session_id, email=email, penalty_choice=penalty_choice, penalty_lambda=penalty_lambda)
 
         # Generate LaTeX mathematical formulation and Q-matrix preview if IR is available
         latex_model = ""
@@ -214,6 +216,7 @@ async def run_optimization_pipeline_stream(
     session_id: str = None,
     email: str = None,
     penalty_choice: int = 3,
+    penalty_lambda: Optional[float] = None,
 ):
     """
     Streamed multi-agent optimization pipeline.
@@ -221,13 +224,14 @@ async def run_optimization_pipeline_stream(
     """
     try:
         supervisor = SupervisorAgent()
-        async for update in supervisor.execute_stream(problem, mode, session_id, email=email, penalty_choice=penalty_choice):
+        async for update in supervisor.execute_stream(problem, mode, session_id, email=email, penalty_choice=penalty_choice, penalty_lambda=penalty_lambda):
             if update.get("step") == "complete":
                 workspace = update["workspace"]
                 
                 # Generate LaTeX mathematical formulation and Q-matrix preview if IR is available
                 latex_model = ""
                 q_matrix_block = ""
+                rich_res = None
                 if workspace.problem_specification:
                     try:
                         from ..compiler.dcc import compile_compositional_ast_rich
@@ -244,6 +248,19 @@ async def run_optimization_pipeline_stream(
                                 q_matrix_block = format_q_matrix_preview(rich_res.get("Q_matrix"), flat_vars or rich_res.get("variable_map") or list(workspace.problem_specification.get("variable_registry", [])))
                     except Exception as latex_err:
                         print(f"[optimization.py] Failed to generate LaTeX model: {latex_err}")
+
+                # Structured, real-data block consumed by the Enterprise workbench.
+                # Prefer the IR the solver actually ran on; fall back to the rich compile.
+                enterprise_payload = None
+                try:
+                    from .enterprise_payload import build_enterprise_payload
+                    enterprise_ir = getattr(workspace, "_compiled_qubo_ir", None)
+                    if enterprise_ir is None and rich_res:
+                        enterprise_ir = rich_res.get("ir")
+                    enterprise_payload = build_enterprise_payload(workspace, enterprise_ir)
+                except Exception as enterprise_err:
+                    print(f"[optimization.py] Failed to build enterprise payload: {enterprise_err}")
+                real_penalty_weight = ((workspace.execution_result or {}).get("penalty_weight")) if workspace.execution_result else None
 
                 # Determine backward-compatible pattern classification
                 pattern = "selection"
@@ -348,7 +365,7 @@ async def run_optimization_pipeline_stream(
                             "objective_sense": objective_sense,
                             "complexity": complexity,
                             "penalty_label": {1: "Proposed Penalty 1 (Sum)", 2: "Proposed Penalty 2 (Moderate)", 3: "Proposed Penalty 3 (Verma-Lewis)", 4: "Adaptive L2 Norm", 5: "Lagrange Ratio", 6: "Active Density"}.get(penalty_choice if 'penalty_choice' in locals() else 3, "Proposed Penalty 3 (Verma-Lewis)"),
-                            "penalty_weight": penalty_weight if 'penalty_weight' in locals() else 2.0
+                            "penalty_weight": real_penalty_weight if real_penalty_weight is not None else (penalty_weight if 'penalty_weight' in locals() else 2.0)
                         },
                         "solver_routing": {
                             "selected_solver": workspace.solver_strategy or "CQM",
@@ -359,7 +376,8 @@ async def run_optimization_pipeline_stream(
                         "qa_report": {
                             "checklist": qa_checklist
                         },
-                        "compiler_metrics": metrics
+                        "compiler_metrics": metrics,
+                        "enterprise": enterprise_payload
                     }
                 }
             else:

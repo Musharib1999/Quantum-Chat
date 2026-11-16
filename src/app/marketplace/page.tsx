@@ -208,7 +208,7 @@ const CAPABILITIES: QuantumCapability[] = [
     id: 'opt-8',
     credits: 3,
     tag: 'tools.opt.algebraic_slack_qubo',
-    name: 'Algebraic & Slack AutoQUBO Engine',
+    name: 'Algebraic & Slack QUBO Engine',
     serviceName: 'Deterministic Polynomial Expander',
     category: 'optimization',
     categoryLabel: 'Optimization',
@@ -219,7 +219,7 @@ const CAPABILITIES: QuantumCapability[] = [
     level: 'Advanced',
     pricing: 'Free',
     executionTime: '< 10ms',
-    workflowChain: ['Problem Formulator', 'Algebraic & Slack AutoQUBO Engine', 'QAOA & Annealing Solver', 'Solution Decoder'],
+    workflowChain: ['Problem Formulator', 'Algebraic & Slack QUBO Engine', 'QAOA & Annealing Solver', 'Solution Decoder'],
     sampleInput: '4 variables, budget $22M, mutual exclusion (Solar A, Wind D), dependency (Wind C -> Battery E)',
     sampleOutput: 'Dense 7x7 Q-matrix with 3 logarithmic slacks, zero-slack mutual exclusion couplings'
   },

@@ -572,7 +572,7 @@ class SupervisorAgent:
             "ExecutionAgent": 2
         }
 
-    async def execute(self, problem_text: str, mode: str = "auto", session_id: str = None, email: str = None, penalty_choice: int = 3) -> Workspace:
+    async def execute(self, problem_text: str, mode: str = "auto", session_id: str = None, email: str = None, penalty_choice: int = 3, penalty_lambda: Optional[float] = None) -> Workspace:
         print(f"[Supervisor] Initializing shared workspace for new run...")
         
         # Extract large numeric arrays and run token budget guard
@@ -801,6 +801,7 @@ class SupervisorAgent:
                     async for update in run_direct_model_pipeline_stream(
                         model_text=spec_json,
                         penalty_choice=penalty_choice,  # forwarded from user selection
+                        penalty_lambda=penalty_lambda,
                         num_reads=1000,
                         email=workspace.user_email or email,
                         session_id=session_id,
@@ -836,7 +837,11 @@ class SupervisorAgent:
                         "solution": solve_res.get("solution", {}),
                         "feasibility": solve_res.get("feasibility", {}),
                         "selected_variables": selected,
-                        "q_size": q_size
+                        "q_size": q_size,
+                        "objective_value": solve_res.get("objective_value"),
+                        "num_reads": solve_res.get("num_reads"),
+                        "penalty_weight": solve_res.get("penalty_weight"),
+                        "penalty_label": solve_res.get("penalty_label"),
                     }
 
                     # Compile the ir locally to attach to workspace for explanation block
@@ -846,7 +851,12 @@ class SupervisorAgent:
 
                     cmm = parse_spec_to_cmm(active_ir)
                     om = expand_cmm_to_om(cmm)
-                    penalty_weight = resolve_penalty_weight(penalty_choice, om)
+                    if penalty_lambda is not None:
+                        penalty_weight = float(penalty_lambda)
+                    elif isinstance(penalty_choice, (int, float)) and (isinstance(penalty_choice, float) or penalty_choice not in (1, 2, 3, 4, 5, 6)):
+                        penalty_weight = float(penalty_choice)
+                    else:
+                        penalty_weight = resolve_penalty_weight(penalty_choice, om)
                     ir = compile_om_to_autoqubo_ir(om, penalty_weight=penalty_weight)
                     workspace._compiled_qubo_ir = ir
                     dcc_code = ir.qubo_code
@@ -1014,7 +1024,7 @@ class SupervisorAgent:
 
         return workspace
 
-    async def execute_stream(self, problem_text: str, mode: str = "auto", session_id: str = None, email: str = None, penalty_choice: int = 3):
+    async def execute_stream(self, problem_text: str, mode: str = "auto", session_id: str = None, email: str = None, penalty_choice: int = 3, penalty_lambda: Optional[float] = None):
         print(f"[Supervisor] Starting streamed shared workspace run...")
         
         # Extract large numeric arrays and run token budget guard
@@ -1252,6 +1262,7 @@ class SupervisorAgent:
                     async for update in run_direct_model_pipeline_stream(
                         model_text=spec_json,
                         penalty_choice=penalty_choice,  # forwarded from user selection
+                        penalty_lambda=penalty_lambda,
                         num_reads=1000,
                         email=workspace.user_email,
                         session_id=session_id,
@@ -1289,7 +1300,11 @@ class SupervisorAgent:
                         "solution": solve_res.get("solution", {}),
                         "feasibility": solve_res.get("feasibility", {}),
                         "selected_variables": selected,
-                        "q_size": q_size
+                        "q_size": q_size,
+                        "objective_value": solve_res.get("objective_value"),
+                        "num_reads": solve_res.get("num_reads"),
+                        "penalty_weight": solve_res.get("penalty_weight"),
+                        "penalty_label": solve_res.get("penalty_label"),
                     }
 
                     # Compile the ir locally to attach to workspace for explanation block
@@ -1299,7 +1314,12 @@ class SupervisorAgent:
 
                     cmm = parse_spec_to_cmm(active_ir)
                     om = expand_cmm_to_om(cmm)
-                    penalty_weight = resolve_penalty_weight(penalty_choice, om)
+                    if penalty_lambda is not None:
+                        penalty_weight = float(penalty_lambda)
+                    elif isinstance(penalty_choice, (int, float)) and (isinstance(penalty_choice, float) or penalty_choice not in (1, 2, 3, 4, 5, 6)):
+                        penalty_weight = float(penalty_choice)
+                    else:
+                        penalty_weight = resolve_penalty_weight(penalty_choice, om)
                     ir = compile_om_to_autoqubo_ir(om, penalty_weight=penalty_weight)
                     workspace._compiled_qubo_ir = ir
                     dcc_code = ir.qubo_code

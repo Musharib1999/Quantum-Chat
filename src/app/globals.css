@@ -257,3 +257,35 @@ code, pre, kbd, samp, .font-mono {
 .katex {
   max-width: 100% !important;
 }
+
+/* ── Quantum Guru Enterprise Studio Theme Elevation System (Harmonized with IDE) ── */
+.enterprise-bg-layer-0 {
+  background-color: #090A0D !important;
+}
+.enterprise-bg-layer-1 {
+  background-color: #0E0F13 !important;
+}
+.enterprise-bg-layer-2 {
+  background-color: #0E0F13 !important;
+}
+.enterprise-bg-layer-3 {
+  background-color: #13141A !important;
+}
+.enterprise-bg-layer-3-hover:hover {
+  background-color: #181A22 !important;
+}
+.enterprise-bg-layer-3-active {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+.enterprise-bg-layer-4 {
+  background-color: #191A23 !important;
+}
+.enterprise-bg-code {
+  background-color: #090A0D !important;
+}
+.enterprise-border {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.enterprise-border-card {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}

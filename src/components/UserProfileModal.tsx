@@ -149,6 +149,21 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     </button>
                 )}
 
+                {/* Circuit IDE Navigation Button */}
+                <button
+                    onClick={() => {
+                        router.push('/ide');
+                        onClose();
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium text-foreground hover:text-sky-400 hover:bg-sky-500/10 transition-all group border border-border/30 mb-1"
+                >
+                    <div className="flex items-center gap-2.5">
+                        <Layout size={16} className="text-sky-400" />
+                        <span className="font-semibold">Circuit IDE</span>
+                    </div>
+                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-muted-foreground group-hover:text-sky-400" />
+                </button>
+
                 {/* Password Change Button */}
                 {isAuthenticated && (
                     <button

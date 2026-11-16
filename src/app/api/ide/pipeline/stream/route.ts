@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { problem, mode = 'auto', penalty_choice = 3, session_id = 'studio_ide_session' } = body;
+    const { problem, mode = 'auto', penalty_choice = 3, penalty_lambda, session_id = 'studio_ide_session' } = body;
+    const activePenalty = typeof penalty_lambda === 'number' ? penalty_lambda : (typeof penalty_choice === 'number' ? penalty_choice : 3);
 
     if (!problem || typeof problem !== 'string' || !problem.trim()) {
       return NextResponse.json({ error: 'Problem description cannot be empty.' }, { status: 400 });
@@ -37,7 +38,8 @@ export async function POST(req: NextRequest) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 model_text: problem,
-                penalty_choice,
+                penalty_choice: activePenalty,
+                penalty_lambda: activePenalty,
                 session_id,
                 run_solver: true,
               }),
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
                 step: 'error',
                 agent: 'SupervisorAgent',
                 status: 'failed',
-                message: `Direct AutoQUBO compilation error: ${err}`,
+                message: `Direct QUBO compilation error: ${err}`,
               });
               controller.close();
               return;
@@ -124,7 +126,7 @@ export async function POST(req: NextRequest) {
                         agent: 'SolverStrategyAgent',
                         title: 'Solver Strategy Decider',
                         status: 'done',
-                        message: 'Routing to D-Wave Advantage BQM via Verma-Lewis AutoQUBO Compiler.',
+                        message: 'Routing to D-Wave Advantage BQM via Verma-Lewis Compiler.',
                         suggested_solver: 'D-Wave BQM',
                       });
                     }
@@ -132,8 +134,8 @@ export async function POST(req: NextRequest) {
                     if (data.status === 'running') {
                       sendEvent({
                         step: 'solver',
-                        agent: 'AutoQUBOCompiler',
-                        title: 'AutoQUBO Hamiltonian Compiler',
+                        agent: 'HamiltonianCompiler',
+                        title: 'QUBO Hamiltonian Compiler',
                         status: 'running',
                         message: data.message || 'Synthesizing penalty Hamiltonian and Q-matrix couplers...',
                       });
@@ -141,8 +143,8 @@ export async function POST(req: NextRequest) {
                       qMatrixData = data;
                       sendEvent({
                         step: 'solver',
-                        agent: 'AutoQUBOCompiler',
-                        title: 'AutoQUBO Hamiltonian Compiler',
+                        agent: 'HamiltonianCompiler',
+                        title: 'QUBO Hamiltonian Compiler',
                         status: 'done',
                         message: `Q-matrix compiled: ${data.q_size}x${data.q_size} variables (${data.q_nnz} couplers).`,
                         details: `Stiffness: lambda = ${data.penalty_weight} (${data.penalty_label})`,
@@ -252,7 +254,8 @@ export async function POST(req: NextRequest) {
               unstructured_problem: problem,
               mode: mode || 'auto',
               session_id,
-              penalty_choice,
+              penalty_choice: activePenalty,
+              penalty_lambda: activePenalty,
             }),
           });
 
@@ -303,7 +306,7 @@ export async function POST(req: NextRequest) {
                   nlp: { agent: 'UnderstandingAgent', title: 'Understanding Agent' },
                   reasoner: { agent: 'ConstraintVerificationAgent', title: 'Constraint Verification Agent' },
                   suggestor: { agent: 'SolverStrategyAgent', title: 'Solver Strategy Decider' },
-                  solver: { agent: 'AutoQUBOCompiler', title: 'AutoQUBO Hamiltonian Compiler' },
+                  solver: { agent: 'HamiltonianCompiler', title: 'QUBO Hamiltonian Compiler' },
                   simulator: { agent: 'DWaveSimulator', title: 'D-Wave Annealing Sampler' },
                   verifier: { agent: 'VerificationAgent', title: 'Mathematical Verifier' },
                   explanation: { agent: 'ExplanationAgent', title: 'Business Translation Agent' },

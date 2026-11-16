@@ -180,7 +180,8 @@ class PipelineRequest(BaseModel):
     email: Optional[str] = None
     mode: Optional[str] = "auto"   # auto | cqm | qubo | ortools
     session_id: Optional[str] = None
-    penalty_choice: Optional[int] = 3  # 1-6 preset or >6 = custom raw value
+    penalty_choice: Optional[Union[float, int]] = 3  # 1-6 preset or custom raw value
+    penalty_lambda: Optional[float] = None
 
 
 class PipelineResponse(BaseModel):

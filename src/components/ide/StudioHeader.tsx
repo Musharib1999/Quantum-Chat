@@ -19,6 +19,7 @@ import {
   Compass,
   Bug,
   Globe,
+  Sparkles,
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
 
@@ -457,6 +458,20 @@ export function StudioHeader({
             <span className="font-medium">Algorithm Vault</span>
           </button>
         )}
+
+        {/* Enterprise Optimization Studio Switcher */}
+        <Link
+          href="/enterprise"
+          className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
+            isDark
+              ? "bg-sky-500/10 hover:bg-sky-500/20 border-sky-500/20 text-sky-400 hover:text-sky-300"
+              : "bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-700 hover:text-sky-900"
+          }`}
+          title="Switch to Enterprise Optimization Studio"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+          <span className="font-medium">Enterprise Studio</span>
+        </Link>
 
 
 

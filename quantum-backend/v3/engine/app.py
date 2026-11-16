@@ -5,7 +5,7 @@ import sys
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 
 # Add parent directory to path so imports work correctly inside the engine module
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -45,7 +45,8 @@ class PipelineRequest(BaseModel):
     mode: Optional[str] = "auto"
     session_id: Optional[str] = None
     email: Optional[str] = None
-    penalty_choice: Optional[int] = 3  # 1-6 preset or >6 = custom raw value
+    penalty_choice: Optional[Union[float, int]] = 3  # 1-6 preset or custom raw value
+    penalty_lambda: Optional[float] = None
 
 class AssistantChatRequest(BaseModel):
     message: str
@@ -93,7 +94,8 @@ async def engine_run(request: PipelineRequest):
             mode=request.mode or "auto",
             session_id=request.session_id,
             email=request.email,
-            penalty_choice=request.penalty_choice or 3
+            penalty_choice=request.penalty_choice or 3,
+            penalty_lambda=request.penalty_lambda,
         )
         return result
     except Exception as e:
@@ -114,7 +116,8 @@ async def engine_stream(request: PipelineRequest):
                 mode=request.mode or "auto",
                 session_id=request.session_id,
                 email=request.email,
-                penalty_choice=request.penalty_choice or 3
+                penalty_choice=request.penalty_choice or 3,
+                penalty_lambda=request.penalty_lambda,
             ):
                 yield f"data: {json.dumps(update)}\n\n"
         except Exception as err:
