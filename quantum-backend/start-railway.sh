@@ -13,8 +13,14 @@ echo "=================================================="
 # Start internal AI Engine in background on 127.0.0.1:8003
 python -m uvicorn app:app --app-dir v3/engine --host 127.0.0.1 --port 8003 &
 
-# Wait 2 seconds for engine to initialize
-sleep 2
+# Wait for engine to initialize (up to 10s)
+for i in {1..10}; do
+  if curl -s http://127.0.0.1:8003/health >/dev/null 2>&1; then
+    echo "Quantum Engine is ready on 127.0.0.1:8003 (attempt $i)"
+    break
+  fi
+  sleep 1
+done
 
 # Start public API Gateway on $PORT (foreground)
 exec python -m uvicorn main_v3:app --app-dir v3/api --host 0.0.0.0 --port "$PORT"

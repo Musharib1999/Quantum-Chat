@@ -90,7 +90,46 @@ _MAX_SLOTS = int(os.environ.get("MAX_PIPELINE_SLOTS", "4"))
 pipeline_semaphore = _asyncio.Semaphore(_MAX_SLOTS)
 
 # Engine URL for internal proxying
-ENGINE_URL = os.environ.get("QUANTUM_ENGINE_URL", "http://localhost:8003")
+ENGINE_URL = os.environ.get("QUANTUM_ENGINE_URL", "http://127.0.0.1:8003")
+
+# Ensure backend root and v3 are in sys.path for direct engine resolution
+_backend_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _backend_root not in sys.path:
+    sys.path.insert(0, _backend_root)
+_v3_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _v3_root not in sys.path:
+    sys.path.insert(0, _v3_root)
+
+try:
+    from v3.engine.app import app as engine_app
+except ImportError:
+    try:
+        from engine.app import app as engine_app
+    except ImportError:
+        engine_app = None
+
+def get_engine_client(timeout: float = 180.0) -> httpx.AsyncClient:
+    """
+    Returns an httpx.AsyncClient for communicating with the Quantum AI Engine.
+    When ENGINE_URL points to localhost/127.0.0.1 (or in unified deployment),
+    uses httpx.ASGITransport(app=engine_app) for zero-latency, rock-solid in-process
+    execution without socket/port/IPv6 failure risks.
+    Otherwise connects via HTTP to the remote QUANTUM_ENGINE_URL.
+    """
+    is_local = (
+        not ENGINE_URL or
+        "localhost" in ENGINE_URL or
+        "127.0.0.1" in ENGINE_URL or
+        ENGINE_URL.strip().lower() == "internal"
+    )
+    if is_local and engine_app is not None:
+        transport = httpx.ASGITransport(app=engine_app)
+        return httpx.AsyncClient(
+            transport=transport,
+            base_url=ENGINE_URL if (ENGINE_URL and "internal" not in ENGINE_URL.lower()) else "http://127.0.0.1:8003",
+            timeout=httpx.Timeout(timeout, connect=10.0)
+        )
+    return httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=10.0))
 
 # =========================================================================
 # SHARED CONNECTION POOL & LIFESPAN
@@ -312,7 +351,7 @@ async def run_pipeline_v2(request: CodeGenRequest, background_tasks: BackgroundT
 
     try:
         payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
-        async with httpx.AsyncClient(timeout=180.0) as client:
+        async with get_engine_client(timeout=180.0) as client:
             res = await client.post(f"{ENGINE_URL}/engine/run", json=payload)
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail=res.text)
@@ -374,7 +413,7 @@ async def finalize_results(request: FinalizeRequest, background_tasks: Backgroun
         
     try:
         payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
-        async with httpx.AsyncClient(timeout=180.0) as client:
+        async with get_engine_client(timeout=180.0) as client:
             res = await client.post(f"{ENGINE_URL}/engine/v3/finalize", json=payload)
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail=res.text)
@@ -404,7 +443,7 @@ async def assistant_chat(request: AssistantChatRequest, background_tasks: Backgr
     """
     try:
         payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with get_engine_client(timeout=30.0) as client:
             res = await client.post(f"{ENGINE_URL}/engine/assistant/chat", json=payload)
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail=res.text)
@@ -425,7 +464,7 @@ async def general_chat(request: ChatRequest, background_tasks: BackgroundTasks):
     """
     try:
         payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with get_engine_client(timeout=60.0) as client:
             res = await client.post(f"{ENGINE_URL}/engine/v2/chat", json=payload)
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail=res.text)
@@ -451,7 +490,7 @@ async def enterprise_analyze(request: AnalyzeRequest, background_tasks: Backgrou
 
     try:
         payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with get_engine_client(timeout=60.0) as client:
             res = await client.post(f"{ENGINE_URL}/engine/enterprise/analyze", json=payload)
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail=res.text)
@@ -483,7 +522,7 @@ async def run_pipeline_stream(request: PipelineRequest, background_tasks: Backgr
             try:
                 # Proxy the stream request to the engine
                 payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
-                async with httpx.AsyncClient(timeout=300.0) as client:
+                async with get_engine_client(timeout=300.0) as client:
                     async with client.stream(
                         "POST", 
                         f"{ENGINE_URL}/engine/stream", 
@@ -519,7 +558,7 @@ async def run_pipeline_v1_compat(request: PipelineRequest, background_tasks: Bac
     """
     async with pipeline_semaphore:
         payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
-        async with httpx.AsyncClient(timeout=180.0) as client:
+        async with get_engine_client(timeout=180.0) as client:
             res = await client.post(f"{ENGINE_URL}/engine/run", json=payload)
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail=res.text)
@@ -567,7 +606,7 @@ async def execute_code(request: ExecutionRequest, background_tasks: BackgroundTa
 
     try:
         payload = request.model_dump() if hasattr(request, "model_dump") else request.dict()
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with get_engine_client(timeout=90.0) as client:
             res = await client.post(f"{ENGINE_URL}/engine/v2/execute", json=payload)
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail=res.text)
@@ -613,7 +652,7 @@ async def direct_model_stream(request: DirectModelRequest, background_tasks: Bac
     async def event_generator():
         async with pipeline_semaphore:
             try:
-                async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0)) as client:
+                async with get_engine_client(timeout=300.0) as client:
                     async with client.stream(
                         "POST",
                         f"{ENGINE_URL}/engine/direct-model/stream",
@@ -653,7 +692,7 @@ async def gate_model_stream(request: GateModelRequest, background_tasks: Backgro
     async def event_generator():
         async with pipeline_semaphore:
             try:
-                async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0)) as client:
+                async with get_engine_client(timeout=300.0) as client:
                     async with client.stream(
                         "POST",
                         f"{ENGINE_URL}/engine/gate-model/stream",
@@ -1127,7 +1166,7 @@ async def proxy_connectors_csv_ingress(req: dict):
     Proxies CSV ingress requests to the Quantum AI Engine.
     """
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with get_engine_client(timeout=30.0) as client:
             resp = await client.post(f"{ENGINE_URL}/engine/connectors/ingress/csv", json=req)
             if resp.status_code != 200:
                 raise HTTPException(status_code=resp.status_code, detail=resp.text)
@@ -1143,7 +1182,7 @@ async def proxy_connectors_egress(req: dict):
     Proxies solution and Q-matrix egress export requests to the Quantum AI Engine.
     """
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with get_engine_client(timeout=30.0) as client:
             resp = await client.post(f"{ENGINE_URL}/engine/connectors/egress", json=req)
             if resp.status_code != 200:
                 raise HTTPException(status_code=resp.status_code, detail=resp.text)

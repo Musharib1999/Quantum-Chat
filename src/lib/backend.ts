@@ -11,10 +11,10 @@ export function getBackendUrl(): string {
     if (!raw) {
         // When running in browser on production (non-localhost) or in server production environment
         if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
-            return "https://quantum-guru-09-09-2026-production.up.railway.app";
+            return "https://quantum-guru-11-11-2026-production.up.railway.app";
         }
         if (process.env.NODE_ENV === 'production') {
-            return "https://quantum-guru-09-09-2026-production.up.railway.app";
+            return "https://quantum-guru-11-11-2026-production.up.railway.app";
         }
         return "http://localhost:8002";
     }
