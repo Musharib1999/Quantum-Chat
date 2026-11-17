@@ -424,8 +424,9 @@ def compile_om_to_autoqubo_ir(
             if s_max > 0:
                 n_slack = math.ceil(math.log2(s_max + 1))
                 c_slacks = []
+                clean_name = re.sub(r'\W+', '_', c.name)
                 for k in range(n_slack):
-                    slack_name = f"slack_{re.sub(r'\W+', '_', c.name)}_{k}"
+                    slack_name = f"slack_{clean_name}_{k}"
                     c_slacks.append(slack_name)
                     v_map.slack_vars.append(slack_name)
                 slack_blocks[c.name] = (s_max, c_slacks)
