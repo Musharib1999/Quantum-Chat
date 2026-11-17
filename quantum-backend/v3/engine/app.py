@@ -28,12 +28,13 @@ app = FastAPI(
 
 
 
-# Initialize and seed Quantum Algorithm Library globally
+# Initialize and seed Quantum Algorithm Library in background (non-blocking)
 try:
     print("Initializing Quantum Algorithm Library inside AI Engine...")
+    import threading
     from engine.compiler.library import AlgorithmRegistry
-    AlgorithmRegistry.seed_database()
-    print("Quantum Algorithm Library initialization complete.")
+    threading.Thread(target=AlgorithmRegistry.seed_database, daemon=True).start()
+    print("Quantum Algorithm Library background initialization dispatched.")
 except Exception as e:
     print(f"Failed to seed Quantum Algorithm Library: {e}")
 

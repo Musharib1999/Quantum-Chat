@@ -43,7 +43,7 @@ class AlgorithmRegistry:
             return
             
         try:
-            client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
+            client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=2000, connectTimeoutMS=2000)
             db = client["test"]
             col = db["quantum_algorithms"]
             

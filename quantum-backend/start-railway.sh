@@ -4,23 +4,14 @@ set -e
 PORT="${PORT:-8002}"
 export QUANTUM_ENGINE_URL="${QUANTUM_ENGINE_URL:-http://127.0.0.1:8003}"
 
+PYTHON_BIN="$(command -v python3 || command -v python || echo "python3")"
+
 echo "=================================================="
 echo " Starting Quantum Guru Services on Railway"
 echo " API Gateway Port: $PORT"
-echo " Internal Engine:  $QUANTUM_ENGINE_URL"
+echo " Python Binary:    $PYTHON_BIN"
 echo "=================================================="
 
-# Start internal AI Engine in background on 127.0.0.1:8003
-python -m uvicorn app:app --app-dir v3/engine --host 127.0.0.1 --port 8003 &
-
-# Wait for engine to initialize (up to 10s)
-for i in {1..10}; do
-  if curl -s http://127.0.0.1:8003/health >/dev/null 2>&1; then
-    echo "Quantum Engine is ready on 127.0.0.1:8003 (attempt $i)"
-    break
-  fi
-  sleep 1
-done
-
 # Start public API Gateway on $PORT (foreground)
-exec python -m uvicorn main_v3:app --app-dir v3/api --host 0.0.0.0 --port "$PORT"
+# Routes both gateway endpoints and internal Quantum Engine via in-process ASGI dispatch
+exec "$PYTHON_BIN" -m uvicorn main_v3:app --app-dir v3/api --host 0.0.0.0 --port "$PORT"

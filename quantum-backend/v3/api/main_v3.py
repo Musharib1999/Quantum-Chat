@@ -102,10 +102,11 @@ if _v3_root not in sys.path:
 
 try:
     from v3.engine.app import app as engine_app
-except ImportError:
+except Exception:
     try:
         from engine.app import app as engine_app
-    except ImportError:
+    except Exception as e:
+        print(f"[Gateway] In-process engine_app import failed: {e}")
         engine_app = None
 
 def get_engine_client(timeout: float = 180.0) -> httpx.AsyncClient:
