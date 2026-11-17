@@ -100,13 +100,16 @@ _v3_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _v3_root not in sys.path:
     sys.path.insert(0, _v3_root)
 
+engine_app = None
 try:
     from v3.engine.app import app as engine_app
-except Exception:
+    print("[Gateway] Successfully loaded engine_app from v3.engine.app")
+except Exception as e1:
     try:
         from engine.app import app as engine_app
-    except Exception as e:
-        print(f"[Gateway] In-process engine_app import failed: {e}")
+        print("[Gateway] Successfully loaded engine_app from engine.app")
+    except Exception as e2:
+        print(f"[Gateway CRITICAL] Could not import engine_app: error1={e1}, error2={e2}")
         engine_app = None
 
 def get_engine_client(timeout: float = 180.0) -> httpx.AsyncClient:
