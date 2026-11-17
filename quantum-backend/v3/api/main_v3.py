@@ -333,7 +333,32 @@ def health():
         "qwen_base_url": config.QWEN_BASE_URL or "NOT SET",
         "llama_base_url": config.LLAMA_BASE_URL or "NOT SET",
         "runtime_mode": config.get_mode(),
+        "engine_in_process": engine_app is not None,
+        "engine_url": ENGINE_URL,
     }
+
+@app.get("/v3/engine-diagnostic")
+def engine_diagnostic():
+    diag = {
+        "engine_app_loaded": engine_app is not None,
+        "engine_url": ENGINE_URL,
+        "sys_path": sys.path[:6],
+        "env_quantum_engine_url": os.environ.get("QUANTUM_ENGINE_URL"),
+        "cwd": os.getcwd(),
+        "version": "diag-v1",
+    }
+    if engine_app is None:
+        try:
+            from v3.engine.app import app as _
+            diag["v3_engine_app"] = "SUCCESS"
+        except Exception as ex:
+            diag["v3_engine_app_err"] = f"{type(ex).__name__}: {ex}"
+        try:
+            from engine.app import app as _
+            diag["engine_app"] = "SUCCESS"
+        except Exception as ex:
+            diag["engine_app_err"] = f"{type(ex).__name__}: {ex}"
+    return diag
 
 
 # =========================================================================
