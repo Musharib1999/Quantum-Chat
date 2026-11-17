@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { problem, mode = 'auto', penalty_choice = 3, penalty_lambda, session_id = 'studio_ide_session' } = body;
+    const { problem, mode = 'qubo', penalty_choice = 3, penalty_lambda, session_id = 'studio_ide_session' } = body;
     const activePenalty = typeof penalty_lambda === 'number' ? penalty_lambda : (typeof penalty_choice === 'number' ? penalty_choice : 3);
 
     if (!problem || typeof problem !== 'string' || !problem.trim()) {
@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               unstructured_problem: problem,
-              mode: mode || 'auto',
+              mode: mode || 'qubo',
               session_id,
               penalty_choice: activePenalty,
               penalty_lambda: activePenalty,

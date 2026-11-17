@@ -247,7 +247,7 @@ export default function EnterpriseStudioPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           problem: text,
-          mode: "auto",
+          mode: "qubo",
           penalty_choice: activePenalty,
           penalty_lambda: activePenalty,
           session_id: `enterprise_${Date.now()}`,

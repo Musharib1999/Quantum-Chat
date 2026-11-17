@@ -132,6 +132,18 @@ def build_variables(spec: Dict[str, Any], ir: Any, solution: Dict[str, Any]) -> 
         names = list(ir.variable_map.decision_vars)
     else:
         names = []
+        for v in registry:
+            base_name = v.get("name") or v.get("id") or "x"
+            dims = v.get("dimensions") or [1]
+            if len(dims) == 1:
+                for i in range(dims[0]):
+                    names.append(f"{base_name}_{i}")
+            elif len(dims) == 2:
+                for i in range(dims[0]):
+                    for j in range(dims[1]):
+                        names.append(f"{base_name}_{i}_{j}")
+            else:
+                names.append(base_name)
 
     int_enc = {}
     if ir is not None:
@@ -236,6 +248,20 @@ def build_objective(spec: Dict[str, Any], ir: Any) -> Dict[str, Any]:
         objectives = (spec or {}).get("objectives", []) or []
         if objectives:
             sense = objectives[0].get("sense") or objectives[0].get("type")
+    if not expr:
+        objectives = (spec or {}).get("objectives", []) or []
+        if objectives:
+            e = objectives[0].get("expression")
+            if isinstance(e, str):
+                expr = e
+            elif isinstance(e, dict):
+                var_id = e.get("var_id", "x")
+                coefs = e.get("coefficients", [])
+                parts = []
+                for idx, c in enumerate(coefs):
+                    if c != 0:
+                        parts.append(f"{c} * {var_id}_{idx}")
+                expr = " + ".join(parts) if parts else "0.0"
     return {
         "sense": str(sense).lower() if sense else None,
         "expression": str(expr) if expr else None,

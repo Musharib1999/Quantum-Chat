@@ -55,7 +55,7 @@ async def run_optimization_pipeline(
     Full QuantumGuru v7 multi-agent optimization pipeline.
     """
     try:
-        supervisor = SupervisorAgent()
+        supervisor = SupervisorAgent(mode=mode or "qubo")
         workspace = await supervisor.execute(problem, mode, session_id, email=email, penalty_choice=penalty_choice, penalty_lambda=penalty_lambda)
 
         # Generate LaTeX mathematical formulation and Q-matrix preview if IR is available
@@ -223,7 +223,7 @@ async def run_optimization_pipeline_stream(
     Yields step updates as they complete.
     """
     try:
-        supervisor = SupervisorAgent()
+        supervisor = SupervisorAgent(mode=mode or "qubo")
         async for update in supervisor.execute_stream(problem, mode, session_id, email=email, penalty_choice=penalty_choice, penalty_lambda=penalty_lambda):
             if update.get("step") == "complete":
                 workspace = update["workspace"]
