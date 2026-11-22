@@ -940,12 +940,59 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
             continue
             
         # Declarative Constraint Pattern Matching
+        c_desc_lower = (name + " " + str(c.get("description", ""))).lower()
+        is_consecutive_constraint = any(
+            kw in c_desc_lower
+            for kw in ("consecutive", "double_shift", "double shift", "adjacent_shift", "adjacent shift", "back_to_back", "back-to-back")
+        )
+        is_row_uniqueness = (
+            family in ("uniqueness", "cardinality")
+            or "unique" in name.lower()
+            or any(
+                kw in c_desc_lower
+                for kw in (
+                    "per_engineer", "per engineer", "each_engineer", "each engineer",
+                    "per_nurse", "per nurse", "each_nurse", "each nurse",
+                    "per_worker", "per worker", "each_worker", "each worker",
+                    "per_employee", "per employee", "each_employee", "each employee",
+                    "one_shift_per", "one shift per", "single_shift", "single shift",
+                )
+            )
+            or ("assignment" in name.lower() and "fixed" not in name.lower() and family not in ("equality", "coverage", "demand"))
+        )
         is_col_constraint = (
-            family in ("coverage", "demand") or 
-            any(w in name.lower() for w in ("shift", "coverage", "col", "slot", "machine", "room"))
+            not is_consecutive_constraint
+            and not is_row_uniqueness
+            and (
+                family in ("coverage", "demand")
+                or any(w in name.lower() for w in ("coverage", "per_shift", "each_shift", "min_shift", "shift_coverage", "col", "slot", "machine", "room"))
+            )
         )
 
-        if is_col_constraint:
+        if is_consecutive_constraint:
+            # Consecutive / no-double-shift exclusion along columns j, j+1 for every row i:
+            # x[i, j] + x[i, j+1] <= 1  forall i in set_i, j in 0..|set_j|-2
+            clean_v_name = primary_var.replace(" ", "_").replace("-", "_")
+            row_elements = cmm.sets[set_i].elements
+            col_elements = cmm.sets[set_j].elements
+            for r_el in row_elements:
+                for c_idx in range(len(col_elements) - 1):
+                    c1 = col_elements[c_idx]
+                    c2 = col_elements[c_idx + 1]
+                    cmm.constraints.append(
+                        CMMConstraint(
+                            name=f"{name}_{r_el}_{c1}_{c2}",
+                            quantifier="NONE",
+                            left=BinaryOp(
+                                left=VarRef(var_name=clean_v_name, indices=[r_el, c1]),
+                                op="+",
+                                right=VarRef(var_name=clean_v_name, indices=[r_el, c2]),
+                            ),
+                            op="<=",
+                            right=Constant(value=1.0),
+                        )
+                    )
+        elif is_col_constraint:
             clean_v_name = primary_var.replace(" ", "_").replace("-", "_")
             cmm.constraints.append(
                 CMMConstraint(
@@ -962,10 +1009,12 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
                     right=Constant(value=rhs_val)
                 )
             )
-        elif family == "uniqueness" or "unique" in name.lower() or ("assignment" in name.lower() and "fixed" not in name.lower() and family != "equality"):
+        elif is_row_uniqueness:
             p = UniquenessPattern(name=name, var_name=primary_var, row_set=set_i, col_set=set_j, rhs_value=rhs_val)
             cmm.patterns.append(p)
             cmm.constraints.extend(compile_uniqueness(p, cmm))
+            if op in ("<=", ">="):
+                cmm.constraints[-1].op = op
             
         elif family == "capacity" or "capacity" in name.lower() or ("limit" in name.lower() and "fixed" not in name.lower() and "vacation" not in name.lower() and "unavailable" not in name.lower() and "maintenance" not in name.lower() and "availability" not in name.lower() and family != "dependency"):
             p = CapacityPattern(name=name, var_name=primary_var, row_set=set_i, col_set=set_j, capacity_value=rhs_val)
@@ -1157,6 +1206,9 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
                     obj_vname = var_id_to_name.get(str(obj_vid).lower().replace("_", "").replace(" ", ""), primary_var) if obj_vid else primary_var
                     obj_vobj = cmm.variables.get(obj_vname, var_obj)
                     parsed_expr = parse_json_expr(expr_node, obj_vname, obj_vobj.index_sets if obj_vobj else [])
+                    # Do not allow an empty/zero Constant(0.0) objective to shadow the default Sum(x) objective
+                    if isinstance(parsed_expr, Constant) and parsed_expr.value == 0.0:
+                        continue
                     if combined_expr is None:
                         combined_expr = parsed_expr
                     else:
@@ -1167,7 +1219,7 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
                 except Exception as e:
                     print(f"[CMM Objective Parser] Failed to parse objective {idx} expression: {e}")
                     
-    if combined_expr is None:
+    if combined_expr is None or (isinstance(combined_expr, Constant) and combined_expr.value == 0.0):
         if var_obj and len(var_obj.index_sets) == 2:
             set_i = var_obj.index_sets[0]
             set_j = var_obj.index_sets[1]
@@ -1456,8 +1508,8 @@ class BaseBuilder:
             obj_expr = "z"
 
         # 5. Logical Constraint Reformulation: Implication Check
-        if "cannot fly together" in p_lower or "if" in p_lower:
-            print("[OM Expander] Logical implication or conflict keyword detected. Instantiating linking constraints.")
+        if "cannot fly together" in p_lower:
+            print("[OM Expander] Logical conflict keyword detected. Instantiating linking constraints.")
             x_vars = [v for v in expanded_vars.keys() if v.startswith("x_")]
             if x_vars:
                 slots = set(v.split("_")[-1] for v in x_vars if len(v.split("_")) == 3)
