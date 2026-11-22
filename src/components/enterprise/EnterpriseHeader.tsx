@@ -145,17 +145,6 @@ export function EnterpriseHeader({
             </button>
           </div>
         )}
-        {isSolving && onStopSolving && (
-          <button
-            type="button"
-            onClick={onStopSolving}
-            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 hover:text-white transition-all cursor-pointer"
-            title="Terminate active optimization run"
-          >
-            <RotateCw className="w-3 h-3 animate-spin text-rose-400" />
-            <span>Stop Run</span>
-          </button>
-        )}
       </div>
 
       {/* Right: Theme Toggle, Profile Dropdown */}

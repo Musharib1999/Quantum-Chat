@@ -232,21 +232,7 @@ export function EnterpriseChatPane({
                               </span>
                             </div>
 
-                            <div className="flex items-center space-x-2 shrink-0 ml-3 text-[10px] text-zinc-400">
-                              {msg.isStreaming && onStopStreaming && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onStopStreaming();
-                                  }}
-                                  className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 hover:text-white font-mono text-[10px] flex items-center space-x-1 transition-colors cursor-pointer"
-                                  title="Terminate running pipeline execution"
-                                >
-                                  <Square className="w-2.5 h-2.5 fill-current" />
-                                  <span>Stop</span>
-                                </button>
-                              )}
+                            <div className="flex items-center space-x-1.5 shrink-0 ml-3 text-[10px] text-zinc-400">
                               <span>{isStepsExpanded ? "Hide details" : "View stages"}</span>
                               {isStepsExpanded ? (
                                 <ChevronUp className="w-3 h-3" />
