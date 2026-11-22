@@ -22,7 +22,7 @@ function KaTeXMathInner({ math, displayMode = false, isDark = true }: { math: st
       });
       if (rendered.includes('class="katex-error"')) {
         return (
-          <code className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${isDark ? 'bg-zinc-800 text-sky-300' : 'bg-slate-100 text-slate-800'}`}>
+          <code className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${isDark ? 'bg-zinc-900 text-zinc-200 border border-white/[0.1]' : 'bg-slate-100 text-slate-800'}`}>
             {cleanMath.replace(/\\([a-zA-Z]+)/g, '$1')}
           </code>
         );
@@ -48,9 +48,9 @@ function KaTeXMathInner({ math, displayMode = false, isDark = true }: { math: st
     <span 
       className={displayMode 
         ? `block my-2 font-mono text-xs p-2 rounded border ${
-            isDark ? 'text-sky-400 bg-zinc-900 border-zinc-800' : 'text-sky-700 bg-sky-50 border-sky-200'
+            isDark ? 'text-zinc-200 bg-zinc-900 border-zinc-800' : 'text-slate-800 bg-slate-100 border-slate-200'
           }` 
-        : `font-mono text-xs px-1 ${isDark ? 'text-sky-400' : 'text-sky-700'}`
+        : `font-mono text-xs px-1 ${isDark ? 'text-zinc-200' : 'text-slate-800'}`
       } 
       suppressHydrationWarning
     >
@@ -160,16 +160,16 @@ function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendere
         components={{
           h1: ({ children }) => (
             <h1 className={`text-[15px] font-bold mt-3 mb-1.5 font-heading tracking-wide border-b pb-1 ${
-              isDark ? 'text-sky-400 border-zinc-800' : 'text-sky-800 border-slate-200'
+              isDark ? 'text-zinc-100 border-zinc-800' : 'text-slate-900 border-slate-200'
             }`}>
               {processMathInChildren(children, isDark)}
             </h1>
           ),
           h2: ({ children }) => (
             <h2 className={`text-[14px] font-semibold mt-2.5 mb-1 font-heading tracking-wide flex items-center gap-1.5 ${
-              isDark ? 'text-sky-300' : 'text-sky-700'
+              isDark ? 'text-zinc-100' : 'text-slate-900'
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full inline-block ${isDark ? 'bg-sky-400' : 'bg-sky-600'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full inline-block ${isDark ? 'bg-zinc-300' : 'bg-slate-700'}`} />
               {processMathInChildren(children, isDark)}
             </h2>
           ),
@@ -210,7 +210,7 @@ function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendere
           ),
           blockquote: ({ children }) => (
             <blockquote className={`border-l-2 pl-2.5 py-1.5 my-2 rounded-r italic text-[13px] ${
-              isDark ? 'border-sky-500/60 bg-sky-500/10 text-zinc-300' : 'border-sky-600 bg-sky-50 text-slate-800'
+              isDark ? 'border-zinc-500 bg-white/[0.04] text-zinc-300' : 'border-slate-500 bg-slate-100 text-slate-800'
             }`}>
               {processMathInChildren(children, isDark)}
             </blockquote>
@@ -224,8 +224,8 @@ function IdeMarkdownRendererInner({ content, isDark = true }: IdeMarkdownRendere
             return (
               <code className={`px-1.5 py-0.5 rounded text-[12.5px] font-mono border ${
                 isDark 
-                  ? 'bg-zinc-800/70 border-zinc-700/60 text-sky-300' 
-                  : 'bg-sky-50 border-sky-200 text-sky-800 font-semibold'
+                  ? 'bg-zinc-900 border-white/[0.12] text-zinc-100' 
+                  : 'bg-slate-100 border-slate-300 text-slate-900 font-semibold'
               }`} {...props}>
                 {children}
               </code>

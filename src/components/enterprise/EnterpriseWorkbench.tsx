@@ -1881,7 +1881,7 @@ ${textToSend}
           flexBasis: "50%",
           flexGrow: 1,
           flexShrink: 0,
-          backgroundColor: isDark ? "#0E0F13" : "#FFFFFF",
+          backgroundColor: isDark ? "#090A0D" : "#FFFFFF",
         }}
         className="h-full flex flex-col min-w-0 min-h-0 overflow-hidden"
       >
@@ -1895,9 +1895,15 @@ ${textToSend}
           }`}
         >
           <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className={`font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>Guru AI</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">
+            <Sparkles className={`w-4 h-4 ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
+            <span className={`font-semibold ${isDark ? "text-zinc-100" : "text-slate-900"}`}>Guru AI</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                isDark
+                  ? "bg-white/[0.04] text-zinc-300 border-white/[0.12]"
+                  : "bg-slate-100 text-slate-700 border-slate-300"
+              }`}
+            >
               Formulation Assistant
             </span>
           </div>
@@ -1908,12 +1914,16 @@ ${textToSend}
               onClick={() => handleSelectTab("code")}
               className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer border ${
                 activeTab === "code"
-                  ? "bg-sky-500/15 text-sky-300 border-sky-500/30"
-                  : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border-white/[0.08]"
+                  ? isDark
+                    ? "bg-white/[0.08] text-zinc-100 border-white/[0.2]"
+                    : "bg-slate-200 text-slate-900 border-slate-400"
+                  : isDark
+                  ? "bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 hover:text-white border-white/[0.1]"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300"
               }`}
               title="Open solution.py in Code Editor tab"
             >
-              <FileCode className="w-3.5 h-3.5 text-sky-400" />
+              <FileCode className={`w-3.5 h-3.5 ${isDark ? "text-zinc-300" : "text-slate-700"}`} />
               <span>solution.py</span>
             </button>
           </div>
@@ -1924,11 +1934,19 @@ ${textToSend}
           {guruAiMessages.length === 0 ? (
             /* Clean Empty State */
             <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-3">
-              <div className="w-9 h-9 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+              <div
+                className={`w-9 h-9 rounded-full border flex items-center justify-center ${
+                  isDark
+                    ? "bg-white/[0.04] border-white/[0.12] text-zinc-200"
+                    : "bg-slate-100 border-slate-300 text-slate-700"
+                }`}
+              >
                 <Sparkles className="w-4 h-4" />
               </div>
               <div className="space-y-1 max-w-sm">
-                <div className="text-xs font-semibold text-zinc-200">Guru AI Formulation Assistant</div>
+                <div className={`text-xs font-semibold ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                  Guru AI Formulation Assistant
+                </div>
                 <p className="text-[11px] text-zinc-500 leading-relaxed">
                   Ask questions about your formulation, penalty tuning, constraints, or solver output.
                 </p>
@@ -1942,7 +1960,7 @@ ${textToSend}
                     onClick={() => handleSendGuruAiMessage(p.query)}
                     className={`text-[11px] px-3 py-1 rounded-full border transition-all cursor-pointer active:scale-95 ${
                       isDark
-                        ? "bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 hover:text-white border-white/[0.08]"
+                        ? "bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 hover:text-white border-white/[0.1]"
                         : "bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-200"
                     }`}
                   >
@@ -1964,17 +1982,33 @@ ${textToSend}
                   <div className="flex items-center space-x-1.5 mb-1 px-1">
                     {msg.sender === "assistant" ? (
                       <>
-                        <div className="w-4 h-4 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-                          <Sparkles className="w-2.5 h-2.5 text-purple-300" />
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center ${
+                            isDark
+                              ? "bg-white/[0.06] border-white/[0.14]"
+                              : "bg-slate-100 border-slate-300"
+                          }`}
+                        >
+                          <Sparkles className={`w-2.5 h-2.5 ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
                         </div>
-                        <span className="text-[10px] font-semibold text-purple-300">Guru AI</span>
+                        <span className={`text-[10px] font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
+                          Guru AI
+                        </span>
                       </>
                     ) : (
                       <>
-                        <div className="w-4 h-4 rounded bg-sky-500/20 border border-sky-500/30 flex items-center justify-center">
-                          <User className="w-2.5 h-2.5 text-sky-300" />
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center ${
+                            isDark
+                              ? "bg-white/[0.06] border-white/[0.14]"
+                              : "bg-slate-100 border-slate-300"
+                          }`}
+                        >
+                          <User className={`w-2.5 h-2.5 ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
                         </div>
-                        <span className="text-[10px] font-semibold text-sky-300">You</span>
+                        <span className={`text-[10px] font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
+                          You
+                        </span>
                       </>
                     )}
                     <span className="text-[10px] text-zinc-500">{msg.timestamp}</span>
@@ -1985,17 +2019,17 @@ ${textToSend}
                       backgroundColor:
                         msg.sender === "user"
                           ? isDark
-                            ? "#1A2234"
-                            : "#E0F2FE"
+                            ? "#111216"
+                            : "#F1F5F9"
                           : isDark
-                          ? "#13141A"
+                          ? "#0C0D11"
                           : "#FFFFFF",
                     }}
                     className={`max-w-[95%] sm:max-w-[90%] rounded-xl p-3 border leading-relaxed text-xs font-mono ${
                       msg.sender === "user"
                         ? isDark
-                          ? "border-sky-500/30 text-sky-100"
-                          : "border-sky-300 text-sky-950"
+                          ? "border-white/[0.14] text-zinc-100"
+                          : "border-slate-300 text-slate-900"
                         : isDark
                         ? "border-white/[0.08] text-zinc-200"
                         : "border-slate-200 text-slate-800"
@@ -2006,16 +2040,20 @@ ${textToSend}
                         <IdeMarkdownRenderer content={msg.text} isDark={isDark} />
                         {msg.suggestedCode && (
                           <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between gap-2">
-                            <span className="text-[10px] text-purple-400">Suggested Code Update Available</span>
+                            <span className="text-[10px] text-zinc-400">Suggested Code Update Available</span>
                             <button
                               type="button"
                               onClick={() => {
                                 onChangeCode(msg.suggestedCode!);
                                 handleSelectTab("code");
                               }}
-                              className="px-2 py-1 rounded bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-200 text-[10px] font-semibold transition-all cursor-pointer active:scale-95 flex items-center space-x-1"
+                              className={`px-2 py-1 rounded border text-[10px] font-semibold transition-all cursor-pointer active:scale-95 flex items-center space-x-1 ${
+                                isDark
+                                  ? "bg-white/[0.08] hover:bg-white/[0.14] border-white/[0.18] text-zinc-100"
+                                  : "bg-slate-200 hover:bg-slate-300 border-slate-400 text-slate-900"
+                              }`}
                             >
-                              <FileCode className="w-3 h-3 text-purple-300" />
+                              <FileCode className="w-3 h-3" />
                               <span>Apply to solution.py</span>
                             </button>
                           </div>
@@ -2032,18 +2070,24 @@ ${textToSend}
               {isGuruAiThinking && (
                 <div className="flex flex-col items-start">
                   <div className="flex items-center space-x-1.5 mb-1 px-1">
-                    <div className="w-4 h-4 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-                      <Sparkles className="w-2.5 h-2.5 text-purple-300 animate-spin" />
+                    <div
+                      className={`w-4 h-4 rounded border flex items-center justify-center ${
+                        isDark ? "bg-white/[0.06] border-white/[0.14]" : "bg-slate-100 border-slate-300"
+                      }`}
+                    >
+                      <Sparkles className={`w-2.5 h-2.5 animate-spin ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
                     </div>
-                    <span className="text-[10px] font-semibold text-purple-300">Guru AI</span>
+                    <span className={`text-[10px] font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
+                      Guru AI
+                    </span>
                   </div>
                   <div
                     style={{
-                      backgroundColor: isDark ? "#13141A" : "#FFFFFF",
+                      backgroundColor: isDark ? "#0C0D11" : "#FFFFFF",
                     }}
-                    className={`p-3 rounded-xl border border-white/[0.08] text-xs text-zinc-400 flex items-center space-x-2`}
+                    className="p-3 rounded-xl border border-white/[0.08] text-xs text-zinc-400 flex items-center space-x-2"
                   >
-                    <RotateCw className="w-3.5 h-3.5 text-purple-400 animate-spin" />
+                    <RotateCw className="w-3.5 h-3.5 text-zinc-300 animate-spin" />
                     <span>Analyzing problem formulation, penalty λ, and solution.py...</span>
                   </div>
                 </div>
@@ -2072,12 +2116,12 @@ ${textToSend}
           >
             <div
               style={{
-                backgroundColor: isDark ? "#12141A" : "#FFFFFF",
+                backgroundColor: isDark ? "#0C0D11" : "#FFFFFF",
               }}
-              className={`w-full rounded-xl border p-2.5 transition-all focus-within:ring-1 focus-within:ring-purple-500/50 ${
+              className={`w-full rounded-xl border p-2.5 transition-all ${
                 isDark
-                  ? "border-white/[0.1] focus-within:border-purple-500/60"
-                  : "border-slate-300 focus-within:border-purple-500 shadow-xs"
+                  ? "border-white/[0.1] focus-within:border-white/[0.24]"
+                  : "border-slate-300 focus-within:border-slate-500 shadow-xs"
               }`}
             >
               <textarea
@@ -2131,7 +2175,9 @@ ${textToSend}
                     disabled={!guruAiInput.trim() || isGuruAiThinking}
                     className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center space-x-1.5 transition-all cursor-pointer ${
                       guruAiInput.trim() && !isGuruAiThinking
-                        ? "bg-purple-600 hover:bg-purple-500 text-white shadow-xs active:scale-95"
+                        ? isDark
+                          ? "bg-zinc-100 hover:bg-white text-black shadow-xs active:scale-95"
+                          : "bg-slate-900 hover:bg-slate-800 text-white shadow-xs active:scale-95"
                         : "bg-white/[0.04] text-zinc-500 border border-white/[0.06] cursor-not-allowed"
                     }`}
                     title="Send message (Enter)"

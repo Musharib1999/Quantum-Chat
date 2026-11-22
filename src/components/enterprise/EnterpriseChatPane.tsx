@@ -179,11 +179,11 @@ export function EnterpriseChatPane({
                   <div className="flex justify-end">
                     <div
                       style={{
-                        backgroundColor: isDark ? "#181B26" : "#F1F5F9",
+                        backgroundColor: isDark ? "#111216" : "#F1F5F9",
                       }}
                       className={`max-w-[85%] p-4 rounded-2xl rounded-tr-xs border text-xs sm:text-[13px] leading-relaxed shadow-md ${
                         isDark
-                          ? "border-white/[0.08] text-[#F8FAFC] shadow-black/40"
+                          ? "border-white/[0.1] text-[#F8FAFC] shadow-black/40"
                           : "border-slate-200 text-slate-900 shadow-sm"
                       }`}
                     >
