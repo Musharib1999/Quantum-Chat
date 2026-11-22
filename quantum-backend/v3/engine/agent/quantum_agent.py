@@ -381,11 +381,12 @@ class QuantumAgent:
 
 
         is_journey = project_id == "quantum_journey_101" or "journey" in project_id
+        is_enterprise_workbench = "[CURRENT WORKSPACE STATE]" in user_message
 
         # =========================================================================
         # 1. 📈 PHASE 2: AUTONOMOUS QUBO & COMBINATORIAL OPTIMIZATION PIPELINE
         # =========================================================================
-        if not is_journey and is_optimization_synthesis_request(user_message, project_id, target_backend):
+        if not is_journey and not is_enterprise_workbench and is_optimization_synthesis_request(user_message, project_id, target_backend):
             async for event in handle_optimization_synthesis(
                 self.stream,
                 self.runtime,
@@ -401,7 +402,7 @@ class QuantumAgent:
 
         from .qiskit_synthesizer import is_circuit_synthesis_request, synthesize_qiskit_circuit
 
-        if not is_journey and is_circuit_synthesis_request(user_message):
+        if not is_journey and not is_enterprise_workbench and is_circuit_synthesis_request(user_message):
             # 1. Pre-built Tool: tools.algo.classify_algorithm
             yield await self.stream.publish(ToolCallAction(project_id=project_id, tool_name="tools.algo.classify_algorithm"))
             t0 = time.time()
@@ -696,6 +697,9 @@ if __name__ == "__main__":
             summary=f"Analyzed workspace code context ({active_file}) and theoretical principles"
         ))
 
+        # Check if this request comes from the Enterprise Workbench Formulation Assistant
+        is_enterprise_workbench = "[CURRENT WORKSPACE STATE]" in user_message
+
         # Check if user explicitly asked for the complete replacement code
         is_explicit_full_code = bool(
             _re.search(
@@ -705,7 +709,25 @@ if __name__ == "__main__":
             )
         )
 
-        if is_explicit_full_code:
+        if is_enterprise_workbench:
+            mentor_instructions = """MODE: ENTERPRISE OPTIMIZATION FORMULATION ASSISTANT
+You are Guru AI, the Formulation & Operations Research Co-Engineer inside Quantum Guru Enterprise Workbench.
+
+Rules:
+1. Answer the user's question directly, conversationally, and accurately based on the [CURRENT WORKSPACE STATE] and `solution.py` code.
+2. NEVER use the IDE bug-diagnosis headers ("DIAGNOSTIC VERDICT", "2 TARGETED HINTS", "MINIMAL LINE-LEVEL ADJUSTMENT", or "MENTOR CONCLUSION").
+3. NEVER end with "Would you like me to generate the full replacement script, or would you like to update these lines in your editor?".
+4. When explaining the output or solution:
+   - Clearly state what business decisions/assignments were selected (`variable = 1`), the objective value / ground energy, and whether all constraints are satisfied.
+   - If the user asks about penalty stiffness (λ), QUBO couplings, or constraint slack, explain the math clearly using the actual variables and numbers from their current model.
+   - Only include a Python code snippet if the user specifically asks about code or how to modify `solution.py`."""
+            sys_instruction = (
+                "You are Guru AI, an authoritative Operations Research & Quantum Optimization Co-Engineer in Enterprise Workbench. "
+                "Answer the user's question directly and clearly using their workspace variables, constraints, penalty lambda, and solver output. "
+                "Do NOT use rigid diagnostic templates like DIAGNOSTIC VERDICT or 2 TARGETED HINTS."
+            )
+            scientific_verdict = "Formulation and solver output analyzed."
+        elif is_explicit_full_code:
             mentor_instructions = """MODE: COMPLETE CODE REPAIR REQUEST
 1. Pinpoint the exact line number and error cause in 1-2 concise sentences.
 2. Provide the complete, production-ready corrected Python file enclosed in a single ```python block.
