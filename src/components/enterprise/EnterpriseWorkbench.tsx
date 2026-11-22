@@ -2075,7 +2075,7 @@ ${textToSend}
                         isDark ? "bg-white/[0.06] border-white/[0.14]" : "bg-slate-100 border-slate-300"
                       }`}
                     >
-                      <Sparkles className={`w-2.5 h-2.5 animate-spin ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
+                      <Sparkles className={`w-2.5 h-2.5 ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
                     </div>
                     <span className={`text-[10px] font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
                       Guru AI
@@ -2087,7 +2087,7 @@ ${textToSend}
                     }}
                     className="p-3 rounded-xl border border-white/[0.08] text-xs text-zinc-400 flex items-center space-x-2"
                   >
-                    <RotateCw className="w-3.5 h-3.5 text-zinc-300 animate-spin" />
+                    <RotateCw className="w-3.5 h-3.5 text-zinc-300 animate-spin shrink-0" />
                     <span>Analyzing problem formulation, penalty λ, and solution.py...</span>
                   </div>
                 </div>
