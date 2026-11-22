@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { EnterpriseHeader } from "@/components/enterprise/EnterpriseHeader";
 import { EnterpriseHistorySidebar, ProjectEntry } from "@/components/enterprise/EnterpriseHistorySidebar";
 import { EnterpriseChatPane } from "@/components/enterprise/EnterpriseChatPane";
@@ -49,9 +49,31 @@ function loadSavedState(): {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed.projects) && parsed.projects.length > 0) {
+      // Auto-clean any interrupted streaming state left over from a page reload or closed tab
+      const cleanedProjects: ProjectRecord[] = parsed.projects.map((p: ProjectRecord) => ({
+        ...p,
+        messages: Array.isArray(p.messages)
+          ? p.messages.map((m) =>
+              m.isStreaming
+                ? {
+                    ...m,
+                    isStreaming: false,
+                    text: m.text && !m.text.startsWith("Decomposing")
+                      ? m.text
+                      : "Execution was interrupted by page reload.",
+                    pipelineSteps: m.pipelineSteps?.map((s) =>
+                      s.status === "running"
+                        ? { ...s, status: "failed" as const, message: "Interrupted" }
+                        : s
+                    ),
+                  }
+                : m
+            )
+          : [],
+      }));
       return {
-        projects: parsed.projects,
-        activeProjectId: parsed.activeProjectId || parsed.projects[0].id,
+        projects: cleanedProjects,
+        activeProjectId: parsed.activeProjectId || cleanedProjects[0].id,
         surfaceMode: parsed.surfaceMode === "workbench" ? "workbench" : "copilot",
       };
     }
@@ -87,10 +109,52 @@ export default function EnterpriseStudioPage() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSolving, setIsSolving] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const pipelineAbortRef = useRef<AbortController | null>(null);
+  const timedOutRef = useRef<boolean>(false);
 
   // Projects state: Initialized with deterministic default to prevent SSR hydration mismatches
   const [projects, setProjects] = useState<ProjectRecord[]>([DEFAULT_INITIAL_PROJECT]);
   const [activeProjectId, setActiveProjectId] = useState<string>("proj_initial");
+
+  // Terminate active pipeline / solver execution on user request
+  const handleStopExecution = useCallback((reason: string = "Execution terminated by user.") => {
+    if (pipelineAbortRef.current) {
+      pipelineAbortRef.current.abort();
+      pipelineAbortRef.current = null;
+    }
+    setIsStreaming(false);
+    setIsSolving(false);
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id !== activeProjectId) return proj;
+        const hasStreamingMsg = proj.messages.some((m) => m.isStreaming);
+        return {
+          ...proj,
+          updatedAt: Date.now(),
+          workspace: {
+            ...proj.workspace,
+            terminal: [...proj.workspace.terminal, `[STOPPED] ${reason}`],
+          },
+          messages: hasStreamingMsg
+            ? proj.messages.map((msg) =>
+                msg.isStreaming
+                  ? {
+                      ...msg,
+                      text: reason,
+                      isStreaming: false,
+                      pipelineSteps: msg.pipelineSteps?.map((s) =>
+                        s.status === "running"
+                          ? { ...s, status: "failed" as const, message: reason }
+                          : s
+                      ),
+                    }
+                  : msg
+              )
+            : proj.messages,
+        };
+      })
+    );
+  }, [activeProjectId]);
 
   // Hydrate from localStorage once safely mounted on the client
   useEffect(() => {
@@ -245,6 +309,27 @@ export default function EnterpriseStudioPage() {
       })
     );
 
+    // Abort any existing in-flight pipeline stream before starting a new one
+    if (pipelineAbortRef.current) {
+      pipelineAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    pipelineAbortRef.current = controller;
+    timedOutRef.current = false;
+
+    // 75-second inactivity watchdog timer (reset on every received SSE chunk)
+    let watchdogTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      timedOutRef.current = true;
+      controller.abort();
+    }, 75000);
+    const resetWatchdog = () => {
+      if (watchdogTimer) clearTimeout(watchdogTimer);
+      watchdogTimer = setTimeout(() => {
+        timedOutRef.current = true;
+        controller.abort();
+      }, 75000);
+    };
+
     setIsStreaming(true);
 
     try {
@@ -252,6 +337,7 @@ export default function EnterpriseStudioPage() {
       const resp = await fetch("/api/ide/pipeline/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           problem: text,
           mode: "qubo",
@@ -272,6 +358,7 @@ export default function EnterpriseStudioPage() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        resetWatchdog();
         streamBuffer += decoder.decode(value, { stream: true });
         const lines = streamBuffer.split("\n");
         streamBuffer = lines.pop() || "";
@@ -397,6 +484,12 @@ export default function EnterpriseStudioPage() {
         }
       }
     } catch (err: any) {
+      const isAbort = err?.name === "AbortError" || controller.signal.aborted;
+      const stopNote = timedOutRef.current
+        ? "Execution timed out (no response from solver for 75s). Please try again or simplify constraints."
+        : isAbort
+        ? "Execution terminated by user."
+        : `Pipeline execution note: ${err.message}`;
       setProjects((prev) =>
         prev.map((proj) => {
           if (proj.id !== activeProjectId) return proj;
@@ -404,13 +497,26 @@ export default function EnterpriseStudioPage() {
             ...proj,
             messages: proj.messages.map((msg) =>
               msg.id === botMsgId
-                ? { ...msg, text: `Pipeline execution note: ${err.message}`, isStreaming: false }
+                ? {
+                    ...msg,
+                    text: stopNote,
+                    isStreaming: false,
+                    pipelineSteps: msg.pipelineSteps?.map((s) =>
+                      s.status === "running"
+                        ? { ...s, status: "failed" as const, message: stopNote }
+                        : s
+                    ),
+                  }
                 : msg
             ),
           };
         })
       );
     } finally {
+      if (watchdogTimer) clearTimeout(watchdogTimer);
+      if (pipelineAbortRef.current === controller) {
+        pipelineAbortRef.current = null;
+      }
       setIsStreaming(false);
     }
   };
@@ -428,11 +534,17 @@ export default function EnterpriseStudioPage() {
       }
     } else if (currentProject.workspace.code) {
       // Execute the code directly if no prompt text was submitted yet
+      if (pipelineAbortRef.current) {
+        pipelineAbortRef.current.abort();
+      }
+      const controller = new AbortController();
+      pipelineAbortRef.current = controller;
       setIsSolving(true);
       try {
         const res = await fetch("/api/ide/execute", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({ code: currentProject.workspace.code }),
         });
         const data = await res.json();
@@ -448,11 +560,18 @@ export default function EnterpriseStudioPage() {
           }));
         }
       } catch (err: any) {
+        const isAbort = err?.name === "AbortError" || controller.signal.aborted;
         updateActiveWorkspace((prev) => ({
           ...prev,
-          terminal: [...prev.terminal, `[ERROR] Re-solve failed: ${err.message}`],
+          terminal: [
+            ...prev.terminal,
+            isAbort ? `[STOPPED] Re-solve terminated by user.` : `[ERROR] Re-solve failed: ${err.message}`,
+          ],
         }));
       } finally {
+        if (pipelineAbortRef.current === controller) {
+          pipelineAbortRef.current = null;
+        }
         setIsSolving(false);
       }
     }
@@ -494,6 +613,7 @@ export default function EnterpriseStudioPage() {
         onLogout={logout}
         activeProblemTitle={currentProject.title}
         isSolving={isSolving || isStreaming}
+        onStopSolving={() => handleStopExecution()}
         surfaceMode={surfaceMode}
         onSelectSurfaceMode={setSurfaceMode}
       />
@@ -554,6 +674,7 @@ export default function EnterpriseStudioPage() {
                 messages={currentProject.messages}
                 isStreaming={isStreaming}
                 onSendMessage={handleSendMessage}
+                onStopStreaming={() => handleStopExecution()}
                 onClearChat={() => {
                   setProjects((prev) =>
                     prev.map((proj) => (proj.id === activeProjectId ? { ...proj, messages: [] } : proj))
@@ -609,7 +730,8 @@ export default function EnterpriseStudioPage() {
               executionHistory={currentProject.runs}
               onRestoreRun={handleSelectRun}
               onReSolve={handleReSolve}
-              isSolving={isSolving}
+              onStopSolving={() => handleStopExecution()}
+              isSolving={isSolving || isStreaming}
               onOpenDeploy={() => setIsDeployModalOpen(true)}
               projectId={activeProjectId}
               problemTitle={currentProject.title}

@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertTriangle,
+  Square,
 } from "lucide-react";
 import { EnterpriseChatMessage } from "./types";
 
@@ -24,6 +25,7 @@ interface EnterpriseChatPaneProps {
   messages: EnterpriseChatMessage[];
   isStreaming: boolean;
   onSendMessage: (text: string) => void;
+  onStopStreaming?: () => void;
   onClearChat: () => void;
   onFocusWorkbench?: () => void;
 }
@@ -57,6 +59,7 @@ export function EnterpriseChatPane({
   messages,
   isStreaming,
   onSendMessage,
+  onStopStreaming,
   onClearChat,
   onFocusWorkbench,
 }: EnterpriseChatPaneProps) {
@@ -229,7 +232,21 @@ export function EnterpriseChatPane({
                               </span>
                             </div>
 
-                            <div className="flex items-center space-x-1.5 shrink-0 ml-3 text-[10px] text-zinc-400">
+                            <div className="flex items-center space-x-2 shrink-0 ml-3 text-[10px] text-zinc-400">
+                              {msg.isStreaming && onStopStreaming && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStopStreaming();
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 hover:text-white font-mono text-[10px] flex items-center space-x-1 transition-colors cursor-pointer"
+                                  title="Terminate running pipeline execution"
+                                >
+                                  <Square className="w-2.5 h-2.5 fill-current" />
+                                  <span>Stop</span>
+                                </button>
+                              )}
                               <span>{isStepsExpanded ? "Hide details" : "View stages"}</span>
                               {isStepsExpanded ? (
                                 <ChevronUp className="w-3 h-3" />
@@ -411,28 +428,31 @@ export function EnterpriseChatPane({
           />
 
           <div className="flex items-center justify-end pt-2 border-t border-white/[0.04] mt-1">
-            <button
-              type="submit"
-              disabled={isStreaming || !inputText.trim()}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer flex items-center space-x-1.5 ${
-                isStreaming || !inputText.trim()
-                  ? "bg-white/[0.04] text-zinc-600 border border-white/[0.06] cursor-not-allowed"
-                  : "bg-sky-500 hover:bg-sky-400 text-black shadow-xs active:scale-95"
-              }`}
-              title="Submit problem to pipeline"
-            >
-              {isStreaming ? (
-                <>
-                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Solving...</span>
-                </>
-              ) : (
-                <>
-                  <span>Send</span>
-                  <Send className="w-3 h-3" />
-                </>
-              )}
-            </button>
+            {isStreaming && onStopStreaming ? (
+              <button
+                type="button"
+                onClick={onStopStreaming}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer flex items-center space-x-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/40 shadow-xs active:scale-95"
+                title="Terminate running execution"
+              >
+                <Square className="w-3 h-3 fill-current" />
+                <span>Stop Execution</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isStreaming || !inputText.trim()}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                  isStreaming || !inputText.trim()
+                    ? "bg-white/[0.04] text-zinc-600 border border-white/[0.06] cursor-not-allowed"
+                    : "bg-sky-500 hover:bg-sky-400 text-black shadow-xs active:scale-95"
+                }`}
+                title="Submit problem to pipeline"
+              >
+                <span>Send</span>
+                <Send className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </form>
       </div>

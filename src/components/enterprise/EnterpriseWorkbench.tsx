@@ -32,6 +32,7 @@ import {
   User,
   CornerDownLeft,
   MessageSquare,
+  Square,
 } from "lucide-react";
 import { LatexMath } from "../optimization/LatexMath";
 import IdeMarkdownRenderer from "../IdeMarkdownRenderer";
@@ -77,6 +78,7 @@ export interface EnterpriseWorkbenchProps {
   executionHistory: ExecutionRun[];
   onRestoreRun: (run: ExecutionRun) => void;
   onReSolve: () => void;
+  onStopSolving?: () => void;
   isSolving: boolean;
   onOpenDeploy?: () => void;
   projectId?: string;
@@ -143,6 +145,7 @@ export function EnterpriseWorkbench({
   executionHistory,
   onRestoreRun,
   onReSolve,
+  onStopSolving,
   isSolving,
   onOpenDeploy,
   projectId = "default",
@@ -197,7 +200,25 @@ export function EnterpriseWorkbench({
   const [guruAiMessages, setGuruAiMessages] = useState<GuruAiMessage[]>([]);
   const [guruAiInput, setGuruAiInput] = useState("");
   const [isGuruAiThinking, setIsGuruAiThinking] = useState(false);
+  const guruAbortRef = useRef<AbortController | null>(null);
+  const runCodeAbortRef = useRef<AbortController | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const handleStopGuruAi = () => {
+    if (guruAbortRef.current) {
+      guruAbortRef.current.abort();
+      guruAbortRef.current = null;
+    }
+    setIsGuruAiThinking(false);
+  };
+
+  const handleStopPythonScript = () => {
+    if (runCodeAbortRef.current) {
+      runCodeAbortRef.current.abort();
+      runCodeAbortRef.current = null;
+    }
+    setIsRunningCode(false);
+  };
 
   // Guru AI quick prompt templates
   const GURU_QUICK_PROMPTS = useMemo(() => [
@@ -260,6 +281,12 @@ export function EnterpriseWorkbench({
     setGuruAiInput("");
     setIsGuruAiThinking(true);
 
+    if (guruAbortRef.current) {
+      guruAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    guruAbortRef.current = controller;
+
     try {
       // Build deep contextual summary of the current problem
       const contextSummary = `
@@ -295,6 +322,7 @@ ${textToSend}
       const res = await fetch("/api/ide/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           project_id: projectId,
           user_message: contextSummary,
@@ -330,14 +358,20 @@ ${textToSend}
 
       setGuruAiMessages((prev) => [...prev, aiMsg]);
     } catch (err: any) {
+      const isAbort = err?.name === "AbortError" || controller.signal.aborted;
       const errMsg: GuruAiMessage = {
         id: `err_${Date.now()}`,
         sender: "assistant",
-        text: `**Connection Error:** Unable to reach Guru AI engine (${err.message}). Please ensure the backend service is running.`,
+        text: isAbort
+          ? `_Request terminated by user._`
+          : `**Connection Error:** Unable to reach Guru AI engine (${err.message}). Please ensure the backend service is running.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setGuruAiMessages((prev) => [...prev, errMsg]);
     } finally {
+      if (guruAbortRef.current === controller) {
+        guruAbortRef.current = null;
+      }
       setIsGuruAiThinking(false);
     }
   };
@@ -458,6 +492,11 @@ ${textToSend}
   // Real execution in container sandbox
   const handleRunPythonScript = async () => {
     if (!generatedCode?.trim()) return;
+    if (runCodeAbortRef.current) {
+      runCodeAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    runCodeAbortRef.current = controller;
     setShowTerminal(true);
     setIsRunningCode(true);
     setTerminalLogs((prev) => [
@@ -471,6 +510,7 @@ ${textToSend}
       const res = await fetch("/api/ide/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({ code: generatedCode }),
       });
       const data = await res.json();
@@ -494,11 +534,15 @@ ${textToSend}
         ]);
       }
     } catch (err: any) {
+      const isAbort = err?.name === "AbortError" || controller.signal.aborted;
       setTerminalLogs((prev) => [
         ...prev,
-        `[ERROR] Execution engine connection error: ${err.message}`,
+        isAbort ? `[STOPPED] Execution terminated by user.` : `[ERROR] Execution engine connection error: ${err.message}`,
       ]);
     } finally {
+      if (runCodeAbortRef.current === controller) {
+        runCodeAbortRef.current = null;
+      }
       setIsRunningCode(false);
     }
   };
@@ -1819,19 +1863,31 @@ ${textToSend}
                       <div />
                     )}
 
-                    <button
-                      type="submit"
-                      disabled={!guruAiInput.trim() || isGuruAiThinking}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center space-x-1.5 transition-all cursor-pointer ${
-                        guruAiInput.trim() && !isGuruAiThinking
-                          ? "bg-purple-600 hover:bg-purple-500 text-white shadow-xs active:scale-95"
-                          : "bg-white/[0.04] text-zinc-500 border border-white/[0.06] cursor-not-allowed"
-                      }`}
-                      title="Send message (Enter)"
-                    >
-                      <span>Send</span>
-                      <Send className="w-3 h-3" />
-                    </button>
+                    {isGuruAiThinking ? (
+                      <button
+                        type="button"
+                        onClick={handleStopGuruAi}
+                        className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center space-x-1.5 transition-all cursor-pointer bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/40 shadow-xs active:scale-95"
+                        title="Terminate Guru AI request"
+                      >
+                        <Square className="w-3 h-3 fill-current" />
+                        <span>Stop</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={!guruAiInput.trim() || isGuruAiThinking}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center space-x-1.5 transition-all cursor-pointer ${
+                          guruAiInput.trim() && !isGuruAiThinking
+                            ? "bg-purple-600 hover:bg-purple-500 text-white shadow-xs active:scale-95"
+                            : "bg-white/[0.04] text-zinc-500 border border-white/[0.06] cursor-not-allowed"
+                        }`}
+                        title="Send message (Enter)"
+                      >
+                        <span>Send</span>
+                        <Send className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </form>
@@ -1871,41 +1927,57 @@ ${textToSend}
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
-            {/* Recompile & Solve */}
-            <button
-              type="button"
-              onClick={onReSolve}
-              disabled={isRunningCode || isSolving}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-medium transition-all cursor-pointer shrink-0 border ${
-                isSolving
-                  ? "bg-white/[0.02] text-zinc-600 border-white/[0.04] cursor-not-allowed"
-                  : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 hover:text-white border-white/[0.08] active:scale-95"
-              }`}
-              title="Recompile QUBO and solve"
-            >
-              <RotateCw className={`w-3.5 h-3.5 text-sky-400 ${isSolving ? "animate-spin" : ""}`} />
-              <span>{isSolving ? "Solving..." : "Recompile & Solve"}</span>
-            </button>
+            {/* Recompile & Solve / Stop */}
+            {isSolving && onStopSolving ? (
+              <button
+                type="button"
+                onClick={onStopSolving}
+                className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/40 active:scale-95"
+                title="Terminate running solver execution"
+              >
+                <Square className="w-3 h-3 fill-current" />
+                <span>Stop Solve</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onReSolve}
+                disabled={isRunningCode || isSolving}
+                className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-medium transition-all cursor-pointer shrink-0 border ${
+                  isSolving
+                    ? "bg-white/[0.02] text-zinc-600 border-white/[0.04] cursor-not-allowed"
+                    : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 hover:text-white border-white/[0.08] active:scale-95"
+                }`}
+                title="Recompile QUBO and solve"
+              >
+                <RotateCw className={`w-3.5 h-3.5 text-sky-400 ${isSolving ? "animate-spin" : ""}`} />
+                <span>Recompile & Solve</span>
+              </button>
+            )}
 
-            {/* Run code (Primary CTA) */}
-            <button
-              type="button"
-              onClick={handleRunPythonScript}
-              disabled={isRunningCode || isSolving}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 ${
-                isRunningCode
-                  ? "bg-emerald-500/50 text-black cursor-not-allowed"
-                  : "bg-emerald-500 hover:bg-emerald-400 text-black shadow-xs active:scale-95"
-              }`}
-              title="Execute Python script in container sandbox"
-            >
-              {isRunningCode ? (
-                <RotateCw className="w-3.5 h-3.5 animate-spin" />
-              ) : (
+            {/* Run code / Stop code (Primary CTA) */}
+            {isRunningCode ? (
+              <button
+                type="button"
+                onClick={handleStopPythonScript}
+                className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 bg-rose-500 hover:bg-rose-400 text-black shadow-xs active:scale-95"
+                title="Terminate running script"
+              >
+                <Square className="w-3 h-3 fill-black" />
+                <span>Stop</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleRunPythonScript}
+                disabled={isRunningCode || isSolving}
+                className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 bg-emerald-500 hover:bg-emerald-400 text-black shadow-xs active:scale-95"
+                title="Execute Python script in container sandbox"
+              >
                 <Play className="w-3.5 h-3.5 fill-black" />
-              )}
-              <span>{isRunningCode ? "Running..." : "Run code"}</span>
-            </button>
+                <span>Run code</span>
+              </button>
+            )}
           </div>
         </div>
 
