@@ -62,9 +62,16 @@ function loadSavedState(): {
 }
 
 export default function EnterpriseStudioPage() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isInitializing, logout } = useAuth();
   const [isDark, setIsDark] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+
+  // Strict client-side auth gate: redirect unauthenticated visitors straight to /login?redirect=/enterprise
+  useEffect(() => {
+    if (!isInitializing && !isAuthenticated && typeof window !== "undefined") {
+      window.location.replace("/login?redirect=/enterprise");
+    }
+  }, [isInitializing, isAuthenticated]);
 
   // Synchronize document root data-theme and dark class
   useEffect(() => {
@@ -452,6 +459,20 @@ export default function EnterpriseStudioPage() {
   };
 
   const ws = currentProject.workspace;
+
+  if (!isMounted || isInitializing || !isAuthenticated) {
+    return (
+      <div
+        suppressHydrationWarning
+        className="h-screen w-screen flex flex-col items-center justify-center bg-[#090A0D] text-white select-none"
+      >
+        <div className="flex items-center space-x-2 text-xs font-mono text-zinc-400">
+          <div className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+          <span>{!isInitializing && !isAuthenticated ? "Redirecting to Sign In..." : "Verifying Enterprise session..."}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

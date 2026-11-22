@@ -20,7 +20,7 @@ export interface StudioBottomBarProps {
   showTerminal: boolean;
   onToggleTerminal: () => void;
   terminalOutput?: string;
-  onAutoFix?: () => void;
+  onDiagnoseError?: () => void;
   onOpenProjectModal?: () => void;
   specs?: {
     qubits?: number;
@@ -48,7 +48,7 @@ export function StudioBottomBar({
   showTerminal,
   onToggleTerminal,
   terminalOutput,
-  onAutoFix,
+  onDiagnoseError,
   onOpenProjectModal,
   specs,
 }: StudioBottomBarProps) {
@@ -56,6 +56,14 @@ export function StudioBottomBar({
 
   const isFrameworkMismatch = Boolean(
     terminalOutput && terminalOutput.includes("[FRAMEWORK MISMATCH ERROR]")
+  );
+
+  const isEngineUnavailable = Boolean(
+    terminalOutput &&
+    (terminalOutput.includes("Execution Engine Notice") ||
+     terminalOutput.includes("fetch failed") ||
+     terminalOutput.includes("ECONNREFUSED") ||
+     terminalOutput.includes("Service temporarily unavailable"))
   );
 
   const hasError = Boolean(
@@ -223,16 +231,16 @@ export function StudioBottomBar({
             </button>
           )}
 
-          {hasError && onAutoFix && (
+          {hasError && !isEngineUnavailable && onDiagnoseError && (
             <>
               <button
                 type="button"
-                onClick={onAutoFix}
+                onClick={onDiagnoseError}
                 className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-gradient-to-r from-amber-500/15 to-sky-500/15 hover:from-amber-500/25 hover:to-sky-500/25 border border-sky-500/35 text-sky-300 hover:text-white transition-all shadow-xs cursor-pointer animate-pulse"
-                title={isFrameworkMismatch ? "Diagnose framework mismatch with Guru AI" : "Auto-repair code error with Guru Copilot"}
+                title={isFrameworkMismatch ? "Check framework mismatch details with Guru AI" : "Check what went wrong with Guru AI (read-only analysis)"}
               >
                 <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
-                <span>{isFrameworkMismatch ? "Fix with Guru AI" : "Auto-Fix with Guru AI"}</span>
+                <span>Check Issue with Guru AI</span>
               </button>
               <span className={`select-none ${isDark ? "text-zinc-700" : "text-slate-300"}`}>|</span>
             </>
@@ -269,7 +277,22 @@ export function StudioBottomBar({
               }" in the top toolbar to execute.`}
           </div>
 
-          {hasError && onAutoFix && (
+          {hasError && isEngineUnavailable && (
+            <div className={`mt-3 p-2.5 rounded-lg border flex items-center justify-between shrink-0 ${
+              isDark
+                ? "bg-[#14161F] border-amber-500/30 text-zinc-200"
+                : "bg-amber-50/80 border-amber-200 text-slate-800"
+            }`}>
+              <div className="flex items-center space-x-2 text-xs">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                <span className="font-sans text-xs">
+                  Execution engine unreachable. Check that the Quantum Guru backend service is running, then try again.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {hasError && !isEngineUnavailable && onDiagnoseError && (
             <div className={`mt-3 p-2.5 rounded-lg border flex items-center justify-between shrink-0 ${
               isDark
                 ? isFrameworkMismatch
@@ -286,7 +309,7 @@ export function StudioBottomBar({
                     ? isDwave
                       ? "Framework mismatch: This workspace is aligned for D-Wave Annealing, not Qiskit."
                       : "Framework mismatch: This workspace is aligned for Qiskit Aer Simulator, not D-Wave."
-                    : "Execution error detected. Guru AI can diagnose and repair your code automatically."}
+                    : "Issue detected in your script. Check what went wrong with Guru AI (read-only analysis)."}
                 </span>
               </div>
               <div className="flex items-center space-x-2 shrink-0">
@@ -302,11 +325,11 @@ export function StudioBottomBar({
                 )}
                 <button
                   type="button"
-                  onClick={onAutoFix}
+                  onClick={onDiagnoseError}
                   className="flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold font-mono bg-sky-500 hover:bg-sky-400 text-black shadow-sm transition-all cursor-pointer shrink-0"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Fix with Guru AI</span>
+                  <span>Check Issue with Guru AI</span>
                 </button>
               </div>
             </div>

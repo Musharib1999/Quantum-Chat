@@ -50,9 +50,41 @@ export function middleware(req: NextRequest) {
         return NextResponse.next();
     }
 
+    // 3. Protect Quantum IDE & Enterprise Workbench pages (require user_session cookie)
+    if (pathname === "/ide" || pathname.startsWith("/ide/") || pathname === "/enterprise" || pathname.startsWith("/enterprise/")) {
+        const userSession = req.cookies.get("user_session")?.value;
+        if (!userSession) {
+            const loginUrl = new URL("/login", req.url);
+            loginUrl.searchParams.set("redirect", pathname);
+            return NextResponse.redirect(loginUrl);
+        }
+        return NextResponse.next();
+    }
+
+    // 4. Fast-reject unauthenticated calls to IDE & D-Wave APIs (DB token check also enforced inside each route)
+    if (pathname.startsWith("/api/ide") || pathname.startsWith("/api/dwave")) {
+        const userSession = req.cookies.get("user_session")?.value;
+        if (!userSession) {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized — please sign in to continue." },
+                { status: 401 }
+            );
+        }
+        return NextResponse.next();
+    }
+
     return NextResponse.next();
 }
 
 export const config = {
-    matcher: ["/admin/:path*", "/api/admin/:path*"],
+    matcher: [
+        "/admin/:path*",
+        "/api/admin/:path*",
+        "/ide",
+        "/ide/:path*",
+        "/enterprise",
+        "/enterprise/:path*",
+        "/api/ide/:path*",
+        "/api/dwave/:path*",
+    ],
 };

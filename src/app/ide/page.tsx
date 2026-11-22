@@ -62,7 +62,6 @@ import {
   FrameworkType,
   HeroTabType,
 } from "@/components/ide";
-import { DataConnectorsModal } from "@/components/optimization/DataConnectorsModal";
 import { DeploySolutionModal } from "@/components/optimization/DeploySolutionModal";
 import IssueReportModal from "@/components/IssueReportModal";
 import {
@@ -1058,8 +1057,15 @@ export default function QuantumGuruStudioPage() {
   };
 
   const [targetBackend, setTargetBackend] = useState<string>("dwave_simulated_annealing");
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isInitializing, logout } = useAuth();
   const userKey = useMemo(() => getActiveUserKey(user?.email), [user?.email]);
+
+  // Strict client-side auth gate: redirect unauthenticated visitors straight to /login?redirect=/ide
+  useEffect(() => {
+    if (!isInitializing && !isAuthenticated && typeof window !== "undefined") {
+      window.location.replace("/login?redirect=/ide");
+    }
+  }, [isInitializing, isAuthenticated]);
 
   // Reactive User-Switch Isolation: When active user changes (login, logout, account switch),
   // immediately reload the workspace to that user's isolated storage context.
@@ -1572,7 +1578,6 @@ export default function QuantumGuruStudioPage() {
       setShowTerminal(true);
     }
   }, []);
-  const [isDataConnectorsOpen, setIsDataConnectorsOpen] = useState<boolean>(false);
   const [isDeployModalOpen, setIsDeployModalOpen] = useState<boolean>(false);
 
   const [isModelDirty, setIsModelDirty] = useState<boolean>(false);
@@ -2265,6 +2270,12 @@ export default function QuantumGuruStudioPage() {
   };
 
   const handleCreateProject = async (newProj: ProjectItem, isFromVault: boolean = false) => {
+    if (!isAuthenticated || !user?.email) {
+      if (typeof window !== "undefined") {
+        window.location.replace("/login?redirect=/ide");
+      }
+      return;
+    }
     const isVault = isFromVault || newProj.id.startsWith("algo_");
     const targetFile = newProj.activeFile || newProj.files?.[0] || "main.py";
     const initialCode =
@@ -4309,35 +4320,7 @@ ${currentM.challengeInstruction}`,
 
         const data = await resp.json();
 
-        if (data.circuit_gates && data.circuit_gates.length > 0) {
-          setCircuitGates(data.circuit_gates);
-        }
-        if (data.circuit_ascii) {
-          setCircuitAscii(data.circuit_ascii);
-        }
-        if (data.active_qubits) {
-          setQiskitQubits(data.active_qubits);
-        }
-        if (data.measurement_counts) {
-          setQiskitCounts(data.measurement_counts);
-          if (typeof window !== "undefined") {
-            try {
-              setScopedIdeItem(
-                `qiskit_result_${activeProject.id}`,
-                userKey,
-                JSON.stringify({
-                  measurement_counts: data.measurement_counts,
-                  circuit_gates: data.circuit_gates,
-                  circuit_ascii: data.circuit_ascii,
-                  active_qubits: data.active_qubits,
-                  circuit_depth: data.circuit_depth,
-                  simulator_id: data.simulator_id,
-                })
-              );
-            } catch (e) {}
-          }
-        }
-
+        // Read-only Diagnostic Mentor mode: never mutate editor code, circuit gates, or simulator telemetry from chat.
         setQiskitCopilotMessages((prev) =>
           prev.map((msg) =>
             msg.id === botMsgId
@@ -4345,8 +4328,8 @@ ${currentM.challengeInstruction}`,
                   ...msg,
                   text: data.response_text || "Analysis complete.",
                   isStreaming: false,
-                  pipelineSteps: undefined, // Qiskit Circuit Copilot does not render autonomous pipeline block
-                  generatedCode: data.updated_code || undefined,
+                  pipelineSteps: undefined,
+                  generatedCode: undefined,
                   appliedToEditor: false,
                 }
               : msg
@@ -4368,231 +4351,63 @@ ${currentM.challengeInstruction}`,
       return;
     }
 
-    // D-Wave: Check user intent via Two-Tier Intent Router
+    // D-Wave: Read-only Diagnostic Mentor mode (no autonomous code mutation inside Quantum IDE)
     setDwaveCopilotMessages((prev) => [...prev, userMsg]);
-    const optIntent = classifyOptimizationIntent(text);
-
-    // Intent Branch A: Casual Greeting or Conversational Q&A / Explanation
-    if (optIntent === "CHAT") {
-      const botMsgId = Date.now() + 1;
-      const initialBotMsg: CopilotMessage = {
-        id: botMsgId,
-        sender: "assistant",
-        text: "Thinking...",
-        timestamp: "Just now",
-        isStreaming: true,
-      };
-      setDwaveCopilotMessages((prev) => [...prev, initialBotMsg]);
-
-      try {
-        const effectiveTerminal = overrideTerminalOutput ?? terminalOutput;
-        const resp = await fetch("/api/ide/agent/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            project_id: activeProject.id,
-            user_message: text,
-            active_file: activeFile,
-            file_content: dwaveCode,
-            target_backend: "dwave_simulated_annealing",
-            model_engine: "groq",
-            terminal_output: effectiveTerminal,
-            execution_context: {
-              framework: "dwave",
-              ground_energy: solverResult?.energy,
-              optimal_sample: solverResult?.sample,
-              variables: solverResult?.variables,
-              num_variables: solverResult?.num_variables,
-              num_reads: solverResult?.num_reads,
-              latex_formula: solverResult?.latex_formula,
-              qubo_matrix: solverResult?.qubo_matrix,
-              top_eigenstates: solverResult?.energy_distribution?.slice(0, 5),
-              simulator_id: solverResult?.simulator_id,
-              latency_ms: latencyMs,
-            },
-          }),
-        });
-
-        if (!resp.ok) {
-          throw new Error(`Copilot response error: HTTP ${resp.status}`);
-        }
-
-        const data = await resp.json();
-
-        setDwaveCopilotMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === botMsgId
-              ? {
-                  ...msg,
-                  text: data.response_text || "Ready to assist.",
-                  isStreaming: false,
-                  pipelineSteps: undefined, // Regular D-Wave chat does not render autonomous pipeline block
-                  generatedCode: data.updated_code || undefined,
-                  appliedToEditor: false,
-                }
-              : msg
-          )
-        );
-      } catch (err: any) {
-        setDwaveCopilotMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === botMsgId
-              ? {
-                  ...msg,
-                  text: `Notice: ${err.message || "Failed to reach AI engine"}`,
-                  isStreaming: false,
-                }
-              : msg
-          )
-        );
-      }
-      return;
-    }
-
-    // Intent Branch B: Explicit Combinatorial Optimization Problem -> 7-Agent Autonomous Pipeline
     const botMsgId = Date.now() + 1;
     const initialBotMsg: CopilotMessage = {
       id: botMsgId,
       sender: "assistant",
-      text: "Decomposing optimization formulation...",
+      text: "Analyzing workspace...",
       timestamp: "Just now",
       isStreaming: true,
-      pipelineSteps: [
-        {
-          id: "supervisor",
-          agent: "SupervisorAgent",
-          title: "Supervisor Agent",
-          status: "running",
-          message: "Decomposing problem bounds & mathematical structure...",
-        },
-      ],
     };
-
     setDwaveCopilotMessages((prev) => [...prev, initialBotMsg]);
 
     try {
-      const resp = await fetch("/api/ide/pipeline/stream", {
+      const effectiveTerminal = overrideTerminalOutput ?? terminalOutput;
+      const resp = await fetch("/api/ide/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          problem: text,
-          mode: "auto",
-          penalty_choice: 3,
-          session_id: activeProject.id,
+          project_id: activeProject.id,
+          user_message: text,
+          active_file: activeFile,
+          file_content: dwaveCode,
+          target_backend: "dwave_simulated_annealing",
+          model_engine: "groq",
+          terminal_output: effectiveTerminal,
+          execution_context: {
+            framework: "dwave",
+            ground_energy: solverResult?.energy,
+            optimal_sample: solverResult?.sample,
+            variables: solverResult?.variables,
+            num_variables: solverResult?.num_variables,
+            num_reads: solverResult?.num_reads,
+            latex_formula: solverResult?.latex_formula,
+            qubo_matrix: solverResult?.qubo_matrix,
+            top_eigenstates: solverResult?.energy_distribution?.slice(0, 5),
+            simulator_id: solverResult?.simulator_id,
+            latency_ms: latencyMs,
+          },
         }),
       });
 
-      if (!resp.ok || !resp.body) {
-        throw new Error(`Pipeline response status: ${resp.status}`);
+      if (!resp.ok) {
+        throw new Error(`Copilot response error: HTTP ${resp.status}`);
       }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let streamBuffer = "";
+      const data = await resp.json();
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        streamBuffer += decoder.decode(value, { stream: true });
-        const lines = streamBuffer.split("\n");
-        streamBuffer = lines.pop() || "";
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith("data:")) continue;
-          try {
-            const data = JSON.parse(trimmed.slice(5).trim());
-            const stepName = data.step;
-            const isComplete = stepName === "complete" || data.event === "complete";
-
-            setDwaveCopilotMessages((prev) =>
-              prev.map((msg) => {
-                if (msg.id !== botMsgId) return msg;
-                const existingSteps = msg.pipelineSteps ? [...msg.pipelineSteps] : [];
-
-                if (isComplete) {
-                  const res = data.result || {};
-                  const stats = res.optimization_stats || {};
-                  const execRes = res.execution_result || data.execution_result || {};
-                  const interpretationText = execRes.interpretation || (data.value && typeof data.value === "string" ? data.value : null);
-                  const displayText = interpretationText
-                    ? interpretationText
-                    : `Optimization model compiled: ${stats.q_size || 0} binary variables with ${stats.q_nnz || 0} non-zero couplers (penalty weight λ = ${stats.penalty_weight || 5.0}).`;
-
-                  if (res.final_code) {
-                    setTimeout(() => {
-                      handleApplyPipelineCode(res.final_code, {
-                        variables: res.variable_map,
-                        q_size: stats.q_size,
-                        q_nnz: stats.q_nnz,
-                        qubo_code: res.qubo_code,
-                      });
-                    }, 150);
-                  }
-
-                  return {
-                    ...msg,
-                    text: displayText,
-                    isStreaming: false,
-                    generatedCode: res.final_code,
-                    appliedToEditor: true,
-                    mathFormula: res.latex_model || undefined,
-                    executionResult: execRes,
-                    formulationMeta: {
-                      objectiveSense: stats.objective_sense,
-                      variables: res.variable_map,
-                      penaltyWeight: stats.penalty_weight,
-                      penaltyLabel: stats.penalty_label,
-                      q_size: stats.q_size,
-                      q_nnz: stats.q_nnz,
-                      matrixDensity: stats.matrix_density,
-                    },
-                    pipelineSteps: existingSteps.map((s) => ({ ...s, status: "done" })),
-                  };
-                }
-
-                const stepId = stepName || data.agent || "step";
-                const stepIdx = existingSteps.findIndex((s) => s.id === stepId || s.agent === data.agent);
-
-                const updatedStep = {
-                  id: stepId,
-                  agent: data.agent || "Agent",
-                  title: data.title || (data.agent ? data.agent.replace("Agent", " Agent") : "Pipeline Step"),
-                  status: data.status === "done" ? ("done" as const) : data.status === "failed" ? ("failed" as const) : ("running" as const),
-                  message: data.message,
-                  details: data.details,
-                };
-
-                if (stepIdx >= 0) {
-                  existingSteps[stepIdx] = { ...existingSteps[stepIdx], ...updatedStep };
-                } else {
-                  existingSteps.push(updatedStep);
-                }
-
-                return {
-                  ...msg,
-                  pipelineSteps: existingSteps,
-                  text: (stepName === "explanation" && data.value) ? data.value : (data.message ? `Agent Reasoning: ${data.message}` : msg.text),
-                };
-              })
-            );
-          } catch {
-            // ignore chunk parse errors
-          }
-        }
-      }
-
-      // Safety net: Guarantee completion when the stream finishes reading
       setDwaveCopilotMessages((prev) =>
         prev.map((msg) =>
-          msg.id === botMsgId && msg.isStreaming
+          msg.id === botMsgId
             ? {
                 ...msg,
+                text: data.response_text || "Ready to assist.",
                 isStreaming: false,
-                pipelineSteps: msg.pipelineSteps?.map((s) => ({
-                  ...s,
-                  status: s.status === "running" ? ("done" as const) : s.status,
-                })),
+                pipelineSteps: undefined,
+                generatedCode: undefined,
+                appliedToEditor: false,
               }
             : msg
         )
@@ -4603,11 +4418,8 @@ ${currentM.challengeInstruction}`,
           msg.id === botMsgId
             ? {
                 ...msg,
-                text: `Pipeline error: ${err.message}`,
+                text: `Notice: ${err.message || "Failed to reach AI engine"}`,
                 isStreaming: false,
-                pipelineSteps: msg.pipelineSteps?.map((s) =>
-                  s.status === "running" ? { ...s, status: "failed" as const, message: err.message } : s
-                ),
               }
             : msg
         )
@@ -4615,7 +4427,7 @@ ${currentM.challengeInstruction}`,
     }
   };
 
-  const handleAutoFix = useCallback(async (customErrorText?: string) => {
+  const handleDiagnoseError = useCallback(async (customErrorText?: string) => {
     const errText = customErrorText || terminalOutput || "";
     if (!errText) return;
 
@@ -4629,7 +4441,7 @@ ${currentM.challengeInstruction}`,
       cleanError.includes("[FRAMEWORK MISMATCH ERROR]") ||
       errText.includes("[FRAMEWORK MISMATCH ERROR]");
 
-    const repairPrompt = isFrameworkMismatch
+    const diagnosePrompt = isFrameworkMismatch
       ? `I ran my code in ${activeFile} and received this framework mismatch error:
 \`\`\`
 ${cleanError}
@@ -4639,9 +4451,9 @@ Please explain why this framework cannot be executed in this workspace and guide
 \`\`\`
 ${cleanError}
 \`\`\`
-Pinpoint the exact line and cause in 1-2 sentences, then return the complete corrected Python file.`;
+Diagnose the exact line number, root cause, and explain how to fix it conceptually (diagnostic-only; do not rewrite the full file).`;
 
-    await handleSendMessage(repairPrompt, errText);
+    await handleSendMessage(diagnosePrompt, errText);
   }, [terminalOutput, activeFile, handleSendMessage]);
 
   const handleToggleMutualExclusion = () => {
@@ -4682,7 +4494,7 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
     return Object.values(s).filter((v) => v === 1).length * 10;
   }, [solverResult.sample, solverResult.variables, activeProject.id]);
 
-  if (!mounted) {
+  if (!mounted || isInitializing || !isAuthenticated) {
     return (
       <div
         suppressHydrationWarning
@@ -4702,7 +4514,7 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
         </div>
         <div className="mt-4 flex items-center space-x-2 text-xs font-mono text-zinc-400">
           <div className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-          <span>Loading Quantum Studio environment...</span>
+          <span>{!isInitializing && !isAuthenticated ? "Redirecting to Sign In..." : "Verifying session..."}</span>
         </div>
       </div>
     );
@@ -4744,7 +4556,6 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
         onOpenProjectModal={() => setShowProjectModal(true)}
         onOpenNewProjectModal={() => setShowNewProjectModal(true)}
         onOpenAlgorithmStudio={() => setShowAlgorithmStudioModal(true)}
-        onOpenDataConnectors={() => setIsDataConnectorsOpen(true)}
         onOpenDeployModal={() => setIsDeployModalOpen(true)}
         isSynced={isCircuitSynced}
         onSync={handleSyncCodeAndCircuit}
@@ -5094,18 +4905,18 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
                               </div>
 
                               <div className="flex items-center space-x-2.5 text-zinc-400">
-                                {item.status === "error" && (
+                                {item.status === "error" && !(item.stderr || item.stdout || "").includes("Execution Engine Notice") && (
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleAutoFix(item.stderr || item.stdout);
+                                      handleDiagnoseError(item.stderr || item.stdout);
                                     }}
                                     className="flex items-center space-x-1 text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/25 transition-all cursor-pointer"
-                                    title="Auto-repair code with Guru AI"
+                                    title="Check what went wrong with Guru AI (read-only)"
                                   >
                                     <Sparkles className="w-2.5 h-2.5" />
-                                    <span>Auto-Fix</span>
+                                    <span>Check Issue</span>
                                   </button>
                                 )}
                                 <span className="text-[11px] font-mono text-zinc-500">
@@ -5171,7 +4982,7 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
             showTerminal={showTerminal}
             onToggleTerminal={() => setShowTerminal((prev) => !prev)}
             terminalOutput={terminalOutput}
-            onAutoFix={() => handleAutoFix()}
+            onDiagnoseError={() => handleDiagnoseError()}
             onOpenProjectModal={() => setShowProjectModal(true)}
             specs={
               framework === "qiskit"
@@ -5224,7 +5035,6 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
             onApplyCircuitAction={handleRunOrRecompile}
             variables={solverResult.variables}
             isPortfolioProblem={isPortfolio}
-            onApplyCodeToEditor={handleApplyPipelineCode}
             isJourney={activeProject.id === "quantum_journey_101"}
             journeyStage={journeyStage}
             journeyMilestoneId={journeyMilestoneId}
@@ -5247,18 +5057,6 @@ Pinpoint the exact line and cause in 1-2 sentences, then return the complete cor
           />
         </aside>
       </div>
-
-      {/* Data Connectors Modal (Pillar 2 Ingress / Egress) */}
-      <DataConnectorsModal
-        isOpen={isDataConnectorsOpen}
-        onClose={() => setIsDataConnectorsOpen(false)}
-        isDark={isDark}
-        colors={colors}
-        solverResult={solverResult}
-        onSendToPipeline={(problemText) => {
-          handleSendMessage(problemText);
-        }}
-      />
 
       {/* Deploy Solution Modal (Microservice REST Showcase) */}
       <DeploySolutionModal

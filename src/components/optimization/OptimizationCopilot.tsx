@@ -271,28 +271,30 @@ function ProgressiveAiResponse({
               )}
             </pre>
 
-            <button
-              onClick={() =>
-                onApplyCodeToEditor && onApplyCodeToEditor(msg.generatedCode!, msg.formulationMeta)
-              }
-              className={`w-full py-2 px-3 rounded-lg font-semibold text-xs transition-all flex items-center justify-center space-x-2 shadow-md ${
-                msg.appliedToEditor
-                  ? "bg-emerald-600 text-white shadow-emerald-500/20"
-                  : "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-500/20"
-              }`}
-            >
-              {msg.appliedToEditor ? (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Injected into Monaco Editor & Running</span>
-                </>
-              ) : (
-                <>
-                  <Zap className="w-3.5 h-3.5 fill-current" />
-                  <span>Apply to Monaco Editor & Run</span>
-                </>
-              )}
-            </button>
+            {onApplyCodeToEditor && (
+              <button
+                onClick={() =>
+                  onApplyCodeToEditor(msg.generatedCode!, msg.formulationMeta)
+                }
+                className={`w-full py-2 px-3 rounded-lg font-semibold text-xs transition-all flex items-center justify-center space-x-2 shadow-md ${
+                  msg.appliedToEditor
+                    ? "bg-emerald-600 text-white shadow-emerald-500/20"
+                    : "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-500/20"
+                }`}
+              >
+                {msg.appliedToEditor ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Injected into Monaco Editor & Running</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-3.5 h-3.5 fill-current" />
+                    <span>Apply to Monaco Editor & Run</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -72,7 +72,8 @@ function LoginForm() {
                 showToast('Login Successful', 'success');
 
                 const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-                const activeRedirect = params?.get('redirect') || redirect;
+                const rawRedirect = params?.get('redirect') || redirect;
+                const activeRedirect = (rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')) ? rawRedirect : '/';
 
                 let targetRedirect = activeRedirect;
                 if (activeRedirect === '/' || activeRedirect === '/industry') {

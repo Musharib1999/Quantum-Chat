@@ -47,7 +47,6 @@ interface StudioHeaderProps {
   showTerminal?: boolean;
   onToggleTerminal?: () => void;
   isSyncing?: boolean;
-  onOpenDataConnectors?: () => void;
   onStartTour?: () => void;
   onOpenReportIssue?: () => void;
   onOpenDeployModal?: () => void;
@@ -73,7 +72,6 @@ export function StudioHeader({
   activeFile,
   onSelectFile,
   onAddFile,
-  onOpenDataConnectors,
   onStartTour,
   onOpenReportIssue,
   onOpenDeployModal,

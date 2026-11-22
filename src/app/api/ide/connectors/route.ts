@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBackendUrl } from '@/lib/backend';
+import { verifyUserSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    const verifiedEmail = await verifyUserSession(req);
+    if (!verifiedEmail) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Please sign in to use data connectors.' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { action } = body; // 'ingress_csv' or 'egress_export'
     const backendUrl = getBackendUrl();
