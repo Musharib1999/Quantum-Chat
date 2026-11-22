@@ -156,25 +156,15 @@ export function EnterpriseWorkbench({
   terminalLogs: externalTerminalLogs,
   onUpdateTerminalLogs,
 }: EnterpriseWorkbenchProps) {
-  const [activeTab, setActiveTab] = useState<WorkbenchTab>("model");
+  const [activeTab, setActiveTab] = useState<WorkbenchTab>("code");
 
-  // Restore active tab from localStorage on mount
+  // Always auto-select Code Editor tab when entering Workbench
   useEffect(() => {
-    try {
-      const savedTab = localStorage.getItem("qg_enterprise_active_tab");
-      if (savedTab === "guru_ai") {
-        setActiveTab("code");
-      } else if (savedTab && ["model", "q_matrix", "solver", "feasibility", "deploy", "code"].includes(savedTab)) {
-        setActiveTab(savedTab as WorkbenchTab);
-      }
-    } catch {}
+    setActiveTab("code");
   }, []);
 
   const handleSelectTab = (tab: WorkbenchTab) => {
     setActiveTab(tab);
-    try {
-      localStorage.setItem("qg_enterprise_active_tab", tab);
-    } catch {}
   };
 
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
