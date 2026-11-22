@@ -278,6 +278,11 @@ export function EnterpriseChatPane({
                         </div>
                       )}
 
+                      {/* ── ASSISTANT PROSE EXPLANATION ── */}
+                      <div className="text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-300">
+                        {msg.text}
+                      </div>
+
                       {/* ── EXECUTIVE SOLUTION CARD ── */}
                       {msg.executionResult && (
                         <div
@@ -349,11 +354,6 @@ export function EnterpriseChatPane({
                           </div>
                         </div>
                       )}
-
-                      {/* ── ASSISTANT PROSE EXPLANATION ── */}
-                      <div className="text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-300">
-                        {msg.text}
-                      </div>
 
                       {/* ── WORKBENCH SYNC CTA BUTTON ── */}
                       {onFocusWorkbench && (
