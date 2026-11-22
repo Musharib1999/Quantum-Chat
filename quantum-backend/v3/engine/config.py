@@ -16,16 +16,17 @@ if os.path.exists(_LOCAL_ENV):
     load_dotenv(dotenv_path=_LOCAL_ENV)
 
 # ── Groq API (Variant 2) ────────────────────────────────────────────────────────
-INFERENCE_PROVIDER   = os.environ.get("INFERENCE_PROVIDER", "runpod")
-FORCE_SOLVER         = os.environ.get("FORCE_SOLVER", "QUBO")
 GROQ_API_KEY         = os.environ.get("GROQ_API_KEY", "")
-GROQ_PRIMARY_MODEL   = os.environ.get("GROQ_PRIMARY_MODEL", "qwen/qwen3.8-27b")
-GROQ_FAST_MODEL      = os.environ.get("GROQ_FAST_MODEL", "qwen/qwen3.8-27b")
+GROQ_PRIMARY_MODEL   = os.environ.get("GROQ_PRIMARY_MODEL", "llama-3.3-70b-versatile")
+GROQ_FAST_MODEL      = os.environ.get("GROQ_FAST_MODEL", "llama-3.3-70b-versatile")
 
 # ── Qwen 3 32B (RunPod vllm, port 8000) ───────────────────────────────────────
 QWEN_BASE_URL  = os.environ.get("QWEN_BASE_URL", "")   # e.g. https://<pod>-8000.proxy.runpod.net/v1
 QWEN_API_KEY   = os.environ.get("QWEN_API_KEY", "none")
 QWEN_MODEL     = os.environ.get("QWEN_MODEL", "Qwen/Qwen2.5-Coder-32B-Instruct-AWQ")
+
+INFERENCE_PROVIDER   = os.environ.get("INFERENCE_PROVIDER", "runpod" if QWEN_BASE_URL else ("groq" if GROQ_API_KEY else "runpod"))
+FORCE_SOLVER         = os.environ.get("FORCE_SOLVER", "QUBO")
 
 # ── Llama 3 8B + LoRA adapters (RunPod vllm, port 8001) ───────────────────────
 LLAMA_BASE_URL = os.environ.get("LLAMA_BASE_URL", "")  # e.g. https://<pod>-8001.proxy.runpod.net/v1

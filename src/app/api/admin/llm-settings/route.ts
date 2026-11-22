@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import LLMSetting from '@/models/LLMSetting';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+    if (!(await verifyAdminCookies())) {
+        return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+    }
     await dbConnect();
     try {
         let settings = await LLMSetting.find({}).sort({ isDefault: -1, createdAt: 1 });
@@ -28,6 +32,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+    if (!(await verifyAdminCookies())) {
+        return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+    }
     await dbConnect();
     try {
         const body = await req.json();
@@ -69,6 +76,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+    if (!(await verifyAdminCookies())) {
+        return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+    }
     await dbConnect();
     try {
         const { searchParams } = new URL(req.url);

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import QuantumForm from '@/models/QuantumForm';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +80,9 @@ export async function GET(req: Request) {
 // POST: Admin Create/Update form
 export async function POST(req: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const body = await req.json();
         const { _id, industry, service, problem, hardware } = body;

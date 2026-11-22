@@ -8,11 +8,12 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: NextRequest) {
     try {
-        const { verifyUserSession } = await import('@/lib/auth');
-        const verifiedEmail = await verifyUserSession(req);
-        if (!verifiedEmail) {
-            return NextResponse.json({ error: "Unauthorized - user session required" }, { status: 401 });
+        const { gatewayAuth } = await import('@/lib/gatewayAuth');
+        const authRes = await gatewayAuth(req);
+        if (!authRes.ok) {
+            return authRes.response;
         }
+        const verifiedEmail = authRes.identity?.email;
 
         // Check Qiskit service status
         const { default: Hardware } = await import('@/models/Hardware');
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
 
         const response = await fetch(`${backendUrl}/v3/gate-model/stream`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authRes.headers },
             body: JSON.stringify({
                 model_text,
                 shots: shots ?? 5000,

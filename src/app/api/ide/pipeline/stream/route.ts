@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBackendUrl } from '@/lib/backend';
-import { verifyUserSession } from '@/lib/auth';
+import { gatewayAuth } from '@/lib/gatewayAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const verifiedEmail = await verifyUserSession(req);
-    if (!verifiedEmail) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Please sign in to run the optimization pipeline.' },
-        { status: 401 }
-      );
+    const authRes = await gatewayAuth(req);
+    if (!authRes.ok) {
+      return authRes.response;
     }
 
     const body = await req.json();
@@ -44,7 +41,7 @@ export async function POST(req: NextRequest) {
           try {
             const directResp = await fetch(`${backendUrl}/v3/direct-model/stream`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', ...authRes.headers },
               body: JSON.stringify({
                 model_text: problem,
                 penalty_choice: activePenalty,
@@ -258,7 +255,7 @@ export async function POST(req: NextRequest) {
         try {
           const resp = await fetch(`${backendUrl}/v3/enterprise/pipeline/stream`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authRes.headers },
             body: JSON.stringify({
               unstructured_problem: problem,
               mode: mode || 'qubo',

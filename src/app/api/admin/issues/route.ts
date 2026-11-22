@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import IssueReport from '@/models/IssueReport';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
 
         const { searchParams } = new URL(req.url);

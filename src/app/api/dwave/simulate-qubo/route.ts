@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBackendUrl } from "@/lib/backend";
-import { verifyUserSession } from "@/lib/auth";
+import { gatewayAuth } from "@/lib/gatewayAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const verifiedEmail = await verifyUserSession(req);
-    if (!verifiedEmail) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized: Please sign in to run QUBO simulations." },
-        { status: 401 }
-      );
+    const authRes = await gatewayAuth(req);
+    if (!authRes.ok) {
+      return authRes.response;
     }
 
     const body = await req.json();
@@ -21,6 +18,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authRes.headers,
       },
       body: JSON.stringify(body),
     });

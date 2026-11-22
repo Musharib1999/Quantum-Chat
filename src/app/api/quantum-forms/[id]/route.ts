@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import QuantumForm from '@/models/QuantumForm';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 // PATCH: Update specific fields (e.g., active toggle)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const { id } = await params;
         const body = await req.json();
 
-        const updatedForm = await QuantumForm.findByIdAndUpdate(id, body, { new: true });
+        const updatedForm = await QuantumForm.findByIdAndUpdate(id, { $set: body }, { new: true });
         
         if (!updatedForm) {
             return NextResponse.json({ error: 'Form not found' }, { status: 404 });
@@ -26,6 +30,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 // DELETE: Remove a form blueprint
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const { id } = await params;
 

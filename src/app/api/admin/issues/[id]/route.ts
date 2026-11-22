@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import IssueReport from '@/models/IssueReport';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         const { id } = await params;
         await dbConnect();
 
@@ -26,6 +30,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         const { id } = await params;
         const body = await req.json();
         const { status, priority, adminNotes } = body;
@@ -67,6 +74,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         const { id } = await params;
         await dbConnect();
 

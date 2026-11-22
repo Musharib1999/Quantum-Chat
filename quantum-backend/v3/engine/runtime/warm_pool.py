@@ -25,7 +25,12 @@ MAX_WARM_QUBITS = 28
 MAX_WARM_SHOTS = 10000
 
 def _worker_loop(task_queue: mp.Queue, result_queue: mp.Queue):
-    """Long-lived worker process with pre-imported quantum packages."""
+    """Long-lived worker process with pre-imported quantum packages and scrubbed environment."""
+    # Scrub sensitive server secrets from long-lived worker process memory
+    for _env_key in list(os.environ.keys()):
+        if any(s in _env_key.upper() for s in ("KEY", "SECRET", "TOKEN", "URI", "PASS", "CREDENTIAL", "AUTH")):
+            os.environ.pop(_env_key, None)
+
     # Pre-import heavy libraries once on process startup
     import numpy as np
     import qiskit

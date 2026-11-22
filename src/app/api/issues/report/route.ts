@@ -1,21 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import IssueReport from '@/models/IssueReport';
+import { verifyUserSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
+        const sessionEmail = await verifyUserSession(req);
+        if (!sessionEmail) {
+            return NextResponse.json(
+                { success: false, error: 'Unauthorized — please sign in to submit an issue report.' },
+                { status: 401 }
+            );
+        }
+
         const body = await req.json();
         const {
             title,
             description,
             category = 'other',
-            userEmail,
             userId,
-            isGuest = false,
             flowContext = {},
         } = body;
+        const userEmail = sessionEmail;
+        const isGuest = false;
 
         if (!description || typeof description !== 'string' || !description.trim()) {
             return NextResponse.json(

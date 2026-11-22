@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import SystemPrompt from '@/models/SystemPrompt';
 import { seedSystemPrompts } from '@/lib/seed-prompts';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
 
         // Auto-seed if empty to prevent UI crashing on first load
@@ -21,6 +25,9 @@ export async function GET() {
 
 export async function PUT(request: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const body = await request.json();
 

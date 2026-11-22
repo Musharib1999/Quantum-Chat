@@ -365,12 +365,27 @@ async def engine_v3_finalize(request: FinalizeRequest):
 @app.post("/engine/v2/execute", response_model=ExecutionResponse)
 async def engine_execute_code(request: ExecutionRequest):
     """
-    Execute Python solver code in an isolated subprocess.
+    Execute Python solver code in an isolated subprocess with AST security validation and scrubbed environment.
     """
     if not request.code.strip():
         return ExecutionResponse(
             output="",
             error="No code provided for execution.",
+            success=False
+        )
+
+    # Layer 1: AST Pre-Execution Security Check (blocks os, subprocess, socket, requests, open, eval, etc.)
+    try:
+        from .runtime.execution_runner import validate_code_security, SandboxSecurityError
+    except ImportError:
+        from v3.engine.runtime.execution_runner import validate_code_security, SandboxSecurityError
+
+    try:
+        validate_code_security(request.code)
+    except SandboxSecurityError as sec_err:
+        return ExecutionResponse(
+            output="",
+            error=str(sec_err),
             success=False
         )
 
@@ -397,12 +412,20 @@ async def engine_execute_code(request: ExecutionRequest):
         tmp.write(code_to_run)
         tmp_path = tmp.name
 
+    # Scrub sensitive secrets/keys from child subprocess environment
+    safe_env = {
+        k: v for k, v in os.environ.items()
+        if not any(s in k.upper() for s in ("KEY", "SECRET", "TOKEN", "URI", "PASS", "CREDENTIAL", "AUTH"))
+    }
+    safe_env["OMP_NUM_THREADS"] = "2"
+
     try:
         # Async subprocess — does not block the event loop during execution
         proc = await _asyncio.create_subprocess_exec(
             sys.executable, tmp_path,
             stdout=_asyncio.subprocess.PIPE,
             stderr=_asyncio.subprocess.PIPE,
+            env=safe_env,
         )
         try:
             stdout_bytes, stderr_bytes = await _asyncio.wait_for(

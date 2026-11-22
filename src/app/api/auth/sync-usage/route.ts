@@ -1,33 +1,38 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
+import { verifyUserSession } from '@/lib/auth';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
-        const { email, tokensDelta, simMinutesDelta } = body;
-
-        if (!email) {
-            return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+        const sessionEmail = await verifyUserSession(req);
+        if (!sessionEmail) {
+            return NextResponse.json({ error: 'Unauthorized — active session required' }, { status: 401 });
         }
 
-        if ((!tokensDelta || isNaN(tokensDelta)) && (!simMinutesDelta || isNaN(simMinutesDelta))) {
-            return NextResponse.json({ error: 'Valid tokensDelta or simMinutesDelta required' }, { status: 400 });
+        const body = await req.json();
+        const { tokensDelta, simMinutesDelta } = body;
+
+        const tDelta = tokensDelta !== undefined ? Number(tokensDelta) : 0;
+        const sDelta = simMinutesDelta !== undefined ? Number(simMinutesDelta) : 0;
+
+        if ((isNaN(tDelta) || tDelta < 0) || (isNaN(sDelta) || sDelta < 0) || (tDelta === 0 && sDelta === 0)) {
+            return NextResponse.json({ error: 'Positive tokensDelta or simMinutesDelta required' }, { status: 400 });
         }
 
         await dbConnect();
 
         const updateData: any = {};
-        if (tokensDelta && !isNaN(tokensDelta)) {
-            updateData.tokensUsed = Number(tokensDelta);
+        if (tDelta > 0) {
+            updateData.tokensUsed = tDelta;
         }
-        if (simMinutesDelta && !isNaN(simMinutesDelta)) {
-            updateData.simMinutesUsed = Number(simMinutesDelta);
+        if (sDelta > 0) {
+            updateData.simMinutesUsed = sDelta;
         }
 
-        // Use atomic $inc to safely add the delta to the existing DB values
+        // Use atomic $inc on the verified session owner's account only
         const updatedUser = await User.findOneAndUpdate(
-            { email },
+            { email: sessionEmail },
             { $inc: updateData },
             { new: true }
         ).lean();

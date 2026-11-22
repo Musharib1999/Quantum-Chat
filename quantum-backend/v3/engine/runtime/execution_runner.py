@@ -1427,7 +1427,10 @@ def run_code_sandbox(req: CodeExecutionRequest, simulator_id: Optional[str] = No
                     with open(act_full, "w", encoding="utf-8") as fp:
                         fp.write(code)
 
-            run_env = os.environ.copy()
+            run_env = {
+                k: v for k, v in os.environ.items()
+                if not any(s in k.upper() for s in ("KEY", "SECRET", "TOKEN", "URI", "PASS", "CREDENTIAL", "AUTH"))
+            }
             run_env["OMP_NUM_THREADS"] = "2"
             run_env["OPENBLAS_NUM_THREADS"] = "2"
             run_env["MKL_NUM_THREADS"] = "2"

@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import dbConnect from '../../../../../lib/db';
 import User from '../../../../../models/User';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export async function POST(req: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const { currentPassword, newPassword } = await req.json();
 

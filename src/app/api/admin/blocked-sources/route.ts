@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import BlockedSource from '@/models/BlockedSource';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export async function GET() {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const sources = await BlockedSource.find().sort({ createdAt: -1 });
         return NextResponse.json(sources);
@@ -14,6 +18,9 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         const { name } = await req.json();
         if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
@@ -27,6 +34,9 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
@@ -42,6 +52,9 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
         if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });

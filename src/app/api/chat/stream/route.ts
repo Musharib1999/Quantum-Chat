@@ -4,11 +4,12 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
-        const { verifyUserSession } = await import('@/lib/auth');
-        const verifiedEmail = await verifyUserSession(req);
-        if (!verifiedEmail) {
-            return NextResponse.json({ error: "Unauthorized - user session required" }, { status: 401 });
+        const { gatewayAuth } = await import('@/lib/gatewayAuth');
+        const authRes = await gatewayAuth(req);
+        if (!authRes.ok) {
+            return authRes.response;
         }
+        const verifiedEmail = authRes.identity?.email;
 
         const body = await req.json();
         const { unstructured_problem, mode, session_id, penalty_choice } = body;
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...authRes.headers,
             },
             body: JSON.stringify({
                 unstructured_problem,

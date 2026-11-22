@@ -155,6 +155,8 @@ def get_http_client() -> httpx.AsyncClient:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Enforce gateway auth policy on startup (refuses to boot in ENV=production without GATEWAY_AUTH_ENFORCE=1 & secret)
+    AuthConfig.from_env().validate()
     # Eagerly initialize connection pool on startup
     get_http_client()
     if db_client:
@@ -178,8 +180,10 @@ app = FastAPI(
 # Add additional origins via ALLOWED_ORIGINS env var (comma-separated).
 _default_origins = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "http://localhost:3001",
     "https://optios.vercel.app",
+    "https://quantumchat.quantumcomputers.guru",
 ]
 _extra = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 _allowed_origins = _default_origins + _extra
@@ -187,7 +191,6 @@ _allowed_origins = _default_origins + _extra
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
-    allow_origin_regex=r"^https://.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

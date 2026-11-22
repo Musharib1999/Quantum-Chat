@@ -15,7 +15,6 @@ const PUBLIC_ADMIN_ROUTES = [
     "/admin/login",
     "/api/admin/auth/login",
     "/api/admin/auth/logout",
-    "/api/admin/auth/change-password",
 ];
 
 export function middleware(req: NextRequest) {
@@ -61,8 +60,8 @@ export function middleware(req: NextRequest) {
         return NextResponse.next();
     }
 
-    // 4. Fast-reject unauthenticated calls to IDE & D-Wave APIs (DB token check also enforced inside each route)
-    if (pathname.startsWith("/api/ide") || pathname.startsWith("/api/dwave")) {
+    // 4. Fast-reject unauthenticated calls to IDE, D-Wave & Developer execute APIs (DB token check also enforced inside each route)
+    if (pathname.startsWith("/api/ide") || pathname.startsWith("/api/dwave") || pathname.startsWith("/api/developer")) {
         const userSession = req.cookies.get("user_session")?.value;
         if (!userSession) {
             return NextResponse.json(
@@ -86,5 +85,6 @@ export const config = {
         "/enterprise/:path*",
         "/api/ide/:path*",
         "/api/dwave/:path*",
+        "/api/developer/:path*",
     ],
 };

@@ -102,7 +102,11 @@ Materials	Vulcan Materials	VMC	15	8	10	22
 Materials	Steel Dynamics	STLD	21	32	12	29`;
 
 async function ingest() {
-    const uri = "mongodb+srv://musharibsubhani_db_user:Zq8jSgF42sl88Jcl@cluster0.auezwk2.mongodb.net/?appName=Cluster0";
+    require('dotenv').config();
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+        throw new Error("MONGODB_URI environment variable is required.");
+    }
     try {
         await mongoose.connect(uri);
         const Schema = mongoose.Schema;

@@ -7,7 +7,7 @@ set -euo pipefail
 # ── Config ────────────────────────────────────────────────
 WORKERS="${WORKERS:-1}"             # 1 worker is default since LLM pipeline is async & vLLM handles batching
 PORT="${PORT:-8003}"
-HOST="${HOST:-0.0.0.0}"
+HOST="${HOST:-127.0.0.1}"
 APP="app:app"
 TIMEOUT="${TIMEOUT:-300}"          # 5 minutes timeout per request (AI agent chains are long)
 KEEPALIVE="${KEEPALIVE:-5}"

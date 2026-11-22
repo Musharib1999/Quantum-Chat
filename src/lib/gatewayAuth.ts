@@ -65,16 +65,13 @@ export type GatewayAuthResult =
 function build(identity: SessionIdentity | null): GatewayAuthResult {
     const secret = signingSecret();
     if (!identity) {
-        if (gatewayAuthEnforced()) {
-            return {
-                ok: false,
-                response: NextResponse.json(
-                    { success: false, error: 'Unauthorized - please sign in to use this feature.' },
-                    { status: 401 }
-                ),
-            };
-        }
-        return { ok: true, headers: {}, identity: null };
+        return {
+            ok: false,
+            response: NextResponse.json(
+                { success: false, error: 'Unauthorized - please sign in to use this feature.' },
+                { status: 401 }
+            ),
+        };
     }
     if (!secret) {
         if (gatewayAuthEnforced()) {

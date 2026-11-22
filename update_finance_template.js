@@ -185,7 +185,11 @@ print(f"[QUANTUM_JSON]{json.dumps(result)}[/QUANTUM_JSON]")
 `;
 
 async function updateFinance() {
-    const uri = "mongodb+srv://musharibsubhani_db_user:Zq8jSgF42sl88Jcl@cluster0.auezwk2.mongodb.net/?appName=Cluster0";
+    require('dotenv').config();
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+        throw new Error("MONGODB_URI environment variable is required.");
+    }
     try {
         await mongoose.connect(uri);
         const Schema = mongoose.Schema;

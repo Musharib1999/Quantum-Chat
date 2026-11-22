@@ -76,6 +76,10 @@ async def call_primary(
     secured_system = system + IDENTITY_INJECTION
 
     provider = getattr(config, "INFERENCE_PROVIDER", "runpod")
+    if provider != "groq" and not getattr(config, "QWEN_BASE_URL", "") and getattr(config, "GROQ_API_KEY", ""):
+        provider = "groq"
+    if provider != "groq" and not getattr(config, "QWEN_BASE_URL", "") and getattr(config, "GROQ_API_KEY", ""):
+        provider = "groq"
     
     if provider == "groq":
         from .groq_client import call_groq
@@ -88,12 +92,25 @@ async def call_primary(
         )
     else:
         from .qwen_client import call_qwen
-        raw_response = await call_qwen(
-            system=secured_system,
-            user=user,
-            max_tokens=max_tokens,
-            temperature=temperature
-        )
+        try:
+            raw_response = await call_qwen(
+                system=secured_system,
+                user=user,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+        except Exception:
+            if getattr(config, "GROQ_API_KEY", ""):
+                from .groq_client import call_groq
+                raw_response = await call_groq(
+                    system=secured_system,
+                    user=user,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    model=config.GROQ_PRIMARY_MODEL
+                )
+            else:
+                raise
 
     # 3. Output Sanitizer (Safety backup)
     return sanitize_output(raw_response)
@@ -120,6 +137,8 @@ async def call_fast(
         )
 
     provider = getattr(config, "INFERENCE_PROVIDER", "runpod")
+    if provider != "groq" and not getattr(config, "QWEN_BASE_URL", "") and getattr(config, "GROQ_API_KEY", ""):
+        provider = "groq"
     
     system_content = "You are a helpful coding assistant specialized in quantum algorithms, QUBO formulation, and optimization."
     user_content = prompt

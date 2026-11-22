@@ -1,14 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '../../../../lib/db';
 import User from '../../../../models/User';
+import UserSession from '../../../../models/UserSession';
+import { verifyUserSession } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
-        await dbConnect();
-        const { email, currentPassword, newPassword } = await req.json();
+        const sessionEmail = await verifyUserSession(req);
+        if (!sessionEmail) {
+            return NextResponse.json({ error: 'Unauthorized — active session required' }, { status: 401 });
+        }
 
-        if (!email || !currentPassword || !newPassword) {
+        await dbConnect();
+        const { currentPassword, newPassword } = await req.json();
+
+        if (!currentPassword || !newPassword) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -16,7 +23,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'New password must be at least 8 characters long' }, { status: 400 });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: sessionEmail });
 
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -38,7 +45,13 @@ export async function POST(req: Request) {
         user.password = hashedPassword;
         await user.save();
 
-        console.log(`Password updated for user: ${email}`);
+        // Revoke any other active sessions for this user except the current cookie
+        const currentToken = req.cookies.get('user_session')?.value;
+        if (currentToken) {
+            await UserSession.deleteMany({ email: sessionEmail, token: { $ne: currentToken } });
+        }
+
+        console.log(`Password updated for user: ${sessionEmail}`);
 
         return NextResponse.json({ success: true, message: 'Password updated successfully' });
 

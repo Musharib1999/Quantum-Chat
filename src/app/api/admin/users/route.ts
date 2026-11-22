@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/db';
 import User from '../../../../models/User';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +17,11 @@ function generateApiKey() {
 
 export async function GET() {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
-        const users = await User.find({}).sort({ createdAt: -1 });
+        const users = await User.find({}).select('-password').sort({ createdAt: -1 });
         return NextResponse.json(users);
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
@@ -25,6 +30,9 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const body = await req.json();
 
@@ -51,15 +59,20 @@ export async function POST(req: Request) {
             demoExpiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
         }
 
+        const hashedPassword = body.password ? await bcrypt.hash(String(body.password), 10) : undefined;
+
         const user = await User.create({
             ...body,
+            ...(hashedPassword ? { password: hashedPassword } : {}),
             demoExpiresAt,
             simMinutesLimit: body.simMinutesLimit || simMinutesLimit,
             tokenLimit: body.tokenLimit || tokenLimit,
             apiKey: (body.isApproved || body.role === 'admin') ? generateApiKey() : undefined,
             apiEnabled: body.isApproved || body.role === 'admin'
         });
-        return NextResponse.json(user, { status: 201 });
+        const safeUser = user.toObject();
+        delete safeUser.password;
+        return NextResponse.json(safeUser, { status: 201 });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
     }
@@ -67,6 +80,9 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const body = await req.json();
         const { 
@@ -103,7 +119,7 @@ export async function PUT(req: Request) {
                 updateData.demoExpiresAt = null;
             }
         }
-        if (password) updateData.password = password;
+        if (password) updateData.password = await bcrypt.hash(String(password), 10);
         if (tokenLimit !== undefined) updateData.tokenLimit = Number(tokenLimit);
         if (tokensUsed !== undefined) updateData.tokensUsed = Number(tokensUsed);
         if (simMinutesLimit !== undefined) updateData.simMinutesLimit = Number(simMinutesLimit);
@@ -129,7 +145,7 @@ export async function PUT(req: Request) {
             updateData.apiEnabled = false;
         }
 
-        const user = await User.findByIdAndUpdate(id, updateData, { new: true });
+        const user = await User.findByIdAndUpdate(id, updateData, { new: true }).select('-password');
 
         console.log("PUT /api/admin/users db response user tokenLimit:", user?.tokenLimit);
 
@@ -145,6 +161,9 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
+        if (!(await verifyAdminCookies())) {
+            return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+        }
         await dbConnect();
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');

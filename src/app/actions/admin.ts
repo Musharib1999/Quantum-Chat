@@ -1,6 +1,7 @@
 "use server";
 
 import dbConnect from '@/lib/db';
+import { requireAdminAction } from '@/lib/auth';
 import mongoose from 'mongoose';
 import QaPair from '@/models/QaPair';
 import Guardrail from '@/models/Guardrail';
@@ -51,6 +52,7 @@ export type ChatLogType = {
 
 // --- Knowledge Base Actions ---
 export async function getQaPairs() {
+    await requireAdminAction();
     await dbConnect();
     const pairs = await QaPair.find({}).lean();
     return pairs.map((p: any) => ({
@@ -64,12 +66,14 @@ export async function getQaPairs() {
 }
 
 export async function addQaPair(data: any) {
+    await requireAdminAction();
     await dbConnect();
     const newPair = await QaPair.create(data);
     return { success: true, id: newPair._id.toString() };
 }
 
 export async function deleteQaPair(id: string) {
+    await requireAdminAction();
     await dbConnect();
     await QaPair.findByIdAndDelete(id);
     return { success: true };
@@ -77,6 +81,7 @@ export async function deleteQaPair(id: string) {
 
 // --- Guardrails Actions ---
 export async function getGuardrails() {
+    await requireAdminAction();
     await dbConnect();
     const rules = await Guardrail.find({}).lean();
     return rules.map((r: any) => ({
@@ -88,12 +93,14 @@ export async function getGuardrails() {
 }
 
 export async function addGuardrail(data: any) {
+    await requireAdminAction();
     await dbConnect();
     const newRule = await Guardrail.create(data);
     return { success: true, id: newRule._id.toString() };
 }
 
 export async function toggleGuardrail(id: string) {
+    await requireAdminAction();
     await dbConnect();
     const rule = await Guardrail.findById(id);
     if (rule) {
@@ -104,12 +111,14 @@ export async function toggleGuardrail(id: string) {
 }
 
 export async function deleteGuardrail(id: string) {
+    await requireAdminAction();
     await dbConnect();
     await Guardrail.findByIdAndDelete(id);
     return { success: true };
 }
 
 export async function updateGuardrail(id: string, rule: string) {
+    await requireAdminAction();
     await dbConnect();
     await Guardrail.findByIdAndUpdate(id, { rule });
     return { success: true };
@@ -117,6 +126,7 @@ export async function updateGuardrail(id: string, rule: string) {
 
 // --- Chat Logs Actions ---
 export async function getChatLogs() {
+    await requireAdminAction();
     await dbConnect();
     const logs = await ChatLog.find({}).sort({ timestamp: -1 }).limit(50).lean();
     return logs.map((l: any) => ({
@@ -177,18 +187,21 @@ export async function getHardwares() {
 }
 
 export async function addHardware(data: any) {
+    await requireAdminAction();
     await dbConnect();
     const newHw = await Hardware.create(data);
     return { success: true, id: newHw._id.toString() };
 }
 
 export async function updateHardware(id: string, data: any) {
+    await requireAdminAction();
     await dbConnect();
     await Hardware.findByIdAndUpdate(id, data);
     return { success: true };
 }
 
 export async function toggleHardwareStatus(id: string) {
+    await requireAdminAction();
     await dbConnect();
     const hw = await Hardware.findById(id);
     if (hw) {
@@ -201,6 +214,7 @@ export async function toggleHardwareStatus(id: string) {
 }
 
 export async function deleteHardware(id: string) {
+    await requireAdminAction();
     await dbConnect();
     await Hardware.findByIdAndDelete(id);
     return { success: true };
@@ -363,18 +377,21 @@ export async function getCourses() {
 }
 
 export async function addCourse(data: any) {
+    await requireAdminAction();
     await dbConnect();
     const newCourse = await Course.create(data);
     return { success: true, id: newCourse._id.toString() };
 }
 
 export async function updateCourse(id: string, data: any) {
+    await requireAdminAction();
     await dbConnect();
     await Course.findByIdAndUpdate(id, data);
     return { success: true };
 }
 
 export async function deleteCourse(id: string) {
+    await requireAdminAction();
     await dbConnect();
     await Course.findByIdAndDelete(id);
     return { success: true };
@@ -414,6 +431,7 @@ export async function getExercises(courseId?: string) {
     })));
 }
 export async function addExercise(data: any) {
+    await requireAdminAction();
     await dbConnect();
     const newExercise = await Exercise.create(data);
     return serializeData({
@@ -423,6 +441,7 @@ export async function addExercise(data: any) {
 }
 
 export async function updateExercise(id: string, data: any) {
+    await requireAdminAction();
     await dbConnect();
     const updated = await Exercise.findByIdAndUpdate(id, data, { new: true });
     if (!updated) throw new Error("Exercise not found");
@@ -433,6 +452,7 @@ export async function updateExercise(id: string, data: any) {
 }
 
 export async function deleteExercise(id: string) {
+    await requireAdminAction();
     await dbConnect();
     const deleted = await Exercise.findByIdAndDelete(id);
     if (!deleted) throw new Error("Exercise not found");

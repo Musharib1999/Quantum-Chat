@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import UseCase from '@/models/UseCase';
+import { verifyAdminCookies } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+    if (!(await verifyAdminCookies())) {
+        return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+    }
     await dbConnect();
     try {
         const body = await req.json();
@@ -26,6 +30,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+    if (!(await verifyAdminCookies())) {
+        return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+    }
     await dbConnect();
     try {
         const { searchParams } = new URL(req.url);
@@ -33,7 +40,7 @@ export async function PUT(req: NextRequest) {
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
         const body = await req.json();
-        const useCase = await UseCase.findByIdAndUpdate(id, body, { new: true });
+        const useCase = await UseCase.findByIdAndUpdate(id, { $set: body }, { new: true });
         return NextResponse.json(useCase);
     } catch (error) {
         return NextResponse.json({ error: 'Failed to update use case' }, { status: 500 });
@@ -41,6 +48,9 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+    if (!(await verifyAdminCookies())) {
+        return NextResponse.json({ error: 'Unauthorized — admin session required.' }, { status: 401 });
+    }
     await dbConnect();
     try {
         const { searchParams } = new URL(req.url);
