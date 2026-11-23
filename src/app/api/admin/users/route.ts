@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/db';
 import User from '../../../../models/User';
 import { verifyAdminCookies } from '@/lib/auth';
+import { normalizeRole } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,8 +54,10 @@ export async function POST(req: Request) {
         if (plan === 'Pro') tokenLimit = 500000;
         if (plan === 'Enterprise') tokenLimit = 2000000;
 
+        const canonicalRole = normalizeRole(body.role);
+
         let demoExpiresAt = undefined;
-        if (body.role === 'demo') {
+        if (canonicalRole === 'demo') {
             const hours = Number(body.demoDurationHours) || 2;
             demoExpiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
         }
@@ -63,12 +66,13 @@ export async function POST(req: Request) {
 
         const user = await User.create({
             ...body,
+            role: canonicalRole,
             ...(hashedPassword ? { password: hashedPassword } : {}),
             demoExpiresAt,
             simMinutesLimit: body.simMinutesLimit || simMinutesLimit,
             tokenLimit: body.tokenLimit || tokenLimit,
-            apiKey: (body.isApproved || body.role === 'admin') ? generateApiKey() : undefined,
-            apiEnabled: body.isApproved || body.role === 'admin'
+            apiKey: (body.isApproved || canonicalRole === 'admin') ? generateApiKey() : undefined,
+            apiEnabled: body.isApproved || canonicalRole === 'admin'
         });
         const safeUser = user.toObject();
         delete safeUser.password;
@@ -107,8 +111,9 @@ export async function PUT(req: Request) {
         if (phone !== undefined) updateData.phone = phone;
         if (plan !== undefined) updateData.plan = plan;
         if (role !== undefined) {
-            updateData.role = role;
-            if (role === 'demo') {
+            const canonicalRole = normalizeRole(role);
+            updateData.role = canonicalRole;
+            if (canonicalRole === 'demo') {
                 const existing = await User.findById(id);
                 if (existing) {
                     const hours = Number(demoDurationHours) || 2;

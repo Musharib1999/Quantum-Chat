@@ -8,10 +8,7 @@ export async function POST(req: Request) {
         await dbConnect();
         const body = await req.json();
 
-        const { firstName, lastName, email, company, password, role } = body;
-        
-        // Safety: only allow user or student roles to be requested
-        const requestedRole = (role === 'student') ? 'student' : 'user';
+        const { firstName, lastName, email, company, password } = body;
 
         // Basic validation
         if (!email || !password || !firstName || !lastName) {
@@ -28,7 +25,7 @@ export async function POST(req: Request) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create new user, explicitly setting isApproved to false
+        // Create new user, explicitly setting isApproved to false and canonical 'learner' role
         const newUser = await User.create({
             firstName,
             lastName,
@@ -36,8 +33,7 @@ export async function POST(req: Request) {
             company: company || '',
             password: hashedPassword,
             isApproved: false, // Requires admin approval
-            role: requestedRole,
-            plan: requestedRole === 'student' ? 'Pro' : 'Guest' // Students get Pro tier features
+            role: 'learner',
         });
 
         return NextResponse.json(

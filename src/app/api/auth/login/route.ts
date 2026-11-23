@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '../../../../lib/db';
 import User from '../../../../models/User';
 import bcrypt from 'bcryptjs';
+import { normalizeRole } from '@/lib/roles';
 
 export async function POST(req: Request) {
     try {
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
             lastName: user.lastName || '',
             phone: user.phone || '',
             plan: user.plan || 'Guest',
-            role: user.role || 'user',
+            role: normalizeRole(user.role),
             tokenLimit: user.tokenLimit,
             tokensUsed: user.tokensUsed,
             simMinutesLimit: user.simMinutesLimit ?? 5,

@@ -82,14 +82,14 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             </div>
                             <div className="flex flex-col min-w-0">
                                 <span className="text-sm font-semibold text-foreground truncate">
-                                    {user?.role === 'builder' ? 'Quantum Builder' : (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.name || 'Quantum User')}
+                                    {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.name || 'Quantum User'}
                                 </span>
 
                             </div>
                         </div>
-                        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border w-fit ${user.role === 'builder' ? 'bg-[#3066bb]/5 border-[#3066bb]/10' : 'bg-green-500/5 border-green-500/10'}`}>
-                            <Zap size={12} className={user.role === 'builder' ? 'text-[#3066bb]' : 'text-green-500'} />
-                            <span className={`text-[11px] font-bold uppercase tracking-wider ${user.role === 'builder' ? 'text-[#3066bb]' : 'text-green-600'}`}>{user.role === 'builder' ? 'BUILDER' : (user.plan || 'PRO')} PLAN</span>
+                        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border w-fit bg-green-500/5 border-green-500/10">
+                            <Zap size={12} className="text-green-500" />
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-green-600">{(user.plan || 'PRO')} PLAN</span>
                         </div>
                     </div>
                 ) : (
@@ -115,35 +115,18 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             <div className="p-2 space-y-1">
 
 
-                {/* Builder Dashboard Button */}
-                {isAuthenticated && user?.role === 'builder' && (
+                {/* Enterprise Studio Button */}
+                {isAuthenticated && (user?.role === 'enterprise' || user?.role === 'admin') && (
                     <button
                         onClick={() => {
-                            router.push('/builder/dashboard');
-                            onClose();
-                        }}
-                        className="w-full flex items-center justify-between px-4 py-3 mt-2 rounded-xl bg-[#3066bb] text-white hover:bg-[#3066bb]/90 transition-all group shadow-md"
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <Cpu size={16} className="text-white" />
-                            <span className="text-sm font-semibold tracking-wider">BUILDER CONSOLE</span>
-                        </div>
-                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-white/70" />
-                    </button>
-                )}
-
-                {/* Enterprise Dashboard Button */}
-                {isAuthenticated && user?.role === 'enterprise' && (
-                    <button
-                        onClick={() => {
-                            router.push('/enterprise/dashboard');
+                            router.push('/enterprise');
                             onClose();
                         }}
                         className="w-full flex items-center justify-between px-4 py-3 mt-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all group shadow-md"
                     >
                         <div className="flex items-center gap-2.5">
                             <Activity size={16} className="text-cyan-400" />
-                            <span className="text-sm font-semibold tracking-wider">ENTERPRISE PORTAL</span>
+                            <span className="text-sm font-semibold tracking-wider">ENTERPRISE STUDIO</span>
                         </div>
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-slate-400" />
                     </button>

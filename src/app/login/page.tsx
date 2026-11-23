@@ -5,6 +5,7 @@ import { Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { normalizeRole } from '@/lib/roles';
 
 function LoginForm() {
     const { login } = useAuth();
@@ -20,7 +21,6 @@ function LoginForm() {
     const [company, setCompany] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isStudent, setIsStudent] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -53,7 +53,7 @@ function LoginForm() {
             const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/signup';
             const bodyPayload = mode === 'login'
                 ? { email, password }
-                : { firstName, lastName, company, email, password, role: isStudent ? 'student' : 'user' };
+                : { firstName, lastName, company, email, password, role: 'learner' };
 
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -75,10 +75,11 @@ function LoginForm() {
                 const rawRedirect = params?.get('redirect') || redirect;
                 const activeRedirect = (rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')) ? rawRedirect : '/';
 
+                const userRole = normalizeRole(data.role ?? data.user?.role);
                 let targetRedirect = activeRedirect;
                 if (activeRedirect === '/' || activeRedirect === '/industry') {
-                    if (data.user?.role === 'admin') targetRedirect = '/admin';
-                    else if (data.user?.role === 'enterprise') targetRedirect = '/enterprise/dashboard';
+                    if (userRole === 'admin') targetRedirect = '/admin/dashboard';
+                    else if (userRole === 'enterprise') targetRedirect = '/enterprise';
                     else targetRedirect = '/ide';
                 }
 
@@ -157,25 +158,6 @@ function LoginForm() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {mode === 'signup' && (
                             <>
-                                <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200/60 mb-3">
-                                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">I am registering as a:</label>
-                                    <div className="flex gap-2">
-                                        <button 
-                                            type="button"
-                                            onClick={() => setIsStudent(false)}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${!isStudent ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'}`}
-                                        >
-                                            Professional
-                                        </button>
-                                        <button 
-                                            type="button"
-                                            onClick={() => setIsStudent(true)}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${isStudent ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'}`}
-                                        >
-                                            Student
-                                        </button>
-                                    </div>
-                                </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
                                         <label className="block text-xs font-semibold text-slate-700 mb-1">First Name</label>
@@ -200,7 +182,7 @@ function LoginForm() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                        {isStudent ? 'University / Institute' : 'Company / Organization'}
+                                        Organization / University
                                     </label>
                                     <input
                                         type="text"

@@ -3,10 +3,11 @@ import crypto from 'crypto';
 import dbConnect from './db';
 import UserSession from '../models/UserSession';
 import User from '../models/User';
+import { normalizeRole, UserRole } from './roles';
 
 export interface SessionIdentity {
     email: string;
-    role: string;
+    role: UserRole;
 }
 
 /**
@@ -61,7 +62,7 @@ export async function resolveSessionFromToken(sessionToken: string | null | unde
             return null;
         }
 
-        return { email: session.email, role: user.role || 'user' };
+        return { email: session.email, role: normalizeRole(user.role) };
     } catch (e) {
         console.error("[verifyUserSession] Auth check failed:", e);
         return null;

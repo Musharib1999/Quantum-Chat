@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { normalizeRole, getRoleLabel, UserRole } from '@/lib/roles';
 
 interface User {
     _id: string;
@@ -45,7 +46,7 @@ export default function UserManager() {
     const [simMinutesUsed, setSimMinutesUsed] = useState<number>(0);
     const [apiKey, setApiKey] = useState("");
     const [apiEnabled, setApiEnabled] = useState(false);
-    const [role, setRole] = useState<'user' | 'admin' | 'enterprise' | 'builder' | 'student' | 'demo'>('user');
+    const [role, setRole] = useState<UserRole>('learner');
     const [demoDuration, setDemoDuration] = useState("2");
     const [formError, setFormError] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
@@ -79,7 +80,7 @@ export default function UserManager() {
         setSimMinutesUsed(0);
         setApiKey("");
         setApiEnabled(false);
-        setRole('user');
+        setRole('learner');
         setDemoDuration("2");
         setFormError("");
         setSelectedUser(null);
@@ -248,22 +249,20 @@ export default function UserManager() {
                                                 {(user.firstName || user.lastName) && (
                                                     <span className="text-xs text-[#0F172A]">{user.firstName} {user.lastName}</span>
                                                 )}
-                                                <span className="text-[10px] text-[#0F172A]">{user.role} • {user.plan}</span>
+                                                <span className="text-[10px] text-[#0F172A]">{getRoleLabel(user.role)} • {user.plan}</span>
                                             </div>
                                         </td>
                                         <td className="px-5 py-4">
-                                            {user.role === 'admin' ? (
+                                            {normalizeRole(user.role) === 'admin' ? (
                                                 <span className="px-2 py-0.5 bg-white text-[#0F172A] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/20">Admin</span>
-                                            ) : user.role === 'enterprise' ? (
+                                            ) : normalizeRole(user.role) === 'enterprise' ? (
                                                 <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold border border-purple-100">Enterprise</span>
-                                            ) : user.role === 'builder' ? (
-                                                <span className="px-2 py-0.5 bg-white text-[#0F172A] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/20">Builder</span>
-                                            ) : user.role === 'student' ? (
-                                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold border border-emerald-100">Student</span>
+                                            ) : normalizeRole(user.role) === 'demo' ? (
+                                                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-bold border border-amber-200">Demo Trial</span>
                                             ) : user.isApproved ? (
-                                                <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded text-[10px] font-bold border border-green-100">Active</span>
+                                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-bold border border-emerald-100">Learner · Active</span>
                                             ) : (
-                                                <span className="px-2 py-0.5 bg-white text-[#0F172A] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/30">Pending</span>
+                                                <span className="px-2 py-0.5 bg-white text-[#0F172A] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/30">Learner · Pending</span>
                                             )}
                                         </td>
                                         <td className="px-5 py-4">
@@ -323,7 +322,7 @@ export default function UserManager() {
                                                         setSimMinutesUsed(user.simMinutesUsed || 0);
                                                         setApiKey(user.apiKey || "");
                                                         setApiEnabled(user.apiEnabled || false);
-                                                        setRole(user.role as any || 'user');
+                                                        setRole(normalizeRole(user.role));
                                                         let durationStr = "2";
                                                         if (user.role === 'demo' && user.demoExpiresAt && user.createdAt) {
                                                             const diffMs = new Date(user.demoExpiresAt).getTime() - new Date(user.createdAt).getTime();
@@ -426,9 +425,7 @@ export default function UserManager() {
                                     value={role}
                                     onChange={e => setRole(e.target.value as any)}
                                 >
-                                    <option value="user">Standard User</option>
-                                    <option value="student">Academy Student</option>
-                                    <option value="builder">Quantum Builder</option>
+                                    <option value="learner">Learner</option>
                                     <option value="enterprise">Enterprise Partner</option>
                                     <option value="admin">Administrator</option>
                                     <option value="demo">Demo Trial Account</option>
@@ -537,9 +534,7 @@ export default function UserManager() {
                                         value={role}
                                         onChange={e => setRole(e.target.value as any)}
                                     >
-                                        <option value="user">Standard User</option>
-                                        <option value="student">Academy Student</option>
-                                        <option value="builder">Quantum Builder</option>
+                                        <option value="learner">Learner</option>
                                         <option value="enterprise">Enterprise Partner</option>
                                         <option value="admin">Administrator</option>
                                         <option value="demo">Demo Trial Account</option>

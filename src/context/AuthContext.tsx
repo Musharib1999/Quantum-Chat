@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { normalizeRole, UserRole } from '@/lib/roles';
 
 interface User {
     email: string;
@@ -9,7 +10,7 @@ interface User {
     lastName?: string;
     phone?: string;
     plan?: 'Guest' | 'Pro' | 'Enterprise';
-    role?: 'user' | 'admin' | 'enterprise' | 'builder' | 'demo';
+    role?: UserRole;
     demoExpiresAt?: string;
     tokenLimit?: number;
     tokensUsed?: number;
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     lastName: parsed.lastName || '',
                     phone: parsed.phone || '',
                     plan: parsed.plan || 'Guest',
-                    role: parsed.role || 'user',
+                    role: normalizeRole(parsed.role),
                     tokenLimit: parsed.tokenLimit,
                     tokensUsed: parsed.tokensUsed,
                     simMinutesLimit: parsed.simMinutesLimit,
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                                 simMinutesLimit: data.simMinutesLimit ?? 5,
                                 simMinutesUsed: data.simMinutesUsed ?? 0,
                                 apiKey: data.apiKey || '',
-                                role: data.role || 'user',
+                                role: normalizeRole(data.role),
                                 demoExpiresAt: data.demoExpiresAt || undefined
                             };
                             localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
@@ -132,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             lastName: userData.lastName || '',
             phone: userData.phone || '',
             plan: userData.plan || 'Guest',
-            role: userData.role || 'user',
+            role: normalizeRole(userData.role),
             demoExpiresAt: userData.demoExpiresAt || undefined,
             tokenLimit: userData.tokenLimit,
             tokensUsed: userData.tokensUsed,

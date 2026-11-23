@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '../../../../lib/db';
 import User from '../../../../models/User';
 import { verifyUserSession } from '../../../../lib/auth';
+import { normalizeRole } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
             lastName: user.lastName || '',
             phone: user.phone || '',
             plan: user.plan || 'Guest',
-            role: user.role || 'user',
+            role: normalizeRole(user.role),
             tokenLimit: user.tokenLimit,
             tokensUsed: user.tokensUsed,
             simMinutesLimit: user.simMinutesLimit ?? 5,
