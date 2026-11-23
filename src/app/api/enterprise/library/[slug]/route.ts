@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import LibraryProblem from '@/models/LibraryProblem';
 import LibraryProblemVersion from '@/models/LibraryProblemVersion';
+import LibraryBenchmarkRun from '@/models/LibraryBenchmarkRun';
 import { resolveSession } from '@/lib/auth';
 import { canAccessEnterprise } from '@/lib/roles';
 import { ensureLibrarySeeded, LibraryDetail } from '@/lib/problemLibrary';
@@ -10,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/enterprise/library/[slug]
- * Login-only, read-only detail (full problem statement, data, best-known verification) of the current version.
+ * Login-only, read-only detail (full problem statement, data, best-known verification, benchmark run) of the current version.
  */
 export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: string }> }) {
   try {
@@ -37,6 +38,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: strin
     if (!v) {
       return NextResponse.json({ success: false, error: 'Problem version not found.' }, { status: 404 });
     }
+    const b = await LibraryBenchmarkRun.findOne({ slug: v.slug, contentHash: v.contentHash }).lean<any>();
 
     const detail: LibraryDetail = {
       slug: problem.slug,
@@ -54,6 +56,19 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: strin
       contentHash: v.contentHash,
       prompt: v.prompt,
       data: v.data,
+      benchmark: b
+        ? {
+            slug: b.slug,
+            contentHash: b.contentHash,
+            runAt: b.runAt,
+            protocol: b.protocol,
+            quboVars: b.quboVars,
+            verdict: b.verdict,
+            verdictNote: b.verdictNote || '',
+            qubo: b.qubo,
+            classical: b.classical,
+          }
+        : null,
     };
 
     return NextResponse.json({ success: true, problem: detail });
