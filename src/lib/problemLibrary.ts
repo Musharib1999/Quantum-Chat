@@ -54,72 +54,123 @@ export function ensureLibrarySeeded(): Promise<void> {
   if (!seedPromise) {
     seedPromise = (async () => {
       await dbConnect();
-      for (const bundle of SEED_BUNDLES) {
-        for (const p of bundle.problems) {
-          const hash = computeContentHash(p);
-          const existing = await LibraryProblem.findOne({ slug: p.slug }).lean<any>();
-          const existingVersion = existing
-            ? await LibraryProblemVersion.findOne({ slug: p.slug, contentHash: hash }).lean<any>()
-            : null;
+      const allProblems = SEED_BUNDLES.flatMap((b) => b.problems || []);
+      if (allProblems.length === 0) return;
 
-          let versionNumber = existing?.currentVersion ?? 1;
-          if (!existingVersion) {
-            const latest = await LibraryProblemVersion.findOne({ slug: p.slug })
-              .sort({ version: -1 })
-              .lean<any>();
-            versionNumber = latest ? latest.version + 1 : 1;
-            await LibraryProblemVersion.create({
-              slug: p.slug,
-              version: versionNumber,
-              contentHash: hash,
-              prompt: p.prompt,
-              data: p.data,
-              bestKnown: p.bestKnown,
-              status: 'pipeline_generated',
-            });
-          } else {
-            versionNumber = existingVersion.version;
-          }
+      const slugs = allProblems.map((p) => p.slug);
 
-          await LibraryProblem.findOneAndUpdate(
-            { slug: p.slug },
-            {
-              slug: p.slug,
-              title: p.title,
-              industry: p.industry,
-              problemType: p.problemType,
-              description: p.description,
-              sizeTier: p.sizeTier,
-              estimatedBinaryVars: p.estimatedBinaryVars,
-              objectiveSense: p.objectiveSense,
-              source: p.source,
-              currentVersion: versionNumber,
-            },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
-          );
-        }
+      // Single batched read of existing templates & versions instead of ~160 sequential round-trips
+      const [existingTemplates, existingVersions] = await Promise.all([
+        LibraryProblem.find({ slug: { $in: slugs } })
+          .select('slug currentVersion')
+          .lean<any[]>(),
+        LibraryProblemVersion.find({ slug: { $in: slugs } })
+          .select('slug version contentHash')
+          .lean<any[]>(),
+      ]);
+
+      const maxVersionBySlug = new Map<string, number>();
+      const versionBySlugHash = new Map<string, number>();
+      for (const v of existingVersions) {
+        versionBySlugHash.set(`${v.slug}@${v.contentHash}`, v.version);
+        const curMax = maxVersionBySlug.get(v.slug) ?? 0;
+        if (v.version > curMax) maxVersionBySlug.set(v.slug, v.version);
+      }
+      for (const t of existingTemplates) {
+        const curMax = maxVersionBySlug.get(t.slug) ?? 0;
+        if ((t.currentVersion ?? 0) > curMax) maxVersionBySlug.set(t.slug, t.currentVersion);
       }
 
-      // Idempotently seed reproducible benchmark snapshots bound to (slug, contentHash)
+      const newVersionOps: any[] = [];
+      const templateOps: any[] = [];
+
+      for (const p of allProblems) {
+        const hash = computeContentHash(p);
+        const existingVerNum = versionBySlugHash.get(`${p.slug}@${hash}`);
+        let versionNumber: number;
+
+        if (existingVerNum !== undefined) {
+          versionNumber = existingVerNum;
+        } else {
+          versionNumber = (maxVersionBySlug.get(p.slug) ?? 0) + 1;
+          maxVersionBySlug.set(p.slug, versionNumber);
+          versionBySlugHash.set(`${p.slug}@${hash}`, versionNumber);
+          newVersionOps.push({
+            insertOne: {
+              document: {
+                slug: p.slug,
+                version: versionNumber,
+                contentHash: hash,
+                prompt: p.prompt,
+                data: p.data,
+                bestKnown: p.bestKnown,
+                status: 'pipeline_generated',
+              },
+            },
+          });
+        }
+
+        templateOps.push({
+          updateOne: {
+            filter: { slug: p.slug },
+            update: {
+              $set: {
+                slug: p.slug,
+                title: p.title,
+                industry: p.industry,
+                problemType: p.problemType,
+                description: p.description,
+                sizeTier: p.sizeTier,
+                estimatedBinaryVars: p.estimatedBinaryVars,
+                objectiveSense: p.objectiveSense,
+                source: p.source,
+                currentVersion: versionNumber,
+              },
+            },
+            upsert: true,
+          },
+        });
+      }
+
+      const benchOps: any[] = [];
       for (const bundle of BENCHMARK_BUNDLES) {
         for (const b of bundle.benchmarks || []) {
           if (!b?.slug || !b?.contentHash) continue;
-          await LibraryBenchmarkRun.findOneAndUpdate(
-            { slug: b.slug, contentHash: b.contentHash },
-            {
-              slug: b.slug,
-              contentHash: b.contentHash,
-              runAt: b.runAt,
-              protocol: b.protocol,
-              quboVars: b.quboVars,
-              verdict: b.verdict,
-              verdictNote: b.verdictNote,
-              qubo: b.qubo,
-              classical: b.classical,
+          benchOps.push({
+            updateOne: {
+              filter: { slug: b.slug, contentHash: b.contentHash },
+              update: {
+                $set: {
+                  slug: b.slug,
+                  contentHash: b.contentHash,
+                  runAt: b.runAt,
+                  protocol: b.protocol,
+                  quboVars: b.quboVars,
+                  verdict: b.verdict,
+                  verdictNote: b.verdictNote,
+                  qubo: b.qubo,
+                  classical: b.classical,
+                },
+              },
+              upsert: true,
             },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
-          );
+          });
         }
+      }
+
+      // Execute all upserts in at most 3 parallel bulkWrite calls (~200ms vs ~10s serial)
+      const tasks: Promise<any>[] = [];
+      if (newVersionOps.length > 0) {
+        tasks.push(LibraryProblemVersion.bulkWrite(newVersionOps, { ordered: false }));
+      }
+      if (templateOps.length > 0) {
+        tasks.push(LibraryProblem.bulkWrite(templateOps, { ordered: false }));
+      }
+      if (benchOps.length > 0) {
+        tasks.push(LibraryBenchmarkRun.bulkWrite(benchOps, { ordered: false }));
+      }
+      if (tasks.length > 0) {
+        await Promise.all(tasks);
       }
     })().catch((err) => {
       seedPromise = null; // allow retry on next request

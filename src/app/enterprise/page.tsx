@@ -35,6 +35,31 @@ import {
 
 const STORAGE_KEY = "qg_enterprise_studio_v1";
 
+/**
+ * Keep persisted project payloads compact (avoids multi-MB synchronous JSON.stringify freezes
+ * and huge MongoDB uploads caused by duplicating full qMatrix + code inside every historical run).
+ */
+function compactProjectForStorage(proj: ProjectRecord): ProjectRecord {
+  const trimmedRuns = (proj.runs || []).slice(0, 5).map((r, idx) => {
+    if (idx === 0 || !r.snapshot) return r;
+    return {
+      ...r,
+      snapshot: {
+        ...r.snapshot,
+        qMatrix: r.snapshot.qMatrix
+          ? { ...r.snapshot.qMatrix, entries: r.snapshot.qMatrix.entries.slice(0, 200), truncated: true }
+          : null,
+        code: "",
+        ortoolsCode: "",
+      },
+    };
+  });
+  return {
+    ...proj,
+    runs: trimmedRuns,
+  };
+}
+
 const DEFAULT_INITIAL_PROJECT: ProjectRecord = {
   id: "proj_initial",
   title: "New optimization model",
@@ -123,6 +148,10 @@ export default function EnterpriseStudioPage() {
   }, [isDark]);
 
   const [surfaceMode, setSurfaceMode] = useState<SurfaceMode>("copilot");
+  const [mountedSurfaces, setMountedSurfaces] = useState<{ workbench: boolean; library: boolean }>({
+    workbench: false,
+    library: false,
+  });
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -132,7 +161,20 @@ export default function EnterpriseStudioPage() {
   const [terminalRunSeq, setTerminalRunSeq] = useState(0);
   const pipelineAbortRef = useRef<AbortController | null>(null);
   const scriptAbortRef = useRef<AbortController | null>(null);
+  const scriptInFlightRef = useRef<boolean>(false);
+  const compileInFlightRef = useRef<boolean>(false);
+  const localSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSyncedUpdatedAtRef = useRef<Record<string, number>>({});
   const timedOutRef = useRef<boolean>(false);
+
+  // Lazy-mount Workbench and Library on first visit, then keep alive with CSS so switching is 0ms instant
+  useEffect(() => {
+    if (surfaceMode === "workbench" && !mountedSurfaces.workbench) {
+      setMountedSurfaces((prev) => ({ ...prev, workbench: true }));
+    } else if (surfaceMode === "library" && !mountedSurfaces.library) {
+      setMountedSurfaces((prev) => ({ ...prev, library: true }));
+    }
+  }, [surfaceMode, mountedSurfaces.workbench, mountedSurfaces.library]);
 
   // Projects state: Initialized with deterministic default to prevent SSR hydration mismatches
   const [projects, setProjects] = useState<ProjectRecord[]>([DEFAULT_INITIAL_PROJECT]);
@@ -148,6 +190,8 @@ export default function EnterpriseStudioPage() {
       scriptAbortRef.current.abort();
       scriptAbortRef.current = null;
     }
+    scriptInFlightRef.current = false;
+    compileInFlightRef.current = false;
     setIsStreaming(false);
     setIsSolving(false);
     setIsExecutingScript(false);
@@ -222,6 +266,9 @@ export default function EnterpriseStudioPage() {
               : [],
           }));
           setProjects(cleaned);
+          for (const p of cleaned) {
+            lastSyncedUpdatedAtRef.current[p.id] = p.updatedAt;
+          }
           setActiveProjectId(cleaned[0].id);
           setHasLoadedFromDb(true);
           return;
@@ -268,45 +315,59 @@ export default function EnterpriseStudioPage() {
     return projects.find((p) => p.id === activeProjectId) || projects[0] || DEFAULT_INITIAL_PROJECT;
   }, [projects, activeProjectId]);
 
-  // Persist projects to localStorage (fast cache) and MongoDB (debounced cloud persistence) for non-demo users
+  // Debounced localStorage cache + single-project incremental MongoDB sync (never blocks typing or tab switches)
   useEffect(() => {
-    if (!isMounted || !hasLoadedFromDb || isDemoUser) return;
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          projects,
-          activeProjectId,
-          surfaceMode,
-        })
-      );
-    } catch (e) {
-      console.warn("Failed to persist enterprise workspace to localStorage", e);
+    if (!isMounted || !hasLoadedFromDb || isDemoUser || isStreaming) return;
+
+    if (localSaveTimerRef.current) {
+      clearTimeout(localSaveTimerRef.current);
     }
+    localSaveTimerRef.current = setTimeout(() => {
+      try {
+        const compacted = projects.map(compactProjectForStorage);
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            projects: compacted,
+            activeProjectId,
+            surfaceMode,
+          })
+        );
+      } catch (e) {
+        console.warn("Failed to persist enterprise workspace to localStorage", e);
+      }
+    }, 1500);
 
-    if (isStreaming) return;
-    const meaningful = projects.filter(
-      (p) => p.id !== "proj_initial" || p.messages.length > 0 || Boolean(p.workspace?.code)
-    );
-    if (meaningful.length === 0) return;
+    // Only sync projects whose `updatedAt` actually advanced since the last MongoDB write
+    const dirtyProjects = projects.filter((p) => {
+      const meaningful = p.id !== "proj_initial" || p.messages.length > 0 || Boolean(p.workspace?.code);
+      if (!meaningful) return false;
+      const lastSynced = lastSyncedUpdatedAtRef.current[p.id] ?? 0;
+      return p.updatedAt > lastSynced;
+    });
 
-    if (dbSyncTimerRef.current) {
-      clearTimeout(dbSyncTimerRef.current);
-    }
-    dbSyncTimerRef.current = setTimeout(() => {
-      fetch("/api/enterprise/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projects: meaningful }),
-      }).catch((err) => {
-        console.warn("[Enterprise] Failed to sync projects to MongoDB:", err);
-      });
-    }, 1200);
-
-    return () => {
+    if (dirtyProjects.length > 0) {
       if (dbSyncTimerRef.current) {
         clearTimeout(dbSyncTimerRef.current);
       }
+      dbSyncTimerRef.current = setTimeout(() => {
+        const payload = dirtyProjects.map(compactProjectForStorage);
+        for (const p of payload) {
+          lastSyncedUpdatedAtRef.current[p.id] = p.updatedAt;
+        }
+        fetch("/api/enterprise/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projects: payload }),
+        }).catch((err) => {
+          console.warn("[Enterprise] Failed to sync projects to MongoDB:", err);
+        });
+      }, 1500);
+    }
+
+    return () => {
+      if (localSaveTimerRef.current) clearTimeout(localSaveTimerRef.current);
+      if (dbSyncTimerRef.current) clearTimeout(dbSyncTimerRef.current);
     };
   }, [projects, activeProjectId, surfaceMode, isMounted, hasLoadedFromDb, isDemoUser, isStreaming]);
 
@@ -684,63 +745,68 @@ export default function EnterpriseStudioPage() {
     }
   };
 
-  // Recompile & Solve handler
+  // Recompile & Solve handler (guarded with synchronous ref lock to prevent double-submit)
   const handleReSolve = async () => {
     if (isDemoUser) {
       showToast("Demo mode is view-only. Recompiling and solving are disabled in preview accounts.", "info");
       return;
     }
-    const textToSolve = currentProject.lastProblemText;
-    const currentLambda = currentProject.workspace.penaltyLambda;
-    if (textToSolve) {
-      setIsSolving(true);
-      try {
-        await handleSendMessage(textToSolve, currentLambda);
-      } finally {
-        setIsSolving(false);
-      }
-    } else if (currentProject.workspace.code) {
-      // Execute the code directly if no prompt text was submitted yet
-      if (pipelineAbortRef.current) {
-        pipelineAbortRef.current.abort();
-      }
-      const controller = new AbortController();
-      pipelineAbortRef.current = controller;
-      setIsSolving(true);
-      try {
-        const res = await fetch("/api/ide/execute", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({ code: currentProject.workspace.code }),
-        });
-        const data = await res.json();
-        if (data.success) {
+    if (compileInFlightRef.current || scriptInFlightRef.current) return;
+    compileInFlightRef.current = true;
+    try {
+      const textToSolve = currentProject.lastProblemText;
+      const currentLambda = currentProject.workspace.penaltyLambda;
+      if (textToSolve) {
+        setIsSolving(true);
+        try {
+          await handleSendMessage(textToSolve, currentLambda);
+        } finally {
+          setIsSolving(false);
+        }
+      } else if (currentProject.workspace.code) {
+        if (pipelineAbortRef.current) {
+          pipelineAbortRef.current.abort();
+        }
+        const controller = new AbortController();
+        pipelineAbortRef.current = controller;
+        setIsSolving(true);
+        try {
+          const res = await fetch("/api/ide/execute", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({ code: sanitizeLegacyQuboScript(currentProject.workspace.code) }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            updateActiveWorkspace((prev) => ({
+              ...prev,
+              terminal: [
+                ...prev.terminal,
+                `> Recompile & solve executed.`,
+                ...(data.stdout ? data.stdout.trim().split("\n") : []),
+                `[OK] Solver convergence reached in ${Math.round(data.execution_time_ms || 120)}ms.`,
+              ],
+            }));
+          }
+        } catch (err: any) {
+          const isAbort = err?.name === "AbortError" || controller.signal.aborted;
           updateActiveWorkspace((prev) => ({
             ...prev,
             terminal: [
               ...prev.terminal,
-              `> Recompile & solve executed.`,
-              ...(data.stdout ? data.stdout.trim().split("\n") : []),
-              `[OK] Solver convergence reached in ${Math.round(data.execution_time_ms || 120)}ms.`,
+              isAbort ? `[STOPPED] Re-solve terminated by user.` : `[ERROR] Re-solve failed: ${err.message}`,
             ],
           }));
+        } finally {
+          if (pipelineAbortRef.current === controller) {
+            pipelineAbortRef.current = null;
+          }
+          setIsSolving(false);
         }
-      } catch (err: any) {
-        const isAbort = err?.name === "AbortError" || controller.signal.aborted;
-        updateActiveWorkspace((prev) => ({
-          ...prev,
-          terminal: [
-            ...prev.terminal,
-            isAbort ? `[STOPPED] Re-solve terminated by user.` : `[ERROR] Re-solve failed: ${err.message}`,
-          ],
-        }));
-      } finally {
-        if (pipelineAbortRef.current === controller) {
-          pipelineAbortRef.current = null;
-        }
-        setIsSolving(false);
       }
+    } finally {
+      compileInFlightRef.current = false;
     }
   };
 
@@ -756,12 +822,14 @@ export default function EnterpriseStudioPage() {
     return buildFallbackOrtoolsCode(ws.variables, ws.mathModel);
   }, [ws.ortoolsCode, ws.execution, ws.variables, ws.mathModel]);
 
-  // Unified solver execution triggered from the top navbar Solve menu
+  // Unified solver execution triggered from the top navbar Solve menu (synchronous ref lock prevents duplicate runs)
   const handleExecuteSolver = async (mode: "dwave" | "ortools" | "parallel") => {
     if (isDemoUser) {
       showToast("Demo mode is view-only. Simulators and solvers are disabled in preview accounts.", "info");
       return;
     }
+    if (scriptInFlightRef.current || compileInFlightRef.current) return;
+
     const quboToRun =
       mode === "dwave" || mode === "parallel" ? sanitizeLegacyQuboScript(ws.code?.trim() || "") : "";
     const ortoolsToRun =
@@ -770,6 +838,7 @@ export default function EnterpriseStudioPage() {
         : "";
     if (!quboToRun && !ortoolsToRun) return;
 
+    scriptInFlightRef.current = true;
     if (surfaceMode !== "workbench") {
       setSurfaceMode("workbench");
     }
@@ -984,6 +1053,7 @@ export default function EnterpriseStudioPage() {
       if (scriptAbortRef.current === controller) {
         scriptAbortRef.current = null;
       }
+      scriptInFlightRef.current = false;
       setIsExecutingScript(false);
     }
   };
@@ -1046,72 +1116,70 @@ export default function EnterpriseStudioPage() {
         }}
         className="flex-1 flex min-h-0 relative overflow-hidden enterprise-bg-layer-0"
       >
-        {/* ── SURFACE 1: Optimization Copilot & Project History (Left Sidebar 30% + Chat 70%) ── */}
-        {surfaceMode === "copilot" && (
+        {/* ── SURFACE 1: Optimization Copilot & Project History (kept mounted, toggled via CSS for 0ms switches) ── */}
+        <div
+          style={{
+            width: "100%",
+            minWidth: "100%",
+            maxWidth: "100%",
+            flexBasis: "100%",
+            flexGrow: 0,
+            flexShrink: 0,
+          }}
+          className={`h-full flex-row min-w-0 overflow-hidden ${surfaceMode === "copilot" ? "flex" : "hidden"}`}
+        >
+          {/* Sidebar (30% width) */}
           <div
             style={{
-              width: "100%",
-              minWidth: "100%",
-              maxWidth: "100%",
-              flexBasis: "100%",
-              flexGrow: 0,
+              width: "30%",
+              flexBasis: "30%",
               flexShrink: 0,
+              backgroundColor: isDark ? "#090A0D" : "#FFFFFF",
             }}
-            className="h-full flex flex-row min-w-0 overflow-hidden"
+            className="h-full flex flex-col min-w-0 border-r border-white/[0.08] overflow-hidden enterprise-bg-layer-1"
           >
-            {/* Sidebar (30% width) */}
-            <div
-              style={{
-                width: "30%",
-                flexBasis: "30%",
-                flexShrink: 0,
-                backgroundColor: isDark ? "#090A0D" : "#FFFFFF",
-              }}
-              className="h-full flex flex-col min-w-0 border-r border-white/[0.08] overflow-hidden enterprise-bg-layer-1"
-            >
-              <EnterpriseHistorySidebar
-                isDark={isDark}
-                projects={projectEntries}
-                activeProjectId={activeProjectId}
-                onSelectProject={handleSelectProject}
-                onNewProject={handleNewProject}
-                executionHistory={currentProject.runs}
-                activeRunId={currentProject.activeRunId}
-                onSelectRun={handleSelectRun}
-              />
-            </div>
-
-            {/* Chat Area (70% width) */}
-            <div
-              style={{
-                width: "70%",
-                flexBasis: "70%",
-                backgroundColor: isDark ? "#0E0F13" : "#FFFFFF",
-              }}
-              className="flex-1 h-full flex flex-col min-w-0 overflow-hidden enterprise-bg-layer-2"
-            >
-              <EnterpriseChatPane
-                isDark={isDark}
-                messages={currentProject.messages}
-                isStreaming={isStreaming}
-                onSendMessage={handleSendMessage}
-                onStopStreaming={() => handleStopExecution()}
-                onClearChat={() => {
-                  setProjects((prev) =>
-                    prev.map((proj) => (proj.id === activeProjectId ? { ...proj, messages: [] } : proj))
-                  );
-                }}
-                onFocusWorkbench={() => setSurfaceMode("workbench")}
-              />
-            </div>
+            <EnterpriseHistorySidebar
+              isDark={isDark}
+              projects={projectEntries}
+              activeProjectId={activeProjectId}
+              onSelectProject={handleSelectProject}
+              onNewProject={handleNewProject}
+              executionHistory={currentProject.runs}
+              activeRunId={currentProject.activeRunId}
+              onSelectRun={handleSelectRun}
+            />
           </div>
-        )}
 
-        {/* ── SURFACE 3: Verified Industry Problem Library ── */}
-        {surfaceMode === "library" && (
+          {/* Chat Area (70% width) */}
+          <div
+            style={{
+              width: "70%",
+              flexBasis: "70%",
+              backgroundColor: isDark ? "#0E0F13" : "#FFFFFF",
+            }}
+            className="flex-1 h-full flex flex-col min-w-0 overflow-hidden enterprise-bg-layer-2"
+          >
+            <EnterpriseChatPane
+              isDark={isDark}
+              messages={currentProject.messages}
+              isStreaming={isStreaming}
+              onSendMessage={handleSendMessage}
+              onStopStreaming={() => handleStopExecution()}
+              onClearChat={() => {
+                setProjects((prev) =>
+                  prev.map((proj) => (proj.id === activeProjectId ? { ...proj, messages: [] } : proj))
+                );
+              }}
+              onFocusWorkbench={() => setSurfaceMode("workbench")}
+            />
+          </div>
+        </div>
+
+        {/* ── SURFACE 3: Verified Industry Problem Library (lazy-mounted on first visit, then kept alive) ── */}
+        {(mountedSurfaces.library || surfaceMode === "library") && (
           <div
             style={{ width: "100%", minWidth: "100%", maxWidth: "100%", flexBasis: "100%", flexGrow: 0, flexShrink: 0 }}
-            className="h-full flex flex-col min-w-0 overflow-hidden"
+            className={`h-full flex-col min-w-0 overflow-hidden ${surfaceMode === "library" ? "flex" : "hidden"}`}
           >
             <EnterpriseProblemLibrary
               isDark={isDark}
@@ -1121,8 +1189,8 @@ export default function EnterpriseStudioPage() {
           </div>
         )}
 
-        {/* ── SURFACE 2: POC Workbench (Model | Q Matrix | Solver | Feasibility | Deploy + Monaco) ── */}
-        {surfaceMode === "workbench" && (
+        {/* ── SURFACE 2: POC Workbench (lazy-mounted on first visit, kept alive so Monaco never reloads) ── */}
+        {(mountedSurfaces.workbench || surfaceMode === "workbench") && (
           <div
             style={{
               width: "100%",
@@ -1133,7 +1201,9 @@ export default function EnterpriseStudioPage() {
               flexShrink: 0,
               backgroundColor: isDark ? "#090A0F" : "#FFFFFF",
             }}
-            className="h-full flex flex-col min-w-0 max-w-full overflow-hidden enterprise-bg-layer-0"
+            className={`h-full flex-col min-w-0 max-w-full overflow-hidden enterprise-bg-layer-0 ${
+              surfaceMode === "workbench" ? "flex" : "hidden"
+            }`}
           >
             <EnterpriseWorkbench
               isDark={isDark}

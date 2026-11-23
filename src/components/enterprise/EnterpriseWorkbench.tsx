@@ -136,6 +136,106 @@ const AVAILABLE_SOLVERS: Array<{
   },
 ];
 
+const QMATRIX_DOM_GRID_LIMIT = 32;
+const COUPLINGS_PAGE_SIZE = 150;
+
+const QMatrixCanvas = React.memo(function QMatrixCanvas({
+  qMatrix,
+  matrixMap,
+  maxMagnitude,
+  selectedCell,
+  onSelectCell,
+}: {
+  qMatrix: QMatrixData;
+  matrixMap: Map<string, number>;
+  maxMagnitude: number;
+  selectedCell: { i: number; j: number; val: number } | null;
+  onSelectCell: (cell: { i: number; j: number; val: number }) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const size = Math.max(1, qMatrix.size);
+  const canvasPx = Math.min(520, Math.max(280, size * 3));
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+    canvas.width = Math.round(canvasPx * dpr);
+    canvas.height = Math.round(canvasPx * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Background
+    ctx.fillStyle = "#090A0D";
+    ctx.fillRect(0, 0, canvasPx, canvasPx);
+
+    const cellPx = canvasPx / size;
+    const drawPx = Math.max(1.25, cellPx);
+
+    // Subtle diagonal guide
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.14)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(canvasPx, canvasPx);
+    ctx.stroke();
+
+    // Draw all non-zero symmetric entries in O(nnz)
+    for (const e of qMatrix.entries) {
+      const val = e.value;
+      if (val === 0) continue;
+      const intensity = Math.min(1, Math.abs(val) / maxMagnitude);
+      const alpha = Math.max(0.22, intensity * 0.9);
+      ctx.fillStyle = val > 0 ? `rgba(245, 158, 11, ${alpha})` : `rgba(56, 189, 248, ${alpha})`;
+      ctx.fillRect(e.j * cellPx, e.i * cellPx, drawPx, drawPx);
+      if (e.i !== e.j) {
+        ctx.fillRect(e.i * cellPx, e.j * cellPx, drawPx, drawPx);
+      }
+    }
+
+    // Highlight selected cell
+    if (selectedCell && selectedCell.i < size && selectedCell.j < size) {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.lineWidth = 1.5;
+      const box = Math.max(4, cellPx);
+      ctx.strokeRect(
+        selectedCell.j * cellPx - (box - cellPx) / 2,
+        selectedCell.i * cellPx - (box - cellPx) / 2,
+        box,
+        box
+      );
+    }
+  }, [qMatrix, maxMagnitude, selectedCell, size, canvasPx]);
+
+  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const col = Math.min(size - 1, Math.max(0, Math.floor(((e.clientX - rect.left) / rect.width) * size)));
+    const row = Math.min(size - 1, Math.max(0, Math.floor(((e.clientY - rect.top) / rect.height) * size)));
+    const val = matrixMap.get(`${row}_${col}`) ?? matrixMap.get(`${col}_${row}`) ?? 0;
+    onSelectCell({ i: row, j: col, val });
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-2 border border-white/[0.06] rounded-lg p-3 bg-[#090A0D]">
+      <canvas
+        ref={canvasRef}
+        onClick={handleClick}
+        style={{ width: `${canvasPx}px`, height: `${canvasPx}px`, maxWidth: "100%" }}
+        className="cursor-crosshair rounded border border-white/[0.06] aspect-square"
+        title="Click any cell to inspect Q[i, j]"
+      />
+      <p className="text-[10px] font-mono text-zinc-500">
+        Canvas heatmap ({size}×{size} · {qMatrix.entries.length.toLocaleString()} non-zero entries) — click any cell to inspect
+      </p>
+    </div>
+  );
+});
+
 export function EnterpriseWorkbench({
   isDark,
   mathModel,
@@ -407,6 +507,11 @@ ${textToSend}
   const [qSearch, setQSearch] = useState("");
   const [qFilterKind, setQFilterKind] = useState<"all" | "decision" | "slack">("all");
   const [selectedCell, setSelectedCell] = useState<{ i: number; j: number; val: number } | null>(null);
+  const [visibleCouplingCount, setVisibleCouplingCount] = useState(COUPLINGS_PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCouplingCount(COUPLINGS_PAGE_SIZE);
+  }, [qSearch, qFilterKind, qMatrix]);
 
   // Precomputed lookup map and max magnitude for Q Matrix heatmap
   const { matrixMap, maxMagnitude, sortedEntries } = useMemo(() => {
@@ -522,6 +627,87 @@ ${textToSend}
   }, [ortoolsCode, execution, variables, mathModel]);
 
   const activeEditorCode = activeCodeFile === "ortools_baseline.py" ? synthesizedOrtoolsCode : generatedCode;
+
+  // Debounce Monaco onChange into parent project state (250ms) so typing in large scripts stays 60fps
+  const [editorDraft, setEditorDraft] = useState<string>(activeEditorCode);
+  const editorDraftRef = useRef<string>(activeEditorCode);
+  const lastCommittedCodeRef = useRef<string | null>(null);
+  const codeContextKeyRef = useRef<string>(`${projectId}::${activeCodeFile}`);
+  const codeChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingCodeEditRef = useRef<{ file: "solution.py" | "ortools_baseline.py"; value: string } | null>(null);
+  const onChangeCodeRef = useRef(onChangeCode);
+  const onChangeOrtoolsCodeRef = useRef(onChangeOrtoolsCode);
+  onChangeCodeRef.current = onChangeCode;
+  onChangeOrtoolsCodeRef.current = onChangeOrtoolsCode;
+
+  const flushPendingCodeEdit = () => {
+    if (codeChangeTimerRef.current) {
+      clearTimeout(codeChangeTimerRef.current);
+      codeChangeTimerRef.current = null;
+    }
+    const pending = pendingCodeEditRef.current;
+    if (!pending) return;
+    pendingCodeEditRef.current = null;
+    lastCommittedCodeRef.current = pending.value;
+    if (pending.file === "ortools_baseline.py") {
+      onChangeOrtoolsCodeRef.current?.(pending.value);
+    } else {
+      onChangeCodeRef.current(pending.value);
+    }
+  };
+
+  useEffect(() => {
+    const nextKey = `${projectId}::${activeCodeFile}`;
+    const prevKey = codeContextKeyRef.current;
+    if (nextKey !== prevKey) {
+      // Flush pending edits only if switching files within the same project
+      if (prevKey.startsWith(`${projectId}::`)) {
+        flushPendingCodeEdit();
+      } else {
+        if (codeChangeTimerRef.current) {
+          clearTimeout(codeChangeTimerRef.current);
+          codeChangeTimerRef.current = null;
+        }
+        pendingCodeEditRef.current = null;
+      }
+      codeContextKeyRef.current = nextKey;
+      lastCommittedCodeRef.current = null;
+      editorDraftRef.current = activeEditorCode;
+      setEditorDraft(activeEditorCode);
+      return;
+    }
+
+    // Ignore echoes of our own debounced commits so we never clobber in-flight keystrokes
+    if (activeEditorCode === editorDraftRef.current || activeEditorCode === lastCommittedCodeRef.current) {
+      return;
+    }
+    if (codeChangeTimerRef.current) {
+      clearTimeout(codeChangeTimerRef.current);
+      codeChangeTimerRef.current = null;
+    }
+    pendingCodeEditRef.current = null;
+    editorDraftRef.current = activeEditorCode;
+    setEditorDraft(activeEditorCode);
+  }, [activeEditorCode, activeCodeFile, projectId]);
+
+  useEffect(() => {
+    return () => {
+      flushPendingCodeEdit();
+    };
+  }, []);
+
+  const handleDebouncedEditorChange = (val: string | undefined) => {
+    const next = val || "";
+    editorDraftRef.current = next;
+    setEditorDraft(next);
+    pendingCodeEditRef.current = { file: activeCodeFile, value: next };
+    if (codeChangeTimerRef.current) {
+      clearTimeout(codeChangeTimerRef.current);
+    }
+    codeChangeTimerRef.current = setTimeout(() => {
+      flushPendingCodeEdit();
+    }, 250);
+  };
 
   // Live-update penalty λ inside solution.py whenever the user edits λ
   const handleInlinePenaltyChange = (nextLambda: number) => {
@@ -1180,7 +1366,16 @@ ${textToSend}
                     </div>
                   </div>
 
-                  {/* Matrix Grid Container */}
+                  {/* Matrix Grid Container (Canvas for large matrices > 32, DOM grid for small matrices) */}
+                  {qMatrix.size > QMATRIX_DOM_GRID_LIMIT ? (
+                    <QMatrixCanvas
+                      qMatrix={qMatrix}
+                      matrixMap={matrixMap}
+                      maxMagnitude={maxMagnitude}
+                      selectedCell={selectedCell}
+                      onSelectCell={setSelectedCell}
+                    />
+                  ) : (
                   <div className="overflow-x-auto max-h-[380px] custom-scrollbar border border-white/[0.06] rounded-lg p-2 bg-[#090A0D]">
                     <div
                       className="grid gap-1"
@@ -1256,6 +1451,7 @@ ${textToSend}
                       ))}
                     </div>
                   </div>
+                  )}
 
                   {/* Selected Cell Inspector */}
                   {selectedCell && (
@@ -1369,7 +1565,7 @@ ${textToSend}
                           backgroundColor: isDark ? "#13141A" : "#FFFFFF",
                         }}
                       >
-                        {filteredCouplings.map((e, idx) => {
+                        {filteredCouplings.slice(0, visibleCouplingCount).map((e, idx, arr) => {
                           const varA = qMatrix.variables[e.i];
                           const varB = qMatrix.variables[e.j];
                           const isLinear = e.i === e.j;
@@ -1378,7 +1574,7 @@ ${textToSend}
                             <tr
                               key={`${e.i}_${e.j}_${idx}`}
                               className={`transition-colors hover:bg-white/[0.03] ${
-                                idx !== filteredCouplings.length - 1 ? "border-b border-white/[0.04]" : ""
+                                idx !== arr.length - 1 ? "border-b border-white/[0.04]" : ""
                               }`}
                             >
                               <td className="p-3">
@@ -1429,6 +1625,30 @@ ${textToSend}
                       </tbody>
                     </table>
                   </div>
+                  {filteredCouplings.length > visibleCouplingCount && (
+                    <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 pt-1">
+                      <span>
+                        Showing {Math.min(visibleCouplingCount, filteredCouplings.length).toLocaleString()} of{" "}
+                        {filteredCouplings.length.toLocaleString()} couplings
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setVisibleCouplingCount((prev) => prev + COUPLINGS_PAGE_SIZE)}
+                          className="px-2.5 py-1 rounded border border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.07] text-zinc-200 cursor-pointer"
+                        >
+                          Show {Math.min(COUPLINGS_PAGE_SIZE, filteredCouplings.length - visibleCouplingCount)} more
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVisibleCouplingCount(filteredCouplings.length)}
+                          className="px-2.5 py-1 rounded border border-white/[0.08] text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                        >
+                          Show all
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -1898,14 +2118,8 @@ ${textToSend}
                 language="python"
                 theme={isDark ? "quantum-dark" : "quantum-light"}
                 beforeMount={handleBeforeMount}
-                value={activeEditorCode}
-                onChange={(val) => {
-                  if (activeCodeFile === "ortools_baseline.py") {
-                    onChangeOrtoolsCode?.(val || "");
-                  } else {
-                    onChangeCode(val || "");
-                  }
-                }}
+                value={editorDraft}
+                onChange={handleDebouncedEditorChange}
                 options={{
                   fontSize: 12,
                   fontFamily: "JetBrains Mono, Menlo, monospace",
