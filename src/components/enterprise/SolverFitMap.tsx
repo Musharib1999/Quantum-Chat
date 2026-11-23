@@ -350,14 +350,14 @@ export function SolverFitMap({ isDark, problems, onSelectProblem }: SolverFitMap
           </svg>
         </div>
 
-        {/* Active point callout */}
+        {/* Active point callout (fixed min-height prevents vertical layout shift when hovering chart points) */}
         {activeProblem && activeProblem.benchmark && (
           <div
-            className={`rounded-lg border px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-[12px] ${border} ${
+            className={`rounded-lg border px-3.5 py-2.5 min-h-[72px] flex flex-wrap items-center justify-between gap-2 text-[12px] ${border} ${
               isDark ? "bg-white/[0.02]" : "bg-slate-50"
             }`}
           >
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 flex-1 min-w-[260px]">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`font-semibold font-sans ${textMain}`}>{activeProblem.title}</span>
                 <span className={`text-[11px] font-mono ${verdictTextClass(activeProblem.benchmark.verdict)}`}>
@@ -367,7 +367,7 @@ export function SolverFitMap({ isDark, problems, onSelectProblem }: SolverFitMap
                   {activeProblem.benchmark.quboVars} QUBO vars
                 </span>
               </div>
-              <p className={`text-[12px] font-sans ${textMuted}`}>{activeProblem.benchmark.verdictNote}</p>
+              <p className={`text-[12px] font-sans line-clamp-2 ${textMuted}`}>{activeProblem.benchmark.verdictNote}</p>
             </div>
             {onSelectProblem && (
               <button
@@ -406,13 +406,9 @@ export function SolverFitMap({ isDark, problems, onSelectProblem }: SolverFitMap
                 return (
                   <tr
                     key={p.slug}
-                    onMouseEnter={() => setHoveredSlug(p.slug)}
-                    className={`transition-colors ${
-                      hoveredSlug === p.slug
-                        ? isDark
-                          ? "bg-white/[0.03]"
-                          : "bg-slate-50"
-                        : ""
+                    onClick={() => onSelectProblem?.(p.slug)}
+                    className={`transition-colors cursor-pointer ${
+                      isDark ? "hover:bg-white/[0.03]" : "hover:bg-slate-50"
                     }`}
                   >
                     <td className="py-2.5 px-4">
