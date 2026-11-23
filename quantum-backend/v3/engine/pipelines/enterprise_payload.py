@@ -281,6 +281,8 @@ def build_execution(exec_res: Optional[Dict[str, Any]]) -> Optional[Dict[str, An
         "num_reads": exec_res.get("num_reads"),
         "penalty_weight": _num(exec_res.get("penalty_weight")),
         "penalty_label": exec_res.get("penalty_label"),
+        "solver_comparison": exec_res.get("solver_comparison"),
+        "ortools_code": exec_res.get("ortools_code") or "",
     }
 
 
@@ -300,4 +302,6 @@ def build_enterprise_payload(workspace: Any, ir: Any) -> Dict[str, Any]:
             penalty_label=(execution or {}).get("penalty_label"),
         ),
         "execution": execution,
+        "solver_comparison": exec_res.get("solver_comparison"),
+        "ortools_code": exec_res.get("ortools_code") or "",
     }

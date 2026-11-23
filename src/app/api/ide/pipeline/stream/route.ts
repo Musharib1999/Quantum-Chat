@@ -232,9 +232,12 @@ export async function POST(req: NextRequest) {
                 execution_result: {
                   feasible: outputData?.feasible ?? simulatorData?.feasible ?? true,
                   energy: outputData?.energy ?? simulatorData?.energy ?? 0.0,
+                  objective_value: outputData?.objective_value ?? null,
                   solution: outputData?.solution ?? {},
                   selected_variables: outputData?.selected_variables ?? [],
                   interpretation: outputData?.output_text || '',
+                  solver_comparison: outputData?.solver_comparison ?? simulatorData?.solver_comparison ?? null,
+                  ortools_code: outputData?.ortools_code ?? simulatorData?.ortools_code ?? '',
                 },
               },
             });

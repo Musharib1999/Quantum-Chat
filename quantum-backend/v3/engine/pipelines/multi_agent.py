@@ -523,12 +523,26 @@ class ExplanationAgent(Agent):
                 feasible = workspace.execution_result.get("feasible", False)
                 val = workspace.execution_result.get("energy", 0.0)
                 selected_vars = [k for k, v in sol.items() if v == 1]
+                comp = workspace.execution_result.get("solver_comparison") or {}
+                comp_text = ""
+                if comp:
+                    q_meta = comp.get("quantum") or {}
+                    c_meta = comp.get("classical") or {}
+                    comp_text = (
+                        f"\nParallel Quantum vs. Classical Benchmark:\n"
+                        f"  Verdict: {comp.get('verdict_badge')}\n"
+                        f"  Optimality Gap: {comp.get('optimality_gap_pct')}%\n"
+                        f"  Quantum (D-Wave QUBO): Objective={q_meta.get('objective_value')}, Energy={q_meta.get('energy')}, Feasible={q_meta.get('feasible')}, Constraints={q_meta.get('constraints_satisfied')}/{q_meta.get('constraints_total')}, Time={q_meta.get('solve_time_ms')}ms, Selected={q_meta.get('selected_variables')}\n"
+                        f"  Classical (Google OR-Tools CP-SAT): Status={c_meta.get('status')}, Objective={c_meta.get('objective_value')}, Feasible={c_meta.get('feasible')}, Constraints={c_meta.get('constraints_satisfied')}/{c_meta.get('constraints_total')}, Time={c_meta.get('solve_time_ms')}ms, Selected={c_meta.get('selected_variables')}\n"
+                        f"  Technical Comparison Summary: {comp.get('summary')}\n"
+                    )
                 exec_summary = (
                     f"\nExecution Results:\n"
                     f"  Status: {'FEASIBLE' if feasible else 'INFEASIBLE'}\n"
                     f"  Objective Energy: {val}\n"
                     f"  Selected Variables: {selected_vars}\n"
                     f"  Full Solution Assignments: {sol}\n"
+                    f"{comp_text}"
                 )
 
             analysis_user = (
@@ -536,7 +550,8 @@ class ExplanationAgent(Agent):
                 f"Selected solver: {workspace.solver_strategy}\n"
                 f"Feasibility trace: {workspace.verification.get('reasoning_trace') if workspace.verification else ''}\n"
                 f"Generated code:\n{code_summary}"
-                f"{exec_summary}"
+                f"{exec_summary}\n\n"
+                f"Include a dedicated section comparing the Quantum Annealing (D-Wave QUBO) solution against the Classical (Google OR-Tools CP-SAT) solution, explaining which is better (or if both reached 0.00% optimality gap) and why."
             )
             
             explanation = await call_primary(
@@ -842,6 +857,8 @@ class SupervisorAgent:
                         "num_reads": solve_res.get("num_reads"),
                         "penalty_weight": solve_res.get("penalty_weight"),
                         "penalty_label": solve_res.get("penalty_label"),
+                        "solver_comparison": solve_res.get("solver_comparison"),
+                        "ortools_code": solve_res.get("ortools_code", ""),
                     }
 
                     # Compile the ir locally to attach to workspace for explanation block
@@ -1305,6 +1322,8 @@ class SupervisorAgent:
                         "num_reads": solve_res.get("num_reads"),
                         "penalty_weight": solve_res.get("penalty_weight"),
                         "penalty_label": solve_res.get("penalty_label"),
+                        "solver_comparison": solve_res.get("solver_comparison"),
+                        "ortools_code": solve_res.get("ortools_code", ""),
                     }
 
                     # Compile the ir locally to attach to workspace for explanation block

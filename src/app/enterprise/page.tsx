@@ -411,6 +411,7 @@ export default function EnterpriseStudioPage() {
                             selected_variables: nextWs.execution.selectedVariables,
                             num_reads: nextWs.execution.numReads,
                             interpretation: res.interpretation,
+                            solver_comparison: nextWs.execution.solverComparison ?? null,
                           }
                         : undefined,
                       pipelineSteps: existingSteps.map((s) => ({ ...s, status: "done" as const })),
@@ -727,6 +728,8 @@ export default function EnterpriseStudioPage() {
               }
               generatedCode={ws.code}
               onChangeCode={(code: string) => updateActiveWorkspace((prev) => ({ ...prev, code }))}
+              ortoolsCode={ws.ortoolsCode || ws.execution?.ortoolsCode || ws.execution?.solverComparison?.classical?.code || ""}
+              onChangeOrtoolsCode={(ortoolsCode: string) => updateActiveWorkspace((prev) => ({ ...prev, ortoolsCode }))}
               executionHistory={currentProject.runs}
               onRestoreRun={handleSelectRun}
               onReSolve={handleReSolve}

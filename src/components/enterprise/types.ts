@@ -60,6 +60,32 @@ export interface QMatrixData {
   slackCount: number;
 }
 
+export interface SolverComparisonSide {
+  solver: string;
+  status: string;
+  feasible: boolean | null;
+  objective_value: number | null;
+  energy?: number | null;
+  selected_variables: string[];
+  constraints_satisfied: number;
+  constraints_total: number;
+  solve_time_ms: number | null;
+  logical_qubits?: number;
+  penalty_lambda?: number;
+  code?: string;
+}
+
+export interface SolverComparisonData {
+  winner: "TIE" | "QUANTUM" | "CLASSICAL" | "NONE";
+  verdict_badge: string;
+  optimality_gap_pct: number | null;
+  decision_overlap_pct: number | null;
+  exact_decision_match: boolean;
+  summary: string;
+  quantum: SolverComparisonSide;
+  classical: SolverComparisonSide;
+}
+
 /** Solver result exactly as produced by the sampler. */
 export interface SolverExecution {
   feasible: boolean | null;
@@ -70,6 +96,8 @@ export interface SolverExecution {
   numReads: number | null;
   penaltyWeight: number | null;
   penaltyLabel: string | null;
+  solverComparison?: SolverComparisonData | null;
+  ortoolsCode?: string;
 }
 
 export interface SolverRouting {
@@ -86,6 +114,7 @@ export interface WorkspaceState {
   execution: SolverExecution | null;
   solverRouting: SolverRouting | null;
   code: string;
+  ortoolsCode?: string;
   penaltyLambda: number;
   selectedSolver: SolverType;
   terminal: string[];
@@ -129,6 +158,7 @@ export interface EnterpriseChatMessage {
     selected_variables: string[];
     num_reads?: number | null;
     interpretation?: string;
+    solver_comparison?: SolverComparisonData | null;
   };
   isStreaming?: boolean;
 }

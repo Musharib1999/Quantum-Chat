@@ -27,6 +27,7 @@ export function emptyWorkspace(): WorkspaceState {
     execution: null,
     solverRouting: null,
     code: "",
+    ortoolsCode: "",
     penaltyLambda: DEFAULT_PENALTY_LAMBDA,
     selectedSolver: "dwave_sa",
     terminal: [],
@@ -67,6 +68,8 @@ function adaptExecution(raw: any): SolverExecution | null {
     numReads: asNumber(raw.num_reads ?? raw.numReads),
     penaltyWeight: asNumber(raw.penalty_weight ?? raw.penaltyWeight),
     penaltyLabel: typeof (raw.penalty_label ?? raw.penaltyLabel) === "string" ? (raw.penalty_label ?? raw.penaltyLabel) : null,
+    solverComparison: raw.solver_comparison ?? raw.solverComparison ?? null,
+    ortoolsCode: typeof (raw.ortools_code ?? raw.ortoolsCode) === "string" ? (raw.ortools_code ?? raw.ortoolsCode) : "",
   };
 }
 
@@ -188,6 +191,12 @@ export function adaptPipelineResult(result: any, prev: WorkspaceState): Workspac
   const selectedSolver: SolverType =
     routing?.selected && /qubo/i.test(routing.selected) ? "dwave_sa" : prev.selectedSolver;
 
+  const ortoolsCode =
+    (typeof ent?.ortools_code === "string" && ent.ortools_code) ||
+    execution?.ortoolsCode ||
+    execution?.solverComparison?.classical?.code ||
+    "";
+
   return {
     mathModel,
     variables,
@@ -196,6 +205,7 @@ export function adaptPipelineResult(result: any, prev: WorkspaceState): Workspac
     execution,
     solverRouting: routing,
     code: typeof res.final_code === "string" ? res.final_code : "",
+    ortoolsCode,
     penaltyLambda: execution?.penaltyWeight ?? prev.penaltyLambda,
     selectedSolver,
     terminal: prev.terminal,

@@ -352,6 +352,49 @@ export function EnterpriseChatPane({
                               )}
                             </div>
                           </div>
+
+                          {/* Parallel Quantum vs. Classical (Google OR-Tools) Benchmark Strip */}
+                          {msg.executionResult.solver_comparison && (
+                            <div className="pt-2.5 border-t border-white/[0.08] space-y-2 text-[11px]">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="text-zinc-300 font-semibold">
+                                  Quantum vs. Classical OR-Tools Benchmark
+                                </span>
+                                <span className="px-2 py-0.5 rounded bg-white/[0.06] border border-white/[0.12] text-zinc-100 font-semibold">
+                                  {msg.executionResult.solver_comparison.verdict_badge}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="p-2 rounded bg-black/30 border border-white/[0.08] flex items-center justify-between">
+                                  <span className="text-zinc-400">D-Wave QUBO Annealer:</span>
+                                  <span className="text-zinc-100 font-semibold">
+                                    Obj{" "}
+                                    {msg.executionResult.solver_comparison.quantum.objective_value ?? "—"}{" "}
+                                    <span className="text-zinc-400 font-normal">
+                                      ({msg.executionResult.solver_comparison.quantum.constraints_satisfied}/
+                                      {msg.executionResult.solver_comparison.quantum.constraints_total} constraints ·{" "}
+                                      {msg.executionResult.solver_comparison.quantum.solve_time_ms ?? "—"} ms)
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="p-2 rounded bg-black/30 border border-white/[0.08] flex items-center justify-between">
+                                  <span className="text-zinc-400">Google OR-Tools CP-SAT:</span>
+                                  <span className="text-zinc-100 font-semibold">
+                                    Obj{" "}
+                                    {msg.executionResult.solver_comparison.classical.objective_value ?? "—"}{" "}
+                                    <span className="text-zinc-400 font-normal">
+                                      ({msg.executionResult.solver_comparison.classical.constraints_satisfied}/
+                                      {msg.executionResult.solver_comparison.classical.constraints_total} constraints ·{" "}
+                                      {msg.executionResult.solver_comparison.classical.solve_time_ms ?? "—"} ms)
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-zinc-400 leading-relaxed font-sans text-xs">
+                                {msg.executionResult.solver_comparison.summary}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
 

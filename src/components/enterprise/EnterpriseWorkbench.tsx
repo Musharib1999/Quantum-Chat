@@ -75,6 +75,8 @@ export interface EnterpriseWorkbenchProps {
   onChangePenaltyLambda: (val: number) => void;
   generatedCode: string;
   onChangeCode: (code: string) => void;
+  ortoolsCode?: string;
+  onChangeOrtoolsCode?: (code: string) => void;
   executionHistory: ExecutionRun[];
   onRestoreRun: (run: ExecutionRun) => void;
   onReSolve: () => void;
@@ -142,6 +144,8 @@ export function EnterpriseWorkbench({
   onChangePenaltyLambda,
   generatedCode,
   onChangeCode,
+  ortoolsCode = "",
+  onChangeOrtoolsCode,
   executionHistory,
   onRestoreRun,
   onReSolve,
@@ -157,6 +161,7 @@ export function EnterpriseWorkbench({
   onUpdateTerminalLogs,
 }: EnterpriseWorkbenchProps) {
   const [activeTab, setActiveTab] = useState<WorkbenchTab>("code");
+  const [activeCodeFile, setActiveCodeFile] = useState<"solution.py" | "ortools_baseline.py">("solution.py");
 
   // Always auto-select Code Editor tab when entering Workbench
   useEffect(() => {
@@ -214,9 +219,9 @@ export function EnterpriseWorkbench({
 
   // Guru AI quick prompt templates
   const GURU_QUICK_PROMPTS = useMemo(() => [
+    { label: "Quantum vs. OR-Tools", query: "Compare the D-Wave QUBO solution against the Google OR-Tools CP-SAT solution and explain which is better and why." },
     { label: "Why these variables?", query: "Why did the solver pick these specific variables?" },
     { label: "Calibrate penalty λ", query: `Is penalty stiffness λ = ${(typeof penaltyLambda === "number" ? penaltyLambda : 1.0).toFixed(1)} calibrated properly for these constraints?` },
-    { label: "Explain QUBO couplings", query: "Explain the QUBO interaction couplings derived from the objective." },
   ], [penaltyLambda]);
 
   // Restore or initialize conversation on project change
@@ -295,7 +300,18 @@ ${
   - Objective Value: ${execution.objectiveValue}
   - Feasible: ${execution.feasible}
   - Selected Variables: ${execution.selectedVariables?.join(", ") || "None"}
-  - Variable Values: ${JSON.stringify(execution.solution || {})}`
+  - Variable Values: ${JSON.stringify(execution.solution || {})}
+${
+  execution.solverComparison
+    ? `Parallel Quantum vs. Classical (Google OR-Tools CP-SAT) Benchmark:
+  - Verdict: ${execution.solverComparison.verdict_badge}
+  - Optimality Gap (%): ${execution.solverComparison.optimality_gap_pct}
+  - Decision Overlap (%): ${execution.solverComparison.decision_overlap_pct}
+  - Quantum (D-Wave QUBO): Objective=${execution.solverComparison.quantum.objective_value}, Feasible=${execution.solverComparison.quantum.feasible}, Constraints=${execution.solverComparison.quantum.constraints_satisfied}/${execution.solverComparison.quantum.constraints_total}, Time=${execution.solverComparison.quantum.solve_time_ms}ms, Selected=${execution.solverComparison.quantum.selected_variables?.join(", ") || "None"}
+  - Classical (Google OR-Tools CP-SAT): Status=${execution.solverComparison.classical.status}, Objective=${execution.solverComparison.classical.objective_value}, Feasible=${execution.solverComparison.classical.feasible}, Constraints=${execution.solverComparison.classical.constraints_satisfied}/${execution.solverComparison.classical.constraints_total}, Time=${execution.solverComparison.classical.solve_time_ms}ms, Selected=${execution.solverComparison.classical.selected_variables?.join(", ") || "None"}
+  - Benchmark Summary: ${execution.solverComparison.summary}`
+    : ""
+}`
     : "Latest Solver Execution: Not yet executed."
 }
 ${
@@ -480,8 +496,11 @@ ${textToSend}
   };
 
   // Real execution in container sandbox
+  const activeEditorCode = activeCodeFile === "ortools_baseline.py" ? (ortoolsCode || execution?.ortoolsCode || execution?.solverComparison?.classical?.code || "") : generatedCode;
+
   const handleRunPythonScript = async () => {
-    if (!generatedCode?.trim()) return;
+    const codeToExecute = activeEditorCode;
+    if (!codeToExecute?.trim()) return;
     if (runCodeAbortRef.current) {
       runCodeAbortRef.current.abort();
     }
@@ -491,8 +510,8 @@ ${textToSend}
     setIsRunningCode(true);
     setTerminalLogs((prev) => [
       ...prev,
-      `> python3 solution.py`,
-      `[INFO] Dispatching code to sandbox execution engine...`,
+      `> python3 ${activeCodeFile}`,
+      `[INFO] Dispatching ${activeCodeFile} to sandbox execution engine...`,
     ]);
 
     const start = performance.now();
@@ -501,7 +520,7 @@ ${textToSend}
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-        body: JSON.stringify({ code: generatedCode }),
+        body: JSON.stringify({ code: codeToExecute }),
       });
       const data = await res.json();
       const elapsed = Math.round(performance.now() - start);
@@ -1422,90 +1441,228 @@ ${textToSend}
         )}
 
         {/* ════════════════════════════════════════════════════════════════════════════════ */}
-        {/* TAB 3: SOLVER STRATEGY                                                           */}
+        {/* TAB 3: SOLVER STRATEGY & PARALLEL QUANTUM VS. CLASSICAL BENCHMARK                */}
         {/* ════════════════════════════════════════════════════════════════════════════════ */}
         {activeTab === "solver" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-mono font-semibold text-zinc-200">
-                Solver Strategy
+                Parallel Quantum vs. Classical Solver Benchmark
               </h3>
+              {execution?.solverComparison?.verdict_badge && (
+                <span className="text-[11px] font-mono px-2.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.14] text-zinc-100 font-semibold">
+                  {execution.solverComparison.verdict_badge}
+                </span>
+              )}
             </div>
 
-            {/* AI Recommendation Banner if available from backend */}
-            {solverRouting?.selected && (
-              <div className="p-3 rounded-xl border border-sky-500/30 bg-sky-500/[0.04] space-y-1.5 font-mono text-xs">
-                <div className="flex items-center space-x-2 text-sky-400 font-semibold">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>AI Recommended Solver: {solverRouting.selected}</span>
+            {execution?.solverComparison ? (
+              <div className="space-y-4 font-mono text-xs">
+                {/* Comparative AI Verdict Card */}
+                <div
+                  style={{
+                    backgroundColor: isDark ? "#111216" : "#F8FAFC",
+                  }}
+                  className="p-4 rounded-xl border border-white/[0.1] space-y-2"
+                >
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-semibold text-zinc-100">
+                      Comparative Optimality &amp; Feasibility Verdict
+                    </span>
+                    <div className="flex items-center space-x-2 text-zinc-400">
+                      <span>
+                        Optimality Gap:{" "}
+                        <strong className="text-zinc-100">
+                          {execution.solverComparison.optimality_gap_pct !== null
+                            ? `${execution.solverComparison.optimality_gap_pct.toFixed(2)}%`
+                            : "—"}
+                        </strong>
+                      </span>
+                      <span>·</span>
+                      <span>
+                        Decision Overlap:{" "}
+                        <strong className="text-zinc-100">
+                          {execution.solverComparison.decision_overlap_pct !== null
+                            ? `${execution.solverComparison.decision_overlap_pct}%`
+                            : "—"}
+                        </strong>
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                    {execution.solverComparison.summary}
+                  </p>
                 </div>
-                {solverRouting.reasons.length > 0 && (
-                  <ul className="text-[11px] text-zinc-300 list-disc list-inside space-y-0.5 pl-1">
-                    {solverRouting.reasons.map((r, i) => (
-                      <li key={i}>{r}</li>
-                    ))}
-                  </ul>
-                )}
+
+                {/* Head-to-Head Side-by-Side Comparison Table */}
+                <div
+                  style={{
+                    backgroundColor: isDark ? "#13141A" : "#FFFFFF",
+                  }}
+                  className="w-full border border-white/[0.08] rounded-xl overflow-x-auto custom-scrollbar"
+                >
+                  <table className="w-full min-w-[500px] text-left border-collapse text-xs">
+                    <thead
+                      style={{
+                        backgroundColor: isDark ? "#090A0D" : "#F8FAFC",
+                      }}
+                      className="text-zinc-400 border-b border-white/[0.08] text-[11px]"
+                    >
+                      <tr>
+                        <th className="p-3">Metric</th>
+                        <th className="p-3">Quantum Annealing (D-Wave QUBO)</th>
+                        <th className="p-3">Classical Exact (Google OR-Tools CP-SAT)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.05]">
+                      <tr>
+                        <td className="p-3 text-zinc-400">Convergence Status</td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                              execution.solverComparison.quantum.feasible
+                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
+                                : "bg-amber-500/10 text-amber-300 border-amber-500/25"
+                            }`}
+                          >
+                            {execution.solverComparison.quantum.feasible ? "FEASIBLE" : "BOUNDARY VIOLATION"}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                              execution.solverComparison.classical.feasible
+                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
+                                : "bg-amber-500/10 text-amber-300 border-amber-500/25"
+                            }`}
+                          >
+                            {execution.solverComparison.classical.status}
+                          </span>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="p-3 text-zinc-400">Objective Value</td>
+                        <td className="p-3 font-semibold text-zinc-100">
+                          {execution.solverComparison.quantum.objective_value ?? "—"}
+                        </td>
+                        <td className="p-3 font-semibold text-zinc-100">
+                          {execution.solverComparison.classical.objective_value ?? "—"}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="p-3 text-zinc-400">Constraints Satisfied</td>
+                        <td className="p-3 text-zinc-200">
+                          {execution.solverComparison.quantum.constraints_satisfied} /{" "}
+                          {execution.solverComparison.quantum.constraints_total}
+                        </td>
+                        <td className="p-3 text-zinc-200">
+                          {execution.solverComparison.classical.constraints_satisfied} /{" "}
+                          {execution.solverComparison.classical.constraints_total}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="p-3 text-zinc-400">Execution Latency</td>
+                        <td className="p-3 text-zinc-200">
+                          {execution.solverComparison.quantum.solve_time_ms ?? "—"} ms{" "}
+                          <span className="text-zinc-500 text-[10px]">(1,000 annealing reads)</span>
+                        </td>
+                        <td className="p-3 text-zinc-200">
+                          {execution.solverComparison.classical.solve_time_ms ?? "—"} ms{" "}
+                          <span className="text-zinc-500 text-[10px]">(Branch-and-cut CP-SAT)</span>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="p-3 text-zinc-400">Formulation Mechanism</td>
+                        <td className="p-3 text-zinc-300 text-[11px]">
+                          Unconstrained Penalty QUBO (λ = {execution.solverComparison.quantum.penalty_lambda ?? penaltyLambda},{" "}
+                          {execution.solverComparison.quantum.logical_qubits ?? "—"} qubits)
+                        </td>
+                        <td className="p-3 text-zinc-300 text-[11px]">
+                          Hard Linear / Integer Constraints (0 slack bits)
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="p-3 text-zinc-400 align-top">Active Decisions (x = 1)</td>
+                        <td className="p-3">
+                          <div className="flex flex-wrap gap-1">
+                            {execution.solverComparison.quantum.selected_variables.length > 0 ? (
+                              execution.solverComparison.quantum.selected_variables.map((v, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2 py-0.5 rounded text-[10px] bg-white/[0.06] border border-white/[0.1] text-zinc-200"
+                                >
+                                  {v}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-zinc-500 italic">None</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex flex-wrap gap-1">
+                            {execution.solverComparison.classical.selected_variables.length > 0 ? (
+                              execution.solverComparison.classical.selected_variables.map((v, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2 py-0.5 rounded text-[10px] bg-white/[0.06] border border-white/[0.1] text-zinc-200"
+                                >
+                                  {v}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-zinc-500 italic">None</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="p-3 text-zinc-400">Compiled Script</td>
+                        <td className="p-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveCodeFile("solution.py");
+                              handleSelectTab("code");
+                            }}
+                            className="px-2.5 py-1 rounded bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-zinc-100 text-[11px] cursor-pointer transition-colors"
+                          >
+                            Open solution.py →
+                          </button>
+                        </td>
+                        <td className="p-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveCodeFile("ortools_baseline.py");
+                              handleSelectTab("code");
+                            }}
+                            className="px-2.5 py-1 rounded bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-zinc-100 text-[11px] cursor-pointer transition-colors"
+                          >
+                            Open ortools_baseline.py →
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  backgroundColor: isDark ? "#13141A" : "#F8FAFC",
+                }}
+                className="p-6 rounded-xl border border-dashed border-white/[0.1] text-center text-xs text-zinc-500"
+              >
+                Run a problem in Copilot or click &quot;Recompile &amp; Solve&quot; to generate the parallel D-Wave QUBO vs. Google OR-Tools CP-SAT benchmark.
               </div>
             )}
-
-            {/* Active Solver: D-Wave Simulator working on Quantum Guru Infrastructure */}
-            <div
-              style={{
-                backgroundColor: isDark ? "rgba(56, 189, 248, 0.05)" : "#FFFFFF",
-              }}
-              className="p-4 sm:p-5 rounded-xl border border-sky-500/30 space-y-3 font-mono text-xs"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
-                    <Cpu className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-semibold text-zinc-100">
-                      DWave Simulator
-                    </h4>
-                    <span className="text-[11px] text-sky-300">
-                      Quantum Guru Runtime
-                    </span>
-                  </div>
-                </div>
-
-                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1 font-semibold">
-                  <Check className="w-3 h-3" />
-                  <span>Active</span>
-                </span>
-              </div>
-
-              <div className="pt-2 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[11px] text-zinc-400">
-                <div>
-                  <span className="text-zinc-500 text-[10px] block">Sampler backend:</span>
-                  <span className="text-zinc-200 font-semibold">dimod.SimulatedAnnealingSampler</span>
-                </div>
-                <div>
-                  <span className="text-zinc-500 text-[10px] block">Execution host:</span>
-                  <span className="text-zinc-200 font-semibold">Quantum Guru Cluster</span>
-                </div>
-                <div>
-                  <span className="text-zinc-500 text-[10px] block">Sampling depth:</span>
-                  <span className="text-sky-400 font-semibold">1,000 reads / solve</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Hardware Note */}
-            <div
-              style={{
-                backgroundColor: isDark ? "#13141A" : "#F8FAFC",
-              }}
-              className="p-3 rounded-xl border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-1 font-mono text-xs"
-            >
-              <div className="flex items-center space-x-1.5 text-zinc-400 text-[11px]">
-                <Layers className="w-3.5 h-3.5 text-zinc-500" />
-                <span className="font-semibold text-zinc-300">Physical Quantum Hardware (D-Wave Advantage QPU)</span>
-              </div>
-              <span className="text-[10px] text-zinc-500">Configurable with Leap API credentials</span>
-            </div>
           </div>
         )}
 
@@ -1674,9 +1831,42 @@ ${textToSend}
                 isDark ? "border-white/[0.08]" : "border-slate-200"
               }`}
             >
-              <div className="flex items-center space-x-2 sm:space-x-2.5">
-                <FileCode className="w-4 h-4 text-sky-400" />
-                <span className={`font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>solution.py</span>
+              <div className="flex items-center space-x-1.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveCodeFile("solution.py")}
+                  className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer border ${
+                    activeCodeFile === "solution.py"
+                      ? isDark
+                        ? "bg-white/[0.08] text-zinc-100 border-white/[0.2] font-semibold"
+                        : "bg-slate-200 text-slate-900 border-slate-400 font-semibold"
+                      : isDark
+                      ? "bg-transparent hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200 border-transparent"
+                      : "bg-transparent hover:bg-slate-100 text-slate-600 border-transparent"
+                  }`}
+                  title="D-Wave Quantum Annealing / AutoQUBO Script"
+                >
+                  <FileCode className="w-3.5 h-3.5" />
+                  <span>solution.py (Quantum QUBO)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveCodeFile("ortools_baseline.py")}
+                  className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer border ${
+                    activeCodeFile === "ortools_baseline.py"
+                      ? isDark
+                        ? "bg-white/[0.08] text-zinc-100 border-white/[0.2] font-semibold"
+                        : "bg-slate-200 text-slate-900 border-slate-400 font-semibold"
+                      : isDark
+                      ? "bg-transparent hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200 border-transparent"
+                      : "bg-transparent hover:bg-slate-100 text-slate-600 border-transparent"
+                  }`}
+                  title="Deterministic Google OR-Tools CP-SAT Classical Baseline"
+                >
+                  <FileCode className="w-3.5 h-3.5" />
+                  <span>ortools_baseline.py (OR-Tools)</span>
+                </button>
               </div>
 
               <div className="flex items-center space-x-2 shrink-0">
@@ -1747,8 +1937,14 @@ ${textToSend}
                 language="python"
                 theme={isDark ? "quantum-dark" : "quantum-light"}
                 beforeMount={handleBeforeMount}
-                value={generatedCode}
-                onChange={(val) => onChangeCode(val || "")}
+                value={activeEditorCode}
+                onChange={(val) => {
+                  if (activeCodeFile === "ortools_baseline.py") {
+                    onChangeOrtoolsCode?.(val || "");
+                  } else {
+                    onChangeCode(val || "");
+                  }
+                }}
                 options={{
                   fontSize: 12,
                   fontFamily: "JetBrains Mono, Menlo, monospace",
@@ -1851,7 +2047,11 @@ ${textToSend}
               <div className="flex items-center space-x-2">
                 <span className="text-zinc-500 text-[10px]">Python 3.11</span>
                 <span className="text-zinc-600">·</span>
-                <span className="text-zinc-500 text-[10px]">dimod / dwave-neal</span>
+                <span className="text-zinc-500 text-[10px]">
+                  {activeCodeFile === "ortools_baseline.py"
+                    ? "ortools.sat.python.cp_model (CP-SAT)"
+                    : "dimod / dwave-neal (QUBO)"}
+                </span>
               </div>
 
               <div className="flex items-center space-x-1">

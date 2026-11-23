@@ -476,19 +476,37 @@ async def run_direct_model_pipeline_stream(
     if not run_solver:
         return # STOP HERE IF WE ONLY WANT TO COMPILE!
 
-    # ── Stage 4: Simulator ────────────────────────────────────────────────────
+    # ── Stage 4: Parallel Quantum (D-Wave) & Classical (Google OR-Tools) Solvers ──
     yield {
         "step": "simulator",
         "status": "running",
-        "message": f"Running D-Wave Simulated Annealing sampler ({num_reads:,} reads)...",
+        "message": f"Running parallel benchmark: D-Wave Simulated Annealing ({num_reads:,} reads) vs. Google OR-Tools CP-SAT...",
         "num_reads": num_reads,
-        "sampler": "D-Wave SimulatedAnnealingSampler",
+        "sampler": "D-Wave SimulatedAnnealingSampler + Google OR-Tools CP-SAT",
     }
     await asyncio.sleep(0.1)
 
     try:
+        import time as _time
+        from ..compiler.backends.ortools_backend import (
+            solve_om_with_ortools,
+            build_quantum_vs_classical_comparison,
+        )
+
+        t_q0 = _time.perf_counter()
         adapter = DWaveAdapter()
         result = adapter.solve(ir, num_reads=num_reads)
+        quantum_time_ms = round((_time.perf_counter() - t_q0) * 1000.0, 2)
+
+        classical_result = solve_om_with_ortools(om)
+        solver_comparison = build_quantum_vs_classical_comparison(
+            om=om,
+            quantum_result=result,
+            quantum_time_ms=quantum_time_ms,
+            classical_result=classical_result,
+            q_size=q_size,
+            penalty_weight=penalty_weight,
+        )
     except Exception as e:
         yield {"step": "error", "message": f"Simulator failed: {e}"}
         return
@@ -496,10 +514,12 @@ async def run_direct_model_pipeline_stream(
     yield {
         "step": "simulator",
         "status": "done",
-        "message": "Simulator completed",
+        "message": f"Parallel benchmark completed ({solver_comparison.get('verdict_badge', 'Done')})",
         "energy": result.get("energy"),
         "feasible": result.get("feasible"),
         "num_reads": num_reads,
+        "solver_comparison": solver_comparison,
+        "ortools_code": classical_result.get("code", ""),
     }
     await asyncio.sleep(0.1)
 
@@ -520,13 +540,17 @@ async def run_direct_model_pipeline_stream(
             icon = "✓" if ok else "✗"
             feasibility_lines.append(f"  {icon} {c_name}: {'SATISFIED' if ok else 'VIOLATED'}")
 
-    output_text = f"""## Direct QUBO Solver Output
+    output_text = f"""## Parallel Quantum vs. Classical Solver Output
 
-**Status:** {'✅ FEASIBLE' if feasible else '⚠️ INFEASIBLE'}  
-**Objective Energy:** `{round(energy, 4)}`  
-**Penalty Applied:** {penalty_label} (λ = {penalty_weight})  
-**Sampler:** D-Wave Simulated Annealing · {num_reads:,} reads  
-**Logical Qubits:** {q_size}
+**Benchmark Verdict:** {solver_comparison.get('verdict_badge', '')}  
+**Comparative Analysis:** {solver_comparison.get('summary', '')}
+
+---
+
+**Quantum Status (D-Wave QUBO):** {'✅ FEASIBLE' if feasible else '⚠️ INFEASIBLE'}  
+**Quantum Objective / Energy:** `{round(energy, 4)}` ({quantum_time_ms} ms · {num_reads:,} reads · {q_size} logical qubits)  
+**Classical Status (Google OR-Tools CP-SAT):** `{classical_result.get('status')}` (Objective: `{classical_result.get('objective_value')}` · {classical_result.get('solve_time_ms')} ms)  
+**Penalty Applied:** {penalty_label} (λ = {penalty_weight})
 
 ---
 
@@ -558,5 +582,7 @@ async def run_direct_model_pipeline_stream(
         "penalty_weight": penalty_weight,
         "objective_value": result.get("objective_value"),
         "num_reads": num_reads,
+        "solver_comparison": solver_comparison,
+        "ortools_code": classical_result.get("code", ""),
     }
 
