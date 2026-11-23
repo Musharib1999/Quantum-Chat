@@ -1,0 +1,4203 @@
+{
+  "industry": "Multi-Industry",
+  "problems": [
+    {
+      "slug": "workforce-shifts-5x3",
+      "title": "Nurse Shift Rostering (5 staff, 3 shifts)",
+      "industry": "Workforce Scheduling",
+      "problemType": "Shift Scheduling",
+      "description": "Assign 5 engineers across 3 shifts meeting exact coverage [2, 2, 1] at minimum wage cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 15,
+      "sizeTier": "small",
+      "prompt": "Schedule 5 engineers across 3 shifts. Each engineer must be assigned to exactly one shift (and cannot work consecutive double shifts). Required headcount per shift (shifts 0 to 2) is [2, 2, 1]. Wage cost matrix (rows engineers, columns shifts): engineer 0: [33, 21, 13]; engineer 1: [27, 18, 18]; engineer 2: [20, 44, 12]; engineer 3: [42, 23, 14]; engineer 4: [39, 21, 20]. Minimize total staffing cost.",
+      "data": {
+        "staff": 5,
+        "shifts": 3,
+        "requiredCoverage": [
+          2,
+          2,
+          1
+        ],
+        "costMatrix": [
+          [
+            33,
+            21,
+            13
+          ],
+          [
+            27,
+            18,
+            18
+          ],
+          [
+            20,
+            44,
+            12
+          ],
+          [
+            42,
+            23,
+            14
+          ],
+          [
+            39,
+            21,
+            20
+          ]
+        ],
+        "rngSeed": 2101
+      },
+      "bestKnown": {
+        "value": 103,
+        "kind": "proven_optimal",
+        "method": "Exact branch-and-cut optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "workforce-shifts-6x4",
+      "title": "Hospital Shift Rostering (6 staff, 4 shifts)",
+      "industry": "Workforce Scheduling",
+      "problemType": "Shift Scheduling",
+      "description": "Assign 6 engineers across 4 shifts meeting exact coverage [2, 2, 1, 1] at minimum wage cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 24,
+      "sizeTier": "small",
+      "prompt": "Schedule 6 engineers across 4 shifts. Each engineer must be assigned to exactly one shift (and cannot work consecutive double shifts). Required headcount per shift (shifts 0 to 3) is [2, 2, 1, 1]. Wage cost matrix (rows engineers, columns shifts): engineer 0: [29, 42, 16, 39]; engineer 1: [29, 43, 38, 37]; engineer 2: [15, 20, 16, 25]; engineer 3: [11, 24, 34, 36]; engineer 4: [14, 12, 31, 39]; engineer 5: [41, 19, 18, 15]. Minimize total staffing cost.",
+      "data": {
+        "staff": 6,
+        "shifts": 4,
+        "requiredCoverage": [
+          2,
+          2,
+          1,
+          1
+        ],
+        "costMatrix": [
+          [
+            29,
+            42,
+            16,
+            39
+          ],
+          [
+            29,
+            43,
+            38,
+            37
+          ],
+          [
+            15,
+            20,
+            16,
+            25
+          ],
+          [
+            11,
+            24,
+            34,
+            36
+          ],
+          [
+            14,
+            12,
+            31,
+            39
+          ],
+          [
+            41,
+            19,
+            18,
+            15
+          ]
+        ],
+        "rngSeed": 2102
+      },
+      "bestKnown": {
+        "value": 103,
+        "kind": "proven_optimal",
+        "method": "Exact branch-and-cut optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "workforce-shifts-9x4",
+      "title": "Operations Crew Rostering (9 staff, 4 shifts)",
+      "industry": "Workforce Scheduling",
+      "problemType": "Shift Scheduling",
+      "description": "Assign 9 engineers across 4 shifts meeting exact coverage [3, 2, 2, 2] at minimum wage cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 36,
+      "sizeTier": "small",
+      "prompt": "Schedule 9 engineers across 4 shifts. Each engineer must be assigned to exactly one shift (and cannot work consecutive double shifts). Required headcount per shift (shifts 0 to 3) is [3, 2, 2, 2]. Wage cost matrix (rows engineers, columns shifts): engineer 0: [15, 42, 31, 13]; engineer 1: [36, 13, 26, 37]; engineer 2: [14, 41, 41, 25]; engineer 3: [18, 10, 10, 17]; engineer 4: [39, 40, 35, 29]; engineer 5: [42, 44, 19, 42]; engineer 6: [37, 35, 22, 10]; engineer 7: [10, 36, 37, 26]; engineer 8: [14, 44, 27, 42]. Minimize total staffing cost.",
+      "data": {
+        "staff": 9,
+        "shifts": 4,
+        "requiredCoverage": [
+          3,
+          2,
+          2,
+          2
+        ],
+        "costMatrix": [
+          [
+            15,
+            42,
+            31,
+            13
+          ],
+          [
+            36,
+            13,
+            26,
+            37
+          ],
+          [
+            14,
+            41,
+            41,
+            25
+          ],
+          [
+            18,
+            10,
+            10,
+            17
+          ],
+          [
+            39,
+            40,
+            35,
+            29
+          ],
+          [
+            42,
+            44,
+            19,
+            42
+          ],
+          [
+            37,
+            35,
+            22,
+            10
+          ],
+          [
+            10,
+            36,
+            37,
+            26
+          ],
+          [
+            14,
+            44,
+            27,
+            42
+          ]
+        ],
+        "rngSeed": 2103
+      },
+      "bestKnown": {
+        "value": 138,
+        "kind": "proven_optimal",
+        "method": "Exact branch-and-cut optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "workforce-shifts-12x5",
+      "title": "Plant Shift Rostering (12 staff, 5 shifts)",
+      "industry": "Workforce Scheduling",
+      "problemType": "Shift Scheduling",
+      "description": "Assign 12 engineers across 5 shifts meeting exact coverage [3, 3, 2, 2, 2] at minimum wage cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 60,
+      "sizeTier": "medium",
+      "prompt": "Schedule 12 engineers across 5 shifts. Each engineer must be assigned to exactly one shift (and cannot work consecutive double shifts). Required headcount per shift (shifts 0 to 4) is [3, 3, 2, 2, 2]. Wage cost matrix (rows engineers, columns shifts): engineer 0: [21, 43, 23, 41, 35]; engineer 1: [32, 45, 45, 21, 37]; engineer 2: [19, 20, 32, 41, 29]; engineer 3: [10, 37, 16, 14, 38]; engineer 4: [27, 24, 26, 45, 33]; engineer 5: [32, 36, 37, 19, 20]; engineer 6: [29, 30, 32, 18, 39]; engineer 7: [30, 12, 28, 15, 40]; engineer 8: [44, 21, 15, 36, 21]; engineer 9: [41, 44, 23, 22, 38]; engineer 10: [44, 18, 15, 24, 11]; engineer 11: [24, 31, 18, 45, 41]. Minimize total staffing cost.",
+      "data": {
+        "staff": 12,
+        "shifts": 5,
+        "requiredCoverage": [
+          3,
+          3,
+          2,
+          2,
+          2
+        ],
+        "costMatrix": [
+          [
+            21,
+            43,
+            23,
+            41,
+            35
+          ],
+          [
+            32,
+            45,
+            45,
+            21,
+            37
+          ],
+          [
+            19,
+            20,
+            32,
+            41,
+            29
+          ],
+          [
+            10,
+            37,
+            16,
+            14,
+            38
+          ],
+          [
+            27,
+            24,
+            26,
+            45,
+            33
+          ],
+          [
+            32,
+            36,
+            37,
+            19,
+            20
+          ],
+          [
+            29,
+            30,
+            32,
+            18,
+            39
+          ],
+          [
+            30,
+            12,
+            28,
+            15,
+            40
+          ],
+          [
+            44,
+            21,
+            15,
+            36,
+            21
+          ],
+          [
+            41,
+            44,
+            23,
+            22,
+            38
+          ],
+          [
+            44,
+            18,
+            15,
+            24,
+            11
+          ],
+          [
+            24,
+            31,
+            18,
+            45,
+            41
+          ]
+        ],
+        "rngSeed": 2104
+      },
+      "bestKnown": {
+        "value": 218,
+        "kind": "proven_optimal",
+        "method": "Exact branch-and-cut optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "workforce-shifts-20x8",
+      "title": "Enterprise Multi-Site Roster (20 staff, 8 shifts)",
+      "industry": "Workforce Scheduling",
+      "problemType": "Shift Scheduling",
+      "description": "Assign 20 engineers across 8 shifts meeting exact coverage [3, 3, 3, 3, 2, 2, 2, 2] at minimum wage cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 160,
+      "sizeTier": "large",
+      "prompt": "Schedule 20 engineers across 8 shifts. Each engineer must be assigned to exactly one shift (and cannot work consecutive double shifts). Required headcount per shift (shifts 0 to 7) is [3, 3, 3, 3, 2, 2, 2, 2]. Wage cost matrix (rows engineers, columns shifts): engineer 0: [19, 37, 13, 37, 38, 14, 14, 41]; engineer 1: [12, 15, 10, 27, 34, 42, 33, 17]; engineer 2: [13, 24, 13, 37, 41, 11, 11, 12]; engineer 3: [40, 32, 14, 29, 10, 33, 18, 28]; engineer 4: [37, 31, 39, 30, 24, 32, 39, 25]; engineer 5: [11, 31, 10, 30, 38, 27, 44, 41]; engineer 6: [41, 41, 40, 11, 19, 37, 37, 28]; engineer 7: [30, 15, 22, 37, 29, 21, 15, 24]; engineer 8: [22, 31, 11, 29, 29, 37, 18, 40]; engineer 9: [28, 20, 27, 16, 21, 40, 26, 10]; engineer 10: [36, 29, 41, 34, 11, 37, 30, 16]; engineer 11: [11, 38, 36, 33, 29, 16, 45, 38]; engineer 12: [28, 41, 32, 31, 16, 30, 21, 14]; engineer 13: [20, 43, 34, 41, 42, 43, 39, 15]; engineer 14: [35, 10, 22, 21, 35, 42, 17, 14]; engineer 15: [16, 28, 43, 29, 16, 30, 16, 33]; engineer 16: [26, 27, 20, 45, 14, 15, 41, 22]; engineer 17: [20, 37, 20, 36, 19, 15, 26, 13]; engineer 18: [23, 14, 19, 36, 28, 22, 19, 27]; engineer 19: [20, 28, 23, 45, 10, 20, 39, 36]. Minimize total staffing cost.",
+      "data": {
+        "staff": 20,
+        "shifts": 8,
+        "requiredCoverage": [
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          2,
+          2
+        ],
+        "costMatrix": [
+          [
+            19,
+            37,
+            13,
+            37,
+            38,
+            14,
+            14,
+            41
+          ],
+          [
+            12,
+            15,
+            10,
+            27,
+            34,
+            42,
+            33,
+            17
+          ],
+          [
+            13,
+            24,
+            13,
+            37,
+            41,
+            11,
+            11,
+            12
+          ],
+          [
+            40,
+            32,
+            14,
+            29,
+            10,
+            33,
+            18,
+            28
+          ],
+          [
+            37,
+            31,
+            39,
+            30,
+            24,
+            32,
+            39,
+            25
+          ],
+          [
+            11,
+            31,
+            10,
+            30,
+            38,
+            27,
+            44,
+            41
+          ],
+          [
+            41,
+            41,
+            40,
+            11,
+            19,
+            37,
+            37,
+            28
+          ],
+          [
+            30,
+            15,
+            22,
+            37,
+            29,
+            21,
+            15,
+            24
+          ],
+          [
+            22,
+            31,
+            11,
+            29,
+            29,
+            37,
+            18,
+            40
+          ],
+          [
+            28,
+            20,
+            27,
+            16,
+            21,
+            40,
+            26,
+            10
+          ],
+          [
+            36,
+            29,
+            41,
+            34,
+            11,
+            37,
+            30,
+            16
+          ],
+          [
+            11,
+            38,
+            36,
+            33,
+            29,
+            16,
+            45,
+            38
+          ],
+          [
+            28,
+            41,
+            32,
+            31,
+            16,
+            30,
+            21,
+            14
+          ],
+          [
+            20,
+            43,
+            34,
+            41,
+            42,
+            43,
+            39,
+            15
+          ],
+          [
+            35,
+            10,
+            22,
+            21,
+            35,
+            42,
+            17,
+            14
+          ],
+          [
+            16,
+            28,
+            43,
+            29,
+            16,
+            30,
+            16,
+            33
+          ],
+          [
+            26,
+            27,
+            20,
+            45,
+            14,
+            15,
+            41,
+            22
+          ],
+          [
+            20,
+            37,
+            20,
+            36,
+            19,
+            15,
+            26,
+            13
+          ],
+          [
+            23,
+            14,
+            19,
+            36,
+            28,
+            22,
+            19,
+            27
+          ],
+          [
+            20,
+            28,
+            23,
+            45,
+            10,
+            20,
+            39,
+            36
+          ]
+        ],
+        "rngSeed": 2105
+      },
+      "bestKnown": {
+        "value": 274,
+        "kind": "proven_optimal",
+        "method": "Exact branch-and-cut optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "workforce-crew-5x5",
+      "title": "Field Technician Assignment (5x5)",
+      "industry": "Workforce Scheduling",
+      "problemType": "Crew Assignment",
+      "description": "One-to-one assignment of 5 technicians to 5 sites at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 25,
+      "sizeTier": "small",
+      "prompt": "Assign 5 technicians to 5 sites one-to-one so every technician handles exactly one site. Cost matrix (rows technicians, columns sites): technician 0: [18, 34, 17, 19, 35]; technician 1: [10, 15, 41, 39, 24]; technician 2: [35, 46, 39, 35, 39]; technician 3: [20, 13, 30, 27, 20]; technician 4: [46, 18, 32, 25, 36]. Minimize total assignment cost.",
+      "data": {
+        "n": 5,
+        "costMatrix": [
+          [
+            18,
+            34,
+            17,
+            19,
+            35
+          ],
+          [
+            10,
+            15,
+            41,
+            39,
+            24
+          ],
+          [
+            35,
+            46,
+            39,
+            35,
+            39
+          ],
+          [
+            20,
+            13,
+            30,
+            27,
+            20
+          ],
+          [
+            46,
+            18,
+            32,
+            25,
+            36
+          ]
+        ],
+        "rngSeed": 2201
+      },
+      "bestKnown": {
+        "value": 100,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "workforce-crew-8x8",
+      "title": "Flight Crew Pairing Assignment (8x8)",
+      "industry": "Workforce Scheduling",
+      "problemType": "Crew Assignment",
+      "description": "One-to-one assignment of 8 crews to 8 flights at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 64,
+      "sizeTier": "medium",
+      "prompt": "Assign 8 crews to 8 flights one-to-one so every crew handles exactly one flight. Cost matrix (rows crews, columns flights): crew 0: [9, 13, 41, 17, 16, 13, 16, 41]; crew 1: [25, 43, 25, 32, 16, 18, 14, 46]; crew 2: [32, 26, 37, 30, 39, 12, 31, 46]; crew 3: [21, 39, 35, 31, 29, 48, 31, 31]; crew 4: [42, 14, 46, 22, 46, 36, 16, 35]; crew 5: [11, 50, 29, 18, 46, 42, 48, 43]; crew 6: [14, 10, 35, 21, 35, 28, 24, 48]; crew 7: [43, 19, 48, 31, 10, 23, 31, 42]. Minimize total assignment cost.",
+      "data": {
+        "n": 8,
+        "costMatrix": [
+          [
+            9,
+            13,
+            41,
+            17,
+            16,
+            13,
+            16,
+            41
+          ],
+          [
+            25,
+            43,
+            25,
+            32,
+            16,
+            18,
+            14,
+            46
+          ],
+          [
+            32,
+            26,
+            37,
+            30,
+            39,
+            12,
+            31,
+            46
+          ],
+          [
+            21,
+            39,
+            35,
+            31,
+            29,
+            48,
+            31,
+            31
+          ],
+          [
+            42,
+            14,
+            46,
+            22,
+            46,
+            36,
+            16,
+            35
+          ],
+          [
+            11,
+            50,
+            29,
+            18,
+            46,
+            42,
+            48,
+            43
+          ],
+          [
+            14,
+            10,
+            35,
+            21,
+            35,
+            28,
+            24,
+            48
+          ],
+          [
+            43,
+            19,
+            48,
+            31,
+            10,
+            23,
+            31,
+            42
+          ]
+        ],
+        "rngSeed": 2202
+      },
+      "bestKnown": {
+        "value": 131,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "workforce-oncall-8x10",
+      "title": "On-Call Skill Coverage (8 engineers, 10 windows)",
+      "industry": "Workforce Scheduling",
+      "problemType": "Set Cover",
+      "description": "Select the minimum-cost subset of 8 engineers covering all 10 windows.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 8,
+      "sizeTier": "small",
+      "prompt": "Choose engineers to cover all 10 windows (0 to 9) at minimum cost. Options: engineer 0 (cost 13) covers windows [1, 3, 7, 9]; engineer 1 (cost 11) covers windows [0, 1, 4, 6, 8]; engineer 2 (cost 18) covers windows [0, 2, 3, 7]; engineer 3 (cost 10) covers windows [2, 5, 8]; engineer 4 (cost 18) covers windows [3, 4, 5]; engineer 5 (cost 5) covers windows [3, 4, 9]; engineer 6 (cost 20) covers windows [1, 2, 4, 5]; engineer 7 (cost 18) covers windows [2, 3, 4, 9].",
+      "data": {
+        "items": 10,
+        "units": 8,
+        "covers": [
+          [
+            1,
+            3,
+            7,
+            9
+          ],
+          [
+            0,
+            1,
+            4,
+            6,
+            8
+          ],
+          [
+            0,
+            2,
+            3,
+            7
+          ],
+          [
+            2,
+            5,
+            8
+          ],
+          [
+            3,
+            4,
+            5
+          ],
+          [
+            3,
+            4,
+            9
+          ],
+          [
+            1,
+            2,
+            4,
+            5
+          ],
+          [
+            2,
+            3,
+            4,
+            9
+          ]
+        ],
+        "cost": [
+          13,
+          11,
+          18,
+          10,
+          18,
+          5,
+          20,
+          18
+        ],
+        "rngSeed": 2301
+      },
+      "bestKnown": {
+        "value": 34,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "finance-portfolio-8-k4",
+      "title": "Equity Portfolio Selection (8 assets, pick 4)",
+      "industry": "Finance",
+      "problemType": "Portfolio Selection",
+      "description": "Pick exactly 4 of 8 assets to maximize expected return minus pairwise covariance risk.",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 8,
+      "sizeTier": "small",
+      "prompt": "Select exactly 4 assets out of 8 candidate equities to maximize risk-adjusted return (expected return minus pairwise covariance penalty). Expected returns: [41, 17, 47, 38, 24, 32, 38, 28]. Symmetric risk covariance matrix: asset 0: [0, 10, 4, 6, 1, 5, 9, 8]; asset 1: [10, 0, 9, 6, 8, 1, 9, 6]; asset 2: [4, 9, 0, 8, 6, 5, 2, 7]; asset 3: [6, 6, 8, 0, 10, 10, 10, 7]; asset 4: [1, 8, 6, 10, 0, 9, 8, 7]; asset 5: [5, 1, 5, 10, 9, 0, 4, 1]; asset 6: [9, 9, 2, 10, 8, 4, 0, 6]; asset 7: [8, 6, 7, 7, 7, 1, 6, 0].",
+      "data": {
+        "n": 8,
+        "k": 4,
+        "returns": [
+          41,
+          17,
+          47,
+          38,
+          24,
+          32,
+          38,
+          28
+        ],
+        "covariance": [
+          [
+            0,
+            10,
+            4,
+            6,
+            1,
+            5,
+            9,
+            8
+          ],
+          [
+            10,
+            0,
+            9,
+            6,
+            8,
+            1,
+            9,
+            6
+          ],
+          [
+            4,
+            9,
+            0,
+            8,
+            6,
+            5,
+            2,
+            7
+          ],
+          [
+            6,
+            6,
+            8,
+            0,
+            10,
+            10,
+            10,
+            7
+          ],
+          [
+            1,
+            8,
+            6,
+            10,
+            0,
+            9,
+            8,
+            7
+          ],
+          [
+            5,
+            1,
+            5,
+            10,
+            9,
+            0,
+            4,
+            1
+          ],
+          [
+            9,
+            9,
+            2,
+            10,
+            8,
+            4,
+            0,
+            6
+          ],
+          [
+            8,
+            6,
+            7,
+            7,
+            7,
+            1,
+            6,
+            0
+          ]
+        ],
+        "rngSeed": 3101
+      },
+      "bestKnown": {
+        "value": 129,
+        "kind": "proven_optimal",
+        "method": "Exact quadratic-linearized optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "finance-portfolio-12-k5",
+      "title": "Equity Portfolio Selection (12 assets, pick 5)",
+      "industry": "Finance",
+      "problemType": "Portfolio Selection",
+      "description": "Pick exactly 5 of 12 assets to maximize expected return minus pairwise covariance risk.",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 12,
+      "sizeTier": "small",
+      "prompt": "Select exactly 5 assets out of 12 candidate equities to maximize risk-adjusted return (expected return minus pairwise covariance penalty). Expected returns: [43, 35, 26, 15, 21, 38, 17, 26, 46, 26, 28, 26]. Symmetric risk covariance matrix: asset 0: [0, 8, 9, 8, 8, 8, 8, 4, 9, 3, 4, 7]; asset 1: [8, 0, 3, 9, 8, 9, 2, 6, 9, 8, 2, 6]; asset 2: [9, 3, 0, 10, 1, 9, 5, 3, 5, 10, 10, 7]; asset 3: [8, 9, 10, 0, 10, 6, 5, 8, 9, 2, 3, 8]; asset 4: [8, 8, 1, 10, 0, 2, 7, 4, 9, 4, 6, 8]; asset 5: [8, 9, 9, 6, 2, 0, 9, 5, 10, 5, 6, 5]; asset 6: [8, 2, 5, 5, 7, 9, 0, 9, 6, 7, 2, 5]; asset 7: [4, 6, 3, 8, 4, 5, 9, 0, 8, 10, 1, 6]; asset 8: [9, 9, 5, 9, 9, 10, 6, 8, 0, 1, 6, 10]; asset 9: [3, 8, 10, 2, 4, 5, 7, 10, 1, 0, 6, 10]; asset 10: [4, 2, 10, 3, 6, 6, 2, 1, 6, 6, 0, 5]; asset 11: [7, 6, 7, 8, 8, 5, 5, 6, 10, 10, 5, 0].",
+      "data": {
+        "n": 12,
+        "k": 5,
+        "returns": [
+          43,
+          35,
+          26,
+          15,
+          21,
+          38,
+          17,
+          26,
+          46,
+          26,
+          28,
+          26
+        ],
+        "covariance": [
+          [
+            0,
+            8,
+            9,
+            8,
+            8,
+            8,
+            8,
+            4,
+            9,
+            3,
+            4,
+            7
+          ],
+          [
+            8,
+            0,
+            3,
+            9,
+            8,
+            9,
+            2,
+            6,
+            9,
+            8,
+            2,
+            6
+          ],
+          [
+            9,
+            3,
+            0,
+            10,
+            1,
+            9,
+            5,
+            3,
+            5,
+            10,
+            10,
+            7
+          ],
+          [
+            8,
+            9,
+            10,
+            0,
+            10,
+            6,
+            5,
+            8,
+            9,
+            2,
+            3,
+            8
+          ],
+          [
+            8,
+            8,
+            1,
+            10,
+            0,
+            2,
+            7,
+            4,
+            9,
+            4,
+            6,
+            8
+          ],
+          [
+            8,
+            9,
+            9,
+            6,
+            2,
+            0,
+            9,
+            5,
+            10,
+            5,
+            6,
+            5
+          ],
+          [
+            8,
+            2,
+            5,
+            5,
+            7,
+            9,
+            0,
+            9,
+            6,
+            7,
+            2,
+            5
+          ],
+          [
+            4,
+            6,
+            3,
+            8,
+            4,
+            5,
+            9,
+            0,
+            8,
+            10,
+            1,
+            6
+          ],
+          [
+            9,
+            9,
+            5,
+            9,
+            9,
+            10,
+            6,
+            8,
+            0,
+            1,
+            6,
+            10
+          ],
+          [
+            3,
+            8,
+            10,
+            2,
+            4,
+            5,
+            7,
+            10,
+            1,
+            0,
+            6,
+            10
+          ],
+          [
+            4,
+            2,
+            10,
+            3,
+            6,
+            6,
+            2,
+            1,
+            6,
+            6,
+            0,
+            5
+          ],
+          [
+            7,
+            6,
+            7,
+            8,
+            8,
+            5,
+            5,
+            6,
+            10,
+            10,
+            5,
+            0
+          ]
+        ],
+        "rngSeed": 3102
+      },
+      "bestKnown": {
+        "value": 123,
+        "kind": "proven_optimal",
+        "method": "Exact quadratic-linearized optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "finance-portfolio-16-k6",
+      "title": "Multi-Sector Portfolio (16 assets, pick 6)",
+      "industry": "Finance",
+      "problemType": "Portfolio Selection",
+      "description": "Pick exactly 6 of 16 assets to maximize expected return minus pairwise covariance risk.",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 16,
+      "sizeTier": "small",
+      "prompt": "Select exactly 6 assets out of 16 candidate equities to maximize risk-adjusted return (expected return minus pairwise covariance penalty). Expected returns: [42, 38, 18, 49, 19, 37, 45, 46, 35, 32, 25, 21, 43, 19, 37, 50]. Symmetric risk covariance matrix: asset 0: [0, 8, 7, 5, 9, 9, 5, 9, 7, 3, 4, 1, 5, 7, 5, 4]; asset 1: [8, 0, 10, 4, 10, 1, 10, 3, 3, 8, 9, 4, 6, 9, 3, 8]; asset 2: [7, 10, 0, 5, 4, 7, 2, 8, 10, 8, 2, 8, 7, 8, 5, 9]; asset 3: [5, 4, 5, 0, 8, 10, 8, 10, 7, 6, 6, 10, 7, 5, 7, 6]; asset 4: [9, 10, 4, 8, 0, 6, 4, 2, 10, 8, 2, 4, 9, 5, 6, 6]; asset 5: [9, 1, 7, 10, 6, 0, 10, 2, 8, 4, 4, 1, 9, 7, 5, 6]; asset 6: [5, 10, 2, 8, 4, 10, 0, 4, 9, 2, 3, 9, 7, 7, 4, 8]; asset 7: [9, 3, 8, 10, 2, 2, 4, 0, 2, 10, 1, 10, 7, 9, 10, 5]; asset 8: [7, 3, 10, 7, 10, 8, 9, 2, 0, 10, 6, 10, 1, 6, 7, 8]; asset 9: [3, 8, 8, 6, 8, 4, 2, 10, 10, 0, 10, 6, 2, 7, 3, 3]; asset 10: [4, 9, 2, 6, 2, 4, 3, 1, 6, 10, 0, 8, 2, 8, 7, 10]; asset 11: [1, 4, 8, 10, 4, 1, 9, 10, 10, 6, 8, 0, 2, 4, 9, 4]; asset 12: [5, 6, 7, 7, 9, 9, 7, 7, 1, 2, 2, 2, 0, 1, 1, 10]; asset 13: [7, 9, 8, 5, 5, 7, 7, 9, 6, 7, 8, 4, 1, 0, 6, 3]; asset 14: [5, 3, 5, 7, 6, 5, 4, 10, 7, 3, 7, 9, 1, 6, 0, 9]; asset 15: [4, 8, 9, 6, 6, 6, 8, 5, 8, 3, 10, 4, 10, 3, 9, 0].",
+      "data": {
+        "n": 16,
+        "k": 6,
+        "returns": [
+          42,
+          38,
+          18,
+          49,
+          19,
+          37,
+          45,
+          46,
+          35,
+          32,
+          25,
+          21,
+          43,
+          19,
+          37,
+          50
+        ],
+        "covariance": [
+          [
+            0,
+            8,
+            7,
+            5,
+            9,
+            9,
+            5,
+            9,
+            7,
+            3,
+            4,
+            1,
+            5,
+            7,
+            5,
+            4
+          ],
+          [
+            8,
+            0,
+            10,
+            4,
+            10,
+            1,
+            10,
+            3,
+            3,
+            8,
+            9,
+            4,
+            6,
+            9,
+            3,
+            8
+          ],
+          [
+            7,
+            10,
+            0,
+            5,
+            4,
+            7,
+            2,
+            8,
+            10,
+            8,
+            2,
+            8,
+            7,
+            8,
+            5,
+            9
+          ],
+          [
+            5,
+            4,
+            5,
+            0,
+            8,
+            10,
+            8,
+            10,
+            7,
+            6,
+            6,
+            10,
+            7,
+            5,
+            7,
+            6
+          ],
+          [
+            9,
+            10,
+            4,
+            8,
+            0,
+            6,
+            4,
+            2,
+            10,
+            8,
+            2,
+            4,
+            9,
+            5,
+            6,
+            6
+          ],
+          [
+            9,
+            1,
+            7,
+            10,
+            6,
+            0,
+            10,
+            2,
+            8,
+            4,
+            4,
+            1,
+            9,
+            7,
+            5,
+            6
+          ],
+          [
+            5,
+            10,
+            2,
+            8,
+            4,
+            10,
+            0,
+            4,
+            9,
+            2,
+            3,
+            9,
+            7,
+            7,
+            4,
+            8
+          ],
+          [
+            9,
+            3,
+            8,
+            10,
+            2,
+            2,
+            4,
+            0,
+            2,
+            10,
+            1,
+            10,
+            7,
+            9,
+            10,
+            5
+          ],
+          [
+            7,
+            3,
+            10,
+            7,
+            10,
+            8,
+            9,
+            2,
+            0,
+            10,
+            6,
+            10,
+            1,
+            6,
+            7,
+            8
+          ],
+          [
+            3,
+            8,
+            8,
+            6,
+            8,
+            4,
+            2,
+            10,
+            10,
+            0,
+            10,
+            6,
+            2,
+            7,
+            3,
+            3
+          ],
+          [
+            4,
+            9,
+            2,
+            6,
+            2,
+            4,
+            3,
+            1,
+            6,
+            10,
+            0,
+            8,
+            2,
+            8,
+            7,
+            10
+          ],
+          [
+            1,
+            4,
+            8,
+            10,
+            4,
+            1,
+            9,
+            10,
+            10,
+            6,
+            8,
+            0,
+            2,
+            4,
+            9,
+            4
+          ],
+          [
+            5,
+            6,
+            7,
+            7,
+            9,
+            9,
+            7,
+            7,
+            1,
+            2,
+            2,
+            2,
+            0,
+            1,
+            1,
+            10
+          ],
+          [
+            7,
+            9,
+            8,
+            5,
+            5,
+            7,
+            7,
+            9,
+            6,
+            7,
+            8,
+            4,
+            1,
+            0,
+            6,
+            3
+          ],
+          [
+            5,
+            3,
+            5,
+            7,
+            6,
+            5,
+            4,
+            10,
+            7,
+            3,
+            7,
+            9,
+            1,
+            6,
+            0,
+            9
+          ],
+          [
+            4,
+            8,
+            9,
+            6,
+            6,
+            6,
+            8,
+            5,
+            8,
+            3,
+            10,
+            4,
+            10,
+            3,
+            9,
+            0
+          ]
+        ],
+        "rngSeed": 3103
+      },
+      "bestKnown": {
+        "value": 180,
+        "kind": "proven_optimal",
+        "method": "Exact quadratic-linearized optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "finance-portfolio-20-k8",
+      "title": "Institutional Portfolio (20 assets, pick 8)",
+      "industry": "Finance",
+      "problemType": "Portfolio Selection",
+      "description": "Pick exactly 8 of 20 assets to maximize expected return minus pairwise covariance risk.",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 20,
+      "sizeTier": "small",
+      "prompt": "Select exactly 8 assets out of 20 candidate equities to maximize risk-adjusted return (expected return minus pairwise covariance penalty). Expected returns: [22, 46, 38, 39, 21, 33, 49, 32, 36, 23, 28, 45, 24, 47, 44, 31, 36, 22, 20, 16]. Symmetric risk covariance matrix: asset 0: [0, 1, 8, 8, 3, 2, 10, 7, 1, 7, 7, 2, 1, 4, 3, 9, 10, 5, 5, 5]; asset 1: [1, 0, 4, 6, 7, 3, 10, 4, 4, 1, 8, 2, 4, 8, 8, 3, 6, 7, 3, 7]; asset 2: [8, 4, 0, 9, 3, 7, 6, 9, 7, 4, 6, 6, 7, 6, 10, 8, 6, 6, 3, 3]; asset 3: [8, 6, 9, 0, 2, 4, 10, 3, 3, 9, 6, 5, 7, 9, 9, 4, 3, 3, 9, 6]; asset 4: [3, 7, 3, 2, 0, 6, 4, 9, 7, 2, 5, 4, 2, 9, 2, 2, 7, 6, 5, 10]; asset 5: [2, 3, 7, 4, 6, 0, 10, 10, 5, 6, 9, 4, 7, 2, 10, 10, 9, 1, 3, 8]; asset 6: [10, 10, 6, 10, 4, 10, 0, 3, 7, 8, 7, 5, 1, 3, 4, 8, 10, 2, 4, 1]; asset 7: [7, 4, 9, 3, 9, 10, 3, 0, 3, 6, 3, 8, 6, 9, 9, 3, 8, 4, 10, 9]; asset 8: [1, 4, 7, 3, 7, 5, 7, 3, 0, 9, 7, 4, 9, 2, 1, 8, 8, 7, 1, 8]; asset 9: [7, 1, 4, 9, 2, 6, 8, 6, 9, 0, 5, 8, 4, 6, 6, 10, 4, 8, 5, 5]; asset 10: [7, 8, 6, 6, 5, 9, 7, 3, 7, 5, 0, 5, 3, 4, 8, 7, 2, 9, 8, 3]; asset 11: [2, 2, 6, 5, 4, 4, 5, 8, 4, 8, 5, 0, 1, 8, 2, 9, 10, 8, 1, 3]; asset 12: [1, 4, 7, 7, 2, 7, 1, 6, 9, 4, 3, 1, 0, 7, 7, 1, 7, 3, 7, 5]; asset 13: [4, 8, 6, 9, 9, 2, 3, 9, 2, 6, 4, 8, 7, 0, 5, 4, 1, 4, 1, 7]; asset 14: [3, 8, 10, 9, 2, 10, 4, 9, 1, 6, 8, 2, 7, 5, 0, 6, 2, 5, 4, 3]; asset 15: [9, 3, 8, 4, 2, 10, 8, 3, 8, 10, 7, 9, 1, 4, 6, 0, 8, 2, 4, 5]; asset 16: [10, 6, 6, 3, 7, 9, 10, 8, 8, 4, 2, 10, 7, 1, 2, 8, 0, 7, 8, 10]; asset 17: [5, 7, 6, 3, 6, 1, 2, 4, 7, 8, 9, 8, 3, 4, 5, 2, 7, 0, 8, 1]; asset 18: [5, 3, 3, 9, 5, 3, 4, 10, 1, 5, 8, 1, 7, 1, 4, 4, 8, 8, 0, 3]; asset 19: [5, 7, 3, 6, 10, 8, 1, 9, 8, 5, 3, 3, 5, 7, 3, 5, 10, 1, 3, 0].",
+      "data": {
+        "n": 20,
+        "k": 8,
+        "returns": [
+          22,
+          46,
+          38,
+          39,
+          21,
+          33,
+          49,
+          32,
+          36,
+          23,
+          28,
+          45,
+          24,
+          47,
+          44,
+          31,
+          36,
+          22,
+          20,
+          16
+        ],
+        "covariance": [
+          [
+            0,
+            1,
+            8,
+            8,
+            3,
+            2,
+            10,
+            7,
+            1,
+            7,
+            7,
+            2,
+            1,
+            4,
+            3,
+            9,
+            10,
+            5,
+            5,
+            5
+          ],
+          [
+            1,
+            0,
+            4,
+            6,
+            7,
+            3,
+            10,
+            4,
+            4,
+            1,
+            8,
+            2,
+            4,
+            8,
+            8,
+            3,
+            6,
+            7,
+            3,
+            7
+          ],
+          [
+            8,
+            4,
+            0,
+            9,
+            3,
+            7,
+            6,
+            9,
+            7,
+            4,
+            6,
+            6,
+            7,
+            6,
+            10,
+            8,
+            6,
+            6,
+            3,
+            3
+          ],
+          [
+            8,
+            6,
+            9,
+            0,
+            2,
+            4,
+            10,
+            3,
+            3,
+            9,
+            6,
+            5,
+            7,
+            9,
+            9,
+            4,
+            3,
+            3,
+            9,
+            6
+          ],
+          [
+            3,
+            7,
+            3,
+            2,
+            0,
+            6,
+            4,
+            9,
+            7,
+            2,
+            5,
+            4,
+            2,
+            9,
+            2,
+            2,
+            7,
+            6,
+            5,
+            10
+          ],
+          [
+            2,
+            3,
+            7,
+            4,
+            6,
+            0,
+            10,
+            10,
+            5,
+            6,
+            9,
+            4,
+            7,
+            2,
+            10,
+            10,
+            9,
+            1,
+            3,
+            8
+          ],
+          [
+            10,
+            10,
+            6,
+            10,
+            4,
+            10,
+            0,
+            3,
+            7,
+            8,
+            7,
+            5,
+            1,
+            3,
+            4,
+            8,
+            10,
+            2,
+            4,
+            1
+          ],
+          [
+            7,
+            4,
+            9,
+            3,
+            9,
+            10,
+            3,
+            0,
+            3,
+            6,
+            3,
+            8,
+            6,
+            9,
+            9,
+            3,
+            8,
+            4,
+            10,
+            9
+          ],
+          [
+            1,
+            4,
+            7,
+            3,
+            7,
+            5,
+            7,
+            3,
+            0,
+            9,
+            7,
+            4,
+            9,
+            2,
+            1,
+            8,
+            8,
+            7,
+            1,
+            8
+          ],
+          [
+            7,
+            1,
+            4,
+            9,
+            2,
+            6,
+            8,
+            6,
+            9,
+            0,
+            5,
+            8,
+            4,
+            6,
+            6,
+            10,
+            4,
+            8,
+            5,
+            5
+          ],
+          [
+            7,
+            8,
+            6,
+            6,
+            5,
+            9,
+            7,
+            3,
+            7,
+            5,
+            0,
+            5,
+            3,
+            4,
+            8,
+            7,
+            2,
+            9,
+            8,
+            3
+          ],
+          [
+            2,
+            2,
+            6,
+            5,
+            4,
+            4,
+            5,
+            8,
+            4,
+            8,
+            5,
+            0,
+            1,
+            8,
+            2,
+            9,
+            10,
+            8,
+            1,
+            3
+          ],
+          [
+            1,
+            4,
+            7,
+            7,
+            2,
+            7,
+            1,
+            6,
+            9,
+            4,
+            3,
+            1,
+            0,
+            7,
+            7,
+            1,
+            7,
+            3,
+            7,
+            5
+          ],
+          [
+            4,
+            8,
+            6,
+            9,
+            9,
+            2,
+            3,
+            9,
+            2,
+            6,
+            4,
+            8,
+            7,
+            0,
+            5,
+            4,
+            1,
+            4,
+            1,
+            7
+          ],
+          [
+            3,
+            8,
+            10,
+            9,
+            2,
+            10,
+            4,
+            9,
+            1,
+            6,
+            8,
+            2,
+            7,
+            5,
+            0,
+            6,
+            2,
+            5,
+            4,
+            3
+          ],
+          [
+            9,
+            3,
+            8,
+            4,
+            2,
+            10,
+            8,
+            3,
+            8,
+            10,
+            7,
+            9,
+            1,
+            4,
+            6,
+            0,
+            8,
+            2,
+            4,
+            5
+          ],
+          [
+            10,
+            6,
+            6,
+            3,
+            7,
+            9,
+            10,
+            8,
+            8,
+            4,
+            2,
+            10,
+            7,
+            1,
+            2,
+            8,
+            0,
+            7,
+            8,
+            10
+          ],
+          [
+            5,
+            7,
+            6,
+            3,
+            6,
+            1,
+            2,
+            4,
+            7,
+            8,
+            9,
+            8,
+            3,
+            4,
+            5,
+            2,
+            7,
+            0,
+            8,
+            1
+          ],
+          [
+            5,
+            3,
+            3,
+            9,
+            5,
+            3,
+            4,
+            10,
+            1,
+            5,
+            8,
+            1,
+            7,
+            1,
+            4,
+            4,
+            8,
+            8,
+            0,
+            3
+          ],
+          [
+            5,
+            7,
+            3,
+            6,
+            10,
+            8,
+            1,
+            9,
+            8,
+            5,
+            3,
+            3,
+            5,
+            7,
+            3,
+            5,
+            10,
+            1,
+            3,
+            0
+          ]
+        ],
+        "rngSeed": 3104
+      },
+      "bestKnown": {
+        "value": 196,
+        "kind": "proven_optimal",
+        "method": "Exact quadratic-linearized optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "finance-capex-10",
+      "title": "Capital Budgeting Allocation (10 projects)",
+      "industry": "Finance",
+      "problemType": "Capital Budgeting",
+      "description": "Select projects within a 65 budget ($M) limit to maximize NPV ($M).",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 10,
+      "sizeTier": "small",
+      "prompt": "Select a subset of 10 projects subject to a total budget ($M) cap of 65. Candidates: project 0: budget ($M) 23, NPV ($M) 15; project 1: budget ($M) 23, NPV ($M) 66; project 2: budget ($M) 12, NPV ($M) 72; project 3: budget ($M) 13, NPV ($M) 61; project 4: budget ($M) 19, NPV ($M) 65; project 5: budget ($M) 20, NPV ($M) 62; project 6: budget ($M) 11, NPV ($M) 47; project 7: budget ($M) 7, NPV ($M) 66; project 8: budget ($M) 13, NPV ($M) 24; project 9: budget ($M) 4, NPV ($M) 46. Maximize total NPV ($M).",
+      "data": {
+        "n": 10,
+        "weights": [
+          23,
+          23,
+          12,
+          13,
+          19,
+          20,
+          11,
+          7,
+          13,
+          4
+        ],
+        "values": [
+          15,
+          66,
+          72,
+          61,
+          65,
+          62,
+          47,
+          66,
+          24,
+          46
+        ],
+        "capacity": 65,
+        "rngSeed": 3201
+      },
+      "bestKnown": {
+        "value": 316,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "finance-capex-15",
+      "title": "R&D Portfolio Budgeting (15 projects)",
+      "industry": "Finance",
+      "problemType": "Capital Budgeting",
+      "description": "Select projects within a 107 budget ($M) limit to maximize NPV ($M).",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 15,
+      "sizeTier": "small",
+      "prompt": "Select a subset of 15 projects subject to a total budget ($M) cap of 107. Candidates: project 0: budget ($M) 15, NPV ($M) 42; project 1: budget ($M) 9, NPV ($M) 15; project 2: budget ($M) 17, NPV ($M) 50; project 3: budget ($M) 14, NPV ($M) 34; project 4: budget ($M) 23, NPV ($M) 15; project 5: budget ($M) 16, NPV ($M) 62; project 6: budget ($M) 22, NPV ($M) 44; project 7: budget ($M) 5, NPV ($M) 21; project 8: budget ($M) 20, NPV ($M) 26; project 9: budget ($M) 20, NPV ($M) 49; project 10: budget ($M) 15, NPV ($M) 71; project 11: budget ($M) 4, NPV ($M) 50; project 12: budget ($M) 24, NPV ($M) 35; project 13: budget ($M) 19, NPV ($M) 27; project 14: budget ($M) 16, NPV ($M) 74. Maximize total NPV ($M).",
+      "data": {
+        "n": 15,
+        "weights": [
+          15,
+          9,
+          17,
+          14,
+          23,
+          16,
+          22,
+          5,
+          20,
+          20,
+          15,
+          4,
+          24,
+          19,
+          16
+        ],
+        "values": [
+          42,
+          15,
+          50,
+          34,
+          15,
+          62,
+          44,
+          21,
+          26,
+          49,
+          71,
+          50,
+          35,
+          27,
+          74
+        ],
+        "capacity": 107,
+        "rngSeed": 3202
+      },
+      "bestKnown": {
+        "value": 411,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "finance-capex-22",
+      "title": "Corporate CapEx Selection (22 projects)",
+      "industry": "Finance",
+      "problemType": "Capital Budgeting",
+      "description": "Select projects within a 166 budget ($M) limit to maximize NPV ($M).",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 22,
+      "sizeTier": "small",
+      "prompt": "Select a subset of 22 projects subject to a total budget ($M) cap of 166. Candidates: project 0: budget ($M) 20, NPV ($M) 50; project 1: budget ($M) 10, NPV ($M) 34; project 2: budget ($M) 23, NPV ($M) 14; project 3: budget ($M) 20, NPV ($M) 69; project 4: budget ($M) 7, NPV ($M) 46; project 5: budget ($M) 24, NPV ($M) 40; project 6: budget ($M) 13, NPV ($M) 37; project 7: budget ($M) 11, NPV ($M) 13; project 8: budget ($M) 24, NPV ($M) 67; project 9: budget ($M) 7, NPV ($M) 17; project 10: budget ($M) 19, NPV ($M) 71; project 11: budget ($M) 20, NPV ($M) 24; project 12: budget ($M) 21, NPV ($M) 38; project 13: budget ($M) 23, NPV ($M) 66; project 14: budget ($M) 15, NPV ($M) 14; project 15: budget ($M) 15, NPV ($M) 55; project 16: budget ($M) 7, NPV ($M) 41; project 17: budget ($M) 11, NPV ($M) 56; project 18: budget ($M) 22, NPV ($M) 42; project 19: budget ($M) 14, NPV ($M) 63; project 20: budget ($M) 24, NPV ($M) 34; project 21: budget ($M) 21, NPV ($M) 12. Maximize total NPV ($M).",
+      "data": {
+        "n": 22,
+        "weights": [
+          20,
+          10,
+          23,
+          20,
+          7,
+          24,
+          13,
+          11,
+          24,
+          7,
+          19,
+          20,
+          21,
+          23,
+          15,
+          15,
+          7,
+          11,
+          22,
+          14,
+          24,
+          21
+        ],
+        "values": [
+          50,
+          34,
+          14,
+          69,
+          46,
+          40,
+          37,
+          13,
+          67,
+          17,
+          71,
+          24,
+          38,
+          66,
+          14,
+          55,
+          41,
+          56,
+          42,
+          63,
+          34,
+          12
+        ],
+        "capacity": 166,
+        "rngSeed": 3203
+      },
+      "bestKnown": {
+        "value": 605,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "finance-clearing-13x13",
+      "title": "Large Clearing Desk Assignment (13x13)",
+      "industry": "Finance",
+      "problemType": "Trade Matching",
+      "description": "One-to-one assignment of 13 desks to 13 portfolios at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 169,
+      "sizeTier": "large",
+      "prompt": "Assign 13 desks to 13 portfolios one-to-one so every desk handles exactly one portfolio. Cost matrix (rows desks, columns portfolios): desk 0: [21, 20, 21, 19, 37, 13, 35, 38, 34, 45, 12, 33, 47]; desk 1: [26, 49, 41, 37, 39, 18, 15, 50, 32, 34, 22, 24, 11]; desk 2: [34, 33, 11, 19, 23, 20, 47, 36, 47, 15, 47, 37, 30]; desk 3: [30, 12, 32, 9, 39, 14, 49, 50, 19, 26, 33, 41, 22]; desk 4: [19, 47, 44, 12, 47, 49, 10, 42, 31, 40, 25, 43, 17]; desk 5: [19, 46, 27, 28, 45, 11, 35, 41, 26, 18, 13, 44, 30]; desk 6: [34, 13, 16, 48, 12, 33, 29, 13, 34, 19, 39, 33, 26]; desk 7: [33, 30, 37, 48, 12, 43, 39, 28, 9, 45, 35, 29, 11]; desk 8: [21, 23, 14, 28, 34, 43, 49, 30, 40, 23, 15, 9, 46]; desk 9: [45, 15, 20, 36, 48, 44, 45, 22, 39, 49, 9, 31, 27]; desk 10: [45, 36, 8, 16, 32, 35, 44, 46, 22, 40, 47, 29, 47]; desk 11: [50, 44, 16, 33, 11, 34, 12, 10, 27, 43, 40, 22, 12]; desk 12: [43, 14, 12, 50, 38, 24, 39, 43, 20, 39, 15, 37, 27]. Minimize total assignment cost.",
+      "data": {
+        "n": 13,
+        "costMatrix": [
+          [
+            21,
+            20,
+            21,
+            19,
+            37,
+            13,
+            35,
+            38,
+            34,
+            45,
+            12,
+            33,
+            47
+          ],
+          [
+            26,
+            49,
+            41,
+            37,
+            39,
+            18,
+            15,
+            50,
+            32,
+            34,
+            22,
+            24,
+            11
+          ],
+          [
+            34,
+            33,
+            11,
+            19,
+            23,
+            20,
+            47,
+            36,
+            47,
+            15,
+            47,
+            37,
+            30
+          ],
+          [
+            30,
+            12,
+            32,
+            9,
+            39,
+            14,
+            49,
+            50,
+            19,
+            26,
+            33,
+            41,
+            22
+          ],
+          [
+            19,
+            47,
+            44,
+            12,
+            47,
+            49,
+            10,
+            42,
+            31,
+            40,
+            25,
+            43,
+            17
+          ],
+          [
+            19,
+            46,
+            27,
+            28,
+            45,
+            11,
+            35,
+            41,
+            26,
+            18,
+            13,
+            44,
+            30
+          ],
+          [
+            34,
+            13,
+            16,
+            48,
+            12,
+            33,
+            29,
+            13,
+            34,
+            19,
+            39,
+            33,
+            26
+          ],
+          [
+            33,
+            30,
+            37,
+            48,
+            12,
+            43,
+            39,
+            28,
+            9,
+            45,
+            35,
+            29,
+            11
+          ],
+          [
+            21,
+            23,
+            14,
+            28,
+            34,
+            43,
+            49,
+            30,
+            40,
+            23,
+            15,
+            9,
+            46
+          ],
+          [
+            45,
+            15,
+            20,
+            36,
+            48,
+            44,
+            45,
+            22,
+            39,
+            49,
+            9,
+            31,
+            27
+          ],
+          [
+            45,
+            36,
+            8,
+            16,
+            32,
+            35,
+            44,
+            46,
+            22,
+            40,
+            47,
+            29,
+            47
+          ],
+          [
+            50,
+            44,
+            16,
+            33,
+            11,
+            34,
+            12,
+            10,
+            27,
+            43,
+            40,
+            22,
+            12
+          ],
+          [
+            43,
+            14,
+            12,
+            50,
+            38,
+            24,
+            39,
+            43,
+            20,
+            39,
+            15,
+            37,
+            27
+          ]
+        ],
+        "rngSeed": 3301
+      },
+      "bestKnown": {
+        "value": 148,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "energy-uc-4x4",
+      "title": "Microgrid Unit Commitment (4 gens, 4 periods)",
+      "industry": "Energy",
+      "problemType": "Unit Commitment",
+      "description": "Dispatch 4 generators over 4 periods to satisfy demand [7, 4, 7, 8] MW at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 16,
+      "sizeTier": "small",
+      "prompt": "Schedule 4 power generators across 4 time periods to meet hourly grid demand [7, 4, 7, 8] MW. Generator capacities (MW): [3, 3, 4, 2]; hourly operating costs: [15, 14, 17, 29]; startup costs: [10, 6, 11, 5]. Minimize total operating plus startup cost.",
+      "data": {
+        "generators": 4,
+        "periods": 4,
+        "capacities": [
+          3,
+          3,
+          4,
+          2
+        ],
+        "genCost": [
+          15,
+          14,
+          17,
+          29
+        ],
+        "startupCost": [
+          10,
+          6,
+          11,
+          5
+        ],
+        "demand": [
+          7,
+          4,
+          7,
+          8
+        ],
+        "rngSeed": 4101
+      },
+      "bestKnown": {
+        "value": 158,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "energy-uc-5x4",
+      "title": "Regional Unit Commitment (5 gens, 4 periods)",
+      "industry": "Energy",
+      "problemType": "Unit Commitment",
+      "description": "Dispatch 5 generators over 4 periods to satisfy demand [11, 6, 11, 11] MW at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 20,
+      "sizeTier": "small",
+      "prompt": "Schedule 5 power generators across 4 time periods to meet hourly grid demand [11, 6, 11, 11] MW. Generator capacities (MW): [3, 4, 4, 4, 2]; hourly operating costs: [12, 20, 26, 12, 32]; startup costs: [8, 8, 7, 8, 7]. Minimize total operating plus startup cost.",
+      "data": {
+        "generators": 5,
+        "periods": 4,
+        "capacities": [
+          3,
+          4,
+          4,
+          4,
+          2
+        ],
+        "genCost": [
+          12,
+          20,
+          26,
+          12,
+          32
+        ],
+        "startupCost": [
+          8,
+          8,
+          7,
+          8,
+          7
+        ],
+        "demand": [
+          11,
+          6,
+          11,
+          11
+        ],
+        "rngSeed": 4102
+      },
+      "bestKnown": {
+        "value": 188,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "energy-uc-6x5",
+      "title": "Thermal Fleet Dispatch (6 gens, 5 periods)",
+      "industry": "Energy",
+      "problemType": "Unit Commitment",
+      "description": "Dispatch 6 generators over 5 periods to satisfy demand [14, 9, 9, 10, 9] MW at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 30,
+      "sizeTier": "small",
+      "prompt": "Schedule 6 power generators across 5 time periods to meet hourly grid demand [14, 9, 9, 10, 9] MW. Generator capacities (MW): [5, 3, 3, 5, 2, 5]; hourly operating costs: [19, 21, 29, 23, 26, 35]; startup costs: [10, 11, 6, 16, 13, 6]. Minimize total operating plus startup cost.",
+      "data": {
+        "generators": 6,
+        "periods": 5,
+        "capacities": [
+          5,
+          3,
+          3,
+          5,
+          2,
+          5
+        ],
+        "genCost": [
+          19,
+          21,
+          29,
+          23,
+          26,
+          35
+        ],
+        "startupCost": [
+          10,
+          11,
+          6,
+          16,
+          13,
+          6
+        ],
+        "demand": [
+          14,
+          9,
+          9,
+          10,
+          9
+        ],
+        "rngSeed": 4103
+      },
+      "bestKnown": {
+        "value": 277,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "energy-substation-12x14",
+      "title": "Regional Substation Expansion (12 sites, 14 zones)",
+      "industry": "Energy",
+      "problemType": "Plant Location",
+      "description": "Open a subset of 12 plants and assign 14 orders at minimum total cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 180,
+      "sizeTier": "large",
+      "prompt": "Decide which of 12 production plants to open (fixed costs [79, 39, 65, 70, 82, 74, 84, 84, 43, 76, 81, 48]) and assign each of 14 orders to exactly one open plant. Fulfillment cost matrix (rows plants, columns orders): plant 0: [27, 12, 24, 7, 28, 24, 22, 18, 25, 15, 24, 7, 16, 7]; plant 1: [15, 9, 27, 15, 24, 12, 20, 28, 15, 21, 14, 6, 28, 27]; plant 2: [25, 20, 25, 8, 15, 25, 9, 14, 11, 12, 14, 7, 7, 24]; plant 3: [13, 19, 15, 9, 9, 15, 23, 7, 12, 16, 27, 7, 12, 17]; plant 4: [16, 23, 17, 28, 17, 12, 19, 24, 14, 25, 22, 18, 9, 25]; plant 5: [6, 9, 23, 27, 24, 10, 10, 13, 12, 12, 9, 19, 15, 12]; plant 6: [12, 9, 12, 21, 28, 17, 11, 13, 25, 13, 17, 20, 26, 18]; plant 7: [18, 21, 21, 9, 13, 14, 28, 27, 25, 12, 9, 18, 28, 12]; plant 8: [7, 9, 23, 16, 21, 28, 24, 27, 18, 12, 20, 21, 13, 20]; plant 9: [15, 16, 10, 22, 9, 6, 10, 21, 13, 19, 22, 8, 6, 18]; plant 10: [20, 15, 21, 20, 8, 28, 17, 10, 14, 7, 6, 28, 8, 24]; plant 11: [14, 9, 14, 23, 17, 27, 10, 17, 16, 25, 13, 15, 20, 11]. Minimize total fixed opening plus fulfillment cost.",
+      "data": {
+        "plants": 12,
+        "orders": 14,
+        "fixedCost": [
+          79,
+          39,
+          65,
+          70,
+          82,
+          74,
+          84,
+          84,
+          43,
+          76,
+          81,
+          48
+        ],
+        "fulfillmentCost": [
+          [
+            27,
+            12,
+            24,
+            7,
+            28,
+            24,
+            22,
+            18,
+            25,
+            15,
+            24,
+            7,
+            16,
+            7
+          ],
+          [
+            15,
+            9,
+            27,
+            15,
+            24,
+            12,
+            20,
+            28,
+            15,
+            21,
+            14,
+            6,
+            28,
+            27
+          ],
+          [
+            25,
+            20,
+            25,
+            8,
+            15,
+            25,
+            9,
+            14,
+            11,
+            12,
+            14,
+            7,
+            7,
+            24
+          ],
+          [
+            13,
+            19,
+            15,
+            9,
+            9,
+            15,
+            23,
+            7,
+            12,
+            16,
+            27,
+            7,
+            12,
+            17
+          ],
+          [
+            16,
+            23,
+            17,
+            28,
+            17,
+            12,
+            19,
+            24,
+            14,
+            25,
+            22,
+            18,
+            9,
+            25
+          ],
+          [
+            6,
+            9,
+            23,
+            27,
+            24,
+            10,
+            10,
+            13,
+            12,
+            12,
+            9,
+            19,
+            15,
+            12
+          ],
+          [
+            12,
+            9,
+            12,
+            21,
+            28,
+            17,
+            11,
+            13,
+            25,
+            13,
+            17,
+            20,
+            26,
+            18
+          ],
+          [
+            18,
+            21,
+            21,
+            9,
+            13,
+            14,
+            28,
+            27,
+            25,
+            12,
+            9,
+            18,
+            28,
+            12
+          ],
+          [
+            7,
+            9,
+            23,
+            16,
+            21,
+            28,
+            24,
+            27,
+            18,
+            12,
+            20,
+            21,
+            13,
+            20
+          ],
+          [
+            15,
+            16,
+            10,
+            22,
+            9,
+            6,
+            10,
+            21,
+            13,
+            19,
+            22,
+            8,
+            6,
+            18
+          ],
+          [
+            20,
+            15,
+            21,
+            20,
+            8,
+            28,
+            17,
+            10,
+            14,
+            7,
+            6,
+            28,
+            8,
+            24
+          ],
+          [
+            14,
+            9,
+            14,
+            23,
+            17,
+            27,
+            10,
+            17,
+            16,
+            25,
+            13,
+            15,
+            20,
+            11
+          ]
+        ],
+        "rngSeed": 4104
+      },
+      "bestKnown": {
+        "value": 271,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "energy-maxcut-12",
+      "title": "Substation Phase Balancing (12 nodes)",
+      "industry": "Energy",
+      "problemType": "Grid Partitioning (Max-Cut)",
+      "description": "Partition 12 grid substations across 34 weighted transmission links to maximize cut capacity.",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 12,
+      "sizeTier": "small",
+      "prompt": "Partition 12 electrical substations (0 to 11) into two balanced phase zones to maximize total weighted cut capacity across 34 transmission links. Weighted edges [u, v, weight]: [[0, 3, 8], [0, 4, 3], [0, 6, 10], [0, 7, 2], [0, 8, 2], [0, 10, 9], [0, 11, 6], [1, 3, 1], [1, 10, 10], [1, 11, 9], [2, 3, 1], [2, 4, 1], [2, 6, 4], [2, 7, 1], [2, 9, 8], [2, 10, 5], [2, 11, 3], [3, 6, 1], [3, 9, 4], [3, 11, 5], [4, 6, 4], [4, 10, 7], [4, 11, 5], [5, 6, 5], [5, 7, 9], [5, 8, 5], [5, 9, 10], [5, 10, 1], [5, 11, 2], [6, 8, 7], [6, 11, 6], [7, 11, 3], [9, 10, 8], [10, 11, 8]].",
+      "data": {
+        "nodes": 12,
+        "edges": [
+          [
+            0,
+            3,
+            8
+          ],
+          [
+            0,
+            4,
+            3
+          ],
+          [
+            0,
+            6,
+            10
+          ],
+          [
+            0,
+            7,
+            2
+          ],
+          [
+            0,
+            8,
+            2
+          ],
+          [
+            0,
+            10,
+            9
+          ],
+          [
+            0,
+            11,
+            6
+          ],
+          [
+            1,
+            3,
+            1
+          ],
+          [
+            1,
+            10,
+            10
+          ],
+          [
+            1,
+            11,
+            9
+          ],
+          [
+            2,
+            3,
+            1
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            2,
+            6,
+            4
+          ],
+          [
+            2,
+            7,
+            1
+          ],
+          [
+            2,
+            9,
+            8
+          ],
+          [
+            2,
+            10,
+            5
+          ],
+          [
+            2,
+            11,
+            3
+          ],
+          [
+            3,
+            6,
+            1
+          ],
+          [
+            3,
+            9,
+            4
+          ],
+          [
+            3,
+            11,
+            5
+          ],
+          [
+            4,
+            6,
+            4
+          ],
+          [
+            4,
+            10,
+            7
+          ],
+          [
+            4,
+            11,
+            5
+          ],
+          [
+            5,
+            6,
+            5
+          ],
+          [
+            5,
+            7,
+            9
+          ],
+          [
+            5,
+            8,
+            5
+          ],
+          [
+            5,
+            9,
+            10
+          ],
+          [
+            5,
+            10,
+            1
+          ],
+          [
+            5,
+            11,
+            2
+          ],
+          [
+            6,
+            8,
+            7
+          ],
+          [
+            6,
+            11,
+            6
+          ],
+          [
+            7,
+            11,
+            3
+          ],
+          [
+            9,
+            10,
+            8
+          ],
+          [
+            10,
+            11,
+            8
+          ]
+        ],
+        "rngSeed": 4201
+      },
+      "bestKnown": {
+        "value": 128,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "energy-maxcut-20",
+      "title": "Transmission Grid Partitioning (20 nodes)",
+      "industry": "Energy",
+      "problemType": "Grid Partitioning (Max-Cut)",
+      "description": "Partition 20 grid substations across 57 weighted transmission links to maximize cut capacity.",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 20,
+      "sizeTier": "small",
+      "prompt": "Partition 20 electrical substations (0 to 19) into two balanced phase zones to maximize total weighted cut capacity across 57 transmission links. Weighted edges [u, v, weight]: [[0, 2, 6], [0, 6, 6], [0, 8, 7], [0, 10, 9], [0, 14, 4], [1, 2, 5], [1, 3, 7], [1, 5, 10], [1, 7, 10], [1, 14, 8], [1, 17, 9], [2, 5, 10], [2, 6, 2], [2, 14, 2], [2, 16, 1], [3, 6, 7], [3, 9, 4], [3, 14, 2], [3, 15, 4], [3, 18, 6], [4, 5, 3], [4, 10, 7], [4, 12, 9], [4, 17, 8], [5, 6, 1], [5, 13, 4], [5, 16, 8], [5, 19, 3], [6, 7, 9], [6, 10, 10], [6, 11, 2], [6, 14, 4], [7, 12, 5], [7, 13, 4], [7, 15, 8], [7, 17, 2], [7, 18, 2], [7, 19, 10], [8, 9, 4], [8, 13, 1], [8, 14, 2], [9, 17, 9], [10, 12, 1], [10, 13, 10], [10, 14, 1], [10, 16, 3], [10, 17, 10], [10, 19, 5], [11, 14, 8], [11, 15, 8], [12, 15, 10], [13, 14, 2], [14, 18, 4], [14, 19, 6], [15, 19, 9], [16, 19, 7], [18, 19, 10]].",
+      "data": {
+        "nodes": 20,
+        "edges": [
+          [
+            0,
+            2,
+            6
+          ],
+          [
+            0,
+            6,
+            6
+          ],
+          [
+            0,
+            8,
+            7
+          ],
+          [
+            0,
+            10,
+            9
+          ],
+          [
+            0,
+            14,
+            4
+          ],
+          [
+            1,
+            2,
+            5
+          ],
+          [
+            1,
+            3,
+            7
+          ],
+          [
+            1,
+            5,
+            10
+          ],
+          [
+            1,
+            7,
+            10
+          ],
+          [
+            1,
+            14,
+            8
+          ],
+          [
+            1,
+            17,
+            9
+          ],
+          [
+            2,
+            5,
+            10
+          ],
+          [
+            2,
+            6,
+            2
+          ],
+          [
+            2,
+            14,
+            2
+          ],
+          [
+            2,
+            16,
+            1
+          ],
+          [
+            3,
+            6,
+            7
+          ],
+          [
+            3,
+            9,
+            4
+          ],
+          [
+            3,
+            14,
+            2
+          ],
+          [
+            3,
+            15,
+            4
+          ],
+          [
+            3,
+            18,
+            6
+          ],
+          [
+            4,
+            5,
+            3
+          ],
+          [
+            4,
+            10,
+            7
+          ],
+          [
+            4,
+            12,
+            9
+          ],
+          [
+            4,
+            17,
+            8
+          ],
+          [
+            5,
+            6,
+            1
+          ],
+          [
+            5,
+            13,
+            4
+          ],
+          [
+            5,
+            16,
+            8
+          ],
+          [
+            5,
+            19,
+            3
+          ],
+          [
+            6,
+            7,
+            9
+          ],
+          [
+            6,
+            10,
+            10
+          ],
+          [
+            6,
+            11,
+            2
+          ],
+          [
+            6,
+            14,
+            4
+          ],
+          [
+            7,
+            12,
+            5
+          ],
+          [
+            7,
+            13,
+            4
+          ],
+          [
+            7,
+            15,
+            8
+          ],
+          [
+            7,
+            17,
+            2
+          ],
+          [
+            7,
+            18,
+            2
+          ],
+          [
+            7,
+            19,
+            10
+          ],
+          [
+            8,
+            9,
+            4
+          ],
+          [
+            8,
+            13,
+            1
+          ],
+          [
+            8,
+            14,
+            2
+          ],
+          [
+            9,
+            17,
+            9
+          ],
+          [
+            10,
+            12,
+            1
+          ],
+          [
+            10,
+            13,
+            10
+          ],
+          [
+            10,
+            14,
+            1
+          ],
+          [
+            10,
+            16,
+            3
+          ],
+          [
+            10,
+            17,
+            10
+          ],
+          [
+            10,
+            19,
+            5
+          ],
+          [
+            11,
+            14,
+            8
+          ],
+          [
+            11,
+            15,
+            8
+          ],
+          [
+            12,
+            15,
+            10
+          ],
+          [
+            13,
+            14,
+            2
+          ],
+          [
+            14,
+            18,
+            4
+          ],
+          [
+            14,
+            19,
+            6
+          ],
+          [
+            15,
+            19,
+            9
+          ],
+          [
+            16,
+            19,
+            7
+          ],
+          [
+            18,
+            19,
+            10
+          ]
+        ],
+        "rngSeed": 4202
+      },
+      "bestKnown": {
+        "value": 255,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "energy-demand-12",
+      "title": "Demand-Response Load Shedding (12 feeders)",
+      "industry": "Energy",
+      "problemType": "Demand Response",
+      "description": "Select feeders within a 67 curtailment (MW) limit to maximize grid stability score.",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 12,
+      "sizeTier": "small",
+      "prompt": "Select a subset of 12 feeders subject to a total curtailment (MW) cap of 67. Candidates: feeder 0: curtailment (MW) 14, grid stability score 13; feeder 1: curtailment (MW) 5, grid stability score 44; feeder 2: curtailment (MW) 18, grid stability score 74; feeder 3: curtailment (MW) 13, grid stability score 12; feeder 4: curtailment (MW) 14, grid stability score 67; feeder 5: curtailment (MW) 15, grid stability score 22; feeder 6: curtailment (MW) 9, grid stability score 57; feeder 7: curtailment (MW) 22, grid stability score 49; feeder 8: curtailment (MW) 8, grid stability score 53; feeder 9: curtailment (MW) 19, grid stability score 30; feeder 10: curtailment (MW) 9, grid stability score 21; feeder 11: curtailment (MW) 4, grid stability score 39. Maximize total grid stability score.",
+      "data": {
+        "n": 12,
+        "weights": [
+          14,
+          5,
+          18,
+          13,
+          14,
+          15,
+          9,
+          22,
+          8,
+          19,
+          9,
+          4
+        ],
+        "values": [
+          13,
+          44,
+          74,
+          12,
+          67,
+          22,
+          57,
+          49,
+          53,
+          30,
+          21,
+          39
+        ],
+        "capacity": 67,
+        "rngSeed": 4301
+      },
+      "bestKnown": {
+        "value": 355,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "energy-substation-cover",
+      "title": "Backup Generator Coverage (9 units, 12 zones)",
+      "industry": "Energy",
+      "problemType": "Set Cover",
+      "description": "Select the minimum-cost subset of 9 backup units covering all 12 grid zones.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 9,
+      "sizeTier": "small",
+      "prompt": "Choose backup units to cover all 12 grid zones (0 to 11) at minimum cost. Options: backup unit 0 (cost 8) covers grid zones [1, 2, 4, 6]; backup unit 1 (cost 17) covers grid zones [1, 3, 5]; backup unit 2 (cost 11) covers grid zones [1, 5, 6, 10, 11]; backup unit 3 (cost 5) covers grid zones [0, 5, 7]; backup unit 4 (cost 5) covers grid zones [0, 6, 8, 9, 10]; backup unit 5 (cost 6) covers grid zones [4, 5, 8]; backup unit 6 (cost 20) covers grid zones [0, 1, 2, 7, 9]; backup unit 7 (cost 18) covers grid zones [1, 3, 5, 6]; backup unit 8 (cost 16) covers grid zones [2, 5, 6, 7, 11].",
+      "data": {
+        "items": 12,
+        "units": 9,
+        "covers": [
+          [
+            1,
+            2,
+            4,
+            6
+          ],
+          [
+            1,
+            3,
+            5
+          ],
+          [
+            1,
+            5,
+            6,
+            10,
+            11
+          ],
+          [
+            0,
+            5,
+            7
+          ],
+          [
+            0,
+            6,
+            8,
+            9,
+            10
+          ],
+          [
+            4,
+            5,
+            8
+          ],
+          [
+            0,
+            1,
+            2,
+            7,
+            9
+          ],
+          [
+            1,
+            3,
+            5,
+            6
+          ],
+          [
+            2,
+            5,
+            6,
+            7,
+            11
+          ]
+        ],
+        "cost": [
+          8,
+          17,
+          11,
+          5,
+          5,
+          6,
+          20,
+          18,
+          16
+        ],
+        "rngSeed": 4401
+      },
+      "bestKnown": {
+        "value": 44,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "mfg-machine-5x5",
+      "title": "CNC Machine-to-Job Assignment (5x5)",
+      "industry": "Manufacturing",
+      "problemType": "Machine Assignment",
+      "description": "One-to-one assignment of 5 machines to 5 jobs at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 25,
+      "sizeTier": "small",
+      "prompt": "Assign 5 machines to 5 jobs one-to-one so every machine handles exactly one job. Cost matrix (rows machines, columns jobs): machine 0: [42, 29, 31, 17, 36]; machine 1: [24, 30, 14, 48, 32]; machine 2: [18, 37, 31, 20, 21]; machine 3: [35, 28, 49, 42, 35]; machine 4: [41, 41, 24, 13, 45]. Minimize total assignment cost.",
+      "data": {
+        "n": 5,
+        "costMatrix": [
+          [
+            42,
+            29,
+            31,
+            17,
+            36
+          ],
+          [
+            24,
+            30,
+            14,
+            48,
+            32
+          ],
+          [
+            18,
+            37,
+            31,
+            20,
+            21
+          ],
+          [
+            35,
+            28,
+            49,
+            42,
+            35
+          ],
+          [
+            41,
+            41,
+            24,
+            13,
+            45
+          ]
+        ],
+        "rngSeed": 5101
+      },
+      "bestKnown": {
+        "value": 109,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "mfg-machine-7x7",
+      "title": "Assembly Cell Assignment (7x7)",
+      "industry": "Manufacturing",
+      "problemType": "Machine Assignment",
+      "description": "One-to-one assignment of 7 cells to 7 orders at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 49,
+      "sizeTier": "medium",
+      "prompt": "Assign 7 cells to 7 orders one-to-one so every cell handles exactly one order. Cost matrix (rows cells, columns orders): cell 0: [13, 12, 47, 25, 14, 24, 38]; cell 1: [31, 50, 43, 48, 44, 9, 50]; cell 2: [12, 15, 31, 41, 26, 12, 27]; cell 3: [11, 26, 20, 35, 43, 45, 46]; cell 4: [39, 41, 14, 20, 42, 18, 24]; cell 5: [23, 31, 10, 19, 41, 39, 34]; cell 6: [48, 20, 21, 14, 44, 17, 49]. Minimize total assignment cost.",
+      "data": {
+        "n": 7,
+        "costMatrix": [
+          [
+            13,
+            12,
+            47,
+            25,
+            14,
+            24,
+            38
+          ],
+          [
+            31,
+            50,
+            43,
+            48,
+            44,
+            9,
+            50
+          ],
+          [
+            12,
+            15,
+            31,
+            41,
+            26,
+            12,
+            27
+          ],
+          [
+            11,
+            26,
+            20,
+            35,
+            43,
+            45,
+            46
+          ],
+          [
+            39,
+            41,
+            14,
+            20,
+            42,
+            18,
+            24
+          ],
+          [
+            23,
+            31,
+            10,
+            19,
+            41,
+            39,
+            34
+          ],
+          [
+            48,
+            20,
+            21,
+            14,
+            44,
+            17,
+            49
+          ]
+        ],
+        "rngSeed": 5102
+      },
+      "bestKnown": {
+        "value": 97,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "mfg-machine-9x9",
+      "title": "SMT Line Assignment (9x9)",
+      "industry": "Manufacturing",
+      "problemType": "Machine Assignment",
+      "description": "One-to-one assignment of 9 lines to 9 boards at minimum cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 81,
+      "sizeTier": "medium",
+      "prompt": "Assign 9 lines to 9 boards one-to-one so every line handles exactly one board. Cost matrix (rows lines, columns boards): line 0: [35, 20, 32, 43, 30, 49, 29, 34, 19]; line 1: [12, 43, 36, 15, 17, 46, 17, 11, 36]; line 2: [43, 47, 34, 26, 23, 18, 35, 31, 13]; line 3: [47, 24, 26, 17, 49, 47, 38, 18, 24]; line 4: [11, 27, 10, 49, 40, 42, 41, 9, 32]; line 5: [14, 41, 42, 24, 14, 33, 8, 25, 44]; line 6: [47, 44, 28, 10, 22, 44, 12, 21, 20]; line 7: [22, 32, 8, 34, 16, 50, 12, 49, 8]; line 8: [32, 12, 37, 32, 19, 23, 12, 47, 18]. Minimize total assignment cost.",
+      "data": {
+        "n": 9,
+        "costMatrix": [
+          [
+            35,
+            20,
+            32,
+            43,
+            30,
+            49,
+            29,
+            34,
+            19
+          ],
+          [
+            12,
+            43,
+            36,
+            15,
+            17,
+            46,
+            17,
+            11,
+            36
+          ],
+          [
+            43,
+            47,
+            34,
+            26,
+            23,
+            18,
+            35,
+            31,
+            13
+          ],
+          [
+            47,
+            24,
+            26,
+            17,
+            49,
+            47,
+            38,
+            18,
+            24
+          ],
+          [
+            11,
+            27,
+            10,
+            49,
+            40,
+            42,
+            41,
+            9,
+            32
+          ],
+          [
+            14,
+            41,
+            42,
+            24,
+            14,
+            33,
+            8,
+            25,
+            44
+          ],
+          [
+            47,
+            44,
+            28,
+            10,
+            22,
+            44,
+            12,
+            21,
+            20
+          ],
+          [
+            22,
+            32,
+            8,
+            34,
+            16,
+            50,
+            12,
+            49,
+            8
+          ],
+          [
+            32,
+            12,
+            37,
+            32,
+            19,
+            23,
+            12,
+            47,
+            18
+          ]
+        ],
+        "rngSeed": 5103
+      },
+      "bestKnown": {
+        "value": 121,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "mfg-plant-3x6",
+      "title": "Factory Line Allocation (3 plants, 6 orders)",
+      "industry": "Manufacturing",
+      "problemType": "Plant Location",
+      "description": "Open a subset of 3 plants and assign 6 orders at minimum total cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 21,
+      "sizeTier": "small",
+      "prompt": "Decide which of 3 production plants to open (fixed costs [51, 72, 64]) and assign each of 6 orders to exactly one open plant. Fulfillment cost matrix (rows plants, columns orders): plant 0: [16, 26, 14, 26, 13, 16]; plant 1: [17, 7, 12, 27, 18, 6]; plant 2: [17, 21, 25, 25, 14, 15]. Minimize total fixed opening plus fulfillment cost.",
+      "data": {
+        "plants": 3,
+        "orders": 6,
+        "fixedCost": [
+          51,
+          72,
+          64
+        ],
+        "fulfillmentCost": [
+          [
+            16,
+            26,
+            14,
+            26,
+            13,
+            16
+          ],
+          [
+            17,
+            7,
+            12,
+            27,
+            18,
+            6
+          ],
+          [
+            17,
+            21,
+            25,
+            25,
+            14,
+            15
+          ]
+        ],
+        "rngSeed": 5201
+      },
+      "bestKnown": {
+        "value": 159,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "mfg-plant-4x8",
+      "title": "Regional Plant Allocation (4 plants, 8 orders)",
+      "industry": "Manufacturing",
+      "problemType": "Plant Location",
+      "description": "Open a subset of 4 plants and assign 8 orders at minimum total cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 36,
+      "sizeTier": "small",
+      "prompt": "Decide which of 4 production plants to open (fixed costs [74, 67, 61, 58]) and assign each of 8 orders to exactly one open plant. Fulfillment cost matrix (rows plants, columns orders): plant 0: [10, 7, 24, 13, 20, 9, 11, 14]; plant 1: [25, 23, 22, 11, 22, 23, 18, 20]; plant 2: [8, 18, 18, 6, 16, 7, 19, 22]; plant 3: [25, 27, 23, 9, 21, 24, 27, 21]. Minimize total fixed opening plus fulfillment cost.",
+      "data": {
+        "plants": 4,
+        "orders": 8,
+        "fixedCost": [
+          74,
+          67,
+          61,
+          58
+        ],
+        "fulfillmentCost": [
+          [
+            10,
+            7,
+            24,
+            13,
+            20,
+            9,
+            11,
+            14
+          ],
+          [
+            25,
+            23,
+            22,
+            11,
+            22,
+            23,
+            18,
+            20
+          ],
+          [
+            8,
+            18,
+            18,
+            6,
+            16,
+            7,
+            19,
+            22
+          ],
+          [
+            25,
+            27,
+            23,
+            9,
+            21,
+            24,
+            27,
+            21
+          ]
+        ],
+        "rngSeed": 5202
+      },
+      "bestKnown": {
+        "value": 175,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "mfg-batch-12",
+      "title": "Production Batch Selection (12 batches)",
+      "industry": "Manufacturing",
+      "problemType": "Batch Selection",
+      "description": "Select batchs within a 85 machine hours limit to maximize margin ($k).",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 12,
+      "sizeTier": "small",
+      "prompt": "Select a subset of 12 batchs subject to a total machine hours cap of 85. Candidates: batch 0: machine hours 19, margin ($k) 32; batch 1: machine hours 6, margin ($k) 30; batch 2: machine hours 19, margin ($k) 55; batch 3: machine hours 17, margin ($k) 34; batch 4: machine hours 17, margin ($k) 22; batch 5: machine hours 24, margin ($k) 30; batch 6: machine hours 11, margin ($k) 27; batch 7: machine hours 5, margin ($k) 34; batch 8: machine hours 24, margin ($k) 28; batch 9: machine hours 16, margin ($k) 40; batch 10: machine hours 8, margin ($k) 13; batch 11: machine hours 23, margin ($k) 43. Maximize total margin ($k).",
+      "data": {
+        "n": 12,
+        "weights": [
+          19,
+          6,
+          19,
+          17,
+          17,
+          24,
+          11,
+          5,
+          24,
+          16,
+          8,
+          23
+        ],
+        "values": [
+          32,
+          30,
+          55,
+          34,
+          22,
+          30,
+          27,
+          34,
+          28,
+          40,
+          13,
+          43
+        ],
+        "capacity": 85,
+        "rngSeed": 5301
+      },
+      "bestKnown": {
+        "value": 233,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "mfg-batch-18",
+      "title": "High-Mix Production Selection (18 batches)",
+      "industry": "Manufacturing",
+      "problemType": "Batch Selection",
+      "description": "Select batchs within a 116 machine hours limit to maximize margin ($k).",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 18,
+      "sizeTier": "small",
+      "prompt": "Select a subset of 18 batchs subject to a total machine hours cap of 116. Candidates: batch 0: machine hours 21, margin ($k) 62; batch 1: machine hours 21, margin ($k) 32; batch 2: machine hours 18, margin ($k) 67; batch 3: machine hours 23, margin ($k) 31; batch 4: machine hours 18, margin ($k) 26; batch 5: machine hours 19, margin ($k) 14; batch 6: machine hours 8, margin ($k) 60; batch 7: machine hours 24, margin ($k) 20; batch 8: machine hours 12, margin ($k) 69; batch 9: machine hours 7, margin ($k) 72; batch 10: machine hours 11, margin ($k) 49; batch 11: machine hours 7, margin ($k) 43; batch 12: machine hours 5, margin ($k) 48; batch 13: machine hours 11, margin ($k) 42; batch 14: machine hours 8, margin ($k) 47; batch 15: machine hours 12, margin ($k) 49; batch 16: machine hours 12, margin ($k) 58; batch 17: machine hours 22, margin ($k) 25. Maximize total margin ($k).",
+      "data": {
+        "n": 18,
+        "weights": [
+          21,
+          21,
+          18,
+          23,
+          18,
+          19,
+          8,
+          24,
+          12,
+          7,
+          11,
+          7,
+          5,
+          11,
+          8,
+          12,
+          12,
+          22
+        ],
+        "values": [
+          62,
+          32,
+          67,
+          31,
+          26,
+          14,
+          60,
+          20,
+          69,
+          72,
+          49,
+          43,
+          48,
+          42,
+          47,
+          49,
+          58,
+          25
+        ],
+        "capacity": 116,
+        "rngSeed": 5302
+      },
+      "bestKnown": {
+        "value": 604,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    },
+    {
+      "slug": "mfg-plant-12x14",
+      "title": "Global Supply Network Allocation (12 plants, 14 hubs)",
+      "industry": "Manufacturing",
+      "problemType": "Plant Location",
+      "description": "Open a subset of 12 plants and assign 14 orders at minimum total cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 180,
+      "sizeTier": "large",
+      "prompt": "Decide which of 12 production plants to open (fixed costs [80, 49, 70, 55, 73, 45, 82, 56, 62, 83, 58, 66]) and assign each of 14 orders to exactly one open plant. Fulfillment cost matrix (rows plants, columns orders): plant 0: [19, 28, 19, 14, 12, 28, 24, 13, 13, 25, 14, 25, 16, 25]; plant 1: [12, 11, 10, 17, 7, 21, 16, 24, 22, 28, 24, 24, 9, 21]; plant 2: [18, 6, 21, 20, 10, 19, 8, 9, 9, 19, 26, 26, 18, 13]; plant 3: [20, 17, 20, 11, 10, 14, 27, 24, 28, 21, 17, 7, 9, 8]; plant 4: [28, 6, 17, 14, 13, 10, 21, 7, 14, 19, 21, 10, 16, 12]; plant 5: [20, 15, 9, 19, 6, 24, 15, 19, 16, 11, 26, 10, 22, 26]; plant 6: [9, 7, 24, 10, 19, 11, 14, 28, 9, 23, 23, 23, 15, 11]; plant 7: [25, 21, 15, 21, 22, 12, 24, 9, 20, 8, 24, 24, 27, 18]; plant 8: [17, 7, 11, 28, 15, 12, 26, 26, 9, 13, 13, 18, 20, 19]; plant 9: [11, 6, 24, 9, 25, 6, 15, 22, 25, 27, 12, 10, 25, 11]; plant 10: [23, 14, 11, 19, 23, 7, 13, 21, 13, 19, 10, 7, 15, 28]; plant 11: [9, 24, 10, 15, 12, 8, 23, 11, 12, 20, 8, 9, 12, 13]. Minimize total fixed opening plus fulfillment cost.",
+      "data": {
+        "plants": 12,
+        "orders": 14,
+        "fixedCost": [
+          80,
+          49,
+          70,
+          55,
+          73,
+          45,
+          82,
+          56,
+          62,
+          83,
+          58,
+          66
+        ],
+        "fulfillmentCost": [
+          [
+            19,
+            28,
+            19,
+            14,
+            12,
+            28,
+            24,
+            13,
+            13,
+            25,
+            14,
+            25,
+            16,
+            25
+          ],
+          [
+            12,
+            11,
+            10,
+            17,
+            7,
+            21,
+            16,
+            24,
+            22,
+            28,
+            24,
+            24,
+            9,
+            21
+          ],
+          [
+            18,
+            6,
+            21,
+            20,
+            10,
+            19,
+            8,
+            9,
+            9,
+            19,
+            26,
+            26,
+            18,
+            13
+          ],
+          [
+            20,
+            17,
+            20,
+            11,
+            10,
+            14,
+            27,
+            24,
+            28,
+            21,
+            17,
+            7,
+            9,
+            8
+          ],
+          [
+            28,
+            6,
+            17,
+            14,
+            13,
+            10,
+            21,
+            7,
+            14,
+            19,
+            21,
+            10,
+            16,
+            12
+          ],
+          [
+            20,
+            15,
+            9,
+            19,
+            6,
+            24,
+            15,
+            19,
+            16,
+            11,
+            26,
+            10,
+            22,
+            26
+          ],
+          [
+            9,
+            7,
+            24,
+            10,
+            19,
+            11,
+            14,
+            28,
+            9,
+            23,
+            23,
+            23,
+            15,
+            11
+          ],
+          [
+            25,
+            21,
+            15,
+            21,
+            22,
+            12,
+            24,
+            9,
+            20,
+            8,
+            24,
+            24,
+            27,
+            18
+          ],
+          [
+            17,
+            7,
+            11,
+            28,
+            15,
+            12,
+            26,
+            26,
+            9,
+            13,
+            13,
+            18,
+            20,
+            19
+          ],
+          [
+            11,
+            6,
+            24,
+            9,
+            25,
+            6,
+            15,
+            22,
+            25,
+            27,
+            12,
+            10,
+            25,
+            11
+          ],
+          [
+            23,
+            14,
+            11,
+            19,
+            23,
+            7,
+            13,
+            21,
+            13,
+            19,
+            10,
+            7,
+            15,
+            28
+          ],
+          [
+            9,
+            24,
+            10,
+            15,
+            12,
+            8,
+            23,
+            11,
+            12,
+            20,
+            8,
+            9,
+            12,
+            13
+          ]
+        ],
+        "rngSeed": 5203
+      },
+      "bestKnown": {
+        "value": 252,
+        "kind": "proven_optimal",
+        "method": "Exact optimality proven by OR-Tools CP-SAT"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      }
+    }
+  ]
+}

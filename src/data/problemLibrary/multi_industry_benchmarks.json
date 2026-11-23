@@ -1,0 +1,2099 @@
+{
+  "industry": "Multi-Industry",
+  "generatedAt": "2026-11-23T20:17:16.414707+00:00",
+  "maxQuboVars": 150,
+  "benchmarks": [
+    {
+      "slug": "workforce-shifts-5x3",
+      "contentHash": "973448d793a3cdf5600f56da2d1ac3d07f02a631f57f7716f3da74afb85eb259",
+      "runAt": "2026-11-23T20:16:25.267549+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 15,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (103.0) (5/5 feasible SA runs at \u03bb=44.0). OR-Tools CP-SAT solved in 0.8 ms vs. 113.5 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 44.0,
+        "lambdaSweep": [
+          {
+            "lambda": 44.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 103.0
+          },
+          {
+            "lambda": 88.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 103.0
+          },
+          {
+            "lambda": 176.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 103.0
+          },
+          {
+            "lambda": 352.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 103.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 103.0,
+        "meanObjective": 103.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 113.52
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 103.0,
+        "meanObjective": 103.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.78
+      }
+    },
+    {
+      "slug": "workforce-shifts-6x4",
+      "contentHash": "79ca36d2deaa14d8b8b1f96411fcbfdbb8b829bbde97598165ba321e55217089",
+      "runAt": "2026-11-23T20:16:26.758977+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 24,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (103.0) (5/5 feasible SA runs at \u03bb=43.0). OR-Tools CP-SAT solved in 1.1 ms vs. 180.1 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 43.0,
+        "lambdaSweep": [
+          {
+            "lambda": 43.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 103.0
+          },
+          {
+            "lambda": 86.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 103.0
+          },
+          {
+            "lambda": 172.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 103.0
+          },
+          {
+            "lambda": 344.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 103.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 103.0,
+        "meanObjective": 103.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 180.09
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 103.0,
+        "meanObjective": 103.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.15
+      }
+    },
+    {
+      "slug": "workforce-shifts-9x4",
+      "contentHash": "492924ea535a535dc9461781aa440355d5e523ce9d86a78d1e21e7984c125558",
+      "runAt": "2026-11-23T20:16:29.071292+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 36,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (138.0) (5/5 feasible SA runs at \u03bb=44.0). OR-Tools CP-SAT solved in 1.5 ms vs. 280.1 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 44.0,
+        "lambdaSweep": [
+          {
+            "lambda": 44.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 138.0
+          },
+          {
+            "lambda": 88.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 138.0
+          },
+          {
+            "lambda": 176.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 156.0
+          },
+          {
+            "lambda": 352.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 150.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 138.0,
+        "meanObjective": 138.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 280.13
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 138.0,
+        "meanObjective": 138.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.52
+      }
+    },
+    {
+      "slug": "workforce-shifts-12x5",
+      "contentHash": "149a5d33c79adc530b125e7f6fc3c4584234bbab5f186e8a4622f56251b38879",
+      "runAt": "2026-11-23T20:16:33.064422+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 60,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (218.0) (5/5 feasible SA runs at \u03bb=45.0). OR-Tools CP-SAT solved in 2.4 ms vs. 481.3 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 45.0,
+        "lambdaSweep": [
+          {
+            "lambda": 45.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 219.0
+          },
+          {
+            "lambda": 90.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 231.0
+          },
+          {
+            "lambda": 180.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 245.0
+          },
+          {
+            "lambda": 360.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 248.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 218.0,
+        "meanObjective": 221.2,
+        "stdObjective": 4.1665,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 481.26
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 218.0,
+        "meanObjective": 218.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 2.44
+      }
+    },
+    {
+      "slug": "workforce-shifts-20x8",
+      "contentHash": "e1dbca22a3f3488ce3adc24faacc144fa6da8a6ea075f98b27c8f2603f3e33a6",
+      "runAt": "2026-11-23T20:16:33.093752+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 160,
+      "verdict": "exceeds_qubo_limit",
+      "verdictNote": "Formulation requires 160 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (274.0) in 4.6 ms.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": true,
+        "bestLambda": null,
+        "lambdaSweep": [],
+        "feasibilityRate": 0.0,
+        "feasibleRuns": 0,
+        "totalRuns": 0,
+        "bestObjective": null,
+        "meanObjective": null,
+        "stdObjective": null,
+        "gapVsBestKnownPct": null,
+        "gapVsOrtoolsPct": null,
+        "meanTimeMs": null
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 274.0,
+        "meanObjective": 274.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 4.64
+      }
+    },
+    {
+      "slug": "workforce-crew-5x5",
+      "contentHash": "8f1e1e65f5ac596192f26705cad0bd3a90f349ff01ae7c1b5576798137d98804",
+      "runAt": "2026-11-23T20:16:34.618725+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 25,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (100.0) (5/5 feasible SA runs at \u03bb=46.0). OR-Tools CP-SAT solved in 0.9 ms vs. 178.6 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 46.0,
+        "lambdaSweep": [
+          {
+            "lambda": 46.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 100.0
+          },
+          {
+            "lambda": 92.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 100.0
+          },
+          {
+            "lambda": 184.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 100.0
+          },
+          {
+            "lambda": 368.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 100.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 100.0,
+        "meanObjective": 100.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 178.58
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 100.0,
+        "meanObjective": 100.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.89
+      }
+    },
+    {
+      "slug": "workforce-crew-8x8",
+      "contentHash": "5e75e8785672ed161120f5fdecff0a0d0bdcf7dee1386557a000742a7d22a87f",
+      "runAt": "2026-11-23T20:16:38.418539+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 64,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (131.0) (5/5 feasible SA runs at \u03bb=50.0). OR-Tools CP-SAT solved in 1.6 ms vs. 458.3 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 50.0,
+        "lambdaSweep": [
+          {
+            "lambda": 50.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 131.0
+          },
+          {
+            "lambda": 100.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 131.0
+          },
+          {
+            "lambda": 200.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 150.0
+          },
+          {
+            "lambda": 400.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 150.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 131.0,
+        "meanObjective": 131.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 458.27
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 131.0,
+        "meanObjective": 131.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.61
+      }
+    },
+    {
+      "slug": "workforce-oncall-8x10",
+      "contentHash": "98ca3928b0cc8e4d2d337e6f4b2336d21b5db166d02eb9f6a60a8c161b3c49a2",
+      "runAt": "2026-11-23T20:16:39.887075+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 25,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (34.0) (5/5 feasible SA runs at \u03bb=20.0). OR-Tools CP-SAT solved in 0.4 ms vs. 178.2 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 20.0,
+        "lambdaSweep": [
+          {
+            "lambda": 20.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 34.0
+          },
+          {
+            "lambda": 40.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 34.0
+          },
+          {
+            "lambda": 80.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 34.0
+          },
+          {
+            "lambda": 160.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 34.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 34.0,
+        "meanObjective": 34.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 178.15
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 34.0,
+        "meanObjective": 34.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.38
+      }
+    },
+    {
+      "slug": "finance-portfolio-8-k4",
+      "contentHash": "853d71c4502246125d5191b7cf7fdc5c0c78c5032bcce9160707b8241fd0247a",
+      "runAt": "2026-11-23T20:16:40.295689+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 8,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (129.0) (5/5 feasible SA runs at \u03bb=94.0). OR-Tools CP-SAT solved in 2.4 ms vs. 48.5 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 94.0,
+        "lambdaSweep": [
+          {
+            "lambda": 94.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 129.0
+          },
+          {
+            "lambda": 188.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 129.0
+          },
+          {
+            "lambda": 376.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 129.0
+          },
+          {
+            "lambda": 752.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 129.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 129.0,
+        "meanObjective": 129.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 48.49
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 129.0,
+        "meanObjective": 129.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 2.37
+      }
+    },
+    {
+      "slug": "finance-portfolio-12-k5",
+      "contentHash": "3402cd62a406c612e77a25dab869fa9e7a577791880eeaa40564f0bd20b91fcd",
+      "runAt": "2026-11-23T20:16:41.383215+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 12,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (123.0) (5/5 feasible SA runs at \u03bb=92.0). OR-Tools CP-SAT solved in 5.7 ms vs. 127.6 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 92.0,
+        "lambdaSweep": [
+          {
+            "lambda": 92.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 123.0
+          },
+          {
+            "lambda": 184.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 123.0
+          },
+          {
+            "lambda": 368.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 123.0
+          },
+          {
+            "lambda": 736.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 123.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 123.0,
+        "meanObjective": 123.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 127.61
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 123.0,
+        "meanObjective": 123.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 5.69
+      }
+    },
+    {
+      "slug": "finance-portfolio-16-k6",
+      "contentHash": "fd417f6e2e41b7f20c363386c387d6b409b8460acb572e59ab46b164c2ed0d91",
+      "runAt": "2026-11-23T20:16:43.134425+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 16,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (180.0) (5/5 feasible SA runs at \u03bb=100.0). OR-Tools CP-SAT solved in 25.7 ms vs. 193.8 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 100.0,
+        "lambdaSweep": [
+          {
+            "lambda": 100.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 180.0
+          },
+          {
+            "lambda": 200.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 173.0
+          },
+          {
+            "lambda": 400.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 180.0
+          },
+          {
+            "lambda": 800.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 170.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 180.0,
+        "meanObjective": 179.6,
+        "stdObjective": 0.8,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 193.76
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 180.0,
+        "meanObjective": 180.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 25.68
+      }
+    },
+    {
+      "slug": "finance-portfolio-20-k8",
+      "contentHash": "ade56cbb8b7492f94d877c8ddeec6efb1f3d68616466c67972411ebad58b14e6",
+      "runAt": "2026-11-23T20:16:47.386495+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 20,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (196.0) (5/5 feasible SA runs at \u03bb=196.0). OR-Tools CP-SAT solved in 337.6 ms vs. 271.5 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 196.0,
+        "lambdaSweep": [
+          {
+            "lambda": 98.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 189.0
+          },
+          {
+            "lambda": 196.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 196.0
+          },
+          {
+            "lambda": 392.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 186.0
+          },
+          {
+            "lambda": 784.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 175.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 196.0,
+        "meanObjective": 187.6,
+        "stdObjective": 5.1614,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 271.46
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 196.0,
+        "meanObjective": 196.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 337.59
+      }
+    },
+    {
+      "slug": "finance-capex-10",
+      "contentHash": "ba87d18d8d9121627c904432d0371ac4547ba19376bf5afa03d0812e652e6ee7",
+      "runAt": "2026-11-23T20:16:48.397462+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 17,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (316.0) (5/5 feasible SA runs at \u03bb=72.0). OR-Tools CP-SAT solved in 0.3 ms vs. 121.2 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 72.0,
+        "lambdaSweep": [
+          {
+            "lambda": 72.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 316.0
+          },
+          {
+            "lambda": 144.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 316.0
+          },
+          {
+            "lambda": 288.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 311.0
+          },
+          {
+            "lambda": 576.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 316.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 316.0,
+        "meanObjective": 315.0,
+        "stdObjective": 2.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 121.2
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 316.0,
+        "meanObjective": 316.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.33
+      }
+    },
+    {
+      "slug": "finance-capex-15",
+      "contentHash": "66ac722c37bee6a6f6ad0b140b48f2d1c2296d280b91d6f98f5b6958bd16d19b",
+      "runAt": "2026-11-23T20:16:49.770388+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 22,
+      "verdict": "classical_wins",
+      "verdictNote": "OR-Tools CP-SAT proved the optimum (411.0) in 0.3 ms, outperforming QUBO simulated annealing (best 398.0, 3.16% gap, 5/5 feasible at \u03bb=74.0).",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 74.0,
+        "lambdaSweep": [
+          {
+            "lambda": 74.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 385.0
+          },
+          {
+            "lambda": 148.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 364.0
+          },
+          {
+            "lambda": 296.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 371.0
+          },
+          {
+            "lambda": 592.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 372.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 398.0,
+        "meanObjective": 392.4,
+        "stdObjective": 4.7582,
+        "gapVsBestKnownPct": 3.16,
+        "gapVsOrtoolsPct": 3.16,
+        "meanTimeMs": 166.66
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 411.0,
+        "meanObjective": 411.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.35
+      }
+    },
+    {
+      "slug": "finance-capex-22",
+      "contentHash": "9667373c301ccb2ce231dc1856ae6df866802ef9010c8e527caf3ef1d22814a9",
+      "runAt": "2026-11-23T20:16:51.891684+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 30,
+      "verdict": "classical_wins",
+      "verdictNote": "OR-Tools CP-SAT proved the optimum (605.0) in 0.5 ms, outperforming QUBO simulated annealing (best 538.0, 11.07% gap, 5/5 feasible at \u03bb=284.0).",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 284.0,
+        "lambdaSweep": [
+          {
+            "lambda": 71.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 510.0
+          },
+          {
+            "lambda": 142.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 529.0
+          },
+          {
+            "lambda": 284.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 533.0
+          },
+          {
+            "lambda": 568.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 480.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 538.0,
+        "meanObjective": 527.8,
+        "stdObjective": 6.4,
+        "gapVsBestKnownPct": 11.07,
+        "gapVsOrtoolsPct": 11.07,
+        "meanTimeMs": 256.7
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 605.0,
+        "meanObjective": 605.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.45
+      }
+    },
+    {
+      "slug": "finance-clearing-13x13",
+      "contentHash": "5c23448ed8176a5674ed5eb33fe5241dcee04b92481106800f0f8172e93e1cca",
+      "runAt": "2026-11-23T20:16:51.926541+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 169,
+      "verdict": "exceeds_qubo_limit",
+      "verdictNote": "Formulation requires 169 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (148.0) in 5.5 ms.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": true,
+        "bestLambda": null,
+        "lambdaSweep": [],
+        "feasibilityRate": 0.0,
+        "feasibleRuns": 0,
+        "totalRuns": 0,
+        "bestObjective": null,
+        "meanObjective": null,
+        "stdObjective": null,
+        "gapVsBestKnownPct": null,
+        "gapVsOrtoolsPct": null,
+        "meanTimeMs": null
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 148.0,
+        "meanObjective": 148.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 5.54
+      }
+    },
+    {
+      "slug": "energy-uc-4x4",
+      "contentHash": "8471d2ebb790685282945b7e6ce3d16e9a61705ae57b5de61bf08d5b588930f4",
+      "runAt": "2026-11-23T20:16:53.191542+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 29,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (158.0) (5/5 feasible SA runs at \u03bb=80.0). OR-Tools CP-SAT solved in 1.5 ms vs. 153.9 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 80.0,
+        "lambdaSweep": [
+          {
+            "lambda": 40.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 159.0
+          },
+          {
+            "lambda": 80.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 158.0
+          },
+          {
+            "lambda": 160.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 164.0
+          },
+          {
+            "lambda": 320.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 183.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 158.0,
+        "meanObjective": 159.2,
+        "stdObjective": 1.9391,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 153.87
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 158.0,
+        "meanObjective": 158.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.46
+      }
+    },
+    {
+      "slug": "energy-uc-5x4",
+      "contentHash": "f8e4dd101ed14a37558223dbf6ff19dd41c7702155168f1251656b1170fbb5eb",
+      "runAt": "2026-11-23T20:16:54.665911+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 33,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (188.0) (5/5 feasible SA runs at \u03bb=40.0). OR-Tools CP-SAT solved in 1.4 ms vs. 183.3 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 40.0,
+        "lambdaSweep": [
+          {
+            "lambda": 40.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 193.0
+          },
+          {
+            "lambda": 80.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 209.0
+          },
+          {
+            "lambda": 160.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 217.0
+          },
+          {
+            "lambda": 320.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 219.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 188.0,
+        "meanObjective": 191.0,
+        "stdObjective": 2.4495,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 183.33
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 188.0,
+        "meanObjective": 188.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.44
+      }
+    },
+    {
+      "slug": "energy-uc-6x5",
+      "contentHash": "ad786e30df1e7491914b09fdf2466faef50be7a6bc38368951282c09e62b57df",
+      "runAt": "2026-11-23T20:16:56.927606+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 50,
+      "verdict": "classical_wins",
+      "verdictNote": "OR-Tools CP-SAT proved the optimum (277.0) in 1.8 ms, outperforming QUBO simulated annealing (best 339.0, 22.38% gap, 5/5 feasible at \u03bb=51.0).",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 51.0,
+        "lambdaSweep": [
+          {
+            "lambda": 51.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 353.0
+          },
+          {
+            "lambda": 102.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 434.0
+          },
+          {
+            "lambda": 204.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 437.0
+          },
+          {
+            "lambda": 408.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 463.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 339.0,
+        "meanObjective": 362.6,
+        "stdObjective": 21.3691,
+        "gapVsBestKnownPct": 22.38,
+        "gapVsOrtoolsPct": 22.38,
+        "meanTimeMs": 279.37
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 277.0,
+        "meanObjective": 277.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.79
+      }
+    },
+    {
+      "slug": "energy-substation-12x14",
+      "contentHash": "98acaf0996ffa80de3b7501afd67b411592ef68692ff81dd9fd658bfbcd59a4d",
+      "runAt": "2026-11-23T20:16:57.041411+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 180,
+      "verdict": "exceeds_qubo_limit",
+      "verdictNote": "Formulation requires 180 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (271.0) in 18.9 ms.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": true,
+        "bestLambda": null,
+        "lambdaSweep": [],
+        "feasibilityRate": 0.0,
+        "feasibleRuns": 0,
+        "totalRuns": 0,
+        "bestObjective": null,
+        "meanObjective": null,
+        "stdObjective": null,
+        "gapVsBestKnownPct": null,
+        "gapVsOrtoolsPct": null,
+        "meanTimeMs": null
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 271.0,
+        "meanObjective": 271.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 18.92
+      }
+    },
+    {
+      "slug": "energy-maxcut-12",
+      "contentHash": "4ca9d02e17f903d86b1bdad3daf04d45a707370ed91a20580026cf8a0dd474e0",
+      "runAt": "2026-11-23T20:16:57.543216+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 12,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (128.0) (5/5 feasible SA runs at \u03bb=10.0). OR-Tools CP-SAT solved in 2.3 ms vs. 59.1 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 10.0,
+        "lambdaSweep": [
+          {
+            "lambda": 10.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 128.0
+          },
+          {
+            "lambda": 20.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 128.0
+          },
+          {
+            "lambda": 40.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 128.0
+          },
+          {
+            "lambda": 80.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 128.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 128.0,
+        "meanObjective": 128.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 59.14
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 128.0,
+        "meanObjective": 128.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 2.28
+      }
+    },
+    {
+      "slug": "energy-maxcut-20",
+      "contentHash": "efb5c43ef45509c55391055f8412cffb35ba342c003c65a1d8e6a47863af04b3",
+      "runAt": "2026-11-23T20:16:58.506411+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 20,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (255.0) (5/5 feasible SA runs at \u03bb=10.0). OR-Tools CP-SAT solved in 24.7 ms vs. 98.8 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 10.0,
+        "lambdaSweep": [
+          {
+            "lambda": 10.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 255.0
+          },
+          {
+            "lambda": 20.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 255.0
+          },
+          {
+            "lambda": 40.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 255.0
+          },
+          {
+            "lambda": 80.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 255.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 255.0,
+        "meanObjective": 255.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 98.75
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 255.0,
+        "meanObjective": 255.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 24.73
+      }
+    },
+    {
+      "slug": "energy-demand-12",
+      "contentHash": "2d08d089e81828efc526014aab77770bc2e46e2f45841ebe856f3df38438219f",
+      "runAt": "2026-11-23T20:16:59.675860+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 19,
+      "verdict": "classical_wins",
+      "verdictNote": "OR-Tools CP-SAT proved the optimum (355.0) in 0.4 ms, outperforming QUBO simulated annealing (best 334.0, 5.92% gap, 5/5 feasible at \u03bb=74.0).",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 74.0,
+        "lambdaSweep": [
+          {
+            "lambda": 74.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 334.0
+          },
+          {
+            "lambda": 148.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 299.0
+          },
+          {
+            "lambda": 296.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 311.0
+          },
+          {
+            "lambda": 592.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 309.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 334.0,
+        "meanObjective": 323.8,
+        "stdObjective": 13.3626,
+        "gapVsBestKnownPct": 5.92,
+        "gapVsOrtoolsPct": 5.92,
+        "meanTimeMs": 141.85
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 355.0,
+        "meanObjective": 355.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.37
+      }
+    },
+    {
+      "slug": "energy-substation-cover",
+      "contentHash": "fea432dbf5f49bb9a6e0fd5bf0aa821887113ce549b36f071a48e4ffade9b26b",
+      "runAt": "2026-11-23T20:17:01.407785+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 30,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (44.0) (5/5 feasible SA runs at \u03bb=20.0). OR-Tools CP-SAT solved in 0.6 ms vs. 209.5 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 20.0,
+        "lambdaSweep": [
+          {
+            "lambda": 20.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 44.0
+          },
+          {
+            "lambda": 40.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 44.0
+          },
+          {
+            "lambda": 80.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 44.0
+          },
+          {
+            "lambda": 160.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 46.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 44.0,
+        "meanObjective": 44.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 209.51
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 44.0,
+        "meanObjective": 44.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.56
+      }
+    },
+    {
+      "slug": "mfg-machine-5x5",
+      "contentHash": "9e9a1c04d575a5e9b9a49c8dae9b3fbc8358ae2b7bbc740e247445baeba7e7d4",
+      "runAt": "2026-11-23T20:17:02.893187+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 25,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (109.0) (5/5 feasible SA runs at \u03bb=49.0). OR-Tools CP-SAT solved in 1.0 ms vs. 179.9 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 49.0,
+        "lambdaSweep": [
+          {
+            "lambda": 49.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 109.0
+          },
+          {
+            "lambda": 98.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 109.0
+          },
+          {
+            "lambda": 196.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 109.0
+          },
+          {
+            "lambda": 392.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 109.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 109.0,
+        "meanObjective": 109.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 179.95
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 109.0,
+        "meanObjective": 109.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.99
+      }
+    },
+    {
+      "slug": "mfg-machine-7x7",
+      "contentHash": "5d3906a765d26d74aaf5686f59fd93f631977b272142778f135eb3197bc16495",
+      "runAt": "2026-11-23T20:17:05.796205+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 49,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (97.0) (5/5 feasible SA runs at \u03bb=50.0). OR-Tools CP-SAT solved in 1.2 ms vs. 349.4 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 50.0,
+        "lambdaSweep": [
+          {
+            "lambda": 50.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 97.0
+          },
+          {
+            "lambda": 100.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 97.0
+          },
+          {
+            "lambda": 200.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 106.0
+          },
+          {
+            "lambda": 400.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 114.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 97.0,
+        "meanObjective": 97.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 349.43
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 97.0,
+        "meanObjective": 97.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.24
+      }
+    },
+    {
+      "slug": "mfg-machine-9x9",
+      "contentHash": "c3bd6b053ccb74452031f6263ed3d24b0bed6f8f3ff624d26cb5e593be040893",
+      "runAt": "2026-11-23T20:17:10.634731+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 81,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (121.0) (5/5 feasible SA runs at \u03bb=50.0). OR-Tools CP-SAT solved in 2.4 ms vs. 585.9 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 50.0,
+        "lambdaSweep": [
+          {
+            "lambda": 50.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 121.0
+          },
+          {
+            "lambda": 100.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 129.0
+          },
+          {
+            "lambda": 200.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 130.0
+          },
+          {
+            "lambda": 400.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 159.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 121.0,
+        "meanObjective": 121.2,
+        "stdObjective": 0.4,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 585.86
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 121.0,
+        "meanObjective": 121.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 2.39
+      }
+    },
+    {
+      "slug": "mfg-plant-3x6",
+      "contentHash": "420071ad66872651c43dbfeae40a9d9cdd770d31c817eaefef1c6c6ba0f4e6dd",
+      "runAt": "2026-11-23T20:17:11.589620+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 21,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (159.0) (5/5 feasible SA runs at \u03bb=99.0). OR-Tools CP-SAT solved in 1.1 ms vs. 115.2 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 99.0,
+        "lambdaSweep": [
+          {
+            "lambda": 99.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 159.0
+          },
+          {
+            "lambda": 198.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 159.0
+          },
+          {
+            "lambda": 396.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 159.0
+          },
+          {
+            "lambda": 792.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 203.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 159.0,
+        "meanObjective": 159.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 115.2
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 159.0,
+        "meanObjective": 159.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.06
+      }
+    },
+    {
+      "slug": "mfg-plant-4x8",
+      "contentHash": "e5ee5b17a295002a12f27adbcbf2b7404ad0ccc000cfe3d7cbeeb5b6e8041ac2",
+      "runAt": "2026-11-23T20:17:13.268462+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 36,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (175.0) (5/5 feasible SA runs at \u03bb=101.0). OR-Tools CP-SAT solved in 1.6 ms vs. 206.8 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 101.0,
+        "lambdaSweep": [
+          {
+            "lambda": 101.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 175.0
+          },
+          {
+            "lambda": 202.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 175.0
+          },
+          {
+            "lambda": 404.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 230.0
+          },
+          {
+            "lambda": 808.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 224.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 175.0,
+        "meanObjective": 175.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 206.78
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 175.0,
+        "meanObjective": 175.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 1.59
+      }
+    },
+    {
+      "slug": "mfg-batch-12",
+      "contentHash": "7fb50159804880bea6b03e43715199d60c7edad238aa44a3d3ee41ff1bcaf12a",
+      "runAt": "2026-11-23T20:17:14.411792+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 19,
+      "verdict": "competitive",
+      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (233.0) (5/5 feasible SA runs at \u03bb=220.0). OR-Tools CP-SAT solved in 0.3 ms vs. 140.1 ms for simulated annealing.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 220.0,
+        "lambdaSweep": [
+          {
+            "lambda": 55.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 229.0
+          },
+          {
+            "lambda": 110.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 225.0
+          },
+          {
+            "lambda": 220.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 231.0
+          },
+          {
+            "lambda": 440.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 223.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 233.0,
+        "meanObjective": 226.2,
+        "stdObjective": 7.4404,
+        "gapVsBestKnownPct": 0.0,
+        "gapVsOrtoolsPct": 0.0,
+        "meanTimeMs": 140.09
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 233.0,
+        "meanObjective": 233.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.34
+      }
+    },
+    {
+      "slug": "mfg-batch-18",
+      "contentHash": "b691cd4f528c11bd1196b90f3e5951adec90d6a96cf5e48b24f8725f25f6f422",
+      "runAt": "2026-11-23T20:17:16.123552+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 25,
+      "verdict": "classical_wins",
+      "verdictNote": "OR-Tools CP-SAT proved the optimum (604.0) in 0.4 ms, outperforming QUBO simulated annealing (best 570.0, 5.63% gap, 5/5 feasible at \u03bb=576.0).",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": false,
+        "bestLambda": 576.0,
+        "lambdaSweep": [
+          {
+            "lambda": 72.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 522.0
+          },
+          {
+            "lambda": 144.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 513.0
+          },
+          {
+            "lambda": 288.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 507.0
+          },
+          {
+            "lambda": 576.0,
+            "feasibilityRate": 1.0,
+            "bestObjective": 552.0
+          }
+        ],
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 570.0,
+        "meanObjective": 544.2,
+        "stdObjective": 19.1353,
+        "gapVsBestKnownPct": 5.63,
+        "gapVsOrtoolsPct": 5.63,
+        "meanTimeMs": 207.95
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 604.0,
+        "meanObjective": 604.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 0.42
+      }
+    },
+    {
+      "slug": "mfg-plant-12x14",
+      "contentHash": "0ea1a97ae650a3ee66bf3fca3d74336ccc53bdfb99aaf692ccd939d6fa621e89",
+      "runAt": "2026-11-23T20:17:16.413951+00:00",
+      "protocol": {
+        "repeats": 5,
+        "seeds": [
+          101,
+          202,
+          303,
+          404,
+          505
+        ],
+        "quboReadsPerRepeat": 500,
+        "maxQuboVars": 150
+      },
+      "quboVars": 180,
+      "verdict": "exceeds_qubo_limit",
+      "verdictNote": "Formulation requires 180 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (252.0) in 50.0 ms.",
+      "qubo": {
+        "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
+        "exceedsLimit": true,
+        "bestLambda": null,
+        "lambdaSweep": [],
+        "feasibilityRate": 0.0,
+        "feasibleRuns": 0,
+        "totalRuns": 0,
+        "bestObjective": null,
+        "meanObjective": null,
+        "stdObjective": null,
+        "gapVsBestKnownPct": null,
+        "gapVsOrtoolsPct": null,
+        "meanTimeMs": null
+      },
+      "classical": {
+        "backend": "Google OR-Tools CP-SAT (classical exact)",
+        "status": "OPTIMAL",
+        "feasibilityRate": 1.0,
+        "feasibleRuns": 5,
+        "totalRuns": 5,
+        "bestObjective": 252.0,
+        "meanObjective": 252.0,
+        "stdObjective": 0.0,
+        "gapVsBestKnownPct": 0.0,
+        "meanTimeMs": 49.95
+      }
+    }
+  ]
+}

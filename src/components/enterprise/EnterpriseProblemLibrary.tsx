@@ -36,6 +36,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
   const [viewMode, setViewMode] = useState<"problems" | "fit_map">("problems");
   const [problems, setProblems] = useState<LibraryListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [industryFilter, setIndustryFilter] = useState<string>("All");
   const [typeFilter, setTypeFilter] = useState<string>("All");
   const [sizeFilter, setSizeFilter] = useState<string>("All");
   const [verdictFilter, setVerdictFilter] = useState<string>("All");
@@ -64,20 +65,30 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
     };
   }, []);
 
-  const problemTypes = useMemo(
-    () => ["All", ...Array.from(new Set((problems || []).map((p) => p.problemType)))],
+  const industries = useMemo(
+    () => ["All", ...Array.from(new Set((problems || []).map((p) => p.industry))).sort()],
     [problems]
+  );
+
+  const industryScoped = useMemo(
+    () => (problems || []).filter((p) => industryFilter === "All" || p.industry === industryFilter),
+    [problems, industryFilter]
+  );
+
+  const problemTypes = useMemo(
+    () => ["All", ...Array.from(new Set(industryScoped.map((p) => p.problemType))).sort()],
+    [industryScoped]
   );
 
   const filtered = useMemo(
     () =>
-      (problems || []).filter(
+      industryScoped.filter(
         (p) =>
           (typeFilter === "All" || p.problemType === typeFilter) &&
           (sizeFilter === "All" || p.sizeTier === sizeFilter) &&
           (verdictFilter === "All" || p.benchmark?.verdict === verdictFilter)
       ),
-    [problems, typeFilter, sizeFilter, verdictFilter]
+    [industryScoped, typeFilter, sizeFilter, verdictFilter]
   );
 
   const fetchDetail = async (slug: string): Promise<LibraryDetail | null> => {
@@ -110,6 +121,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
   };
 
   const handleInspectFromMap = async (slug: string) => {
+    setIndustryFilter("All");
     setTypeFilter("All");
     setSizeFilter("All");
     setVerdictFilter("All");
@@ -155,7 +167,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
           <div className="space-y-1.5">
             <h1 className={`text-lg font-semibold font-sans tracking-tight ${textMain}`}>Problem Library</h1>
             <p className={`text-[13px] leading-relaxed font-sans max-w-3xl ${textMuted}`}>
-              Logistics benchmark problems with verified best-known optima and seeded side-by-side runs comparing
+              Multi-industry benchmark problems with verified best-known optima and seeded side-by-side runs comparing
               D-Wave Simulated Annealing (classical software) against Google OR-Tools CP-SAT.
             </p>
           </div>
@@ -208,9 +220,29 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
 
         {!problems && !error && <div className={`text-[12px] font-mono ${textFaint}`}>Loading problems...</div>}
 
+        {/* Shared Industry Filter Strip (applies to both Problems and Solver Fit Map) */}
+        {problems && industries.length > 2 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={`text-[11px] font-mono mr-1 ${textFaint}`}>Industry</span>
+            {industries.map((ind) => (
+              <button
+                key={ind}
+                type="button"
+                className={chip(industryFilter === ind)}
+                onClick={() => {
+                  setIndustryFilter(ind);
+                  setTypeFilter("All");
+                }}
+              >
+                {ind}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* ── VIEW 1: SOLVER FIT MAP ── */}
         {problems && viewMode === "fit_map" && (
-          <SolverFitMap isDark={isDark} problems={problems} onSelectProblem={handleInspectFromMap} />
+          <SolverFitMap isDark={isDark} problems={industryScoped} onSelectProblem={handleInspectFromMap} />
         )}
 
         {/* ── VIEW 2: PROBLEM CARDS ── */}

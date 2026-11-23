@@ -96,6 +96,11 @@ export default function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen
                         active={activeTab === 'academy'}
                         onClick={() => handleNav('academy')}
                     />
+                    <SidebarLink
+                        label="Problem Library"
+                        active={activeTab === 'problem_library'}
+                        onClick={() => handleNav('problem_library')}
+                    />
 
                     {/* User Management */}
                     <div className="pt-4 mt-4 border-t border-[rgb(27,176,206)]/20">

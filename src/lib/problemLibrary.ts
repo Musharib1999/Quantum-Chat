@@ -5,10 +5,18 @@ import LibraryProblemVersion from '@/models/LibraryProblemVersion';
 import LibraryBenchmarkRun from '@/models/LibraryBenchmarkRun';
 import logisticsSeed from '@/data/problemLibrary/logistics.json';
 import logisticsBenchmarks from '@/data/problemLibrary/logistics_benchmarks.json';
+import multiIndustrySeed from '@/data/problemLibrary/multi_industry.json';
+import multiIndustryBenchmarks from '@/data/problemLibrary/multi_industry_benchmarks.json';
 
 /** All seed bundles shipped with the app. Add new industries here. */
-const SEED_BUNDLES: Array<{ industry: string; problems: any[] }> = [logisticsSeed as any];
-const BENCHMARK_BUNDLES: Array<{ benchmarks: any[] }> = [logisticsBenchmarks as any];
+const SEED_BUNDLES: Array<{ industry: string; problems: any[] }> = [
+  logisticsSeed as any,
+  multiIndustrySeed as any,
+];
+const BENCHMARK_BUNDLES: Array<{ benchmarks: any[] }> = [
+  logisticsBenchmarks as any,
+  multiIndustryBenchmarks as any,
+];
 
 function stableStringify(value: any): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
