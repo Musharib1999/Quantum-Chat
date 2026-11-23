@@ -368,7 +368,7 @@ async def run_direct_model_pipeline_stream(
             try:
                 cmm = parse_spec_to_cmm(spec)
                 print("DEBUG PIPELINE: CMM parsed. Expanding to OM...")
-                om = expand_cmm_to_om(cmm)
+                om = expand_cmm_to_om(cmm, spec.get("problem_text", ""))
                 print("DEBUG PIPELINE: OM expanded successfully.")
             except Exception as parse_err:
                 print("DEBUG PIPELINE: Exception caught during CMM/OM parsing:")
@@ -376,8 +376,13 @@ async def run_direct_model_pipeline_stream(
                 raise parse_err
             default_penalty = spec.get("penalty_weight")
         else:
-            ir_dict = parse_model_deterministically(model_text)
-            om = build_om_from_ir(ir_dict)
+            from ..compiler.expander import _try_build_deterministic_tsp
+            tsp_om = _try_build_deterministic_tsp(model_text)
+            if tsp_om is not None:
+                om = tsp_om
+            else:
+                ir_dict = parse_model_deterministically(model_text)
+                om = build_om_from_ir(ir_dict)
     except Exception as e:
         print("DEBUG PIPELINE: Top-level parse exception caught:")
         traceback.print_exc()

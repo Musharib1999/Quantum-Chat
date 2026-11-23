@@ -867,7 +867,7 @@ class SupervisorAgent:
                     from .direct_model_pipeline import resolve_penalty_weight
 
                     cmm = parse_spec_to_cmm(active_ir)
-                    om = expand_cmm_to_om(cmm)
+                    om = expand_cmm_to_om(cmm, workspace.problem_text)
                     if penalty_lambda is not None:
                         penalty_weight = float(penalty_lambda)
                     elif isinstance(penalty_choice, (int, float)) and (isinstance(penalty_choice, float) or penalty_choice not in (1, 2, 3, 4, 5, 6)):
@@ -1332,7 +1332,7 @@ class SupervisorAgent:
                     from .direct_model_pipeline import resolve_penalty_weight
 
                     cmm = parse_spec_to_cmm(active_ir)
-                    om = expand_cmm_to_om(cmm)
+                    om = expand_cmm_to_om(cmm, workspace.problem_text)
                     if penalty_lambda is not None:
                         penalty_weight = float(penalty_lambda)
                     elif isinstance(penalty_choice, (int, float)) and (isinstance(penalty_choice, float) or penalty_choice not in (1, 2, 3, 4, 5, 6)):
