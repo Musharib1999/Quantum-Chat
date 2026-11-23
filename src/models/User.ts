@@ -32,8 +32,8 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        // 'user', 'student', 'builder' retained only for backward-compatibility with legacy records (normalized to 'learner')
-        enum: ['learner', 'enterprise', 'admin', 'demo', 'user', 'student', 'builder'],
+        // 'user', 'student', 'builder', 'demo' retained for backward-compatibility with legacy records
+        enum: ['learner', 'enterprise', 'admin', 'demo_ide', 'demo_enterprise', 'demo', 'user', 'student', 'builder'],
         default: 'learner',
     },
     demoExpiresAt: {

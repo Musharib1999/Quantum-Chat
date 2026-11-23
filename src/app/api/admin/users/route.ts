@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/db';
 import User from '../../../../models/User';
 import { verifyAdminCookies } from '@/lib/auth';
-import { normalizeRole } from '@/lib/roles';
+import { isDemoRole, normalizeRole } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
         const canonicalRole = normalizeRole(body.role);
 
         let demoExpiresAt = undefined;
-        if (canonicalRole === 'demo') {
+        if (isDemoRole(canonicalRole)) {
             const hours = Number(body.demoDurationHours) || 2;
             demoExpiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
         }
@@ -113,7 +113,7 @@ export async function PUT(req: Request) {
         if (role !== undefined) {
             const canonicalRole = normalizeRole(role);
             updateData.role = canonicalRole;
-            if (canonicalRole === 'demo') {
+            if (isDemoRole(canonicalRole)) {
                 const existing = await User.findById(id);
                 if (existing) {
                     const hours = Number(demoDurationHours) || 2;

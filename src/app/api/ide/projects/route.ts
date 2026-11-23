@@ -1,36 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import QuantumProject from '@/models/QuantumProject';
-import { verifyUserSession } from '@/lib/auth';
-
-/**
- * Resolves the user email ONLY from the verified HttpOnly session cookie.
- *
- * Previously this also trusted an `?email=` query param and an `x-user-email` header, which let
- * any caller read, overwrite or delete another user's projects just by naming their email.
- * Those fallbacks are removed; the front-end still sends them, but they are now ignored.
- */
-async function resolveUserEmail(req: NextRequest): Promise<string | null> {
-  return verifyUserSession(req);
-}
+import { resolveSession } from '@/lib/auth';
+import { canAccessIde, isDemoRole } from '@/lib/roles';
 
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
-    const userEmail = await resolveUserEmail(req);
+    const identity = await resolveSession(req);
 
     // If not authenticated, return empty list (guests only see initial templates)
-    if (!userEmail) {
+    if (!identity) {
       return NextResponse.json({
         success: true,
         projects: []
       });
     }
 
-    const projects = await QuantumProject.find({ userEmail }).sort({ updatedAt: -1 }).lean();
+    if (!canAccessIde(identity.role)) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden — IDE access required.' },
+        { status: 403 }
+      );
+    }
+
+    const projects = await QuantumProject.find({ userEmail: identity.email }).sort({ updatedAt: -1 }).lean();
 
     return NextResponse.json({
       success: true,
+      readOnly: isDemoRole(identity.role),
       projects: projects || []
     });
   } catch (error: any) {
@@ -45,13 +43,33 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    const userEmail = await resolveUserEmail(req);
-    if (!userEmail) {
+    const identity = await resolveSession(req);
+    if (!identity) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized: You must be logged in to save projects.' },
         { status: 401 }
       );
     }
+
+    if (!canAccessIde(identity.role)) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden — IDE access required.' },
+        { status: 403 }
+      );
+    }
+
+    if (isDemoRole(identity.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'DEMO_READ_ONLY',
+          error: 'Demo accounts are view-only and cannot modify saved projects.',
+        },
+        { status: 403 }
+      );
+    }
+
+    const userEmail = identity.email;
 
     const body = await req.json();
     const { projectId, title, desc, templateKey, framework, activeFile, files, runtimeMetrics, chatMessages } = body;
@@ -101,13 +119,33 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     await dbConnect();
-    const userEmail = await resolveUserEmail(req);
-    if (!userEmail) {
+    const identity = await resolveSession(req);
+    if (!identity) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized: You must be logged in to delete projects.' },
         { status: 401 }
       );
     }
+
+    if (!canAccessIde(identity.role)) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden — IDE access required.' },
+        { status: 403 }
+      );
+    }
+
+    if (isDemoRole(identity.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'DEMO_READ_ONLY',
+          error: 'Demo accounts are view-only and cannot delete saved projects.',
+        },
+        { status: 403 }
+      );
+    }
+
+    const userEmail = identity.email;
 
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get('projectId');

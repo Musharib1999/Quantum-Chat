@@ -21,6 +21,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { isDemoRole } from "@/lib/roles";
 import {
   getActiveUserKey,
   getScopedIdeItem,
@@ -1058,6 +1059,7 @@ export default function QuantumGuruStudioPage() {
 
   const [targetBackend, setTargetBackend] = useState<string>("dwave_simulated_annealing");
   const { user, isAuthenticated, isInitializing, logout } = useAuth();
+  const isDemoUser = isDemoRole(user?.role);
   const userKey = useMemo(() => getActiveUserKey(user?.email), [user?.email]);
 
   // Strict client-side auth gate: redirect unauthenticated visitors straight to /login?redirect=/ide
@@ -3220,6 +3222,13 @@ export default function QuantumGuruStudioPage() {
   }, [framework, qiskitCode]);
 
   const handleRunOrRecompile = useCallback(async () => {
+    if (isDemoUser) {
+      setShowTerminal(true);
+      setTerminalOutput((prev) =>
+        `${prev ? `${prev}\n` : ""}[DEMO · VIEW ONLY] Simulators and code execution are disabled for demo accounts. Contact an administrator for full access.`
+      );
+      return;
+    }
     setIsRunningOrRecompiling(true);
     setShowTerminal(true);
     const t0 = performance.now();
@@ -3678,7 +3687,7 @@ export default function QuantumGuruStudioPage() {
         setIsRunningOrRecompiling(false);
       }
     }
-  }, [framework, dwaveCode, qiskitCode, currentMatrix, mathParams, activeProject, activeFile, journeyMilestoneId, journeyStage, userPrediction]);
+  }, [isDemoUser, framework, dwaveCode, qiskitCode, currentMatrix, mathParams, activeProject, activeFile, journeyMilestoneId, journeyStage, userPrediction]);
 
   const handleApplyPipelineCode = async (code: string, meta?: any) => {
     if (!code) return;
@@ -3903,6 +3912,21 @@ export default function QuantumGuruStudioPage() {
       text,
       timestamp: "Just now",
     };
+
+    if (isDemoUser) {
+      const demoReply: CopilotMessage = {
+        id: Date.now() + 1,
+        sender: "assistant",
+        text: "Demo accounts are view-only. Guru AI and quantum simulators are disabled in preview mode — contact an administrator to unlock full access.",
+        timestamp: "Just now",
+      };
+      if (framework === "qiskit") {
+        setQiskitCopilotMessages((prev) => [...prev, userMsg, demoReply]);
+      } else {
+        setDwaveCopilotMessages((prev) => [...prev, userMsg, demoReply]);
+      }
+      return;
+    }
 
     if (framework === "qiskit") {
       setQiskitCopilotMessages((prev) => [...prev, userMsg]);

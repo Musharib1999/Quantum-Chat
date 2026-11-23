@@ -16,6 +16,7 @@
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSession, resolveSessionFromToken, SessionIdentity } from './auth';
+import { isDemoRole, UserRole } from './roles';
 
 export const GATEWAY_HEADER = 'x-gateway-auth';
 const TOKEN_VERSION = 'v1';
@@ -62,7 +63,12 @@ export type GatewayAuthResult =
     | { ok: true; headers: Record<string, string>; identity: SessionIdentity | null }
     | { ok: false; response: NextResponse };
 
-function build(identity: SessionIdentity | null): GatewayAuthResult {
+export interface GatewayAuthOptions {
+    allowedRoles?: UserRole[];
+    allowDemo?: boolean;
+}
+
+function build(identity: SessionIdentity | null, opts: GatewayAuthOptions = {}): GatewayAuthResult {
     const secret = signingSecret();
     if (!identity) {
         return {
@@ -73,6 +79,37 @@ function build(identity: SessionIdentity | null): GatewayAuthResult {
             ),
         };
     }
+
+    // Strict server-side view-only lock for demo_ide & demo_enterprise accounts
+    if (!opts.allowDemo && isDemoRole(identity.role)) {
+        return {
+            ok: false,
+            response: NextResponse.json(
+                {
+                    success: false,
+                    code: 'DEMO_READ_ONLY',
+                    error: 'Demo accounts are view-only. AI agents and quantum simulators are disabled in preview mode.',
+                },
+                { status: 403 }
+            ),
+        };
+    }
+
+    // Role-based access control check (e.g., Enterprise-only endpoints)
+    if (opts.allowedRoles && opts.allowedRoles.length > 0 && !opts.allowedRoles.includes(identity.role)) {
+        return {
+            ok: false,
+            response: NextResponse.json(
+                {
+                    success: false,
+                    code: 'FORBIDDEN_ROLE',
+                    error: 'Forbidden - your account role does not have access to this resource.',
+                },
+                { status: 403 }
+            ),
+        };
+    }
+
     if (!secret) {
         if (gatewayAuthEnforced()) {
             console.error('[gatewayAuth] GATEWAY_AUTH_ENFORCE is on but GATEWAY_SHARED_SECRET is not set');
@@ -89,12 +126,15 @@ function build(identity: SessionIdentity | null): GatewayAuthResult {
     return { ok: true, headers: { [GATEWAY_HEADER]: signGatewayToken(identity, { secret }) }, identity };
 }
 
-/** For API routes: verifies the session cookie and returns headers to forward to the gateway. */
-export async function gatewayAuth(req: NextRequest): Promise<GatewayAuthResult> {
-    return build(await resolveSession(req));
+/** For API routes: verifies the session cookie, enforces RBAC & demo read-only locks, and returns gateway headers. */
+export async function gatewayAuth(req: NextRequest, opts: GatewayAuthOptions = {}): Promise<GatewayAuthResult> {
+    return build(await resolveSession(req), opts);
 }
 
 /** For server actions: same, from the raw cookie value. */
-export async function gatewayAuthFromSessionToken(sessionToken: string | null | undefined): Promise<GatewayAuthResult> {
-    return build(await resolveSessionFromToken(sessionToken));
+export async function gatewayAuthFromSessionToken(
+    sessionToken: string | null | undefined,
+    opts: GatewayAuthOptions = {}
+): Promise<GatewayAuthResult> {
+    return build(await resolveSessionFromToken(sessionToken), opts);
 }

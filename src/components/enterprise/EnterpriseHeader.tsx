@@ -39,6 +39,7 @@ interface EnterpriseHeaderProps {
   canCompile?: boolean;
   canRunDwave?: boolean;
   canRunOrtools?: boolean;
+  isDemo?: boolean;
 }
 
 export function EnterpriseHeader({
@@ -62,6 +63,7 @@ export function EnterpriseHeader({
   canCompile = false,
   canRunDwave = false,
   canRunOrtools = false,
+  isDemo = false,
 }: EnterpriseHeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSolveMenuOpen, setIsSolveMenuOpen] = useState(false);
@@ -169,8 +171,21 @@ export function EnterpriseHeader({
         )}
       </div>
 
-      {/* Right: Solve Dropdown, Theme Toggle, Profile Dropdown */}
+      {/* Right: Demo Indicator, Solve Dropdown, Theme Toggle, Profile Dropdown */}
       <div className="flex items-center space-x-2.5">
+        {isDemo && (
+          <span
+            className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono border ${
+              isDark
+                ? "bg-white/[0.04] border-white/[0.12] text-zinc-400"
+                : "bg-slate-100 border-slate-200 text-slate-600"
+            }`}
+            title="View-only demo account — AI and simulators are disabled"
+          >
+            Demo · View Only
+          </span>
+        )}
+
         {/* Solve / Stop Dropdown (Option 2: Ultra-Minimal, Zero Fancy Icons) */}
         {isSolving && onStopSolving ? (
           <button
@@ -383,14 +398,16 @@ export function EnterpriseHeader({
                 </div>
 
                 <div className="p-1 space-y-0.5 text-xs font-mono">
-                  <Link
-                    href="/ide"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left hover:bg-white/[0.05] text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                  >
-                    <Layers className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Circuit IDE</span>
-                  </Link>
+                  {!isDemo && (
+                    <Link
+                      href="/ide"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left hover:bg-white/[0.05] text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                    >
+                      <Layers className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Circuit IDE</span>
+                    </Link>
+                  )}
 
                   <button
                     onClick={() => {

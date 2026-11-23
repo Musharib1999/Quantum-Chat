@@ -9,6 +9,8 @@ import { DeploySolutionModal } from "@/components/optimization/DeploySolutionMod
 import IssueReportModal from "@/components/IssueReportModal";
 import UserProfileModal from "@/components/UserProfileModal";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
+import { isDemoRole } from "@/lib/roles";
 import {
   ProjectRecord,
   ExecutionRun,
@@ -88,8 +90,12 @@ function loadSavedState(): {
 
 export default function EnterpriseStudioPage() {
   const { user, isAuthenticated, isInitializing, logout } = useAuth();
+  const { showToast } = useToast();
+  const isDemoUser = isDemoRole(user?.role);
   const [isDark, setIsDark] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const [hasLoadedFromDb, setHasLoadedFromDb] = useState(false);
+  const dbSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Strict client-side auth gate: redirect unauthenticated visitors straight to /login?redirect=/enterprise
   useEffect(() => {
@@ -167,27 +173,94 @@ export default function EnterpriseStudioPage() {
     );
   }, [activeProjectId]);
 
-  // Hydrate from localStorage once safely mounted on the client
+  // Hydrate projects from MongoDB (authoritative across devices) with localStorage fallback for non-demo migration
   useEffect(() => {
     setIsMounted(true);
-    const saved = loadSavedState();
-    if (saved && saved.projects.length > 0) {
-      setProjects(saved.projects);
-      setActiveProjectId(saved.activeProjectId);
-      if (saved.surfaceMode) {
-        setSurfaceMode(saved.surfaceMode);
-      }
-    }
   }, []);
+
+  useEffect(() => {
+    if (!isMounted || isInitializing || !isAuthenticated || !user?.email) return;
+    let cancelled = false;
+
+    const hydrateProjects = async () => {
+      try {
+        const res = await fetch("/api/enterprise/projects", { cache: "no-store" });
+        const data = await res.json();
+        if (cancelled) return;
+
+        if (res.ok && data.success && Array.isArray(data.projects) && data.projects.length > 0) {
+          const cleaned: ProjectRecord[] = data.projects.map((p: ProjectRecord) => ({
+            ...p,
+            messages: Array.isArray(p.messages)
+              ? p.messages.map((m) =>
+                  m.isStreaming
+                    ? {
+                        ...m,
+                        isStreaming: false,
+                        text:
+                          m.text && !m.text.startsWith("Decomposing")
+                            ? m.text
+                            : "Execution was interrupted by page reload.",
+                        pipelineSteps: m.pipelineSteps?.map((s) =>
+                          s.status === "running"
+                            ? { ...s, status: "failed" as const, message: "Interrupted" }
+                            : s
+                        ),
+                      }
+                    : m
+                )
+              : [],
+          }));
+          setProjects(cleaned);
+          setActiveProjectId(cleaned[0].id);
+          setHasLoadedFromDb(true);
+          return;
+        }
+      } catch (err) {
+        console.warn("[Enterprise] Failed to hydrate projects from MongoDB:", err);
+      }
+
+      if (cancelled) return;
+
+      // For non-demo accounts with no MongoDB projects yet, migrate any existing localStorage projects
+      if (!isDemoUser) {
+        const saved = loadSavedState();
+        if (saved && saved.projects.length > 0) {
+          setProjects(saved.projects);
+          setActiveProjectId(saved.activeProjectId);
+          if (saved.surfaceMode) {
+            setSurfaceMode(saved.surfaceMode);
+          }
+          // Backfill migrated local projects into MongoDB
+          const meaningful = saved.projects.filter(
+            (p) => p.id !== "proj_initial" || p.messages.length > 0 || Boolean(p.workspace?.code)
+          );
+          if (meaningful.length > 0) {
+            fetch("/api/enterprise/projects", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ projects: meaningful }),
+            }).catch(() => {});
+          }
+        }
+      }
+      setHasLoadedFromDb(true);
+    };
+
+    hydrateProjects();
+    return () => {
+      cancelled = true;
+    };
+  }, [isMounted, isInitializing, isAuthenticated, user?.email, isDemoUser]);
 
   // Current active project record
   const currentProject = useMemo(() => {
     return projects.find((p) => p.id === activeProjectId) || projects[0] || DEFAULT_INITIAL_PROJECT;
   }, [projects, activeProjectId]);
 
-  // Persist projects and surfaceMode to localStorage on change only after mounted
+  // Persist projects to localStorage (fast cache) and MongoDB (debounced cloud persistence) for non-demo users
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || !hasLoadedFromDb || isDemoUser) return;
     try {
       localStorage.setItem(
         STORAGE_KEY,
@@ -200,7 +273,32 @@ export default function EnterpriseStudioPage() {
     } catch (e) {
       console.warn("Failed to persist enterprise workspace to localStorage", e);
     }
-  }, [projects, activeProjectId, surfaceMode, isMounted]);
+
+    if (isStreaming) return;
+    const meaningful = projects.filter(
+      (p) => p.id !== "proj_initial" || p.messages.length > 0 || Boolean(p.workspace?.code)
+    );
+    if (meaningful.length === 0) return;
+
+    if (dbSyncTimerRef.current) {
+      clearTimeout(dbSyncTimerRef.current);
+    }
+    dbSyncTimerRef.current = setTimeout(() => {
+      fetch("/api/enterprise/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projects: meaningful }),
+      }).catch((err) => {
+        console.warn("[Enterprise] Failed to sync projects to MongoDB:", err);
+      });
+    }, 1200);
+
+    return () => {
+      if (dbSyncTimerRef.current) {
+        clearTimeout(dbSyncTimerRef.current);
+      }
+    };
+  }, [projects, activeProjectId, surfaceMode, isMounted, hasLoadedFromDb, isDemoUser, isStreaming]);
 
   // Escape key collapses workbench fullscreen back to copilot
   useEffect(() => {
@@ -254,6 +352,10 @@ export default function EnterpriseStudioPage() {
 
   // Create new empty project
   const handleNewProject = () => {
+    if (isDemoUser) {
+      showToast("Demo mode is view-only. Creating new projects is disabled.", "info");
+      return;
+    }
     const proj = newProject("New optimization model", "Custom domain");
     setProjects((prev) => [proj, ...prev]);
     setActiveProjectId(proj.id);
@@ -281,6 +383,10 @@ export default function EnterpriseStudioPage() {
   // Natural language chat execution
   const handleSendMessage = async (text: string, penaltyOverride?: number) => {
     if (!text.trim()) return;
+    if (isDemoUser) {
+      showToast("Demo mode is view-only. AI optimization pipeline is disabled in preview accounts.", "info");
+      return;
+    }
 
     const userMsgId = `usr_${Date.now()}`;
     const botMsgId = `bot_${Date.now()}`;
@@ -535,6 +641,10 @@ export default function EnterpriseStudioPage() {
 
   // Recompile & Solve handler
   const handleReSolve = async () => {
+    if (isDemoUser) {
+      showToast("Demo mode is view-only. Recompiling and solving are disabled in preview accounts.", "info");
+      return;
+    }
     const textToSolve = currentProject.lastProblemText;
     const currentLambda = currentProject.workspace.penaltyLambda;
     if (textToSolve) {
@@ -603,6 +713,10 @@ export default function EnterpriseStudioPage() {
 
   // Unified solver execution triggered from the top navbar Solve menu
   const handleExecuteSolver = async (mode: "dwave" | "ortools" | "parallel") => {
+    if (isDemoUser) {
+      showToast("Demo mode is view-only. Simulators and solvers are disabled in preview accounts.", "info");
+      return;
+    }
     const quboToRun = mode === "dwave" || mode === "parallel" ? (ws.code?.trim() || "") : "";
     const ortoolsToRun = mode === "ortools" || mode === "parallel" ? (resolvedOrtoolsCode?.trim() || "") : "";
     if (!quboToRun && !ortoolsToRun) return;
@@ -872,6 +986,7 @@ export default function EnterpriseStudioPage() {
         canCompile={canCompile}
         canRunDwave={canRunDwave}
         canRunOrtools={canRunOrtools}
+        isDemo={isDemoUser}
       />
 
       {/* ── WORKSPACE SURFACE AREA ── */}
@@ -990,6 +1105,7 @@ export default function EnterpriseStudioPage() {
               onReSolve={handleReSolve}
               onStopSolving={() => handleStopExecution()}
               isSolving={isSolving || isStreaming || isExecutingScript}
+              isDemo={isDemoUser}
               terminalRunSeq={terminalRunSeq}
               onOpenDeploy={() => setIsDeployModalOpen(true)}
               projectId={activeProjectId}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { normalizeRole, UserRole } from '@/lib/roles';
+import { isDemoRole, normalizeRole, UserRole } from '@/lib/roles';
 
 interface User {
     email: string;
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isInitializing, setIsInitializing] = useState(true);
 
     useEffect(() => {
-        if (!user || user.role !== 'demo' || !user.demoExpiresAt) return;
+        if (!user || !isDemoRole(user.role) || !user.demoExpiresAt) return;
 
         const checkExpiry = () => {
             const expTime = new Date(user.demoExpiresAt!).getTime();
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         }
 
                         // Demo expiration check on mount
-                        if (data.role === 'demo' && data.demoExpiresAt && new Date() > new Date(data.demoExpiresAt)) {
+                        if (isDemoRole(data.role) && data.demoExpiresAt && new Date() > new Date(data.demoExpiresAt)) {
                             console.log("Demo expired on mount, logging out...");
                             logout();
                             return;
@@ -150,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setIsAuthenticated(false);
         localStorage.removeItem('quantum_session');
+        localStorage.removeItem('qg_enterprise_studio_v1');
         sessionStorage.removeItem('qg_session_tokens_used');
 
         // Clean up session and pipeline state, but PRESERVE user IDE projects and code (quantum_ide_*)!

@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import dbConnect from './db';
 import UserSession from '../models/UserSession';
 import User from '../models/User';
-import { normalizeRole, UserRole } from './roles';
+import { isDemoRole, normalizeRole, UserRole } from './roles';
 
 export interface SessionIdentity {
     email: string;
@@ -56,8 +56,8 @@ export async function resolveSessionFromToken(sessionToken: string | null | unde
             return null;
         }
 
-        // Demo expiration check
-        if (user.role === 'demo' && user.demoExpiresAt && new Date() > new Date(user.demoExpiresAt)) {
+        // Demo expiration check (applies to demo_ide, demo_enterprise, and legacy demo)
+        if (isDemoRole(user.role) && user.demoExpiresAt && new Date() > new Date(user.demoExpiresAt)) {
             console.log(`[verifyUserSession] Demo account expired for email: ${user.email}`);
             return null;
         }

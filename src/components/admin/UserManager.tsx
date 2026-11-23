@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { normalizeRole, getRoleLabel, UserRole } from '@/lib/roles';
+import { normalizeRole, getRoleLabel, isDemoRole, UserRole } from '@/lib/roles';
 
 interface User {
     _id: string;
@@ -103,7 +103,7 @@ export default function UserManager() {
                 phone,
                 plan,
                 role,
-                demoDurationHours: role === 'demo' ? Number(demoDuration) : undefined,
+                demoDurationHours: isDemoRole(role) ? Number(demoDuration) : undefined,
                 apiKey: "",
                 apiEnabled: false
             });
@@ -146,7 +146,7 @@ export default function UserManager() {
             simMinutesUsed,
             apiKey,
             apiEnabled,
-            demoDurationHours: role === 'demo' ? Number(demoDuration) : undefined
+            demoDurationHours: isDemoRole(role) ? Number(demoDuration) : undefined
         };
 
         if (password) {
@@ -257,8 +257,10 @@ export default function UserManager() {
                                                 <span className="px-2 py-0.5 bg-white text-[#0F172A] rounded text-[10px] font-bold border border-[rgb(27,176,206)]/20">Admin</span>
                                             ) : normalizeRole(user.role) === 'enterprise' ? (
                                                 <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold border border-purple-100">Enterprise</span>
-                                            ) : normalizeRole(user.role) === 'demo' ? (
-                                                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-bold border border-amber-200">Demo Trial</span>
+                                            ) : normalizeRole(user.role) === 'demo_enterprise' ? (
+                                                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-bold border border-amber-200">Enterprise Demo</span>
+                                            ) : normalizeRole(user.role) === 'demo_ide' ? (
+                                                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-bold border border-amber-200">IDE Demo</span>
                                             ) : user.isApproved ? (
                                                 <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-bold border border-emerald-100">Learner · Active</span>
                                             ) : (
@@ -324,7 +326,7 @@ export default function UserManager() {
                                                         setApiEnabled(user.apiEnabled || false);
                                                         setRole(normalizeRole(user.role));
                                                         let durationStr = "2";
-                                                        if (user.role === 'demo' && user.demoExpiresAt && user.createdAt) {
+                                                        if (isDemoRole(user.role) && user.demoExpiresAt && user.createdAt) {
                                                             const diffMs = new Date(user.demoExpiresAt).getTime() - new Date(user.createdAt).getTime();
                                                             const hours = diffMs / (1000 * 60 * 60);
                                                             durationStr = Number(hours.toFixed(2)).toString();
@@ -427,12 +429,13 @@ export default function UserManager() {
                                 >
                                     <option value="learner">Learner</option>
                                     <option value="enterprise">Enterprise Partner</option>
+                                    <option value="demo_ide">IDE Demo (View-Only)</option>
+                                    <option value="demo_enterprise">Enterprise Demo (View-Only)</option>
                                     <option value="admin">Administrator</option>
-                                    <option value="demo">Demo Trial Account</option>
                                 </select>
                             </div>
 
-                            {role === 'demo' && (
+                            {isDemoRole(role) && (
                                 <div className="space-y-1 animate-in fade-in duration-200">
                                     <label className="text-[10px] font-bold text-[#0F172A] uppercase">Demo Duration (Hours)</label>
                                     <input
@@ -536,11 +539,12 @@ export default function UserManager() {
                                     >
                                         <option value="learner">Learner</option>
                                         <option value="enterprise">Enterprise Partner</option>
+                                        <option value="demo_ide">IDE Demo (View-Only)</option>
+                                        <option value="demo_enterprise">Enterprise Demo (View-Only)</option>
                                         <option value="admin">Administrator</option>
-                                        <option value="demo">Demo Trial Account</option>
                                     </select>
                                 </div>
-                                {role === 'demo' && (
+                                {isDemoRole(role) && (
                                     <div className="space-y-1.5 animate-in fade-in duration-200">
                                         <label className="text-[10px] font-bold text-[#0F172A] uppercase">Demo Duration (Hours)</label>
                                         <input

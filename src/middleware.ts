@@ -60,8 +60,13 @@ export function middleware(req: NextRequest) {
         return NextResponse.next();
     }
 
-    // 4. Fast-reject unauthenticated calls to IDE, D-Wave & Developer execute APIs (DB token check also enforced inside each route)
-    if (pathname.startsWith("/api/ide") || pathname.startsWith("/api/dwave") || pathname.startsWith("/api/developer")) {
+    // 4. Fast-reject unauthenticated calls to IDE, Enterprise, D-Wave & Developer APIs (DB token + RBAC check also enforced inside each route)
+    if (
+        pathname.startsWith("/api/ide") ||
+        pathname.startsWith("/api/enterprise") ||
+        pathname.startsWith("/api/dwave") ||
+        pathname.startsWith("/api/developer")
+    ) {
         const userSession = req.cookies.get("user_session")?.value;
         if (!userSession) {
             return NextResponse.json(
@@ -84,6 +89,7 @@ export const config = {
         "/enterprise",
         "/enterprise/:path*",
         "/api/ide/:path*",
+        "/api/enterprise/:path*",
         "/api/dwave/:path*",
         "/api/developer/:path*",
     ],

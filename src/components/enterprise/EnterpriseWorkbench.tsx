@@ -82,6 +82,7 @@ export interface EnterpriseWorkbenchProps {
   onReSolve: () => void;
   onStopSolving?: () => void;
   isSolving: boolean;
+  isDemo?: boolean;
   terminalRunSeq?: number;
   onOpenDeploy?: () => void;
   projectId?: string;
@@ -153,6 +154,7 @@ export function EnterpriseWorkbench({
   onReSolve,
   onStopSolving,
   isSolving,
+  isDemo = false,
   terminalRunSeq = 0,
   onOpenDeploy,
   projectId = "default",
@@ -277,6 +279,19 @@ export function EnterpriseWorkbench({
 
     setGuruAiMessages((prev) => [...prev, userMsg]);
     setGuruAiInput("");
+    if (isDemo) {
+      setGuruAiMessages((prev) => [
+        ...prev,
+        {
+          id: `demo_${Date.now()}`,
+          sender: "assistant",
+          text: "Demo accounts are view-only. Guru AI and quantum simulators are disabled in preview mode — contact an administrator to unlock full access.",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+      return;
+    }
+
     setIsGuruAiThinking(true);
 
     if (guruAbortRef.current) {

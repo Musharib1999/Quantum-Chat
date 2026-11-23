@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const authRes = await gatewayAuth(req);
+    const authRes = await gatewayAuth(req, { allowedRoles: ['enterprise', 'admin'] });
     if (!authRes.ok) {
       return authRes.response;
     }

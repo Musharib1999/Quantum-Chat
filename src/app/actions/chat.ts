@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import { buildAssistantContext } from './assistant-pipeline';
 import { buildArticleContext } from './article-pipeline';
 import { getDynamicPrompt } from './prompt-utils';
+import { isDemoRole } from '@/lib/roles';
 
 function getPromptHash(text: string): string {
     const normalized = text.toLowerCase().trim().replace(/\s+/g, ' ');
@@ -153,9 +154,19 @@ export async function chatWithQuantumAI(
     // Sanitize prompt
     const sanitizedPrompt = prompt.trim();
 
-    // 1. Token limit check
+    // 1. Demo view-only lock & token limit check
     if (activeUserEmail) {
         const user = await User.findOne({ email: activeUserEmail }).lean() as any;
+        if (user && isDemoRole(user.role)) {
+            return {
+                text: "Demo accounts are view-only. AI assistants and quantum simulators are disabled in preview mode.",
+                source: 'system',
+                error: 'DEMO_READ_ONLY',
+                guardrailsStatus: 'passed',
+                activeGuardrails: [],
+                tokensUsed: 0
+            };
+        }
         if (user && user.tokensUsed >= user.tokenLimit) {
             return {
                 text: "⚠️ Your token limit has been reached. Please contact administration.",

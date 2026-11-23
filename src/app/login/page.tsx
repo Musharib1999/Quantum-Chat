@@ -5,7 +5,7 @@ import { Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { normalizeRole } from '@/lib/roles';
+import { canAccessEnterprise, canAccessIde, getDefaultRouteForRole, normalizeRole } from '@/lib/roles';
 
 function LoginForm() {
     const { login } = useAuth();
@@ -76,11 +76,17 @@ function LoginForm() {
                 const activeRedirect = (rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')) ? rawRedirect : '/';
 
                 const userRole = normalizeRole(data.role ?? data.user?.role);
-                let targetRedirect = activeRedirect;
-                if (activeRedirect === '/' || activeRedirect === '/industry') {
-                    if (userRole === 'admin') targetRedirect = '/admin/dashboard';
-                    else if (userRole === 'enterprise') targetRedirect = '/enterprise';
-                    else targetRedirect = '/ide';
+                let targetRedirect = getDefaultRouteForRole(userRole);
+                if (activeRedirect !== '/' && activeRedirect !== '/industry') {
+                    if (activeRedirect.startsWith('/enterprise')) {
+                        if (canAccessEnterprise(userRole)) targetRedirect = activeRedirect;
+                    } else if (activeRedirect.startsWith('/ide')) {
+                        if (canAccessIde(userRole)) targetRedirect = activeRedirect;
+                    } else if (activeRedirect.startsWith('/admin')) {
+                        if (userRole === 'admin') targetRedirect = activeRedirect;
+                    } else {
+                        targetRedirect = activeRedirect;
+                    }
                 }
 
                 router.push(targetRedirect);
