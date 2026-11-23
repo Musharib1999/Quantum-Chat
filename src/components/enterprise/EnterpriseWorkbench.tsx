@@ -496,7 +496,65 @@ ${textToSend}
   };
 
   // Real execution in container sandbox
-  const activeEditorCode = activeCodeFile === "ortools_baseline.py" ? (ortoolsCode || execution?.ortoolsCode || execution?.solverComparison?.classical?.code || "") : generatedCode;
+  // Synthesize deterministic Google OR-Tools CP-SAT script client-side if loading a historical project saved before the OR-Tools update
+  const synthesizedOrtoolsCode = useMemo(() => {
+    const existing = ortoolsCode || execution?.ortoolsCode || execution?.solverComparison?.classical?.code || "";
+    if (existing.trim()) return existing;
+    if (!variables || variables.length === 0) return "";
+
+    const lines: string[] = [
+      "# ── Deterministic Google OR-Tools CP-SAT Classical Baseline ──",
+      "import time",
+      "from ortools.sat.python import cp_model",
+      "",
+      "def solve_classical_baseline():",
+      "    t0 = time.perf_counter()",
+      "    model = cp_model.CpModel()",
+      "",
+      "    # 1. Decision Variables",
+    ];
+    for (const v of variables) {
+      if (v.varType === "BINARY") {
+        lines.push(`    ${v.name} = model.NewBoolVar('${v.name}')`);
+      } else {
+        const lb = typeof v.lowerBound === "number" ? Math.round(v.lowerBound) : 0;
+        const ub = typeof v.upperBound === "number" ? Math.round(v.upperBound) : 10000;
+        lines.push(`    ${v.name} = model.NewIntVar(${lb}, ${ub}, '${v.name}')`);
+      }
+    }
+    lines.push("");
+    lines.push("    # 2. Hard Constraints");
+    for (const c of mathModel?.constraints || []) {
+      if (!c.leftExpr?.trim()) continue;
+      const rhs = typeof c.rightVal === "number" ? Math.round(c.rightVal) : 0;
+      const op = c.op === "==" ? "==" : c.op;
+      lines.push(`    model.Add(${c.leftExpr} ${op} ${rhs})  # ${c.name}`);
+    }
+    lines.push("");
+    lines.push("    # 3. Objective Function");
+    const senseFn = mathModel?.objectiveSense === "Maximize" ? "Maximize" : "Minimize";
+    const objExpr = mathModel?.objectiveExpr?.trim() ? mathModel.objectiveExpr : "0";
+    lines.push(`    model.${senseFn}(${objExpr})`);
+    lines.push("");
+    lines.push("    # 4. Execute CP-SAT Exact Branch-and-Cut Solver");
+    lines.push("    solver = cp_model.CpSolver()");
+    lines.push("    solver.parameters.max_time_in_seconds = 10.0");
+    lines.push("    status = solver.Solve(model)");
+    lines.push("    elapsed_ms = (time.perf_counter() - t0) * 1000.0");
+    lines.push("    status_name = solver.StatusName(status)");
+    lines.push(`    all_vars = [${variables.map((v) => `("${v.name}", ${v.name})`).join(", ")}]`);
+    lines.push("    selected = [name for name, v in all_vars if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) and solver.Value(v) > 0]");
+    lines.push("    print(f'Google OR-Tools CP-SAT Status : {status_name} ({elapsed_ms:.2f} ms)')");
+    lines.push("    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):");
+    lines.push("        print(f'Exact Classical Objective     : {solver.ObjectiveValue():.4f}')");
+    lines.push("    print(f'Active Decisions ({len(selected)})       : {selected}')");
+    lines.push("");
+    lines.push("if __name__ == '__main__':");
+    lines.push("    solve_classical_baseline()");
+    return lines.join("\n");
+  }, [ortoolsCode, execution, variables, mathModel]);
+
+  const activeEditorCode = activeCodeFile === "ortools_baseline.py" ? synthesizedOrtoolsCode : generatedCode;
 
   const handleRunPythonScript = async () => {
     const codeToExecute = activeEditorCode;
