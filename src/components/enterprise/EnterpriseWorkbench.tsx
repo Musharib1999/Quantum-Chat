@@ -558,9 +558,27 @@ ${textToSend}
 
   const activeEditorCode = activeCodeFile === "ortools_baseline.py" ? synthesizedOrtoolsCode : generatedCode;
 
+  // Live-update penalty λ inside solution.py whenever the user edits λ
+  const handleInlinePenaltyChange = (nextLambda: number) => {
+    const safeLambda = Number.isFinite(nextLambda) && nextLambda > 0 ? nextLambda : 1.0;
+    onChangePenaltyLambda(safeLambda);
+    if (generatedCode?.trim()) {
+      const updatedQubo = generatedCode
+        .replace(/Q\s*=\s*Q_cost\s*\+\s*[\d.]+\s*\*\s*Q_con/g, `Q = Q_cost + ${safeLambda} * Q_con`)
+        .replace(/offset\s*=\s*offset_cost\s*\+\s*[\d.]+\s*\*\s*offset_con/g, `offset = offset_cost + ${safeLambda} * offset_con`)
+        .replace(/penalty_lambda\s*=\s*[\d.]+/g, `penalty_lambda = ${safeLambda}`);
+      if (updatedQubo !== generatedCode) {
+        onChangeCode(updatedQubo);
+      }
+    }
+  };
+
+  // 1-Click Parallel Execution: Runs BOTH solution.py (D-Wave QUBO) and ortools_baseline.py (Google OR-Tools) simultaneously
   const handleRunPythonScript = async () => {
-    const codeToExecute = activeEditorCode;
-    if (!codeToExecute?.trim()) return;
+    const quboToRun = generatedCode?.trim() || "";
+    const ortoolsToRun = synthesizedOrtoolsCode?.trim() || "";
+    if (!quboToRun && !ortoolsToRun) return;
+
     if (runCodeAbortRef.current) {
       runCodeAbortRef.current.abort();
     }
@@ -570,149 +588,190 @@ ${textToSend}
     setIsRunningCode(true);
     setTerminalLogs((prev) => [
       ...prev,
-      `> python3 ${activeCodeFile}`,
-      `[INFO] Dispatching ${activeCodeFile} to sandbox execution engine...`,
+      `> Executing Parallel Benchmark: solution.py (D-Wave QUBO, λ=${penaltyLambda}) + ortools_baseline.py (Google OR-Tools CP-SAT)`,
+      `[INFO] Dispatching both scripts in parallel to sandbox execution engine...`,
     ]);
 
     const start = performance.now();
     try {
-      const res = await fetch("/api/ide/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({ code: codeToExecute }),
-      });
-      const data = await res.json();
-      const elapsed = Math.round(performance.now() - start);
+      const [quboRes, ortoolsRes] = await Promise.all([
+        quboToRun
+          ? fetch("/api/ide/execute", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              signal: controller.signal,
+              body: JSON.stringify({ code: quboToRun }),
+            }).then(async (r) => ({ data: await r.json(), ms: Math.round(performance.now() - start) }))
+          : Promise.resolve(null),
+        ortoolsToRun
+          ? fetch("/api/ide/execute", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              signal: controller.signal,
+              body: JSON.stringify({ code: ortoolsToRun }),
+            }).then(async (r) => ({ data: await r.json(), ms: Math.round(performance.now() - start) }))
+          : Promise.resolve(null),
+      ]);
 
-      if (data.success) {
-        const stdoutLines = data.stdout ? data.stdout.trim().split("\n") : [];
-        const stderrLines = data.stderr ? data.stderr.trim().split("\n") : [];
-        setTerminalLogs((prev) => [
-          ...prev,
-          ...stdoutLines,
-          ...(stderrLines.length > 0 ? stderrLines.map((l: string) => `[STDERR] ${l}`) : []),
-          `[OK] Execution completed in ${elapsed}ms (${data.backend_used || "local"}).`,
-        ]);
+      const totalElapsed = Math.round(performance.now() - start);
+      const logLines: string[] = [];
 
-        // Synchronize live sandbox execution result into workspace.execution so the Result tab updates immediately
-        if (onUpdateExecution) {
-          const opt = data.optimization_results;
-          const stdoutText = data.stdout || "";
+      if (quboRes?.data) {
+        logLines.push(`── [1/2] D-Wave QUBO Annealer (solution.py · ${quboRes.ms}ms) ──`);
+        if (quboRes.data.stdout) logLines.push(...quboRes.data.stdout.trim().split("\n"));
+        if (quboRes.data.stderr) {
+          logLines.push(...quboRes.data.stderr.trim().split("\n").map((l: string) => `[STDERR] ${l}`));
+        }
+      }
+      if (ortoolsRes?.data) {
+        logLines.push(`── [2/2] Google OR-Tools CP-SAT (ortools_baseline.py · ${ortoolsRes.ms}ms) ──`);
+        if (ortoolsRes.data.stdout) logLines.push(...ortoolsRes.data.stdout.trim().split("\n"));
+        if (ortoolsRes.data.stderr) {
+          logLines.push(...ortoolsRes.data.stderr.trim().split("\n").map((l: string) => `[STDERR] ${l}`));
+        }
+      }
+      logLines.push(`[OK] Parallel benchmark completed in ${totalElapsed}ms.`);
+      setTerminalLogs((prev) => [...prev, ...logLines]);
 
-          if (activeCodeFile === "ortools_baseline.py") {
-            const statusMatch = stdoutText.match(/Google OR-Tools CP-SAT Status\s*:\s*([A-Z_]+)/);
-            const objMatch = stdoutText.match(/Exact Classical Objective\s*:\s*([-+]?\d+(?:\.\d+)?)/);
-            const activeMatch = stdoutText.match(/Active Decisions \(\d+\)\s*:\s*\[([^\]]*)\]/);
-            const parsedStatus = statusMatch ? statusMatch[1] : "OPTIMAL";
-            const parsedObj = objMatch ? parseFloat(objMatch[1]) : null;
-            const parsedSelected = activeMatch
-              ? activeMatch[1]
-                  .split(",")
-                  .map((s: string) => s.trim().replace(/^['"]|['"]$/g, ""))
-                  .filter(Boolean)
-              : [];
+      // Synchronize both results into workspace.execution so the Result tab and Solver strategy tab update in 1 click
+      if (onUpdateExecution) {
+        const totalCons = mathModel?.constraints?.length || 0;
 
-            onUpdateExecution((prev) => {
-              const base: SolverExecution = prev || {
-                feasible: true,
-                energy: parsedObj ?? 0,
-                objectiveValue: parsedObj,
-                solution: Object.fromEntries(variables.map((v) => [v.name, parsedSelected.includes(v.name) ? 1 : 0])),
-                selectedVariables: parsedSelected,
-                numReads: 1000,
-                penaltyWeight: penaltyLambda,
-                penaltyLabel: `λ = ${penaltyLambda}`,
-                solverComparison: null,
-              };
-              const qObj = base.objectiveValue ?? base.energy ?? parsedObj ?? 0;
-              const cObj = parsedObj ?? qObj;
-              const gap =
-                cObj !== 0 && cObj !== null && qObj !== null
-                  ? Math.round((Math.abs(qObj - cObj) / Math.abs(cObj)) * 10000) / 100
-                  : 0;
-              const totalCons = mathModel?.constraints?.length || 0;
-              return {
-                ...base,
-                solverComparison: {
-                  winner: gap === 0 ? "TIE" : "CLASSICAL",
-                  verdict_badge:
-                    gap === 0
-                      ? "0.00% Optimality Gap — Global Optimum Verified"
-                      : `Classical OR-Tools Optimal (${gap}% QUBO gap)`,
-                  optimality_gap_pct: gap,
-                  decision_overlap_pct: 100,
-                  exact_decision_match: gap === 0,
-                  summary: `Google OR-Tools CP-SAT executed in ${elapsed}ms with status ${parsedStatus} (Objective = ${cObj}).`,
-                  quantum: base.solverComparison?.quantum || {
-                    solver: "D-Wave Simulated Annealer (QUBO)",
-                    status: base.feasible ? "FEASIBLE" : "SUBOPTIMAL",
-                    feasible: base.feasible ?? true,
-                    objective_value: qObj,
-                    energy: base.energy,
-                    selected_variables: base.selectedVariables || [],
-                    constraints_satisfied: base.feasible ? totalCons : 0,
-                    constraints_total: totalCons,
-                    solve_time_ms: elapsed,
-                    logical_qubits: qMatrix?.size || variables.length,
-                    penalty_lambda: penaltyLambda,
-                  },
-                  classical: {
-                    solver: "Google OR-Tools CP-SAT",
-                    status: parsedStatus,
-                    feasible: parsedStatus === "OPTIMAL" || parsedStatus === "FEASIBLE",
-                    objective_value: cObj,
-                    selected_variables: parsedSelected,
-                    constraints_satisfied: parsedStatus === "OPTIMAL" || parsedStatus === "FEASIBLE" ? totalCons : 0,
-                    constraints_total: totalCons,
-                    solve_time_ms: elapsed,
-                    code: codeToExecute,
-                  },
-                },
-              };
-            });
-          } else if (opt && typeof opt === "object" && !opt.error) {
-            const sampleObj: Record<string, number> =
-              opt.sample && typeof opt.sample === "object" ? opt.sample : {};
-            // Merge with declared variables so all decision variables exist in solution map
-            const fullSolution: Record<string, number> = {};
-            for (const v of variables) {
-              fullSolution[v.name] = typeof sampleObj[v.name] === "number" ? sampleObj[v.name] : 0;
-            }
-            for (const [k, val] of Object.entries(sampleObj)) {
-              if (!k.startsWith("slack_")) {
-                fullSolution[k] = Number(val);
-              }
-            }
-            const selectedVars = Object.entries(fullSolution)
-              .filter(([, val]) => Number(val) > 0)
-              .map(([k]) => k);
-            const energyVal = typeof opt.energy === "number" ? opt.energy : 0;
-            const penMatch = stdoutText.match(/Total Penalty:\s*([-+]?\d+(?:\.\d+)?)/);
-            const totalPenalty = penMatch ? parseFloat(penMatch[1]) : 0;
-            const isFeasible = totalPenalty <= 1e-4;
-
-            onUpdateExecution((prev) => ({
-              feasible: isFeasible,
-              energy: energyVal,
-              objectiveValue: Math.round((energyVal - totalPenalty) * 10000) / 10000,
-              solution: fullSolution,
-              selectedVariables: selectedVars,
-              numReads: typeof opt.num_reads === "number" ? opt.num_reads : prev?.numReads ?? 1000,
-              penaltyWeight: prev?.penaltyWeight ?? penaltyLambda,
-              penaltyLabel: prev?.penaltyLabel ?? `λ = ${penaltyLambda}`,
-              solverComparison: prev?.solverComparison ?? null,
-              ortoolsCode: prev?.ortoolsCode ?? ortoolsCode,
-            }));
+        // 1. Parse Quantum QUBO Result
+        const qData = quboRes?.data;
+        const qOpt = qData?.optimization_results;
+        const qStdout = qData?.stdout || "";
+        const sampleObj: Record<string, number> =
+          qOpt?.sample && typeof qOpt.sample === "object" ? qOpt.sample : {};
+        const fullSolution: Record<string, number> = {};
+        for (const v of variables) {
+          fullSolution[v.name] = typeof sampleObj[v.name] === "number" ? sampleObj[v.name] : 0;
+        }
+        for (const [k, val] of Object.entries(sampleObj)) {
+          if (!k.startsWith("slack_")) {
+            fullSolution[k] = Number(val);
           }
         }
-      } else {
-        const err = data.stderr || data.error || "Execution failed";
-        setTerminalLogs((prev) => [
-          ...prev,
-          `[ERROR] ${err}`,
-          `[FAIL] Process exited with failure (${elapsed}ms)`,
-        ]);
+        const qSelected = Object.entries(fullSolution)
+          .filter(([, val]) => Number(val) > 0)
+          .map(([k]) => k);
+        const qEnergy = typeof qOpt?.energy === "number" ? qOpt.energy : 0;
+        const penMatch = qStdout.match(/Total Penalty:\s*([-+]?\d+(?:\.\d+)?)/);
+        const totalPenalty = penMatch ? parseFloat(penMatch[1]) : 0;
+        const qFeasible = totalPenalty <= 1e-4;
+        const qObj = Math.round((qEnergy - totalPenalty) * 10000) / 10000;
+        const qReads = typeof qOpt?.num_reads === "number" ? qOpt.num_reads : 1000;
+        const qMs = quboRes?.ms ?? totalElapsed;
+
+        // 2. Parse Classical Google OR-Tools CP-SAT Result
+        const cData = ortoolsRes?.data;
+        const cStdout = cData?.stdout || "";
+        const statusMatch = cStdout.match(/Google OR-Tools CP-SAT Status\s*:\s*([A-Z_]+)/);
+        const objMatch = cStdout.match(/Exact Classical Objective\s*:\s*([-+]?\d+(?:\.\d+)?)/);
+        const activeMatch = cStdout.match(/Active Decisions \(\d+\)\s*:\s*\[([^\]]*)\]/);
+        const cStatus = statusMatch ? statusMatch[1] : cData?.success ? "OPTIMAL" : "ERROR";
+        const cFeasible = cStatus === "OPTIMAL" || cStatus === "FEASIBLE";
+        const cObj = objMatch ? parseFloat(objMatch[1]) : null;
+        const cSelected = activeMatch
+          ? activeMatch[1]
+              .split(",")
+              .map((s: string) => s.trim().replace(/^['"]|['"]$/g, ""))
+              .filter(Boolean)
+          : [];
+        const cMs = ortoolsRes?.ms ?? totalElapsed;
+
+        // 3. Honest Head-to-Head Comparison (no false 0.00% gap when infeasible!)
+        let winner: "TIE" | "QUANTUM" | "CLASSICAL" | "NONE" = "NONE";
+        let verdictBadge = "Boundary Conflict Detected in Both Solvers";
+        let gapPct: number | null = null;
+        let summaryText = "";
+
+        const qSet = new Set(qSelected);
+        const cSet = new Set(cSelected);
+        const unionSize = new Set([...qSelected, ...cSelected]).size;
+        const interSize = [...qSet].filter((x) => cSet.has(x)).length;
+        const overlapPct = unionSize > 0 ? Math.round((interSize / unionSize) * 1000) / 10 : 100;
+
+        if (qFeasible && cFeasible && cObj !== null) {
+          const diff = qObj - cObj;
+          gapPct =
+            Math.abs(cObj) > 1e-9
+              ? Math.round((Math.abs(diff) / Math.abs(cObj)) * 10000) / 100
+              : Math.abs(diff) < 1e-5
+              ? 0
+              : 100;
+          if (Math.abs(diff) < 1e-5) {
+            winner = "TIE";
+            verdictBadge = "0.00% Optimality Gap — Global Optimum Verified";
+            summaryText = `Both D-Wave Quantum Annealing (QUBO, λ=${penaltyLambda}) and Google OR-Tools CP-SAT converged to the exact global optimum (Objective = ${qObj.toFixed(4)}, ${totalCons}/${totalCons} constraints satisfied).`;
+          } else {
+            const senseUpper = (mathModel?.objectiveSense || "Minimize").toUpperCase();
+            const qBetter = senseUpper === "MAXIMIZE" ? diff > 0 : diff < 0;
+            winner = qBetter ? "QUANTUM" : "CLASSICAL";
+            verdictBadge = qBetter
+              ? `Quantum Annealing Outperformed (${gapPct}% advantage)`
+              : `Classical OR-Tools Optimal (${gapPct}% QUBO gap)`;
+            summaryText = qBetter
+              ? `D-Wave QUBO Annealing found a better feasible objective (${qObj.toFixed(4)}) than OR-Tools (${cObj.toFixed(4)}).`
+              : `Google OR-Tools CP-SAT proved the exact global optimum (Objective = ${cObj.toFixed(4)}), while D-Wave QUBO converged to Objective = ${qObj.toFixed(4)} (gap = ${gapPct}% at λ = ${penaltyLambda}).`;
+          }
+        } else if (cFeasible && !qFeasible) {
+          winner = "CLASSICAL";
+          verdictBadge = "Classical OR-Tools Feasible (Increase QUBO Penalty λ)";
+          summaryText = `Google OR-Tools CP-SAT found a feasible optimum (Objective = ${cObj ?? "—"}), whereas the QUBO sample had remaining constraint penalty (${totalPenalty.toFixed(2)}) at λ = ${penaltyLambda}. Increase Penalty λ in the toolbar and click Run Parallel Benchmark.`;
+        } else if (qFeasible && !cFeasible) {
+          winner = "QUANTUM";
+          verdictBadge = "Quantum QUBO Feasible";
+          summaryText = `D-Wave QUBO Annealing satisfied all constraints (Objective = ${qObj.toFixed(4)}), while OR-Tools returned ${cStatus}.`;
+        } else {
+          winner = "NONE";
+          verdictBadge = "Infeasible Constraint Bounds Detected";
+          summaryText = `Both D-Wave QUBO (Penalty = ${totalPenalty.toFixed(2)}) and Google OR-Tools CP-SAT (Status = ${cStatus}) report that the current constraint bounds cannot be simultaneously satisfied by the binary variables. Click "Recompile & Solve" to normalize constraint capacity weights or relax bounds in the Model tab.`;
+        }
+
+        onUpdateExecution((prev) => ({
+          feasible: qFeasible,
+          energy: qEnergy,
+          objectiveValue: qObj,
+          solution: fullSolution,
+          selectedVariables: qSelected,
+          numReads: qReads,
+          penaltyWeight: penaltyLambda,
+          penaltyLabel: `λ = ${penaltyLambda}`,
+          ortoolsCode: ortoolsToRun,
+          solverComparison: {
+            winner,
+            verdict_badge: verdictBadge,
+            optimality_gap_pct: gapPct,
+            decision_overlap_pct: overlapPct,
+            exact_decision_match: overlapPct === 100 && qFeasible && cFeasible,
+            summary: summaryText,
+            quantum: {
+              solver: "D-Wave Simulated Annealer (QUBO)",
+              status: qFeasible ? "FEASIBLE" : "SUBOPTIMAL",
+              feasible: qFeasible,
+              objective_value: qObj,
+              energy: qEnergy,
+              selected_variables: qSelected,
+              constraints_satisfied: qFeasible ? totalCons : 0,
+              constraints_total: totalCons,
+              solve_time_ms: qMs,
+              logical_qubits: qMatrix?.size || variables.length,
+              penalty_lambda: penaltyLambda,
+            },
+            classical: {
+              solver: "Google OR-Tools CP-SAT",
+              status: cStatus,
+              feasible: cFeasible,
+              objective_value: cObj,
+              selected_variables: cSelected,
+              constraints_satisfied: cFeasible ? totalCons : 0,
+              constraints_total: totalCons,
+              solve_time_ms: cMs,
+              code: ortoolsToRun,
+            },
+          },
+        }));
       }
     } catch (err: any) {
       const isAbort = err?.name === "AbortError" || controller.signal.aborted;
@@ -944,7 +1003,7 @@ ${textToSend}
                     min="0.1"
                     step="0.5"
                     value={penaltyLambda}
-                    onChange={(e) => onChangePenaltyLambda(parseFloat(e.target.value) || 1.0)}
+                    onChange={(e) => handleInlinePenaltyChange(parseFloat(e.target.value) || 1.0)}
                     className={`w-20 px-2.5 py-1 text-xs font-mono rounded-lg border outline-none font-semibold transition-colors ${
                       isDark
                         ? "bg-[#13141A] border-white/[0.1] text-zinc-100 focus:border-sky-400"
@@ -2055,6 +2114,24 @@ ${textToSend}
               </div>
 
               <div className="flex items-center space-x-2 shrink-0">
+                {/* Inline Penalty λ Control synced live with solution.py */}
+                <div className="hidden sm:flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.08]">
+                  <span className="text-[11px] text-zinc-400">λ:</span>
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.5"
+                    value={penaltyLambda}
+                    onChange={(e) => handleInlinePenaltyChange(parseFloat(e.target.value) || 1.0)}
+                    className={`w-14 px-1.5 py-0.5 text-[11px] font-mono rounded border outline-none font-semibold ${
+                      isDark
+                        ? "bg-[#111216] border-white/[0.12] text-zinc-100 focus:border-white/[0.3]"
+                        : "bg-white border-slate-300 text-slate-900"
+                    }`}
+                    title="QUBO Constraint Penalty Multiplier (λ) — live-updates solution.py"
+                  />
+                </div>
+
                 {/* Recompile & Solve / Stop */}
                 {isSolving && onStopSolving ? (
                   <button
@@ -2076,20 +2153,20 @@ ${textToSend}
                         ? "bg-white/[0.02] text-zinc-600 border-white/[0.04] cursor-not-allowed"
                         : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 hover:text-white border-white/[0.08] active:scale-95"
                     }`}
-                    title="Recompile QUBO and solve"
+                    title="Recompile both QUBO and OR-Tools models with current λ and solve"
                   >
-                    <RotateCw className={`w-3.5 h-3.5 text-sky-400 ${isSolving ? "animate-spin" : ""}`} />
+                    <RotateCw className={`w-3.5 h-3.5 text-zinc-300 ${isSolving ? "animate-spin" : ""}`} />
                     <span>Recompile &amp; Solve</span>
                   </button>
                 )}
 
-                {/* Run code / Stop code (Primary CTA) */}
+                {/* Run Both (QUBO + OR-Tools) / Stop (Primary CTA) */}
                 {isRunningCode ? (
                   <button
                     type="button"
                     onClick={handleStopPythonScript}
                     className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 bg-rose-500 hover:bg-rose-400 text-black shadow-xs active:scale-95"
-                    title="Terminate running script"
+                    title="Terminate running benchmark"
                   >
                     <Square className="w-3 h-3 fill-black" />
                     <span>Stop</span>
@@ -2100,10 +2177,10 @@ ${textToSend}
                     onClick={handleRunPythonScript}
                     disabled={isRunningCode || isSolving}
                     className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 bg-emerald-500 hover:bg-emerald-400 text-black shadow-xs active:scale-95"
-                    title="Execute Python script in container sandbox"
+                    title="Execute both solution.py (D-Wave QUBO) and ortools_baseline.py (Google OR-Tools) in parallel and update Result tab"
                   >
                     <Play className="w-3.5 h-3.5 fill-black" />
-                    <span>Run code</span>
+                    <span>Run Parallel Benchmark</span>
                   </button>
                 )}
               </div>
@@ -2170,6 +2247,16 @@ ${textToSend}
                     <span className="text-[10px] text-zinc-500">stdout / stderr</span>
                   </div>
                   <div className="flex items-center space-x-1.5">
+                    {execution && (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectTab("results")}
+                        className="px-2 py-0.5 rounded text-[10px] bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-zinc-100 transition-colors cursor-pointer"
+                        title="Open side-by-side Quantum vs. OR-Tools Result comparison"
+                      >
+                        View Result Comparison →
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setTerminalLogs(() => [])}
