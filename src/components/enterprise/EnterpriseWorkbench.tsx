@@ -164,6 +164,7 @@ export function EnterpriseWorkbench({
 }: EnterpriseWorkbenchProps) {
   const [activeTab, setActiveTab] = useState<WorkbenchTab>("code");
   const [activeCodeFile, setActiveCodeFile] = useState<"solution.py" | "ortools_baseline.py">("solution.py");
+  const [resultVarFilter, setResultVarFilter] = useState<"active" | "all">("active");
 
   // Always auto-select Code Editor tab when entering Workbench
   useEffect(() => {
@@ -2352,279 +2353,300 @@ ${textToSend}
         )}
 
         {/* ════════════════════════════════════════════════════════════════════════════════ */}
-        {/* TAB 7: RESULT (EXECUTION SOLUTION & QUANTUM VS. OR-TOOLS COMPARISON)             */}
+        {/* TAB 7: RESULT (CLEAN 3-ZONE EXECUTIVE SUMMARY & PARALLEL BENCHMARK)              */}
         {/* ════════════════════════════════════════════════════════════════════════════════ */}
         {activeTab === "results" && (
-          <div className="space-y-5 font-mono text-xs">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-mono font-semibold text-zinc-200">
-                Execution Result &amp; Parallel Benchmark
-              </h3>
-              {execution && (() => {
-                const isTrivialZero =
-                  (mathModel?.constraints?.length || 0) === 0 &&
-                  (execution.selectedVariables?.length || 0) === 0 &&
-                  (execution.objectiveValue === null || Math.abs(execution.objectiveValue) < 1e-6);
-                return (
-                  <span
-                    className={`text-[11px] px-2.5 py-0.5 rounded border font-semibold ${
-                      isTrivialZero
-                        ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                        : execution.feasible
-                        ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
-                        : "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                    }`}
-                  >
-                    {isTrivialZero
-                      ? "Unconstrained Trivial Zero State"
-                      : execution.feasible
-                      ? "Feasible Solution Found"
-                      : "Suboptimal / Boundary Violation"}
-                  </span>
-                );
-              })()}
-            </div>
-
+          <div className="space-y-6 text-xs">
             {!execution ? (
               <div
                 style={{
-                  backgroundColor: isDark ? "#13141A" : "#F8FAFC",
+                  backgroundColor: isDark ? "#0C0D11" : "#F8FAFC",
                 }}
-                className="p-8 rounded-xl border border-dashed border-white/[0.1] text-center text-xs text-zinc-500"
+                className="p-10 rounded-xl border border-dashed border-white/[0.1] text-center space-y-2"
               >
-                No execution results yet. Run a problem in Copilot or click &quot;Recompile &amp; Solve&quot; in the Code Editor tab.
+                <div className="text-sm font-medium text-zinc-200 font-sans">No execution results yet</div>
+                <p className="text-xs text-zinc-500 font-sans">
+                  Run a problem in Copilot or click <span className="text-zinc-300 font-mono">Run Parallel Benchmark</span> in the Code Editor tab.
+                </p>
               </div>
-            ) : (
-              <>
-                {/* 1. Primary Solution Summary Metrics */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div
-                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
-                    className="p-3 rounded-xl border border-white/[0.08] space-y-1"
-                  >
-                    <span className="text-[10px] text-zinc-500 block">Ground Energy</span>
-                    <span className="text-sm font-bold text-zinc-100">
-                      {typeof execution.energy === "number" ? execution.energy.toFixed(4) : "—"}
-                    </span>
-                  </div>
-                  <div
-                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
-                    className="p-3 rounded-xl border border-white/[0.08] space-y-1"
-                  >
-                    <span className="text-[10px] text-zinc-500 block">Objective Value</span>
-                    <span className="text-sm font-bold text-zinc-100">
-                      {typeof execution.objectiveValue === "number"
-                        ? execution.objectiveValue.toFixed(4)
-                        : typeof execution.energy === "number"
-                        ? execution.energy.toFixed(4)
-                        : "—"}
-                    </span>
-                  </div>
-                  <div
-                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
-                    className="p-3 rounded-xl border border-white/[0.08] space-y-1"
-                  >
-                    <span className="text-[10px] text-zinc-500 block">Active Decisions</span>
-                    <span className="text-sm font-bold text-zinc-100">
-                      {execution.selectedVariables?.length ?? 0} / {variables.length || Object.keys(execution.solution || {}).length}
-                    </span>
-                  </div>
-                  <div
-                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
-                    className="p-3 rounded-xl border border-white/[0.08] space-y-1"
-                  >
-                    <span className="text-[10px] text-zinc-500 block">Sampling Reads</span>
-                    <span className="text-sm font-bold text-zinc-100">
-                      {typeof execution.numReads === "number" ? execution.numReads.toLocaleString() : "1,000"}
-                    </span>
-                  </div>
-                </div>
+            ) : (() => {
+              const comp = execution.solverComparison;
+              const totalConstraints = mathModel?.constraints?.length || comp?.quantum?.constraints_total || 0;
+              const isTrivialZero =
+                totalConstraints === 0 &&
+                (execution.selectedVariables?.length || 0) === 0 &&
+                (execution.objectiveValue === null || Math.abs(execution.objectiveValue) < 1e-6);
 
-                {/* 2. Active Decisions Card */}
-                <div
-                  style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
-                  className="p-4 rounded-xl border border-white/[0.08] space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-zinc-200">
-                      Optimal Selected Decision Variables (x = 1)
-                    </span>
-                    <span className="text-[11px] text-zinc-400">
-                      Penalty λ = {execution.penaltyWeight ?? penaltyLambda}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Array.isArray(execution.selectedVariables) && execution.selectedVariables.length > 0 ? (
-                      execution.selectedVariables.map((v, idx) => (
+              const bothFeasible = Boolean(
+                !isTrivialZero &&
+                (comp ? comp.quantum.feasible && comp.classical.feasible : execution.feasible)
+              );
+
+              const verdictTitle = isTrivialZero
+                ? "Unconstrained Trivial Zero State"
+                : comp?.verdict_badge
+                ? comp.verdict_badge
+                : execution.feasible
+                ? "Feasible Solution Found"
+                : "Constraint Bounds Infeasible";
+
+              const verdictSubtitle = isTrivialZero
+                ? "No constraints were compiled into this model (0/0). Re-submit the problem or add constraints in the Model tab."
+                : comp?.summary
+                ? comp.summary
+                : execution.feasible
+                ? `Solver converged across ${typeof execution.numReads === "number" ? execution.numReads.toLocaleString() : "1,000"} annealing reads with penalty stiffness λ = ${execution.penaltyWeight ?? penaltyLambda}.`
+                : `Solver could not satisfy all constraints at λ = ${execution.penaltyWeight ?? penaltyLambda}. Adjust penalty λ or inspect constraint bounds.`;
+
+              const allRows: Array<{ name: string; qVal: number; cVal: number | null }> = (
+                Object.keys(execution.solution || {}).length > 0
+                  ? Object.entries(execution.solution || {})
+                  : variables.map((v) => [
+                      v.name,
+                      execution.selectedVariables?.includes(v.name) ? 1 : 0,
+                    ] as [string, number])
+              ).map(([name, qVal]) => ({
+                name,
+                qVal: Number(qVal),
+                cVal: comp
+                  ? comp.classical.selected_variables?.includes(name)
+                    ? 1
+                    : 0
+                  : null,
+              }));
+
+              const activeRows = allRows.filter((r) => r.qVal > 0 || (r.cVal !== null && r.cVal > 0));
+              const displayedRows = resultVarFilter === "active" && activeRows.length > 0 ? activeRows : allRows;
+
+              const qObjDisplay =
+                typeof (comp?.quantum?.objective_value ?? execution.objectiveValue) === "number"
+                  ? Number(comp?.quantum?.objective_value ?? execution.objectiveValue).toFixed(2)
+                  : "—";
+              const qEnergyDisplay =
+                typeof execution.energy === "number" ? execution.energy.toFixed(2) : null;
+              const showEnergyNote =
+                qEnergyDisplay !== null &&
+                qObjDisplay !== "—" &&
+                Math.abs(Number(execution.energy) - Number(comp?.quantum?.objective_value ?? execution.objectiveValue)) > 0.01;
+
+              const cObjDisplay =
+                typeof comp?.classical?.objective_value === "number"
+                  ? comp.classical.objective_value.toFixed(2)
+                  : "—";
+
+              const fmtMs = (ms: number | null | undefined) => {
+                if (typeof ms !== "number") return "—";
+                return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
+              };
+
+              return (
+                <>
+                  {/* ── ZONE 1: SINGLE HERO VERDICT BANNER ── */}
+                  <div className="pb-5 border-b border-white/[0.08] space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center space-x-2.5">
                         <span
-                          key={idx}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/25"
-                        >
-                          {v} = {execution.solution?.[v] ?? 1}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-zinc-500 italic text-xs">
-                        None active (all binary decision variables = 0 in ground state)
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* 3. Parallel Quantum (D-Wave QUBO) vs. Classical (Google OR-Tools) Comparison */}
-                {execution.solverComparison && (
-                  <div
-                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
-                    className="p-4 rounded-xl border border-white/[0.1] space-y-3"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/[0.08]">
-                      <span className="text-xs font-semibold text-zinc-100">
-                        Parallel Quantum vs. Classical (Google OR-Tools CP-SAT) Benchmark
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.14] text-zinc-100 text-[11px] font-semibold">
-                        {execution.solverComparison.verdict_badge}
-                      </span>
+                          className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                            bothFeasible ? "bg-emerald-400" : "bg-amber-400"
+                          }`}
+                        />
+                        <h3 className={`text-sm sm:text-base font-semibold font-sans tracking-tight ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                          {verdictTitle}
+                        </h3>
+                      </div>
+                      <div className="flex items-center space-x-2 text-[11px] font-mono text-zinc-500">
+                        <span>λ = {execution.penaltyWeight ?? penaltyLambda}</span>
+                        <span>·</span>
+                        <span>{typeof execution.numReads === "number" ? execution.numReads.toLocaleString() : "1,000"} reads</span>
+                      </div>
                     </div>
-
-                    <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-                      {execution.solverComparison.summary}
+                    <p className="text-[13px] text-zinc-400 leading-relaxed font-sans max-w-3xl">
+                      {verdictSubtitle}
                     </p>
+                  </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      {/* Quantum Column */}
-                      <div className="p-3 rounded-lg bg-black/30 border border-white/[0.08] space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-zinc-100">D-Wave QUBO Annealer</span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                              execution.solverComparison.quantum.feasible
-                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
-                                : "bg-amber-500/10 text-amber-300 border-amber-500/25"
-                            }`}
-                          >
-                            {execution.solverComparison.quantum.feasible ? "FEASIBLE" : "SUBOPTIMAL"}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 text-[11px] pt-1">
-                          <div>
-                            <span className="text-zinc-500 block text-[10px]">Objective</span>
-                            <span className="text-zinc-100 font-semibold">
-                              {execution.solverComparison.quantum.objective_value ?? "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-zinc-500 block text-[10px]">Constraints</span>
-                            <span className="text-zinc-100 font-semibold">
-                              {execution.solverComparison.quantum.constraints_satisfied}/
-                              {execution.solverComparison.quantum.constraints_total}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-zinc-500 block text-[10px]">Solve Time</span>
-                            <span className="text-zinc-100 font-semibold">
-                              {execution.solverComparison.quantum.solve_time_ms ?? "—"} ms
-                            </span>
-                          </div>
-                        </div>
+                  {/* ── ZONE 2: CLEAN 2-COLUMN SOLVER COMPARISON (HAIRLINE DIVIDER, ZERO NESTED BOXES) ── */}
+                  <div
+                    style={{ backgroundColor: isDark ? "#0C0D11" : "#F8FAFC" }}
+                    className="rounded-xl border border-white/[0.08] grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.08]"
+                  >
+                    {/* Left: Quantum (D-Wave QUBO) */}
+                    <div className="p-4 sm:p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-zinc-400 font-sans">
+                          Quantum Annealing (D-Wave QUBO)
+                        </span>
+                        <span
+                          className={`text-[11px] font-mono font-medium ${
+                            (comp ? comp.quantum.feasible : execution.feasible) && !isTrivialZero
+                              ? "text-emerald-400"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          {isTrivialZero
+                            ? "Unconstrained"
+                            : (comp ? comp.quantum.feasible : execution.feasible)
+                            ? "Feasible"
+                            : "Suboptimal"}
+                        </span>
                       </div>
 
-                      {/* Classical Column */}
-                      <div className="p-3 rounded-lg bg-black/30 border border-white/[0.08] space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-zinc-100">Google OR-Tools CP-SAT</span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                              execution.solverComparison.classical.feasible
-                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
-                                : "bg-amber-500/10 text-amber-300 border-amber-500/25"
-                            }`}
-                          >
-                            {execution.solverComparison.classical.status}
+                      <div className="flex items-baseline space-x-2.5">
+                        <span className={`text-2xl font-semibold font-mono tracking-tight ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                          {qObjDisplay}
+                        </span>
+                        <span className="text-[11px] text-zinc-500 font-sans">objective</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-zinc-400 pt-1">
+                        <span>
+                          Constraints:{" "}
+                          <strong className="text-zinc-200 font-medium">
+                            {comp
+                              ? `${comp.quantum.constraints_satisfied}/${comp.quantum.constraints_total}`
+                              : `${execution.feasible ? totalConstraints : 0}/${totalConstraints}`}
+                          </strong>
+                        </span>
+                        <span>
+                          Time:{" "}
+                          <strong className="text-zinc-200 font-medium">
+                            {fmtMs(comp?.quantum?.solve_time_ms)}
+                          </strong>
+                        </span>
+                        {showEnergyNote && (
+                          <span className="text-zinc-500" title="Raw QUBO Hamiltonian energy including penalty">
+                            Energy: {qEnergyDisplay}
                           </span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 text-[11px] pt-1">
-                          <div>
-                            <span className="text-zinc-500 block text-[10px]">Objective</span>
-                            <span className="text-zinc-100 font-semibold">
-                              {execution.solverComparison.classical.objective_value ?? "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-zinc-500 block text-[10px]">Constraints</span>
-                            <span className="text-zinc-100 font-semibold">
-                              {execution.solverComparison.classical.constraints_satisfied}/
-                              {execution.solverComparison.classical.constraints_total}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-zinc-500 block text-[10px]">Solve Time</span>
-                            <span className="text-zinc-100 font-semibold">
-                              {execution.solverComparison.classical.solve_time_ms ?? "—"} ms
-                            </span>
-                          </div>
-                        </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Classical (Google OR-Tools CP-SAT) */}
+                    <div className="p-4 sm:p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-zinc-400 font-sans">
+                          Classical Exact (Google OR-Tools)
+                        </span>
+                        <span
+                          className={`text-[11px] font-mono font-medium ${
+                            comp
+                              ? comp.classical.feasible && !isTrivialZero
+                                ? "text-emerald-400"
+                                : "text-amber-400"
+                              : "text-zinc-500"
+                          }`}
+                        >
+                          {comp ? (isTrivialZero ? "Unconstrained" : comp.classical.status) : "Not run"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-baseline space-x-2.5">
+                        <span className={`text-2xl font-semibold font-mono tracking-tight ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                          {cObjDisplay}
+                        </span>
+                        <span className="text-[11px] text-zinc-500 font-sans">objective</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-zinc-400 pt-1">
+                        <span>
+                          Constraints:{" "}
+                          <strong className="text-zinc-200 font-medium">
+                            {comp
+                              ? `${comp.classical.constraints_satisfied}/${comp.classical.constraints_total}`
+                              : `—/${totalConstraints}`}
+                          </strong>
+                        </span>
+                        <span>
+                          Time:{" "}
+                          <strong className="text-zinc-200 font-medium">
+                            {fmtMs(comp?.classical?.solve_time_ms)}
+                          </strong>
+                        </span>
                       </div>
                     </div>
                   </div>
-                )}
 
-                {/* 4. Full Variable Assignment Table */}
-                <div
-                  style={{ backgroundColor: isDark ? "#13141A" : "#FFFFFF" }}
-                  className="w-full border border-white/[0.08] rounded-xl overflow-x-auto custom-scrollbar"
-                >
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead
-                      style={{ backgroundColor: isDark ? "#090A0D" : "#F8FAFC" }}
-                      className="text-zinc-400 border-b border-white/[0.08] text-[11px]"
+                  {/* ── ZONE 3: UNIFIED DECISION VARIABLES TABLE (ACTIVE FILTER, NO REDUNDANT PILLS) ── */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-zinc-300 font-sans">
+                        Decision Variables
+                      </span>
+                      <div className="flex items-center space-x-1 p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.08] font-sans text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setResultVarFilter("active")}
+                          className={`px-2.5 py-0.5 rounded-md transition-colors cursor-pointer ${
+                            resultVarFilter === "active"
+                              ? "bg-white/[0.12] text-zinc-100 font-medium"
+                              : "text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          Active ({activeRows.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setResultVarFilter("all")}
+                          className={`px-2.5 py-0.5 rounded-md transition-colors cursor-pointer ${
+                            resultVarFilter === "all"
+                              ? "bg-white/[0.12] text-zinc-100 font-medium"
+                              : "text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          All ({allRows.length})
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{ backgroundColor: isDark ? "#0C0D11" : "#FFFFFF" }}
+                      className="w-full border border-white/[0.08] rounded-xl overflow-x-auto custom-scrollbar"
                     >
-                      <tr>
-                        <th className="p-3">Decision Variable</th>
-                        <th className="p-3">Quantum QUBO Value</th>
-                        {execution.solverComparison && (
-                          <th className="p-3">OR-Tools CP-SAT Value</th>
-                        )}
-                        <th className="p-3 text-right">State</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/[0.05]">
-                      {(Object.keys(execution.solution || {}).length > 0
-                        ? Object.entries(execution.solution || {})
-                        : variables.map((v) => [
-                            v.name,
-                            execution.selectedVariables?.includes(v.name) ? 1 : 0,
-                          ] as [string, number])
-                      ).map(([vName, vVal]) => {
-                        const isSelected = Number(vVal) > 0;
-                        const classicalSelected = execution.solverComparison?.classical?.selected_variables?.includes(vName);
-                        return (
-                          <tr key={vName} className="hover:bg-white/[0.02]">
-                            <td className="p-2.5 px-3 font-semibold text-zinc-200">{vName}</td>
-                            <td className="p-2.5 px-3 text-zinc-100">{vVal}</td>
-                            {execution.solverComparison && (
-                              <td className="p-2.5 px-3 text-zinc-300">
-                                {classicalSelected ? 1 : 0}
-                              </td>
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead className="text-zinc-500 border-b border-white/[0.08] text-[11px] font-sans">
+                          <tr>
+                            <th className="py-2.5 px-4 font-medium">Variable</th>
+                            <th className="py-2.5 px-4 font-medium text-right">Quantum (QUBO)</th>
+                            {comp && (
+                              <th className="py-2.5 px-4 font-medium text-right">Classical (OR-Tools)</th>
                             )}
-                            <td className="p-2.5 px-3 text-right">
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                                  isSelected
-                                    ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25"
-                                    : "bg-white/[0.04] text-zinc-500 border border-white/[0.06]"
-                                }`}
-                              >
-                                {isSelected ? "ACTIVE" : "INACTIVE"}
-                              </span>
-                            </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
+                        </thead>
+                        <tbody className="divide-y divide-white/[0.05] font-mono">
+                          {displayedRows.length === 0 ? (
+                            <tr>
+                              <td colSpan={comp ? 3 : 2} className="py-6 px-4 text-center text-zinc-500 font-sans">
+                                No variables selected in this state.
+                              </td>
+                            </tr>
+                          ) : (
+                            displayedRows.map((row) => {
+                              const qActive = row.qVal > 0;
+                              const cActive = row.cVal !== null && row.cVal > 0;
+                              return (
+                                <tr key={row.name} className="hover:bg-white/[0.02]">
+                                  <td className={`py-2.5 px-4 ${qActive || cActive ? "text-zinc-100 font-medium" : "text-zinc-500"}`}>
+                                    {row.name}
+                                  </td>
+                                  <td className={`py-2.5 px-4 text-right ${qActive ? "text-zinc-100 font-semibold" : "text-zinc-600"}`}>
+                                    {row.qVal}
+                                  </td>
+                                  {comp && (
+                                    <td className={`py-2.5 px-4 text-right ${cActive ? "text-zinc-100 font-semibold" : "text-zinc-600"}`}>
+                                      {row.cVal}
+                                    </td>
+                                  )}
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
