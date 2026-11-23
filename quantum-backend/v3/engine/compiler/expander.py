@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Union
 from .cmm import (
     CMMSet, CMMParameter, CMMVariable, VarType,
@@ -145,6 +145,7 @@ class OptimizationModel:
     variables: Dict[str, ExpandedVariable]
     objective: ExpandedObjective
     constraints: List[ExpandedConstraint]
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 def compile_logical_implication(p: LogicalImplicationPattern, cmm: CanonicalMathematicalModel) -> List[CMMConstraint]:
     clean_v_name = p.var_name.replace(" ", "_").replace("-", "_")
@@ -1593,10 +1594,132 @@ class MILPBuilder(BaseBuilder):
 class QUBOBuilder(BaseBuilder):
     pass
 
+def _extract_square_matrix(text: str) -> Optional[List[List[float]]]:
+    """
+    Deterministically extract an N x N numeric matrix from natural language text such as:
+    `city 0: [0, 153, ...]; city 1: [153, 0, ...]` or `[[0, 10], [10, 0]]`.
+    """
+    import re as _re
+    if not text:
+        return None
+
+    # Pattern 1: labeled rows `city 0: [0, 153, ...]` or `node 0: [...]` or `row 0: [...]`
+    labeled = _re.findall(r"(?:city|node|location|stop|row)\s*\d+\s*:\s*\[([^\]]+)\]", text, flags=_re.IGNORECASE)
+    rows_raw = labeled if len(labeled) >= 3 else _re.findall(r"\[([0-9.,\s+-]+)\]", text)
+
+    parsed_rows: List[List[float]] = []
+    for r in rows_raw:
+        nums = [float(x) for x in _re.findall(r"[-+]?\d+(?:\.\d+)?", r)]
+        if len(nums) >= 3:
+            parsed_rows.append(nums)
+
+    if len(parsed_rows) < 3:
+        return None
+    n = len(parsed_rows)
+    if all(len(r) == n for r in parsed_rows):
+        return parsed_rows
+    return None
+
+
+def _try_build_deterministic_tsp(problem_text: str) -> Optional[OptimizationModel]:
+    """
+    Detect standard single-courier TSP / round-trip prompts with an explicit N x N distance matrix
+    and deterministically compile the exact 2N+1 position constraints and quadratic tour objective.
+    """
+    if not problem_text:
+        return None
+    p_low = problem_text.lower()
+
+    # Guard: do not hijack multi-vehicle VRP/CVRP prompts
+    if any(k in p_low for k in ("delivery vans", "vehicles", "capacity", "demands", "cvrp", "vrp")):
+        return None
+
+    is_tsp = (
+        ("round trip" in p_low)
+        or ("tsp" in p_low)
+        or ("traveling salesman" in p_low)
+        or ("travelling salesman" in p_low)
+        or ("visit" in p_low and "city" in p_low and "exactly once" in p_low and "distance" in p_low)
+    )
+    if not is_tsp:
+        return None
+
+    dist = _extract_square_matrix(problem_text)
+    if not dist:
+        return None
+
+    n = len(dist)
+    # Sanity check: diagonal of a distance matrix should be 0
+    if not all(abs(dist[i][i]) < 1e-6 for i in range(n)):
+        return None
+
+    expanded_vars: Dict[str, ExpandedVariable] = {}
+    for i in range(n):
+        for t in range(n):
+            vname = f"visit_{i}_{t}"
+            expanded_vars[vname] = ExpandedVariable(
+                name=vname,
+                var_type=VarType.BINARY,
+                lower_bound=0.0,
+                upper_bound=1.0,
+            )
+
+    constraints: List[ExpandedConstraint] = []
+    # 1. Each city visited at exactly one position
+    for i in range(n):
+        lhs = " + ".join(f"visit_{i}_{t}" for t in range(n))
+        constraints.append(
+            ExpandedConstraint(name=f"city_{i}_visited_once", left=lhs, op="==", right=1.0)
+        )
+    # 2. Each step visits exactly one city
+    for t in range(n):
+        lhs = " + ".join(f"visit_{i}_{t}" for i in range(n))
+        constraints.append(
+            ExpandedConstraint(name=f"step_{t}_single_city", left=lhs, op="==", right=1.0)
+        )
+    # 3. Fix tour start at city 0, step 0 (eliminates N-fold cyclic symmetry)
+    constraints.append(
+        ExpandedConstraint(name="start_at_city_0", left="visit_0_0", op="==", right=1.0)
+    )
+
+    # Exact quadratic tour-length objective: sum_{t, i != j} d[i][j] * (visit_{i,t} * visit_{j,(t+1)%n})
+    obj_terms: List[str] = []
+    for t in range(n):
+        t_next = (t + 1) % n
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                w = dist[i][j]
+                if abs(w) < 1e-9:
+                    continue
+                w_str = str(int(round(w))) if abs(w - round(w)) < 1e-6 else f"{w:.4f}"
+                obj_terms.append(f"{w_str} * (visit_{i}_{t} * visit_{j}_{t_next})")
+
+    obj_expr = " + ".join(obj_terms) if obj_terms else "0.0"
+
+    return OptimizationModel(
+        variables=expanded_vars,
+        objective=ExpandedObjective(sense="MINIMIZE", expression=obj_expr),
+        constraints=constraints,
+        metadata={
+            "problem_type": "TSP",
+            "n_cities": n,
+            "distance_matrix": dist,
+            "var_prefix": "visit",
+        },
+    )
+
+
 def expand_cmm_to_om(cmm: CanonicalMathematicalModel, problem_text: str = "") -> OptimizationModel:
     """
     Determinstically expands the symbolic CMM and reformulates logic/auxiliary bounds.
     """
+    # Deterministic TSP fast-path: guarantees all 2N+1 tour constraints & exact quadratic distance objective
+    tsp_om = _try_build_deterministic_tsp(problem_text)
+    if tsp_om is not None:
+        return tsp_om
+
     family = cmm.problem_family.upper()
     if family == "SELECTION":
         builder = SelectionBuilder()

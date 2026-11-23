@@ -951,6 +951,7 @@ export default function EnterpriseStudioPage() {
           totalCons,
           penaltyLambda: prev.penaltyLambda,
           objectiveSense: prev.mathModel?.objectiveSense,
+          objectiveExpr: prev.mathModel?.objectiveExpr,
         });
 
         return {

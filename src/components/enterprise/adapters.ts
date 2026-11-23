@@ -426,8 +426,9 @@ export function computeSolverComparison(args: {
   totalCons: number;
   penaltyLambda: number;
   objectiveSense: string | null | undefined;
+  objectiveExpr?: string | null;
 }): SolverComparisonData {
-  const { quantum, classical, totalCons, penaltyLambda, objectiveSense } = args;
+  const { quantum, classical, totalCons, penaltyLambda, objectiveSense, objectiveExpr } = args;
 
   const qRan = quantum.status !== "NOT_RUN";
   const cRan = classical.status !== "NOT_RUN";
@@ -459,11 +460,21 @@ export function computeSolverComparison(args: {
 
   const qEnergyStr = typeof qEnergy === "number" ? qEnergy.toFixed(2) : "—";
 
+  const normalizedObjExpr = (objectiveExpr || "").trim();
+  const isZeroObjective =
+    objectiveExpr !== undefined &&
+    ["", "0", "0.0", "(0)", "(0.0)", "-0", "-0.0"].includes(normalizedObjExpr);
+
   if (isTrivialUnconstrained) {
     winner = "NONE";
     verdictBadge = "Unconstrained Trivial Zero State — Constraints Missing";
     summaryText =
       "No constraints were compiled into this model (0/0 constraints). Minimizing an unconstrained objective trivially sets every decision variable to 0. Re-submit the problem in Copilot or add constraints in the Model tab.";
+  } else if (isZeroObjective) {
+    winner = "NONE";
+    verdictBadge = "Objective Expression Missing (Constant 0)";
+    summaryText =
+      "The compiled mathematical model has a constant 0 objective expression, so any feasible variable assignment scores 0.0000. Inspect the Model tab or select Compile from Solve to re-extract the objective function.";
   } else if (qRan && !cRan) {
     if (qFeasible) {
       winner = "QUANTUM";

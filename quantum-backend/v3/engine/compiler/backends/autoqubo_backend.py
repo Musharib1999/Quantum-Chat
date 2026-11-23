@@ -474,17 +474,55 @@ def compile_om_to_autoqubo_ir(
         ""
     ]
 
-    # Objective function code block (AST-chunked if > 250 terms so CPython never hits AST recursion depth limit at N > 980)
+    # Objective function code block (AST-chunked for large linear or quadratic objectives)
     raw_obj_expr = om.objective.expression or "0.0"
     safe_obj = to_safe_expr(raw_obj_expr)
+    sgn_float = -1.0 if om.objective.sense.upper() == "MAXIMIZE" else 1.0
     sign = "-1.0 * " if om.objective.sense.upper() == "MAXIMIZE" else ""
-    if safe_obj.count("+") > 250 and "*" not in safe_obj.replace(" * x[", "").replace("*x[", ""):
+
+    # Parse any explicit quadratic objective terms (e.g., `153 * (visit_0_0 * visit_1_1)`)
+    obj_quad_specs = []
+    for q_m in re.finditer(
+        r"([+-]?)\s*\(?\s*(\d+(?:\.\d+)?)\s*\*\s*\(?\s*([a-zA-Z_]\w*)\s*\*\s*([a-zA-Z_]\w*)\s*\)?\s*\)?",
+        raw_obj_expr,
+    ):
+        q_sign_str, q_num_str, q_v1, q_v2 = q_m.groups()
+        if q_v1 in var_to_idx and q_v2 in var_to_idx:
+            q_val = (-1.0 if q_sign_str == "-" else 1.0) * float(q_num_str) * sgn_float
+            if abs(q_val) > 1e-12:
+                obj_quad_specs.append((var_to_idx[q_v1], var_to_idx[q_v2], q_val))
+
+    if obj_quad_specs:
+        # Also extract any remaining linear terms after stripping quadratic patterns
+        lin_only_expr = re.sub(
+            r"([+-]?)\s*\(?\s*(\d+(?:\.\d+)?)\s*\*\s*\(?\s*[a-zA-Z_]\w*\s*\*\s*[a-zA-Z_]\w*\s*\)?\s*\)?",
+            " ",
+            raw_obj_expr,
+        )
+        obj_coefs_map = parse_linear_expression(lin_only_expr, decision_vars_set)
+        obj_indices = [var_to_idx[k] for k in obj_coefs_map.keys() if abs(obj_coefs_map[k]) > 1e-12]
+        obj_coefs_list = [float(obj_coefs_map[k]) for k in obj_coefs_map.keys() if abs(obj_coefs_map[k]) > 1e-12]
+        lines.extend([
+            f"_obj_indices = {obj_indices}",
+            f"_obj_coefs = {obj_coefs_list}",
+            f"_obj_quad_specs = {obj_quad_specs}",
+            "def objective_fn(x):",
+            f"    lin_part = {sign}sum(c * x[i] for c, i in zip(_obj_coefs, _obj_indices)) if _obj_indices else 0.0",
+            "    quad_part = sum(w * x[i] * x[j] for i, j, w in _obj_quad_specs)",
+            "    return lin_part + quad_part",
+            "",
+            "constraint_fns = []",
+            "constraint_names = []",
+            ""
+        ])
+    elif safe_obj.count("+") > 250 and "*" not in safe_obj.replace(" * x[", "").replace("*x[", ""):
         obj_coefs_map = parse_linear_expression(raw_obj_expr, decision_vars_set)
         obj_indices = [var_to_idx[k] for k in obj_coefs_map.keys()]
         obj_coefs_list = [float(v) for v in obj_coefs_map.values()]
         lines.extend([
             f"_obj_indices = {obj_indices}",
             f"_obj_coefs = {obj_coefs_list}",
+            "_obj_quad_specs = []",
             "def objective_fn(x):",
             f"    return {sign}sum(c * x[i] for c, i in zip(_obj_coefs, _obj_indices))",
             "",
@@ -496,6 +534,7 @@ def compile_om_to_autoqubo_ir(
         lines.extend([
             "_obj_indices = []",
             "_obj_coefs = []",
+            "_obj_quad_specs = []",
             "def objective_fn(x):",
             f"    return {sign}({safe_obj})",
             "",
@@ -619,12 +658,15 @@ def compile_om_to_autoqubo_ir(
             "def get_qubo():",
             "    Q_cost = np.zeros((n_vars, n_vars), dtype=np.float64)",
             "    offset_cost = 0.0",
-            "    if _obj_indices:",
-            "        for _ch in range(0, len(_obj_indices), 16):",
-            "            _sub_i = _obj_indices[_ch:_ch+16]",
-            "            _sub_c = _obj_coefs[_ch:_ch+16]",
-            f"            _sgn = -1.0 if '{om.objective.sense.upper()}' == 'MAXIMIZE' else 1.0",
-            "            offset_cost += _scatter_subspace_qubo(Q_cost, _sub_i, lambda z, sc=_sub_c, sg=_sgn: sg * sum(c * z[j] for j, c in enumerate(sc)))",
+            "    if _obj_indices or _obj_quad_specs:",
+            f"        _sgn = -1.0 if '{om.objective.sense.upper()}' == 'MAXIMIZE' else 1.0",
+            "        for _oi, _oc in zip(_obj_indices, _obj_coefs):",
+            "            Q_cost[_oi, _oi] += _sgn * _oc",
+            "        for _qa, _qb, _qw in _obj_quad_specs:",
+            "            if _qa <= _qb:",
+            "                Q_cost[_qa, _qb] += _qw",
+            "            else:",
+            "                Q_cost[_qb, _qa] += _qw",
             "    elif n_vars <= 80:",
             "        Q_cost, offset_cost = SamplingCompiler.generate_qubo_matrix(objective_fn, n_vars, use_multiprocessing=False)",
             "    else:",

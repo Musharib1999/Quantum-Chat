@@ -31,11 +31,72 @@ def _find_scale_factor(values: List[float]) -> int:
     return 1000
 
 
+def _compile_tsp_ortools_code(n: int, dist: List[List[float]], var_prefix: str = "visit") -> str:
+    """Generate a native Google OR-Tools CP-SAT AddCircuit script for TSP problems."""
+    flat_vals = [float(dist[i][j]) for i in range(n) for j in range(n) if i != j]
+    scale = _find_scale_factor(flat_vals) if flat_vals else 1
+    int_dist = [[int(round(float(dist[i][j]) * scale)) for j in range(n)] for i in range(n)]
+    lines = [
+        "# ── Deterministic Google OR-Tools CP-SAT Classical Baseline (Native AddCircuit TSP) ──",
+        "import time",
+        "from ortools.sat.python import cp_model",
+        "",
+        "def solve_classical_baseline():",
+        "    t0 = time.perf_counter()",
+        f"    n = {n}",
+        f"    dist = {int_dist}",
+        f"    scale = {float(scale)}",
+        "    model = cp_model.CpModel()",
+        "",
+        "    arcs = []",
+        "    arc_vars = {}",
+        "    for i in range(n):",
+        "        for j in range(n):",
+        "            if i == j:",
+        "                continue",
+        "            lit = model.NewBoolVar(f'arc_{i}_{j}')",
+        "            arc_vars[(i, j)] = lit",
+        "            arcs.append((i, j, lit))",
+        "    model.AddCircuit(arcs)",
+        "    model.Minimize(sum(dist[i][j] * lit for (i, j), lit in arc_vars.items()))",
+        "",
+        "    solver = cp_model.CpSolver()",
+        "    solver.parameters.max_time_in_seconds = 15.0",
+        "    status = solver.Solve(model)",
+        "    elapsed_ms = (time.perf_counter() - t0) * 1000.0",
+        "    status_name = solver.StatusName(status)",
+        "    obj_val = solver.ObjectiveValue() / scale if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) else None",
+        "    selected = []",
+        "    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):",
+        "        next_city = {i: j for (i, j), lit in arc_vars.items() if solver.Value(lit) == 1}",
+        "        cur = 0",
+        "        for step in range(n):",
+        f"            selected.append(f'{var_prefix}_{{cur}}_{{step}}')",
+        "            cur = next_city.get(cur, 0)",
+        "    print(f'Google OR-Tools CP-SAT Status : {status_name} ({elapsed_ms:.2f} ms)')",
+        "    if obj_val is not None:",
+        "        print(f'Exact Classical Objective     : {obj_val:.4f}')",
+        "    print(f'Active Decisions ({len(selected)})       : {selected}')",
+        "",
+        "if __name__ == '__main__':",
+        "    solve_classical_baseline()",
+    ]
+    return "\n".join(lines)
+
+
 def compile_om_to_ortools_code(om: "OptimizationModel") -> str:
     """
     Deterministically generate a standalone, runnable Google OR-Tools CP-SAT
     Python script (`ortools_baseline.py`) from an `OptimizationModel`.
     """
+    meta = getattr(om, "metadata", None) or {}
+    if meta.get("problem_type") == "TSP" and meta.get("distance_matrix"):
+        return _compile_tsp_ortools_code(
+            int(meta["n_cities"]),
+            meta["distance_matrix"],
+            str(meta.get("var_prefix", "visit")),
+        )
+
     decision_vars = list(om.variables.keys())
     decision_vars_set = set(decision_vars)
     obj_sense = (om.objective.sense or "MINIMIZE").upper()
@@ -158,6 +219,73 @@ def solve_om_with_ortools(om: "OptimizationModel") -> Dict[str, Any]:
 
     t0 = time.perf_counter()
     try:
+        meta = getattr(om, "metadata", None) or {}
+        if meta.get("problem_type") == "TSP" and meta.get("distance_matrix"):
+            n_cities = int(meta["n_cities"])
+            dist = meta["distance_matrix"]
+            prefix = str(meta.get("var_prefix", "visit"))
+            flat_vals = [float(dist[i][j]) for i in range(n_cities) for j in range(n_cities) if i != j]
+            scale = _find_scale_factor(flat_vals) if flat_vals else 1
+            model = cp_model.CpModel()
+            arcs = []
+            arc_vars = {}
+            for i in range(n_cities):
+                for j in range(n_cities):
+                    if i == j:
+                        continue
+                    lit = model.NewBoolVar(f"arc_{i}_{j}")
+                    arc_vars[(i, j)] = lit
+                    arcs.append((i, j, lit))
+            model.AddCircuit(arcs)
+            model.Minimize(
+                sum(int(round(float(dist[i][j]) * scale)) * lit for (i, j), lit in arc_vars.items())
+            )
+            solver = cp_model.CpSolver()
+            solver.parameters.max_time_in_seconds = 15.0
+            status = solver.Solve(model)
+            solve_time_ms = round((time.perf_counter() - t0) * 1000.0, 2)
+            status_name = solver.StatusName(status)
+            if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+                return {
+                    "available": True,
+                    "solver": "Google OR-Tools CP-SAT",
+                    "status": status_name,
+                    "feasible": False,
+                    "objective_value": None,
+                    "solution": {},
+                    "selected_variables": [],
+                    "solve_time_ms": solve_time_ms,
+                    "constraints_satisfied": 0,
+                    "constraints_total": len(om.constraints),
+                    "code": code,
+                    "error": None,
+                }
+            next_city = {i: j for (i, j), lit in arc_vars.items() if solver.Value(lit) == 1}
+            solution: Dict[str, int] = {name: 0 for name in decision_vars}
+            selected: List[str] = []
+            cur = 0
+            for step in range(n_cities):
+                vname = f"{prefix}_{cur}_{step}"
+                if vname in solution:
+                    solution[vname] = 1
+                selected.append(vname)
+                cur = next_city.get(cur, 0)
+            exact_obj_val = round(float(solver.ObjectiveValue()) / float(scale), 4)
+            return {
+                "available": True,
+                "solver": "Google OR-Tools CP-SAT",
+                "status": status_name,
+                "feasible": True,
+                "objective_value": exact_obj_val,
+                "solution": solution,
+                "selected_variables": selected,
+                "solve_time_ms": solve_time_ms,
+                "constraints_satisfied": len(om.constraints),
+                "constraints_total": len(om.constraints),
+                "code": code,
+                "error": None,
+            }
+
         model = cp_model.CpModel()
         cp_vars: Dict[str, Any] = {}
 
@@ -359,6 +487,10 @@ def build_quantum_vs_classical_comparison(
         and (q_obj is None or abs(float(q_obj)) < 1e-6)
     )
 
+    # Guard against empty/constant-0 objective expression (e.g., dropped quadratic objective)
+    raw_obj_expr = (om.objective.expression or "").strip()
+    is_zero_objective = raw_obj_expr in ("", "0", "0.0", "(0)", "(0.0)", "-0", "-0.0")
+
     # Determine Winner & Technical Verdict
     if is_trivial_unconstrained:
         winner = "NONE"
@@ -367,6 +499,13 @@ def build_quantum_vs_classical_comparison(
             "No constraints were compiled into this model (0/0 constraints). Minimizing an unconstrained objective "
             "trivially sets every decision variable to 0 (Objective = 0.0000). Re-submit the problem with explicit "
             "constraints or add constraints in the Model tab."
+        )
+    elif is_zero_objective:
+        winner = "NONE"
+        verdict_badge = "Objective Expression Missing (Constant 0)"
+        summary = (
+            "The compiled mathematical model has a constant 0 objective expression, so any feasible variable assignment "
+            "scores 0.0000. Inspect the Model tab to verify the objective function was extracted properly."
         )
     elif q_feasible and c_feasible and q_obj is not None and c_obj is not None:
         diff = float(q_obj) - float(c_obj)

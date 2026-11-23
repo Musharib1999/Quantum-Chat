@@ -2066,8 +2066,13 @@ ${textToSend}
                 (execution.selectedVariables?.length || 0) === 0 &&
                 (execution.objectiveValue === null || Math.abs(execution.objectiveValue) < 1e-6);
 
+              const isZeroObjective =
+                Boolean(mathModel) &&
+                ["", "0", "0.0", "(0)", "(0.0)", "-0", "-0.0"].includes((mathModel.objectiveExpr || "").trim());
+
               const bothFeasible = Boolean(
                 !isTrivialZero &&
+                !isZeroObjective &&
                 (comp
                   ? qNotRun
                     ? comp.classical.feasible
@@ -2079,6 +2084,8 @@ ${textToSend}
 
               const verdictTitle = isTrivialZero
                 ? "Unconstrained Trivial Zero State"
+                : isZeroObjective
+                ? "Objective Expression Missing (Constant 0)"
                 : comp?.verdict_badge
                 ? comp.verdict_badge
                 : execution.feasible
