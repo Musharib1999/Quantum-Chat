@@ -52,7 +52,7 @@ import { exprToLatex } from "./adapters";
 // Dynamically import Monaco Editor to avoid SSR hydration mismatch
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
-export type WorkbenchTab = "model" | "q_matrix" | "solver" | "feasibility" | "deploy" | "code";
+export type WorkbenchTab = "model" | "q_matrix" | "solver" | "feasibility" | "deploy" | "code" | "results";
 
 export interface GuruAiMessage {
   id: string;
@@ -683,13 +683,13 @@ ${textToSend}
 
   return (
     <div className="w-full h-full min-w-0 max-w-full flex flex-row min-h-0 overflow-hidden font-mono text-xs">
-      {/* ── LEFT PANE: All Tabs (Left 50%) ── */}
+      {/* ── LEFT PANE: All Tabs (Left 65%) ── */}
       <div
         style={{
-          width: "50%",
+          width: "65%",
           minWidth: 0,
-          maxWidth: "50%",
-          flexBasis: "50%",
+          maxWidth: "65%",
+          flexBasis: "65%",
           flexGrow: 1,
           flexShrink: 0,
           backgroundColor: isDark ? "#090A0D" : "#FFFFFF",
@@ -787,6 +787,19 @@ ${textToSend}
           >
             <FileCode className="w-3.5 h-3.5 text-sky-400" />
             <span>Code Editor</span>
+          </button>
+
+          <span className={`h-3 w-px shrink-0 select-none ${isDark ? "bg-white/[0.08]" : "bg-slate-300"}`} />
+
+          <button
+            onClick={() => handleSelectTab("results")}
+            className={`h-full px-1 sm:px-1.5 transition-colors flex items-center space-x-1 shrink-0 cursor-pointer border-b-2 -mb-px ${
+              activeTab === "results"
+                ? "border-sky-400 text-sky-300 font-semibold"
+                : "border-transparent text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <span>Result</span>
           </button>
         </div>
       </div>
@@ -2125,19 +2138,278 @@ ${textToSend}
             </div>
           </div>
         )}
+
+        {/* ════════════════════════════════════════════════════════════════════════════════ */}
+        {/* TAB 7: RESULT (EXECUTION SOLUTION & QUANTUM VS. OR-TOOLS COMPARISON)             */}
+        {/* ════════════════════════════════════════════════════════════════════════════════ */}
+        {activeTab === "results" && (
+          <div className="space-y-5 font-mono text-xs">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-mono font-semibold text-zinc-200">
+                Execution Result &amp; Parallel Benchmark
+              </h3>
+              {execution && (
+                <span
+                  className={`text-[11px] px-2.5 py-0.5 rounded border font-semibold ${
+                    execution.feasible
+                      ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                      : "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                  }`}
+                >
+                  {execution.feasible ? "Feasible Solution Found" : "Suboptimal / Boundary Violation"}
+                </span>
+              )}
+            </div>
+
+            {!execution ? (
+              <div
+                style={{
+                  backgroundColor: isDark ? "#13141A" : "#F8FAFC",
+                }}
+                className="p-8 rounded-xl border border-dashed border-white/[0.1] text-center text-xs text-zinc-500"
+              >
+                No execution results yet. Run a problem in Copilot or click &quot;Recompile &amp; Solve&quot; in the Code Editor tab.
+              </div>
+            ) : (
+              <>
+                {/* 1. Primary Solution Summary Metrics */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div
+                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
+                    className="p-3 rounded-xl border border-white/[0.08] space-y-1"
+                  >
+                    <span className="text-[10px] text-zinc-500 block">Ground Energy</span>
+                    <span className="text-sm font-bold text-zinc-100">
+                      {typeof execution.energy === "number" ? execution.energy.toFixed(4) : "—"}
+                    </span>
+                  </div>
+                  <div
+                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
+                    className="p-3 rounded-xl border border-white/[0.08] space-y-1"
+                  >
+                    <span className="text-[10px] text-zinc-500 block">Objective Value</span>
+                    <span className="text-sm font-bold text-zinc-100">
+                      {typeof execution.objectiveValue === "number"
+                        ? execution.objectiveValue.toFixed(4)
+                        : typeof execution.energy === "number"
+                        ? execution.energy.toFixed(4)
+                        : "—"}
+                    </span>
+                  </div>
+                  <div
+                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
+                    className="p-3 rounded-xl border border-white/[0.08] space-y-1"
+                  >
+                    <span className="text-[10px] text-zinc-500 block">Active Decisions</span>
+                    <span className="text-sm font-bold text-zinc-100">
+                      {execution.selectedVariables?.length ?? 0} / {variables.length || Object.keys(execution.solution || {}).length}
+                    </span>
+                  </div>
+                  <div
+                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
+                    className="p-3 rounded-xl border border-white/[0.08] space-y-1"
+                  >
+                    <span className="text-[10px] text-zinc-500 block">Sampling Reads</span>
+                    <span className="text-sm font-bold text-zinc-100">
+                      {typeof execution.numReads === "number" ? execution.numReads.toLocaleString() : "1,000"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2. Active Decisions Card */}
+                <div
+                  style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
+                  className="p-4 rounded-xl border border-white/[0.08] space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-200">
+                      Optimal Selected Decision Variables (x = 1)
+                    </span>
+                    <span className="text-[11px] text-zinc-400">
+                      Penalty λ = {execution.penaltyWeight ?? penaltyLambda}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.isArray(execution.selectedVariables) && execution.selectedVariables.length > 0 ? (
+                      execution.selectedVariables.map((v, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/25"
+                        >
+                          {v} = {execution.solution?.[v] ?? 1}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-zinc-500 italic text-xs">
+                        None active (all binary decision variables = 0 in ground state)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. Parallel Quantum (D-Wave QUBO) vs. Classical (Google OR-Tools) Comparison */}
+                {execution.solverComparison && (
+                  <div
+                    style={{ backgroundColor: isDark ? "#111216" : "#F8FAFC" }}
+                    className="p-4 rounded-xl border border-white/[0.1] space-y-3"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/[0.08]">
+                      <span className="text-xs font-semibold text-zinc-100">
+                        Parallel Quantum vs. Classical (Google OR-Tools CP-SAT) Benchmark
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.14] text-zinc-100 text-[11px] font-semibold">
+                        {execution.solverComparison.verdict_badge}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                      {execution.solverComparison.summary}
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {/* Quantum Column */}
+                      <div className="p-3 rounded-lg bg-black/30 border border-white/[0.08] space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-zinc-100">D-Wave QUBO Annealer</span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                              execution.solverComparison.quantum.feasible
+                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
+                                : "bg-amber-500/10 text-amber-300 border-amber-500/25"
+                            }`}
+                          >
+                            {execution.solverComparison.quantum.feasible ? "FEASIBLE" : "SUBOPTIMAL"}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-[11px] pt-1">
+                          <div>
+                            <span className="text-zinc-500 block text-[10px]">Objective</span>
+                            <span className="text-zinc-100 font-semibold">
+                              {execution.solverComparison.quantum.objective_value ?? "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block text-[10px]">Constraints</span>
+                            <span className="text-zinc-100 font-semibold">
+                              {execution.solverComparison.quantum.constraints_satisfied}/
+                              {execution.solverComparison.quantum.constraints_total}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block text-[10px]">Solve Time</span>
+                            <span className="text-zinc-100 font-semibold">
+                              {execution.solverComparison.quantum.solve_time_ms ?? "—"} ms
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Classical Column */}
+                      <div className="p-3 rounded-lg bg-black/30 border border-white/[0.08] space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-zinc-100">Google OR-Tools CP-SAT</span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                              execution.solverComparison.classical.feasible
+                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
+                                : "bg-amber-500/10 text-amber-300 border-amber-500/25"
+                            }`}
+                          >
+                            {execution.solverComparison.classical.status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-[11px] pt-1">
+                          <div>
+                            <span className="text-zinc-500 block text-[10px]">Objective</span>
+                            <span className="text-zinc-100 font-semibold">
+                              {execution.solverComparison.classical.objective_value ?? "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block text-[10px]">Constraints</span>
+                            <span className="text-zinc-100 font-semibold">
+                              {execution.solverComparison.classical.constraints_satisfied}/
+                              {execution.solverComparison.classical.constraints_total}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block text-[10px]">Solve Time</span>
+                            <span className="text-zinc-100 font-semibold">
+                              {execution.solverComparison.classical.solve_time_ms ?? "—"} ms
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Full Variable Assignment Table */}
+                <div
+                  style={{ backgroundColor: isDark ? "#13141A" : "#FFFFFF" }}
+                  className="w-full border border-white/[0.08] rounded-xl overflow-x-auto custom-scrollbar"
+                >
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead
+                      style={{ backgroundColor: isDark ? "#090A0D" : "#F8FAFC" }}
+                      className="text-zinc-400 border-b border-white/[0.08] text-[11px]"
+                    >
+                      <tr>
+                        <th className="p-3">Decision Variable</th>
+                        <th className="p-3">Quantum QUBO Value</th>
+                        {execution.solverComparison && (
+                          <th className="p-3">OR-Tools CP-SAT Value</th>
+                        )}
+                        <th className="p-3 text-right">State</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.05]">
+                      {Object.entries(execution.solution || {}).map(([vName, vVal]) => {
+                        const isSelected = Number(vVal) > 0;
+                        const classicalSelected = execution.solverComparison?.classical?.selected_variables?.includes(vName);
+                        return (
+                          <tr key={vName} className="hover:bg-white/[0.02]">
+                            <td className="p-2.5 px-3 font-semibold text-zinc-200">{vName}</td>
+                            <td className="p-2.5 px-3 text-zinc-100">{vVal}</td>
+                            {execution.solverComparison && (
+                              <td className="p-2.5 px-3 text-zinc-300">
+                                {classicalSelected ? 1 : 0}
+                              </td>
+                            )}
+                            <td className="p-2.5 px-3 text-right">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                  isSelected
+                                    ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25"
+                                    : "bg-white/[0.04] text-zinc-500 border border-white/[0.06]"
+                                }`}
+                              >
+                                {isSelected ? "ACTIVE" : "INACTIVE"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════════════════ */}
-      {/* ── RIGHT PANE: PERMANENT GURU AI ASSISTANT (Right 50%) ──                        */}
+      {/* ── RIGHT PANE: PERMANENT GURU AI ASSISTANT (Right 35% — reduced by 30%) ──      */}
       {/* ════════════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
-          width: "50%",
+          width: "35%",
           minWidth: 0,
-          maxWidth: "50%",
-          flexBasis: "50%",
-          flexGrow: 1,
+          maxWidth: "35%",
+          flexBasis: "35%",
+          flexGrow: 0,
           flexShrink: 0,
           backgroundColor: isDark ? "#090A0D" : "#FFFFFF",
         }}
