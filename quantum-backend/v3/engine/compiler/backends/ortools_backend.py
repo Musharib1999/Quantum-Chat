@@ -351,8 +351,24 @@ def build_quantum_vs_classical_comparison(
     overlap_pct = round((len(q_set & c_set) / union_len) * 100.0, 1) if union_len > 0 else 100.0
     exact_match = q_set == c_set
 
+    # Guard against trivial unconstrained all-zero fallback (0 constraints & 0 active decisions)
+    is_trivial_unconstrained = (
+        total_cons == 0
+        and len(q_selected) == 0
+        and len(c_selected) == 0
+        and (q_obj is None or abs(float(q_obj)) < 1e-6)
+    )
+
     # Determine Winner & Technical Verdict
-    if q_feasible and c_feasible and q_obj is not None and c_obj is not None:
+    if is_trivial_unconstrained:
+        winner = "NONE"
+        verdict_badge = "Unconstrained Trivial Zero State — Constraints Missing"
+        summary = (
+            "No constraints were compiled into this model (0/0 constraints). Minimizing an unconstrained objective "
+            "trivially sets every decision variable to 0 (Objective = 0.0000). Re-submit the problem with explicit "
+            "constraints or add constraints in the Model tab."
+        )
+    elif q_feasible and c_feasible and q_obj is not None and c_obj is not None:
         diff = float(q_obj) - float(c_obj)
         if abs(diff) < 1e-5:
             winner = "TIE"

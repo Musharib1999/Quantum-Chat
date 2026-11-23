@@ -158,8 +158,8 @@ def validate_selection_parser(data: dict) -> list:
 # V6 Compositional schema validation
 def validate_compositional_parser(data: dict) -> list:
     errors = []
-    if "variable_registry" not in data or not isinstance(data["variable_registry"], list):
-        errors.append("Missing or invalid variable_registry list")
+    if "variable_registry" not in data or not isinstance(data["variable_registry"], list) or len(data["variable_registry"]) == 0:
+        errors.append("Missing or empty variable_registry list (must define at least 1 decision variable array)")
     else:
         for i, var in enumerate(data["variable_registry"]):
             for key in ["id", "name", "domain", "dimensions"]:
@@ -168,8 +168,8 @@ def validate_compositional_parser(data: dict) -> list:
             if "domain" in var and var["domain"] not in {"boolean", "integer", "continuous"}:
                 errors.append(f"Variable {i} invalid domain: {var['domain']}")
 
-    if "constraint_registry" not in data or not isinstance(data["constraint_registry"], list):
-        errors.append("Missing or invalid constraint_registry list")
+    if "constraint_registry" not in data or not isinstance(data["constraint_registry"], list) or len(data["constraint_registry"]) == 0:
+        errors.append("Missing or empty constraint_registry list (must extract at least 1 constraint from the problem)")
     else:
         for i, c in enumerate(data["constraint_registry"]):
             for key in ["id", "name", "family", "operator"]:

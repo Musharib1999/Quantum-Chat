@@ -692,7 +692,18 @@ ${textToSend}
         const interSize = [...qSet].filter((x) => cSet.has(x)).length;
         const overlapPct = unionSize > 0 ? Math.round((interSize / unionSize) * 1000) / 10 : 100;
 
-        if (qFeasible && cFeasible && cObj !== null) {
+        const isTrivialUnconstrained =
+          totalCons === 0 &&
+          qSelected.length === 0 &&
+          cSelected.length === 0 &&
+          Math.abs(qObj) < 1e-6;
+
+        if (isTrivialUnconstrained) {
+          winner = "NONE";
+          verdictBadge = "Unconstrained Trivial Zero State — Constraints Missing";
+          summaryText =
+            "No constraints were compiled into this model (0/0 constraints). Minimizing an unconstrained objective trivially sets every decision variable to 0. Re-submit the problem in Copilot or add constraints in the Model tab.";
+        } else if (qFeasible && cFeasible && cObj !== null) {
           const diff = qObj - cObj;
           gapPct =
             Math.abs(cObj) > 1e-9
@@ -2349,17 +2360,29 @@ ${textToSend}
               <h3 className="text-xs font-mono font-semibold text-zinc-200">
                 Execution Result &amp; Parallel Benchmark
               </h3>
-              {execution && (
-                <span
-                  className={`text-[11px] px-2.5 py-0.5 rounded border font-semibold ${
-                    execution.feasible
-                      ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
-                      : "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                  }`}
-                >
-                  {execution.feasible ? "Feasible Solution Found" : "Suboptimal / Boundary Violation"}
-                </span>
-              )}
+              {execution && (() => {
+                const isTrivialZero =
+                  (mathModel?.constraints?.length || 0) === 0 &&
+                  (execution.selectedVariables?.length || 0) === 0 &&
+                  (execution.objectiveValue === null || Math.abs(execution.objectiveValue) < 1e-6);
+                return (
+                  <span
+                    className={`text-[11px] px-2.5 py-0.5 rounded border font-semibold ${
+                      isTrivialZero
+                        ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                        : execution.feasible
+                        ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                        : "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                    }`}
+                  >
+                    {isTrivialZero
+                      ? "Unconstrained Trivial Zero State"
+                      : execution.feasible
+                      ? "Feasible Solution Found"
+                      : "Suboptimal / Boundary Violation"}
+                  </span>
+                );
+              })()}
             </div>
 
             {!execution ? (

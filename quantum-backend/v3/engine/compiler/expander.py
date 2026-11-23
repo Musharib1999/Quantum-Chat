@@ -676,6 +676,12 @@ def parse_spec_to_cmm(spec: dict) -> CanonicalMathematicalModel:
 
     # 2. Parse variables
     var_registry = spec.get("variable_registry", spec.get("variables", []))
+    const_registry_check = spec.get("constraint_registry", [])
+    if not var_registry and not const_registry_check:
+        raise ValueError(
+            "Empty problem specification: neither decision variables nor constraints were extracted from the prompt. "
+            "Refusing to compile a trivial unconstrained 5x3 fallback model."
+        )
     if not var_registry:
         # Fallback default binary variable x using sets that exist
         fallback_sets = list(cmm.sets.keys())[:2]
