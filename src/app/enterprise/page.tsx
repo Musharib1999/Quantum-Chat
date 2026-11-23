@@ -741,6 +741,12 @@ export default function EnterpriseStudioPage() {
               qMatrix={ws.qMatrix}
               solverRouting={ws.solverRouting}
               execution={ws.execution}
+              onUpdateExecution={(updater) =>
+                updateActiveWorkspace((prev) => ({
+                  ...prev,
+                  execution: typeof updater === "function" ? updater(prev.execution) : updater,
+                }))
+              }
               terminalLogs={ws.terminal}
               onUpdateTerminalLogs={(updater) =>
                 updateActiveWorkspace((prev) => ({
