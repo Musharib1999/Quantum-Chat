@@ -5,6 +5,8 @@ import { EnterpriseHeader } from "@/components/enterprise/EnterpriseHeader";
 import { EnterpriseHistorySidebar, ProjectEntry } from "@/components/enterprise/EnterpriseHistorySidebar";
 import { EnterpriseChatPane } from "@/components/enterprise/EnterpriseChatPane";
 import { EnterpriseWorkbench } from "@/components/enterprise/EnterpriseWorkbench";
+import { EnterpriseProblemLibrary } from "@/components/enterprise/EnterpriseProblemLibrary";
+import type { LibraryDetail } from "@/lib/problemLibrary";
 import { DeploySolutionModal } from "@/components/optimization/DeploySolutionModal";
 import IssueReportModal from "@/components/IssueReportModal";
 import UserProfileModal from "@/components/UserProfileModal";
@@ -18,6 +20,7 @@ import {
   WorkspaceState,
   SolverType,
   SolverComparisonSide,
+  SurfaceMode,
 } from "@/components/enterprise/types";
 import {
   newProject,
@@ -46,7 +49,7 @@ const DEFAULT_INITIAL_PROJECT: ProjectRecord = {
 function loadSavedState(): {
   projects: ProjectRecord[];
   activeProjectId: string;
-  surfaceMode?: "copilot" | "workbench";
+  surfaceMode?: SurfaceMode;
 } | null {
   if (typeof window === "undefined") return null;
   try {
@@ -79,7 +82,12 @@ function loadSavedState(): {
       return {
         projects: cleanedProjects,
         activeProjectId: parsed.activeProjectId || cleanedProjects[0].id,
-        surfaceMode: parsed.surfaceMode === "workbench" ? "workbench" : "copilot",
+        surfaceMode:
+          parsed.surfaceMode === "workbench"
+            ? "workbench"
+            : parsed.surfaceMode === "library"
+            ? "library"
+            : "copilot",
       };
     }
   } catch {
@@ -112,7 +120,7 @@ export default function EnterpriseStudioPage() {
     }
   }, [isDark]);
 
-  const [surfaceMode, setSurfaceMode] = useState<"copilot" | "workbench">("copilot");
+  const [surfaceMode, setSurfaceMode] = useState<SurfaceMode>("copilot");
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -359,6 +367,41 @@ export default function EnterpriseStudioPage() {
     const proj = newProject("New optimization model", "Custom domain");
     setProjects((prev) => [proj, ...prev]);
     setActiveProjectId(proj.id);
+  };
+
+  // Create a project from a Problem Library entry (no solver runs until the user selects Solve > Compile)
+  const handleOpenLibraryProblem = (problem: LibraryDetail) => {
+    if (isDemoUser) {
+      showToast("Demo mode is view-only. Opening library problems is disabled.", "info");
+      return;
+    }
+    const proj = newProject(problem.title, problem.industry);
+    const ts = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    proj.lastProblemText = problem.prompt;
+    proj.libraryRef = {
+      slug: problem.slug,
+      version: problem.version,
+      title: problem.title,
+      objectiveSense: problem.objectiveSense,
+      bestKnown: problem.bestKnown,
+    };
+    proj.messages = [
+      {
+        id: `usr_${Date.now()}`,
+        sender: "user",
+        timestamp: ts,
+        text: problem.prompt,
+      },
+      {
+        id: `bot_${Date.now()}`,
+        sender: "assistant",
+        timestamp: ts,
+        text: `Loaded "${problem.title}" from the Problem Library (best known value: ${problem.bestKnown.value}). Select Solve > Compile to formulate it, then Run Parallel to compare D-Wave QUBO with Google OR-Tools.`,
+      },
+    ];
+    setProjects((prev) => [proj, ...prev]);
+    setActiveProjectId(proj.id);
+    setSurfaceMode("copilot");
   };
 
   // Select project from sidebar
@@ -1057,6 +1100,20 @@ export default function EnterpriseStudioPage() {
           </div>
         )}
 
+        {/* ── SURFACE 3: Verified Industry Problem Library ── */}
+        {surfaceMode === "library" && (
+          <div
+            style={{ width: "100%", minWidth: "100%", maxWidth: "100%", flexBasis: "100%", flexGrow: 0, flexShrink: 0 }}
+            className="h-full flex flex-col min-w-0 overflow-hidden"
+          >
+            <EnterpriseProblemLibrary
+              isDark={isDark}
+              isDemo={isDemoUser}
+              onOpenProblem={handleOpenLibraryProblem}
+            />
+          </div>
+        )}
+
         {/* ── SURFACE 2: POC Workbench (Model | Q Matrix | Solver | Feasibility | Deploy + Monaco) ── */}
         {surfaceMode === "workbench" && (
           <div
@@ -1113,6 +1170,7 @@ export default function EnterpriseStudioPage() {
               qMatrix={ws.qMatrix}
               solverRouting={ws.solverRouting}
               execution={ws.execution}
+              libraryReference={currentProject.libraryRef ?? null}
               onUpdateExecution={(updater) =>
                 updateActiveWorkspace((prev) => ({
                   ...prev,

@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
       runs: Array.isArray(doc.runs) ? doc.runs : [],
       activeRunId: doc.activeRunId ?? null,
       workspace: doc.workspace || {},
+      libraryRef: doc.libraryRef ?? null,
     }));
 
     return NextResponse.json({
@@ -130,6 +131,7 @@ export async function POST(req: NextRequest) {
           runs: Array.isArray(proj.runs) ? proj.runs : [],
           activeRunId: proj.activeRunId ?? null,
           workspace: proj.workspace || {},
+          libraryRef: proj.libraryRef ?? null,
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );

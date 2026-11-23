@@ -46,6 +46,7 @@ import {
   QMatrixData,
   SolverExecution,
   SolverRouting,
+  LibraryReference,
 } from "./types";
 import { exprToLatex, buildFallbackOrtoolsCode } from "./adapters";
 
@@ -83,6 +84,7 @@ export interface EnterpriseWorkbenchProps {
   onStopSolving?: () => void;
   isSolving: boolean;
   isDemo?: boolean;
+  libraryReference?: LibraryReference | null;
   terminalRunSeq?: number;
   onOpenDeploy?: () => void;
   projectId?: string;
@@ -155,6 +157,7 @@ export function EnterpriseWorkbench({
   onStopSolving,
   isSolving,
   isDemo = false,
+  libraryReference = null,
   terminalRunSeq = 0,
   onOpenDeploy,
   projectId = "default",
@@ -2135,6 +2138,19 @@ ${textToSend}
                   ? comp.classical.objective_value.toFixed(2)
                   : "—";
 
+              // Gap versus the Problem Library's verified best-known value (only for projects opened from the library)
+              const libGap = (obj: number | null | undefined, feasible: boolean | null | undefined) => {
+                if (!libraryReference) return null;
+                if (typeof obj !== "number" || !feasible) return "no feasible solution";
+                const best = libraryReference.bestKnown.value;
+                if (Math.abs(best) < 1e-9) return Math.abs(obj) < 1e-6 ? "0.00% gap" : "gap undefined";
+                const pct = (Math.abs(obj - best) / Math.abs(best)) * 100;
+                const worse = libraryReference.objectiveSense === "Minimize" ? obj > best : obj < best;
+                return pct < 0.005 ? "matches best known" : `${pct.toFixed(2)}% ${worse ? "worse than" : "better than"} best known`;
+              };
+              const libQuantumGap = libGap(comp?.quantum?.objective_value ?? execution.objectiveValue, comp?.quantum?.feasible ?? execution.feasible);
+              const libClassicalGap = comp && comp.classical.status !== "NOT_RUN" ? libGap(comp.classical.objective_value, comp.classical.feasible) : null;
+
               const fmtMs = (ms: number | null | undefined) => {
                 if (typeof ms !== "number") return "—";
                 return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
@@ -2270,6 +2286,25 @@ ${textToSend}
                       </div>
                     </div>
                   </div>
+
+                  {/* ── Library reference (only for projects opened from the Problem Library) ── */}
+                  {libraryReference && (
+                    <div
+                      className={`rounded-lg border px-4 py-2.5 text-[12px] font-mono space-y-0.5 ${
+                        isDark ? "border-white/[0.08] text-zinc-400" : "border-slate-200 text-slate-600"
+                      }`}
+                    >
+                      <div>
+                        Library best known:{" "}
+                        <strong className={isDark ? "text-zinc-100" : "text-slate-900"}>{libraryReference.bestKnown.value}</strong>{" "}
+                        ({libraryReference.bestKnown.kind === "published_optimal" ? "published optimal" : "proven optimal"})
+                      </div>
+                      <div>
+                        D-Wave QUBO (simulated annealing): {libQuantumGap ?? "—"}
+                        {libClassicalGap !== null && <span> · OR-Tools: {libClassicalGap}</span>}
+                      </div>
+                    </div>
+                  )}
 
                   {/* ── ZONE 3: UNIFIED DECISION VARIABLES TABLE (ACTIVE FILTER, NO REDUNDANT PILLS) ── */}
                   <div className="space-y-2.5">

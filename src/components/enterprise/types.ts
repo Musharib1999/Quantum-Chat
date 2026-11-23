@@ -163,6 +163,21 @@ export interface EnterpriseChatMessage {
   isStreaming?: boolean;
 }
 
+export type SurfaceMode = "copilot" | "workbench" | "library";
+
+/** Reference back to the Verified Industry Problem Library entry a project was opened from. */
+export interface LibraryReference {
+  slug: string;
+  version: number;
+  title: string;
+  objectiveSense: "Minimize" | "Maximize";
+  bestKnown: {
+    value: number;
+    kind: "proven_optimal" | "published_optimal";
+    method: string;
+  };
+}
+
 export interface ProjectRecord {
   id: string;
   title: string;
@@ -176,4 +191,6 @@ export interface ProjectRecord {
   runs: ExecutionRun[];
   activeRunId: string | null;
   workspace: WorkspaceState;
+  /** Set when the project was opened from the Problem Library. */
+  libraryRef?: LibraryReference | null;
 }

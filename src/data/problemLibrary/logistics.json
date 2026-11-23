@@ -1,0 +1,945 @@
+{
+  "industry": "Logistics",
+  "problems": [
+    {
+      "slug": "assignment-driver-route-6",
+      "title": "Driver-to-Route Assignment (6x6)",
+      "problemType": "Assignment",
+      "description": "Assign 6 drivers to 6 routes at minimum total cost (one-to-one).",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 36,
+      "prompt": "Assign 6 drivers to 6 delivery routes. Each driver must be assigned to exactly one route and each route must be covered by exactly one driver. The cost of assigning a driver to a route is given by this matrix (rows are drivers 0 to 5, columns are routes 0 to 5): driver 0: [27, 31, 28, 18, 16, 15]; driver 1: [14, 40, 14, 30, 14, 19]; driver 2: [23, 12, 30, 38, 22, 38]; driver 3: [18, 17, 24, 8, 24, 8]; driver 4: [38, 28, 6, 32, 18, 17]; driver 5: [10, 6, 9, 23, 31, 14]. Minimize the total assignment cost.",
+      "data": {
+        "n": 6,
+        "costMatrix": [
+          [
+            27,
+            31,
+            28,
+            18,
+            16,
+            15
+          ],
+          [
+            14,
+            40,
+            14,
+            30,
+            14,
+            19
+          ],
+          [
+            23,
+            12,
+            30,
+            38,
+            22,
+            38
+          ],
+          [
+            18,
+            17,
+            24,
+            8,
+            24,
+            8
+          ],
+          [
+            38,
+            28,
+            6,
+            32,
+            18,
+            17
+          ],
+          [
+            10,
+            6,
+            9,
+            23,
+            31,
+            14
+          ]
+        ],
+        "rngSeed": 1101
+      },
+      "bestKnown": {
+        "value": 65,
+        "kind": "proven_optimal",
+        "method": "Hungarian algorithm (SciPy) and OR-Tools CP-SAT agree"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      },
+      "industry": "Logistics",
+      "sizeTier": "small"
+    },
+    {
+      "slug": "assignment-driver-route-10",
+      "title": "Driver-to-Route Assignment (10x10)",
+      "problemType": "Assignment",
+      "description": "Assign 10 drivers to 10 routes at minimum total cost (one-to-one).",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 100,
+      "prompt": "Assign 10 drivers to 10 delivery routes. Each driver must be assigned to exactly one route and each route must be covered by exactly one driver. The cost of assigning a driver to a route is given by this matrix (rows are drivers 0 to 9, columns are routes 0 to 9): driver 0: [28, 13, 38, 31, 31, 15, 17, 23, 15, 21]; driver 1: [39, 34, 24, 36, 9, 21, 12, 23, 17, 11]; driver 2: [12, 8, 7, 38, 23, 20, 18, 37, 31, 36]; driver 3: [7, 28, 37, 16, 39, 34, 5, 11, 39, 14]; driver 4: [12, 37, 7, 12, 23, 24, 27, 20, 14, 25]; driver 5: [8, 31, 23, 39, 10, 27, 9, 40, 37, 16]; driver 6: [23, 18, 13, 26, 5, 21, 20, 23, 28, 22]; driver 7: [11, 30, 26, 22, 34, 29, 23, 10, 23, 5]; driver 8: [35, 32, 25, 19, 33, 32, 17, 30, 13, 30]; driver 9: [37, 8, 36, 35, 35, 10, 14, 39, 15, 11]. Minimize the total assignment cost.",
+      "data": {
+        "n": 10,
+        "costMatrix": [
+          [
+            28,
+            13,
+            38,
+            31,
+            31,
+            15,
+            17,
+            23,
+            15,
+            21
+          ],
+          [
+            39,
+            34,
+            24,
+            36,
+            9,
+            21,
+            12,
+            23,
+            17,
+            11
+          ],
+          [
+            12,
+            8,
+            7,
+            38,
+            23,
+            20,
+            18,
+            37,
+            31,
+            36
+          ],
+          [
+            7,
+            28,
+            37,
+            16,
+            39,
+            34,
+            5,
+            11,
+            39,
+            14
+          ],
+          [
+            12,
+            37,
+            7,
+            12,
+            23,
+            24,
+            27,
+            20,
+            14,
+            25
+          ],
+          [
+            8,
+            31,
+            23,
+            39,
+            10,
+            27,
+            9,
+            40,
+            37,
+            16
+          ],
+          [
+            23,
+            18,
+            13,
+            26,
+            5,
+            21,
+            20,
+            23,
+            28,
+            22
+          ],
+          [
+            11,
+            30,
+            26,
+            22,
+            34,
+            29,
+            23,
+            10,
+            23,
+            5
+          ],
+          [
+            35,
+            32,
+            25,
+            19,
+            33,
+            32,
+            17,
+            30,
+            13,
+            30
+          ],
+          [
+            37,
+            8,
+            36,
+            35,
+            35,
+            10,
+            14,
+            39,
+            15,
+            11
+          ]
+        ],
+        "rngSeed": 1102
+      },
+      "bestKnown": {
+        "value": 94,
+        "kind": "proven_optimal",
+        "method": "Hungarian algorithm (SciPy) and OR-Tools CP-SAT agree"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      },
+      "industry": "Logistics",
+      "sizeTier": "medium"
+    },
+    {
+      "slug": "cargo-knapsack-12",
+      "title": "Cargo Loading Knapsack (12 parcels)",
+      "problemType": "Knapsack",
+      "description": "Pick parcels for a van with a 51 kg limit to maximize revenue.",
+      "objectiveSense": "Maximize",
+      "estimatedBinaryVars": 12,
+      "prompt": "A delivery van can carry at most 51 kg. There are 12 parcels to choose from: parcel 0: weight 9 kg, revenue 22; parcel 1: weight 8 kg, revenue 27; parcel 2: weight 14 kg, revenue 26; parcel 3: weight 7 kg, revenue 55; parcel 4: weight 15 kg, revenue 19; parcel 5: weight 17 kg, revenue 48; parcel 6: weight 4 kg, revenue 28; parcel 7: weight 16 kg, revenue 20; parcel 8: weight 4 kg, revenue 57; parcel 9: weight 6 kg, revenue 31; parcel 10: weight 12 kg, revenue 29; parcel 11: weight 16 kg, revenue 34. Choose which parcels to load so that the total weight does not exceed 51 kg and the total revenue is maximized.",
+      "data": {
+        "n": 12,
+        "weights": [
+          9,
+          8,
+          14,
+          7,
+          15,
+          17,
+          4,
+          16,
+          4,
+          6,
+          12,
+          16
+        ],
+        "values": [
+          22,
+          27,
+          26,
+          55,
+          19,
+          48,
+          28,
+          20,
+          57,
+          31,
+          29,
+          34
+        ],
+        "capacity": 51,
+        "rngSeed": 1201
+      },
+      "bestKnown": {
+        "value": 249,
+        "kind": "proven_optimal",
+        "method": "Dynamic programming and OR-Tools CP-SAT agree"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      },
+      "industry": "Logistics",
+      "sizeTier": "small"
+    },
+    {
+      "slug": "facility-location-3x6",
+      "title": "Warehouse Location (3 sites, 6 customers)",
+      "problemType": "Facility Location",
+      "description": "Open a subset of 3 warehouses and serve 6 customers at minimum total cost.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 21,
+      "prompt": "Choose which of 3 candidate warehouses to open and assign each of 6 customers to exactly one open warehouse. Opening costs for warehouses 0 to 2 are [67, 71, 60]. The cost of serving a customer from a warehouse is given by this matrix (rows are warehouses, columns are customers 0 to 5): warehouse 0: [28, 8, 30, 5, 13, 20]; warehouse 1: [8, 20, 15, 6, 22, 23]; warehouse 2: [11, 18, 13, 19, 18, 5]. A customer can only be served by a warehouse that is open. Minimize total opening cost plus total service cost.",
+      "data": {
+        "warehouses": 3,
+        "customers": 6,
+        "openingCost": [
+          67,
+          71,
+          60
+        ],
+        "serviceCost": [
+          [
+            28,
+            8,
+            30,
+            5,
+            13,
+            20
+          ],
+          [
+            8,
+            20,
+            15,
+            6,
+            22,
+            23
+          ],
+          [
+            11,
+            18,
+            13,
+            19,
+            18,
+            5
+          ]
+        ],
+        "rngSeed": 1301
+      },
+      "bestKnown": {
+        "value": 144,
+        "kind": "proven_optimal",
+        "method": "Exhaustive subset enumeration and OR-Tools CP-SAT agree"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      },
+      "industry": "Logistics",
+      "sizeTier": "small"
+    },
+    {
+      "slug": "set-cover-depots-10",
+      "title": "Depot Coverage Set Cover (7 depots, 10 regions)",
+      "problemType": "Set Cover",
+      "description": "Open the cheapest set of depots that covers all 10 regions.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 7,
+      "prompt": "Choose which depots to open so that every one of 10 regions (numbered 0 to 9) is covered by at least one open depot. Candidate depots: depot 0 (cost 3) covers regions [0, 2, 3, 6, 7]; depot 1 (cost 6) covers regions [2, 3, 4, 7, 9]; depot 2 (cost 6) covers regions [1, 5, 8, 9]; depot 3 (cost 9) covers regions [1, 6, 7, 8]; depot 4 (cost 3) covers regions [1, 4, 5, 7]; depot 5 (cost 9) covers regions [1, 2, 4, 6, 8]; depot 6 (cost 3) covers regions [1, 3, 6, 7, 8]. Minimize the total cost of the opened depots.",
+      "data": {
+        "regions": 10,
+        "depots": 7,
+        "covers": [
+          [
+            0,
+            2,
+            3,
+            6,
+            7
+          ],
+          [
+            2,
+            3,
+            4,
+            7,
+            9
+          ],
+          [
+            1,
+            5,
+            8,
+            9
+          ],
+          [
+            1,
+            6,
+            7,
+            8
+          ],
+          [
+            1,
+            4,
+            5,
+            7
+          ],
+          [
+            1,
+            2,
+            4,
+            6,
+            8
+          ],
+          [
+            1,
+            3,
+            6,
+            7,
+            8
+          ]
+        ],
+        "cost": [
+          3,
+          6,
+          6,
+          9,
+          3,
+          9,
+          3
+        ],
+        "rngSeed": 1401
+      },
+      "bestKnown": {
+        "value": 12,
+        "kind": "proven_optimal",
+        "method": "Exhaustive subset enumeration and OR-Tools CP-SAT agree"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      },
+      "industry": "Logistics",
+      "sizeTier": "small"
+    },
+    {
+      "slug": "tsp-5-city",
+      "title": "Courier Round Trip TSP (5 cities)",
+      "problemType": "TSP",
+      "description": "Shortest round trip through 5 cities starting and ending at city 0.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 25,
+      "prompt": "A courier must visit 5 cities (numbered 0 to 4) exactly once, starting and ending at city 0. The travel distance between cities is given by this symmetric matrix: city 0: [0, 14, 45, 8, 36]; city 1: [14, 0, 38, 22, 35]; city 2: [45, 38, 0, 49, 18]; city 3: [8, 22, 49, 0, 37]; city 4: [36, 35, 18, 37, 0]. Find the shortest round trip that visits every city exactly once.",
+      "data": {
+        "n": 5,
+        "coordinates": [
+          [
+            40,
+            14
+          ],
+          [
+            27,
+            10
+          ],
+          [
+            3,
+            39
+          ],
+          [
+            47,
+            18
+          ],
+          [
+            20,
+            44
+          ]
+        ],
+        "distanceMatrix": [
+          [
+            0,
+            14,
+            45,
+            8,
+            36
+          ],
+          [
+            14,
+            0,
+            38,
+            22,
+            35
+          ],
+          [
+            45,
+            38,
+            0,
+            49,
+            18
+          ],
+          [
+            8,
+            22,
+            49,
+            0,
+            37
+          ],
+          [
+            36,
+            35,
+            18,
+            37,
+            0
+          ]
+        ],
+        "rngSeed": 1501
+      },
+      "bestKnown": {
+        "value": 115,
+        "kind": "proven_optimal",
+        "method": "Exhaustive permutation search and OR-Tools CP-SAT circuit model agree"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      },
+      "industry": "Logistics",
+      "sizeTier": "small"
+    },
+    {
+      "slug": "cvrp-6c-2v",
+      "title": "Capacitated Vehicle Routing (6 customers, 2 vans)",
+      "problemType": "Vehicle Routing",
+      "description": "Route 2 capacity-10 vans to serve 6 customers at minimum distance.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 98,
+      "prompt": "2 delivery vans, each with capacity 10, start and end at the depot (node 0). There are 6 customers (nodes 1 to 6) with demands [3, 3, 3, 5, 2, 1] respectively. The travel distance matrix between nodes 0 to 6 is: node 0: [0, 28, 28, 21, 25, 10, 15]; node 1: [28, 0, 26, 12, 52, 38, 31]; node 2: [28, 26, 0, 15, 41, 34, 17]; node 3: [21, 12, 15, 0, 42, 30, 20]; node 4: [25, 52, 41, 42, 0, 16, 24]; node 5: [10, 38, 34, 30, 16, 0, 17]; node 6: [15, 31, 17, 20, 24, 17, 0]. Each customer must be visited exactly once by exactly one van, and no van may carry more than 10 in total demand. Minimize the total distance travelled by all vans.",
+      "data": {
+        "customers": 6,
+        "vehicles": 2,
+        "capacity": 10,
+        "demand": [
+          0,
+          3,
+          3,
+          3,
+          5,
+          2,
+          1
+        ],
+        "coordinates": [
+          [
+            25,
+            31
+          ],
+          [
+            49,
+            45
+          ],
+          [
+            50,
+            19
+          ],
+          [
+            46,
+            33
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            17,
+            25
+          ],
+          [
+            33,
+            18
+          ]
+        ],
+        "distanceMatrix": [
+          [
+            0,
+            28,
+            28,
+            21,
+            25,
+            10,
+            15
+          ],
+          [
+            28,
+            0,
+            26,
+            12,
+            52,
+            38,
+            31
+          ],
+          [
+            28,
+            26,
+            0,
+            15,
+            41,
+            34,
+            17
+          ],
+          [
+            21,
+            12,
+            15,
+            0,
+            42,
+            30,
+            20
+          ],
+          [
+            25,
+            52,
+            41,
+            42,
+            0,
+            16,
+            24
+          ],
+          [
+            10,
+            38,
+            34,
+            30,
+            16,
+            0,
+            17
+          ],
+          [
+            15,
+            31,
+            17,
+            20,
+            24,
+            17,
+            0
+          ]
+        ],
+        "rngSeed": 1601
+      },
+      "bestKnown": {
+        "value": 138,
+        "kind": "proven_optimal",
+        "method": "Exhaustive enumeration of all customer orderings and 2-route splits"
+      },
+      "source": {
+        "name": "Synthetic instance (fixed seed)",
+        "url": null,
+        "license": "Original / CC0"
+      },
+      "industry": "Logistics",
+      "sizeTier": "medium"
+    },
+    {
+      "slug": "tsp-burma14",
+      "title": "Burma14 TSP (TSPLIB, 14 cities)",
+      "problemType": "TSP",
+      "description": "Classic public 14-city benchmark with a published optimal tour length of 3323.",
+      "objectiveSense": "Minimize",
+      "estimatedBinaryVars": 196,
+      "prompt": "A courier must visit 14 cities (numbered 0 to 13) exactly once, starting and ending at city 0. The travel distance between cities is given by this symmetric matrix: city 0: [0, 153, 510, 706, 966, 581, 455, 70, 160, 372, 157, 567, 342, 398]; city 1: [153, 0, 422, 664, 997, 598, 507, 197, 311, 479, 310, 581, 417, 376]; city 2: [510, 422, 0, 289, 744, 390, 437, 491, 645, 880, 618, 374, 455, 211]; city 3: [706, 664, 289, 0, 491, 265, 410, 664, 804, 1070, 768, 259, 499, 310]; city 4: [966, 997, 744, 491, 0, 400, 514, 902, 990, 1261, 947, 418, 635, 636]; city 5: [581, 598, 390, 265, 400, 0, 168, 522, 634, 910, 593, 19, 284, 239]; city 6: [455, 507, 437, 410, 514, 168, 0, 389, 482, 757, 439, 163, 124, 232]; city 7: [70, 197, 491, 664, 902, 522, 389, 0, 154, 406, 133, 508, 273, 355]; city 8: [160, 311, 645, 804, 990, 634, 482, 154, 0, 276, 43, 623, 358, 498]; city 9: [372, 479, 880, 1070, 1261, 910, 757, 406, 276, 0, 318, 898, 633, 761]; city 10: [157, 310, 618, 768, 947, 593, 439, 133, 43, 318, 0, 582, 315, 464]; city 11: [567, 581, 374, 259, 418, 19, 163, 508, 623, 898, 582, 0, 275, 221]; city 12: [342, 417, 455, 499, 635, 284, 124, 273, 358, 633, 315, 275, 0, 247]; city 13: [398, 376, 211, 310, 636, 239, 232, 355, 498, 761, 464, 221, 247, 0]. Find the shortest round trip that visits every city exactly once.",
+      "data": {
+        "n": 14,
+        "coordinates": [
+          [
+            16.47,
+            96.1
+          ],
+          [
+            16.47,
+            94.44
+          ],
+          [
+            20.09,
+            92.54
+          ],
+          [
+            22.39,
+            93.37
+          ],
+          [
+            25.23,
+            97.24
+          ],
+          [
+            22.0,
+            96.05
+          ],
+          [
+            20.47,
+            97.02
+          ],
+          [
+            17.2,
+            96.29
+          ],
+          [
+            16.3,
+            97.38
+          ],
+          [
+            14.05,
+            98.12
+          ],
+          [
+            16.53,
+            97.38
+          ],
+          [
+            21.52,
+            95.59
+          ],
+          [
+            19.41,
+            97.13
+          ],
+          [
+            20.09,
+            94.55
+          ]
+        ],
+        "distanceMatrix": [
+          [
+            0,
+            153,
+            510,
+            706,
+            966,
+            581,
+            455,
+            70,
+            160,
+            372,
+            157,
+            567,
+            342,
+            398
+          ],
+          [
+            153,
+            0,
+            422,
+            664,
+            997,
+            598,
+            507,
+            197,
+            311,
+            479,
+            310,
+            581,
+            417,
+            376
+          ],
+          [
+            510,
+            422,
+            0,
+            289,
+            744,
+            390,
+            437,
+            491,
+            645,
+            880,
+            618,
+            374,
+            455,
+            211
+          ],
+          [
+            706,
+            664,
+            289,
+            0,
+            491,
+            265,
+            410,
+            664,
+            804,
+            1070,
+            768,
+            259,
+            499,
+            310
+          ],
+          [
+            966,
+            997,
+            744,
+            491,
+            0,
+            400,
+            514,
+            902,
+            990,
+            1261,
+            947,
+            418,
+            635,
+            636
+          ],
+          [
+            581,
+            598,
+            390,
+            265,
+            400,
+            0,
+            168,
+            522,
+            634,
+            910,
+            593,
+            19,
+            284,
+            239
+          ],
+          [
+            455,
+            507,
+            437,
+            410,
+            514,
+            168,
+            0,
+            389,
+            482,
+            757,
+            439,
+            163,
+            124,
+            232
+          ],
+          [
+            70,
+            197,
+            491,
+            664,
+            902,
+            522,
+            389,
+            0,
+            154,
+            406,
+            133,
+            508,
+            273,
+            355
+          ],
+          [
+            160,
+            311,
+            645,
+            804,
+            990,
+            634,
+            482,
+            154,
+            0,
+            276,
+            43,
+            623,
+            358,
+            498
+          ],
+          [
+            372,
+            479,
+            880,
+            1070,
+            1261,
+            910,
+            757,
+            406,
+            276,
+            0,
+            318,
+            898,
+            633,
+            761
+          ],
+          [
+            157,
+            310,
+            618,
+            768,
+            947,
+            593,
+            439,
+            133,
+            43,
+            318,
+            0,
+            582,
+            315,
+            464
+          ],
+          [
+            567,
+            581,
+            374,
+            259,
+            418,
+            19,
+            163,
+            508,
+            623,
+            898,
+            582,
+            0,
+            275,
+            221
+          ],
+          [
+            342,
+            417,
+            455,
+            499,
+            635,
+            284,
+            124,
+            273,
+            358,
+            633,
+            315,
+            275,
+            0,
+            247
+          ],
+          [
+            398,
+            376,
+            211,
+            310,
+            636,
+            239,
+            232,
+            355,
+            498,
+            761,
+            464,
+            221,
+            247,
+            0
+          ]
+        ],
+        "tsplibName": "burma14"
+      },
+      "bestKnown": {
+        "value": 3323,
+        "kind": "published_optimal",
+        "method": "Published TSPLIB optimum (3323), independently re-proven with OR-Tools CP-SAT on the downloaded data"
+      },
+      "source": {
+        "name": "TSPLIB95 burma14 (Reinelt)",
+        "url": "http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/",
+        "license": "Freely available for research use (TSPLIB)"
+      },
+      "industry": "Logistics",
+      "sizeTier": "large"
+    }
+  ]
+}

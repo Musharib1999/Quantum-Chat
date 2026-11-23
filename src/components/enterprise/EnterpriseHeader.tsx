@@ -17,6 +17,7 @@ import {
   Square,
   RotateCw,
 } from "lucide-react";
+import type { SurfaceMode } from "./types";
 
 interface EnterpriseHeaderProps {
   isDark: boolean;
@@ -30,8 +31,8 @@ interface EnterpriseHeaderProps {
   activeProblemTitle: string;
   isSolving?: boolean;
   onStopSolving?: () => void;
-  surfaceMode?: "copilot" | "workbench";
-  onSelectSurfaceMode?: (mode: "copilot" | "workbench") => void;
+  surfaceMode?: SurfaceMode;
+  onSelectSurfaceMode?: (mode: SurfaceMode) => void;
   onCompile?: () => void;
   onRunDwave?: () => void;
   onRunOrtools?: () => void;
@@ -166,6 +167,17 @@ export function EnterpriseHeader({
               title="Surface 2 Workbench View (50% Math Deck + 50% Monaco Code Studio)"
             >
               Workbench
+            </button>
+            <button
+              onClick={() => onSelectSurfaceMode("library")}
+              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                surfaceMode === "library"
+                  ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
+                  : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
+              }`}
+              title="Verified Industry Problem Library"
+            >
+              Library
             </button>
           </div>
         )}

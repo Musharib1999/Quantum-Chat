@@ -13,6 +13,7 @@ const EnterpriseProjectSchema = new mongoose.Schema(
     runs: { type: [mongoose.Schema.Types.Mixed], default: [] },
     activeRunId: { type: String, default: null },
     workspace: { type: mongoose.Schema.Types.Mixed, default: {} },
+    libraryRef: { type: mongoose.Schema.Types.Mixed, default: null },
   },
   { timestamps: true }
 );
