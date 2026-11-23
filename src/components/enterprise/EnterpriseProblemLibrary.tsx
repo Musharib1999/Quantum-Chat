@@ -1,8 +1,115 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Search, X } from "lucide-react";
 import type { LibraryDetail, LibraryListItem } from "@/lib/problemLibrary";
 import { SolverFitMap } from "./SolverFitMap";
+
+interface FilterDropdownOption {
+  value: string;
+  label: string;
+}
+
+function FilterDropdown({
+  label,
+  value,
+  options,
+  onChange,
+  isDark,
+}: {
+  label: string;
+  value: string;
+  options: FilterDropdownOption[];
+  onChange: (value: string) => void;
+  isDark: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  const selectedOption = options.find((o) => o.value === value) || options[0];
+  const isActive = value !== "All";
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`h-8 px-2.5 rounded-lg border text-[11px] font-mono inline-flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap ${
+          isDark
+            ? isActive
+              ? "bg-white/[0.08] border-white/[0.18] text-zinc-100"
+              : "bg-[#0C0D11] border-white/[0.08] text-zinc-300 hover:border-white/[0.16] hover:bg-white/[0.03]"
+            : isActive
+            ? "bg-slate-900 border-slate-900 text-white"
+            : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+        }`}
+      >
+        <span className={isActive ? (isDark ? "text-zinc-400" : "text-slate-300") : isDark ? "text-zinc-500" : "text-slate-400"}>
+          {label}
+        </span>
+        <span className="font-medium max-w-[140px] truncate">{selectedOption?.label ?? value}</span>
+        <ChevronDown
+          className={`w-3 h-3 shrink-0 transition-transform ${open ? "rotate-180" : ""} ${
+            isActive ? (isDark ? "text-zinc-300" : "text-slate-200") : isDark ? "text-zinc-500" : "text-slate-400"
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div
+          style={{ backgroundColor: isDark ? "#0E0F14" : "#FFFFFF" }}
+          className={`absolute left-0 mt-1.5 min-w-[190px] max-h-64 overflow-y-auto rounded-lg border shadow-xl z-40 py-1 ${
+            isDark ? "border-white/[0.12]" : "border-slate-200"
+          }`}
+        >
+          {options.map((opt) => {
+            const selected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className={`w-full text-left px-3 py-1.5 text-[11.5px] font-mono flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                  selected
+                    ? isDark
+                      ? "bg-white/[0.09] text-zinc-100 font-medium"
+                      : "bg-slate-100 text-slate-900 font-medium"
+                    : isDark
+                    ? "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                }`}
+              >
+                <span className="truncate">{opt.label}</span>
+                {selected && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isDark ? "bg-zinc-200" : "bg-slate-800"}`} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface EnterpriseProblemLibraryProps {
   isDark: boolean;
@@ -39,10 +146,25 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
   const [industryFilter, setIndustryFilter] = useState<string>("All");
   const [typeFilter, setTypeFilter] = useState<string>("All");
   const [sizeFilter, setSizeFilter] = useState<string>("All");
-  const [verdictFilter, setVerdictFilter] = useState<string>("All");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchFocused, setSearchFocused] = useState<boolean>(false);
+  const [activeSuggestionIdx, setActiveSuggestionIdx] = useState<number>(-1);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, LibraryDetail>>({});
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!searchFocused) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+        setActiveSuggestionIdx(-1);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [searchFocused]);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,16 +202,48 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
     [industryScoped]
   );
 
-  const filtered = useMemo(
-    () =>
-      industryScoped.filter(
-        (p) =>
-          (typeFilter === "All" || p.problemType === typeFilter) &&
-          (sizeFilter === "All" || p.sizeTier === sizeFilter) &&
-          (verdictFilter === "All" || p.benchmark?.verdict === verdictFilter)
-      ),
-    [industryScoped, typeFilter, sizeFilter, verdictFilter]
-  );
+  const filtered = useMemo(() => {
+    const tokens = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return industryScoped.filter((p) => {
+      if (typeFilter !== "All" && p.problemType !== typeFilter) return false;
+      if (sizeFilter !== "All" && p.sizeTier !== sizeFilter) return false;
+      if (tokens.length > 0) {
+        const haystack = `${p.title} ${p.industry} ${p.problemType} ${p.description} ${p.slug} ${SIZE_LABEL[p.sizeTier] || p.sizeTier}`.toLowerCase();
+        if (!tokens.every((tok) => haystack.includes(tok))) return false;
+      }
+      return true;
+    });
+  }, [industryScoped, typeFilter, sizeFilter, searchQuery]);
+
+  const suggestions = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q || !problems) return [];
+    const tokens = q.split(/\s+/).filter(Boolean);
+    return problems
+      .filter((p) => {
+        const haystack = `${p.title} ${p.industry} ${p.problemType} ${p.description} ${p.slug}`.toLowerCase();
+        return tokens.every((tok) => haystack.includes(tok));
+      })
+      .sort((a, b) => {
+        const aTitle = a.title.toLowerCase().startsWith(q) ? 0 : a.title.toLowerCase().includes(q) ? 1 : 2;
+        const bTitle = b.title.toLowerCase().startsWith(q) ? 0 : b.title.toLowerCase().includes(q) ? 1 : 2;
+        if (aTitle !== bTitle) return aTitle - bTitle;
+        return a.title.localeCompare(b.title);
+      })
+      .slice(0, 6);
+  }, [problems, searchQuery]);
+
+  const hasActiveFilters =
+    industryFilter !== "All" || typeFilter !== "All" || sizeFilter !== "All" || searchQuery.trim().length > 0;
+
+  const resetFilters = () => {
+    setIndustryFilter("All");
+    setTypeFilter("All");
+    setSizeFilter("All");
+    setSearchQuery("");
+    setSearchFocused(false);
+    setActiveSuggestionIdx(-1);
+  };
 
   const fetchDetail = async (slug: string): Promise<LibraryDetail | null> => {
     if (details[slug]) return details[slug];
@@ -124,10 +278,22 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
     setIndustryFilter("All");
     setTypeFilter("All");
     setSizeFilter("All");
-    setVerdictFilter("All");
+    setSearchQuery("");
     setViewMode("problems");
     setExpanded(slug);
     await fetchDetail(slug);
+  };
+
+  const handleSelectSuggestion = async (p: LibraryListItem) => {
+    setSearchQuery(p.title);
+    setIndustryFilter("All");
+    setTypeFilter("All");
+    setSizeFilter("All");
+    setSearchFocused(false);
+    setActiveSuggestionIdx(-1);
+    setViewMode("problems");
+    setExpanded(p.slug);
+    await fetchDetail(p.slug);
   };
 
   const handleOpen = async (slug: string) => {
@@ -142,34 +308,41 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
   const textMuted = isDark ? "text-zinc-400" : "text-slate-600";
   const textFaint = isDark ? "text-zinc-500" : "text-slate-500";
 
-  const chip = (active: boolean) =>
-    `px-2.5 py-1 rounded-md text-[11px] font-mono border cursor-pointer transition-colors ${
-      active
-        ? isDark
-          ? "bg-white/[0.10] border-white/[0.20] text-zinc-100"
-          : "bg-slate-900 border-slate-900 text-white"
-        : isDark
-        ? "bg-transparent border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
-        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-    }`;
-
   const verdictTextClass = (verdict?: string) => {
     if (verdict === "competitive") return isDark ? "text-emerald-400" : "text-emerald-700";
     if (verdict === "exceeds_qubo_limit") return isDark ? "text-amber-400" : "text-amber-700";
     return isDark ? "text-zinc-300" : "text-slate-700";
   };
 
+  const industryOptions = useMemo(
+    () => industries.map((ind) => ({ value: ind, label: ind })),
+    [industries]
+  );
+
+  const typeOptions = useMemo(
+    () => problemTypes.map((t) => ({ value: t, label: t })),
+    [problemTypes]
+  );
+
+  const sizeOptions: FilterDropdownOption[] = [
+    { value: "All", label: "All" },
+    { value: "small", label: "Small" },
+    { value: "medium", label: "Medium" },
+    { value: "large", label: "Large" },
+  ];
+
   return (
     <div className="h-full w-full overflow-y-auto" style={{ backgroundColor: isDark ? "#090A0D" : "#F8FAFC" }}>
-      <div className="max-w-6xl mx-auto px-5 py-6 space-y-5">
+      <div className="max-w-6xl mx-auto px-5 py-6 space-y-4">
         {/* Header + View Switcher */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-baseline gap-2.5">
             <h1 className={`text-lg font-semibold font-sans tracking-tight ${textMain}`}>Problem Library</h1>
-            <p className={`text-[13px] leading-relaxed font-sans max-w-3xl ${textMuted}`}>
-              Multi-industry benchmark problems with verified best-known optima and seeded side-by-side runs comparing
-              D-Wave Simulated Annealing (classical software) against Google OR-Tools CP-SAT.
-            </p>
+            {problems && (
+              <span className={`text-[11px] font-mono ${textFaint}`}>
+                {hasActiveFilters ? `${filtered.length} / ${problems.length}` : `${problems.length}`}
+              </span>
+            )}
           </div>
 
           {/* Problems | Solver Fit Map segmented toggle */}
@@ -220,63 +393,165 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
 
         {!problems && !error && <div className={`text-[12px] font-mono ${textFaint}`}>Loading problems...</div>}
 
-        {/* Shared Industry Filter Strip (applies to both Problems and Solver Fit Map) */}
-        {problems && industries.length > 2 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={`text-[11px] font-mono mr-1 ${textFaint}`}>Industry</span>
-            {industries.map((ind) => (
-              <button
-                key={ind}
-                type="button"
-                className={chip(industryFilter === ind)}
-                onClick={() => {
-                  setIndustryFilter(ind);
-                  setTypeFilter("All");
+        {/* Unified Search + Dropdown Filter Bar */}
+        {problems && problems.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Dynamic / Suggestive Search Box */}
+            <div ref={searchBoxRef} className="relative flex-1 min-w-[220px]">
+              <Search
+                className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${textFaint}`}
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onFocus={() => setSearchFocused(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSearchFocused(true);
+                  setActiveSuggestionIdx(-1);
                 }}
+                onKeyDown={(e) => {
+                  if (!searchFocused || suggestions.length === 0) {
+                    if (e.key === "Escape") {
+                      setSearchFocused(false);
+                    }
+                    return;
+                  }
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveSuggestionIdx((prev) => (prev + 1) % suggestions.length);
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveSuggestionIdx((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+                  } else if (e.key === "Enter" && activeSuggestionIdx >= 0) {
+                    e.preventDefault();
+                    handleSelectSuggestion(suggestions[activeSuggestionIdx]);
+                  } else if (e.key === "Escape") {
+                    setSearchFocused(false);
+                    setActiveSuggestionIdx(-1);
+                  }
+                }}
+                placeholder="Search problems, industries, or types..."
+                className={`w-full h-8 pl-8 pr-7 rounded-lg border text-[12px] font-sans outline-none transition-colors ${
+                  isDark
+                    ? "bg-[#0C0D11] border-white/[0.08] text-zinc-100 placeholder:text-zinc-500 focus:border-white/[0.22]"
+                    : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-slate-400"
+                }`}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setActiveSuggestionIdx(-1);
+                  }}
+                  aria-label="Clear search"
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded cursor-pointer ${
+                    isDark ? "text-zinc-500 hover:text-zinc-200" : "text-slate-400 hover:text-slate-700"
+                  }`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {/* Suggestive Dropdown */}
+              {searchFocused && searchQuery.trim().length > 0 && (
+                <div
+                  style={{ backgroundColor: isDark ? "#0E0F14" : "#FFFFFF" }}
+                  className={`absolute left-0 right-0 mt-1.5 rounded-lg border shadow-xl z-40 py-1 overflow-hidden ${
+                    isDark ? "border-white/[0.12]" : "border-slate-200"
+                  }`}
+                >
+                  {suggestions.length === 0 ? (
+                    <div className={`px-3 py-2 text-[11.5px] font-mono ${textFaint}`}>No matching problems</div>
+                  ) : (
+                    suggestions.map((item, idx) => {
+                      const highlighted = idx === activeSuggestionIdx;
+                      return (
+                        <button
+                          key={item.slug}
+                          type="button"
+                          onMouseEnter={() => setActiveSuggestionIdx(idx)}
+                          onClick={() => handleSelectSuggestion(item)}
+                          className={`w-full text-left px-3 py-2 flex items-center justify-between gap-3 transition-colors cursor-pointer ${
+                            highlighted
+                              ? isDark
+                                ? "bg-white/[0.08]"
+                                : "bg-slate-100"
+                              : isDark
+                              ? "hover:bg-white/[0.04]"
+                              : "hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <div className={`text-[12px] font-sans font-medium truncate ${textMain}`}>{item.title}</div>
+                            <div className={`text-[10.5px] font-mono truncate ${textFaint}`}>
+                              {item.industry} · {item.problemType}
+                            </div>
+                          </div>
+                          <span className={`text-[10.5px] font-mono shrink-0 ${textFaint}`}>
+                            {SIZE_LABEL[item.sizeTier]} · {item.benchmark?.quboVars ?? item.estimatedBinaryVars} vars
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 1. Industry Dropdown */}
+            <FilterDropdown
+              label="Industry"
+              value={industryFilter}
+              options={industryOptions}
+              onChange={(nextInd) => {
+                setIndustryFilter(nextInd);
+                setTypeFilter("All");
+              }}
+              isDark={isDark}
+            />
+
+            {/* 2. Problem Type Dropdown */}
+            <FilterDropdown
+              label="Problem type"
+              value={typeFilter}
+              options={typeOptions}
+              onChange={setTypeFilter}
+              isDark={isDark}
+            />
+
+            {/* 3. Problem Size Dropdown */}
+            <FilterDropdown
+              label="Problem size"
+              value={sizeFilter}
+              options={sizeOptions}
+              onChange={setSizeFilter}
+              isDark={isDark}
+            />
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className={`h-8 px-2 text-[11px] font-mono cursor-pointer transition-colors ${
+                  isDark ? "text-zinc-500 hover:text-zinc-200" : "text-slate-500 hover:text-slate-900"
+                }`}
               >
-                {ind}
+                Reset
               </button>
-            ))}
+            )}
           </div>
         )}
 
         {/* ── VIEW 1: SOLVER FIT MAP ── */}
         {problems && viewMode === "fit_map" && (
-          <SolverFitMap isDark={isDark} problems={industryScoped} onSelectProblem={handleInspectFromMap} />
+          <SolverFitMap isDark={isDark} problems={filtered} onSelectProblem={handleInspectFromMap} />
         )}
 
         {/* ── VIEW 2: PROBLEM CARDS ── */}
         {problems && viewMode === "problems" && (
           <>
-            {/* Filters */}
-            {problems.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className={`text-[11px] font-mono mr-1 ${textFaint}`}>Type</span>
-                  {problemTypes.map((t) => (
-                    <button key={t} type="button" className={chip(typeFilter === t)} onClick={() => setTypeFilter(t)}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className={`text-[11px] font-mono mr-1 ${textFaint}`}>Size</span>
-                  {["All", "small", "medium", "large"].map((s) => (
-                    <button key={s} type="button" className={chip(sizeFilter === s)} onClick={() => setSizeFilter(s)}>
-                      {s === "All" ? "All" : SIZE_LABEL[s]}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className={`text-[11px] font-mono mr-1 ${textFaint}`}>Fit</span>
-                  {["All", "competitive", "classical_wins", "exceeds_qubo_limit"].map((v) => (
-                    <button key={v} type="button" className={chip(verdictFilter === v)} onClick={() => setVerdictFilter(v)}>
-                      {v === "All" ? "All" : VERDICT_LABEL[v]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {filtered.length === 0 && (
               <div className={`text-[13px] font-sans ${textFaint}`}>No problems match these filters.</div>
