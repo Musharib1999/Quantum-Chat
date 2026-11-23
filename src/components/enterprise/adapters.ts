@@ -290,6 +290,73 @@ export function runFromWorkspace(args: {
   };
 }
 
+/**
+ * Scale all numeric literals in a linear expression (and optional RHS) into exact integers
+ * for Google OR-Tools CP-SAT, which strictly rejects FloatAffine expressions in model.Add().
+ */
+function scaleLinearExprToInt(expr: string, rhs?: number): { expr: string; rhs: number; scale: number } {
+  const numRe = /(?<![A-Za-z0-9_])(\d+(?:\.\d+)?)(?![A-Za-z0-9_])/g;
+  const nums: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = numRe.exec(expr)) !== null) {
+    nums.push(parseFloat(m[1]));
+  }
+  if (typeof rhs === "number" && Number.isFinite(rhs)) {
+    nums.push(rhs);
+  }
+
+  let scale = 1;
+  for (const candidate of [1, 10, 100, 1000]) {
+    if (nums.every((v) => Math.abs(v * candidate - Math.round(v * candidate)) < 1e-6)) {
+      scale = candidate;
+      break;
+    }
+    scale = 1000;
+  }
+
+  const intExpr = expr.replace(numRe, (_, raw) => String(Math.round(parseFloat(raw) * scale)));
+  const intRhs = typeof rhs === "number" && Number.isFinite(rhs) ? Math.round(rhs * scale) : 0;
+  return { expr: intExpr, rhs: intRhs, scale };
+}
+
+/**
+ * Sanitize legacy saved QUBO scripts that contained `if '_xxx' in globals():`
+ * (which the execution sandbox AST security guard rejects).
+ */
+export function sanitizeLegacyQuboScript(code: string): string {
+  if (!code || !code.includes("globals()")) return code;
+  const specNames = ["_obj_indices", "_obj_coefs", "_dep_specs", "_mut_specs", "_clique_specs", "_eq_specs", "_ineq_specs"];
+  const missingDecls = specNames
+    .filter((name) => !new RegExp(`^\\s*${name}\\s*=`, "m").test(code))
+    .map((name) => `${name} = []`);
+
+  let cleaned = code.replace(/if\s+['"](_[a-z_]+)['"]\s+in\s+globals\(\)\s*:/g, "if $1:");
+  if (missingDecls.length > 0) {
+    cleaned = `${missingDecls.join("\n")}\n${cleaned}`;
+  }
+  return cleaned;
+}
+
+/**
+ * Sanitize legacy saved OR-Tools scripts whose model.Add() lines contain `.0` float literals
+ * (e.g. `9.0 * Select_0`), which cause CP-SAT `FloatAffine` TypeError.
+ */
+export function sanitizeLegacyOrtoolsScript(code: string): string {
+  if (!code) return code;
+  return code
+    .split("\n")
+    .map((line) => {
+      const addMatch = line.match(/^(\s*model\.Add\()(.+)(\).*)$/);
+      if (!addMatch) return line;
+      const inner = addMatch[2];
+      // Only rewrite if a decimal literal appears inside model.Add(...)
+      if (!/(?<![A-Za-z0-9_])\d+\.\d+(?![A-Za-z0-9_])/.test(inner)) return line;
+      const { expr } = scaleLinearExprToInt(inner);
+      return `${addMatch[1]}${expr}${addMatch[3]}`;
+    })
+    .join("\n");
+}
+
 /** Synthesize deterministic Google OR-Tools CP-SAT script when none was persisted yet. */
 export function buildFallbackOrtoolsCode(
   variables: OptimizationVariable[],
@@ -321,15 +388,17 @@ export function buildFallbackOrtoolsCode(
   lines.push("    # 2. Hard Constraints");
   for (const c of mathModel?.constraints || []) {
     if (!c.leftExpr?.trim()) continue;
-    const rhs = typeof c.rightVal === "number" ? Math.round(c.rightVal) : 0;
+    const rawRhs = typeof c.rightVal === "number" ? c.rightVal : 0;
+    const { expr: intLeft, rhs: intRhs } = scaleLinearExprToInt(c.leftExpr, rawRhs);
     const op = c.op === "==" ? "==" : c.op;
-    lines.push(`    model.Add(${c.leftExpr} ${op} ${rhs})  # ${c.name}`);
+    lines.push(`    model.Add(${intLeft} ${op} ${intRhs})  # ${c.name}`);
   }
   lines.push("");
   lines.push("    # 3. Objective Function");
   const senseFn = mathModel?.objectiveSense === "Maximize" ? "Maximize" : "Minimize";
-  const objExpr = mathModel?.objectiveExpr?.trim() ? mathModel.objectiveExpr : "0";
-  lines.push(`    model.${senseFn}(${objExpr})`);
+  const rawObj = mathModel?.objectiveExpr?.trim() ? mathModel.objectiveExpr : "0";
+  const { expr: intObj, scale: objScale } = scaleLinearExprToInt(rawObj);
+  lines.push(`    model.${senseFn}(${intObj})`);
   lines.push("");
   lines.push("    # 4. Execute CP-SAT Exact Branch-and-Cut Solver");
   lines.push("    solver = cp_model.CpSolver()");
@@ -337,11 +406,12 @@ export function buildFallbackOrtoolsCode(
   lines.push("    status = solver.Solve(model)");
   lines.push("    elapsed_ms = (time.perf_counter() - t0) * 1000.0");
   lines.push("    status_name = solver.StatusName(status)");
+  lines.push(`    obj_val = solver.ObjectiveValue() / ${objScale.toFixed(1)} if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) else None`);
   lines.push(`    all_vars = [${variables.map((v) => `("${v.name}", ${v.name})`).join(", ")}]`);
   lines.push("    selected = [name for name, v in all_vars if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) and solver.Value(v) > 0]");
   lines.push("    print(f'Google OR-Tools CP-SAT Status : {status_name} ({elapsed_ms:.2f} ms)')");
-  lines.push("    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):");
-  lines.push("        print(f'Exact Classical Objective     : {solver.ObjectiveValue():.4f}')");
+  lines.push("    if obj_val is not None:");
+  lines.push("        print(f'Exact Classical Objective     : {obj_val:.4f}')");
   lines.push("    print(f'Active Decisions ({len(selected)})       : {selected}')");
   lines.push("");
   lines.push("if __name__ == '__main__':");

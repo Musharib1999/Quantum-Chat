@@ -494,6 +494,8 @@ def compile_om_to_autoqubo_ir(
         ])
     else:
         lines.extend([
+            "_obj_indices = []",
+            "_obj_coefs = []",
             "def objective_fn(x):",
             f"    return {sign}({safe_obj})",
             "",
@@ -551,6 +553,13 @@ def compile_om_to_autoqubo_ir(
             eq_specs.append((lhs_indices, lhs_coefs, float(c.right), c.name))
 
     # Emit compact data-driven constraint registration (O(1) lines regardless of N constraints)
+    lines.extend([
+        "_dep_specs = []",
+        "_mut_specs = []",
+        "_clique_specs = []",
+        "_eq_specs = []",
+        "_ineq_specs = []",
+    ])
     if dep_specs:
         lines.append(f"_dep_specs = {dep_specs}")
         lines.append("for _p, _n, _nm in _dep_specs: constraint_fns.append(make_dep(_p, _n)); constraint_names.append(_nm)")
@@ -610,7 +619,7 @@ def compile_om_to_autoqubo_ir(
             "def get_qubo():",
             "    Q_cost = np.zeros((n_vars, n_vars), dtype=np.float64)",
             "    offset_cost = 0.0",
-            "    if '_obj_indices' in globals():",
+            "    if _obj_indices:",
             "        for _ch in range(0, len(_obj_indices), 16):",
             "            _sub_i = _obj_indices[_ch:_ch+16]",
             "            _sub_c = _obj_coefs[_ch:_ch+16]",
@@ -626,19 +635,19 @@ def compile_om_to_autoqubo_ir(
             "            Q_cost[_i, _i] = _Q1[0, 0]",
             "    Q_con = np.zeros((n_vars, n_vars), dtype=np.float64)",
             "    offset_con = 0.0",
-            "    if '_dep_specs' in globals():",
+            "    if _dep_specs:",
             "        for _p, _n, _ in _dep_specs:",
             "            offset_con += _scatter_subspace_qubo(Q_con, [_p, _n], lambda z: z[0] * (1.0 - z[1]))",
-            "    if '_mut_specs' in globals():",
+            "    if _mut_specs:",
             "        for _a, _b, _ in _mut_specs:",
             "            offset_con += _scatter_subspace_qubo(Q_con, [_a, _b], lambda z: z[0] * z[1])",
-            "    if '_clique_specs' in globals():",
+            "    if _clique_specs:",
             "        for _ci, _ in _clique_specs:",
             "            offset_con += _scatter_subspace_qubo(Q_con, _ci, lambda z: (sum(z) * (sum(z) - 1.0)) / 2.0)",
-            "    if '_eq_specs' in globals():",
+            "    if _eq_specs:",
             "        for _li, _lc, _r, _ in _eq_specs:",
             "            offset_con += _scatter_subspace_qubo(Q_con, _li, lambda z, lc=_lc, r=_r: (sum(c * z[j] for j, c in enumerate(lc)) - r) ** 2)",
-            "    if '_ineq_specs' in globals():",
+            "    if _ineq_specs:",
             "        for _li, _lc, _si, _sc, _r, _op, _ in _ineq_specs:",
             "            _all_i = _li + _si",
             "            _nl = len(_li)",

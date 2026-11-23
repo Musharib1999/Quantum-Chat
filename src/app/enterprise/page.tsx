@@ -29,6 +29,8 @@ import {
   runFromWorkspace,
   buildFallbackOrtoolsCode,
   computeSolverComparison,
+  sanitizeLegacyQuboScript,
+  sanitizeLegacyOrtoolsScript,
 } from "@/components/enterprise/adapters";
 
 const STORAGE_KEY = "qg_enterprise_studio_v1";
@@ -760,8 +762,12 @@ export default function EnterpriseStudioPage() {
       showToast("Demo mode is view-only. Simulators and solvers are disabled in preview accounts.", "info");
       return;
     }
-    const quboToRun = mode === "dwave" || mode === "parallel" ? (ws.code?.trim() || "") : "";
-    const ortoolsToRun = mode === "ortools" || mode === "parallel" ? (resolvedOrtoolsCode?.trim() || "") : "";
+    const quboToRun =
+      mode === "dwave" || mode === "parallel" ? sanitizeLegacyQuboScript(ws.code?.trim() || "") : "";
+    const ortoolsToRun =
+      mode === "ortools" || mode === "parallel"
+        ? sanitizeLegacyOrtoolsScript(resolvedOrtoolsCode?.trim() || "")
+        : "";
     if (!quboToRun && !ortoolsToRun) return;
 
     if (surfaceMode !== "workbench") {
