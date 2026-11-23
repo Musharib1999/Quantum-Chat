@@ -23,6 +23,7 @@ import {
   SurfaceMode,
 } from "@/components/enterprise/types";
 import {
+  DEFAULT_PENALTY_LAMBDA,
   newProject,
   emptyWorkspace,
   adaptPipelineResult,
@@ -441,6 +442,9 @@ export default function EnterpriseStudioPage() {
     const proj = newProject(problem.title, problem.industry);
     const ts = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     proj.lastProblemText = problem.prompt;
+    if (typeof problem.benchmark?.qubo?.bestLambda === "number" && problem.benchmark.qubo.bestLambda > 0) {
+      proj.workspace.penaltyLambda = problem.benchmark.qubo.bestLambda;
+    }
     proj.libraryRef = {
       slug: problem.slug,
       version: problem.version,
@@ -556,7 +560,7 @@ export default function EnterpriseStudioPage() {
     setIsStreaming(true);
 
     try {
-      const activePenalty = typeof penaltyOverride === "number" ? penaltyOverride : currentProject.workspace.penaltyLambda;
+      const hasExplicitPenalty = typeof penaltyOverride === "number" && Number.isFinite(penaltyOverride) && penaltyOverride > 0;
       const resp = await fetch("/api/ide/pipeline/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -564,8 +568,8 @@ export default function EnterpriseStudioPage() {
         body: JSON.stringify({
           problem: text,
           mode: "qubo",
-          penalty_choice: activePenalty,
-          penalty_lambda: activePenalty,
+          penalty_choice: hasExplicitPenalty ? penaltyOverride : 3,
+          penalty_lambda: hasExplicitPenalty ? penaltyOverride : null,
           session_id: `enterprise_${Date.now()}`,
         }),
       });
@@ -756,10 +760,11 @@ export default function EnterpriseStudioPage() {
     try {
       const textToSolve = currentProject.lastProblemText;
       const currentLambda = currentProject.workspace.penaltyLambda;
+      const useAutoPenalty = !currentProject.workspace.code && currentLambda === DEFAULT_PENALTY_LAMBDA;
       if (textToSolve) {
         setIsSolving(true);
         try {
-          await handleSendMessage(textToSolve, currentLambda);
+          await handleSendMessage(textToSolve, useAutoPenalty ? undefined : currentLambda);
         } finally {
           setIsSolving(false);
         }

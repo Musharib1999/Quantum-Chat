@@ -208,7 +208,7 @@ export function adaptPipelineResult(result: any, prev: WorkspaceState): Workspac
     solverRouting: routing,
     code: typeof res.final_code === "string" ? res.final_code : "",
     ortoolsCode,
-    penaltyLambda: execution?.penaltyWeight ?? prev.penaltyLambda,
+    penaltyLambda: qMatrix?.penaltyWeight ?? execution?.penaltyWeight ?? prev.penaltyLambda,
     selectedSolver,
     terminal: prev.terminal,
   };

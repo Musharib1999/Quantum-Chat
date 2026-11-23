@@ -1711,14 +1711,196 @@ def _try_build_deterministic_tsp(problem_text: str) -> Optional[OptimizationMode
     )
 
 
+def _try_build_deterministic_coscheduling(problem_text: str) -> Optional[OptimizationModel]:
+    """
+    Detect crew/equipment co-scheduling prompts with explicit Task cost matrix rows,
+    shared resource non-overlap groups (e.g. TowerCrane=[2, 3, 5, 6]), and optional
+    precedence pairs (e.g. [(0, 2), (2, 5)]). Emits zero-slack clique/mutex constraints.
+    """
+    if not problem_text:
+        return None
+    import re as _re
+
+    p_low = problem_text.lower()
+    if "cost matrix" not in p_low or ("non-overlap" not in p_low and "co-scheduling" not in p_low and "precedence" not in p_low):
+        return None
+
+    task_rows_raw = _re.findall(r"Task\s*\d+\s*:\s*\[([^\]]+)\]", problem_text, flags=_re.IGNORECASE)
+    if len(task_rows_raw) < 2:
+        return None
+    cost_matrix: List[List[float]] = []
+    for r in task_rows_raw:
+        nums = [float(x) for x in _re.findall(r"[-+]?\d+(?:\.\d+)?", r)]
+        if not nums:
+            return None
+        cost_matrix.append(nums)
+
+    n_tasks = len(cost_matrix)
+    n_slots = len(cost_matrix[0])
+    if n_slots < 2 or not all(len(r) == n_slots for r in cost_matrix):
+        return None
+
+    # Parse resource non-overlap groups: Name=[0, 1, 7]
+    groups: List[tuple] = []
+    for g_name, g_body in _re.findall(r"([A-Za-z][A-Za-z0-9_+-]*)\s*=\s*\[(\s*\d+(?:\s*,\s*\d+)*\s*)\]", problem_text):
+        members = [int(x) for x in _re.findall(r"\d+", g_body)]
+        valid = [m for m in members if 0 <= m < n_tasks]
+        if len(valid) >= 2:
+            groups.append((g_name, valid))
+
+    # Parse precedence pairs after 'precedence' keyword: [(0, 2), (2, 5), ...]
+    precedences: List[tuple] = []
+    prec_match = _re.search(r"precedence[^\n]*?\[([^\]]+)\]", problem_text, flags=_re.IGNORECASE)
+    if prec_match:
+        for a_s, b_s in _re.findall(r"\(\s*(\d+)\s*,\s*(\d+)\s*\)", prec_match.group(1)):
+            a, b = int(a_s), int(b_s)
+            if 0 <= a < n_tasks and 0 <= b < n_tasks and a != b:
+                precedences.append((a, b))
+
+    if not groups and not precedences:
+        return None
+
+    expanded_vars: Dict[str, ExpandedVariable] = {}
+    for i in range(n_tasks):
+        for t in range(n_slots):
+            vname = f"sched_{i}_{t}"
+            expanded_vars[vname] = ExpandedVariable(
+                name=vname,
+                var_type=VarType.BINARY,
+                lower_bound=0.0,
+                upper_bound=1.0,
+            )
+
+    constraints: List[ExpandedConstraint] = []
+    # 1. Each task runs in exactly 1 slot
+    for i in range(n_tasks):
+        lhs = " + ".join(f"sched_{i}_{t}" for t in range(n_slots))
+        constraints.append(ExpandedConstraint(name=f"task_assign_{i}", left=lhs, op="==", right=1.0))
+
+    # 2. Shared equipment/crew non-overlap cliques (subset only — zero QUBO slack bits)
+    for g_name, members in groups:
+        clean_g = _re.sub(r"[^A-Za-z0-9_]+", "_", g_name).strip("_").lower()
+        for t in range(n_slots):
+            lhs = " + ".join(f"sched_{i}_{t}" for i in members)
+            constraints.append(ExpandedConstraint(name=f"{clean_g}_slot_{t}", left=lhs, op="<=", right=1.0))
+
+    # 3. Strict precedence ordering: slot(a) < slot(b)  <=>  sched_a_t1 + sched_b_t2 <= 1 for t1 >= t2
+    for a, b in precedences:
+        for t1 in range(n_slots):
+            for t2 in range(t1 + 1):
+                constraints.append(
+                    ExpandedConstraint(
+                        name=f"prec_{a}_{b}_s{t1}_{t2}",
+                        left=f"sched_{a}_{t1} + sched_{b}_{t2}",
+                        op="<=",
+                        right=1.0,
+                    )
+                )
+
+    obj_terms: List[str] = []
+    for i in range(n_tasks):
+        for t in range(n_slots):
+            w = cost_matrix[i][t]
+            if abs(w) < 1e-9:
+                continue
+            w_str = str(int(round(w))) if abs(w - round(w)) < 1e-6 else f"{w:.4f}"
+            obj_terms.append(f"({w_str} * sched_{i}_{t})")
+
+    return OptimizationModel(
+        variables=expanded_vars,
+        objective=ExpandedObjective(sense="MINIMIZE", expression=" + ".join(obj_terms) if obj_terms else "0.0"),
+        constraints=constraints,
+        metadata={
+            "problem_type": "COSCHEDULING",
+            "n_tasks": n_tasks,
+            "n_slots": n_slots,
+            "resource_groups": {k: v for k, v in groups},
+            "precedences": precedences,
+        },
+    )
+
+
+def _try_build_deterministic_rcpsp(problem_text: str) -> Optional[OptimizationModel]:
+    """
+    Detect RCPSP prompts with explicit crew requirements, priority weights, weekly capacity cap,
+    and precedence arcs, and deterministically build the exact time-indexed model.
+    """
+    if not problem_text:
+        return None
+    import re as _re
+
+    p_low = problem_text.lower()
+    if "rcpsp" not in p_low and "weekly site crew capacity" not in p_low:
+        return None
+
+    m_weeks = _re.search(r"across\s+(\d+)\s+weekly\s+slots", problem_text, flags=_re.IGNORECASE)
+    m_crew = _re.search(r"crew\s+units\s+required\s+per\s+task\s*:\s*\[([^\]]+)\]", problem_text, flags=_re.IGNORECASE)
+    m_wt = _re.search(r"priority\s+weights\s+per\s+task\s*:\s*\[([^\]]+)\]", problem_text, flags=_re.IGNORECASE)
+    m_cap = _re.search(r"weekly\s+site\s+crew\s+capacity\s+cap\s*:\s*(\d+)", problem_text, flags=_re.IGNORECASE)
+    m_prec = _re.search(r"precedence\s+arcs[^\n]*?:\s*\[([^\]]+)\]", problem_text, flags=_re.IGNORECASE)
+    if not (m_weeks and m_crew and m_wt and m_cap):
+        return None
+
+    n_weeks = int(m_weeks.group(1))
+    crew_req = [int(x) for x in _re.findall(r"\d+", m_crew.group(1))]
+    weights = [int(x) for x in _re.findall(r"\d+", m_wt.group(1))]
+    cap = int(m_cap.group(1))
+    n_tasks = len(crew_req)
+    if n_tasks < 2 or len(weights) != n_tasks or n_weeks < 2:
+        return None
+
+    precedences: List[tuple] = []
+    if m_prec:
+        for a_s, b_s in _re.findall(r"\(\s*(\d+)\s*,\s*(\d+)\s*\)", m_prec.group(1)):
+            a, b = int(a_s), int(b_s)
+            if 0 <= a < n_tasks and 0 <= b < n_tasks and a != b:
+                precedences.append((a, b))
+
+    expanded_vars: Dict[str, ExpandedVariable] = {}
+    for i in range(n_tasks):
+        for t in range(n_weeks):
+            vname = f"wk_{i}_{t}"
+            expanded_vars[vname] = ExpandedVariable(name=vname, var_type=VarType.BINARY, lower_bound=0.0, upper_bound=1.0)
+
+    constraints: List[ExpandedConstraint] = []
+    for i in range(n_tasks):
+        lhs = " + ".join(f"wk_{i}_{t}" for t in range(n_weeks))
+        constraints.append(ExpandedConstraint(name=f"task_week_{i}", left=lhs, op="==", right=1.0))
+
+    for a, b in precedences:
+        for t1 in range(n_weeks):
+            for t2 in range(t1 + 1):
+                constraints.append(
+                    ExpandedConstraint(name=f"prec_{a}_{b}_w{t1}_{t2}", left=f"wk_{a}_{t1} + wk_{b}_{t2}", op="<=", right=1.0)
+                )
+
+    for t in range(n_weeks):
+        lhs = " + ".join(f"({crew_req[i]} * wk_{i}_{t})" for i in range(n_tasks))
+        constraints.append(ExpandedConstraint(name=f"week_{t}_crew_cap", left=lhs, op="<=", right=float(cap)))
+
+    obj_terms = [f"({weights[i] * (t + 1)} * wk_{i}_{t})" for i in range(n_tasks) for t in range(n_weeks)]
+    return OptimizationModel(
+        variables=expanded_vars,
+        objective=ExpandedObjective(sense="MINIMIZE", expression=" + ".join(obj_terms)),
+        constraints=constraints,
+        metadata={"problem_type": "RCPSP", "n_tasks": n_tasks, "n_weeks": n_weeks},
+    )
+
+
 def expand_cmm_to_om(cmm: CanonicalMathematicalModel, problem_text: str = "") -> OptimizationModel:
     """
     Determinstically expands the symbolic CMM and reformulates logic/auxiliary bounds.
     """
-    # Deterministic TSP fast-path: guarantees all 2N+1 tour constraints & exact quadratic distance objective
+    # Deterministic fast-paths for structured problems that require exact subset/precedence/quadratic forms
     tsp_om = _try_build_deterministic_tsp(problem_text)
     if tsp_om is not None:
         return tsp_om
+    cosched_om = _try_build_deterministic_coscheduling(problem_text)
+    if cosched_om is not None:
+        return cosched_om
+    rcpsp_om = _try_build_deterministic_rcpsp(problem_text)
+    if rcpsp_om is not None:
+        return rcpsp_om
 
     family = cmm.problem_family.upper()
     if family == "SELECTION":

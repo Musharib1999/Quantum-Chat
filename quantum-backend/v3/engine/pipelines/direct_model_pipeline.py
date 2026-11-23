@@ -113,7 +113,7 @@ def resolve_penalty_weight(penalty_choice: Any, om: OptimizationModel) -> float:
         elif penalty_choice == 2:
             return round(max_c * n_constraints + 1.0, 2)
         elif penalty_choice == 3:
-            return round(max_c + 1.0, 2)
+            return round(max_c * 2.0 + 1.0, 2)
         elif penalty_choice == 4:
             l2_val = math.sqrt(sum(c**2 for c in abs_obj_coeffs)) if abs_obj_coeffs else 1.0
             return round(l2_val + 1.0, 2)
@@ -376,10 +376,18 @@ async def run_direct_model_pipeline_stream(
                 raise parse_err
             default_penalty = spec.get("penalty_weight")
         else:
-            from ..compiler.expander import _try_build_deterministic_tsp
-            tsp_om = _try_build_deterministic_tsp(model_text)
-            if tsp_om is not None:
-                om = tsp_om
+            from ..compiler.expander import (
+                _try_build_deterministic_tsp,
+                _try_build_deterministic_coscheduling,
+                _try_build_deterministic_rcpsp,
+            )
+            det_om = (
+                _try_build_deterministic_tsp(model_text)
+                or _try_build_deterministic_coscheduling(model_text)
+                or _try_build_deterministic_rcpsp(model_text)
+            )
+            if det_om is not None:
+                om = det_om
             else:
                 ir_dict = parse_model_deterministically(model_text)
                 om = build_om_from_ir(ir_dict)
