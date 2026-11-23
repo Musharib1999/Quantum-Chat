@@ -15,12 +15,15 @@ import {
   EnterpriseChatMessage,
   WorkspaceState,
   SolverType,
+  SolverComparisonSide,
 } from "@/components/enterprise/types";
 import {
   newProject,
   emptyWorkspace,
   adaptPipelineResult,
   runFromWorkspace,
+  buildFallbackOrtoolsCode,
+  computeSolverComparison,
 } from "@/components/enterprise/adapters";
 
 const STORAGE_KEY = "qg_enterprise_studio_v1";
@@ -109,7 +112,10 @@ export default function EnterpriseStudioPage() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSolving, setIsSolving] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isExecutingScript, setIsExecutingScript] = useState(false);
+  const [terminalRunSeq, setTerminalRunSeq] = useState(0);
   const pipelineAbortRef = useRef<AbortController | null>(null);
+  const scriptAbortRef = useRef<AbortController | null>(null);
   const timedOutRef = useRef<boolean>(false);
 
   // Projects state: Initialized with deterministic default to prevent SSR hydration mismatches
@@ -122,8 +128,13 @@ export default function EnterpriseStudioPage() {
       pipelineAbortRef.current.abort();
       pipelineAbortRef.current = null;
     }
+    if (scriptAbortRef.current) {
+      scriptAbortRef.current.abort();
+      scriptAbortRef.current = null;
+    }
     setIsStreaming(false);
     setIsSolving(false);
+    setIsExecutingScript(false);
     setProjects((prev) =>
       prev.map((proj) => {
         if (proj.id !== activeProjectId) return proj;
@@ -580,6 +591,243 @@ export default function EnterpriseStudioPage() {
 
   const ws = currentProject.workspace;
 
+  const resolvedOrtoolsCode = useMemo(() => {
+    const existing =
+      ws.ortoolsCode ||
+      ws.execution?.ortoolsCode ||
+      ws.execution?.solverComparison?.classical?.code ||
+      "";
+    if (existing.trim()) return existing;
+    return buildFallbackOrtoolsCode(ws.variables, ws.mathModel);
+  }, [ws.ortoolsCode, ws.execution, ws.variables, ws.mathModel]);
+
+  // Unified solver execution triggered from the top navbar Solve menu
+  const handleExecuteSolver = async (mode: "dwave" | "ortools" | "parallel") => {
+    const quboToRun = mode === "dwave" || mode === "parallel" ? (ws.code?.trim() || "") : "";
+    const ortoolsToRun = mode === "ortools" || mode === "parallel" ? (resolvedOrtoolsCode?.trim() || "") : "";
+    if (!quboToRun && !ortoolsToRun) return;
+
+    if (surfaceMode !== "workbench") {
+      setSurfaceMode("workbench");
+    }
+
+    if (scriptAbortRef.current) {
+      scriptAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    scriptAbortRef.current = controller;
+    setIsExecutingScript(true);
+    setTerminalRunSeq((s) => s + 1);
+
+    const modeLabel =
+      mode === "dwave"
+        ? `D-Wave QUBO (solution.py, λ = ${ws.penaltyLambda})`
+        : mode === "ortools"
+        ? `Google OR-Tools CP-SAT (ortools_baseline.py)`
+        : `Parallel Benchmark: D-Wave QUBO (λ = ${ws.penaltyLambda}) + Google OR-Tools CP-SAT`;
+
+    updateActiveWorkspace((prev) => ({
+      ...prev,
+      terminal: [
+        ...prev.terminal,
+        `> Running ${modeLabel}...`,
+        `[INFO] Dispatching to sandbox execution engine...`,
+      ],
+    }));
+
+    const start = performance.now();
+    try {
+      const [quboRes, ortoolsRes] = await Promise.all([
+        quboToRun
+          ? fetch("/api/ide/execute", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              signal: controller.signal,
+              body: JSON.stringify({ code: quboToRun }),
+            }).then(async (r) => ({ data: await r.json(), ms: Math.round(performance.now() - start) }))
+          : Promise.resolve(null),
+        ortoolsToRun
+          ? fetch("/api/ide/execute", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              signal: controller.signal,
+              body: JSON.stringify({ code: ortoolsToRun }),
+            }).then(async (r) => ({ data: await r.json(), ms: Math.round(performance.now() - start) }))
+          : Promise.resolve(null),
+      ]);
+
+      const totalElapsed = Math.round(performance.now() - start);
+      const logLines: string[] = [];
+
+      if (quboRes?.data) {
+        logLines.push(`── D-Wave QUBO Annealer (solution.py · ${quboRes.ms}ms) ──`);
+        if (quboRes.data.stdout) logLines.push(...quboRes.data.stdout.trim().split("\n"));
+        if (quboRes.data.stderr) {
+          logLines.push(...quboRes.data.stderr.trim().split("\n").map((l: string) => `[STDERR] ${l}`));
+        }
+      }
+      if (ortoolsRes?.data) {
+        logLines.push(`── Google OR-Tools CP-SAT (ortools_baseline.py · ${ortoolsRes.ms}ms) ──`);
+        if (ortoolsRes.data.stdout) logLines.push(...ortoolsRes.data.stdout.trim().split("\n"));
+        if (ortoolsRes.data.stderr) {
+          logLines.push(...ortoolsRes.data.stderr.trim().split("\n").map((l: string) => `[STDERR] ${l}`));
+        }
+      }
+      logLines.push(`[OK] Completed in ${totalElapsed}ms.`);
+
+      updateActiveWorkspace((prev) => {
+        const totalCons = prev.mathModel?.constraints?.length || 0;
+        const prevExec = prev.execution;
+        const prevComp = prevExec?.solverComparison;
+
+        // Quantum side: parse fresh run if D-Wave ran, otherwise preserve previous
+        let qFeasible: boolean | null = prevExec?.feasible ?? null;
+        let qEnergy: number | null = prevExec?.energy ?? null;
+        let qObj: number | null = prevExec?.objectiveValue ?? null;
+        let fullSolution: Record<string, number> = prevExec?.solution ? { ...prevExec.solution } : {};
+        let qSelected: string[] = prevExec?.selectedVariables ? [...prevExec.selectedVariables] : [];
+        let qReads: number | null = prevExec?.numReads ?? null;
+        let quantumSide: SolverComparisonSide = prevComp?.quantum || {
+          solver: "D-Wave Simulated Annealer (QUBO)",
+          status: "NOT_RUN",
+          feasible: null,
+          objective_value: null,
+          energy: null,
+          selected_variables: [],
+          constraints_satisfied: 0,
+          constraints_total: totalCons,
+          solve_time_ms: null,
+          logical_qubits: prev.qMatrix?.size || prev.variables.length,
+          penalty_lambda: prev.penaltyLambda,
+        };
+
+        if (quboRes?.data) {
+          const qOpt = quboRes.data.optimization_results;
+          const qStdout = quboRes.data.stdout || "";
+          const sampleObj: Record<string, number> =
+            qOpt?.sample && typeof qOpt.sample === "object" ? qOpt.sample : {};
+          const nextSol: Record<string, number> = {};
+          for (const v of prev.variables) {
+            nextSol[v.name] = typeof sampleObj[v.name] === "number" ? sampleObj[v.name] : 0;
+          }
+          for (const [k, val] of Object.entries(sampleObj)) {
+            if (!k.startsWith("slack_")) {
+              nextSol[k] = Number(val);
+            }
+          }
+          fullSolution = nextSol;
+          qSelected = Object.entries(fullSolution)
+            .filter(([, val]) => Number(val) > 0)
+            .map(([k]) => k);
+          const parsedEnergy = typeof qOpt?.energy === "number" ? qOpt.energy : 0;
+          qEnergy = parsedEnergy;
+          const penMatch = qStdout.match(/Total Penalty:\s*([-+]?\d+(?:\.\d+)?)/);
+          const totalPenalty = penMatch ? parseFloat(penMatch[1]) : 0;
+          qFeasible = totalPenalty <= 1e-4;
+          qObj = Math.round((parsedEnergy - totalPenalty) * 10000) / 10000;
+          qReads = typeof qOpt?.num_reads === "number" ? qOpt.num_reads : 1000;
+          quantumSide = {
+            solver: "D-Wave Simulated Annealer (QUBO)",
+            status: qFeasible ? "FEASIBLE" : "SUBOPTIMAL",
+            feasible: qFeasible,
+            objective_value: qObj,
+            energy: qEnergy,
+            selected_variables: qSelected,
+            constraints_satisfied: qFeasible ? totalCons : 0,
+            constraints_total: totalCons,
+            solve_time_ms: quboRes.ms,
+            logical_qubits: prev.qMatrix?.size || prev.variables.length,
+            penalty_lambda: prev.penaltyLambda,
+          };
+        }
+
+        // Classical side: parse fresh run if OR-Tools ran, otherwise preserve previous
+        let classicalSide: SolverComparisonSide = prevComp?.classical || {
+          solver: "Google OR-Tools CP-SAT",
+          status: "NOT_RUN",
+          feasible: null,
+          objective_value: null,
+          selected_variables: [],
+          constraints_satisfied: 0,
+          constraints_total: totalCons,
+          solve_time_ms: null,
+          code: resolvedOrtoolsCode,
+        };
+
+        if (ortoolsRes?.data) {
+          const cStdout = ortoolsRes.data.stdout || "";
+          const statusMatch = cStdout.match(/Google OR-Tools CP-SAT Status\s*:\s*([A-Z_]+)/);
+          const objMatch = cStdout.match(/Exact Classical Objective\s*:\s*([-+]?\d+(?:\.\d+)?)/);
+          const activeMatch = cStdout.match(/Active Decisions \(\d+\)\s*:\s*\[([^\]]*)\]/);
+          const cStatus = statusMatch ? statusMatch[1] : ortoolsRes.data.success ? "OPTIMAL" : "ERROR";
+          const cFeasible = cStatus === "OPTIMAL" || cStatus === "FEASIBLE";
+          const cObj = objMatch ? parseFloat(objMatch[1]) : null;
+          const cSelected = activeMatch
+            ? activeMatch[1]
+                .split(",")
+                .map((s: string) => s.trim().replace(/^['"]|['"]$/g, ""))
+                .filter(Boolean)
+            : [];
+
+          classicalSide = {
+            solver: "Google OR-Tools CP-SAT",
+            status: cStatus,
+            feasible: cFeasible,
+            objective_value: cObj,
+            selected_variables: cSelected,
+            constraints_satisfied: cFeasible ? totalCons : 0,
+            constraints_total: totalCons,
+            solve_time_ms: ortoolsRes.ms,
+            code: ortoolsToRun || resolvedOrtoolsCode,
+          };
+        }
+
+        const solverComparison = computeSolverComparison({
+          quantum: quantumSide,
+          classical: classicalSide,
+          totalCons,
+          penaltyLambda: prev.penaltyLambda,
+          objectiveSense: prev.mathModel?.objectiveSense,
+        });
+
+        return {
+          ...prev,
+          terminal: [...prev.terminal, ...logLines],
+          execution: {
+            feasible: quboRes ? qFeasible : prevExec?.feasible ?? classicalSide.feasible,
+            energy: qEnergy,
+            objectiveValue: quboRes ? qObj : prevExec?.objectiveValue ?? classicalSide.objective_value,
+            solution: fullSolution,
+            selectedVariables: quboRes ? qSelected : prevExec?.selectedVariables ?? classicalSide.selected_variables,
+            numReads: qReads,
+            penaltyWeight: prev.penaltyLambda,
+            penaltyLabel: `λ = ${prev.penaltyLambda}`,
+            ortoolsCode: ortoolsToRun || prev.ortoolsCode || resolvedOrtoolsCode,
+            solverComparison,
+          },
+        };
+      });
+    } catch (err: any) {
+      const isAbort = err?.name === "AbortError" || controller.signal.aborted;
+      updateActiveWorkspace((prev) => ({
+        ...prev,
+        terminal: [
+          ...prev.terminal,
+          isAbort ? `[STOPPED] Execution terminated by user.` : `[ERROR] Execution engine error: ${err.message}`,
+        ],
+      }));
+    } finally {
+      if (scriptAbortRef.current === controller) {
+        scriptAbortRef.current = null;
+      }
+      setIsExecutingScript(false);
+    }
+  };
+
+  const canCompile = Boolean(currentProject.lastProblemText?.trim() || ws.code?.trim());
+  const canRunDwave = Boolean(ws.code?.trim());
+  const canRunOrtools = Boolean(resolvedOrtoolsCode?.trim());
+
   if (!isMounted || isInitializing || !isAuthenticated) {
     return (
       <div
@@ -613,10 +861,17 @@ export default function EnterpriseStudioPage() {
         isAuthenticated={isAuthenticated}
         onLogout={logout}
         activeProblemTitle={currentProject.title}
-        isSolving={isSolving || isStreaming}
+        isSolving={isSolving || isStreaming || isExecutingScript}
         onStopSolving={() => handleStopExecution()}
         surfaceMode={surfaceMode}
         onSelectSurfaceMode={setSurfaceMode}
+        onCompile={handleReSolve}
+        onRunDwave={() => handleExecuteSolver("dwave")}
+        onRunOrtools={() => handleExecuteSolver("ortools")}
+        onRunParallel={() => handleExecuteSolver("parallel")}
+        canCompile={canCompile}
+        canRunDwave={canRunDwave}
+        canRunOrtools={canRunOrtools}
       />
 
       {/* ── WORKSPACE SURFACE AREA ── */}
@@ -734,7 +989,8 @@ export default function EnterpriseStudioPage() {
               onRestoreRun={handleSelectRun}
               onReSolve={handleReSolve}
               onStopSolving={() => handleStopExecution()}
-              isSolving={isSolving || isStreaming}
+              isSolving={isSolving || isStreaming || isExecutingScript}
+              terminalRunSeq={terminalRunSeq}
               onOpenDeploy={() => setIsDeployModalOpen(true)}
               projectId={activeProjectId}
               problemTitle={currentProject.title}

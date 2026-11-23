@@ -32,6 +32,13 @@ interface EnterpriseHeaderProps {
   onStopSolving?: () => void;
   surfaceMode?: "copilot" | "workbench";
   onSelectSurfaceMode?: (mode: "copilot" | "workbench") => void;
+  onCompile?: () => void;
+  onRunDwave?: () => void;
+  onRunOrtools?: () => void;
+  onRunParallel?: () => void;
+  canCompile?: boolean;
+  canRunDwave?: boolean;
+  canRunOrtools?: boolean;
 }
 
 export function EnterpriseHeader({
@@ -48,19 +55,34 @@ export function EnterpriseHeader({
   onStopSolving,
   surfaceMode = "copilot",
   onSelectSurfaceMode,
+  onCompile,
+  onRunDwave,
+  onRunOrtools,
+  onRunParallel,
+  canCompile = false,
+  canRunDwave = false,
+  canRunOrtools = false,
 }: EnterpriseHeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isSolveMenuOpen, setIsSolveMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const solveMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click or Escape
+  // Close dropdowns on outside click or Escape
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
+      if (solveMenuRef.current && !solveMenuRef.current.contains(event.target as Node)) {
+        setIsSolveMenuOpen(false);
+      }
     }
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsUserMenuOpen(false);
+      if (event.key === "Escape") {
+        setIsUserMenuOpen(false);
+        setIsSolveMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
@@ -147,8 +169,141 @@ export function EnterpriseHeader({
         )}
       </div>
 
-      {/* Right: Theme Toggle, Profile Dropdown */}
+      {/* Right: Solve Dropdown, Theme Toggle, Profile Dropdown */}
       <div className="flex items-center space-x-2.5">
+        {/* Solve / Stop Dropdown (Option 2: Ultra-Minimal, Zero Fancy Icons) */}
+        {isSolving && onStopSolving ? (
+          <button
+            type="button"
+            onClick={onStopSolving}
+            className={`px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-colors border cursor-pointer ${
+              isDark
+                ? "bg-rose-500/15 hover:bg-rose-500/25 border-rose-500/35 text-rose-300"
+                : "bg-rose-50 hover:bg-rose-100 border-rose-300 text-rose-700"
+            }`}
+            title="Stop active solver run"
+          >
+            Stop
+          </button>
+        ) : (
+          <div className="relative" ref={solveMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsSolveMenuOpen((prev) => !prev)}
+              className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-colors border cursor-pointer ${
+                isDark
+                  ? "bg-white/[0.06] hover:bg-white/[0.11] border-white/[0.14] text-zinc-100"
+                  : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white"
+              }`}
+              aria-haspopup="menu"
+              aria-expanded={isSolveMenuOpen}
+            >
+              <span>Solve</span>
+              <ChevronDown
+                className={`w-3 h-3 opacity-70 transition-transform ${
+                  isSolveMenuOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isSolveMenuOpen && (
+              <div
+                style={{
+                  backgroundColor: isDark ? "#111216" : "#FFFFFF",
+                }}
+                className={`absolute right-0 top-full mt-1.5 w-44 rounded-lg border shadow-2xl z-50 py-1 text-xs font-mono ${
+                  isDark
+                    ? "border-white/[0.12] text-zinc-200 shadow-black/80"
+                    : "border-slate-200 text-slate-800 shadow-lg"
+                }`}
+                role="menu"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canCompile}
+                  onClick={() => {
+                    setIsSolveMenuOpen(false);
+                    onCompile?.();
+                  }}
+                  className={`w-full text-left px-3 py-1.5 transition-colors ${
+                    canCompile
+                      ? isDark
+                        ? "hover:bg-white/[0.06] text-zinc-200 hover:text-white cursor-pointer"
+                        : "hover:bg-slate-100 text-slate-800 cursor-pointer"
+                      : "text-zinc-600 cursor-not-allowed"
+                  }`}
+                >
+                  Compile
+                </button>
+
+                <div
+                  className={`my-1 border-t ${
+                    isDark ? "border-white/[0.08]" : "border-slate-200"
+                  }`}
+                />
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canRunDwave}
+                  onClick={() => {
+                    setIsSolveMenuOpen(false);
+                    onRunDwave?.();
+                  }}
+                  className={`w-full text-left px-3 py-1.5 transition-colors ${
+                    canRunDwave
+                      ? isDark
+                        ? "hover:bg-white/[0.06] text-zinc-200 hover:text-white cursor-pointer"
+                        : "hover:bg-slate-100 text-slate-800 cursor-pointer"
+                      : "text-zinc-600 cursor-not-allowed"
+                  }`}
+                >
+                  Run D-Wave
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canRunOrtools}
+                  onClick={() => {
+                    setIsSolveMenuOpen(false);
+                    onRunOrtools?.();
+                  }}
+                  className={`w-full text-left px-3 py-1.5 transition-colors ${
+                    canRunOrtools
+                      ? isDark
+                        ? "hover:bg-white/[0.06] text-zinc-200 hover:text-white cursor-pointer"
+                        : "hover:bg-slate-100 text-slate-800 cursor-pointer"
+                      : "text-zinc-600 cursor-not-allowed"
+                  }`}
+                >
+                  Run Google OR-Tools
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canRunDwave && !canRunOrtools}
+                  onClick={() => {
+                    setIsSolveMenuOpen(false);
+                    onRunParallel?.();
+                  }}
+                  className={`w-full text-left px-3 py-1.5 transition-colors ${
+                    canRunDwave || canRunOrtools
+                      ? isDark
+                        ? "hover:bg-white/[0.06] text-zinc-100 hover:text-white font-medium cursor-pointer"
+                        : "hover:bg-slate-100 text-slate-900 font-medium cursor-pointer"
+                      : "text-zinc-600 cursor-not-allowed"
+                  }`}
+                >
+                  Run Parallel
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Theme Toggle */}
         <button
           onClick={onToggleTheme}

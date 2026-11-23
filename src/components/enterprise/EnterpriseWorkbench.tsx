@@ -47,7 +47,7 @@ import {
   SolverExecution,
   SolverRouting,
 } from "./types";
-import { exprToLatex } from "./adapters";
+import { exprToLatex, buildFallbackOrtoolsCode } from "./adapters";
 
 // Dynamically import Monaco Editor to avoid SSR hydration mismatch
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -82,6 +82,7 @@ export interface EnterpriseWorkbenchProps {
   onReSolve: () => void;
   onStopSolving?: () => void;
   isSolving: boolean;
+  terminalRunSeq?: number;
   onOpenDeploy?: () => void;
   projectId?: string;
   problemTitle?: string;
@@ -152,6 +153,7 @@ export function EnterpriseWorkbench({
   onReSolve,
   onStopSolving,
   isSolving,
+  terminalRunSeq = 0,
   onOpenDeploy,
   projectId = "default",
   problemTitle = "Optimization Problem",
@@ -196,12 +198,18 @@ export function EnterpriseWorkbench({
     }
   };
 
+  // Auto-open Terminal whenever a solver run is triggered from the top Solve menu
+  useEffect(() => {
+    if (terminalRunSeq > 0) {
+      setShowTerminal(true);
+    }
+  }, [terminalRunSeq]);
+
   // ── Guru AI Agent State & Handlers ──
   const [guruAiMessages, setGuruAiMessages] = useState<GuruAiMessage[]>([]);
   const [guruAiInput, setGuruAiInput] = useState("");
   const [isGuruAiThinking, setIsGuruAiThinking] = useState(false);
   const guruAbortRef = useRef<AbortController | null>(null);
-  const runCodeAbortRef = useRef<AbortController | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const handleStopGuruAi = () => {
@@ -210,14 +218,6 @@ export function EnterpriseWorkbench({
       guruAbortRef.current = null;
     }
     setIsGuruAiThinking(false);
-  };
-
-  const handleStopPythonScript = () => {
-    if (runCodeAbortRef.current) {
-      runCodeAbortRef.current.abort();
-      runCodeAbortRef.current = null;
-    }
-    setIsRunningCode(false);
   };
 
   // Guru AI quick prompt templates
@@ -385,8 +385,6 @@ ${textToSend}
     }
   };
 
-  const [isRunningCode, setIsRunningCode] = useState(false);
-
   // Q Matrix Tab Filter & Search State
   const [qSearch, setQSearch] = useState("");
   const [qFilterKind, setQFilterKind] = useState<"all" | "decision" | "slack">("all");
@@ -498,63 +496,11 @@ ${textToSend}
     }));
   };
 
-  // Real execution in container sandbox
   // Synthesize deterministic Google OR-Tools CP-SAT script client-side if loading a historical project saved before the OR-Tools update
   const synthesizedOrtoolsCode = useMemo(() => {
     const existing = ortoolsCode || execution?.ortoolsCode || execution?.solverComparison?.classical?.code || "";
     if (existing.trim()) return existing;
-    if (!variables || variables.length === 0) return "";
-
-    const lines: string[] = [
-      "# ── Deterministic Google OR-Tools CP-SAT Classical Baseline ──",
-      "import time",
-      "from ortools.sat.python import cp_model",
-      "",
-      "def solve_classical_baseline():",
-      "    t0 = time.perf_counter()",
-      "    model = cp_model.CpModel()",
-      "",
-      "    # 1. Decision Variables",
-    ];
-    for (const v of variables) {
-      if (v.varType === "BINARY") {
-        lines.push(`    ${v.name} = model.NewBoolVar('${v.name}')`);
-      } else {
-        const lb = typeof v.lowerBound === "number" ? Math.round(v.lowerBound) : 0;
-        const ub = typeof v.upperBound === "number" ? Math.round(v.upperBound) : 10000;
-        lines.push(`    ${v.name} = model.NewIntVar(${lb}, ${ub}, '${v.name}')`);
-      }
-    }
-    lines.push("");
-    lines.push("    # 2. Hard Constraints");
-    for (const c of mathModel?.constraints || []) {
-      if (!c.leftExpr?.trim()) continue;
-      const rhs = typeof c.rightVal === "number" ? Math.round(c.rightVal) : 0;
-      const op = c.op === "==" ? "==" : c.op;
-      lines.push(`    model.Add(${c.leftExpr} ${op} ${rhs})  # ${c.name}`);
-    }
-    lines.push("");
-    lines.push("    # 3. Objective Function");
-    const senseFn = mathModel?.objectiveSense === "Maximize" ? "Maximize" : "Minimize";
-    const objExpr = mathModel?.objectiveExpr?.trim() ? mathModel.objectiveExpr : "0";
-    lines.push(`    model.${senseFn}(${objExpr})`);
-    lines.push("");
-    lines.push("    # 4. Execute CP-SAT Exact Branch-and-Cut Solver");
-    lines.push("    solver = cp_model.CpSolver()");
-    lines.push("    solver.parameters.max_time_in_seconds = 10.0");
-    lines.push("    status = solver.Solve(model)");
-    lines.push("    elapsed_ms = (time.perf_counter() - t0) * 1000.0");
-    lines.push("    status_name = solver.StatusName(status)");
-    lines.push(`    all_vars = [${variables.map((v) => `("${v.name}", ${v.name})`).join(", ")}]`);
-    lines.push("    selected = [name for name, v in all_vars if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) and solver.Value(v) > 0]");
-    lines.push("    print(f'Google OR-Tools CP-SAT Status : {status_name} ({elapsed_ms:.2f} ms)')");
-    lines.push("    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):");
-    lines.push("        print(f'Exact Classical Objective     : {solver.ObjectiveValue():.4f}')");
-    lines.push("    print(f'Active Decisions ({len(selected)})       : {selected}')");
-    lines.push("");
-    lines.push("if __name__ == '__main__':");
-    lines.push("    solve_classical_baseline()");
-    return lines.join("\n");
+    return buildFallbackOrtoolsCode(variables, mathModel);
   }, [ortoolsCode, execution, variables, mathModel]);
 
   const activeEditorCode = activeCodeFile === "ortools_baseline.py" ? synthesizedOrtoolsCode : generatedCode;
@@ -571,231 +517,6 @@ ${textToSend}
       if (updatedQubo !== generatedCode) {
         onChangeCode(updatedQubo);
       }
-    }
-  };
-
-  // 1-Click Parallel Execution: Runs BOTH solution.py (D-Wave QUBO) and ortools_baseline.py (Google OR-Tools) simultaneously
-  const handleRunPythonScript = async () => {
-    const quboToRun = generatedCode?.trim() || "";
-    const ortoolsToRun = synthesizedOrtoolsCode?.trim() || "";
-    if (!quboToRun && !ortoolsToRun) return;
-
-    if (runCodeAbortRef.current) {
-      runCodeAbortRef.current.abort();
-    }
-    const controller = new AbortController();
-    runCodeAbortRef.current = controller;
-    setShowTerminal(true);
-    setIsRunningCode(true);
-    setTerminalLogs((prev) => [
-      ...prev,
-      `> Executing Parallel Benchmark: solution.py (D-Wave QUBO, λ=${penaltyLambda}) + ortools_baseline.py (Google OR-Tools CP-SAT)`,
-      `[INFO] Dispatching both scripts in parallel to sandbox execution engine...`,
-    ]);
-
-    const start = performance.now();
-    try {
-      const [quboRes, ortoolsRes] = await Promise.all([
-        quboToRun
-          ? fetch("/api/ide/execute", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              signal: controller.signal,
-              body: JSON.stringify({ code: quboToRun }),
-            }).then(async (r) => ({ data: await r.json(), ms: Math.round(performance.now() - start) }))
-          : Promise.resolve(null),
-        ortoolsToRun
-          ? fetch("/api/ide/execute", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              signal: controller.signal,
-              body: JSON.stringify({ code: ortoolsToRun }),
-            }).then(async (r) => ({ data: await r.json(), ms: Math.round(performance.now() - start) }))
-          : Promise.resolve(null),
-      ]);
-
-      const totalElapsed = Math.round(performance.now() - start);
-      const logLines: string[] = [];
-
-      if (quboRes?.data) {
-        logLines.push(`── [1/2] D-Wave QUBO Annealer (solution.py · ${quboRes.ms}ms) ──`);
-        if (quboRes.data.stdout) logLines.push(...quboRes.data.stdout.trim().split("\n"));
-        if (quboRes.data.stderr) {
-          logLines.push(...quboRes.data.stderr.trim().split("\n").map((l: string) => `[STDERR] ${l}`));
-        }
-      }
-      if (ortoolsRes?.data) {
-        logLines.push(`── [2/2] Google OR-Tools CP-SAT (ortools_baseline.py · ${ortoolsRes.ms}ms) ──`);
-        if (ortoolsRes.data.stdout) logLines.push(...ortoolsRes.data.stdout.trim().split("\n"));
-        if (ortoolsRes.data.stderr) {
-          logLines.push(...ortoolsRes.data.stderr.trim().split("\n").map((l: string) => `[STDERR] ${l}`));
-        }
-      }
-      logLines.push(`[OK] Parallel benchmark completed in ${totalElapsed}ms.`);
-      setTerminalLogs((prev) => [...prev, ...logLines]);
-
-      // Synchronize both results into workspace.execution so the Result tab and Solver strategy tab update in 1 click
-      if (onUpdateExecution) {
-        const totalCons = mathModel?.constraints?.length || 0;
-
-        // 1. Parse Quantum QUBO Result
-        const qData = quboRes?.data;
-        const qOpt = qData?.optimization_results;
-        const qStdout = qData?.stdout || "";
-        const sampleObj: Record<string, number> =
-          qOpt?.sample && typeof qOpt.sample === "object" ? qOpt.sample : {};
-        const fullSolution: Record<string, number> = {};
-        for (const v of variables) {
-          fullSolution[v.name] = typeof sampleObj[v.name] === "number" ? sampleObj[v.name] : 0;
-        }
-        for (const [k, val] of Object.entries(sampleObj)) {
-          if (!k.startsWith("slack_")) {
-            fullSolution[k] = Number(val);
-          }
-        }
-        const qSelected = Object.entries(fullSolution)
-          .filter(([, val]) => Number(val) > 0)
-          .map(([k]) => k);
-        const qEnergy = typeof qOpt?.energy === "number" ? qOpt.energy : 0;
-        const penMatch = qStdout.match(/Total Penalty:\s*([-+]?\d+(?:\.\d+)?)/);
-        const totalPenalty = penMatch ? parseFloat(penMatch[1]) : 0;
-        const qFeasible = totalPenalty <= 1e-4;
-        const qObj = Math.round((qEnergy - totalPenalty) * 10000) / 10000;
-        const qReads = typeof qOpt?.num_reads === "number" ? qOpt.num_reads : 1000;
-        const qMs = quboRes?.ms ?? totalElapsed;
-
-        // 2. Parse Classical Google OR-Tools CP-SAT Result
-        const cData = ortoolsRes?.data;
-        const cStdout = cData?.stdout || "";
-        const statusMatch = cStdout.match(/Google OR-Tools CP-SAT Status\s*:\s*([A-Z_]+)/);
-        const objMatch = cStdout.match(/Exact Classical Objective\s*:\s*([-+]?\d+(?:\.\d+)?)/);
-        const activeMatch = cStdout.match(/Active Decisions \(\d+\)\s*:\s*\[([^\]]*)\]/);
-        const cStatus = statusMatch ? statusMatch[1] : cData?.success ? "OPTIMAL" : "ERROR";
-        const cFeasible = cStatus === "OPTIMAL" || cStatus === "FEASIBLE";
-        const cObj = objMatch ? parseFloat(objMatch[1]) : null;
-        const cSelected = activeMatch
-          ? activeMatch[1]
-              .split(",")
-              .map((s: string) => s.trim().replace(/^['"]|['"]$/g, ""))
-              .filter(Boolean)
-          : [];
-        const cMs = ortoolsRes?.ms ?? totalElapsed;
-
-        // 3. Honest Head-to-Head Comparison (no false 0.00% gap when infeasible!)
-        let winner: "TIE" | "QUANTUM" | "CLASSICAL" | "NONE" = "NONE";
-        let verdictBadge = "Boundary Conflict Detected in Both Solvers";
-        let gapPct: number | null = null;
-        let summaryText = "";
-
-        const qSet = new Set(qSelected);
-        const cSet = new Set(cSelected);
-        const unionSize = new Set([...qSelected, ...cSelected]).size;
-        const interSize = [...qSet].filter((x) => cSet.has(x)).length;
-        const overlapPct = unionSize > 0 ? Math.round((interSize / unionSize) * 1000) / 10 : 100;
-
-        const isTrivialUnconstrained =
-          totalCons === 0 &&
-          qSelected.length === 0 &&
-          cSelected.length === 0 &&
-          Math.abs(qObj) < 1e-6;
-
-        if (isTrivialUnconstrained) {
-          winner = "NONE";
-          verdictBadge = "Unconstrained Trivial Zero State — Constraints Missing";
-          summaryText =
-            "No constraints were compiled into this model (0/0 constraints). Minimizing an unconstrained objective trivially sets every decision variable to 0. Re-submit the problem in Copilot or add constraints in the Model tab.";
-        } else if (qFeasible && cFeasible && cObj !== null) {
-          const diff = qObj - cObj;
-          gapPct =
-            Math.abs(cObj) > 1e-9
-              ? Math.round((Math.abs(diff) / Math.abs(cObj)) * 10000) / 100
-              : Math.abs(diff) < 1e-5
-              ? 0
-              : 100;
-          if (Math.abs(diff) < 1e-5) {
-            winner = "TIE";
-            verdictBadge = "0.00% Optimality Gap — Global Optimum Verified";
-            summaryText = `Both D-Wave Quantum Annealing (QUBO, λ=${penaltyLambda}) and Google OR-Tools CP-SAT converged to the exact global optimum (Objective = ${qObj.toFixed(4)}, ${totalCons}/${totalCons} constraints satisfied).`;
-          } else {
-            const senseUpper = (mathModel?.objectiveSense || "Minimize").toUpperCase();
-            const qBetter = senseUpper === "MAXIMIZE" ? diff > 0 : diff < 0;
-            winner = qBetter ? "QUANTUM" : "CLASSICAL";
-            verdictBadge = qBetter
-              ? `Quantum Annealing Outperformed (${gapPct}% advantage)`
-              : `Classical OR-Tools Optimal (${gapPct}% QUBO gap)`;
-            summaryText = qBetter
-              ? `D-Wave QUBO Annealing found a better feasible objective (${qObj.toFixed(4)}) than OR-Tools (${cObj.toFixed(4)}).`
-              : `Google OR-Tools CP-SAT proved the exact global optimum (Objective = ${cObj.toFixed(4)}), while D-Wave QUBO converged to Objective = ${qObj.toFixed(4)} (gap = ${gapPct}% at λ = ${penaltyLambda}).`;
-          }
-        } else if (cFeasible && !qFeasible) {
-          winner = "CLASSICAL";
-          verdictBadge = "Classical OR-Tools Feasible (Increase QUBO Penalty λ)";
-          summaryText = `Google OR-Tools CP-SAT found a feasible optimum (Objective = ${cObj ?? "—"}), whereas the QUBO sample had remaining constraint penalty (${totalPenalty.toFixed(2)}) at λ = ${penaltyLambda}. Increase Penalty λ in the toolbar and click Run Parallel Benchmark.`;
-        } else if (qFeasible && !cFeasible) {
-          winner = "QUANTUM";
-          verdictBadge = "Quantum QUBO Feasible";
-          summaryText = `D-Wave QUBO Annealing satisfied all constraints (Objective = ${qObj.toFixed(4)}), while OR-Tools returned ${cStatus}.`;
-        } else {
-          winner = "NONE";
-          verdictBadge = "Infeasible Constraint Bounds Detected";
-          summaryText = `Both D-Wave QUBO (Penalty = ${totalPenalty.toFixed(2)}) and Google OR-Tools CP-SAT (Status = ${cStatus}) report that the current constraint bounds cannot be simultaneously satisfied by the binary variables. Click "Recompile & Solve" to normalize constraint capacity weights or relax bounds in the Model tab.`;
-        }
-
-        onUpdateExecution((prev) => ({
-          feasible: qFeasible,
-          energy: qEnergy,
-          objectiveValue: qObj,
-          solution: fullSolution,
-          selectedVariables: qSelected,
-          numReads: qReads,
-          penaltyWeight: penaltyLambda,
-          penaltyLabel: `λ = ${penaltyLambda}`,
-          ortoolsCode: ortoolsToRun,
-          solverComparison: {
-            winner,
-            verdict_badge: verdictBadge,
-            optimality_gap_pct: gapPct,
-            decision_overlap_pct: overlapPct,
-            exact_decision_match: overlapPct === 100 && qFeasible && cFeasible,
-            summary: summaryText,
-            quantum: {
-              solver: "D-Wave Simulated Annealer (QUBO)",
-              status: qFeasible ? "FEASIBLE" : "SUBOPTIMAL",
-              feasible: qFeasible,
-              objective_value: qObj,
-              energy: qEnergy,
-              selected_variables: qSelected,
-              constraints_satisfied: qFeasible ? totalCons : 0,
-              constraints_total: totalCons,
-              solve_time_ms: qMs,
-              logical_qubits: qMatrix?.size || variables.length,
-              penalty_lambda: penaltyLambda,
-            },
-            classical: {
-              solver: "Google OR-Tools CP-SAT",
-              status: cStatus,
-              feasible: cFeasible,
-              objective_value: cObj,
-              selected_variables: cSelected,
-              constraints_satisfied: cFeasible ? totalCons : 0,
-              constraints_total: totalCons,
-              solve_time_ms: cMs,
-              code: ortoolsToRun,
-            },
-          },
-        }));
-      }
-    } catch (err: any) {
-      const isAbort = err?.name === "AbortError" || controller.signal.aborted;
-      setTerminalLogs((prev) => [
-        ...prev,
-        isAbort ? `[STOPPED] Execution terminated by user.` : `[ERROR] Execution engine connection error: ${err.message}`,
-      ]);
-    } finally {
-      if (runCodeAbortRef.current === controller) {
-        runCodeAbortRef.current = null;
-      }
-      setIsRunningCode(false);
     }
   };
 
@@ -2127,7 +1848,7 @@ ${textToSend}
 
               <div className="flex items-center space-x-2 shrink-0">
                 {/* Inline Penalty λ Control synced live with solution.py */}
-                <div className="hidden sm:flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.08]">
+                <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.08]">
                   <span className="text-[11px] text-zinc-400">λ:</span>
                   <input
                     type="number"
@@ -2143,58 +1864,6 @@ ${textToSend}
                     title="QUBO Constraint Penalty Multiplier (λ) — live-updates solution.py"
                   />
                 </div>
-
-                {/* Recompile & Solve / Stop */}
-                {isSolving && onStopSolving ? (
-                  <button
-                    type="button"
-                    onClick={onStopSolving}
-                    className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/40 active:scale-95"
-                    title="Terminate running solver execution"
-                  >
-                    <Square className="w-3 h-3 fill-current" />
-                    <span>Stop Solve</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={onReSolve}
-                    disabled={isRunningCode || isSolving}
-                    className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-medium transition-all cursor-pointer shrink-0 border ${
-                      isSolving
-                        ? "bg-white/[0.02] text-zinc-600 border-white/[0.04] cursor-not-allowed"
-                        : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 hover:text-white border-white/[0.08] active:scale-95"
-                    }`}
-                    title="Recompile both QUBO and OR-Tools models with current λ and solve"
-                  >
-                    <RotateCw className={`w-3.5 h-3.5 text-zinc-300 ${isSolving ? "animate-spin" : ""}`} />
-                    <span>Recompile &amp; Solve</span>
-                  </button>
-                )}
-
-                {/* Run Both (QUBO + OR-Tools) / Stop (Primary CTA) */}
-                {isRunningCode ? (
-                  <button
-                    type="button"
-                    onClick={handleStopPythonScript}
-                    className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 bg-rose-500 hover:bg-rose-400 text-black shadow-xs active:scale-95"
-                    title="Terminate running benchmark"
-                  >
-                    <Square className="w-3 h-3 fill-black" />
-                    <span>Stop</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleRunPythonScript}
-                    disabled={isRunningCode || isSolving}
-                    className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer shrink-0 bg-emerald-500 hover:bg-emerald-400 text-black shadow-xs active:scale-95"
-                    title="Execute both solution.py (D-Wave QUBO) and ortools_baseline.py (Google OR-Tools) in parallel and update Result tab"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-black" />
-                    <span>Run Parallel Benchmark</span>
-                  </button>
-                )}
               </div>
             </div>
 
@@ -2366,11 +2035,13 @@ ${textToSend}
               >
                 <div className="text-sm font-medium text-zinc-200 font-sans">No execution results yet</div>
                 <p className="text-xs text-zinc-500 font-sans">
-                  Run a problem in Copilot or click <span className="text-zinc-300 font-mono">Run Parallel Benchmark</span> in the Code Editor tab.
+                  Run a problem in Copilot or select an action from the <span className="text-zinc-300 font-mono">Solve</span> menu in the top bar.
                 </p>
               </div>
             ) : (() => {
               const comp = execution.solverComparison;
+              const qNotRun = comp?.quantum?.status === "NOT_RUN";
+              const cNotRun = comp?.classical?.status === "NOT_RUN";
               const totalConstraints = mathModel?.constraints?.length || comp?.quantum?.constraints_total || 0;
               const isTrivialZero =
                 totalConstraints === 0 &&
@@ -2379,7 +2050,13 @@ ${textToSend}
 
               const bothFeasible = Boolean(
                 !isTrivialZero &&
-                (comp ? comp.quantum.feasible && comp.classical.feasible : execution.feasible)
+                (comp
+                  ? qNotRun
+                    ? comp.classical.feasible
+                    : cNotRun
+                    ? comp.quantum.feasible
+                    : comp.quantum.feasible && comp.classical.feasible
+                  : execution.feasible)
               );
 
               const verdictTitle = isTrivialZero
@@ -2390,13 +2067,22 @@ ${textToSend}
                 ? "Feasible Solution Found"
                 : "Constraint Bounds Infeasible";
 
+              const normalizedCompSummary = comp?.summary
+                ? comp.summary
+                    .replace(
+                      /D-Wave QUBO \(Penalty = ([^)]+)\)/g,
+                      `D-Wave QUBO (Energy = ${typeof execution.energy === "number" ? execution.energy.toFixed(2) : "$1"})`
+                    )
+                    .replace(/Click "Recompile & Solve"/g, 'Select "Compile" from the Solve menu')
+                : null;
+
               const verdictSubtitle = isTrivialZero
                 ? "No constraints were compiled into this model (0/0). Re-submit the problem or add constraints in the Model tab."
-                : comp?.summary
-                ? comp.summary
+                : normalizedCompSummary
+                ? normalizedCompSummary
                 : execution.feasible
                 ? `Solver converged across ${typeof execution.numReads === "number" ? execution.numReads.toLocaleString() : "1,000"} annealing reads with penalty stiffness λ = ${execution.penaltyWeight ?? penaltyLambda}.`
-                : `Solver could not satisfy all constraints at λ = ${execution.penaltyWeight ?? penaltyLambda}. Adjust penalty λ or inspect constraint bounds.`;
+                : `Solver could not satisfy all constraints at λ = ${execution.penaltyWeight ?? penaltyLambda}. Adjust λ or inspect constraint bounds.`;
 
               const allRows: Array<{ name: string; qVal: number; cVal: number | null }> = (
                 Object.keys(execution.solution || {}).length > 0
@@ -2478,12 +2164,16 @@ ${textToSend}
                         </span>
                         <span
                           className={`text-[11px] font-mono font-medium ${
-                            (comp ? comp.quantum.feasible : execution.feasible) && !isTrivialZero
+                            qNotRun
+                              ? "text-zinc-500"
+                              : (comp ? comp.quantum.feasible : execution.feasible) && !isTrivialZero
                               ? "text-emerald-400"
                               : "text-amber-400"
                           }`}
                         >
-                          {isTrivialZero
+                          {qNotRun
+                            ? "Not run"
+                            : isTrivialZero
                             ? "Unconstrained"
                             : (comp ? comp.quantum.feasible : execution.feasible)
                             ? "Feasible"
@@ -2529,14 +2219,14 @@ ${textToSend}
                         </span>
                         <span
                           className={`text-[11px] font-mono font-medium ${
-                            comp
+                            comp && !cNotRun
                               ? comp.classical.feasible && !isTrivialZero
                                 ? "text-emerald-400"
                                 : "text-amber-400"
                               : "text-zinc-500"
                           }`}
                         >
-                          {comp ? (isTrivialZero ? "Unconstrained" : comp.classical.status) : "Not run"}
+                          {comp && !cNotRun ? (isTrivialZero ? "Unconstrained" : comp.classical.status) : "Not run"}
                         </span>
                       </div>
 
