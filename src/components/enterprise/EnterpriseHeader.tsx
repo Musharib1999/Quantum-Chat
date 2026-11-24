@@ -526,40 +526,18 @@ export function EnterpriseHeader({
         className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] overflow-hidden"
       >
         {activityStatus === "running" && (
-          typeof activityProgress === "number" ? (
-            /* Determinate 7-stage Copilot compile beam with moving Quantum Guru blue specular highlight */
-            <div className="relative h-full w-full bg-[#2E65BF]/15">
-              <div
-                style={{
-                  width: `${Math.max(8, Math.min(96, activityProgress))}%`,
-                  background: "linear-gradient(90deg, #2E65BF 0%, #1BB0CE 60%, #38BDF8 100%)",
-                  boxShadow: "0 0 10px rgba(56, 189, 248, 0.75)",
-                }}
-                className="relative h-full overflow-hidden transition-[width] duration-500 ease-out"
-              >
-                <div
-                  style={{
-                    background:
-                      "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.75) 50%, transparent 100%)",
-                  }}
-                  className="absolute inset-y-0 left-0 w-1/3 qg-nav-beam-shimmer"
-                />
-              </div>
-            </div>
-          ) : (
-            /* Indeterminate gliding Quantum Guru blue beam for solver simulations */
-            <div className="relative h-full w-full bg-[#2E65BF]/15">
-              <div
-                style={{
-                  width: "30%",
-                  background:
-                    "linear-gradient(90deg, transparent 0%, #2E65BF 22%, #1BB0CE 65%, #38BDF8 92%, transparent 100%)",
-                  boxShadow: "0 0 12px rgba(27, 176, 206, 0.8)",
-                }}
-                className="h-full qg-nav-beam-sweep"
-              />
-            </div>
-          )
+          /* Full-width gliding Quantum Guru blue beam for both compile & simulation */
+          <div className="relative h-full w-full bg-[#2E65BF]/20">
+            <div
+              style={{
+                width: "32%",
+                background:
+                  "linear-gradient(90deg, transparent 0%, #2E65BF 20%, #1BB0CE 62%, #38BDF8 90%, transparent 100%)",
+                boxShadow: "0 0 12px rgba(27, 176, 206, 0.85)",
+              }}
+              className="h-full qg-nav-beam-sweep"
+            />
+          </div>
         )}
 
         {activityStatus === "optimal" && (

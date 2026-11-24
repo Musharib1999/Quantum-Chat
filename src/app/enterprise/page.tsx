@@ -1181,17 +1181,13 @@ export default function EnterpriseStudioPage() {
         const lastBot = [...currentProject.messages].reverse().find((m) => m.sender === "assistant");
         const steps = lastBot?.pipelineSteps || [];
         if (steps.length > 0) {
-          const total = steps.length;
+          const total = Math.max(7, steps.length);
           const doneCount = steps.filter((s) => s.status === "done").length;
           const runningIdx = steps.findIndex((s) => s.status === "running");
           const currentStage = runningIdx >= 0 ? runningIdx + 1 : Math.min(total, doneCount + 1);
-          const pct = Math.max(
-            10,
-            Math.min(94, Math.round(((doneCount + (runningIdx >= 0 ? 0.45 : 0.15)) / total) * 100))
-          );
           return {
             headerActivityStatus: "running",
-            headerActivityProgress: pct,
+            headerActivityProgress: null,
             headerActivityLabel: `Compiling ${currentStage}/${total}`,
           };
         }
