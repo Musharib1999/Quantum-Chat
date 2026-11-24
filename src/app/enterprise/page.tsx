@@ -164,6 +164,7 @@ export default function EnterpriseStudioPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isExecutingScript, setIsExecutingScript] = useState(false);
   const [activeSolverMode, setActiveSolverMode] = useState<"dwave" | "ortools" | "parallel" | null>(null);
+  const activeSolverModeRef = useRef<"dwave" | "ortools" | "parallel" | null>(null);
   const [terminalRunSeq, setTerminalRunSeq] = useState(0);
   const pipelineAbortRef = useRef<AbortController | null>(null);
   const scriptAbortRef = useRef<AbortController | null>(null);
@@ -188,6 +189,10 @@ export default function EnterpriseStudioPage() {
 
   // Terminate active pipeline / solver execution on user request
   const handleStopExecution = useCallback((reason: string = "Execution terminated by user.") => {
+    const hadPipeline = Boolean(pipelineAbortRef.current);
+    const hadScript = Boolean(scriptAbortRef.current);
+    const stoppedMode = activeSolverModeRef.current;
+
     if (pipelineAbortRef.current) {
       pipelineAbortRef.current.abort();
       pipelineAbortRef.current = null;
@@ -198,9 +203,32 @@ export default function EnterpriseStudioPage() {
     }
     scriptInFlightRef.current = false;
     compileInFlightRef.current = false;
+    activeSolverModeRef.current = null;
+    setActiveSolverMode(null);
     setIsStreaming(false);
     setIsSolving(false);
     setIsExecutingScript(false);
+
+    const stopLines: string[] = [];
+    if (hadScript) {
+      if (stoppedMode === "parallel") {
+        stopLines.push(`[STOPPED] D-Wave QUBO (solution.py) — ${reason}`);
+        stopLines.push(`[STOPPED] Google OR-Tools CP-SAT (ortools_baseline.py) — ${reason}`);
+      } else if (stoppedMode === "dwave") {
+        stopLines.push(`[STOPPED] D-Wave QUBO (solution.py) — ${reason}`);
+      } else if (stoppedMode === "ortools") {
+        stopLines.push(`[STOPPED] Google OR-Tools CP-SAT (ortools_baseline.py) — ${reason}`);
+      } else {
+        stopLines.push(`[STOPPED] Solver — ${reason}`);
+      }
+    }
+    if (hadPipeline) {
+      stopLines.push(`[STOPPED] Optimization pipeline — ${reason}`);
+    }
+    if (stopLines.length === 0) {
+      stopLines.push(`[STOPPED] ${reason}`);
+    }
+
     setProjects((prev) =>
       prev.map((proj) => {
         if (proj.id !== activeProjectId) return proj;
@@ -210,7 +238,7 @@ export default function EnterpriseStudioPage() {
           updatedAt: Date.now(),
           workspace: {
             ...proj.workspace,
-            terminal: [...proj.workspace.terminal, `[STOPPED] ${reason}`],
+            terminal: [...proj.workspace.terminal, ...stopLines],
           },
           messages: hasStreamingMsg
             ? proj.messages.map((msg) =>
@@ -848,13 +876,12 @@ export default function EnterpriseStudioPage() {
           }
         } catch (err: any) {
           const isAbort = err?.name === "AbortError" || controller.signal.aborted;
-          updateActiveWorkspace((prev) => ({
-            ...prev,
-            terminal: [
-              ...prev.terminal,
-              isAbort ? `[STOPPED] Re-solve terminated by user.` : `[ERROR] Re-solve failed: ${err.message}`,
-            ],
-          }));
+          if (!isAbort) {
+            updateActiveWorkspace((prev) => ({
+              ...prev,
+              terminal: [...prev.terminal, `[ERROR] Re-solve failed: ${err.message}`],
+            }));
+          }
         } finally {
           if (pipelineAbortRef.current === controller) {
             pipelineAbortRef.current = null;
@@ -905,6 +932,7 @@ export default function EnterpriseStudioPage() {
     }
     const controller = new AbortController();
     scriptAbortRef.current = controller;
+    activeSolverModeRef.current = mode;
     setActiveSolverMode(mode);
     setIsExecutingScript(true);
     setTerminalRunSeq((s) => s + 1);
@@ -1147,18 +1175,19 @@ export default function EnterpriseStudioPage() {
       );
     } catch (err: any) {
       const isAbort = err?.name === "AbortError" || controller.signal.aborted;
-      updateActiveWorkspace((prev) => ({
-        ...prev,
-        terminal: [
-          ...prev.terminal,
-          isAbort ? `[STOPPED] Execution terminated by user.` : `[ERROR] Execution engine error: ${err.message}`,
-        ],
-      }));
+      // User-initiated aborts are already logged with solver-specific labels by handleStopExecution
+      if (!isAbort) {
+        updateActiveWorkspace((prev) => ({
+          ...prev,
+          terminal: [...prev.terminal, `[ERROR] Execution engine error: ${err.message}`],
+        }));
+      }
     } finally {
       if (scriptAbortRef.current === controller) {
         scriptAbortRef.current = null;
       }
       scriptInFlightRef.current = false;
+      activeSolverModeRef.current = null;
       setIsExecutingScript(false);
       setActiveSolverMode(null);
     }
