@@ -381,10 +381,12 @@ async def run_direct_model_pipeline_stream(
                 _try_build_deterministic_coscheduling,
                 _try_build_deterministic_rcpsp,
             )
+            from ..compiler.structured_compilers import try_build_structured_om
             det_om = (
                 _try_build_deterministic_tsp(model_text)
                 or _try_build_deterministic_coscheduling(model_text)
                 or _try_build_deterministic_rcpsp(model_text)
+                or try_build_structured_om(model_text)
             )
             if det_om is not None:
                 om = det_om

@@ -1901,6 +1901,10 @@ def expand_cmm_to_om(cmm: CanonicalMathematicalModel, problem_text: str = "") ->
     rcpsp_om = _try_build_deterministic_rcpsp(problem_text)
     if rcpsp_om is not None:
         return rcpsp_om
+    from .structured_compilers import try_build_structured_om
+    structured_om = try_build_structured_om(problem_text)
+    if structured_om is not None:
+        return structured_om
 
     family = cmm.problem_family.upper()
     if family == "SELECTION":

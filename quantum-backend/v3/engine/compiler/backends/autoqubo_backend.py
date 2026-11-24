@@ -480,12 +480,10 @@ def compile_om_to_autoqubo_ir(
     sgn_float = -1.0 if om.objective.sense.upper() == "MAXIMIZE" else 1.0
     sign = "-1.0 * " if om.objective.sense.upper() == "MAXIMIZE" else ""
 
-    # Parse any explicit quadratic objective terms (e.g., `153 * (visit_0_0 * visit_1_1)`)
+    # Parse any explicit quadratic objective terms (e.g., `153 * (visit_0_0 * visit_1_1)` or `- 5 * (x_0 * x_1)`)
+    _QUAD_RE = r"([+-]?)\s*\(?\s*([+-]?\d+(?:\.\d+)?)\s*\*\s*\(?\s*([a-zA-Z_]\w*)\s*\*\s*([a-zA-Z_]\w*)\s*\)?\s*\)?"
     obj_quad_specs = []
-    for q_m in re.finditer(
-        r"([+-]?)\s*\(?\s*(\d+(?:\.\d+)?)\s*\*\s*\(?\s*([a-zA-Z_]\w*)\s*\*\s*([a-zA-Z_]\w*)\s*\)?\s*\)?",
-        raw_obj_expr,
-    ):
+    for q_m in re.finditer(_QUAD_RE, raw_obj_expr):
         q_sign_str, q_num_str, q_v1, q_v2 = q_m.groups()
         if q_v1 in var_to_idx and q_v2 in var_to_idx:
             q_val = (-1.0 if q_sign_str == "-" else 1.0) * float(q_num_str) * sgn_float
@@ -494,11 +492,7 @@ def compile_om_to_autoqubo_ir(
 
     if obj_quad_specs:
         # Also extract any remaining linear terms after stripping quadratic patterns
-        lin_only_expr = re.sub(
-            r"([+-]?)\s*\(?\s*(\d+(?:\.\d+)?)\s*\*\s*\(?\s*[a-zA-Z_]\w*\s*\*\s*[a-zA-Z_]\w*\s*\)?\s*\)?",
-            " ",
-            raw_obj_expr,
-        )
+        lin_only_expr = re.sub(_QUAD_RE, " ", raw_obj_expr)
         obj_coefs_map = parse_linear_expression(lin_only_expr, decision_vars_set)
         obj_indices = [var_to_idx[k] for k in obj_coefs_map.keys() if abs(obj_coefs_map[k]) > 1e-12]
         obj_coefs_list = [float(obj_coefs_map[k]) for k in obj_coefs_map.keys() if abs(obj_coefs_map[k]) > 1e-12]

@@ -20,6 +20,111 @@ if TYPE_CHECKING:
 from .autoqubo_backend import parse_linear_expression
 
 
+_OBJ_QUAD_RE = re.compile(
+    r"([+-]?)\s*\(?\s*([+-]?\d+(?:\.\d+)?)\s*\*\s*\(?\s*([a-zA-Z_]\w*)\s*\*\s*([a-zA-Z_]\w*)\s*\)?\s*\)?"
+)
+
+
+def _parse_objective_terms(obj_expr: str, decision_vars_set: set):
+    """
+    Parse both quadratic terms `w * (v1 * v2)` and remaining linear terms `w * v`
+    without double-counting variables that appear inside quadratic products.
+    """
+    quad_terms = []
+    for q_m in _OBJ_QUAD_RE.finditer(obj_expr):
+        q_sign_str, q_num_str, q_v1, q_v2 = q_m.groups()
+        if q_v1 in decision_vars_set and q_v2 in decision_vars_set:
+            q_val = (-1.0 if q_sign_str == "-" else 1.0) * float(q_num_str)
+            if abs(q_val) > 1e-12:
+                quad_terms.append((q_v1, q_v2, q_val))
+
+    lin_only = _OBJ_QUAD_RE.sub(" ", obj_expr) if quad_terms else obj_expr
+    lin_coefs = parse_linear_expression(lin_only, decision_vars_set)
+    # Collapse any diagonal quadratic terms (v1 == v2) into linear coefs (binary x^2 == x)
+    clean_quad = []
+    for qv1, qv2, qval in quad_terms:
+        if qv1 == qv2:
+            lin_coefs[qv1] = lin_coefs.get(qv1, 0.0) + qval
+        else:
+            clean_quad.append((qv1, qv2, qval))
+    return lin_coefs, clean_quad
+
+
+def _compile_cvrp_ortools_code(meta: Dict[str, Any]) -> str:
+    """Generate a native Google OR-Tools CP-SAT MTZ flow script for CVRP problems."""
+    customers = int(meta["customers"])
+    vehicles = int(meta["vehicles"])
+    capacity = int(meta["capacity"])
+    demand = [int(x) for x in meta["demand"]]
+    dist = meta["distance_matrix"]
+    n = customers + 1
+    flat_vals = [float(dist[i][j]) for i in range(n) for j in range(n) if i != j]
+    scale = _find_scale_factor(flat_vals) if flat_vals else 1
+    int_dist = [[int(round(float(dist[i][j]) * scale)) for j in range(n)] for i in range(n)]
+    lines = [
+        "# ── Deterministic Google OR-Tools CP-SAT Classical Baseline (Native MTZ CVRP) ──",
+        "import time",
+        "from ortools.sat.python import cp_model",
+        "",
+        "def solve_classical_baseline():",
+        "    t0 = time.perf_counter()",
+        f"    customers = {customers}",
+        f"    vehicles = {vehicles}",
+        f"    capacity = {capacity}",
+        f"    demand = {demand}",
+        f"    dist = {int_dist}",
+        f"    scale = {float(scale)}",
+        "    n = customers + 1",
+        "    model = cp_model.CpModel()",
+        "    x = {}",
+        "    for v in range(vehicles):",
+        "        for i in range(n):",
+        "            for j in range(n):",
+        "                if i != j:",
+        "                    x[(v, i, j)] = model.NewBoolVar(f'x_{v}_{i}_{j}')",
+        "    for j in range(1, n):",
+        "        model.Add(sum(x[(v, i, j)] for v in range(vehicles) for i in range(n) if i != j) == 1)",
+        "    for v in range(vehicles):",
+        "        for k in range(n):",
+        "            model.Add(sum(x[(v, i, k)] for i in range(n) if i != k) == sum(x[(v, k, j)] for j in range(n) if j != k))",
+        "        model.Add(sum(x[(v, 0, j)] for j in range(1, n)) <= 1)",
+        "        u = {i: model.NewIntVar(0, capacity, f'u_{v}_{i}') for i in range(1, n)}",
+        "        for i in range(1, n):",
+        "            used_i = sum(x[(v, k, i)] for k in range(n) if k != i)",
+        "            model.Add(u[i] >= demand[i] * used_i)",
+        "            model.Add(u[i] <= capacity * used_i)",
+        "        for i in range(1, n):",
+        "            for j in range(1, n):",
+        "                if i != j:",
+        "                    model.Add(u[j] >= u[i] + demand[j]).OnlyEnforceIf(x[(v, i, j)])",
+        "    model.Minimize(sum(dist[i][j] * var for (v, i, j), var in x.items()))",
+        "    solver = cp_model.CpSolver()",
+        "    solver.parameters.max_time_in_seconds = 15.0",
+        "    status = solver.Solve(model)",
+        "    elapsed_ms = (time.perf_counter() - t0) * 1000.0",
+        "    status_name = solver.StatusName(status)",
+        "    obj_val = solver.ObjectiveValue() / scale if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) else None",
+        "    selected = []",
+        "    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):",
+        "        for v in range(vehicles):",
+        "            nxt = {i: j for i in range(n) for j in range(n) if i != j and solver.Value(x[(v, i, j)]) == 1}",
+        "            cur = nxt.get(0, 0)",
+        "            slot = 0",
+        "            while cur != 0 and slot < customers:",
+        "                selected.append(f'x_{v}_{cur}_{slot}')",
+        "                cur = nxt.get(cur, 0)",
+        "                slot += 1",
+        "    print(f'Google OR-Tools CP-SAT Status : {status_name} ({elapsed_ms:.2f} ms)')",
+        "    if obj_val is not None:",
+        "        print(f'Exact Classical Objective     : {obj_val:.4f}')",
+        "    print(f'Active Decisions ({len(selected)})       : {selected}')",
+        "",
+        "if __name__ == '__main__':",
+        "    solve_classical_baseline()",
+    ]
+    return "\n".join(lines)
+
+
 def _find_scale_factor(values: List[float]) -> int:
     """
     Find a power-of-10 integer multiplier (1, 10, 100, 1000) so all float
@@ -96,6 +201,8 @@ def compile_om_to_ortools_code(om: "OptimizationModel") -> str:
             meta["distance_matrix"],
             str(meta.get("var_prefix", "visit")),
         )
+    if meta.get("problem_type") == "CVRP" and meta.get("distance_matrix"):
+        return _compile_cvrp_ortools_code(meta)
 
     decision_vars = list(om.variables.keys())
     decision_vars_set = set(decision_vars)
@@ -146,21 +253,36 @@ def compile_om_to_ortools_code(om: "OptimizationModel") -> str:
 
     lines.append("")
     lines.append("    # 3. Objective Function")
-    obj_coefs = parse_linear_expression(obj_expr, decision_vars_set)
-    obj_scale = _find_scale_factor(list(obj_coefs.values())) if obj_coefs else 1
-    if obj_coefs:
-        obj_terms = []
-        for v_name, w in obj_coefs.items():
-            iw = int(round(w * obj_scale))
+    obj_coefs, quad_terms = _parse_objective_terms(obj_expr, decision_vars_set)
+    all_obj_vals = list(obj_coefs.values()) + [q[2] for q in quad_terms]
+    obj_scale = _find_scale_factor(all_obj_vals) if all_obj_vals else 1
+    obj_terms = []
+    for v_name, w in obj_coefs.items():
+        iw = int(round(w * obj_scale))
+        if iw == 1:
+            obj_terms.append(v_name)
+        elif iw == -1:
+            obj_terms.append(f"-{v_name}")
+        elif iw != 0:
+            obj_terms.append(f"{iw} * {v_name}")
+
+    if quad_terms:
+        lines.append("    _quad_vars = []")
+        for idx_q, (qv1, qv2, qval) in enumerate(quad_terms):
+            iw = int(round(qval * obj_scale))
+            if iw == 0:
+                continue
+            z_name = f"_q_{idx_q}"
+            lines.append(f"    {z_name} = model.NewBoolVar('{z_name}')")
+            lines.append(f"    model.Add({z_name} <= {qv1}); model.Add({z_name} <= {qv2}); model.Add({z_name} >= {qv1} + {qv2} - 1)")
             if iw == 1:
-                obj_terms.append(v_name)
+                obj_terms.append(z_name)
             elif iw == -1:
-                obj_terms.append(f"-{v_name}")
-            elif iw != 0:
-                obj_terms.append(f"{iw} * {v_name}")
-        obj_str = " + ".join(obj_terms).replace("+ -", "- ") if obj_terms else "0"
-    else:
-        obj_str = "0"
+                obj_terms.append(f"-{z_name}")
+            else:
+                obj_terms.append(f"{iw} * {z_name}")
+
+    obj_str = " + ".join(obj_terms).replace("+ -", "- ") if obj_terms else "0"
 
     sense_fn = "Maximize" if obj_sense == "MAXIMIZE" else "Minimize"
     lines.append(f"    model.{sense_fn}({obj_str})")
@@ -286,6 +408,90 @@ def solve_om_with_ortools(om: "OptimizationModel") -> Dict[str, Any]:
                 "error": None,
             }
 
+        if meta.get("problem_type") == "CVRP" and meta.get("distance_matrix"):
+            customers = int(meta["customers"])
+            vehicles = int(meta["vehicles"])
+            capacity = int(meta["capacity"])
+            demand = [int(x) for x in meta["demand"]]
+            dist = meta["distance_matrix"]
+            n_nodes = customers + 1
+            flat_vals = [float(dist[i][j]) for i in range(n_nodes) for j in range(n_nodes) if i != j]
+            scale = _find_scale_factor(flat_vals) if flat_vals else 1
+            model = cp_model.CpModel()
+            x_arc = {}
+            for v in range(vehicles):
+                for i in range(n_nodes):
+                    for j in range(n_nodes):
+                        if i != j:
+                            x_arc[(v, i, j)] = model.NewBoolVar(f"x_{v}_{i}_{j}")
+            for j in range(1, n_nodes):
+                model.Add(sum(x_arc[(v, i, j)] for v in range(vehicles) for i in range(n_nodes) if i != j) == 1)
+            for v in range(vehicles):
+                for k in range(n_nodes):
+                    model.Add(
+                        sum(x_arc[(v, i, k)] for i in range(n_nodes) if i != k)
+                        == sum(x_arc[(v, k, j)] for j in range(n_nodes) if j != k)
+                    )
+                model.Add(sum(x_arc[(v, 0, j)] for j in range(1, n_nodes)) <= 1)
+                u_var = {i: model.NewIntVar(0, capacity, f"u_{v}_{i}") for i in range(1, n_nodes)}
+                for i in range(1, n_nodes):
+                    used_i = sum(x_arc[(v, k, i)] for k in range(n_nodes) if k != i)
+                    model.Add(u_var[i] >= demand[i] * used_i)
+                    model.Add(u_var[i] <= capacity * used_i)
+                for i in range(1, n_nodes):
+                    for j in range(1, n_nodes):
+                        if i != j:
+                            model.Add(u_var[j] >= u_var[i] + demand[j]).OnlyEnforceIf(x_arc[(v, i, j)])
+            model.Minimize(sum(int(round(float(dist[i][j]) * scale)) * var for (v, i, j), var in x_arc.items()))
+            solver = cp_model.CpSolver()
+            solver.parameters.max_time_in_seconds = 15.0
+            status = solver.Solve(model)
+            solve_time_ms = round((time.perf_counter() - t0) * 1000.0, 2)
+            status_name = solver.StatusName(status)
+            if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+                return {
+                    "available": True,
+                    "solver": "Google OR-Tools CP-SAT",
+                    "status": status_name,
+                    "feasible": False,
+                    "objective_value": None,
+                    "solution": {},
+                    "selected_variables": [],
+                    "solve_time_ms": solve_time_ms,
+                    "constraints_satisfied": 0,
+                    "constraints_total": len(om.constraints),
+                    "code": code,
+                    "error": None,
+                }
+            solution = {name: 0 for name in decision_vars}
+            selected = []
+            for v in range(vehicles):
+                nxt = {i: j for i in range(n_nodes) for j in range(n_nodes) if i != j and solver.Value(x_arc[(v, i, j)]) == 1}
+                cur = nxt.get(0, 0)
+                slot = 0
+                while cur != 0 and slot < customers:
+                    vname = f"x_{v}_{cur}_{slot}"
+                    if vname in solution:
+                        solution[vname] = 1
+                    selected.append(vname)
+                    cur = nxt.get(cur, 0)
+                    slot += 1
+            exact_obj_val = round(float(solver.ObjectiveValue()) / float(scale), 4)
+            return {
+                "available": True,
+                "solver": "Google OR-Tools CP-SAT",
+                "status": status_name,
+                "feasible": True,
+                "objective_value": exact_obj_val,
+                "solution": solution,
+                "selected_variables": selected,
+                "solve_time_ms": solve_time_ms,
+                "constraints_satisfied": len(om.constraints),
+                "constraints_total": len(om.constraints),
+                "code": code,
+                "error": None,
+            }
+
         model = cp_model.CpModel()
         cp_vars: Dict[str, Any] = {}
 
@@ -313,17 +519,8 @@ def solve_om_with_ortools(om: "OptimizationModel") -> Dict[str, Any]:
             else:
                 model.Add(expr == irhs)
 
-        # Add objective (supports both linear and quadratic terms via auxiliary product variables)
-        obj_coefs = parse_linear_expression(obj_expr, decision_vars_set)
-        quad_terms = []
-        for q_m in re.finditer(
-            r"([+-]?)\s*\(?\s*(\d+(?:\.\d+)?)\s*\*\s*\(?\s*([a-zA-Z_]\w*)\s*\*\s*([a-zA-Z_]\w*)\s*\)?\s*\)?",
-            obj_expr,
-        ):
-            q_sign_str, q_num_str, q_v1, q_v2 = q_m.groups()
-            if q_v1 in cp_vars and q_v2 in cp_vars:
-                q_val = (-1.0 if q_sign_str == "-" else 1.0) * float(q_num_str)
-                quad_terms.append((q_v1, q_v2, q_val))
+        # Add objective (supports both linear and quadratic terms via binary McCormick linearization)
+        obj_coefs, quad_terms = _parse_objective_terms(obj_expr, decision_vars_set)
 
         all_obj_vals = list(obj_coefs.values()) + [q[2] for q in quad_terms]
         obj_scale = _find_scale_factor(all_obj_vals) if all_obj_vals else 1
@@ -335,12 +532,14 @@ def solve_om_with_ortools(om: "OptimizationModel") -> Dict[str, Any]:
         )
         obj_quad_expr = 0
         for idx_q, (qv1, qv2, qval) in enumerate(quad_terms):
-            if qv1 == qv2:
-                obj_quad_expr += int(round(qval * obj_scale)) * cp_vars[qv1]
-            else:
-                prod_var = model.NewBoolVar(f"_quad_{idx_q}_{qv1}_{qv2}")
-                model.AddMultiplicationEquality(prod_var, [cp_vars[qv1], cp_vars[qv2]])
-                obj_quad_expr += int(round(qval * obj_scale)) * prod_var
+            iw = int(round(qval * obj_scale))
+            if iw == 0:
+                continue
+            prod_var = model.NewBoolVar(f"_quad_{idx_q}_{qv1}_{qv2}")
+            model.Add(prod_var <= cp_vars[qv1])
+            model.Add(prod_var <= cp_vars[qv2])
+            model.Add(prod_var >= cp_vars[qv1] + cp_vars[qv2] - 1)
+            obj_quad_expr += iw * prod_var
 
         total_obj_expr = obj_lin_expr + obj_quad_expr
         if obj_sense == "MAXIMIZE":
@@ -349,7 +548,7 @@ def solve_om_with_ortools(om: "OptimizationModel") -> Dict[str, Any]:
             model.Minimize(total_obj_expr)
 
         solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = 8.0
+        solver.parameters.max_time_in_seconds = 15.0
         status = solver.Solve(model)
         solve_time_ms = round((time.perf_counter() - t0) * 1000.0, 2)
         status_name = solver.StatusName(status)
