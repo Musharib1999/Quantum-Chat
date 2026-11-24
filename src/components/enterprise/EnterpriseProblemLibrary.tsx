@@ -167,6 +167,21 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
   }, [searchFocused]);
 
   useEffect(() => {
+    if (!expanded) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setExpanded(null);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [expanded]);
+
+  const activeDrawerItem = useMemo(
+    () => (expanded && problems ? problems.find((p) => p.slug === expanded) ?? null : null),
+    [expanded, problems]
+  );
+  const activeDrawerDetail = expanded ? details[expanded] ?? null : null;
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
@@ -549,283 +564,450 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
           <SolverFitMap isDark={isDark} problems={filtered} onSelectProblem={handleInspectFromMap} />
         )}
 
-        {/* ── VIEW 2: PROBLEM CARDS ── */}
+        {/* ── VIEW 2: LINEAR-STYLE COMPACT PROBLEM LIST ── */}
         {problems && viewMode === "problems" && (
           <>
-
-            {filtered.length === 0 && (
+            {filtered.length === 0 ? (
               <div className={`text-[13px] font-sans ${textFaint}`}>No problems match these filters.</div>
-            )}
+            ) : (
+              <div
+                style={{ backgroundColor: panelBg }}
+                className={`rounded-xl border ${border} overflow-hidden`}
+              >
+                {/* Quiet Column Header */}
+                <div
+                  className={`hidden sm:flex items-center justify-between gap-4 px-4 py-2 border-b text-[10.5px] font-mono ${border} ${textFaint}`}
+                >
+                  <span className="flex-1 min-w-0">Problem</span>
+                  <div className="flex items-center gap-5 shrink-0">
+                    <span className="w-16 text-right">QUBO</span>
+                    <span className="w-16 text-right">Optimum</span>
+                    <span className="w-20 text-right hidden md:block">SA Med Gap</span>
+                    <span className="w-28 text-right">Solver Fit</span>
+                    <span className="w-14 text-right" />
+                  </div>
+                </div>
 
-            {/* Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filtered.map((p) => {
-                const isOpen = expanded === p.slug;
-                const detail = details[p.slug];
-                const b = p.benchmark;
-                return (
-                  <div
-                    key={p.slug}
-                    style={{ backgroundColor: panelBg }}
-                    className={`rounded-xl border ${border} p-4 space-y-3 ${isOpen ? "lg:col-span-2" : ""}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-0.5 min-w-0">
-                        <div className={`text-[11px] font-mono ${textFaint}`}>
-                          {p.industry} · {p.problemType}
-                        </div>
-                        <h3 className={`text-sm font-semibold font-sans ${textMain}`}>{p.title}</h3>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        {b && (
-                          <span className={`text-[11px] font-mono font-medium ${verdictTextClass(b.verdict)}`}>
-                            {VERDICT_LABEL[b.verdict] || b.verdict}
-                          </span>
-                        )}
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-mono border ${border} ${textFaint}`}
-                          title="Total QUBO binary variables (decision + slack)"
-                        >
-                          {SIZE_LABEL[p.sizeTier]} · {b ? `${b.quboVars} QUBO vars` : `~${p.estimatedBinaryVars} vars`}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className={`text-[12.5px] leading-relaxed font-sans ${textMuted}`}>{p.description}</p>
-
-                    {/* Compact Seeded Benchmark Strip */}
-                    {b && (
+                {/* Compact Rows */}
+                <div className={`divide-y ${isDark ? "divide-white/[0.06]" : "divide-slate-100"}`}>
+                  {filtered.map((p) => {
+                    const isSelected = expanded === p.slug;
+                    const b = p.benchmark;
+                    const saGap = b?.qubo.medianGapVsBestKnownPct ?? b?.qubo.gapVsBestKnownPct;
+                    return (
                       <div
-                        className={`rounded-lg border ${border} grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x ${
-                          isDark ? "divide-white/[0.08] bg-white/[0.015]" : "divide-slate-200 bg-slate-50/70"
-                        } text-[11px] font-mono`}
+                        key={p.slug}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => toggleExpand(p.slug)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggleExpand(p.slug);
+                          }
+                        }}
+                        className={`flex items-center justify-between gap-4 px-4 py-2.5 transition-colors cursor-pointer outline-none ${
+                          isSelected
+                            ? isDark
+                              ? "bg-white/[0.05]"
+                              : "bg-slate-100/80"
+                            : isDark
+                            ? "hover:bg-white/[0.025]"
+                            : "hover:bg-slate-50"
+                        }`}
                       >
-                        <div className="px-3 py-2 space-y-0.5">
-                          <div className={textFaint}>D-Wave SA (classical software)</div>
-                          {b.qubo.exceedsLimit ? (
-                            <div className={isDark ? "text-amber-400" : "text-amber-700"}>
-                              Exceeds {b.protocol.maxQuboVars}-var QUBO limit ({b.quboVars} vars)
-                            </div>
-                          ) : b.qubo.bestObjective === null ? (
-                            <div className={textMuted}>
-                              0/{b.qubo.totalRuns} feasible · {fmtMs(b.qubo.meanTimeMs)}
-                            </div>
-                          ) : (
-                            <div className={textMuted}>
-                              Med <strong className={textMain}>{b.qubo.medianObjective ?? b.qubo.bestObjective}</strong> (
-                              {(b.qubo.medianGapVsBestKnownPct ?? b.qubo.gapVsBestKnownPct)?.toFixed(2)}% gap) ·{" "}
-                              {b.qubo.feasibleRuns}/{b.qubo.totalRuns} feas · {fmtMs(b.qubo.solveTimeMs ?? b.qubo.meanTimeMs)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="px-3 py-2 space-y-0.5">
-                          <div className={textFaint}>Google OR-Tools CP-SAT</div>
-                          <div className={textMuted}>
-                            Opt <strong className={textMain}>{b.classical.bestObjective ?? "—"}</strong> (
-                            {typeof b.classical.gapVsBestKnownPct === "number"
-                              ? `${b.classical.gapVsBestKnownPct.toFixed(2)}% gap`
-                              : "—"}
-                            ) · {b.classical.status} · {fmtMs(b.classical.solveTimeMs ?? b.classical.meanTimeMs)}
+                        {/* Title + Meta */}
+                        <div className="min-w-0 flex-1">
+                          <div className={`text-[13px] font-medium font-sans truncate ${textMain}`}>
+                            {p.title}
+                          </div>
+                          <div className={`text-[11px] font-mono truncate mt-0.5 ${textFaint}`}>
+                            {p.industry} · {p.problemType}
                           </div>
                         </div>
-                      </div>
-                    )}
 
-                    <div className={`flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-mono ${textMuted}`}>
-                      <span>
-                        {p.objectiveSense === "Minimize" ? "Min" : "Max"} best known:{" "}
-                        <strong className={`font-semibold ${textMain}`}>{p.bestKnown.value}</strong>{" "}
-                        <span className={textFaint}>({KIND_LABEL[p.bestKnown.kind]})</span>
-                      </span>
-                      <span className={textFaint}>Source: {p.source.name}</span>
-                    </div>
+                        {/* Aligned Right Metrics + Load CTA */}
+                        <div className="flex items-center gap-5 shrink-0 text-[11.5px] font-mono">
+                          <span
+                            className={`w-16 text-right hidden sm:block ${textMuted}`}
+                            title={`${SIZE_LABEL[p.sizeTier]} · ${b ? `${b.quboVars} QUBO vars` : `~${p.estimatedBinaryVars} vars`}`}
+                          >
+                            {b ? `${b.quboVars}v` : `~${p.estimatedBinaryVars}v`}
+                          </span>
 
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => handleOpen(p.slug)}
-                        disabled={isDemo || loadingSlug === p.slug}
-                        title={isDemo ? "Demo accounts cannot load library problems" : "Create a project from this problem in Copilot"}
-                        className={`px-3 py-1 rounded-md text-[11px] font-mono font-medium border transition-colors ${
-                          isDemo
-                            ? "border-white/[0.06] text-zinc-600 cursor-not-allowed"
-                            : isDark
-                            ? "bg-white/[0.08] hover:bg-white/[0.14] border-white/[0.16] text-zinc-100 cursor-pointer"
-                            : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white cursor-pointer"
-                        }`}
-                      >
-                        Load Problem
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleExpand(p.slug)}
-                        className={`px-3 py-1 rounded-md text-[11px] font-mono border cursor-pointer transition-colors ${border} ${textMuted} ${
-                          isDark ? "hover:bg-white/[0.04]" : "hover:bg-slate-50"
-                        }`}
-                      >
-                        {isOpen ? "Hide details" : "Details"}
-                      </button>
-                    </div>
+                          <span
+                            className={`w-16 text-right hidden sm:block font-medium ${textMain}`}
+                            title={`${p.objectiveSense} best known (${KIND_LABEL[p.bestKnown.kind]})`}
+                          >
+                            {p.bestKnown.value}
+                          </span>
 
-                    {isOpen && (
-                      <div className={`border-t pt-3 space-y-4 ${border}`}>
-                        {!detail ? (
-                          <div className={`text-[12px] font-mono ${textFaint}`}>Loading details...</div>
-                        ) : (
-                          <>
-                            <div className="space-y-1">
-                              <div className={`text-[11px] font-mono ${textFaint}`}>Problem statement</div>
-                              <p className={`text-[12.5px] leading-relaxed font-sans whitespace-pre-wrap ${textMuted}`}>
-                                {detail.prompt}
-                              </p>
-                            </div>
-
-                            {detail.benchmark && (
-                              <div className="space-y-2">
-                                <div className={`text-[11px] font-mono ${textFaint}`}>Benchmark summary</div>
-                                <p className={`text-[12.5px] leading-relaxed font-sans ${textMuted}`}>
-                                  {detail.benchmark.verdictNote}
-                                </p>
-
-                                {/* λ Sweep Table */}
-                                {detail.benchmark.qubo.lambdaSweep.length > 0 && (
-                                  <div className={`rounded-lg border ${border} overflow-hidden max-w-lg`}>
-                                    <table className="w-full text-left text-[11px] font-mono">
-                                      <thead>
-                                        <tr className={`border-b ${border} ${textFaint}`}>
-                                          <th className="py-1.5 px-3 font-medium">Penalty λ (disjoint tune)</th>
-                                          <th className="py-1.5 px-3 font-medium">Feasibility</th>
-                                          <th className="py-1.5 px-3 font-medium text-right">Median Obj</th>
-                                          <th className="py-1.5 px-3 font-medium text-right">Best Obj</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className={`divide-y ${isDark ? "divide-white/[0.06]" : "divide-slate-100"}`}>
-                                        {detail.benchmark.qubo.lambdaSweep.map((pt) => {
-                                          const isChosen = pt.lambda === detail.benchmark?.qubo.bestLambda;
-                                          return (
-                                            <tr
-                                              key={pt.lambda}
-                                              className={isChosen ? (isDark ? "bg-white/[0.04]" : "bg-slate-50") : ""}
-                                            >
-                                              <td className={`py-1.5 px-3 ${isChosen ? textMain : textMuted}`}>
-                                                {pt.lambda}
-                                                {isChosen ? " (selected)" : ""}
-                                              </td>
-                                              <td className={`py-1.5 px-3 ${textMuted}`}>
-                                                {Math.round(pt.feasibilityRate * 100)}%
-                                              </td>
-                                              <td className={`py-1.5 px-3 text-right ${textMuted}`}>
-                                                {pt.medianObjective ?? "—"}
-                                              </td>
-                                              <td className={`py-1.5 px-3 text-right ${textMain}`}>
-                                                {pt.bestObjective ?? "—"}
-                                              </td>
-                                            </tr>
-                                          );
-                                        })}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                )}
-
-                                {/* QUBO Structural Telemetry + Equivalence Proof */}
-                                {detail.benchmark.structure && (
-                                  <div className={`flex flex-wrap gap-x-4 gap-y-1 text-[10.5px] font-mono ${textMuted}`}>
-                                    <span>
-                                      QUBO structure: {detail.benchmark.structure.decisionVars} decision +{" "}
-                                      {detail.benchmark.structure.slackVars} slack vars
-                                    </span>
-                                    <span>{detail.benchmark.structure.quadraticCouplings.toLocaleString()} couplings</span>
-                                    <span>density {detail.benchmark.structure.densityPct}%</span>
-                                    <span>max deg {detail.benchmark.structure.maxDegree}</span>
-                                    <span>dynamic range {detail.benchmark.structure.dynamicRange}×</span>
-                                    {detail.benchmark.equivalenceCheck?.passed && (
-                                      <span className={isDark ? "text-emerald-400" : "text-emerald-700"}>
-                                        QUBO≡Original verified (err {detail.benchmark.equivalenceCheck.maxAbsError})
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Statistical Robustness & Separated Timings */}
-                                <div className={`flex flex-wrap gap-x-4 gap-y-1 text-[10.5px] font-mono ${textFaint}`}>
-                                  <span>
-                                    Eval: N={detail.benchmark.protocol.repeats} held-out seeds
-                                    {detail.benchmark.protocol.tuneSeeds?.length
-                                      ? ` (tuned on ${detail.benchmark.protocol.tuneSeeds.length} disjoint seeds)`
-                                      : ""}
-                                  </span>
-                                  <span>
-                                    Reads: {detail.benchmark.protocol.quboReadsPerRepeat.toLocaleString()}
-                                    {detail.benchmark.protocol.quboNumSweeps
-                                      ? ` × ${detail.benchmark.protocol.quboNumSweeps} sweeps`
-                                      : ""}
-                                  </span>
-                                  {detail.benchmark.qubo.meanObjective !== null && (
-                                    <span>
-                                      SA best/med/mean±std/worst: {detail.benchmark.qubo.bestObjective} /{" "}
-                                      {detail.benchmark.qubo.medianObjective ?? "—"} /{" "}
-                                      {detail.benchmark.qubo.meanObjective.toFixed(2)}±
-                                      {(detail.benchmark.qubo.stdObjective ?? 0).toFixed(2)} /{" "}
-                                      {detail.benchmark.qubo.worstObjective ?? "—"}
-                                      {typeof detail.benchmark.qubo.iqrObjective === "number"
-                                        ? ` (IQR ${detail.benchmark.qubo.iqrObjective})`
-                                        : ""}
-                                    </span>
-                                  )}
-                                  {typeof detail.benchmark.classical.buildTimeMs === "number" && (
-                                    <span>
-                                      CP-SAT build/solve: {fmtMs(detail.benchmark.classical.buildTimeMs)} /{" "}
-                                      {fmtMs(detail.benchmark.classical.solveTimeMs)}
-                                    </span>
-                                  )}
-                                  {!detail.benchmark.qubo.exceedsLimit &&
-                                    typeof detail.benchmark.qubo.buildTimeMs === "number" && (
-                                      <span>
-                                        SA build/tune/solve: {fmtMs(detail.benchmark.qubo.buildTimeMs)} /{" "}
-                                        {fmtMs(detail.benchmark.qubo.tuneTimeMs)} /{" "}
-                                        {fmtMs(detail.benchmark.qubo.solveTimeMs)}
-                                      </span>
-                                    )}
-                                  {detail.benchmark.environment && (
-                                    <span>
-                                      Env: Python {detail.benchmark.environment.pythonVersion} · OR-Tools{" "}
-                                      {detail.benchmark.environment.ortoolsVersion} · neal{" "}
-                                      {detail.benchmark.environment.nealVersion} ({detail.benchmark.environment.machine})
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                          <span className={`w-20 text-right hidden md:block ${textMuted}`}>
+                            {!b ? (
+                              "—"
+                            ) : b.qubo.exceedsLimit ? (
+                              <span className={isDark ? "text-amber-400/90" : "text-amber-700"}>
+                                &gt;{b.protocol.maxQuboVars}v
+                              </span>
+                            ) : typeof saGap === "number" ? (
+                              `${saGap.toFixed(2)}%`
+                            ) : (
+                              "—"
                             )}
+                          </span>
 
-                            <div className="space-y-1">
-                              <div className={`text-[11px] font-mono ${textFaint}`}>How the best-known value was verified</div>
-                              <p className={`text-[12.5px] leading-relaxed font-sans ${textMuted}`}>
-                                {detail.bestKnown.method}
-                              </p>
-                            </div>
+                          <span
+                            className={`w-28 text-right text-[11px] font-medium ${
+                              b ? verdictTextClass(b.verdict) : textFaint
+                            }`}
+                          >
+                            {b ? VERDICT_LABEL[b.verdict] || b.verdict : "—"}
+                          </span>
 
-                            <div className={`flex flex-wrap gap-x-5 gap-y-1 text-[11px] font-mono ${textFaint}`}>
-                              <span>
-                                Source: {detail.source.name}
-                                {detail.source.url ? ` (${detail.source.url})` : ""}
-                              </span>
-                              <span>License: {detail.source.license}</span>
-                              <span>
-                                Version v{detail.version} · {detail.contentHash.slice(0, 10)}
-                              </span>
-                            </div>
-                          </>
-                        )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpen(p.slug);
+                            }}
+                            disabled={isDemo || loadingSlug === p.slug}
+                            title={
+                              isDemo
+                                ? "Demo accounts cannot load library problems"
+                                : "Create a project from this problem in Copilot"
+                            }
+                            className={`w-14 py-1 rounded-md text-[11px] font-mono font-medium border text-center transition-colors ${
+                              isDemo
+                                ? "border-white/[0.06] text-zinc-600 cursor-not-allowed"
+                                : isDark
+                                ? "bg-white/[0.06] hover:bg-white/[0.14] border-white/[0.14] text-zinc-100 cursor-pointer"
+                                : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white cursor-pointer"
+                            }`}
+                          >
+                            Load
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
+
+      {/* ── RIGHT-SIDE SLIDE-OVER DETAIL DRAWER ── */}
+      {expanded && activeDrawerItem && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div
+            onClick={() => setExpanded(null)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-[1px]"
+          />
+
+          {/* Drawer Panel */}
+          <aside
+            role="dialog"
+            aria-label={activeDrawerItem.title}
+            style={{ backgroundColor: isDark ? "#0B0C10" : "#FFFFFF" }}
+            className={`relative z-10 w-full max-w-xl h-full border-l flex flex-col shadow-2xl ${border}`}
+          >
+            {/* Sticky Header */}
+            <div className={`px-5 py-4 border-b flex items-start justify-between gap-4 shrink-0 ${border}`}>
+              <div className="min-w-0 space-y-1">
+                <div className={`text-[11px] font-mono ${textFaint}`}>
+                  {activeDrawerItem.industry} · {activeDrawerItem.problemType} · {SIZE_LABEL[activeDrawerItem.sizeTier]} ·{" "}
+                  {activeDrawerItem.benchmark
+                    ? `${activeDrawerItem.benchmark.quboVars} QUBO vars`
+                    : `~${activeDrawerItem.estimatedBinaryVars} vars`}
+                </div>
+                <h2 className={`text-base font-semibold font-sans leading-snug ${textMain}`}>
+                  {activeDrawerItem.title}
+                </h2>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleOpen(activeDrawerItem.slug)}
+                  disabled={isDemo || loadingSlug === activeDrawerItem.slug}
+                  className={`px-3 py-1.5 rounded-md text-[11px] font-mono font-medium border transition-colors ${
+                    isDemo
+                      ? "border-white/[0.06] text-zinc-600 cursor-not-allowed"
+                      : isDark
+                      ? "bg-white/[0.10] hover:bg-white/[0.16] border-white/[0.18] text-zinc-100 cursor-pointer"
+                      : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white cursor-pointer"
+                  }`}
+                >
+                  Load Problem
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExpanded(null)}
+                  aria-label="Close details"
+                  className={`p-1.5 rounded-md border cursor-pointer transition-colors ${border} ${textMuted} ${
+                    isDark ? "hover:bg-white/[0.06] hover:text-zinc-100" : "hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+              {/* Summary + Verdict */}
+              <div className="space-y-2">
+                <p className={`text-[13px] leading-relaxed font-sans ${textMuted}`}>
+                  {activeDrawerItem.description}
+                </p>
+                {activeDrawerItem.benchmark && (
+                  <div
+                    className={`rounded-lg border px-3.5 py-2.5 space-y-1 ${border} ${
+                      isDark ? "bg-white/[0.02]" : "bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 text-[11px] font-mono">
+                      <span className={textFaint}>Solver Fit</span>
+                      <span className={`font-medium ${verdictTextClass(activeDrawerItem.benchmark.verdict)}`}>
+                        {VERDICT_LABEL[activeDrawerItem.benchmark.verdict] || activeDrawerItem.benchmark.verdict}
+                      </span>
+                    </div>
+                    <p className={`text-[12px] leading-relaxed font-sans ${textMuted}`}>
+                      {activeDrawerItem.benchmark.verdictNote}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* 20-Seed Side-by-Side Solver Comparison */}
+              {activeDrawerItem.benchmark && (
+                <div className="space-y-2">
+                  <div className={`text-[11px] font-mono ${textFaint}`}>
+                    Seeded Benchmark (N={activeDrawerItem.benchmark.protocol.repeats} held-out seeds)
+                  </div>
+                  <div
+                    className={`rounded-lg border ${border} grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x ${
+                      isDark ? "divide-white/[0.08] bg-white/[0.015]" : "divide-slate-200 bg-slate-50/70"
+                    } text-[11px] font-mono`}
+                  >
+                    <div className="p-3 space-y-1">
+                      <div className={textFaint}>D-Wave SA (classical software)</div>
+                      {activeDrawerItem.benchmark.qubo.exceedsLimit ? (
+                        <div className={isDark ? "text-amber-400" : "text-amber-700"}>
+                          Exceeds {activeDrawerItem.benchmark.protocol.maxQuboVars}-var cap (
+                          {activeDrawerItem.benchmark.quboVars} vars)
+                        </div>
+                      ) : activeDrawerItem.benchmark.qubo.bestObjective === null ? (
+                        <div className={textMuted}>
+                          0/{activeDrawerItem.benchmark.qubo.totalRuns} feasible
+                        </div>
+                      ) : (
+                        <>
+                          <div className={textMain}>
+                            Med{" "}
+                            <strong>
+                              {activeDrawerItem.benchmark.qubo.medianObjective ??
+                                activeDrawerItem.benchmark.qubo.bestObjective}
+                            </strong>{" "}
+                            <span className={textMuted}>
+                              (
+                              {(
+                                activeDrawerItem.benchmark.qubo.medianGapVsBestKnownPct ??
+                                activeDrawerItem.benchmark.qubo.gapVsBestKnownPct
+                              )?.toFixed(2)}
+                              % gap)
+                            </span>
+                          </div>
+                          <div className={textFaint}>
+                            Best {activeDrawerItem.benchmark.qubo.bestObjective} · Worst{" "}
+                            {activeDrawerItem.benchmark.qubo.worstObjective ?? "—"} ·{" "}
+                            {activeDrawerItem.benchmark.qubo.feasibleRuns}/
+                            {activeDrawerItem.benchmark.qubo.totalRuns} feas
+                          </div>
+                          {activeDrawerItem.benchmark.qubo.meanObjective !== null && (
+                            <div className={textFaint}>
+                              Mean {activeDrawerItem.benchmark.qubo.meanObjective.toFixed(2)} ±{" "}
+                              {(activeDrawerItem.benchmark.qubo.stdObjective ?? 0).toFixed(2)}
+                              {typeof activeDrawerItem.benchmark.qubo.iqrObjective === "number"
+                                ? ` · IQR ${activeDrawerItem.benchmark.qubo.iqrObjective}`
+                                : ""}
+                            </div>
+                          )}
+                          <div className={textFaint}>
+                            Solve {fmtMs(activeDrawerItem.benchmark.qubo.solveTimeMs ?? activeDrawerItem.benchmark.qubo.meanTimeMs)}
+                            {typeof activeDrawerItem.benchmark.qubo.tuneTimeMs === "number"
+                              ? ` · Tune ${fmtMs(activeDrawerItem.benchmark.qubo.tuneTimeMs)}`
+                              : ""}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="p-3 space-y-1">
+                      <div className={textFaint}>Google OR-Tools CP-SAT</div>
+                      <div className={textMain}>
+                        Opt <strong>{activeDrawerItem.benchmark.classical.bestObjective ?? "—"}</strong>{" "}
+                        <span className={textMuted}>
+                          (
+                          {typeof activeDrawerItem.benchmark.classical.gapVsBestKnownPct === "number"
+                            ? `${activeDrawerItem.benchmark.classical.gapVsBestKnownPct.toFixed(2)}% gap`
+                            : "—"}
+                          )
+                        </span>
+                      </div>
+                      <div className={textFaint}>
+                        {activeDrawerItem.benchmark.classical.status} ·{" "}
+                        {activeDrawerItem.benchmark.classical.feasibleRuns}/
+                        {activeDrawerItem.benchmark.classical.totalRuns} proven
+                      </div>
+                      <div className={textFaint}>
+                        Solve{" "}
+                        {fmtMs(
+                          activeDrawerItem.benchmark.classical.solveTimeMs ??
+                            activeDrawerItem.benchmark.classical.meanTimeMs
+                        )}
+                        {typeof activeDrawerItem.benchmark.classical.buildTimeMs === "number"
+                          ? ` · Build ${fmtMs(activeDrawerItem.benchmark.classical.buildTimeMs)}`
+                          : ""}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* QUBO Structure & Equivalence Proof */}
+              {activeDrawerItem.benchmark?.structure && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-[11px] font-mono ${textFaint}`}>QUBO Structure & Equivalence</span>
+                    {activeDrawerItem.benchmark.equivalenceCheck?.passed && (
+                      <span className={`text-[11px] font-mono ${isDark ? "text-emerald-400" : "text-emerald-700"}`}>
+                        QUBO ≡ Original verified (err {activeDrawerItem.benchmark.equivalenceCheck.maxAbsError})
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className={`rounded-lg border px-3 py-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono ${border} ${textMuted}`}
+                  >
+                    <span>
+                      {activeDrawerItem.benchmark.structure.decisionVars} decision +{" "}
+                      {activeDrawerItem.benchmark.structure.slackVars} slack vars
+                    </span>
+                    <span>{activeDrawerItem.benchmark.structure.quadraticCouplings.toLocaleString()} couplings</span>
+                    <span>density {activeDrawerItem.benchmark.structure.densityPct}%</span>
+                    <span>max deg {activeDrawerItem.benchmark.structure.maxDegree}</span>
+                    <span>range {activeDrawerItem.benchmark.structure.dynamicRange}×</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Disjoint λ Sweep Table */}
+              {activeDrawerItem.benchmark && activeDrawerItem.benchmark.qubo.lambdaSweep.length > 0 && (
+                <div className="space-y-2">
+                  <div className={`text-[11px] font-mono ${textFaint}`}>Penalty λ Sweep (disjoint tuning seeds)</div>
+                  <div className={`rounded-lg border ${border} overflow-hidden`}>
+                    <table className="w-full text-left text-[11px] font-mono">
+                      <thead>
+                        <tr className={`border-b ${border} ${textFaint}`}>
+                          <th className="py-1.5 px-3 font-medium">Penalty λ</th>
+                          <th className="py-1.5 px-3 font-medium">Feasibility</th>
+                          <th className="py-1.5 px-3 font-medium text-right">Median Obj</th>
+                          <th className="py-1.5 px-3 font-medium text-right">Best Obj</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${isDark ? "divide-white/[0.06]" : "divide-slate-100"}`}>
+                        {activeDrawerItem.benchmark.qubo.lambdaSweep.map((pt) => {
+                          const isChosen = pt.lambda === activeDrawerItem.benchmark?.qubo.bestLambda;
+                          return (
+                            <tr
+                              key={pt.lambda}
+                              className={isChosen ? (isDark ? "bg-white/[0.04]" : "bg-slate-50") : ""}
+                            >
+                              <td className={`py-1.5 px-3 ${isChosen ? textMain : textMuted}`}>
+                                {pt.lambda}
+                                {isChosen ? " (selected)" : ""}
+                              </td>
+                              <td className={`py-1.5 px-3 ${textMuted}`}>
+                                {Math.round(pt.feasibilityRate * 100)}%
+                              </td>
+                              <td className={`py-1.5 px-3 text-right ${textMuted}`}>
+                                {pt.medianObjective ?? "—"}
+                              </td>
+                              <td className={`py-1.5 px-3 text-right ${textMain}`}>
+                                {pt.bestObjective ?? "—"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Full Problem Statement */}
+              <div className="space-y-2">
+                <div className={`text-[11px] font-mono ${textFaint}`}>Problem statement</div>
+                {!activeDrawerDetail ? (
+                  <div className={`text-[12px] font-mono ${textFaint}`}>Loading full specification...</div>
+                ) : (
+                  <div
+                    className={`rounded-lg border p-3 text-[12px] leading-relaxed font-sans whitespace-pre-wrap ${border} ${textMuted} ${
+                      isDark ? "bg-white/[0.015]" : "bg-slate-50"
+                    }`}
+                  >
+                    {activeDrawerDetail.prompt}
+                  </div>
+                )}
+              </div>
+
+              {/* Verification & Reproducibility Provenance */}
+              <div className={`border-t pt-4 space-y-2 text-[11px] font-mono ${border} ${textFaint}`}>
+                <div>
+                  <span className={textMuted}>
+                    {activeDrawerItem.objectiveSense} best known:{" "}
+                    <strong className={textMain}>{activeDrawerItem.bestKnown.value}</strong> (
+                    {KIND_LABEL[activeDrawerItem.bestKnown.kind]})
+                  </span>{" "}
+                  — {activeDrawerItem.bestKnown.method}
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  <span>
+                    Source: {activeDrawerItem.source.name}
+                    {activeDrawerItem.source.url ? ` (${activeDrawerItem.source.url})` : ""}
+                  </span>
+                  <span>License: {activeDrawerItem.source.license}</span>
+                  {activeDrawerDetail && (
+                    <span>
+                      v{activeDrawerDetail.version} · {activeDrawerDetail.contentHash.slice(0, 10)}
+                    </span>
+                  )}
+                </div>
+                {activeDrawerItem.benchmark && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    <span>
+                      Reads: {activeDrawerItem.benchmark.protocol.quboReadsPerRepeat}
+                      {activeDrawerItem.benchmark.protocol.quboNumSweeps
+                        ? ` × ${activeDrawerItem.benchmark.protocol.quboNumSweeps} sweeps`
+                        : ""}
+                    </span>
+                    {activeDrawerItem.benchmark.environment && (
+                      <span>
+                        Python {activeDrawerItem.benchmark.environment.pythonVersion} · OR-Tools{" "}
+                        {activeDrawerItem.benchmark.environment.ortoolsVersion} · neal{" "}
+                        {activeDrawerItem.benchmark.environment.nealVersion} (
+                        {activeDrawerItem.benchmark.environment.machine})
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
