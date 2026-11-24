@@ -249,10 +249,12 @@ export function EnterpriseChatPane({
                         </div>
                       )}
 
-                      {/* ── ASSISTANT PROSE EXPLANATION ── */}
-                      <div className="text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-300">
-                        {msg.text}
-                      </div>
+                      {/* ── ASSISTANT PROSE (shown for streaming / plain notices; omitted when Executive Solution Card owns the summary) ── */}
+                      {(!msg.executionResult || msg.isStreaming) && msg.text && (
+                        <div className="text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-300">
+                          {msg.text}
+                        </div>
+                      )}
 
                       {/* ── EXECUTIVE SOLUTION CARD ── */}
                       {msg.executionResult && (

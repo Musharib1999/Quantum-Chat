@@ -674,9 +674,9 @@ export default function EnterpriseStudioPage() {
                     return {
                       ...msg,
                       text:
-                        res.interpretation ||
-                        (nextWs.execution?.energy !== null
-                          ? `Optimization converged with ground energy ${nextWs.execution?.energy?.toFixed(
+                        nextWs.execution?.solverComparison?.summary ||
+                        (nextWs.execution?.energy !== null && nextWs.execution?.energy !== undefined
+                          ? `Optimization converged with ground energy ${nextWs.execution.energy.toFixed(
                               4
                             )} across ${nextWs.variables.length} decision variables.`
                           : "Optimization model compiled successfully."),
@@ -1116,6 +1116,7 @@ export default function EnterpriseStudioPage() {
                   idx === lastBotIdx
                     ? {
                         ...m,
+                        text: solverComparison.summary,
                         executionResult: {
                           feasible: nextExecution.feasible,
                           energy: nextExecution.energy,
