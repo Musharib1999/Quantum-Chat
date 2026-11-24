@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, X } from "lucide-react";
 import type { LibraryDetail, LibraryListItem } from "@/lib/problemLibrary";
 import { SolverFitMap } from "./SolverFitMap";
 
@@ -314,7 +314,10 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
   const handleOpen = async (slug: string) => {
     if (isDemo) return;
     const detail = await fetchDetail(slug);
-    if (detail) onOpenProblem(detail);
+    if (detail) {
+      setExpanded(null);
+      onOpenProblem(detail);
+    }
   };
 
   const panelBg = isDark ? "#0C0D11" : "#FFFFFF";
@@ -584,7 +587,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                     <span className="w-16 text-right">Optimum</span>
                     <span className="w-20 text-right hidden md:block">SA Med Gap</span>
                     <span className="w-28 text-right">Solver Fit</span>
-                    <span className="w-14 text-right" />
+                    <span className="w-4" />
                   </div>
                 </div>
 
@@ -606,7 +609,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                             toggleExpand(p.slug);
                           }
                         }}
-                        className={`flex items-center justify-between gap-4 px-4 py-2.5 transition-colors cursor-pointer outline-none ${
+                        className={`group flex items-center justify-between gap-4 px-4 py-2.5 transition-colors cursor-pointer outline-none ${
                           isSelected
                             ? isDark
                               ? "bg-white/[0.05]"
@@ -626,7 +629,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                           </div>
                         </div>
 
-                        {/* Aligned Right Metrics + Load CTA */}
+                        {/* Aligned Right Metrics */}
                         <div className="flex items-center gap-5 shrink-0 text-[11.5px] font-mono">
                           <span
                             className={`w-16 text-right hidden sm:block ${textMuted}`}
@@ -664,28 +667,9 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                             {b ? VERDICT_LABEL[b.verdict] || b.verdict : "—"}
                           </span>
 
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpen(p.slug);
-                            }}
-                            disabled={isDemo || loadingSlug === p.slug}
-                            title={
-                              isDemo
-                                ? "Demo accounts cannot load library problems"
-                                : "Create a project from this problem in Copilot"
-                            }
-                            className={`w-14 py-1 rounded-md text-[11px] font-mono font-medium border text-center transition-colors ${
-                              isDemo
-                                ? "border-white/[0.06] text-zinc-600 cursor-not-allowed"
-                                : isDark
-                                ? "bg-white/[0.06] hover:bg-white/[0.14] border-white/[0.14] text-zinc-100 cursor-pointer"
-                                : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white cursor-pointer"
-                            }`}
-                          >
-                            Load
-                          </button>
+                          <ChevronRight
+                            className={`w-4 h-4 shrink-0 transition-transform group-hover:translate-x-0.5 ${textFaint}`}
+                          />
                         </div>
                       </div>
                     );
@@ -729,6 +713,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                   type="button"
                   onClick={() => handleOpen(activeDrawerItem.slug)}
                   disabled={isDemo || loadingSlug === activeDrawerItem.slug}
+                  title={isDemo ? "Demo accounts cannot instantiate projects" : "Create a new project from this problem"}
                   className={`px-3 py-1.5 rounded-md text-[11px] font-mono font-medium border transition-colors ${
                     isDemo
                       ? "border-white/[0.06] text-zinc-600 cursor-not-allowed"
@@ -737,7 +722,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                       : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white cursor-pointer"
                   }`}
                 >
-                  Load
+                  {loadingSlug === activeDrawerItem.slug ? "Loading..." : "Instantiate Project"}
                 </button>
                 <button
                   type="button"

@@ -6,6 +6,7 @@ import { EnterpriseHistorySidebar, ProjectEntry } from "@/components/enterprise/
 import { EnterpriseChatPane } from "@/components/enterprise/EnterpriseChatPane";
 import { EnterpriseWorkbench } from "@/components/enterprise/EnterpriseWorkbench";
 import { EnterpriseProblemLibrary } from "@/components/enterprise/EnterpriseProblemLibrary";
+import { EnterpriseNewProjectModal } from "@/components/enterprise/EnterpriseNewProjectModal";
 import type { LibraryDetail } from "@/lib/problemLibrary";
 import { DeploySolutionModal } from "@/components/optimization/DeploySolutionModal";
 import IssueReportModal from "@/components/IssueReportModal";
@@ -156,6 +157,9 @@ export default function EnterpriseStudioPage() {
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
+  const [pendingVaultProblem, setPendingVaultProblem] = useState<LibraryDetail | null>(null);
+  const [draftProjectName, setDraftProjectName] = useState("");
   const [isSolving, setIsSolving] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isExecutingScript, setIsExecutingScript] = useState(false);
@@ -422,24 +426,55 @@ export default function EnterpriseStudioPage() {
     [activeProjectId]
   );
 
-  // Create new empty project
+  // Open unified New Project modal (choose Blank Project or browse Problem Vault)
   const handleNewProject = () => {
     if (isDemoUser) {
       showToast("Demo mode is view-only. Creating new projects is disabled.", "info");
       return;
     }
-    const proj = newProject("New optimization model", "Custom domain");
-    setProjects((prev) => [proj, ...prev]);
-    setActiveProjectId(proj.id);
+    setPendingVaultProblem(null);
+    setDraftProjectName("");
+    setIsNewProjectModalOpen(true);
   };
 
-  // Create a project from a Problem Library entry (no solver runs until the user selects Solve > Compile)
-  const handleOpenLibraryProblem = (problem: LibraryDetail) => {
+  // Confirm creating a Blank Project with user-chosen name
+  const handleCreateBlankProject = (projectName: string) => {
+    const cleanName = projectName.trim() || "New optimization model";
+    const proj = newProject(cleanName, "Custom domain");
+    setProjects((prev) => [proj, ...prev]);
+    setActiveProjectId(proj.id);
+    setIsNewProjectModalOpen(false);
+    setPendingVaultProblem(null);
+    setDraftProjectName("");
+    setSurfaceMode("copilot");
+  };
+
+  // Navigate from New Project modal -> Problem Vault (Library) to review & pick a problem
+  const handleOpenProblemVaultFromModal = (draftName: string) => {
+    setDraftProjectName(draftName);
+    setIsNewProjectModalOpen(false);
+    setPendingVaultProblem(null);
+    setSurfaceMode("library");
+  };
+
+  // Step 1 of instantiating from Library: prompt user for project name
+  const handleRequestInstantiateLibraryProblem = (problem: LibraryDetail) => {
+    if (isDemoUser) {
+      showToast("Demo mode is view-only. Instantiating library problems is disabled.", "info");
+      return;
+    }
+    setPendingVaultProblem(problem);
+    setIsNewProjectModalOpen(true);
+  };
+
+  // Step 2 of instantiating from Library: create named project & open in Copilot
+  const handleConfirmInstantiateLibraryProblem = (problem: LibraryDetail, projectName: string) => {
     if (isDemoUser) {
       showToast("Demo mode is view-only. Opening library problems is disabled.", "info");
       return;
     }
-    const proj = newProject(problem.title, problem.industry);
+    const cleanName = projectName.trim() || problem.title;
+    const proj = newProject(cleanName, problem.industry);
     const ts = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     proj.lastProblemText = problem.prompt;
     if (typeof problem.benchmark?.qubo?.bestLambda === "number" && problem.benchmark.qubo.bestLambda > 0) {
@@ -463,11 +498,14 @@ export default function EnterpriseStudioPage() {
         id: `bot_${Date.now()}`,
         sender: "assistant",
         timestamp: ts,
-        text: `Loaded "${problem.title}" from the Problem Library (best known value: ${problem.bestKnown.value}). Select Solve > Compile to formulate it, then Run Parallel to compare D-Wave QUBO with Google OR-Tools.`,
+        text: `Instantiated "${cleanName}" from Problem Vault template "${problem.title}" (best known value: ${problem.bestKnown.value}). Select Solve > Compile to formulate it, then Run Parallel to compare D-Wave QUBO with Google OR-Tools.`,
       },
     ];
     setProjects((prev) => [proj, ...prev]);
     setActiveProjectId(proj.id);
+    setIsNewProjectModalOpen(false);
+    setPendingVaultProblem(null);
+    setDraftProjectName("");
     setSurfaceMode("copilot");
   };
 
@@ -1189,7 +1227,7 @@ export default function EnterpriseStudioPage() {
             <EnterpriseProblemLibrary
               isDark={isDark}
               isDemo={isDemoUser}
-              onOpenProblem={handleOpenLibraryProblem}
+              onOpenProblem={handleRequestInstantiateLibraryProblem}
             />
           </div>
         )}
@@ -1272,6 +1310,20 @@ export default function EnterpriseStudioPage() {
       </div>
 
       {/* ── MODALS ── */}
+      <EnterpriseNewProjectModal
+        isOpen={isNewProjectModalOpen}
+        isDark={isDark}
+        initialName={draftProjectName}
+        templateProblem={pendingVaultProblem}
+        onClose={() => {
+          setIsNewProjectModalOpen(false);
+          setPendingVaultProblem(null);
+        }}
+        onCreateBlank={handleCreateBlankProject}
+        onOpenProblemVault={handleOpenProblemVaultFromModal}
+        onConfirmInstantiate={handleConfirmInstantiateLibraryProblem}
+      />
+
       <DeploySolutionModal
         isOpen={isDeployModalOpen}
         onClose={() => setIsDeployModalOpen(false)}
