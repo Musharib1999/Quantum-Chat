@@ -230,40 +230,138 @@ export function adaptPipelineResult(result: any, prev: WorkspaceState): Workspac
   };
 }
 
-/** Compact LaTeX for a plain-text expression such as `(14.0 * x_0) + (18.0 * x_1)`. */
-export function exprToLatex(expr: string): string {
-  const MAX_TERMS = 14;
-  const split = (s: string): string[] => {
-    const parts: string[] = [];
-    let depth = 0;
-    let cur = "";
-    for (let i = 0; i < s.length; i++) {
-      const ch = s[i];
-      if (ch === "(") depth++;
-      if (ch === ")") depth--;
-      if (depth === 0 && ch === "+" && s[i - 1] === " " && s[i + 1] === " ") {
-        parts.push(cur.trim());
-        cur = "";
-      } else {
-        cur += ch;
+/** Convert a variable identifier like `sched_0_1` or `x_2` into clean LaTeX with real subscripts. */
+function varIdToLatex(id: string): string {
+  const m = id.match(/^([A-Za-z][A-Za-z0-9_]*?)((?:_\d+)+)$/);
+  if (m) {
+    const base = m[1];
+    const indices = m[2].slice(1).split("_").join(",");
+    const baseTex = base.length === 1 ? base : `\\mathrm{${base.replace(/_/g, "\\_")}}`;
+    return `${baseTex}_{${indices}}`;
+  }
+  return id.length === 1 ? id : `\\mathrm{${id.replace(/_/g, "\\_")}}`;
+}
+
+/** Format a single additive term such as `(29.0 * sched_0_1)` into clean textbook LaTeX. */
+function formatTermToLatex(rawTerm: string): string {
+  let t = rawTerm.trim();
+  if (t === "\\cdots") return t;
+
+  // Strip wrapping parens around the entire term
+  while (t.startsWith("(") && t.endsWith(")")) {
+    let d = 0;
+    let wrapsAll = true;
+    for (let i = 0; i < t.length - 1; i++) {
+      if (t[i] === "(") d++;
+      else if (t[i] === ")") d--;
+      if (d === 0) {
+        wrapsAll = false;
+        break;
       }
     }
-    if (cur.trim()) parts.push(cur.trim());
-    return parts;
-  };
+    if (!wrapsAll) break;
+    t = t.slice(1, -1).trim();
+  }
 
-  const terms = split(expr);
-  const shown =
-    terms.length > MAX_TERMS ? [...terms.slice(0, 8), "\\cdots", ...terms.slice(-2)] : terms;
+  // Split multiplicative factors
+  const factors = t.split("*").map((f) => f.trim()).filter(Boolean);
+  if (factors.length > 1) {
+    let numSign = 1;
+    let numVal: number | null = null;
+    const varParts: string[] = [];
+    let allSimple = true;
 
-  const convert = (t: string) =>
-    t === "\\cdots"
-      ? t
-      : t
-          .replace(/[A-Za-z_][A-Za-z0-9_]*/g, (id) => `\\mathrm{${id.replace(/_/g, "\\_")}}`)
-          .replace(/\s*\*\s*/g, " \\cdot ");
+    for (const f of factors) {
+      if (/^[+-]?\d+(?:\.\d+)?$/.test(f)) {
+        const parsed = parseFloat(f);
+        numVal = numVal === null ? parsed : numVal * parsed;
+      } else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(f)) {
+        varParts.push(varIdToLatex(f));
+      } else if (/^-[A-Za-z_][A-Za-z0-9_]*$/.test(f)) {
+        numSign *= -1;
+        varParts.push(varIdToLatex(f.slice(1)));
+      } else {
+        allSimple = false;
+        break;
+      }
+    }
 
-  return shown.map(convert).join(" + ");
+    if (allSimple && varParts.length > 0) {
+      const combined = (numVal ?? 1) * numSign;
+      const absVal = Math.abs(combined);
+      const signPrefix = combined < 0 ? "-" : "";
+      const numStr =
+        Math.abs(absVal - 1) < 1e-9
+          ? ""
+          : Number.isInteger(absVal) || Math.abs(absVal - Math.round(absVal)) < 1e-9
+          ? String(Math.round(absVal))
+          : String(Number(absVal.toFixed(4)));
+      return `${signPrefix}${numStr}${numStr ? "\\," : ""}${varParts.join("\\,")}`;
+    }
+  }
+
+  // Fallback for general single-factor or parenthesized expressions
+  return t
+    .replace(/(?<![A-Za-z0-9_])(\d+)\.0(?![0-9])/g, "$1")
+    .replace(/[A-Za-z_][A-Za-z0-9_]*/g, (id) => varIdToLatex(id))
+    .replace(/\s*\*\s*/g, " \\cdot ");
+}
+
+/** Compact textbook LaTeX for an algebraic expression such as `(29 * sched_0_0) + (50 * sched_0_1)`. */
+export function exprToLatex(expr: string, maxTerms: number = 5): string {
+  if (!expr || !expr.trim()) return "";
+
+  const terms: Array<{ sign: "+" | "-"; body: string }> = [];
+  let depth = 0;
+  let cur = "";
+  let curSign: "+" | "-" = "+";
+  const s = expr.trim();
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "(") {
+      depth++;
+      cur += ch;
+    } else if (ch === ")") {
+      depth = Math.max(0, depth - 1);
+      cur += ch;
+    } else if (
+      depth === 0 &&
+      (ch === "+" || ch === "-") &&
+      cur.trim().length > 0 &&
+      s[i - 1] === " " &&
+      s[i + 1] === " "
+    ) {
+      terms.push({ sign: curSign, body: cur.trim() });
+      cur = "";
+      curSign = ch;
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.trim()) {
+    terms.push({ sign: curSign, body: cur.trim() });
+  }
+  if (terms.length === 0) return "";
+
+  const headCount = Math.max(2, maxTerms - 1);
+  const shown: Array<{ sign: "+" | "-"; body: string }> =
+    terms.length > maxTerms + 1
+      ? [...terms.slice(0, headCount), { sign: "+", body: "\\cdots" }, terms[terms.length - 1]]
+      : terms;
+
+  return shown
+    .map((item, idx) => {
+      const formatted = formatTermToLatex(item.body);
+      const hasLeadingMinus = formatted.startsWith("-");
+      const effectiveNeg = item.sign === "-" ? !hasLeadingMinus : hasLeadingMinus;
+      const unsigned = hasLeadingMinus ? formatted.slice(1).trim() : formatted;
+      if (idx === 0) {
+        return effectiveNeg ? `-${unsigned}` : unsigned;
+      }
+      return effectiveNeg ? `- ${unsigned}` : `+ ${unsigned}`;
+    })
+    .join(" ");
 }
 
 export function termCount(expr: string): number {

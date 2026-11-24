@@ -251,7 +251,11 @@ code, pre, kbd, samp, .font-mono {
   max-width: 100% !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  margin: 0.5em 0 !important;
+  margin: 0.35em 0 !important;
+}
+
+.text-left .katex-display {
+  text-align: left !important;
 }
 
 .katex {

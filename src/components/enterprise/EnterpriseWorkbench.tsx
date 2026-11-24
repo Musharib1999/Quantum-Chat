@@ -48,7 +48,7 @@ import {
   SolverRouting,
   LibraryReference,
 } from "./types";
-import { exprToLatex, buildFallbackOrtoolsCode } from "./adapters";
+import { exprToLatex, termCount, buildFallbackOrtoolsCode } from "./adapters";
 
 // Dynamically import Monaco Editor to avoid SSR hydration mismatch
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -783,13 +783,28 @@ ${textToSend}
   const anyConstraintViolated =
     feasibilityResults.length > 0 && feasibilityResults.some((r) => r.satisfied === false);
 
-  // Formatted LaTeX for objective
+  // Formatted LaTeX for objective & QUBO Hamiltonian
   const renderedObjectiveLatex = useMemo(() => {
     if (!mathModel?.objectiveExpr) return "";
-    const sense = (mathModel.objectiveSense || "Minimize").toLowerCase();
-    const latexExpr = exprToLatex(mathModel.objectiveExpr);
-    return `\\text{${sense}}_{\\mathbf{x}} \\quad \\mathcal{H}_{\\text{obj}}(\\mathbf{x}) = ${latexExpr}`;
-  }, [mathModel?.objectiveExpr, mathModel?.objectiveSense]);
+    const senseCmd = (mathModel.objectiveSense || "Minimize").toLowerCase() === "maximize" ? "\\max" : "\\min";
+    const nVars = variables.length;
+    const domainSub = nVars > 0 ? `\\mathbf{x} \\in \\{0,1\\}^{${nVars}}` : "\\mathbf{x}";
+    const latexExpr = exprToLatex(mathModel.objectiveExpr, 5);
+    return `${senseCmd}_{${domainSub}} \\;\\; \\mathcal{H}_{\\text{obj}}(\\mathbf{x}) = ${latexExpr}`;
+  }, [mathModel?.objectiveExpr, mathModel?.objectiveSense, variables.length]);
+
+  const renderedHamiltonianLatex = useMemo(() => {
+    const nCons = mathModel?.constraints?.length || 0;
+    if (!mathModel?.objectiveExpr || nCons === 0) return "";
+    const lam = Number.isInteger(penaltyLambda) ? String(penaltyLambda) : penaltyLambda.toFixed(1);
+    return `\\mathcal{H}_{\\text{QUBO}}(\\mathbf{x}) = \\mathcal{H}_{\\text{obj}}(\\mathbf{x}) + ${lam} \\sum_{k=1}^{${nCons}} P_k(\\mathbf{x})`;
+  }, [mathModel?.objectiveExpr, mathModel?.constraints?.length, penaltyLambda]);
+
+  const objectiveTermCount = useMemo(
+    () => (mathModel?.objectiveExpr ? termCount(mathModel.objectiveExpr) : 0),
+    [mathModel?.objectiveExpr]
+  );
+  const [showAllConstraints, setShowAllConstraints] = useState(false);
 
   return (
     <div className="w-full h-full min-w-0 max-w-full flex flex-row min-h-0 overflow-hidden font-mono text-xs">
@@ -963,17 +978,46 @@ ${textToSend}
                 </div>
               </div>
 
-              {/* Rendered KaTeX Model */}
+              {/* Rendered KaTeX Mathematical Model & QUBO Hamiltonian */}
               {renderedObjectiveLatex ? (
                 <div
                   style={{
                     backgroundColor: isDark ? "#13141A" : "#F8FAFC",
                   }}
-                  className={`p-4 rounded-xl border flex flex-col items-center justify-center space-y-2 overflow-x-auto text-sm ${
+                  className={`p-4 rounded-xl border space-y-3 ${
                     isDark ? "border-white/[0.08]" : "border-slate-200"
                   }`}
                 >
-                  <LatexMath math={renderedObjectiveLatex} inline={false} isDark={isDark} />
+                  <div className="flex items-center justify-between text-[10.5px] font-mono text-zinc-500">
+                    <span>Objective &amp; QUBO Hamiltonian</span>
+                    {objectiveTermCount > 0 && (
+                      <span>
+                        {variables.length} binary vars · {objectiveTermCount} objective terms
+                      </span>
+                    )}
+                  </div>
+                  <div className="w-full overflow-x-auto custom-scrollbar pb-1">
+                    <LatexMath
+                      math={renderedObjectiveLatex}
+                      inline={false}
+                      isDark={isDark}
+                      className="text-left text-sm"
+                    />
+                  </div>
+                  {renderedHamiltonianLatex && (
+                    <div
+                      className={`pt-2.5 border-t w-full overflow-x-auto custom-scrollbar ${
+                        isDark ? "border-white/[0.06]" : "border-slate-200"
+                      }`}
+                    >
+                      <LatexMath
+                        math={renderedHamiltonianLatex}
+                        inline={false}
+                        isDark={isDark}
+                        className="text-left text-xs opacity-90"
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div
@@ -1017,52 +1061,85 @@ ${textToSend}
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {(mathModel?.constraints || []).map((c) => (
-                      <div
-                        key={c.id}
-                        style={{
-                          backgroundColor: isDark ? "#13141A" : "#FFFFFF",
-                        }}
-                        className={`p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs font-mono ${
-                          isDark ? "border-white/[0.08] hover:border-white/[0.14]" : "border-slate-200"
+                    {(showAllConstraints
+                      ? mathModel?.constraints || []
+                      : (mathModel?.constraints || []).slice(0, 30)
+                    ).map((c) => {
+                      const opSymbol = c.op === "<=" ? "≤" : c.op === ">=" ? "≥" : "=";
+                      const lhsLatex = c.leftExpr ? exprToLatex(c.leftExpr, 6) : "";
+                      return (
+                        <div
+                          key={c.id}
+                          style={{
+                            backgroundColor: isDark ? "#13141A" : "#FFFFFF",
+                          }}
+                          className={`p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs font-mono ${
+                            isDark ? "border-white/[0.08] hover:border-white/[0.14]" : "border-slate-200"
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <span className={`font-semibold text-[11px] block truncate ${isDark ? "text-zinc-300" : "text-slate-700"}`}>
+                              {c.name}
+                            </span>
+                            <div className="w-full overflow-x-auto custom-scrollbar text-zinc-200">
+                              {lhsLatex ? (
+                                <LatexMath math={lhsLatex} inline={true} isDark={isDark} className="text-xs" />
+                              ) : (
+                                <span className="text-zinc-400 text-[11px]">{c.leftExpr}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <span className={`font-semibold text-sm ${isDark ? "text-zinc-300" : "text-slate-700"}`}>
+                              {opSymbol}
+                            </span>
+                            <input
+                              type="number"
+                              step="0.5"
+                              value={c.rightVal ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value === "" ? null : parseFloat(e.target.value) || 0;
+                                onUpdateMathModel((prev) => ({
+                                  ...prev,
+                                  constraints: prev.constraints.map((item) =>
+                                    item.id === c.id ? { ...item, rightVal: val } : item
+                                  ),
+                                }));
+                              }}
+                              className={`w-20 px-2 py-1 text-xs font-mono rounded border outline-none font-semibold ${
+                                isDark
+                                  ? "bg-[#090A0D] border-white/[0.1] text-zinc-100"
+                                  : "bg-white border-slate-300 text-slate-900"
+                              }`}
+                            />
+                            <button
+                              onClick={() => handleDeleteConstraint(c.id)}
+                              className="p-1 rounded text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
+                              title="Remove constraint"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {(mathModel?.constraints?.length || 0) > 30 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllConstraints((prev) => !prev)}
+                        className={`w-full py-2 rounded-lg border text-[11px] font-mono transition-colors cursor-pointer ${
+                          isDark
+                            ? "bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.08] text-zinc-400 hover:text-zinc-200"
+                            : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900"
                         }`}
                       >
-                        <div className="min-w-0 flex-1">
-                          <span className="font-semibold text-zinc-200 block truncate">{c.name}</span>
-                          <span className="text-zinc-400 text-[11px] block truncate">{c.leftExpr}</span>
-                        </div>
-
-                        <div className="flex items-center space-x-2 shrink-0">
-                          <span className="text-sky-400 font-bold">{c.op}</span>
-                          <input
-                            type="number"
-                            step="0.5"
-                            value={c.rightVal ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value === "" ? null : parseFloat(e.target.value) || 0;
-                              onUpdateMathModel((prev) => ({
-                                ...prev,
-                                constraints: prev.constraints.map((item) =>
-                                  item.id === c.id ? { ...item, rightVal: val } : item
-                                ),
-                              }));
-                            }}
-                            className={`w-20 px-2 py-1 text-xs font-mono rounded border outline-none font-semibold ${
-                              isDark
-                                ? "bg-[#090A0D] border-white/[0.1] text-zinc-100"
-                                : "bg-white border-slate-300 text-slate-900"
-                            }`}
-                          />
-                          <button
-                            onClick={() => handleDeleteConstraint(c.id)}
-                            className="p-1 rounded text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
-                            title="Remove constraint"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                        {showAllConstraints
+                          ? "Show fewer constraints"
+                          : `Show all ${mathModel?.constraints?.length} constraints`}
+                      </button>
+                    )}
                   </div>
                 )}
 

@@ -41,10 +41,11 @@ export function LatexMath({ math, inline = true, isDark = true, className = "" }
   }, [math, inline]);
 
   if (html) {
+    const alignClass = className.includes("text-left") ? "" : "text-center";
     return (
       <span
         dangerouslySetInnerHTML={{ __html: html }}
-        className={`${!inline ? "block my-1 text-center overflow-x-auto" : "inline-block align-middle px-0.5"} ${className}`}
+        className={`${!inline ? `block my-1 ${alignClass} overflow-x-auto` : "inline-block align-middle px-0.5"} ${className}`}
         suppressHydrationWarning
       />
     );
