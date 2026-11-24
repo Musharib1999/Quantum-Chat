@@ -1,306 +1,520 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { canAccessEnterprise, canAccessIde, getDefaultRouteForRole, normalizeRole } from '@/lib/roles';
+import React, { useState, useEffect, Suspense } from "react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  canAccessEnterprise,
+  canAccessIde,
+  getDefaultRouteForRole,
+  normalizeRole,
+} from "@/lib/roles";
+import { LatexMath } from "@/components/optimization/LatexMath";
+
+const HERO_HAMILTONIAN_LATEX =
+  "\\min_{\\mathbf{x} \\in \\{0,1\\}^{n}} \\;\\; \\mathcal{H}_{\\text{obj}}(\\mathbf{x}) + \\lambda \\sum_{k=1}^{m} P_k(\\mathbf{x})";
 
 function LoginForm() {
-    const { login } = useAuth();
-    const { showToast } = useToast();
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const redirect = searchParams.get('redirect') || '/';
-    const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'login';
+  const { login } = useAuth();
+  const { showToast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/";
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
 
-    const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [company, setCompany] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [company, setCompany] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [successMsg, setSuccessMsg] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-    // Strictly enforce clean White Theme on Login Page (never dark theme)
-    useEffect(() => {
-        if (typeof document !== 'undefined') {
-            document.documentElement.classList.remove('dark');
-            document.documentElement.setAttribute('data-theme', 'light');
-            document.documentElement.style.backgroundColor = '#ffffff';
-            document.body.style.backgroundColor = '#ffffff';
+  // Align document background with Obsidian Studio theme to eliminate white flash
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+      document.documentElement.style.backgroundColor = "#090A0D";
+      document.body.style.backgroundColor = "#090A0D";
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+    setLoading(true);
+
+    if (!email || !password || (mode === "signup" && (!firstName || !lastName))) {
+      setError("Please provide all required fields.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
+      const bodyPayload =
+        mode === "login"
+          ? { email, password }
+          : { firstName, lastName, company, email, password, role: "learner" };
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyPayload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.error || `${mode === "login" ? "Login" : "Registration"} failed`
+        );
+      }
+
+      if (mode === "login") {
+        login(data);
+        showToast("Login Successful", "success");
+
+        const params =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search)
+            : null;
+        const rawRedirect = params?.get("redirect") || redirect;
+        const activeRedirect =
+          rawRedirect &&
+          rawRedirect.startsWith("/") &&
+          !rawRedirect.startsWith("//")
+            ? rawRedirect
+            : "/";
+
+        const userRole = normalizeRole(data.role ?? data.user?.role);
+        let targetRedirect = getDefaultRouteForRole(userRole);
+        if (activeRedirect !== "/" && activeRedirect !== "/industry") {
+          if (activeRedirect.startsWith("/enterprise")) {
+            if (canAccessEnterprise(userRole)) targetRedirect = activeRedirect;
+          } else if (activeRedirect.startsWith("/ide")) {
+            if (canAccessIde(userRole)) targetRedirect = activeRedirect;
+          } else if (activeRedirect.startsWith("/admin")) {
+            if (userRole === "admin") targetRedirect = activeRedirect;
+          } else {
+            targetRedirect = activeRedirect;
+          }
         }
-    }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setSuccessMsg('');
-        setLoading(true);
+        router.push(targetRedirect);
+      } else {
+        setSuccessMsg(
+          data.message ||
+            "Registration successful. Your account is pending admin approval."
+        );
+        setMode("login");
+        setPassword("");
+      }
+    } catch (err: any) {
+      setError(
+        err.message || "Authentication failed. Please check your connection."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (!email || !password || (mode === 'signup' && (!firstName || !lastName))) {
-            setError('Please provide all required fields');
-            setLoading(false);
-            return;
-        }
+  const isPendingApproval = error.toLowerCase().includes("pending admin approval");
 
-        try {
-            const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/signup';
-            const bodyPayload = mode === 'login'
-                ? { email, password }
-                : { firstName, lastName, company, email, password, role: 'learner' };
+  return (
+    <div
+      style={{ backgroundColor: "#090A0D" }}
+      className="min-h-screen w-full flex flex-col lg:flex-row text-zinc-100 relative overflow-hidden font-sans selection:bg-white/20"
+    >
+      {/* ── LEFT 55%: Obsidian Brand Showcase Canvas ── */}
+      <section
+        style={{
+          backgroundColor: "#090A0D",
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.055) 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+        className="hidden lg:flex lg:w-[55%] flex-col justify-between p-12 xl:p-16 relative overflow-hidden shrink-0"
+      >
+        {/* Subtle Quantum Guru brand-blue ambient radial tint */}
+        <div
+          aria-hidden="true"
+          style={{
+            background:
+              "radial-gradient(640px circle at 18% 16%, rgba(46, 101, 191, 0.14), transparent 70%)",
+          }}
+          className="pointer-events-none absolute inset-0"
+        />
 
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bodyPayload),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || `${mode === 'login' ? 'Login' : 'Registration'} failed`);
-            }
-
-            if (mode === 'login') {
-                login(data);
-                showToast('Login Successful', 'success');
-
-                const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-                const rawRedirect = params?.get('redirect') || redirect;
-                const activeRedirect = (rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')) ? rawRedirect : '/';
-
-                const userRole = normalizeRole(data.role ?? data.user?.role);
-                let targetRedirect = getDefaultRouteForRole(userRole);
-                if (activeRedirect !== '/' && activeRedirect !== '/industry') {
-                    if (activeRedirect.startsWith('/enterprise')) {
-                        if (canAccessEnterprise(userRole)) targetRedirect = activeRedirect;
-                    } else if (activeRedirect.startsWith('/ide')) {
-                        if (canAccessIde(userRole)) targetRedirect = activeRedirect;
-                    } else if (activeRedirect.startsWith('/admin')) {
-                        if (userRole === 'admin') targetRedirect = activeRedirect;
-                    } else {
-                        targetRedirect = activeRedirect;
-                    }
-                }
-
-                router.push(targetRedirect);
-            } else {
-                setSuccessMsg(data.message || 'Registration successful. Your account is pending admin approval');
-                setMode('login');
-                setPassword('');
-            }
-        } catch (err: any) {
-            setError(err.message || 'Authentication failed. Please check your connection');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div 
-            className="min-h-screen w-full flex items-center justify-center text-slate-900 relative overflow-hidden font-sans"
-            style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}
-        >
-            {/* Top-Left Corner Logo */}
-            <div className="absolute top-6 left-6 md:top-8 md:left-10 z-20">
-                <a href="https://www.quantumcomputers.guru/" className="flex items-center">
-                    <img
-                        src="/logo.png"
-                        alt="Quantum Guru"
-                        style={{ height: '56px', width: 'auto' }}
-                        className="w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity drop-shadow-xs"
-                    />
-                </a>
+        {/* Single Brand Anchor (exact IDE & Enterprise sizing) */}
+        <div className="relative z-10">
+          <a
+            href="https://www.quantumcomputers.guru/"
+            className="inline-flex items-center space-x-2.5 select-none group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50 group-hover:scale-105 transition-transform">
+              <img
+                src="/qg-logo.png"
+                alt="Quantum Guru"
+                className="w-full h-full object-contain"
+              />
             </div>
-
-            {/* Main Auth Card (Pure White with Subtle Border & Depth) */}
-            <div className="relative z-10 w-full max-w-md p-6 sm:p-8">
-                <div 
-                    className="bg-white rounded-3xl p-7 sm:p-9 space-y-6"
-                    style={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #E2E8F0',
-                        boxShadow: '0 20px 45px -12px rgba(0, 0, 0, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.04)'
-                    }}
-                >
-                    {/* Header */}
-                    <div className="text-center space-y-2">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50/80 border border-blue-100 mb-2 shadow-2xs overflow-hidden">
-                            <img src="/qg-icon.png" alt="Quantum Guru" className="w-10 h-10 object-contain" />
-                        </div>
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
-                        </h2>
-                        <p className="text-xs sm:text-sm text-slate-500">
-                            {mode === 'login' ? 'Enter your credentials to access the workspace' : 'Request access to the Quantum Workspace'}
-                        </p>
-                    </div>
-
-                    {/* Mode Toggle (Login / Register) */}
-                    <div className="flex p-1 bg-slate-100 rounded-xl">
-                        <button
-                            type="button"
-                            onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }}
-                            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${mode === 'login' ? 'bg-[#3066bb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
-                        >
-                            Login
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); }}
-                            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${mode === 'signup' ? 'bg-[#3066bb] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
-                        >
-                            Register
-                        </button>
-                    </div>
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {mode === 'signup' && (
-                            <>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">First Name</label>
-                                        <input
-                                            type="text"
-                                            value={firstName}
-                                            onChange={(e) => setFirstName(e.target.value)}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
-                                            placeholder="Jane"
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Last Name</label>
-                                        <input
-                                            type="text"
-                                            value={lastName}
-                                            onChange={(e) => setLastName(e.target.value)}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
-                                            placeholder="Doe"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                        Organization / University
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={company}
-                                        onChange={(e) => setCompany(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
-                                        placeholder="Institution name"
-                                    />
-                                </div>
-                            </>
-                        )}
-
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
-                            <div className="relative group">
-                                <div 
-                                    style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
-                                    className="pointer-events-none text-slate-400 group-focus-within:text-[#3066bb] transition-colors"
-                                >
-                                    <Mail size={16} />
-                                </div>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    style={{ paddingLeft: '42px', paddingRight: '14px' }}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
-                                    placeholder="name@example.com"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
-                            <div className="relative group">
-                                <div 
-                                    style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
-                                    className="pointer-events-none text-slate-400 group-focus-within:text-[#3066bb] transition-colors"
-                                >
-                                    <Lock size={16} />
-                                </div>
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    style={{ paddingLeft: '42px', paddingRight: '42px' }}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3066bb]/30 focus:border-[#3066bb] focus:bg-white transition-all"
-                                    placeholder="••••••••"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
-                                    className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                                >
-                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {error && (
-                            <div className={`p-3.5 rounded-xl text-xs font-medium text-center animate-in slide-in-from-top-2 border ${
-                                error.toLowerCase().includes("pending admin approval")
-                                    ? "bg-amber-50/90 border-amber-200 text-amber-900 leading-relaxed text-left"
-                                    : "bg-red-50 border-red-200 text-red-600"
-                            }`}>
-                                {error.toLowerCase().includes("pending admin approval") ? (
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-base leading-none">⏳</span>
-                                        <div>
-                                            <p className="font-semibold text-amber-900">Account Pending Admin Approval</p>
-                                            <p className="text-[11px] text-amber-800/90 mt-0.5">Your registration was successful and is awaiting administrator review. You will be able to log in once an admin activates your account.</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    error
-                                )}
-                            </div>
-                        )}
-
-                        {successMsg && (
-                            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-medium text-center animate-in slide-in-from-top-2">
-                                {successMsg}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-[#3066bb] hover:bg-[#255299] text-white py-3 mt-2 rounded-xl font-semibold tracking-wide transition-all active:scale-[0.98] shadow-md hover:shadow-lg flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70"
-                        >
-                            {loading ? (
-                                <span className="flex items-center gap-2">
-                                    <ShieldCheck size={18} className="animate-pulse" /> Processing...
-                                </span>
-                            ) : (
-                                <span className="flex items-center gap-2">
-                                    {mode === 'login' ? 'Login' : 'Register'} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                                </span>
-                            )}
-                        </button>
-                    </form>
-                </div>
-            </div>
+            <span className="text-xs font-mono font-bold tracking-wider uppercase text-white">
+              QUANTUM GURU
+            </span>
+          </a>
         </div>
-    );
+
+        {/* Engineering Headline + Understated KaTeX Preview Card */}
+        <div className="relative z-10 max-w-xl space-y-8 my-auto py-8">
+          <div className="space-y-3">
+            <div className="text-[11px] font-mono tracking-widest uppercase text-zinc-500">
+              Quantum IDE &middot; Enterprise Optimization Studio
+            </div>
+            <h1 className="text-3xl xl:text-[36px] font-semibold tracking-tight text-zinc-100 leading-[1.18]">
+              Quantum Circuits &amp; Combinatorial Optimization, Verified Side-by-Side.
+            </h1>
+          </div>
+
+          {/* Calm KaTeX QUBO Hamiltonian Preview Card */}
+          <div
+            style={{ backgroundColor: "#0E0F13" }}
+            className="rounded-xl border border-white/[0.08] p-5 space-y-4"
+          >
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/[0.06] text-[10.5px] font-mono">
+              <span className="text-zinc-400">QUBO Hamiltonian Formulation</span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                <CheckCircle2 className="w-3 h-3 shrink-0" />
+                <span>Verified Equivalence</span>
+              </span>
+            </div>
+
+            <div className="py-1 overflow-x-auto custom-scrollbar text-zinc-100">
+              <LatexMath
+                math={HERO_HAMILTONIAN_LATEX}
+                inline={false}
+                isDark={true}
+                className="text-left text-base"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-white/[0.06] font-mono">
+              <div
+                style={{ backgroundColor: "#090A0D" }}
+                className="px-3 py-2 rounded-lg border border-white/[0.07] space-y-0.5"
+              >
+                <div className="text-[10px] text-zinc-500">Annealing Engine</div>
+                <div className="text-[11px] font-medium text-zinc-200">
+                  D-Wave SA (QUBO)
+                </div>
+              </div>
+              <div
+                style={{ backgroundColor: "#090A0D" }}
+                className="px-3 py-2 rounded-lg border border-white/[0.07] space-y-0.5"
+              >
+                <div className="text-[10px] text-zinc-500">Exact Baseline</div>
+                <div className="text-[11px] font-medium text-zinc-200">
+                  Google OR-Tools CP-SAT
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Muted Capability Strip */}
+        <div className="relative z-10 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-mono text-zinc-500">
+          <span>Qiskit Aer</span>
+          <span className="text-zinc-700">&middot;</span>
+          <span>D-Wave SA</span>
+          <span className="text-zinc-700">&middot;</span>
+          <span>Google OR-Tools</span>
+          <span className="text-zinc-700">&middot;</span>
+          <span>48 Benchmarks</span>
+        </div>
+      </section>
+
+      {/* ── RIGHT 45%: Borderless Auth Pane ── */}
+      <main
+        style={{ backgroundColor: "#0E0F13" }}
+        className="relative flex-1 lg:w-[45%] min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:border-l border-white/[0.08]"
+      >
+        {/* Signature 2px Quantum Guru Top Progress & Status Hairline */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] overflow-hidden"
+        >
+          {loading && (
+            <div className="relative h-full w-full bg-[#2E65BF]/20">
+              <div
+                style={{
+                  width: "36%",
+                  background:
+                    "linear-gradient(90deg, transparent 0%, #2E65BF 20%, #1BB0CE 62%, #38BDF8 90%, transparent 100%)",
+                  boxShadow: "0 0 12px rgba(27, 176, 206, 0.85)",
+                }}
+                className="h-full qg-nav-beam-sweep"
+              />
+            </div>
+          )}
+          {!loading && successMsg && (
+            <div
+              style={{
+                background:
+                  "linear-gradient(90deg, #059669 0%, #10B981 50%, #34D399 100%)",
+              }}
+              className="h-full w-full opacity-80"
+            />
+          )}
+          {!loading && error && (
+            <div
+              style={{
+                background:
+                  "linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FBBF24 100%)",
+              }}
+              className="h-full w-full opacity-80"
+            />
+          )}
+        </div>
+
+        {/* Mobile-only Brand Anchor (keeps single logo across every viewport) */}
+        <div className="lg:hidden">
+          <a
+            href="https://www.quantumcomputers.guru/"
+            className="inline-flex items-center space-x-2.5 select-none"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden border border-slate-200/50">
+              <img
+                src="/qg-logo.png"
+                alt="Quantum Guru"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <span className="text-xs font-mono font-bold tracking-wider uppercase text-white">
+              QUANTUM GURU
+            </span>
+          </a>
+        </div>
+
+        {/* Centered Borderless Auth Form */}
+        <div className="w-full max-w-sm mx-auto my-auto py-8 space-y-7">
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-100">
+              {mode === "login"
+                ? "Sign in to Quantum Guru"
+                : "Request workspace access"}
+            </h2>
+            <p className="text-xs font-mono text-zinc-500">
+              {mode === "login"
+                ? "Enter your credentials to open your workspace."
+                : "New accounts are activated after administrator review."}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === "signup" && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-zinc-400">
+                      First name
+                    </label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      style={{ backgroundColor: "#090A0D" }}
+                      className="w-full border border-white/[0.1] focus:border-white/[0.28] rounded-lg py-2.5 px-3 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-colors"
+                      placeholder="Jane"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-zinc-400">
+                      Last name
+                    </label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      style={{ backgroundColor: "#090A0D" }}
+                      className="w-full border border-white/[0.1] focus:border-white/[0.28] rounded-lg py-2.5 px-3 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-colors"
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-mono text-zinc-400">
+                    Organization / University
+                  </label>
+                  <input
+                    type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    style={{ backgroundColor: "#090A0D" }}
+                    className="w-full border border-white/[0.1] focus:border-white/[0.28] rounded-lg py-2.5 px-3 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-colors"
+                    placeholder="Institution or company"
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-mono text-zinc-400">
+                Email
+              </label>
+              <div className="relative group">
+                <Mail className="w-3.5 h-3.5 text-zinc-500 group-focus-within:text-zinc-300 transition-colors pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ backgroundColor: "#090A0D" }}
+                  className="w-full border border-white/[0.1] focus:border-white/[0.28] rounded-lg py-2.5 pl-9 pr-3 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-colors"
+                  placeholder="name@example.com"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-mono text-zinc-400">
+                Password
+              </label>
+              <div className="relative group">
+                <Lock className="w-3.5 h-3.5 text-zinc-500 group-focus-within:text-zinc-300 transition-colors pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={
+                    mode === "login" ? "current-password" : "new-password"
+                  }
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{ backgroundColor: "#090A0D" }}
+                  className="w-full border border-white/[0.1] focus:border-white/[0.28] rounded-lg py-2.5 pl-9 pr-9 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-colors"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div
+                className={`p-3 rounded-lg text-xs font-mono border leading-relaxed ${
+                  isPendingApproval
+                    ? "bg-amber-500/10 border-amber-500/25 text-amber-200"
+                    : "bg-rose-500/10 border-rose-500/25 text-rose-300"
+                }`}
+              >
+                {isPendingApproval ? (
+                  <div className="space-y-1">
+                    <p className="font-semibold text-amber-200">
+                      Account pending admin approval
+                    </p>
+                    <p className="text-[11px] font-sans text-amber-200/80">
+                      Your registration was received and is awaiting administrator
+                      review. You can sign in once activated.
+                    </p>
+                  </div>
+                ) : (
+                  error
+                )}
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="p-3 rounded-lg text-xs font-mono bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 leading-relaxed">
+                {successMsg}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-zinc-200 hover:bg-white text-zinc-900 py-2.5 mt-1 rounded-lg text-xs font-mono font-semibold tracking-tight transition-all active:scale-[0.98] shadow-sm flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <span>
+                  {mode === "login" ? "Signing in..." : "Submitting request..."}
+                </span>
+              ) : (
+                <>
+                  <span>
+                    {mode === "login" ? "Continue" : "Request access"}
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Quiet Footer Mode Switch */}
+          <div className="pt-5 border-t border-white/[0.07] text-center text-xs font-mono text-zinc-500">
+            {mode === "login" ? (
+              <>
+                No account yet?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signup");
+                    setError("");
+                    setSuccessMsg("");
+                  }}
+                  className="text-zinc-200 hover:text-white underline underline-offset-4 decoration-white/25 hover:decoration-white transition-colors cursor-pointer"
+                >
+                  Request access
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("login");
+                    setError("");
+                    setSuccessMsg("");
+                  }}
+                  className="text-zinc-200 hover:text-white underline underline-offset-4 decoration-white/25 hover:decoration-white transition-colors cursor-pointer"
+                >
+                  Sign in
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Subtle Bottom Caption */}
+        <div className="text-[10.5px] font-mono text-zinc-600 text-center lg:text-right">
+          Quantum Guru Studio
+        </div>
+      </main>
+    </div>
+  );
 }
 
 export default function LoginPage() {
-    return (
-        <Suspense>
-            <LoginForm />
-        </Suspense>
-    );
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
 }
