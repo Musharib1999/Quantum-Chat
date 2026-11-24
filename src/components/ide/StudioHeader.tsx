@@ -312,152 +312,6 @@ export function StudioHeader({
             </span>
             <ChevronDown className="w-3 h-3 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200 transition-transform" />
           </button>
-
-          {/* Breadcrumb Separator */}
-          <span
-            className={`text-xs select-none px-0.5 ${
-              isDark ? "text-zinc-600" : "text-slate-400"
-            }`}
-          >
-            /
-          </span>
-
-          {/* File Dropdown Trigger Pill (Directly Anchored Popover) */}
-          <div className="relative" ref={fileDropdownRef}>
-            <button
-              onClick={() => setIsFileDropdownOpen((prev) => !prev)}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.25 rounded-md text-xs font-mono transition-colors group cursor-pointer border ${
-                isFileDropdownOpen
-                  ? isDark
-                    ? "bg-zinc-800 border-white/[0.12] text-white"
-                    : "bg-slate-100 border-slate-300 text-slate-900"
-                  : isDark
-                  ? "border-transparent hover:bg-zinc-800/80 text-zinc-300 hover:text-white"
-                  : "border-slate-200/80 bg-slate-50 hover:bg-slate-100 text-slate-800 hover:text-slate-900"
-              }`}
-              title="Click to view all project files"
-            >
-              {getFileIcon(currentFile)}
-              <span className={`max-w-[120px] sm:max-w-[160px] truncate font-mono text-[11px] font-semibold ${
-                isDark ? "text-zinc-200" : "text-slate-800"
-              }`}>
-                {currentFile}
-              </span>
-              <ChevronDown
-                className={`w-3 h-3 text-zinc-400 transition-transform duration-150 ${
-                  isFileDropdownOpen ? "rotate-180 text-zinc-300" : ""
-                }`}
-              />
-            </button>
-
-            {/* ── PROJECT FILES DROPDOWN POPOVER ── */}
-            {isFileDropdownOpen && (
-              <div
-                className={`absolute top-full left-0 mt-1.5 w-64 rounded-xl border shadow-2xl backdrop-blur-md z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 ${
-                  isDark
-                    ? "bg-[#13141A]/95 border-white/[0.12] text-zinc-200 shadow-black/80"
-                    : "bg-white border-slate-200 text-slate-900 shadow-xl"
-                }`}
-              >
-                {/* Dropdown Header */}
-                <div className={`flex items-center justify-between px-3 py-2 border-b text-[10px] font-mono uppercase tracking-wider ${
-                  isDark ? "border-white/[0.06] text-zinc-400" : "border-slate-100 text-slate-500 bg-slate-50/50"
-                }`}>
-                  <span>Project Files</span>
-                  <span>{projectFiles.length} file{projectFiles.length !== 1 ? "s" : ""}</span>
-                </div>
-
-                {/* Scrollable File List */}
-                <div className="max-h-60 overflow-y-auto custom-scrollbar p-1 space-y-0.5">
-                  {projectFiles.map((file: string) => {
-                    const isActive = file === currentFile;
-                    return (
-                      <button
-                        key={file}
-                        onClick={() => {
-                          onSelectFile?.(file);
-                          setIsFileDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors ${
-                          isActive
-                            ? isDark
-                              ? "bg-white/[0.08] text-white font-semibold"
-                              : "bg-slate-100 text-slate-900 font-semibold"
-                            : isDark
-                            ? "hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200"
-                            : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        <div className="flex items-center space-x-2 min-w-0">
-                          {getFileIcon(file)}
-                          <span className="truncate">{file}</span>
-                        </div>
-                        <div className="flex items-center space-x-1.5 shrink-0 ml-2">
-                          <span className={`text-[10px] font-normal ${isDark ? "text-zinc-500" : "text-slate-400"}`}>
-                            {getFileTypeLabel(file)}
-                          </span>
-                          {isActive && (
-                            <Check className="w-3.5 h-3.5 text-zinc-300" />
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Dropdown Footer: Inline Add File action */}
-                <div className={`p-1.5 border-t ${isDark ? "border-white/[0.06]" : "border-slate-100"}`}>
-                  {isAddingNewFile ? (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const cleanName = newFileNameInput.trim();
-                        if (cleanName) {
-                          onAddFile?.(cleanName);
-                          setNewFileNameInput("");
-                          setIsAddingNewFile(false);
-                          setIsFileDropdownOpen(false);
-                        }
-                      }}
-                      className="flex items-center space-x-1"
-                    >
-                      <input
-                        type="text"
-                        autoFocus
-                        value={newFileNameInput}
-                        onChange={(e) => setNewFileNameInput(e.target.value)}
-                        placeholder="module.py"
-                        className={`flex-1 min-w-0 px-2 py-1 text-xs font-mono rounded border outline-none ${
-                          isDark
-                            ? "bg-black/40 border-white/[0.12] text-zinc-100 focus:border-sky-500/60"
-                            : "bg-white border-slate-300 text-slate-900 focus:border-sky-500"
-                        }`}
-                      />
-                      <button
-                        type="submit"
-                        className="px-2 py-1 rounded text-[10px] font-mono font-semibold bg-sky-600 hover:bg-sky-500 text-white cursor-pointer"
-                      >
-                        Add
-                      </button>
-                    </form>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingNewFile(true)}
-                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-xs font-mono rounded-md transition-colors cursor-pointer ${
-                        isDark
-                          ? "hover:bg-white/[0.05] text-zinc-400 hover:text-zinc-200"
-                          : "hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-medium"
-                      }`}
-                    >
-                      <Plus className="w-3.5 h-3.5 shrink-0" />
-                      <span>New file in project...</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -477,24 +331,6 @@ export function StudioHeader({
             <span className="font-medium">Algorithm Vault</span>
           </button>
         )}
-
-        {/* Enterprise Optimization Studio Switcher */}
-        <Link
-          href="/enterprise"
-          className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono border transition-all cursor-pointer ${
-            isDark
-              ? "bg-sky-500/10 hover:bg-sky-500/20 border-sky-500/20 text-sky-400 hover:text-sky-300"
-              : "bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-700 hover:text-sky-900"
-          }`}
-          title="Switch to Enterprise Optimization Studio"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-          <span className="font-medium">Enterprise Studio</span>
-        </Link>
-
-
-
-
 
         {/* Primary Action Button (Option A: High-Contrast Monochromatic Linear/Vercel style) */}
         <button
@@ -603,6 +439,19 @@ export function StudioHeader({
 
                 {/* Navigation Links */}
                 <div className="p-1 space-y-0.5">
+                  <Link
+                    href="/enterprise"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left ${
+                      isDark
+                        ? "hover:bg-white/[0.06] text-sky-300 hover:text-sky-200"
+                        : "hover:bg-sky-50 text-sky-700 hover:text-sky-800"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Enterprise Studio</span>
+                  </Link>
+
                   {onOpenReportIssue && (
                     <button
                       onClick={() => {
