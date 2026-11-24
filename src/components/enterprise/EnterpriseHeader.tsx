@@ -16,6 +16,7 @@ import {
   Sparkles,
   Square,
   RotateCw,
+  Play,
 } from "lucide-react";
 import type { SurfaceMode } from "./types";
 
@@ -278,31 +279,77 @@ export function EnterpriseHeader({
           </div>
         ) : (
           <div className="relative" ref={solveMenuRef}>
-            <button
-              type="button"
-              onClick={() => setIsSolveMenuOpen((prev) => !prev)}
-              className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-colors border cursor-pointer ${
-                isDark
-                  ? "bg-white/[0.06] hover:bg-white/[0.11] border-white/[0.14] text-zinc-100"
-                  : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white"
-              }`}
-              aria-haspopup="menu"
-              aria-expanded={isSolveMenuOpen}
-            >
-              <span>Solve</span>
-              <ChevronDown
-                className={`w-3 h-3 opacity-70 transition-transform ${
-                  isSolveMenuOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+            {(() => {
+              const canRunAny = canRunDwave || canRunOrtools;
+              const isPrimaryDisabled = canRunAny ? false : !canCompile;
+              return (
+                <div
+                  className={`inline-flex items-stretch rounded-md overflow-hidden border transition-all ${
+                    isPrimaryDisabled
+                      ? isDark
+                        ? "bg-[#2E65BF]/35 border-[#4C82DC]/30 text-white/65"
+                        : "bg-[#2E65BF]/45 border-[#2E65BF]/40 text-white/80"
+                      : "bg-[#2E65BF] border-[#4C82DC]/60 text-white shadow-[0_1px_12px_rgba(46,101,191,0.38)] hover:shadow-[0_2px_16px_rgba(46,101,191,0.55)]"
+                  }`}
+                >
+                  {/* Left half: 1-click smart primary action (Compile before code exists -> Run Parallel once compiled) */}
+                  <button
+                    type="button"
+                    disabled={isPrimaryDisabled}
+                    onClick={() => {
+                      setIsSolveMenuOpen(false);
+                      if (canRunAny) {
+                        onRunParallel?.();
+                      } else {
+                        onCompile?.();
+                      }
+                    }}
+                    className={`flex items-center space-x-1.5 px-3 py-1 text-[11px] font-mono font-semibold tracking-tight transition-colors ${
+                      isPrimaryDisabled
+                        ? "cursor-not-allowed"
+                        : "hover:bg-[#3872D1] active:bg-[#2555A3] cursor-pointer"
+                    }`}
+                    title={
+                      canRunAny
+                        ? "Run D-Wave QUBO and Google OR-Tools CP-SAT side-by-side"
+                        : canCompile
+                        ? "Compile mathematical model, Q-matrix, and solver code"
+                        : "Enter or select a problem to compile"
+                    }
+                  >
+                    {canRunAny && <Play className="w-2.5 h-2.5 fill-current shrink-0" />}
+                    <span>{canRunAny ? "Run Parallel" : "Compile"}</span>
+                  </button>
+
+                  {/* Divider */}
+                  <span className="w-[1px] bg-white/20 shrink-0" aria-hidden="true" />
+
+                  {/* Right half: dropdown toggle for all Compile / Solver options */}
+                  <button
+                    type="button"
+                    onClick={() => setIsSolveMenuOpen((prev) => !prev)}
+                    className="px-2 py-1 flex items-center justify-center hover:bg-[#3872D1] active:bg-[#2555A3] transition-colors cursor-pointer"
+                    aria-label="More solver options"
+                    aria-haspopup="menu"
+                    aria-expanded={isSolveMenuOpen}
+                    title="Compile & solver options"
+                  >
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${
+                        isSolveMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+              );
+            })()}
 
             {isSolveMenuOpen && (
               <div
                 style={{
                   backgroundColor: isDark ? "#111216" : "#FFFFFF",
                 }}
-                className={`absolute right-0 top-full mt-1.5 w-44 rounded-lg border shadow-2xl z-50 py-1 text-xs font-mono ${
+                className={`absolute right-0 top-full mt-1.5 w-48 rounded-lg border shadow-2xl z-50 py-1 text-xs font-mono ${
                   isDark
                     ? "border-white/[0.12] text-zinc-200 shadow-black/80"
                     : "border-slate-200 text-slate-800 shadow-lg"
@@ -333,6 +380,25 @@ export function EnterpriseHeader({
                     isDark ? "border-white/[0.08]" : "border-slate-200"
                   }`}
                 />
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canRunDwave && !canRunOrtools}
+                  onClick={() => {
+                    setIsSolveMenuOpen(false);
+                    onRunParallel?.();
+                  }}
+                  className={`w-full text-left px-3 py-1.5 transition-colors ${
+                    canRunDwave || canRunOrtools
+                      ? isDark
+                        ? "hover:bg-white/[0.06] text-zinc-100 hover:text-white font-medium cursor-pointer"
+                        : "hover:bg-slate-100 text-slate-900 font-medium cursor-pointer"
+                      : "text-zinc-600 cursor-not-allowed"
+                  }`}
+                >
+                  Run Parallel
+                </button>
 
                 <button
                   type="button"
@@ -370,25 +436,6 @@ export function EnterpriseHeader({
                   }`}
                 >
                   Run Google OR-Tools
-                </button>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={!canRunDwave && !canRunOrtools}
-                  onClick={() => {
-                    setIsSolveMenuOpen(false);
-                    onRunParallel?.();
-                  }}
-                  className={`w-full text-left px-3 py-1.5 transition-colors ${
-                    canRunDwave || canRunOrtools
-                      ? isDark
-                        ? "hover:bg-white/[0.06] text-zinc-100 hover:text-white font-medium cursor-pointer"
-                        : "hover:bg-slate-100 text-slate-900 font-medium cursor-pointer"
-                      : "text-zinc-600 cursor-not-allowed"
-                  }`}
-                >
-                  Run Parallel
                 </button>
               </div>
             )}

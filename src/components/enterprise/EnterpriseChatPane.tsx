@@ -325,9 +325,9 @@ export function EnterpriseChatPane({
                         </div>
 
                         <p className={`text-xs font-sans leading-relaxed ${isDark ? "text-zinc-400" : "text-slate-600"}`}>
-                          Mathematical model, Q-matrix, and solver scripts are ready. Run a solver under{" "}
-                          <span className={`font-mono text-[11px] ${isDark ? "text-zinc-200" : "text-slate-800"}`}>Solve</span>{" "}
-                          to evaluate feasibility and optimality.
+                          Mathematical model, Q-matrix, and solver scripts are ready. Click{" "}
+                          <span className={`font-mono text-[11px] ${isDark ? "text-zinc-200" : "text-slate-800"}`}>Run Parallel</span>{" "}
+                          or choose a solver from the top bar to evaluate feasibility and optimality.
                         </p>
                       </div>
                     )}
