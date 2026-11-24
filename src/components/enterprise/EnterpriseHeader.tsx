@@ -141,14 +141,15 @@ export function EnterpriseHeader({
       style={{
         backgroundColor: isDark ? "#0E0F13" : "#FFFFFF",
       }}
-      className={`relative h-12 border-b grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 sm:px-4 shrink-0 z-30 transition-colors enterprise-bg-layer-1 ${
+      className={`relative h-12 border-b pl-2 pr-3.5 flex items-center justify-between gap-4 shrink-0 z-30 shadow-xs transition-colors enterprise-bg-layer-1 ${
         isDark ? "border-white/[0.08]" : "border-slate-200"
       }`}
     >
-      {/* Left: Brand Anchor (Exact Logo from IDE) */}
-      <div className="flex items-center space-x-3 min-w-0 overflow-hidden">
+      {/* ── LEFT: Brand Anchor + View Tabs + Project Title (Exact IDE Layout Order & Sizing) ── */}
+      <div className="flex items-center gap-5 min-w-0 overflow-hidden">
+        {/* Section 1: Brand Anchor (Exact IDE Logo & Text Size) */}
         <Link href="/" className="flex items-center space-x-2.5 shrink-0 select-none group">
-          <div className="w-7 h-7 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50 group-hover:scale-105 transition-transform">
+          <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50 group-hover:scale-105 transition-transform">
             <img
               src="/qg-logo.png"
               alt="Quantum Guru"
@@ -164,39 +165,30 @@ export function EnterpriseHeader({
           </span>
         </Link>
 
-        {activeProblemTitle && (
-          <>
-            <div
-              className={`hidden md:block h-4 w-[1px] shrink-0 ${
-                isDark ? "bg-white/10" : "bg-slate-200"
-              }`}
-            />
-            <span className="hidden md:inline text-xs font-mono text-zinc-400 truncate min-w-0">
-              {activeProblemTitle}
-            </span>
-          </>
-        )}
-      </div>
+        {/* Structural Divider 1: Brand ↔ Workspace Navigation */}
+        <div
+          className={`h-4 w-[1px] shrink-0 ${
+            isDark ? "bg-white/10" : "bg-slate-200"
+          }`}
+        />
 
-      {/* Center: Surface Mode Switcher (always dead-center) */}
-      <div className="flex items-center justify-center space-x-3 text-[11px] font-mono shrink-0">
+        {/* Section 2: Surface Mode Switcher (Exact IDE Hero Tabs Styling & Size) */}
         {onSelectSurfaceMode && (
           <div
-            style={{
-              backgroundColor: isDark ? "#090A0D" : "#F1F5F9",
-            }}
-            className={`flex items-center p-0.5 rounded-lg border enterprise-bg-layer-0 ${
-              isDark ? "border-white/[0.08]" : "border-slate-200"
+            className={`flex items-center space-x-0.5 p-0.5 rounded-lg text-xs font-mono select-none transition-colors shrink-0 ${
+              isDark ? "bg-white/[0.06]" : "bg-slate-100 border border-slate-200/60"
             }`}
           >
             <button
               onClick={() => onSelectSurfaceMode("copilot")}
-              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer ${
                 surfaceMode === "copilot"
                   ? isDark
-                    ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
-                    : "bg-white text-slate-900 font-medium border border-slate-200 shadow-xs"
-                  : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white/[0.12] text-white shadow-xs"
+                    : "bg-white text-slate-900 font-semibold shadow-xs"
+                  : isDark
+                  ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
               }`}
               title="Copilot View"
             >
@@ -204,12 +196,14 @@ export function EnterpriseHeader({
             </button>
             <button
               onClick={() => onSelectSurfaceMode("workbench")}
-              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer ${
                 surfaceMode === "workbench"
                   ? isDark
-                    ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
-                    : "bg-white text-slate-900 font-medium border border-slate-200 shadow-xs"
-                  : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white/[0.12] text-white shadow-xs"
+                    : "bg-white text-slate-900 font-semibold shadow-xs"
+                  : isDark
+                  ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
               }`}
               title="Workbench View (Math Deck + Code Studio)"
             >
@@ -217,12 +211,14 @@ export function EnterpriseHeader({
             </button>
             <button
               onClick={() => onSelectSurfaceMode("library")}
-              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer ${
                 surfaceMode === "library"
                   ? isDark
-                    ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
-                    : "bg-white text-slate-900 font-medium border border-slate-200 shadow-xs"
-                  : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white/[0.12] text-white shadow-xs"
+                    : "bg-white text-slate-900 font-semibold shadow-xs"
+                  : isDark
+                  ? "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
               }`}
               title="Verified Industry Problem Library"
             >
@@ -230,9 +226,23 @@ export function EnterpriseHeader({
             </button>
           </div>
         )}
+
+        {/* Structural Divider 2 + Active Project Title */}
+        {activeProblemTitle && (
+          <>
+            <div
+              className={`hidden lg:block h-4 w-[1px] shrink-0 ${
+                isDark ? "bg-white/10" : "bg-slate-200"
+              }`}
+            />
+            <span className="hidden lg:inline text-xs font-mono text-zinc-400 truncate min-w-0 max-w-[300px]">
+              {activeProblemTitle}
+            </span>
+          </>
+        )}
       </div>
 
-      {/* Right: Demo Indicator, Solve Dropdown, Profile Dropdown */}
+      {/* ── RIGHT: Demo Indicator, IDE-Matched Run Split CTA, Divider, Profile Dropdown ── */}
       <div className="flex items-center justify-end space-x-2.5 shrink-0">
         {isDemo && (
           <span
@@ -247,12 +257,12 @@ export function EnterpriseHeader({
           </span>
         )}
 
-        {/* Solve / Stop Dropdown + Live Phase Micro-Label */}
+        {/* Primary Action Split Button (Exact IDE Run Circuit Style) / Active Stop Button */}
         {isSolving && onStopSolving ? (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2.5">
             {activityLabel && (
               <span
-                className={`hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono tabular-nums ${
+                className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-mono tabular-nums ${
                   isDark ? "text-sky-400/90" : "text-[#2E65BF]"
                 }`}
               >
@@ -267,7 +277,7 @@ export function EnterpriseHeader({
             <button
               type="button"
               onClick={onStopSolving}
-              className={`px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-colors border cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-md text-xs font-mono font-semibold transition-colors border cursor-pointer ${
                 isDark
                   ? "bg-rose-500/15 hover:bg-rose-500/25 border-rose-500/35 text-rose-300"
                   : "bg-rose-50 hover:bg-rose-100 border-rose-300 text-rose-700"
@@ -284,12 +294,14 @@ export function EnterpriseHeader({
               const isPrimaryDisabled = canRunAny ? false : !canCompile;
               return (
                 <div
-                  className={`inline-flex items-stretch rounded-md overflow-hidden border transition-all ${
-                    isPrimaryDisabled
-                      ? isDark
-                        ? "bg-[#2E65BF]/35 border-[#4C82DC]/30 text-white/65"
-                        : "bg-[#2E65BF]/45 border-[#2E65BF]/40 text-white/80"
-                      : "bg-[#2E65BF] border-[#4C82DC]/60 text-white shadow-[0_1px_12px_rgba(46,101,191,0.38)] hover:shadow-[0_2px_16px_rgba(46,101,191,0.55)]"
+                  className={`inline-flex items-stretch rounded-md overflow-hidden transition-all shadow-sm ${
+                    isDark
+                      ? isPrimaryDisabled
+                        ? "bg-zinc-200/35 text-zinc-900/60"
+                        : "bg-zinc-200 text-zinc-900 shadow-zinc-900/20"
+                      : isPrimaryDisabled
+                      ? "bg-slate-900/40 text-white/70"
+                      : "bg-slate-900 text-white shadow-slate-900/10"
                   }`}
                 >
                   {/* Left half: 1-click smart primary action (Compile before code exists -> Run Parallel once compiled) */}
@@ -304,10 +316,12 @@ export function EnterpriseHeader({
                         onCompile?.();
                       }
                     }}
-                    className={`flex items-center space-x-1.5 px-3 py-1 text-[11px] font-mono font-semibold tracking-tight transition-colors ${
+                    className={`flex items-center space-x-1.5 px-3.5 py-1.5 text-xs font-semibold font-mono transition-all ${
                       isPrimaryDisabled
                         ? "cursor-not-allowed"
-                        : "hover:bg-[#3872D1] active:bg-[#2555A3] cursor-pointer"
+                        : isDark
+                        ? "hover:bg-white active:scale-[0.98] cursor-pointer"
+                        : "hover:bg-slate-800 active:scale-[0.98] cursor-pointer"
                     }`}
                     title={
                       canRunAny
@@ -317,25 +331,32 @@ export function EnterpriseHeader({
                         : "Enter or select a problem to compile"
                     }
                   >
-                    {canRunAny && <Play className="w-2.5 h-2.5 fill-current shrink-0" />}
+                    <Play className="w-3.5 h-3.5 fill-current shrink-0" />
                     <span>{canRunAny ? "Run Parallel" : "Compile"}</span>
                   </button>
 
-                  {/* Divider */}
-                  <span className="w-[1px] bg-white/20 shrink-0" aria-hidden="true" />
+                  {/* Split divider */}
+                  <span
+                    className={`w-[1px] shrink-0 ${
+                      isDark ? "bg-zinc-900/15" : "bg-white/20"
+                    }`}
+                    aria-hidden="true"
+                  />
 
                   {/* Right half: dropdown toggle for all Compile / Solver options */}
                   <button
                     type="button"
                     onClick={() => setIsSolveMenuOpen((prev) => !prev)}
-                    className="px-2 py-1 flex items-center justify-center hover:bg-[#3872D1] active:bg-[#2555A3] transition-colors cursor-pointer"
+                    className={`px-2 py-1.5 flex items-center justify-center transition-colors cursor-pointer ${
+                      isDark ? "hover:bg-white" : "hover:bg-slate-800"
+                    }`}
                     aria-label="More solver options"
                     aria-haspopup="menu"
                     aria-expanded={isSolveMenuOpen}
                     title="Compile & solver options"
                   >
                     <ChevronDown
-                      className={`w-3 h-3 transition-transform ${
+                      className={`w-3.5 h-3.5 transition-transform ${
                         isSolveMenuOpen ? "rotate-180" : ""
                       }`}
                     />
@@ -441,6 +462,8 @@ export function EnterpriseHeader({
             )}
           </div>
         )}
+
+        <div className={`h-4 w-[1px] shrink-0 ${isDark ? "bg-zinc-700/50" : "bg-slate-200"}`} />
 
         {/* User / Session Badge & Logout Dropdown */}
         {isAuthenticated ? (
