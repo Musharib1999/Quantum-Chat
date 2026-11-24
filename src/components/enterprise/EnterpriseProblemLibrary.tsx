@@ -711,16 +711,13 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
             role="dialog"
             aria-label={activeDrawerItem.title}
             style={{ backgroundColor: isDark ? "#0B0C10" : "#FFFFFF" }}
-            className={`relative z-10 w-full max-w-xl h-full border-l flex flex-col shadow-2xl ${border}`}
+            className={`relative z-10 w-full max-w-lg h-full border-l flex flex-col shadow-2xl ${border}`}
           >
             {/* Sticky Header */}
             <div className={`px-5 py-4 border-b flex items-start justify-between gap-4 shrink-0 ${border}`}>
               <div className="min-w-0 space-y-1">
                 <div className={`text-[11px] font-mono ${textFaint}`}>
-                  {activeDrawerItem.industry} · {activeDrawerItem.problemType} · {SIZE_LABEL[activeDrawerItem.sizeTier]} ·{" "}
-                  {activeDrawerItem.benchmark
-                    ? `${activeDrawerItem.benchmark.quboVars} QUBO vars`
-                    : `~${activeDrawerItem.estimatedBinaryVars} vars`}
+                  {activeDrawerItem.industry} · {activeDrawerItem.problemType}
                 </div>
                 <h2 className={`text-base font-semibold font-sans leading-snug ${textMain}`}>
                   {activeDrawerItem.title}
@@ -740,7 +737,7 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                       : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white cursor-pointer"
                   }`}
                 >
-                  Load Problem
+                  Load
                 </button>
                 <button
                   type="button"
@@ -755,255 +752,198 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
               </div>
             </div>
 
-            {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
-              {/* Summary + Verdict */}
-              <div className="space-y-2">
-                <p className={`text-[13px] leading-relaxed font-sans ${textMuted}`}>
-                  {activeDrawerItem.description}
-                </p>
+            {/* Scrollable Body — Clean Progressive Disclosure */}
+            <div key={activeDrawerItem.slug} className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+              {/* 1-sentence summary */}
+              <p className={`text-[13px] leading-relaxed font-sans ${textMuted}`}>
+                {activeDrawerItem.description}
+              </p>
+
+              {/* Single Clean Key–Value Table (No Nested Boxes, No Duplication) */}
+              <div className={`divide-y border-y text-[12px] font-mono ${border} ${isDark ? "divide-white/[0.06]" : "divide-slate-100"}`}>
+                <div className="py-2.5 flex items-center justify-between gap-4">
+                  <span className={textFaint}>Solver Fit</span>
+                  <span className={`font-medium ${activeDrawerItem.benchmark ? verdictTextClass(activeDrawerItem.benchmark.verdict) : textMuted}`}>
+                    {activeDrawerItem.benchmark
+                      ? VERDICT_LABEL[activeDrawerItem.benchmark.verdict] || activeDrawerItem.benchmark.verdict
+                      : "—"}
+                  </span>
+                </div>
+
+                <div className="py-2.5 flex items-center justify-between gap-4">
+                  <span className={textFaint}>Problem Size</span>
+                  <span className={textMain}>
+                    {SIZE_LABEL[activeDrawerItem.sizeTier]} ·{" "}
+                    {activeDrawerItem.benchmark
+                      ? `${activeDrawerItem.benchmark.quboVars} QUBO vars`
+                      : `~${activeDrawerItem.estimatedBinaryVars} vars`}
+                  </span>
+                </div>
+
+                <div className="py-2.5 flex items-center justify-between gap-4">
+                  <span className={textFaint}>Best Known ({activeDrawerItem.objectiveSense})</span>
+                  <span className={`font-medium ${textMain}`}>{activeDrawerItem.bestKnown.value}</span>
+                </div>
+
                 {activeDrawerItem.benchmark && (
-                  <div
-                    className={`rounded-lg border px-3.5 py-2.5 space-y-1 ${border} ${
-                      isDark ? "bg-white/[0.02]" : "bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2 text-[11px] font-mono">
-                      <span className={textFaint}>Solver Fit</span>
-                      <span className={`font-medium ${verdictTextClass(activeDrawerItem.benchmark.verdict)}`}>
-                        {VERDICT_LABEL[activeDrawerItem.benchmark.verdict] || activeDrawerItem.benchmark.verdict}
+                  <>
+                    <div className="py-2.5 flex items-center justify-between gap-4">
+                      <span className={textFaint}>OR-Tools CP-SAT</span>
+                      <span className={textMuted}>
+                        <strong className={textMain}>{activeDrawerItem.benchmark.classical.bestObjective ?? "—"}</strong>{" "}
+                        · {fmtMs(activeDrawerItem.benchmark.classical.solveTimeMs ?? activeDrawerItem.benchmark.classical.meanTimeMs)}
                       </span>
                     </div>
-                    <p className={`text-[12px] leading-relaxed font-sans ${textMuted}`}>
-                      {activeDrawerItem.benchmark.verdictNote}
-                    </p>
-                  </div>
-                )}
-              </div>
 
-              {/* 20-Seed Side-by-Side Solver Comparison */}
-              {activeDrawerItem.benchmark && (
-                <div className="space-y-2">
-                  <div className={`text-[11px] font-mono ${textFaint}`}>
-                    Seeded Benchmark (N={activeDrawerItem.benchmark.protocol.repeats} held-out seeds)
-                  </div>
-                  <div
-                    className={`rounded-lg border ${border} grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x ${
-                      isDark ? "divide-white/[0.08] bg-white/[0.015]" : "divide-slate-200 bg-slate-50/70"
-                    } text-[11px] font-mono`}
-                  >
-                    <div className="p-3 space-y-1">
-                      <div className={textFaint}>D-Wave SA (classical software)</div>
-                      {activeDrawerItem.benchmark.qubo.exceedsLimit ? (
-                        <div className={isDark ? "text-amber-400" : "text-amber-700"}>
-                          Exceeds {activeDrawerItem.benchmark.protocol.maxQuboVars}-var cap (
-                          {activeDrawerItem.benchmark.quboVars} vars)
-                        </div>
-                      ) : activeDrawerItem.benchmark.qubo.bestObjective === null ? (
-                        <div className={textMuted}>
-                          0/{activeDrawerItem.benchmark.qubo.totalRuns} feasible
-                        </div>
-                      ) : (
-                        <>
-                          <div className={textMain}>
-                            Med{" "}
-                            <strong>
+                    <div className="py-2.5 flex items-center justify-between gap-4">
+                      <span className={textFaint}>D-Wave SA (software)</span>
+                      <span className={textMuted}>
+                        {activeDrawerItem.benchmark.qubo.exceedsLimit ? (
+                          <span className={isDark ? "text-amber-400" : "text-amber-700"}>
+                            &gt; {activeDrawerItem.benchmark.protocol.maxQuboVars}-var limit
+                          </span>
+                        ) : activeDrawerItem.benchmark.qubo.bestObjective === null ? (
+                          <span>0/{activeDrawerItem.benchmark.qubo.totalRuns} feasible</span>
+                        ) : (
+                          <span>
+                            <strong className={textMain}>
                               {activeDrawerItem.benchmark.qubo.medianObjective ??
                                 activeDrawerItem.benchmark.qubo.bestObjective}
                             </strong>{" "}
-                            <span className={textMuted}>
-                              (
-                              {(
-                                activeDrawerItem.benchmark.qubo.medianGapVsBestKnownPct ??
-                                activeDrawerItem.benchmark.qubo.gapVsBestKnownPct
-                              )?.toFixed(2)}
-                              % gap)
-                            </span>
-                          </div>
-                          <div className={textFaint}>
-                            Best {activeDrawerItem.benchmark.qubo.bestObjective} · Worst{" "}
-                            {activeDrawerItem.benchmark.qubo.worstObjective ?? "—"} ·{" "}
-                            {activeDrawerItem.benchmark.qubo.feasibleRuns}/
-                            {activeDrawerItem.benchmark.qubo.totalRuns} feas
-                          </div>
-                          {activeDrawerItem.benchmark.qubo.meanObjective !== null && (
-                            <div className={textFaint}>
-                              Mean {activeDrawerItem.benchmark.qubo.meanObjective.toFixed(2)} ±{" "}
-                              {(activeDrawerItem.benchmark.qubo.stdObjective ?? 0).toFixed(2)}
-                              {typeof activeDrawerItem.benchmark.qubo.iqrObjective === "number"
-                                ? ` · IQR ${activeDrawerItem.benchmark.qubo.iqrObjective}`
-                                : ""}
-                            </div>
-                          )}
-                          <div className={textFaint}>
-                            Solve {fmtMs(activeDrawerItem.benchmark.qubo.solveTimeMs ?? activeDrawerItem.benchmark.qubo.meanTimeMs)}
-                            {typeof activeDrawerItem.benchmark.qubo.tuneTimeMs === "number"
-                              ? ` · Tune ${fmtMs(activeDrawerItem.benchmark.qubo.tuneTimeMs)}`
-                              : ""}
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="p-3 space-y-1">
-                      <div className={textFaint}>Google OR-Tools CP-SAT</div>
-                      <div className={textMain}>
-                        Opt <strong>{activeDrawerItem.benchmark.classical.bestObjective ?? "—"}</strong>{" "}
-                        <span className={textMuted}>
-                          (
-                          {typeof activeDrawerItem.benchmark.classical.gapVsBestKnownPct === "number"
-                            ? `${activeDrawerItem.benchmark.classical.gapVsBestKnownPct.toFixed(2)}% gap`
-                            : "—"}
-                          )
-                        </span>
-                      </div>
-                      <div className={textFaint}>
-                        {activeDrawerItem.benchmark.classical.status} ·{" "}
-                        {activeDrawerItem.benchmark.classical.feasibleRuns}/
-                        {activeDrawerItem.benchmark.classical.totalRuns} proven
-                      </div>
-                      <div className={textFaint}>
-                        Solve{" "}
-                        {fmtMs(
-                          activeDrawerItem.benchmark.classical.solveTimeMs ??
-                            activeDrawerItem.benchmark.classical.meanTimeMs
+                            (
+                            {(
+                              activeDrawerItem.benchmark.qubo.medianGapVsBestKnownPct ??
+                              activeDrawerItem.benchmark.qubo.gapVsBestKnownPct
+                            )?.toFixed(2)}
+                            % gap ·{" "}
+                            {fmtMs(
+                              activeDrawerItem.benchmark.qubo.solveTimeMs ?? activeDrawerItem.benchmark.qubo.meanTimeMs
+                            )}
+                            )
+                          </span>
                         )}
-                        {typeof activeDrawerItem.benchmark.classical.buildTimeMs === "number"
-                          ? ` · Build ${fmtMs(activeDrawerItem.benchmark.classical.buildTimeMs)}`
-                          : ""}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* QUBO Structure & Equivalence Proof */}
-              {activeDrawerItem.benchmark?.structure && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[11px] font-mono ${textFaint}`}>QUBO Structure & Equivalence</span>
-                    {activeDrawerItem.benchmark.equivalenceCheck?.passed && (
-                      <span className={`text-[11px] font-mono ${isDark ? "text-emerald-400" : "text-emerald-700"}`}>
-                        QUBO ≡ Original verified (err {activeDrawerItem.benchmark.equivalenceCheck.maxAbsError})
                       </span>
-                    )}
-                  </div>
-                  <div
-                    className={`rounded-lg border px-3 py-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono ${border} ${textMuted}`}
-                  >
-                    <span>
-                      {activeDrawerItem.benchmark.structure.decisionVars} decision +{" "}
-                      {activeDrawerItem.benchmark.structure.slackVars} slack vars
-                    </span>
-                    <span>{activeDrawerItem.benchmark.structure.quadraticCouplings.toLocaleString()} couplings</span>
-                    <span>density {activeDrawerItem.benchmark.structure.densityPct}%</span>
-                    <span>max deg {activeDrawerItem.benchmark.structure.maxDegree}</span>
-                    <span>range {activeDrawerItem.benchmark.structure.dynamicRange}×</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Disjoint λ Sweep Table */}
-              {activeDrawerItem.benchmark && activeDrawerItem.benchmark.qubo.lambdaSweep.length > 0 && (
-                <div className="space-y-2">
-                  <div className={`text-[11px] font-mono ${textFaint}`}>Penalty λ Sweep (disjoint tuning seeds)</div>
-                  <div className={`rounded-lg border ${border} overflow-hidden`}>
-                    <table className="w-full text-left text-[11px] font-mono">
-                      <thead>
-                        <tr className={`border-b ${border} ${textFaint}`}>
-                          <th className="py-1.5 px-3 font-medium">Penalty λ</th>
-                          <th className="py-1.5 px-3 font-medium">Feasibility</th>
-                          <th className="py-1.5 px-3 font-medium text-right">Median Obj</th>
-                          <th className="py-1.5 px-3 font-medium text-right">Best Obj</th>
-                        </tr>
-                      </thead>
-                      <tbody className={`divide-y ${isDark ? "divide-white/[0.06]" : "divide-slate-100"}`}>
-                        {activeDrawerItem.benchmark.qubo.lambdaSweep.map((pt) => {
-                          const isChosen = pt.lambda === activeDrawerItem.benchmark?.qubo.bestLambda;
-                          return (
-                            <tr
-                              key={pt.lambda}
-                              className={isChosen ? (isDark ? "bg-white/[0.04]" : "bg-slate-50") : ""}
-                            >
-                              <td className={`py-1.5 px-3 ${isChosen ? textMain : textMuted}`}>
-                                {pt.lambda}
-                                {isChosen ? " (selected)" : ""}
-                              </td>
-                              <td className={`py-1.5 px-3 ${textMuted}`}>
-                                {Math.round(pt.feasibilityRate * 100)}%
-                              </td>
-                              <td className={`py-1.5 px-3 text-right ${textMuted}`}>
-                                {pt.medianObjective ?? "—"}
-                              </td>
-                              <td className={`py-1.5 px-3 text-right ${textMain}`}>
-                                {pt.bestObjective ?? "—"}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Full Problem Statement */}
-              <div className="space-y-2">
-                <div className={`text-[11px] font-mono ${textFaint}`}>Problem statement</div>
-                {!activeDrawerDetail ? (
-                  <div className={`text-[12px] font-mono ${textFaint}`}>Loading full specification...</div>
-                ) : (
-                  <div
-                    className={`rounded-lg border p-3 text-[12px] leading-relaxed font-sans whitespace-pre-wrap ${border} ${textMuted} ${
-                      isDark ? "bg-white/[0.015]" : "bg-slate-50"
-                    }`}
-                  >
-                    {activeDrawerDetail.prompt}
-                  </div>
+                    </div>
+                  </>
                 )}
               </div>
 
-              {/* Verification & Reproducibility Provenance */}
-              <div className={`border-t pt-4 space-y-2 text-[11px] font-mono ${border} ${textFaint}`}>
-                <div>
-                  <span className={textMuted}>
-                    {activeDrawerItem.objectiveSense} best known:{" "}
-                    <strong className={textMain}>{activeDrawerItem.bestKnown.value}</strong> (
-                    {KIND_LABEL[activeDrawerItem.bestKnown.kind]})
-                  </span>{" "}
-                  — {activeDrawerItem.bestKnown.method}
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1">
-                  <span>
-                    Source: {activeDrawerItem.source.name}
-                    {activeDrawerItem.source.url ? ` (${activeDrawerItem.source.url})` : ""}
-                  </span>
-                  <span>License: {activeDrawerItem.source.license}</span>
-                  {activeDrawerDetail && (
-                    <span>
-                      v{activeDrawerDetail.version} · {activeDrawerDetail.contentHash.slice(0, 10)}
-                    </span>
+              {/* Disclosure 1: Problem Statement & Raw Input Data (Collapsed by Default) */}
+              <details className={`group rounded-lg border ${border}`}>
+                <summary
+                  className={`px-3.5 py-2.5 text-[11.5px] font-mono cursor-pointer select-none flex items-center justify-between ${textMuted} ${
+                    isDark ? "hover:text-zinc-100" : "hover:text-slate-900"
+                  }`}
+                >
+                  <span>Problem statement & input data</span>
+                  <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className={`px-3.5 pb-3.5 pt-2 border-t ${border}`}>
+                  {!activeDrawerDetail ? (
+                    <div className={`text-[11.5px] font-mono ${textFaint}`}>Loading...</div>
+                  ) : (
+                    <p className={`text-[12px] leading-relaxed font-sans whitespace-pre-wrap ${textMuted}`}>
+                      {activeDrawerDetail.prompt}
+                    </p>
                   )}
                 </div>
-                {activeDrawerItem.benchmark && (
-                  <div className="flex flex-wrap gap-x-4 gap-y-1">
-                    <span>
-                      Reads: {activeDrawerItem.benchmark.protocol.quboReadsPerRepeat}
-                      {activeDrawerItem.benchmark.protocol.quboNumSweeps
-                        ? ` × ${activeDrawerItem.benchmark.protocol.quboNumSweeps} sweeps`
-                        : ""}
-                    </span>
-                    {activeDrawerItem.benchmark.environment && (
-                      <span>
+              </details>
+
+              {/* Disclosure 2: Benchmark Protocol, λ Sweep & Verification (Collapsed by Default) */}
+              <details className={`group rounded-lg border ${border}`}>
+                <summary
+                  className={`px-3.5 py-2.5 text-[11.5px] font-mono cursor-pointer select-none flex items-center justify-between ${textMuted} ${
+                    isDark ? "hover:text-zinc-100" : "hover:text-slate-900"
+                  }`}
+                >
+                  <span>Benchmark protocol & verification</span>
+                  <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className={`px-3.5 pb-3.5 pt-3 border-t space-y-4 text-[11px] font-mono ${border}`}>
+                  {activeDrawerItem.benchmark && (
+                    <>
+                      <p className={`text-[12px] leading-relaxed font-sans ${textMuted}`}>
+                        {activeDrawerItem.benchmark.verdictNote}
+                      </p>
+
+                      {activeDrawerItem.benchmark.qubo.lambdaSweep.length > 0 && (
+                        <div className={`rounded-md border overflow-hidden ${border}`}>
+                          <table className="w-full text-left text-[11px] font-mono">
+                            <thead>
+                              <tr className={`border-b ${border} ${textFaint}`}>
+                                <th className="py-1.5 px-2.5 font-medium">λ</th>
+                                <th className="py-1.5 px-2.5 font-medium">Feas</th>
+                                <th className="py-1.5 px-2.5 font-medium text-right">Med</th>
+                                <th className="py-1.5 px-2.5 font-medium text-right">Best</th>
+                              </tr>
+                            </thead>
+                            <tbody className={`divide-y ${isDark ? "divide-white/[0.06]" : "divide-slate-100"}`}>
+                              {activeDrawerItem.benchmark.qubo.lambdaSweep.map((pt) => {
+                                const isChosen = pt.lambda === activeDrawerItem.benchmark?.qubo.bestLambda;
+                                return (
+                                  <tr key={pt.lambda} className={isChosen ? (isDark ? "bg-white/[0.04]" : "bg-slate-50") : ""}>
+                                    <td className={`py-1.5 px-2.5 ${isChosen ? textMain : textMuted}`}>
+                                      {pt.lambda}
+                                      {isChosen ? " *" : ""}
+                                    </td>
+                                    <td className={`py-1.5 px-2.5 ${textMuted}`}>{Math.round(pt.feasibilityRate * 100)}%</td>
+                                    <td className={`py-1.5 px-2.5 text-right ${textMuted}`}>{pt.medianObjective ?? "—"}</td>
+                                    <td className={`py-1.5 px-2.5 text-right ${textMain}`}>{pt.bestObjective ?? "—"}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {activeDrawerItem.benchmark.structure && (
+                        <div className={`space-y-1 ${textFaint}`}>
+                          <div>
+                            Structure: {activeDrawerItem.benchmark.structure.decisionVars} decision +{" "}
+                            {activeDrawerItem.benchmark.structure.slackVars} slack ·{" "}
+                            {activeDrawerItem.benchmark.structure.quadraticCouplings.toLocaleString()} couplings ·{" "}
+                            {activeDrawerItem.benchmark.structure.densityPct}% density · deg{" "}
+                            {activeDrawerItem.benchmark.structure.maxDegree} · range{" "}
+                            {activeDrawerItem.benchmark.structure.dynamicRange}×
+                          </div>
+                          {activeDrawerItem.benchmark.equivalenceCheck?.passed && (
+                            <div className={isDark ? "text-emerald-400" : "text-emerald-700"}>
+                              QUBO ≡ Original verified (max err {activeDrawerItem.benchmark.equivalenceCheck.maxAbsError})
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {activeDrawerItem.benchmark.qubo.meanObjective !== null && (
+                        <div className={textFaint}>
+                          SA (N={activeDrawerItem.benchmark.protocol.repeats}): best{" "}
+                          {activeDrawerItem.benchmark.qubo.bestObjective} · med{" "}
+                          {activeDrawerItem.benchmark.qubo.medianObjective ?? "—"} · mean{" "}
+                          {activeDrawerItem.benchmark.qubo.meanObjective.toFixed(2)}±
+                          {(activeDrawerItem.benchmark.qubo.stdObjective ?? 0).toFixed(2)} · worst{" "}
+                          {activeDrawerItem.benchmark.qubo.worstObjective ?? "—"}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className={`space-y-1 pt-2 border-t ${border} ${textFaint}`}>
+                    <div>{activeDrawerItem.bestKnown.method}</div>
+                    <div>
+                      Source: {activeDrawerItem.source.name} ({activeDrawerItem.source.license})
+                      {activeDrawerDetail ? ` · v${activeDrawerDetail.version}` : ""}
+                    </div>
+                    {activeDrawerItem.benchmark?.environment && (
+                      <div>
                         Python {activeDrawerItem.benchmark.environment.pythonVersion} · OR-Tools{" "}
                         {activeDrawerItem.benchmark.environment.ortoolsVersion} · neal{" "}
-                        {activeDrawerItem.benchmark.environment.nealVersion} (
-                        {activeDrawerItem.benchmark.environment.machine})
-                      </span>
+                        {activeDrawerItem.benchmark.environment.nealVersion}
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              </details>
             </div>
           </aside>
         </div>
