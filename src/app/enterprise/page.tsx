@@ -950,139 +950,185 @@ export default function EnterpriseStudioPage() {
       }
       logLines.push(`[OK] Completed in ${totalElapsed}ms.`);
 
-      updateActiveWorkspace((prev) => {
-        const totalCons = prev.mathModel?.constraints?.length || 0;
-        const prevExec = prev.execution;
-        const prevComp = prevExec?.solverComparison;
+      setProjects((prevProjects) =>
+        prevProjects.map((proj) => {
+          if (proj.id !== activeProjectId) return proj;
+          const prev = proj.workspace;
+          const totalCons = prev.mathModel?.constraints?.length || 0;
+          const prevExec = prev.execution;
+          const prevComp = prevExec?.solverComparison;
 
-        // Quantum side: parse fresh run if D-Wave ran, otherwise preserve previous
-        let qFeasible: boolean | null = prevExec?.feasible ?? null;
-        let qEnergy: number | null = prevExec?.energy ?? null;
-        let qObj: number | null = prevExec?.objectiveValue ?? null;
-        let fullSolution: Record<string, number> = prevExec?.solution ? { ...prevExec.solution } : {};
-        let qSelected: string[] = prevExec?.selectedVariables ? [...prevExec.selectedVariables] : [];
-        let qReads: number | null = prevExec?.numReads ?? null;
-        let quantumSide: SolverComparisonSide = prevComp?.quantum || {
-          solver: "D-Wave Simulated Annealer (QUBO)",
-          status: "NOT_RUN",
-          feasible: null,
-          objective_value: null,
-          energy: null,
-          selected_variables: [],
-          constraints_satisfied: 0,
-          constraints_total: totalCons,
-          solve_time_ms: null,
-          logical_qubits: prev.qMatrix?.size || prev.variables.length,
-          penalty_lambda: prev.penaltyLambda,
-        };
-
-        if (quboRes?.data) {
-          const qOpt = quboRes.data.optimization_results;
-          const qStdout = quboRes.data.stdout || "";
-          const sampleObj: Record<string, number> =
-            qOpt?.sample && typeof qOpt.sample === "object" ? qOpt.sample : {};
-          const nextSol: Record<string, number> = {};
-          for (const v of prev.variables) {
-            nextSol[v.name] = typeof sampleObj[v.name] === "number" ? sampleObj[v.name] : 0;
-          }
-          for (const [k, val] of Object.entries(sampleObj)) {
-            if (!k.startsWith("slack_")) {
-              nextSol[k] = Number(val);
-            }
-          }
-          fullSolution = nextSol;
-          qSelected = Object.entries(fullSolution)
-            .filter(([, val]) => Number(val) > 0)
-            .map(([k]) => k);
-          const parsedEnergy = typeof qOpt?.energy === "number" ? qOpt.energy : 0;
-          qEnergy = parsedEnergy;
-          const penMatch = qStdout.match(/Total Penalty:\s*([-+]?\d+(?:\.\d+)?)/);
-          const totalPenalty = penMatch ? parseFloat(penMatch[1]) : 0;
-          qFeasible = totalPenalty <= 1e-4;
-          qObj = Math.round((parsedEnergy - totalPenalty) * 10000) / 10000;
-          qReads = typeof qOpt?.num_reads === "number" ? qOpt.num_reads : 1000;
-          quantumSide = {
+          // Quantum side: parse fresh run if D-Wave ran, otherwise preserve previous
+          let qFeasible: boolean | null = prevExec?.feasible ?? null;
+          let qEnergy: number | null = prevExec?.energy ?? null;
+          let qObj: number | null = prevExec?.objectiveValue ?? null;
+          let fullSolution: Record<string, number> = prevExec?.solution ? { ...prevExec.solution } : {};
+          let qSelected: string[] = prevExec?.selectedVariables ? [...prevExec.selectedVariables] : [];
+          let qReads: number | null = prevExec?.numReads ?? null;
+          let quantumSide: SolverComparisonSide = prevComp?.quantum || {
             solver: "D-Wave Simulated Annealer (QUBO)",
-            status: qFeasible ? "FEASIBLE" : "SUBOPTIMAL",
-            feasible: qFeasible,
-            objective_value: qObj,
-            energy: qEnergy,
-            selected_variables: qSelected,
-            constraints_satisfied: qFeasible ? totalCons : 0,
+            status: "NOT_RUN",
+            feasible: null,
+            objective_value: null,
+            energy: null,
+            selected_variables: [],
+            constraints_satisfied: 0,
             constraints_total: totalCons,
-            solve_time_ms: quboRes.ms,
+            solve_time_ms: null,
             logical_qubits: prev.qMatrix?.size || prev.variables.length,
             penalty_lambda: prev.penaltyLambda,
           };
-        }
 
-        // Classical side: parse fresh run if OR-Tools ran, otherwise preserve previous
-        let classicalSide: SolverComparisonSide = prevComp?.classical || {
-          solver: "Google OR-Tools CP-SAT",
-          status: "NOT_RUN",
-          feasible: null,
-          objective_value: null,
-          selected_variables: [],
-          constraints_satisfied: 0,
-          constraints_total: totalCons,
-          solve_time_ms: null,
-          code: resolvedOrtoolsCode,
-        };
+          if (quboRes?.data) {
+            const qOpt = quboRes.data.optimization_results;
+            const qStdout = quboRes.data.stdout || "";
+            const sampleObj: Record<string, number> =
+              qOpt?.sample && typeof qOpt.sample === "object" ? qOpt.sample : {};
+            const nextSol: Record<string, number> = {};
+            for (const v of prev.variables) {
+              nextSol[v.name] = typeof sampleObj[v.name] === "number" ? sampleObj[v.name] : 0;
+            }
+            for (const [k, val] of Object.entries(sampleObj)) {
+              if (!k.startsWith("slack_")) {
+                nextSol[k] = Number(val);
+              }
+            }
+            fullSolution = nextSol;
+            qSelected = Object.entries(fullSolution)
+              .filter(([, val]) => Number(val) > 0)
+              .map(([k]) => k);
+            const parsedEnergy = typeof qOpt?.energy === "number" ? qOpt.energy : 0;
+            qEnergy = parsedEnergy;
+            const penMatch = qStdout.match(/Total Penalty:\s*([-+]?\d+(?:\.\d+)?)/);
+            const totalPenalty = penMatch ? parseFloat(penMatch[1]) : 0;
+            qFeasible = totalPenalty <= 1e-4;
+            qObj = Math.round((parsedEnergy - totalPenalty) * 10000) / 10000;
+            qReads = typeof qOpt?.num_reads === "number" ? qOpt.num_reads : 1000;
+            quantumSide = {
+              solver: "D-Wave Simulated Annealer (QUBO)",
+              status: qFeasible ? "FEASIBLE" : "SUBOPTIMAL",
+              feasible: qFeasible,
+              objective_value: qObj,
+              energy: qEnergy,
+              selected_variables: qSelected,
+              constraints_satisfied: qFeasible ? totalCons : 0,
+              constraints_total: totalCons,
+              solve_time_ms: quboRes.ms,
+              logical_qubits: prev.qMatrix?.size || prev.variables.length,
+              penalty_lambda: prev.penaltyLambda,
+            };
+          }
 
-        if (ortoolsRes?.data) {
-          const cStdout = ortoolsRes.data.stdout || "";
-          const statusMatch = cStdout.match(/Google OR-Tools CP-SAT Status\s*:\s*([A-Z_]+)/);
-          const objMatch = cStdout.match(/Exact Classical Objective\s*:\s*([-+]?\d+(?:\.\d+)?)/);
-          const activeMatch = cStdout.match(/Active Decisions \(\d+\)\s*:\s*\[([^\]]*)\]/);
-          const cStatus = statusMatch ? statusMatch[1] : ortoolsRes.data.success ? "OPTIMAL" : "ERROR";
-          const cFeasible = cStatus === "OPTIMAL" || cStatus === "FEASIBLE";
-          const cObj = objMatch ? parseFloat(objMatch[1]) : null;
-          const cSelected = activeMatch
-            ? activeMatch[1]
-                .split(",")
-                .map((s: string) => s.trim().replace(/^['"]|['"]$/g, ""))
-                .filter(Boolean)
-            : [];
-
-          classicalSide = {
+          // Classical side: parse fresh run if OR-Tools ran, otherwise preserve previous
+          let classicalSide: SolverComparisonSide = prevComp?.classical || {
             solver: "Google OR-Tools CP-SAT",
-            status: cStatus,
-            feasible: cFeasible,
-            objective_value: cObj,
-            selected_variables: cSelected,
-            constraints_satisfied: cFeasible ? totalCons : 0,
+            status: "NOT_RUN",
+            feasible: null,
+            objective_value: null,
+            selected_variables: [],
+            constraints_satisfied: 0,
             constraints_total: totalCons,
-            solve_time_ms: ortoolsRes.ms,
-            code: ortoolsToRun || resolvedOrtoolsCode,
+            solve_time_ms: null,
+            code: resolvedOrtoolsCode,
           };
-        }
 
-        const solverComparison = computeSolverComparison({
-          quantum: quantumSide,
-          classical: classicalSide,
-          totalCons,
-          penaltyLambda: prev.penaltyLambda,
-          objectiveSense: prev.mathModel?.objectiveSense,
-          objectiveExpr: prev.mathModel?.objectiveExpr,
-        });
+          if (ortoolsRes?.data) {
+            const cStdout = ortoolsRes.data.stdout || "";
+            const statusMatch = cStdout.match(/Google OR-Tools CP-SAT Status\s*:\s*([A-Z_]+)/);
+            const objMatch = cStdout.match(/Exact Classical Objective\s*:\s*([-+]?\d+(?:\.\d+)?)/);
+            const activeMatch = cStdout.match(/Active Decisions \(\d+\)\s*:\s*\[([^\]]*)\]/);
+            const cStatus = statusMatch ? statusMatch[1] : ortoolsRes.data.success ? "OPTIMAL" : "ERROR";
+            const cFeasible = cStatus === "OPTIMAL" || cStatus === "FEASIBLE";
+            const cObj = objMatch ? parseFloat(objMatch[1]) : null;
+            const cSelected = activeMatch
+              ? activeMatch[1]
+                  .split(",")
+                  .map((s: string) => s.trim().replace(/^['"]|['"]$/g, ""))
+                  .filter(Boolean)
+              : [];
 
-        return {
-          ...prev,
-          terminal: [...prev.terminal, ...logLines],
-          execution: {
-            feasible: quboRes ? qFeasible : prevExec?.feasible ?? classicalSide.feasible,
-            energy: qEnergy,
+            classicalSide = {
+              solver: "Google OR-Tools CP-SAT",
+              status: cStatus,
+              feasible: cFeasible,
+              objective_value: cObj,
+              selected_variables: cSelected,
+              constraints_satisfied: cFeasible ? totalCons : 0,
+              constraints_total: totalCons,
+              solve_time_ms: ortoolsRes.ms,
+              code: ortoolsToRun || resolvedOrtoolsCode,
+            };
+          }
+
+          const solverComparison = computeSolverComparison({
+            quantum: quantumSide,
+            classical: classicalSide,
+            totalCons,
+            penaltyLambda: prev.penaltyLambda,
+            objectiveSense: prev.mathModel?.objectiveSense,
+            objectiveExpr: prev.mathModel?.objectiveExpr,
+          });
+
+          const nextFeasible = quboRes ? qFeasible : prevExec?.feasible ?? classicalSide.feasible;
+          const nextSelected = quboRes ? qSelected : prevExec?.selectedVariables ?? classicalSide.selected_variables;
+          const nextEnergy = qEnergy ?? (classicalSide.objective_value ?? null);
+          const nextSolution: Record<string, number> =
+            Object.keys(fullSolution).length > 0
+              ? fullSolution
+              : Object.fromEntries((nextSelected || []).map((v) => [v, 1]));
+
+          const nextExecution = {
+            feasible: nextFeasible,
+            energy: nextEnergy,
             objectiveValue: quboRes ? qObj : prevExec?.objectiveValue ?? classicalSide.objective_value,
-            solution: fullSolution,
-            selectedVariables: quboRes ? qSelected : prevExec?.selectedVariables ?? classicalSide.selected_variables,
+            solution: nextSolution,
+            selectedVariables: nextSelected,
             numReads: qReads,
             penaltyWeight: prev.penaltyLambda,
             penaltyLabel: `λ = ${prev.penaltyLambda}`,
             ortoolsCode: ortoolsToRun || prev.ortoolsCode || resolvedOrtoolsCode,
             solverComparison,
-          },
-        };
-      });
+          };
+
+          // Keep the latest assistant message's Copilot result card in lockstep with the Result tab
+          const lastBotIdx = (() => {
+            for (let i = proj.messages.length - 1; i >= 0; i--) {
+              if (proj.messages[i].sender === "assistant") return i;
+            }
+            return -1;
+          })();
+          const nextMessages =
+            lastBotIdx >= 0
+              ? proj.messages.map((m, idx) =>
+                  idx === lastBotIdx
+                    ? {
+                        ...m,
+                        executionResult: {
+                          feasible: nextExecution.feasible,
+                          energy: nextExecution.energy,
+                          solution: nextExecution.solution,
+                          selected_variables: nextExecution.selectedVariables,
+                          num_reads: nextExecution.numReads,
+                          interpretation: solverComparison.summary,
+                          solver_comparison: solverComparison,
+                        },
+                      }
+                    : m
+                )
+              : proj.messages;
+
+          return {
+            ...proj,
+            updatedAt: Date.now(),
+            messages: nextMessages,
+            workspace: {
+              ...prev,
+              terminal: [...prev.terminal, ...logLines],
+              execution: nextExecution,
+            },
+          };
+        })
+      );
     } catch (err: any) {
       const isAbort = err?.name === "AbortError" || controller.signal.aborted;
       updateActiveWorkspace((prev) => ({
