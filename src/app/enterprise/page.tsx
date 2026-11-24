@@ -680,19 +680,34 @@ export default function EnterpriseStudioPage() {
 
             if (isComplete) {
               const res = data.result || {};
-              // Build typed workspace state directly from backend response
+              // Strict Compile vs. Execute separation:
+              // Compile formulates the math model, Q-matrix, and solver scripts (solution.py + ortools_baseline.py),
+              // leaving `execution: null` until the user explicitly runs a solver (Run Parallel / D-Wave / OR-Tools).
               const prevWs = currentProject.workspace;
-              const nextWs = adaptPipelineResult(res, prevWs);
+              const compiledWs = adaptPipelineResult(res, prevWs);
+              const nextWs: WorkspaceState = {
+                ...compiledWs,
+                execution: null,
+              };
 
-              // Record real execution run
+              // Record compiled snapshot in run history
               const newRun = runFromWorkspace({
                 id: `run_${Date.now()}`,
                 runNumber: currentProject.runs.length + 1,
                 title: text.slice(0, 36) + "...",
                 runtimeMs: typeof res.runtime_ms === "number" ? res.runtime_ms : null,
-                changesSummary: "Autonomous formulation run from prompt",
+                changesSummary: "Model compiled — ready for solver execution",
                 workspace: nextWs,
               });
+
+              const compiledSummary = {
+                variablesCount: nextWs.variables.length,
+                constraintsCount: nextWs.mathModel.constraints.length,
+                qMatrixSize: nextWs.qMatrix?.size ?? null,
+                penaltyLambda: nextWs.penaltyLambda,
+                hasOrtools: Boolean(nextWs.ortoolsCode?.trim()),
+                hasQubo: Boolean(nextWs.code?.trim()),
+              };
 
               setProjects((prev) =>
                 prev.map((proj) => {
@@ -702,25 +717,10 @@ export default function EnterpriseStudioPage() {
                     const existingSteps = msg.pipelineSteps ? [...msg.pipelineSteps] : [];
                     return {
                       ...msg,
-                      text:
-                        nextWs.execution?.solverComparison?.summary ||
-                        (nextWs.execution?.energy !== null && nextWs.execution?.energy !== undefined
-                          ? `Optimization converged with ground energy ${nextWs.execution.energy.toFixed(
-                              4
-                            )} across ${nextWs.variables.length} decision variables.`
-                          : "Optimization model compiled successfully."),
+                      text: "Model compiled — run a solver to evaluate optimality.",
                       isStreaming: false,
-                      executionResult: nextWs.execution
-                        ? {
-                            feasible: nextWs.execution.feasible,
-                            energy: nextWs.execution.energy,
-                            solution: nextWs.execution.solution,
-                            selected_variables: nextWs.execution.selectedVariables,
-                            num_reads: nextWs.execution.numReads,
-                            interpretation: res.interpretation,
-                            solver_comparison: nextWs.execution.solverComparison ?? null,
-                          }
-                        : undefined,
+                      executionResult: undefined,
+                      compiledSummary,
                       pipelineSteps: existingSteps.map((s) => ({ ...s, status: "done" as const })),
                     };
                   });
@@ -1241,9 +1241,10 @@ export default function EnterpriseStudioPage() {
     const exec = ws.execution;
     const hasResult = Boolean(
       exec &&
-        (exec.feasible !== null ||
-          typeof exec.energy === "number" ||
-          exec.solverComparison != null)
+        ((typeof exec.numReads === "number" && exec.numReads > 0) ||
+          exec.solverComparison != null ||
+          (Array.isArray(exec.selectedVariables) && exec.selectedVariables.length > 0) ||
+          (exec.solution && Object.keys(exec.solution).length > 0))
     );
     if (!hasResult || !exec) {
       return {
@@ -1369,6 +1370,7 @@ export default function EnterpriseStudioPage() {
               isDark={isDark}
               messages={currentProject.messages}
               isStreaming={isStreaming}
+              isExecuting={isAnyBusy}
               isLoadingProjects={
                 !hasLoadedFromDb &&
                 projects.length === 1 &&
@@ -1383,6 +1385,8 @@ export default function EnterpriseStudioPage() {
                 );
               }}
               onFocusWorkbench={() => setSurfaceMode("workbench")}
+              onRunParallel={() => handleExecuteSolver("parallel")}
+              canRunParallel={!isDemoUser && (canRunDwave || canRunOrtools)}
               onOpenProblemVault={() => setSurfaceMode("library")}
               onNewProject={handleNewProject}
             />

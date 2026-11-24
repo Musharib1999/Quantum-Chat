@@ -160,6 +160,14 @@ export interface EnterpriseChatMessage {
     interpretation?: string;
     solver_comparison?: SolverComparisonData | null;
   };
+  compiledSummary?: {
+    variablesCount: number;
+    constraintsCount: number;
+    qMatrixSize: number | null;
+    penaltyLambda: number;
+    hasOrtools: boolean;
+    hasQubo: boolean;
+  };
   isStreaming?: boolean;
 }
 

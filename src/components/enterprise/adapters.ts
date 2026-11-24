@@ -57,20 +57,30 @@ const asNumber = (v: unknown): number | null => (typeof v === "number" && Number
 function adaptExecution(raw: any): SolverExecution | null {
   if (!raw || typeof raw !== "object") return null;
   const energy = asNumber(raw.energy);
-  const hasAnything = energy !== null || raw.feasible !== undefined || raw.solution;
-  if (!hasAnything) return null;
+  const objectiveValue = asNumber(raw.objective_value ?? raw.objectiveValue);
+  const solution = raw.solution && typeof raw.solution === "object" ? raw.solution : {};
+  const selectedVariables = Array.isArray(raw.selected_variables ?? raw.selectedVariables)
+    ? (raw.selected_variables ?? raw.selectedVariables)
+    : [];
+  const numReads = asNumber(raw.num_reads ?? raw.numReads);
+  const solverComparison = raw.solver_comparison ?? raw.solverComparison ?? null;
+  const hasRealTelemetry =
+    (numReads !== null && numReads > 0) ||
+    solverComparison != null ||
+    selectedVariables.length > 0 ||
+    Object.keys(solution).length > 0 ||
+    objectiveValue !== null;
+  if (!hasRealTelemetry) return null;
   return {
     feasible: typeof raw.feasible === "boolean" ? raw.feasible : null,
     energy,
-    objectiveValue: asNumber(raw.objective_value ?? raw.objectiveValue),
-    solution: raw.solution && typeof raw.solution === "object" ? raw.solution : {},
-    selectedVariables: Array.isArray(raw.selected_variables ?? raw.selectedVariables)
-      ? (raw.selected_variables ?? raw.selectedVariables)
-      : [],
-    numReads: asNumber(raw.num_reads ?? raw.numReads),
+    objectiveValue,
+    solution,
+    selectedVariables,
+    numReads,
     penaltyWeight: asNumber(raw.penalty_weight ?? raw.penaltyWeight),
     penaltyLabel: typeof (raw.penalty_label ?? raw.penaltyLabel) === "string" ? (raw.penalty_label ?? raw.penaltyLabel) : null,
-    solverComparison: raw.solver_comparison ?? raw.solverComparison ?? null,
+    solverComparison,
     ortoolsCode: typeof (raw.ortools_code ?? raw.ortoolsCode) === "string" ? (raw.ortools_code ?? raw.ortoolsCode) : "",
   };
 }
