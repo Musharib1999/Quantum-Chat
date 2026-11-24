@@ -401,14 +401,7 @@ function resolveBackend(templateData: any): string {
 
 const OFFLINE_GUARD = "Offline Sandbox: Cloud QPU sampler detected without active Leap credentials";
 
-const DWAVE_INITIAL_MESSAGES: CopilotMessage[] = [
-  {
-    id: 1,
-    sender: "assistant",
-    text: "Quantum Guru Studio initialized. I am your quantum formulation & optimization copilot. Ask me to adjust Lagrange multipliers, enforce mutual exclusion, or analyze eigenstate distributions.",
-    timestamp: "Just now",
-  },
-];
+const DWAVE_INITIAL_MESSAGES: CopilotMessage[] = [];
 
 // Helper to cleanse any previously cached corrupted LaTeX strings from localStorage
 function sanitizeCachedChatText(text: string): string {
@@ -430,14 +423,7 @@ const QUANTUM_JOURNEY_INITIAL_MESSAGES: CopilotMessage[] = [
   },
 ];
 
-const QISKIT_INITIAL_MESSAGES: CopilotMessage[] = [
-  {
-    id: 1,
-    sender: "assistant",
-    text: "Qiskit Quantum Studio initialized. I am your quantum circuit & algorithm copilot. Ask me to verify Bell state entanglement, calculate circuit depth, synthesize unitary gates, or configure Aer noise models.",
-    timestamp: "Just now",
-  },
-];
+const QISKIT_INITIAL_MESSAGES: CopilotMessage[] = [];
 
 
 function extractQubit(str: string, varMap?: Record<string, number>): number {
@@ -1074,6 +1060,7 @@ export default function QuantumGuruStudioPage() {
   const prevUserKeyRef = useRef<string>(userKey);
   const isUserHydratingRef = useRef<boolean>(false);
   const vaultDryRunAbortRef = useRef<AbortController | null>(null);
+  const copilotAbortRef = useRef<AbortController | null>(null);
 
   // A1: Purge legacy unscoped keys on initial mount to guarantee no stale browser residue
   useEffect(() => {
@@ -3869,6 +3856,19 @@ export default function QuantumGuruStudioPage() {
     }
   };
 
+  const handleStopCopilot = useCallback(() => {
+    if (copilotAbortRef.current) {
+      copilotAbortRef.current.abort();
+      copilotAbortRef.current = null;
+    }
+    const stopStreaming = (prev: CopilotMessage[]) =>
+      prev.map((m) =>
+        m.isStreaming ? { ...m, text: "Request stopped by user.", isStreaming: false } : m
+      );
+    setQiskitCopilotMessages(stopStreaming);
+    setDwaveCopilotMessages(stopStreaming);
+  }, []);
+
   const handleClearChat = useCallback(() => {
     const fresh =
       framework === "dwave"
@@ -4312,11 +4312,18 @@ ${currentM.challengeInstruction}`,
         ? buildJourneyTutorPrompt(journeyMilestoneId, journeyStage, qiskitCode, text)
         : text;
 
+      if (copilotAbortRef.current) {
+        copilotAbortRef.current.abort();
+      }
+      const qiskitController = new AbortController();
+      copilotAbortRef.current = qiskitController;
+
       try {
         const effectiveTerminal = overrideTerminalOutput ?? terminalOutput;
         const resp = await fetch("/api/ide/agent/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: qiskitController.signal,
           body: JSON.stringify({
             project_id: activeProject.id,
             user_message: userMessageToSend,
@@ -4360,17 +4367,22 @@ ${currentM.challengeInstruction}`,
           )
         );
       } catch (err: any) {
+        const isAbort = err?.name === "AbortError" || qiskitController.signal.aborted;
         setQiskitCopilotMessages((prev) =>
           prev.map((msg) =>
             msg.id === botMsgId
               ? {
                   ...msg,
-                  text: `Notice: ${err.message || "Failed to reach AI engine"}`,
+                  text: isAbort ? "Request stopped by user." : `Notice: ${err.message || "Failed to reach AI engine"}`,
                   isStreaming: false,
                 }
               : msg
           )
         );
+      } finally {
+        if (copilotAbortRef.current === qiskitController) {
+          copilotAbortRef.current = null;
+        }
       }
       return;
     }
@@ -4387,11 +4399,18 @@ ${currentM.challengeInstruction}`,
     };
     setDwaveCopilotMessages((prev) => [...prev, initialBotMsg]);
 
+    if (copilotAbortRef.current) {
+      copilotAbortRef.current.abort();
+    }
+    const dwaveController = new AbortController();
+    copilotAbortRef.current = dwaveController;
+
     try {
       const effectiveTerminal = overrideTerminalOutput ?? terminalOutput;
       const resp = await fetch("/api/ide/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: dwaveController.signal,
         body: JSON.stringify({
           project_id: activeProject.id,
           user_message: text,
@@ -4437,17 +4456,22 @@ ${currentM.challengeInstruction}`,
         )
       );
     } catch (err: any) {
+      const isAbort = err?.name === "AbortError" || dwaveController.signal.aborted;
       setDwaveCopilotMessages((prev) =>
         prev.map((msg) =>
           msg.id === botMsgId
             ? {
                 ...msg,
-                text: `Notice: ${err.message || "Failed to reach AI engine"}`,
+                text: isAbort ? "Request stopped by user." : `Notice: ${err.message || "Failed to reach AI engine"}`,
                 isStreaming: false,
               }
             : msg
         )
       );
+    } finally {
+      if (copilotAbortRef.current === dwaveController) {
+        copilotAbortRef.current = null;
+      }
     }
   };
 
@@ -5052,7 +5076,7 @@ Diagnose the exact line number, root cause, and explain how to fix it conceptual
           className={`w-[442px] h-full max-h-full min-h-0 min-w-0 flex flex-col shrink-0 border-l transition-colors overflow-hidden ${
             isDark
               ? "bg-[#0E0F13] border-white/[0.08]"
-              : "bg-[#F4F7FA] border-[#D5DDE7]"
+              : "bg-white border-slate-200"
           }`}
         >
           <OptimizationCopilot
@@ -5064,6 +5088,7 @@ Diagnose the exact line number, root cause, and explain how to fix it conceptual
             messages={copilotMessages}
             onSendMessage={handleSendMessage}
             onClearChat={handleClearChat}
+            onStopStreaming={handleStopCopilot}
             onApplyMutualExclusion={handleToggleMutualExclusion}
             onApplyCircuitAction={handleRunOrRecompile}
             variables={solverResult.variables}

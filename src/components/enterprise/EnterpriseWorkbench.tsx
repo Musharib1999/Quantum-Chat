@@ -2722,41 +2722,6 @@ ${textToSend}
                     msg.sender === "user" ? "items-end" : "items-start"
                   }`}
                 >
-                  <div className="flex items-center space-x-1.5 mb-1 px-1">
-                    {msg.sender === "assistant" ? (
-                      <>
-                        <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center ${
-                            isDark
-                              ? "bg-white/[0.06] border-white/[0.14]"
-                              : "bg-slate-100 border-slate-300"
-                          }`}
-                        >
-                          <Sparkles className={`w-2.5 h-2.5 ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
-                        </div>
-                        <span className={`text-[10px] font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
-                          Guru AI
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center ${
-                            isDark
-                              ? "bg-white/[0.06] border-white/[0.14]"
-                              : "bg-slate-100 border-slate-300"
-                          }`}
-                        >
-                          <User className={`w-2.5 h-2.5 ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
-                        </div>
-                        <span className={`text-[10px] font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
-                          You
-                        </span>
-                      </>
-                    )}
-                    <span className="text-[10px] text-zinc-500">{msg.timestamp}</span>
-                  </div>
-
                   <div
                     style={{
                       backgroundColor:
@@ -2806,29 +2771,22 @@ ${textToSend}
                       <div className="whitespace-pre-wrap">{msg.text}</div>
                     )}
                   </div>
+                  <span className="text-[10px] font-mono text-zinc-500 mt-1 px-1">
+                    {msg.timestamp}
+                  </span>
                 </div>
               ))}
 
               {/* Thinking animation */}
               {isGuruAiThinking && (
                 <div className="flex flex-col items-start">
-                  <div className="flex items-center space-x-1.5 mb-1 px-1">
-                    <div
-                      className={`w-4 h-4 rounded border flex items-center justify-center ${
-                        isDark ? "bg-white/[0.06] border-white/[0.14]" : "bg-slate-100 border-slate-300"
-                      }`}
-                    >
-                      <Sparkles className={`w-2.5 h-2.5 ${isDark ? "text-zinc-200" : "text-slate-700"}`} />
-                    </div>
-                    <span className={`text-[10px] font-semibold ${isDark ? "text-zinc-200" : "text-slate-800"}`}>
-                      Guru AI
-                    </span>
-                  </div>
                   <div
                     style={{
                       backgroundColor: isDark ? "#0C0D11" : "#FFFFFF",
                     }}
-                    className="p-3 rounded-xl border border-white/[0.08] text-xs text-zinc-400 flex items-center space-x-2"
+                    className={`p-3 rounded-xl border text-xs font-mono flex items-center space-x-2 ${
+                      isDark ? "border-white/[0.08] text-zinc-400" : "border-slate-200 text-slate-600"
+                    }`}
                   >
                     <RotateCw className="w-3.5 h-3.5 text-zinc-300 animate-spin shrink-0" />
                     <span>Analyzing problem formulation, penalty λ, and solution.py...</span>
