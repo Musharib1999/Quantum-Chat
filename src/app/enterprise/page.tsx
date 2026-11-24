@@ -923,9 +923,6 @@ export default function EnterpriseStudioPage() {
     if (!quboToRun && !ortoolsToRun) return;
 
     scriptInFlightRef.current = true;
-    if (surfaceMode !== "workbench") {
-      setSurfaceMode("workbench");
-    }
 
     if (scriptAbortRef.current) {
       scriptAbortRef.current.abort();
