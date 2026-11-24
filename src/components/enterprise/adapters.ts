@@ -205,6 +205,12 @@ export function adaptPipelineResult(result: any, prev: WorkspaceState): Workspac
 
   const ortoolsCode =
     (typeof ent?.ortools_code === "string" && ent.ortools_code) ||
+    (typeof ent?.execution?.ortools_code === "string" && ent.execution.ortools_code) ||
+    (typeof ent?.execution?.solver_comparison?.classical?.code === "string" &&
+      ent.execution.solver_comparison.classical.code) ||
+    (typeof res?.execution_result?.ortools_code === "string" && res.execution_result.ortools_code) ||
+    (typeof res?.execution_result?.solver_comparison?.classical?.code === "string" &&
+      res.execution_result.solver_comparison.classical.code) ||
     execution?.ortoolsCode ||
     execution?.solverComparison?.classical?.code ||
     "";
@@ -348,23 +354,237 @@ export function sanitizeLegacyQuboScript(code: string): string {
 }
 
 /**
- * Sanitize legacy saved OR-Tools scripts whose model.Add() lines contain `.0` float literals
- * (e.g. `9.0 * Select_0`), which cause CP-SAT `FloatAffine` TypeError.
+ * Parse a polynomial objective expression over binary variables into exact linear and
+ * quadratic terms so Google OR-Tools CP-SAT can linearize `u * v` via McCormick envelopes
+ * (CP-SAT LinearExpr.__mul__ rejects multiplying two BoolVars directly).
+ */
+function parseQuadraticObjectiveForCpSat(expr: string): {
+  linear: Array<[number, string]>;
+  quadratic: Array<[number, string, string]>;
+  constant: number;
+  scale: number;
+} | null {
+  if (!expr || !expr.trim()) return null;
+
+  // Split top-level additive terms while respecting parentheses
+  const rawTerms: Array<{ sign: number; body: string }> = [];
+  let depth = 0;
+  let cur = "";
+  let curSign = 1;
+  const s = expr.trim();
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "(") {
+      depth++;
+      cur += ch;
+    } else if (ch === ")") {
+      depth = Math.max(0, depth - 1);
+      cur += ch;
+    } else if (depth === 0 && (ch === "+" || ch === "-")) {
+      const trimmed = cur.trim();
+      if (trimmed) {
+        rawTerms.push({ sign: curSign, body: trimmed });
+        cur = "";
+        curSign = ch === "-" ? -1 : 1;
+      } else {
+        if (ch === "-") curSign *= -1;
+      }
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.trim()) {
+    rawTerms.push({ sign: curSign, body: cur.trim() });
+  }
+  if (rawTerms.length === 0) return null;
+
+  const linearMap = new Map<string, number>();
+  const quadMap = new Map<string, number>();
+  let constant = 0;
+
+  for (const t of rawTerms) {
+    let sign = t.sign;
+    let body = t.body.trim();
+    // Strip wrapping parens and leading unary signs
+    let changed = true;
+    while (changed) {
+      changed = false;
+      if (body.startsWith("+")) {
+        body = body.slice(1).trim();
+        changed = true;
+      } else if (body.startsWith("-")) {
+        sign *= -1;
+        body = body.slice(1).trim();
+        changed = true;
+      } else if (body.startsWith("(") && body.endsWith(")")) {
+        let d = 0;
+        let wrapsAll = true;
+        for (let i = 0; i < body.length - 1; i++) {
+          if (body[i] === "(") d++;
+          else if (body[i] === ")") d--;
+          if (d === 0) {
+            wrapsAll = false;
+            break;
+          }
+        }
+        if (wrapsAll) {
+          body = body.slice(1, -1).trim();
+          changed = true;
+        }
+      }
+    }
+
+    const factors = body.split("*").map((f) => f.trim()).filter(Boolean);
+    if (factors.length === 0) return null;
+
+    let coef = sign;
+    const vars: string[] = [];
+    for (let f of factors) {
+      while (f.startsWith("(") && f.endsWith(")")) {
+        f = f.slice(1, -1).trim();
+      }
+      if (/^[+-]?\d+(?:\.\d+)?$/.test(f)) {
+        coef *= parseFloat(f);
+      } else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(f)) {
+        vars.push(f);
+      } else if (/^-[A-Za-z_][A-Za-z0-9_]*$/.test(f)) {
+        coef *= -1;
+        vars.push(f.slice(1));
+      } else {
+        return null;
+      }
+    }
+
+    if (Math.abs(coef) < 1e-12) continue;
+    if (vars.length === 0) {
+      constant += coef;
+    } else if (vars.length === 1) {
+      linearMap.set(vars[0], (linearMap.get(vars[0]) ?? 0) + coef);
+    } else if (vars.length === 2) {
+      if (vars[0] === vars[1]) {
+        // Binary idempotence: x^2 == x
+        linearMap.set(vars[0], (linearMap.get(vars[0]) ?? 0) + coef);
+      } else {
+        const key = vars[0] < vars[1] ? `${vars[0]}\0${vars[1]}` : `${vars[1]}\0${vars[0]}`;
+        quadMap.set(key, (quadMap.get(key) ?? 0) + coef);
+      }
+    } else {
+      return null;
+    }
+  }
+
+  if (quadMap.size === 0) return null;
+
+  const allCoefs: number[] = [
+    ...Array.from(linearMap.values()),
+    ...Array.from(quadMap.values()),
+    ...(Math.abs(constant) > 1e-12 ? [constant] : []),
+  ];
+  let scale = 1;
+  for (const candidate of [1, 10, 100, 1000]) {
+    if (allCoefs.every((v) => Math.abs(v * candidate - Math.round(v * candidate)) < 1e-6)) {
+      scale = candidate;
+      break;
+    }
+    scale = 1000;
+  }
+
+  const linear: Array<[number, string]> = [];
+  for (const [v, c] of linearMap.entries()) {
+    const ic = Math.round(c * scale);
+    if (ic !== 0) linear.push([ic, v]);
+  }
+  const quadratic: Array<[number, string, string]> = [];
+  for (const [key, c] of quadMap.entries()) {
+    const ic = Math.round(c * scale);
+    if (ic !== 0) {
+      const [u, v] = key.split("\0");
+      quadratic.push([ic, u, v]);
+    }
+  }
+  return { linear, quadratic, constant: Math.round(constant * scale), scale };
+}
+
+function emitLinearizedCpSatObjectiveLines(
+  senseFn: "Minimize" | "Maximize",
+  parsed: {
+    linear: Array<[number, string]>;
+    quadratic: Array<[number, string, string]>;
+    constant: number;
+  },
+  indent: string
+): string[] {
+  const out: string[] = [];
+  out.push(`${indent}# Linearize quadratic binary products via McCormick envelopes`);
+  const linParts: string[] = [];
+  if (parsed.constant !== 0) linParts.push(String(parsed.constant));
+  for (const [c, v] of parsed.linear) {
+    linParts.push(`${c} * ${v}`);
+  }
+  out.push(`${indent}_obj_terms = [${linParts.join(", ")}]`);
+  const quadTuples = parsed.quadratic.map(([c, u, v]) => `(${c}, ${u}, ${v})`).join(", ");
+  out.push(`${indent}for _qi, (_qc, _qu, _qv) in enumerate([${quadTuples}]):`);
+  out.push(`${indent}    _qz = model.NewBoolVar(f'_q_{_qi}')`);
+  out.push(`${indent}    model.Add(_qz <= _qu)`);
+  out.push(`${indent}    model.Add(_qz <= _qv)`);
+  out.push(`${indent}    model.Add(_qz >= _qu + _qv - 1)`);
+  out.push(`${indent}    _obj_terms.append(_qc * _qz)`);
+  out.push(`${indent}model.${senseFn}(sum(_obj_terms))`);
+  return out;
+}
+
+/**
+ * Sanitize legacy saved OR-Tools scripts:
+ * 1) Rewrite `model.Add(...)` lines containing `.0` float literals (prevents CP-SAT FloatAffine TypeError).
+ * 2) Linearize `model.Minimize(...)` / `model.Maximize(...)` containing binary variable products (`u * v`)
+ *    via McCormick auxiliary BoolVars (prevents CP-SAT `LinearExpr.__mul__` TypeError on QAP/Max-Cut/Ising).
  */
 export function sanitizeLegacyOrtoolsScript(code: string): string {
   if (!code) return code;
-  return code
-    .split("\n")
-    .map((line) => {
-      const addMatch = line.match(/^(\s*model\.Add\()(.+)(\).*)$/);
-      if (!addMatch) return line;
+  let objScaleOverride: number | null = null;
+  const outLines: string[] = [];
+
+  for (const line of code.split("\n")) {
+    const addMatch = line.match(/^(\s*model\.Add\()(.+)(\).*)$/);
+    if (addMatch) {
       const inner = addMatch[2];
-      // Only rewrite if a decimal literal appears inside model.Add(...)
-      if (!/(?<![A-Za-z0-9_])\d+\.\d+(?![A-Za-z0-9_])/.test(inner)) return line;
-      const { expr } = scaleLinearExprToInt(inner);
-      return `${addMatch[1]}${expr}${addMatch[3]}`;
-    })
-    .join("\n");
+      if (/(?<![A-Za-z0-9_])\d+\.\d+(?![A-Za-z0-9_])/.test(inner)) {
+        const { expr } = scaleLinearExprToInt(inner);
+        outLines.push(`${addMatch[1]}${expr}${addMatch[3]}`);
+        continue;
+      }
+    }
+
+    const objMatch = line.match(/^(\s*)model\.(Minimize|Maximize)\((.+)\)\s*$/);
+    if (objMatch) {
+      const [, indent, senseFn, inner] = objMatch;
+      const parsedQuad = parseQuadraticObjectiveForCpSat(inner);
+      if (parsedQuad) {
+        objScaleOverride = parsedQuad.scale;
+        outLines.push(
+          ...emitLinearizedCpSatObjectiveLines(
+            senseFn as "Minimize" | "Maximize",
+            parsedQuad,
+            indent
+          )
+        );
+        continue;
+      }
+    }
+
+    if (objScaleOverride !== null && objScaleOverride !== 1) {
+      const divMatch = line.match(/^(\s*obj_val\s*=\s*solver\.ObjectiveValue\(\)\s*\/\s*)1(?:\.0)?(\b.*)$/);
+      if (divMatch) {
+        outLines.push(`${divMatch[1]}${objScaleOverride.toFixed(1)}${divMatch[2]}`);
+        continue;
+      }
+    }
+
+    outLines.push(line);
+  }
+
+  return outLines.join("\n");
 }
 
 /** Synthesize deterministic Google OR-Tools CP-SAT script when none was persisted yet. */
@@ -405,10 +625,18 @@ export function buildFallbackOrtoolsCode(
   }
   lines.push("");
   lines.push("    # 3. Objective Function");
-  const senseFn = mathModel?.objectiveSense === "Maximize" ? "Maximize" : "Minimize";
+  const senseFn: "Minimize" | "Maximize" = mathModel?.objectiveSense === "Maximize" ? "Maximize" : "Minimize";
   const rawObj = mathModel?.objectiveExpr?.trim() ? mathModel.objectiveExpr : "0";
-  const { expr: intObj, scale: objScale } = scaleLinearExprToInt(rawObj);
-  lines.push(`    model.${senseFn}(${intObj})`);
+  const parsedQuad = parseQuadraticObjectiveForCpSat(rawObj);
+  let objScale = 1;
+  if (parsedQuad) {
+    objScale = parsedQuad.scale;
+    lines.push(...emitLinearizedCpSatObjectiveLines(senseFn, parsedQuad, "    "));
+  } else {
+    const scaled = scaleLinearExprToInt(rawObj);
+    objScale = scaled.scale;
+    lines.push(`    model.${senseFn}(${scaled.expr})`);
+  }
   lines.push("");
   lines.push("    # 4. Execute CP-SAT Exact Branch-and-Cut Solver");
   lines.push("    solver = cp_model.CpSolver()");
