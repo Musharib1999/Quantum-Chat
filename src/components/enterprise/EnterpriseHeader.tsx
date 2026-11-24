@@ -100,14 +100,14 @@ export function EnterpriseHeader({
       style={{
         backgroundColor: isDark ? "#0E0F13" : "#FFFFFF",
       }}
-      className={`h-12 border-b flex items-center justify-between px-3 sm:px-4 shrink-0 z-30 transition-colors enterprise-bg-layer-1 ${
+      className={`h-12 border-b grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 sm:px-4 shrink-0 z-30 transition-colors enterprise-bg-layer-1 ${
         isDark ? "border-white/[0.08]" : "border-slate-200"
       }`}
     >
       {/* Left: Brand Anchor (Exact Logo from IDE) */}
-      <div className="flex items-center space-x-3 shrink-0">
+      <div className="flex items-center space-x-3 min-w-0 overflow-hidden">
         <Link href="/" className="flex items-center space-x-2.5 shrink-0 select-none group">
-          <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50 group-hover:scale-105 transition-transform">
+          <div className="w-7 h-7 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs shrink-0 overflow-hidden border border-slate-200/50 group-hover:scale-105 transition-transform">
             <img
               src="/qg-logo.png"
               alt="Quantum Guru"
@@ -115,7 +115,7 @@ export function EnterpriseHeader({
             />
           </div>
           <span
-            className={`text-xs font-mono font-bold tracking-wider uppercase select-none ${
+            className={`text-xs font-mono font-bold tracking-wider uppercase select-none whitespace-nowrap ${
               isDark ? "text-white" : "text-slate-900"
             }`}
           >
@@ -126,34 +126,38 @@ export function EnterpriseHeader({
         {activeProblemTitle && (
           <>
             <div
-              className={`h-4 w-[1px] shrink-0 ${
+              className={`hidden md:block h-4 w-[1px] shrink-0 ${
                 isDark ? "bg-white/10" : "bg-slate-200"
               }`}
             />
-            <span className="hidden md:inline text-xs font-mono text-zinc-400 truncate max-w-[260px]">
+            <span className="hidden md:inline text-xs font-mono text-zinc-400 truncate min-w-0">
               {activeProblemTitle}
             </span>
           </>
         )}
       </div>
 
-      {/* Center: Surface Mode Switcher & Telemetry Strip */}
-      <div className="flex items-center space-x-3 text-[11px] font-mono">
+      {/* Center: Surface Mode Switcher (always dead-center) */}
+      <div className="flex items-center justify-center space-x-3 text-[11px] font-mono shrink-0">
         {onSelectSurfaceMode && (
           <div
             style={{
               backgroundColor: isDark ? "#090A0D" : "#F1F5F9",
             }}
-            className="flex items-center p-0.5 rounded-lg border border-white/[0.08] enterprise-bg-layer-0"
+            className={`flex items-center p-0.5 rounded-lg border enterprise-bg-layer-0 ${
+              isDark ? "border-white/[0.08]" : "border-slate-200"
+            }`}
           >
             <button
               onClick={() => onSelectSurfaceMode("copilot")}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                 surfaceMode === "copilot"
-                  ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
+                  ? isDark
+                    ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
+                    : "bg-white text-slate-900 font-medium border border-slate-200 shadow-xs"
                   : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
               }`}
-              title="Surface 1 Copilot View (30% Project History + 70% Chat)"
+              title="Copilot View"
             >
               Copilot
             </button>
@@ -161,10 +165,12 @@ export function EnterpriseHeader({
               onClick={() => onSelectSurfaceMode("workbench")}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                 surfaceMode === "workbench"
-                  ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
+                  ? isDark
+                    ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
+                    : "bg-white text-slate-900 font-medium border border-slate-200 shadow-xs"
                   : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
               }`}
-              title="Surface 2 Workbench View (50% Math Deck + 50% Monaco Code Studio)"
+              title="Workbench View (Math Deck + Code Studio)"
             >
               Workbench
             </button>
@@ -172,7 +178,9 @@ export function EnterpriseHeader({
               onClick={() => onSelectSurfaceMode("library")}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                 surfaceMode === "library"
-                  ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
+                  ? isDark
+                    ? "bg-white/[0.08] text-white font-medium border border-white/[0.12] shadow-xs"
+                    : "bg-white text-slate-900 font-medium border border-slate-200 shadow-xs"
                   : isDark ? "text-zinc-400 hover:text-zinc-200" : "text-slate-600 hover:text-slate-900"
               }`}
               title="Verified Industry Problem Library"
@@ -183,8 +191,8 @@ export function EnterpriseHeader({
         )}
       </div>
 
-      {/* Right: Demo Indicator, Solve Dropdown, Theme Toggle, Profile Dropdown */}
-      <div className="flex items-center space-x-2.5">
+      {/* Right: Demo Indicator, Solve Dropdown, Profile Dropdown */}
+      <div className="flex items-center justify-end space-x-2.5 shrink-0">
         {isDemo && (
           <span
             className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono border ${

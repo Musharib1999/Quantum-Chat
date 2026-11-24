@@ -59,12 +59,15 @@ export function EnterpriseHistorySidebar({
       style={{
         backgroundColor: isDark ? "#090A0D" : "#F8FAFC",
       }}
-      className={`h-full flex flex-col min-w-0 transition-colors ${
+      className={`h-full flex flex-col min-w-0 overflow-hidden transition-colors ${
         isDark ? "text-zinc-100 border-white/[0.08]" : "text-slate-900 border-slate-200"
       } ${className}`}
     >
       {/* Top 80%: Search + Projects + Run History */}
-      <div className="h-[80%] min-h-0 flex flex-col">
+      <div
+        style={{ height: "80%", flex: "0 0 80%" }}
+        className="min-h-0 flex flex-col overflow-hidden"
+      >
         {/* Search Bar + New Project CTA (Single compact line) */}
         <div className={`p-2.5 sm:p-3 border-b flex items-center gap-2 shrink-0 ${isDark ? "border-white/[0.08]" : "border-slate-200"}`}>
           <div className="relative flex-1 min-w-0">
@@ -201,7 +204,8 @@ export function EnterpriseHistorySidebar({
 
       {/* Bottom 20%: Clean blank breathing room with Light / Dark theme switcher */}
       <div
-        className={`h-[20%] shrink-0 border-t flex flex-col justify-end p-3 ${
+        style={{ height: "20%", flex: "0 0 20%" }}
+        className={`min-h-0 overflow-hidden border-t flex flex-col justify-end px-3 py-3 ${
           isDark ? "border-white/[0.08]" : "border-slate-200"
         }`}
       >

@@ -1231,11 +1231,13 @@ export default function EnterpriseStudioPage() {
           }}
           className={`h-full flex-row min-w-0 overflow-hidden ${surfaceMode === "copilot" ? "flex" : "hidden"}`}
         >
-          {/* Sidebar (30% width) */}
+          {/* Left Rail Sidebar (balanced compact rail) */}
           <div
             style={{
-              width: "30%",
-              flexBasis: "30%",
+              width: "268px",
+              minWidth: "248px",
+              maxWidth: "280px",
+              flexBasis: "268px",
               flexShrink: 0,
               backgroundColor: isDark ? "#090A0D" : "#FFFFFF",
             }}
@@ -1254,11 +1256,9 @@ export default function EnterpriseStudioPage() {
             />
           </div>
 
-          {/* Chat Area (70% width) */}
+          {/* Chat Canvas (fluid remaining width with centered reading column) */}
           <div
             style={{
-              width: "70%",
-              flexBasis: "70%",
               backgroundColor: isDark ? "#0E0F13" : "#FFFFFF",
             }}
             className="flex-1 h-full flex flex-col min-w-0 overflow-hidden enterprise-bg-layer-2"
