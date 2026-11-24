@@ -289,3 +289,32 @@ code, pre, kbd, samp, .font-mono {
 .enterprise-border-card {
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
+
+/* ── Quantum Guru Nav-Bar Progress Beam Animations ── */
+@keyframes qg-nav-beam {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}
+
+@keyframes qg-nav-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.qg-nav-beam-sweep {
+  animation: qg-nav-beam 1.55s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+.qg-nav-beam-shimmer {
+  animation: qg-nav-shimmer 1.35s linear infinite;
+  will-change: transform;
+}

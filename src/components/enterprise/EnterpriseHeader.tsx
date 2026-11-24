@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import type { SurfaceMode } from "./types";
 
+export type HeaderActivityStatus = "idle" | "running" | "optimal" | "warning";
+
 interface EnterpriseHeaderProps {
   isDark: boolean;
   onToggleTheme: () => void;
@@ -31,6 +33,9 @@ interface EnterpriseHeaderProps {
   activeProblemTitle: string;
   isSolving?: boolean;
   onStopSolving?: () => void;
+  activityStatus?: HeaderActivityStatus;
+  activityProgress?: number | null;
+  activityLabel?: string | null;
   surfaceMode?: SurfaceMode;
   onSelectSurfaceMode?: (mode: SurfaceMode) => void;
   onCompile?: () => void;
@@ -55,6 +60,9 @@ export function EnterpriseHeader({
   activeProblemTitle,
   isSolving = false,
   onStopSolving,
+  activityStatus = "idle",
+  activityProgress = null,
+  activityLabel = null,
   surfaceMode = "copilot",
   onSelectSurfaceMode,
   onCompile,
@@ -68,8 +76,40 @@ export function EnterpriseHeader({
 }: EnterpriseHeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSolveMenuOpen, setIsSolveMenuOpen] = useState(false);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [isCompletionFlash, setIsCompletionFlash] = useState(false);
+  const prevActivityRef = useRef<HeaderActivityStatus>(activityStatus);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const solveMenuRef = useRef<HTMLDivElement>(null);
+
+  // Live elapsed timer while compiling / simulating
+  useEffect(() => {
+    if (!isSolving) {
+      setElapsedSec(0);
+      return;
+    }
+    const startedAt = Date.now();
+    setElapsedSec(0);
+    const id = setInterval(() => {
+      setElapsedSec((Date.now() - startedAt) / 1000);
+    }, 100);
+    return () => clearInterval(id);
+  }, [isSolving]);
+
+  // Brief vivid completion flash when transitioning from running -> optimal / warning,
+  // then smoothly settles into a calm ambient hairline.
+  useEffect(() => {
+    const prev = prevActivityRef.current;
+    prevActivityRef.current = activityStatus;
+    if (prev === "running" && (activityStatus === "optimal" || activityStatus === "warning")) {
+      setIsCompletionFlash(true);
+      const t = setTimeout(() => setIsCompletionFlash(false), 3500);
+      return () => clearTimeout(t);
+    }
+    if (activityStatus === "running" || activityStatus === "idle") {
+      setIsCompletionFlash(false);
+    }
+  }, [activityStatus]);
 
   // Close dropdowns on outside click or Escape
   useEffect(() => {
@@ -100,7 +140,7 @@ export function EnterpriseHeader({
       style={{
         backgroundColor: isDark ? "#0E0F13" : "#FFFFFF",
       }}
-      className={`h-12 border-b grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 sm:px-4 shrink-0 z-30 transition-colors enterprise-bg-layer-1 ${
+      className={`relative h-12 border-b grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 sm:px-4 shrink-0 z-30 transition-colors enterprise-bg-layer-1 ${
         isDark ? "border-white/[0.08]" : "border-slate-200"
       }`}
     >
@@ -206,20 +246,36 @@ export function EnterpriseHeader({
           </span>
         )}
 
-        {/* Solve / Stop Dropdown (Option 2: Ultra-Minimal, Zero Fancy Icons) */}
+        {/* Solve / Stop Dropdown + Live Phase Micro-Label */}
         {isSolving && onStopSolving ? (
-          <button
-            type="button"
-            onClick={onStopSolving}
-            className={`px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-colors border cursor-pointer ${
-              isDark
-                ? "bg-rose-500/15 hover:bg-rose-500/25 border-rose-500/35 text-rose-300"
-                : "bg-rose-50 hover:bg-rose-100 border-rose-300 text-rose-700"
-            }`}
-            title="Stop active solver run"
-          >
-            Stop
-          </button>
+          <div className="flex items-center space-x-2">
+            {activityLabel && (
+              <span
+                className={`hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono tabular-nums ${
+                  isDark ? "text-sky-400/90" : "text-[#2E65BF]"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse shrink-0" />
+                <span>{activityLabel}</span>
+                <span className={isDark ? "text-zinc-500" : "text-slate-400"}>·</span>
+                <span className={isDark ? "text-zinc-400" : "text-slate-600"}>
+                  {elapsedSec.toFixed(1)}s
+                </span>
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={onStopSolving}
+              className={`px-3 py-1 rounded-md text-[11px] font-mono font-medium transition-colors border cursor-pointer ${
+                isDark
+                  ? "bg-rose-500/15 hover:bg-rose-500/25 border-rose-500/35 text-rose-300"
+                  : "bg-rose-50 hover:bg-rose-100 border-rose-300 text-rose-700"
+              }`}
+              title="Stop active solver run"
+            >
+              Stop
+            </button>
+          </div>
         ) : (
           <div className="relative" ref={solveMenuRef}>
             <button
@@ -461,6 +517,71 @@ export function EnterpriseHeader({
           >
             <span>Sign in</span>
           </Link>
+        )}
+      </div>
+
+      {/* ── QUANTUM GURU NAV-BAR BOTTOM PROGRESS & STATUS HAIRLINE ── */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] overflow-hidden"
+      >
+        {activityStatus === "running" && (
+          typeof activityProgress === "number" ? (
+            /* Determinate 7-stage Copilot compile beam with moving Quantum Guru blue specular highlight */
+            <div className="relative h-full w-full bg-[#2E65BF]/15">
+              <div
+                style={{
+                  width: `${Math.max(8, Math.min(96, activityProgress))}%`,
+                  background: "linear-gradient(90deg, #2E65BF 0%, #1BB0CE 60%, #38BDF8 100%)",
+                  boxShadow: "0 0 10px rgba(56, 189, 248, 0.75)",
+                }}
+                className="relative h-full overflow-hidden transition-[width] duration-500 ease-out"
+              >
+                <div
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.75) 50%, transparent 100%)",
+                  }}
+                  className="absolute inset-y-0 left-0 w-1/3 qg-nav-beam-shimmer"
+                />
+              </div>
+            </div>
+          ) : (
+            /* Indeterminate gliding Quantum Guru blue beam for solver simulations */
+            <div className="relative h-full w-full bg-[#2E65BF]/15">
+              <div
+                style={{
+                  width: "30%",
+                  background:
+                    "linear-gradient(90deg, transparent 0%, #2E65BF 22%, #1BB0CE 65%, #38BDF8 92%, transparent 100%)",
+                  boxShadow: "0 0 12px rgba(27, 176, 206, 0.8)",
+                }}
+                className="h-full qg-nav-beam-sweep"
+              />
+            </div>
+          )
+        )}
+
+        {activityStatus === "optimal" && (
+          <div
+            style={{
+              background: "linear-gradient(90deg, #059669 0%, #10B981 50%, #34D399 100%)",
+              boxShadow: isCompletionFlash ? "0 0 10px rgba(16, 185, 129, 0.7)" : "none",
+              opacity: isCompletionFlash ? 1 : isDark ? 0.42 : 0.55,
+            }}
+            className="h-full w-full transition-opacity duration-700"
+          />
+        )}
+
+        {activityStatus === "warning" && (
+          <div
+            style={{
+              background: "linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FBBF24 100%)",
+              boxShadow: isCompletionFlash ? "0 0 10px rgba(245, 158, 11, 0.7)" : "none",
+              opacity: isCompletionFlash ? 1 : isDark ? 0.5 : 0.65,
+            }}
+            className="h-full w-full transition-opacity duration-700"
+          />
         )}
       </div>
     </header>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { EnterpriseHeader } from "@/components/enterprise/EnterpriseHeader";
+import { EnterpriseHeader, HeaderActivityStatus } from "@/components/enterprise/EnterpriseHeader";
 import { EnterpriseHistorySidebar, ProjectEntry } from "@/components/enterprise/EnterpriseHistorySidebar";
 import { EnterpriseChatPane } from "@/components/enterprise/EnterpriseChatPane";
 import { EnterpriseWorkbench } from "@/components/enterprise/EnterpriseWorkbench";
@@ -163,6 +163,7 @@ export default function EnterpriseStudioPage() {
   const [isSolving, setIsSolving] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isExecutingScript, setIsExecutingScript] = useState(false);
+  const [activeSolverMode, setActiveSolverMode] = useState<"dwave" | "ortools" | "parallel" | null>(null);
   const [terminalRunSeq, setTerminalRunSeq] = useState(0);
   const pipelineAbortRef = useRef<AbortController | null>(null);
   const scriptAbortRef = useRef<AbortController | null>(null);
@@ -904,6 +905,7 @@ export default function EnterpriseStudioPage() {
     }
     const controller = new AbortController();
     scriptAbortRef.current = controller;
+    setActiveSolverMode(mode);
     setIsExecutingScript(true);
     setTerminalRunSeq((s) => s + 1);
 
@@ -1158,12 +1160,87 @@ export default function EnterpriseStudioPage() {
       }
       scriptInFlightRef.current = false;
       setIsExecutingScript(false);
+      setActiveSolverMode(null);
     }
   };
 
   const canCompile = Boolean(currentProject.lastProblemText?.trim() || ws.code?.trim());
   const canRunDwave = Boolean(ws.code?.trim());
   const canRunOrtools = Boolean(resolvedOrtoolsCode?.trim());
+
+  // Derive live nav-bar progress beam state (Quantum Guru blue while compiling/simulating,
+  // emerald green when optimal, amber/orange when suboptimal or constraint violation).
+  const isAnyBusy = isSolving || isStreaming || isExecutingScript;
+  const { headerActivityStatus, headerActivityProgress, headerActivityLabel } = useMemo<{
+    headerActivityStatus: HeaderActivityStatus;
+    headerActivityProgress: number | null;
+    headerActivityLabel: string | null;
+  }>(() => {
+    if (isAnyBusy) {
+      if (isStreaming) {
+        const lastBot = [...currentProject.messages].reverse().find((m) => m.sender === "assistant");
+        const steps = lastBot?.pipelineSteps || [];
+        if (steps.length > 0) {
+          const total = steps.length;
+          const doneCount = steps.filter((s) => s.status === "done").length;
+          const runningIdx = steps.findIndex((s) => s.status === "running");
+          const currentStage = runningIdx >= 0 ? runningIdx + 1 : Math.min(total, doneCount + 1);
+          const pct = Math.max(
+            10,
+            Math.min(94, Math.round(((doneCount + (runningIdx >= 0 ? 0.45 : 0.15)) / total) * 100))
+          );
+          return {
+            headerActivityStatus: "running",
+            headerActivityProgress: pct,
+            headerActivityLabel: `Compiling ${currentStage}/${total}`,
+          };
+        }
+        return {
+          headerActivityStatus: "running",
+          headerActivityProgress: null,
+          headerActivityLabel: "Compiling",
+        };
+      }
+      const label =
+        activeSolverMode === "ortools"
+          ? "Running OR-Tools"
+          : activeSolverMode === "dwave"
+          ? "Annealing"
+          : activeSolverMode === "parallel"
+          ? "Simulating"
+          : "Solving";
+      return {
+        headerActivityStatus: "running",
+        headerActivityProgress: null,
+        headerActivityLabel: label,
+      };
+    }
+
+    const exec = ws.execution;
+    const hasResult = Boolean(
+      exec &&
+        (exec.feasible !== null ||
+          typeof exec.energy === "number" ||
+          exec.solverComparison != null)
+    );
+    if (!hasResult || !exec) {
+      return {
+        headerActivityStatus: "idle",
+        headerActivityProgress: null,
+        headerActivityLabel: null,
+      };
+    }
+
+    const isFeasible = exec.feasible === true;
+    const gapPct = exec.solverComparison?.optimality_gap_pct;
+    const isOptimal = isFeasible && (gapPct == null || Math.abs(gapPct) <= 0.01);
+
+    return {
+      headerActivityStatus: isOptimal ? "optimal" : "warning",
+      headerActivityProgress: 100,
+      headerActivityLabel: null,
+    };
+  }, [isAnyBusy, isStreaming, activeSolverMode, currentProject.messages, ws.execution]);
 
   if (!isMounted || isInitializing || !isAuthenticated) {
     return (
@@ -1198,8 +1275,11 @@ export default function EnterpriseStudioPage() {
         isAuthenticated={isAuthenticated}
         onLogout={logout}
         activeProblemTitle={currentProject.title}
-        isSolving={isSolving || isStreaming || isExecutingScript}
+        isSolving={isAnyBusy}
         onStopSolving={() => handleStopExecution()}
+        activityStatus={headerActivityStatus}
+        activityProgress={headerActivityProgress}
+        activityLabel={headerActivityLabel}
         surfaceMode={surfaceMode}
         onSelectSurfaceMode={setSurfaceMode}
         onCompile={handleReSolve}
