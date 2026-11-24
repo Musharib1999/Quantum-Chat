@@ -232,9 +232,22 @@ export default function EnterpriseStudioPage() {
     );
   }, [activeProjectId]);
 
-  // Hydrate projects from MongoDB (authoritative across devices) with localStorage fallback for non-demo migration
+  // Warm UI immediately from localStorage cache on mount so returning users never flash a blank placeholder while MongoDB responds
   useEffect(() => {
     setIsMounted(true);
+    const saved = loadSavedState();
+    if (saved && saved.projects.length > 0) {
+      const meaningful = saved.projects.some(
+        (p) => p.id !== "proj_initial" || p.messages.length > 0 || Boolean(p.workspace?.code)
+      );
+      if (meaningful) {
+        setProjects(saved.projects);
+        setActiveProjectId(saved.activeProjectId);
+        if (saved.surfaceMode) {
+          setSurfaceMode(saved.surfaceMode);
+        }
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -1252,6 +1265,12 @@ export default function EnterpriseStudioPage() {
               isDark={isDark}
               messages={currentProject.messages}
               isStreaming={isStreaming}
+              isLoadingProjects={
+                !hasLoadedFromDb &&
+                projects.length === 1 &&
+                projects[0].id === "proj_initial" &&
+                projects[0].messages.length === 0
+              }
               onSendMessage={handleSendMessage}
               onStopStreaming={() => handleStopExecution()}
               onClearChat={() => {
@@ -1260,6 +1279,8 @@ export default function EnterpriseStudioPage() {
                 );
               }}
               onFocusWorkbench={() => setSurfaceMode("workbench")}
+              onOpenProblemVault={() => setSurfaceMode("library")}
+              onNewProject={handleNewProject}
             />
           </div>
         </div>

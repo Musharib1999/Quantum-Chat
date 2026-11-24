@@ -3,17 +3,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   Send,
-  Sparkles,
   RotateCw,
   Check,
   ArrowRight,
-  Trash2,
-  Cpu,
   ChevronDown,
   ChevronUp,
-  Zap,
-  Layers,
-  ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   Square,
@@ -24,44 +18,26 @@ interface EnterpriseChatPaneProps {
   isDark: boolean;
   messages: EnterpriseChatMessage[];
   isStreaming: boolean;
+  isLoadingProjects?: boolean;
   onSendMessage: (text: string) => void;
   onStopStreaming?: () => void;
   onClearChat: () => void;
   onFocusWorkbench?: () => void;
+  onOpenProblemVault?: () => void;
+  onNewProject?: () => void;
 }
-
-const TEMPLATE_SUGGESTIONS = [
-  {
-    icon: Zap,
-    title: "Clean energy portfolio",
-    subtitle: "Allocate CAPEX across 4 facilities to maximize generation yield under $25M budget.",
-    query:
-      "Select optimal energy facilities from 4 candidate sites to maximize clean energy yield subject to Capex budget under $25M and min diversity of 2 sites.",
-  },
-  {
-    icon: Layers,
-    title: "Supply chain logistics",
-    subtitle: "Assign freight distribution across 5 hubs to minimize carbon freight costs.",
-    query:
-      "Assign shipping routes across 5 distribution hubs to minimize carbon freight costs while guaranteeing at least 150 tons daily throughput and vehicle capacity limits.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Workforce shift dispatch",
-    subtitle: "Schedule 5 senior engineers across 3 shifts ensuring 24/7 continuous coverage.",
-    query:
-      "Schedule 5 senior engineers across 3 critical operating shifts ensuring 24/7 site coverage, zero consecutive double-shifts, and compliance with certified safety rules.",
-  },
-];
 
 export function EnterpriseChatPane({
   isDark,
   messages,
   isStreaming,
+  isLoadingProjects = false,
   onSendMessage,
   onStopStreaming,
   onClearChat,
   onFocusWorkbench,
+  onOpenProblemVault,
+  onNewProject,
 }: EnterpriseChatPaneProps) {
   const [inputText, setInputText] = useState("");
   const [expandedStepsMap, setExpandedStepsMap] = useState<Record<string, boolean>>({});
@@ -110,59 +86,54 @@ export function EnterpriseChatPane({
       {/* ── MESSAGES SCROLL AREA ── */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
         {messages.length === 0 ? (
-          /* ANTIGRAVITY EMPTY HERO STATE */
-          <div className="h-full flex flex-col items-center justify-center text-center p-4 max-w-xl mx-auto space-y-6">
-            <div className="relative">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00E5FF]/20 via-[#00E5FF]/10 to-transparent border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] shadow-[0_0_30px_rgba(0,229,255,0.15)]">
-                <Sparkles className="w-7 h-7" />
+          isLoadingProjects ? (
+            <div className="h-full flex items-center justify-center">
+              <span className={`text-xs font-mono ${isDark ? "text-zinc-500" : "text-slate-500"}`}>
+                Loading workspace...
+              </span>
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-center p-4 max-w-md mx-auto space-y-5">
+              <div className="space-y-1.5">
+                <h3 className={`text-base font-semibold font-sans tracking-tight ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
+                  Describe an optimization problem
+                </h3>
+                <p className={`text-[12.5px] leading-relaxed font-sans ${isDark ? "text-zinc-400" : "text-slate-600"}`}>
+                  Formulates constraints and compiles both D-Wave QUBO (simulated annealing) and Google OR-Tools CP-SAT side-by-side.
+                </p>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <h3 className="text-base sm:text-lg font-semibold tracking-tight text-[#F8FAFC]">
-                What problem would you like to optimize?
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed max-w-md mx-auto">
-                Describe your operations research problem in plain English. The 9-stage pipeline extracts variables, verifies interval feasibility, builds the QUBO Hamiltonian, and anneals on D-Wave hardware.
-              </p>
-            </div>
-
-            {/* Clickable Quick-Start Starter Cards (Layer 3) */}
-            <div className="w-full grid grid-cols-1 gap-2.5 pt-2 text-left">
-              {TEMPLATE_SUGGESTIONS.map((item, idx) => {
-                const IconComponent = item.icon;
-                return (
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                {onOpenProblemVault && (
                   <button
-                    key={idx}
-                    onClick={() => onSendMessage(item.query)}
-                    style={{
-                      backgroundColor: isDark ? "#161924" : "#FFFFFF",
-                    }}
-                    className={`p-3.5 rounded-xl border text-left transition-all duration-200 cursor-pointer group flex items-start space-x-3 enterprise-bg-layer-3 ${
+                    type="button"
+                    onClick={onOpenProblemVault}
+                    className={`px-3.5 py-2 rounded-lg text-xs font-mono font-medium border inline-flex items-center gap-2 transition-colors cursor-pointer ${
                       isDark
-                        ? "hover:bg-[#1C2030] border-white/[0.08] hover:border-[#00E5FF]/40 shadow-sm"
-                        : "hover:bg-slate-50 border-slate-200 hover:border-sky-400 shadow-sm"
+                        ? "bg-white/[0.08] hover:bg-white/[0.14] border-white/[0.14] text-zinc-100"
+                        : "bg-slate-900 hover:bg-slate-800 border-slate-900 text-white"
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0 mt-0.5 group-hover:border-[#00E5FF]/30 transition-colors">
-                      <IconComponent className="w-4 h-4 text-[#00E5FF]" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs font-semibold group-hover:text-[#00E5FF] transition-colors ${isDark ? "text-[#F8FAFC]" : "text-slate-900"}`}>
-                          {item.title}
-                        </span>
-                        <ArrowRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-[#00E5FF] transition-transform group-hover:translate-x-0.5" />
-                      </div>
-                      <p className={`text-[11px] line-clamp-1 mt-0.5 ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
-                        {item.subtitle}
-                      </p>
-                    </div>
+                    <span>Browse Problem Vault</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
-                );
-              })}
+                )}
+                {onNewProject && (
+                  <button
+                    type="button"
+                    onClick={onNewProject}
+                    className={`px-3.5 py-2 rounded-lg text-xs font-mono border transition-colors cursor-pointer ${
+                      isDark
+                        ? "bg-transparent hover:bg-white/[0.04] border-white/[0.10] text-zinc-300"
+                        : "bg-white hover:bg-slate-50 border-slate-200 text-slate-700"
+                    }`}
+                  >
+                    New Project
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )
         ) : (
           messages.map((msg) => {
             const hasSteps = msg.pipelineSteps && msg.pipelineSteps.length > 0;
