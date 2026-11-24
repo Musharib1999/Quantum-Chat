@@ -331,19 +331,6 @@ export function EnterpriseHeader({
           </div>
         )}
 
-        {/* Theme Toggle */}
-        <button
-          onClick={onToggleTheme}
-          className={`p-1.5 rounded-md border transition-colors ${
-            isDark
-              ? "bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.08] text-zinc-400 hover:text-zinc-200"
-              : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600"
-          }`}
-          title="Toggle theme"
-        >
-          {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-        </button>
-
         {/* User / Session Badge & Logout Dropdown */}
         {isAuthenticated ? (
           <div className="relative" ref={userMenuRef}>

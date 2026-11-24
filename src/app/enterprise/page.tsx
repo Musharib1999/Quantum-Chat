@@ -1243,6 +1243,7 @@ export default function EnterpriseStudioPage() {
           >
             <EnterpriseHistorySidebar
               isDark={isDark}
+              onToggleTheme={() => setIsDark((prev) => !prev)}
               projects={projectEntries}
               activeProjectId={activeProjectId}
               onSelectProject={handleSelectProject}
