@@ -149,6 +149,10 @@ export function ensureLibrarySeeded(): Promise<void> {
                   contentHash: b.contentHash,
                   runAt: b.runAt,
                   protocol: b.protocol,
+                  environment: b.environment,
+                  structure: b.structure,
+                  equivalenceCheck: b.equivalenceCheck,
+                  runtimeRatioSaVsCp: b.runtimeRatioSaVsCp,
                   quboVars: b.quboVars,
                   verdict: b.verdict,
                   verdictNote: b.verdictNote,
@@ -188,6 +192,42 @@ export interface LambdaSweepPoint {
   lambda: number;
   feasibilityRate: number;
   bestObjective: number | null;
+  medianObjective?: number | null;
+}
+
+export interface QuboStructureTelemetry {
+  totalVars: number;
+  decisionVars: number;
+  slackVars: number;
+  linearTerms: number;
+  quadraticCouplings: number;
+  densityPct: number;
+  maxDegree: number;
+  avgDegree: number;
+  minAbsCoeff: number;
+  maxAbsCoeff: number;
+  dynamicRange: number;
+}
+
+export interface QuboEquivalenceCheck {
+  passed: boolean;
+  optimalEnergyExpected: number;
+  optimalEnergyActual: number;
+  maxAbsError: number;
+  testedPerturbations: number;
+  feasibleNeighborsChecked: number;
+  infeasibleNeighborsChecked: number;
+  infeasibleBarrierPassed: boolean;
+}
+
+export interface BenchmarkEnvironmentManifest {
+  pythonVersion: string;
+  ortoolsVersion: string;
+  dimodVersion: string;
+  nealVersion: string;
+  platform: string;
+  machine: string;
+  cpuCount: number;
 }
 
 export interface LibraryBenchmarkSummary {
@@ -197,9 +237,17 @@ export interface LibraryBenchmarkSummary {
   protocol: {
     repeats: number;
     seeds: number[];
+    tuneSeeds?: number[];
+    quboSweepReads?: number;
     quboReadsPerRepeat: number;
+    quboNumSweeps?: number;
     maxQuboVars: number;
+    quboLimitRationale?: string;
   };
+  environment?: BenchmarkEnvironmentManifest | null;
+  structure?: QuboStructureTelemetry | null;
+  equivalenceCheck?: QuboEquivalenceCheck | null;
+  runtimeRatioSaVsCp?: number | null;
   quboVars: number;
   verdict: 'competitive' | 'classical_wins' | 'exceeds_qubo_limit';
   verdictNote: string;
@@ -212,10 +260,17 @@ export interface LibraryBenchmarkSummary {
     feasibleRuns: number;
     totalRuns: number;
     bestObjective: number | null;
+    medianObjective?: number | null;
     meanObjective: number | null;
     stdObjective: number | null;
+    worstObjective?: number | null;
+    iqrObjective?: number | null;
     gapVsBestKnownPct: number | null;
+    medianGapVsBestKnownPct?: number | null;
     gapVsOrtoolsPct: number | null;
+    buildTimeMs?: number | null;
+    tuneTimeMs?: number | null;
+    solveTimeMs?: number | null;
     meanTimeMs: number | null;
   };
   classical: {
@@ -225,10 +280,18 @@ export interface LibraryBenchmarkSummary {
     feasibleRuns: number;
     totalRuns: number;
     bestObjective: number | null;
+    medianObjective?: number | null;
     meanObjective: number | null;
     stdObjective: number | null;
+    worstObjective?: number | null;
+    iqrObjective?: number | null;
     gapVsBestKnownPct: number | null;
+    medianGapVsBestKnownPct?: number | null;
+    buildTimeMs?: number | null;
+    tuneTimeMs?: number | null;
+    solveTimeMs?: number | null;
     meanTimeMs: number | null;
+    totalMeanTimeMs?: number | null;
   };
 }
 

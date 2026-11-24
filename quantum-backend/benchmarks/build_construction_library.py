@@ -27,11 +27,12 @@ from typing import Any, Dict, List, Optional, Tuple
 import dimod
 from ortools.sat.python import cp_model
 
-from build_multi_industry_library import (
+from benchmark_harness import (
+    EVAL_SEEDS as SEEDS,
     MAX_QUBO_VARS,
-    SEEDS,
-    _add_leq,
+    add_leq as _add_leq,
     fmt_matrix,
+    get_environment_manifest,
     run_benchmark,
     tier_for,
 )
@@ -924,10 +925,14 @@ def main():
         problems.append(p)
         benchmarks.append(b)
         q, c = b["qubo"], b["classical"]
+        eq = b["equivalenceCheck"]
+        st = b["structure"]
         print(
-            f"[{p['problemType']:21s}] {p['slug']:28s} quboVars={b['quboVars']:4d} ({p['sizeTier']:6s})  "
-            f"OR={str(c['bestObjective']):6s} ({c['gapVsBestKnownPct']}%, {c['meanTimeMs']:5.1f}ms) | "
-            f"SA={str(q['bestObjective']):6s} ({q['gapVsBestKnownPct']}%, {q['feasibleRuns']}/{q['totalRuns']}, {str(q['meanTimeMs']):6s}ms) => {b['verdict']}"
+            f"[{p['problemType']:21s}] {p['slug']:26s} vars={b['quboVars']:4d} (slk={st['slackVars']:2d}, dens={st['densityPct']:5.1f}%) "
+            f"eq={'OK' if eq['passed'] else 'FAIL'} | "
+            f"OR={str(c['bestObjective']):6s} ({c['solveTimeMs']:5.1f}ms) | "
+            f"SA med={str(q['medianObjective']):6s} ({q['medianGapVsBestKnownPct']}%) best={str(q['bestObjective']):6s} "
+            f"feas={q['feasibleRuns']}/{q['totalRuns']} ({str(q['solveTimeMs']):6s}ms) => {b['verdict']}"
         )
 
     LIB_OUT.write_text(json.dumps({"industry": INDUSTRY, "problems": problems}, indent=2) + "\n")
@@ -936,6 +941,7 @@ def main():
             {
                 "industry": INDUSTRY,
                 "generatedAt": datetime.now(timezone.utc).isoformat(),
+                "environment": get_environment_manifest(),
                 "maxQuboVars": MAX_QUBO_VARS,
                 "benchmarks": benchmarks,
             },

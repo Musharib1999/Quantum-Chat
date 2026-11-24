@@ -1,231 +1,521 @@
 {
   "industry": "Construction",
-  "generatedAt": "2026-11-23T21:19:29.214604+00:00",
+  "generatedAt": "2026-11-24T18:21:59.136401+00:00",
+  "environment": {
+    "pythonVersion": "3.13.5",
+    "ortoolsVersion": "9.15.6755",
+    "dimodVersion": "0.12.21",
+    "nealVersion": "0.6.0",
+    "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "cpuCount": 8
+  },
   "maxQuboVars": 150,
   "benchmarks": [
     {
       "slug": "const-bid-portfolio-12",
       "contentHash": "ede1ead7fa9291aaa6fcc96bd1fe479a584b828ef0b0ef96c9240f1b9cba85c4",
-      "runAt": "2026-11-23T21:19:07.966076+00:00",
+      "runAt": "2026-11-24T18:20:54.413145+00:00",
       "protocol": {
-        "repeats": 5,
+        "repeats": 20,
         "seeds": [
           101,
           202,
           303,
           404,
-          505
+          505,
+          606,
+          707,
+          808,
+          909,
+          1010,
+          1111,
+          1212,
+          1313,
+          1414,
+          1515,
+          1616,
+          1717,
+          1818,
+          1919,
+          2020
         ],
+        "tuneSeeds": [
+          9001,
+          9002,
+          9003
+        ],
+        "quboSweepReads": 200,
         "quboReadsPerRepeat": 500,
-        "maxQuboVars": 150
+        "quboNumSweeps": 1000,
+        "maxQuboVars": 150,
+        "quboLimitRationale": "Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT."
+      },
+      "environment": {
+        "pythonVersion": "3.13.5",
+        "ortoolsVersion": "9.15.6755",
+        "dimodVersion": "0.12.21",
+        "nealVersion": "0.6.0",
+        "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "cpuCount": 8
+      },
+      "structure": {
+        "totalVars": 19,
+        "decisionVars": 12,
+        "slackVars": 7,
+        "linearTerms": 19,
+        "quadraticCouplings": 171,
+        "densityPct": 100.0,
+        "maxDegree": 18,
+        "avgDegree": 18.0,
+        "minAbsCoeff": 480.0,
+        "maxAbsCoeff": 376320.0,
+        "dynamicRange": 784.0
+      },
+      "equivalenceCheck": {
+        "passed": true,
+        "optimalEnergyExpected": -323.0,
+        "optimalEnergyActual": -323.0,
+        "maxAbsError": 0.0,
+        "testedPerturbations": 12,
+        "feasibleNeighborsChecked": 7,
+        "infeasibleNeighborsChecked": 5,
+        "infeasibleBarrierPassed": true
       },
       "quboVars": 19,
-      "verdict": "competitive",
-      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (323.0) (5/5 feasible SA runs at \u03bb=60.0). OR-Tools CP-SAT solved in 5.9 ms vs. 159.3 ms for simulated annealing.",
+      "verdict": "classical_wins",
+      "verdictNote": "OR-Tools CP-SAT proved optimal (323.0) in 2.4 ms solve, outperforming QUBO SA (median 314.0 [2.79% gap], best 323.0 [0.00% gap], 20/20 feasible at \u03bb=120.0, 133.6 ms solve).",
+      "runtimeRatioSaVsCp": 55.4,
       "qubo": {
         "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
         "exceedsLimit": false,
-        "bestLambda": 60.0,
+        "bestLambda": 120.0,
         "lambdaSweep": [
           {
             "lambda": 60.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 320.0
+            "bestObjective": 323.0,
+            "medianObjective": 309.0
           },
           {
             "lambda": 120.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 297.0
+            "bestObjective": 320.0,
+            "medianObjective": 317.0
           },
           {
             "lambda": 240.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 317.0
+            "bestObjective": 323.0,
+            "medianObjective": 315.0
           },
           {
             "lambda": 480.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 320.0
+            "bestObjective": 323.0,
+            "medianObjective": 308.0
           }
         ],
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
         "bestObjective": 323.0,
-        "meanObjective": 318.2,
-        "stdObjective": 5.5642,
+        "medianObjective": 314.0,
+        "meanObjective": 314.55,
+        "stdObjective": 5.4358,
+        "worstObjective": 308.0,
+        "iqrObjective": 8.0,
         "gapVsBestKnownPct": 0.0,
+        "medianGapVsBestKnownPct": 2.79,
         "gapVsOrtoolsPct": 0.0,
-        "meanTimeMs": 159.3
+        "buildTimeMs": 0.06,
+        "tuneTimeMs": 760.97,
+        "solveTimeMs": 133.61,
+        "meanTimeMs": 133.61
       },
       "classical": {
         "backend": "Google OR-Tools CP-SAT (classical exact)",
         "status": "OPTIMAL",
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 323,
-        "meanObjective": 323,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 323.0,
+        "medianObjective": 323.0,
+        "meanObjective": 323.0,
         "stdObjective": 0.0,
+        "worstObjective": 323.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
-        "meanTimeMs": 5.92
+        "medianGapVsBestKnownPct": 0.0,
+        "buildTimeMs": 0.47,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": 2.41,
+        "meanTimeMs": 2.41,
+        "totalMeanTimeMs": 2.88
       }
     },
     {
       "slug": "const-time-cost-8x3",
       "contentHash": "f4e237d2be7600a6258b72cbd574e9aaa551d865b8b9375f48ab669f21c5ebb1",
-      "runAt": "2026-11-23T21:19:10.089655+00:00",
+      "runAt": "2026-11-24T18:21:00.811327+00:00",
       "protocol": {
-        "repeats": 5,
+        "repeats": 20,
         "seeds": [
           101,
           202,
           303,
           404,
-          505
+          505,
+          606,
+          707,
+          808,
+          909,
+          1010,
+          1111,
+          1212,
+          1313,
+          1414,
+          1515,
+          1616,
+          1717,
+          1818,
+          1919,
+          2020
         ],
+        "tuneSeeds": [
+          9001,
+          9002,
+          9003
+        ],
+        "quboSweepReads": 200,
         "quboReadsPerRepeat": 500,
-        "maxQuboVars": 150
+        "quboNumSweeps": 1000,
+        "maxQuboVars": 150,
+        "quboLimitRationale": "Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT."
+      },
+      "environment": {
+        "pythonVersion": "3.13.5",
+        "ortoolsVersion": "9.15.6755",
+        "dimodVersion": "0.12.21",
+        "nealVersion": "0.6.0",
+        "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "cpuCount": 8
+      },
+      "structure": {
+        "totalVars": 31,
+        "decisionVars": 24,
+        "slackVars": 7,
+        "linearTerms": 31,
+        "quadraticCouplings": 465,
+        "densityPct": 100.0,
+        "maxDegree": 30,
+        "avgDegree": 30.0,
+        "minAbsCoeff": 1296.0,
+        "maxAbsCoeff": 1534464.0,
+        "dynamicRange": 1184.0
+      },
+      "equivalenceCheck": {
+        "passed": true,
+        "optimalEnergyExpected": 411.0,
+        "optimalEnergyActual": 411.0,
+        "maxAbsError": 0.0,
+        "testedPerturbations": 12,
+        "feasibleNeighborsChecked": 0,
+        "infeasibleNeighborsChecked": 12,
+        "infeasibleBarrierPassed": true
       },
       "quboVars": 31,
       "verdict": "classical_wins",
-      "verdictNote": "OR-Tools CP-SAT proved the optimum (411) in 1.3 ms, outperforming QUBO simulated annealing (best 420.0, 2.19% gap, 5/5 feasible at \u03bb=81.0).",
+      "verdictNote": "OR-Tools CP-SAT proved optimal (411.0) in 1.0 ms solve, outperforming QUBO SA (median 438.5 [6.69% gap], best 411.0 [0.00% gap], 20/20 feasible at \u03bb=324.0, 246.7 ms solve).",
+      "runtimeRatioSaVsCp": 257.0,
       "qubo": {
         "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
         "exceedsLimit": false,
-        "bestLambda": 81.0,
+        "bestLambda": 324.0,
         "lambdaSweep": [
           {
             "lambda": 81.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 425.0
+            "bestObjective": 428.0,
+            "medianObjective": 456.0
           },
           {
             "lambda": 162.0,
-            "feasibilityRate": 0.5,
-            "bestObjective": 426.0
+            "feasibilityRate": 0.67,
+            "bestObjective": 428.0,
+            "medianObjective": 458.0
           },
           {
             "lambda": 324.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 459.0
+            "bestObjective": 437.0,
+            "medianObjective": 437.0
           },
           {
             "lambda": 648.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 464.0
+            "bestObjective": 437.0,
+            "medianObjective": 443.0
           }
         ],
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 420.0,
-        "meanObjective": 431.6,
-        "stdObjective": 9.6042,
-        "gapVsBestKnownPct": 2.19,
-        "gapVsOrtoolsPct": 2.19,
-        "meanTimeMs": 257.3
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 411.0,
+        "medianObjective": 438.5,
+        "meanObjective": 437.65,
+        "stdObjective": 14.3293,
+        "worstObjective": 474.0,
+        "iqrObjective": 19.0,
+        "gapVsBestKnownPct": 0.0,
+        "medianGapVsBestKnownPct": 6.69,
+        "gapVsOrtoolsPct": 0.0,
+        "buildTimeMs": 0.09,
+        "tuneTimeMs": 1233.68,
+        "solveTimeMs": 246.68,
+        "meanTimeMs": 246.68
       },
       "classical": {
         "backend": "Google OR-Tools CP-SAT (classical exact)",
         "status": "OPTIMAL",
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 411,
-        "meanObjective": 411,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 411.0,
+        "medianObjective": 411.0,
+        "meanObjective": 411.0,
         "stdObjective": 0.0,
+        "worstObjective": 411.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
-        "meanTimeMs": 1.27
+        "medianGapVsBestKnownPct": 0.0,
+        "buildTimeMs": 0.4,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": 0.96,
+        "meanTimeMs": 0.96,
+        "totalMeanTimeMs": 1.36
       }
     },
     {
       "slug": "const-site-layout-6x6",
       "contentHash": "68c4758ac70aa3421f0dd82a87c7dc5debce8c83a41acf82766085712f574118",
-      "runAt": "2026-11-23T21:19:12.348209+00:00",
+      "runAt": "2026-11-24T18:21:07.724372+00:00",
       "protocol": {
-        "repeats": 5,
+        "repeats": 20,
         "seeds": [
           101,
           202,
           303,
           404,
-          505
+          505,
+          606,
+          707,
+          808,
+          909,
+          1010,
+          1111,
+          1212,
+          1313,
+          1414,
+          1515,
+          1616,
+          1717,
+          1818,
+          1919,
+          2020
         ],
+        "tuneSeeds": [
+          9001,
+          9002,
+          9003
+        ],
+        "quboSweepReads": 200,
         "quboReadsPerRepeat": 500,
-        "maxQuboVars": 150
+        "quboNumSweeps": 1000,
+        "maxQuboVars": 150,
+        "quboLimitRationale": "Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT."
+      },
+      "environment": {
+        "pythonVersion": "3.13.5",
+        "ortoolsVersion": "9.15.6755",
+        "dimodVersion": "0.12.21",
+        "nealVersion": "0.6.0",
+        "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "cpuCount": 8
+      },
+      "structure": {
+        "totalVars": 36,
+        "decisionVars": 36,
+        "slackVars": 0,
+        "linearTerms": 36,
+        "quadraticCouplings": 630,
+        "densityPct": 100.0,
+        "maxDegree": 35,
+        "avgDegree": 35.0,
+        "minAbsCoeff": 3.0,
+        "maxAbsCoeff": 1040.0,
+        "dynamicRange": 346.67
+      },
+      "equivalenceCheck": {
+        "passed": true,
+        "optimalEnergyExpected": 611.0,
+        "optimalEnergyActual": 611.0,
+        "maxAbsError": 0.0,
+        "testedPerturbations": 12,
+        "feasibleNeighborsChecked": 0,
+        "infeasibleNeighborsChecked": 12,
+        "infeasibleBarrierPassed": true
       },
       "quboVars": 36,
       "verdict": "competitive",
-      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (611.0) (5/5 feasible SA runs at \u03bb=260.0). OR-Tools CP-SAT solved in 88.3 ms vs. 214.6 ms for simulated annealing.",
+      "verdictNote": "Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at \u03bb=520.0). Runtime: CP-SAT solve 82.4 ms vs. SA solve 171.7 ms (+ 968 ms \u03bb-tuning).",
+      "runtimeRatioSaVsCp": 2.1,
       "qubo": {
         "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
         "exceedsLimit": false,
-        "bestLambda": 260.0,
+        "bestLambda": 520.0,
         "lambdaSweep": [
           {
             "lambda": 260.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 611.0
+            "bestObjective": 611.0,
+            "medianObjective": 615.0
           },
           {
             "lambda": 520.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 611.0
+            "bestObjective": 611.0,
+            "medianObjective": 611.0
           },
           {
             "lambda": 1040.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 611.0
+            "bestObjective": 633.0,
+            "medianObjective": 636.0
           },
           {
             "lambda": 2080.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 615.0
+            "bestObjective": 611.0,
+            "medianObjective": 611.0
           }
         ],
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
         "bestObjective": 611.0,
-        "meanObjective": 616.6,
-        "stdObjective": 9.3295,
+        "medianObjective": 611.0,
+        "meanObjective": 613.6,
+        "stdObjective": 5.3703,
+        "worstObjective": 629.0,
+        "iqrObjective": 4.0,
         "gapVsBestKnownPct": 0.0,
+        "medianGapVsBestKnownPct": 0.0,
         "gapVsOrtoolsPct": 0.0,
-        "meanTimeMs": 214.63
+        "buildTimeMs": 0.57,
+        "tuneTimeMs": 967.98,
+        "solveTimeMs": 171.65,
+        "meanTimeMs": 171.65
       },
       "classical": {
         "backend": "Google OR-Tools CP-SAT (classical exact)",
         "status": "OPTIMAL",
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 611,
-        "meanObjective": 611,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 611.0,
+        "medianObjective": 611.0,
+        "meanObjective": 611.0,
         "stdObjective": 0.0,
+        "worstObjective": 611.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
-        "meanTimeMs": 88.33
+        "medianGapVsBestKnownPct": 0.0,
+        "buildTimeMs": 5.41,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": 82.37,
+        "meanTimeMs": 82.37,
+        "totalMeanTimeMs": 87.78
       }
     },
     {
       "slug": "const-trade-rostering-6x4",
       "contentHash": "f2527c9fa01623db0c0f7c9e015c5fe81d2b2fb653ae218e70fe4d87b8c5602d",
-      "runAt": "2026-11-23T21:19:13.910006+00:00",
+      "runAt": "2026-11-24T18:21:12.588280+00:00",
       "protocol": {
-        "repeats": 5,
+        "repeats": 20,
         "seeds": [
           101,
           202,
           303,
           404,
-          505
+          505,
+          606,
+          707,
+          808,
+          909,
+          1010,
+          1111,
+          1212,
+          1313,
+          1414,
+          1515,
+          1616,
+          1717,
+          1818,
+          1919,
+          2020
         ],
+        "tuneSeeds": [
+          9001,
+          9002,
+          9003
+        ],
+        "quboSweepReads": 200,
         "quboReadsPerRepeat": 500,
-        "maxQuboVars": 150
+        "quboNumSweeps": 1000,
+        "maxQuboVars": 150,
+        "quboLimitRationale": "Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT."
+      },
+      "environment": {
+        "pythonVersion": "3.13.5",
+        "ortoolsVersion": "9.15.6755",
+        "dimodVersion": "0.12.21",
+        "nealVersion": "0.6.0",
+        "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "cpuCount": 8
+      },
+      "structure": {
+        "totalVars": 24,
+        "decisionVars": 24,
+        "slackVars": 0,
+        "linearTerms": 24,
+        "quadraticCouplings": 96,
+        "densityPct": 34.78,
+        "maxDegree": 8,
+        "avgDegree": 8.0,
+        "minAbsCoeff": 104.0,
+        "maxAbsCoeff": 270.0,
+        "dynamicRange": 2.6
+      },
+      "equivalenceCheck": {
+        "passed": true,
+        "optimalEnergyExpected": 141.0,
+        "optimalEnergyActual": 141.0,
+        "maxAbsError": 0.0,
+        "testedPerturbations": 12,
+        "feasibleNeighborsChecked": 0,
+        "infeasibleNeighborsChecked": 12,
+        "infeasibleBarrierPassed": true
       },
       "quboVars": 24,
       "verdict": "competitive",
-      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (141.0) (5/5 feasible SA runs at \u03bb=72.0). OR-Tools CP-SAT solved in 2.2 ms vs. 187.0 ms for simulated annealing.",
+      "verdictNote": "Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at \u03bb=72.0). Runtime: CP-SAT solve 1.6 ms vs. SA solve 152.8 ms (+ 991 ms \u03bb-tuning).",
+      "runtimeRatioSaVsCp": 97.4,
       "qubo": {
         "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
         "exceedsLimit": false,
@@ -234,66 +524,141 @@
           {
             "lambda": 72.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 141.0
+            "bestObjective": 141.0,
+            "medianObjective": 141.0
           },
           {
             "lambda": 144.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 141.0
+            "bestObjective": 141.0,
+            "medianObjective": 141.0
           },
           {
             "lambda": 288.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 141.0
+            "bestObjective": 141.0,
+            "medianObjective": 141.0
           },
           {
             "lambda": 576.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 141.0
+            "bestObjective": 141.0,
+            "medianObjective": 141.0
           }
         ],
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
         "bestObjective": 141.0,
+        "medianObjective": 141.0,
         "meanObjective": 141.0,
         "stdObjective": 0.0,
+        "worstObjective": 141.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
+        "medianGapVsBestKnownPct": 0.0,
         "gapVsOrtoolsPct": 0.0,
-        "meanTimeMs": 186.97
+        "buildTimeMs": 0.12,
+        "tuneTimeMs": 991.12,
+        "solveTimeMs": 152.85,
+        "meanTimeMs": 152.85
       },
       "classical": {
         "backend": "Google OR-Tools CP-SAT (classical exact)",
         "status": "OPTIMAL",
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 141,
-        "meanObjective": 141,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 141.0,
+        "medianObjective": 141.0,
+        "meanObjective": 141.0,
         "stdObjective": 0.0,
+        "worstObjective": 141.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
-        "meanTimeMs": 2.17
+        "medianGapVsBestKnownPct": 0.0,
+        "buildTimeMs": 0.6,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": 1.57,
+        "meanTimeMs": 1.57,
+        "totalMeanTimeMs": 2.17
       }
     },
     {
       "slug": "const-crew-equip-8x6",
       "contentHash": "081ea70739dfd7d1ed67b2d0dd5d24f53d050bcf88f9d585336f9fe7658f31c2",
-      "runAt": "2026-11-23T21:19:16.543658+00:00",
+      "runAt": "2026-11-24T18:21:20.589562+00:00",
       "protocol": {
-        "repeats": 5,
+        "repeats": 20,
         "seeds": [
           101,
           202,
           303,
           404,
-          505
+          505,
+          606,
+          707,
+          808,
+          909,
+          1010,
+          1111,
+          1212,
+          1313,
+          1414,
+          1515,
+          1616,
+          1717,
+          1818,
+          1919,
+          2020
         ],
+        "tuneSeeds": [
+          9001,
+          9002,
+          9003
+        ],
+        "quboSweepReads": 200,
         "quboReadsPerRepeat": 500,
-        "maxQuboVars": 150
+        "quboNumSweeps": 1000,
+        "maxQuboVars": 150,
+        "quboLimitRationale": "Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT."
+      },
+      "environment": {
+        "pythonVersion": "3.13.5",
+        "ortoolsVersion": "9.15.6755",
+        "dimodVersion": "0.12.21",
+        "nealVersion": "0.6.0",
+        "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "cpuCount": 8
+      },
+      "structure": {
+        "totalVars": 48,
+        "decisionVars": 48,
+        "slackVars": 0,
+        "linearTerms": 47,
+        "quadraticCouplings": 246,
+        "densityPct": 21.81,
+        "maxDegree": 14,
+        "avgDegree": 10.25,
+        "minAbsCoeff": 2.0,
+        "maxAbsCoeff": 140.0,
+        "dynamicRange": 70.0
+      },
+      "equivalenceCheck": {
+        "passed": true,
+        "optimalEnergyExpected": 258.0,
+        "optimalEnergyActual": 258.0,
+        "maxAbsError": 0.0,
+        "testedPerturbations": 12,
+        "feasibleNeighborsChecked": 0,
+        "infeasibleNeighborsChecked": 12,
+        "infeasibleBarrierPassed": true
       },
       "quboVars": 48,
       "verdict": "competitive",
-      "verdictNote": "Both solvers reached within 0.00% of the proven optimum (258.0) (5/5 feasible SA runs at \u03bb=70.0). OR-Tools CP-SAT solved in 2.4 ms vs. 318.1 ms for simulated annealing.",
+      "verdictNote": "Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at \u03bb=70.0). Runtime: CP-SAT solve 1.6 ms vs. SA solve 291.0 ms (+ 1612 ms \u03bb-tuning).",
+      "runtimeRatioSaVsCp": 184.2,
       "qubo": {
         "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
         "exceedsLimit": false,
@@ -302,134 +667,284 @@
           {
             "lambda": 70.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 258.0
+            "bestObjective": 258.0,
+            "medianObjective": 258.0
           },
           {
             "lambda": 140.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 258.0
+            "bestObjective": 258.0,
+            "medianObjective": 258.0
           },
           {
             "lambda": 280.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 270.0
+            "bestObjective": 258.0,
+            "medianObjective": 268.0
           },
           {
             "lambda": 560.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 258.0
+            "bestObjective": 267.0,
+            "medianObjective": 268.0
           }
         ],
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
         "bestObjective": 258.0,
+        "medianObjective": 258.0,
         "meanObjective": 258.0,
         "stdObjective": 0.0,
+        "worstObjective": 258.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
+        "medianGapVsBestKnownPct": 0.0,
         "gapVsOrtoolsPct": 0.0,
-        "meanTimeMs": 318.12
+        "buildTimeMs": 0.25,
+        "tuneTimeMs": 1611.59,
+        "solveTimeMs": 290.99,
+        "meanTimeMs": 290.99
       },
       "classical": {
         "backend": "Google OR-Tools CP-SAT (classical exact)",
         "status": "OPTIMAL",
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 258,
-        "meanObjective": 258,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 258.0,
+        "medianObjective": 258.0,
+        "meanObjective": 258.0,
         "stdObjective": 0.0,
+        "worstObjective": 258.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
-        "meanTimeMs": 2.41
+        "medianGapVsBestKnownPct": 0.0,
+        "buildTimeMs": 0.76,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": 1.58,
+        "meanTimeMs": 1.58,
+        "totalMeanTimeMs": 2.34
       }
     },
     {
       "slug": "const-subcontractor-6x10",
       "contentHash": "e4498e77cda5886ac81c8f598197f0dae54523a851e27922cf681efd09d07531",
-      "runAt": "2026-11-23T21:19:21.224029+00:00",
+      "runAt": "2026-11-24T18:21:34.787588+00:00",
       "protocol": {
-        "repeats": 5,
+        "repeats": 20,
         "seeds": [
           101,
           202,
           303,
           404,
-          505
+          505,
+          606,
+          707,
+          808,
+          909,
+          1010,
+          1111,
+          1212,
+          1313,
+          1414,
+          1515,
+          1616,
+          1717,
+          1818,
+          1919,
+          2020
         ],
+        "tuneSeeds": [
+          9001,
+          9002,
+          9003
+        ],
+        "quboSweepReads": 200,
         "quboReadsPerRepeat": 500,
-        "maxQuboVars": 150
+        "quboNumSweeps": 1000,
+        "maxQuboVars": 150,
+        "quboLimitRationale": "Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT."
+      },
+      "environment": {
+        "pythonVersion": "3.13.5",
+        "ortoolsVersion": "9.15.6755",
+        "dimodVersion": "0.12.21",
+        "nealVersion": "0.6.0",
+        "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "cpuCount": 8
+      },
+      "structure": {
+        "totalVars": 86,
+        "decisionVars": 60,
+        "slackVars": 26,
+        "linearTerms": 86,
+        "quadraticCouplings": 724,
+        "densityPct": 19.81,
+        "maxDegree": 19,
+        "avgDegree": 16.84,
+        "minAbsCoeff": 260.0,
+        "maxAbsCoeff": 13622.0,
+        "dynamicRange": 52.39
+      },
+      "equivalenceCheck": {
+        "passed": true,
+        "optimalEnergyExpected": 225.0,
+        "optimalEnergyActual": 225.0,
+        "maxAbsError": 0.0,
+        "testedPerturbations": 12,
+        "feasibleNeighborsChecked": 0,
+        "infeasibleNeighborsChecked": 12,
+        "infeasibleBarrierPassed": true
       },
       "quboVars": 86,
       "verdict": "classical_wins",
-      "verdictNote": "OR-Tools CP-SAT proved the optimum (225) in 2.1 ms, outperforming QUBO simulated annealing (best 290.0, 28.89% gap, 5/5 feasible at \u03bb=130.0).",
+      "verdictNote": "OR-Tools CP-SAT proved optimal (225.0) in 1.4 ms solve, outperforming QUBO SA (median 320.5 [42.44% gap], best 268.0 [19.11% gap], 20/20 feasible at \u03bb=65.0, 546.0 ms solve).",
+      "runtimeRatioSaVsCp": 384.5,
       "qubo": {
         "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
         "exceedsLimit": false,
-        "bestLambda": 130.0,
+        "bestLambda": 65.0,
         "lambdaSweep": [
           {
             "lambda": 65.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 376.0
+            "bestObjective": 304.0,
+            "medianObjective": 330.0
           },
           {
             "lambda": 130.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 308.0
+            "bestObjective": 327.0,
+            "medianObjective": 368.0
           },
           {
             "lambda": 260.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 313.0
+            "bestObjective": 313.0,
+            "medianObjective": 359.0
           },
           {
             "lambda": 520.0,
             "feasibilityRate": 1.0,
-            "bestObjective": 350.0
+            "bestObjective": 333.0,
+            "medianObjective": 359.0
           }
         ],
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 290.0,
-        "meanObjective": 311.8,
-        "stdObjective": 12.1392,
-        "gapVsBestKnownPct": 28.89,
-        "gapVsOrtoolsPct": 28.89,
-        "meanTimeMs": 566.82
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 268.0,
+        "medianObjective": 320.5,
+        "meanObjective": 318.2,
+        "stdObjective": 22.9991,
+        "worstObjective": 352.0,
+        "iqrObjective": 33.25,
+        "gapVsBestKnownPct": 19.11,
+        "medianGapVsBestKnownPct": 42.44,
+        "gapVsOrtoolsPct": 19.11,
+        "buildTimeMs": 0.19,
+        "tuneTimeMs": 2775.76,
+        "solveTimeMs": 546.03,
+        "meanTimeMs": 546.03
       },
       "classical": {
         "backend": "Google OR-Tools CP-SAT (classical exact)",
         "status": "OPTIMAL",
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 225,
-        "meanObjective": 225,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 225.0,
+        "medianObjective": 225.0,
+        "meanObjective": 225.0,
         "stdObjective": 0.0,
+        "worstObjective": 225.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
-        "meanTimeMs": 2.07
+        "medianGapVsBestKnownPct": 0.0,
+        "buildTimeMs": 0.57,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": 1.42,
+        "meanTimeMs": 1.42,
+        "totalMeanTimeMs": 1.99
       }
     },
     {
       "slug": "const-rcpsp-10x10",
       "contentHash": "1c9afebb34f44050ba42cbc98173e819210410a46840f2dc509945dad50abd7e",
-      "runAt": "2026-11-23T21:19:28.986688+00:00",
+      "runAt": "2026-11-24T18:21:58.352946+00:00",
       "protocol": {
-        "repeats": 5,
+        "repeats": 20,
         "seeds": [
           101,
           202,
           303,
           404,
-          505
+          505,
+          606,
+          707,
+          808,
+          909,
+          1010,
+          1111,
+          1212,
+          1313,
+          1414,
+          1515,
+          1616,
+          1717,
+          1818,
+          1919,
+          2020
         ],
+        "tuneSeeds": [
+          9001,
+          9002,
+          9003
+        ],
+        "quboSweepReads": 200,
         "quboReadsPerRepeat": 500,
-        "maxQuboVars": 150
+        "quboNumSweeps": 1000,
+        "maxQuboVars": 150,
+        "quboLimitRationale": "Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT."
+      },
+      "environment": {
+        "pythonVersion": "3.13.5",
+        "ortoolsVersion": "9.15.6755",
+        "dimodVersion": "0.12.21",
+        "nealVersion": "0.6.0",
+        "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "cpuCount": 8
+      },
+      "structure": {
+        "totalVars": 130,
+        "decisionVars": 100,
+        "slackVars": 30,
+        "linearTerms": 130,
+        "quadraticCouplings": 1680,
+        "densityPct": 20.04,
+        "maxDegree": 39,
+        "avgDegree": 25.85,
+        "minAbsCoeff": 960.0,
+        "maxAbsCoeff": 20157.0,
+        "dynamicRange": 21.0
+      },
+      "equivalenceCheck": {
+        "passed": true,
+        "optimalEnergyExpected": 191.0,
+        "optimalEnergyActual": 191.0,
+        "maxAbsError": 0.0,
+        "testedPerturbations": 12,
+        "feasibleNeighborsChecked": 0,
+        "infeasibleNeighborsChecked": 12,
+        "infeasibleBarrierPassed": true
       },
       "quboVars": 130,
       "verdict": "classical_wins",
-      "verdictNote": "OR-Tools CP-SAT proved the optimum (191) in 5.6 ms, outperforming QUBO simulated annealing (best 233.0, 21.99% gap, 4/5 feasible at \u03bb=480.0).",
+      "verdictNote": "OR-Tools CP-SAT proved optimal (191.0) in 3.1 ms solve, outperforming QUBO SA (median 264.0 [38.22% gap], best 222.0 [16.23% gap], 15/20 feasible at \u03bb=480.0, 897.2 ms solve).",
+      "runtimeRatioSaVsCp": 292.2,
       "qubo": {
         "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
         "exceedsLimit": false,
@@ -437,67 +952,142 @@
         "lambdaSweep": [
           {
             "lambda": 120.0,
-            "feasibilityRate": 0.0,
-            "bestObjective": null
+            "feasibilityRate": 0.33,
+            "bestObjective": 219.0,
+            "medianObjective": 219.0
           },
           {
             "lambda": 240.0,
-            "feasibilityRate": 0.5,
-            "bestObjective": 282.0
+            "feasibilityRate": 0.33,
+            "bestObjective": 215.0,
+            "medianObjective": 215.0
           },
           {
             "lambda": 480.0,
-            "feasibilityRate": 0.5,
-            "bestObjective": 246.0
+            "feasibilityRate": 0.67,
+            "bestObjective": 249.0,
+            "medianObjective": 260.5
           },
           {
             "lambda": 960.0,
-            "feasibilityRate": 0.0,
-            "bestObjective": null
+            "feasibilityRate": 0.33,
+            "bestObjective": 340.0,
+            "medianObjective": 340.0
           }
         ],
-        "feasibilityRate": 0.8,
-        "feasibleRuns": 4,
-        "totalRuns": 5,
-        "bestObjective": 233.0,
-        "meanObjective": 260.25,
-        "stdObjective": 23.2312,
-        "gapVsBestKnownPct": 21.99,
-        "gapVsOrtoolsPct": 21.99,
-        "meanTimeMs": 938.83
+        "feasibilityRate": 0.75,
+        "feasibleRuns": 15,
+        "totalRuns": 20,
+        "bestObjective": 222.0,
+        "medianObjective": 264.0,
+        "meanObjective": 265.2667,
+        "stdObjective": 26.9034,
+        "worstObjective": 327.0,
+        "iqrObjective": 40.0,
+        "gapVsBestKnownPct": 16.23,
+        "medianGapVsBestKnownPct": 38.22,
+        "gapVsOrtoolsPct": 16.23,
+        "buildTimeMs": 0.87,
+        "tuneTimeMs": 4511.13,
+        "solveTimeMs": 897.19,
+        "meanTimeMs": 897.19
       },
       "classical": {
         "backend": "Google OR-Tools CP-SAT (classical exact)",
         "status": "OPTIMAL",
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 191,
-        "meanObjective": 191,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 191.0,
+        "medianObjective": 191.0,
+        "meanObjective": 191.0,
         "stdObjective": 0.0,
+        "worstObjective": 191.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
-        "meanTimeMs": 5.56
+        "medianGapVsBestKnownPct": 0.0,
+        "buildTimeMs": 2.12,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": 3.07,
+        "meanTimeMs": 3.07,
+        "totalMeanTimeMs": 5.19
       }
     },
     {
       "slug": "const-fleet-dispatch-12x14",
       "contentHash": "7484d440e27ad63b8d834dfae6d2c54299ee1b3b82bd03c1680266467fd59a5c",
-      "runAt": "2026-11-23T21:19:29.214081+00:00",
+      "runAt": "2026-11-24T18:21:59.135210+00:00",
       "protocol": {
-        "repeats": 5,
+        "repeats": 20,
         "seeds": [
           101,
           202,
           303,
           404,
-          505
+          505,
+          606,
+          707,
+          808,
+          909,
+          1010,
+          1111,
+          1212,
+          1313,
+          1414,
+          1515,
+          1616,
+          1717,
+          1818,
+          1919,
+          2020
         ],
+        "tuneSeeds": [
+          9001,
+          9002,
+          9003
+        ],
+        "quboSweepReads": 200,
         "quboReadsPerRepeat": 500,
-        "maxQuboVars": 150
+        "quboNumSweeps": 1000,
+        "maxQuboVars": 150,
+        "quboLimitRationale": "Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT."
+      },
+      "environment": {
+        "pythonVersion": "3.13.5",
+        "ortoolsVersion": "9.15.6755",
+        "dimodVersion": "0.12.21",
+        "nealVersion": "0.6.0",
+        "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "cpuCount": 8
+      },
+      "structure": {
+        "totalVars": 180,
+        "decisionVars": 180,
+        "slackVars": 0,
+        "linearTerms": 180,
+        "quadraticCouplings": 1092,
+        "densityPct": 6.78,
+        "maxDegree": 14,
+        "avgDegree": 12.13,
+        "minAbsCoeff": 10.0,
+        "maxAbsCoeff": 488.0,
+        "dynamicRange": 48.8
+      },
+      "equivalenceCheck": {
+        "passed": true,
+        "optimalEnergyExpected": 327.0,
+        "optimalEnergyActual": 327.0,
+        "maxAbsError": 0.0,
+        "testedPerturbations": 12,
+        "feasibleNeighborsChecked": 0,
+        "infeasibleNeighborsChecked": 12,
+        "infeasibleBarrierPassed": true
       },
       "quboVars": 180,
       "verdict": "exceeds_qubo_limit",
-      "verdictNote": "Formulation requires 180 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (327) in 37.2 ms.",
+      "verdictNote": "Formulation requires 180 QUBO vars (180 decision + 0 slack, 1092 couplings), exceeding the 150-var interactive benchmark cap. QUBO equivalence verified (err=0.0); OR-Tools CP-SAT proved optimal (327.0) in 35.1 ms solve.",
+      "runtimeRatioSaVsCp": null,
       "qubo": {
         "backend": "D-Wave Simulated Annealing (dwave-neal \u00b7 classical software)",
         "exceedsLimit": true,
@@ -507,23 +1097,38 @@
         "feasibleRuns": 0,
         "totalRuns": 0,
         "bestObjective": null,
+        "medianObjective": null,
         "meanObjective": null,
         "stdObjective": null,
+        "worstObjective": null,
+        "iqrObjective": null,
         "gapVsBestKnownPct": null,
+        "medianGapVsBestKnownPct": null,
         "gapVsOrtoolsPct": null,
+        "buildTimeMs": 0.55,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": null,
         "meanTimeMs": null
       },
       "classical": {
         "backend": "Google OR-Tools CP-SAT (classical exact)",
         "status": "OPTIMAL",
         "feasibilityRate": 1.0,
-        "feasibleRuns": 5,
-        "totalRuns": 5,
-        "bestObjective": 327,
-        "meanObjective": 327,
+        "feasibleRuns": 20,
+        "totalRuns": 20,
+        "bestObjective": 327.0,
+        "medianObjective": 327.0,
+        "meanObjective": 327.0,
         "stdObjective": 0.0,
+        "worstObjective": 327.0,
+        "iqrObjective": 0.0,
         "gapVsBestKnownPct": 0.0,
-        "meanTimeMs": 37.25
+        "medianGapVsBestKnownPct": 0.0,
+        "buildTimeMs": 1.4,
+        "tuneTimeMs": 0.0,
+        "solveTimeMs": 35.14,
+        "meanTimeMs": 35.14,
+        "totalMeanTimeMs": 36.54
       }
     }
   ]

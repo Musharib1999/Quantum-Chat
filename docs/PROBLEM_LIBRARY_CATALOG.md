@@ -2,110 +2,118 @@
 
 Complete catalog of all **48 independently verified optimization benchmarks** across **6 industries**.
 
-> **Benchmark Protocol:** Every best-known optimum is proven (`0.00%` optimality gap) by **Google OR-Tools CP-SAT** or published TSPLIB ground truth. Side-by-side seeded benchmarks run across `N = 5` fixed seeds (`[101, 202, 303, 404, 505]`), a 4-point penalty λ sweep, and an explicit `150`-variable QUBO limit. **D-Wave Simulated Annealing (`dwave-neal`) is classical software** (no physical QPU or quantum advantage is claimed).
+> **Hardened Benchmark Protocol:** Every best-known optimum is proven (`0.00%` gap) by **Google OR-Tools CP-SAT** (`num_workers=1`) or published TSPLIB ground truth. Every BQM passes automated **QUBO≡Original mathematical equivalence verification** (`48/48` passed, `|E_QUBO(x*) - ±f(x*)| < 1e-4`). Penalty `λ` is tuned on `3` strictly disjoint seeds (`[9001, 9002, 9003]`) and evaluated on `N = 20` held-out seeds (`500` reads × `1000` sweeps). Timings separate model build, `λ` tuning, and pure solve time. **D-Wave Simulated Annealing (`dwave-neal`) is classical software** (no physical QPU or quantum advantage is claimed). Verdict `Competitive` requires `>=80%` feasibility and `<=1.0%` **median** gap.
+
+> **QUBO Size Limit (`150` vars):** Empirical interactive-latency and local simulated-annealing benchmark threshold (150 binary decision + slack variables). Not a hard mathematical limit of dwave-neal; problems above 150 QUBO variables still pass exact QUBO equivalence verification and are solved to proven optimality by Google OR-Tools CP-SAT.
+
+**Reproducibility Environment:** Python `3.13.5` · OR-Tools `9.15.6755` · dimod `0.12.21` · dwave-neal `0.6.0` · `macOS-27.2.1-arm64-arm-64bit-Mach-O` (8 cores)
 
 ## Summary Overview
 
 - **Total Problems:** 48 across 6 industries (8 per industry)
+- **QUBO≡Original Equivalence Proof:** 48/48 passed
 - **By Size Tier:** Small (33) · Medium (8) · Large (7)
-- **By Solver Fit:** Competitive (33) · Classical Wins (9) · Exceeds QUBO Limit (6)
+- **By Solver Fit (20-seed median rule):** Competitive (29) · Classical Wins (13) · Exceeds QUBO Limit (6)
 
 | Industry | Problems | Competitive | Classical Wins | Exceeds QUBO Limit | Problem Types |
 |---|---:|---:|---:|---:|---|
-| **Construction** | 8 | 4 | 3 | 1 | Equipment + Workforce, Project Planning, Workforce Scheduling |
-| **Energy** | 8 | 5 | 2 | 1 | Demand Response, Grid Partitioning (Max-Cut), Plant Location, Set Cover, Unit Commitment |
-| **Finance** | 8 | 5 | 2 | 1 | Capital Budgeting, Portfolio Selection, Trade Matching |
+| **Construction** | 8 | 3 | 4 | 1 | Equipment + Workforce, Project Planning, Workforce Scheduling |
+| **Energy** | 8 | 4 | 3 | 1 | Demand Response, Grid Partitioning (Max-Cut), Plant Location, Set Cover, Unit Commitment |
+| **Finance** | 8 | 4 | 3 | 1 | Capital Budgeting, Portfolio Selection, Trade Matching |
 | **Logistics** | 8 | 6 | 1 | 1 | Assignment, Facility Location, Knapsack, Set Cover, TSP, Vehicle Routing |
-| **Manufacturing** | 8 | 6 | 1 | 1 | Batch Selection, Machine Assignment, Plant Location |
+| **Manufacturing** | 8 | 5 | 2 | 1 | Batch Selection, Machine Assignment, Plant Location |
 | **Workforce Scheduling** | 8 | 7 | 0 | 1 | Crew Assignment, Set Cover, Shift Scheduling |
 
 ## Benchmark Matrix by Industry
 
 ### Construction (8 problems)
 
-| # | Slug | Title | Type | Size | QUBO Vars | Sense | Best Known | OR-Tools CP-SAT | D-Wave SA (classical software) | Solver Fit |
-|---:|---|---|---|---|---:|---|---:|---|---|---|
-| 1 | `const-bid-portfolio-12` | Construction Bid Portfolio (12 tenders, synergy) | Project Planning | Small | 19 | Maximize | 323 | 323 (0.00% · 5.9ms) | 323.0 (0.00% · 5/5 feas · 159.3ms) | **Competitive** |
-| 2 | `const-trade-rostering-6x4` | Trade Crew Rostering (6 crews, 4 shifts) | Workforce Scheduling | Small | 24 | Minimize | 141 | 141 (0.00% · 2.2ms) | 141.0 (0.00% · 5/5 feas · 187.0ms) | **Competitive** |
-| 3 | `const-time-cost-8x3` | Time-Cost Activity Crashing (8 activities, 3 modes) | Project Planning | Small | 31 | Minimize | 411 | 411 (0.00% · 1.3ms) | 420.0 (2.19% · 5/5 feas · 257.3ms) | **Classical Wins** |
-| 4 | `const-site-layout-6x6` | Site Layout Planning (6 facilities, 6 zones) | Project Planning | Small | 36 | Minimize | 611 | 611 (0.00% · 88.3ms) | 611.0 (0.00% · 5/5 feas · 214.6ms) | **Competitive** |
-| 5 | `const-crew-equip-8x6` | Crew & Heavy Equipment Co-Scheduling (8 tasks, 6 slots) | Equipment + Workforce | Medium | 48 | Minimize | 258 | 258 (0.00% · 2.4ms) | 258.0 (0.00% · 5/5 feas · 318.1ms) | **Competitive** |
-| 6 | `const-subcontractor-6x10` | Subcontractor Package Assignment (6 crews, 10 packages) | Workforce Scheduling | Medium | 86 | Minimize | 225 | 225 (0.00% · 2.1ms) | 290.0 (28.89% · 5/5 feas · 566.8ms) | **Classical Wins** |
-| 7 | `const-rcpsp-10x10` | Multi-Floor RCPSP Schedule (10 tasks, 10 weeks) | Project Planning | Large | 130 | Minimize | 191 | 191 (0.00% · 5.6ms) | 233.0 (21.99% · 4/5 feas · 938.8ms) | **Classical Wins** |
-| 8 | `const-fleet-dispatch-12x14` | Multi-Site Fleet & Crew Dispatch (12 units, 14 sites) | Equipment + Workforce | Large | 180 | Minimize | 327 | 327 (0.00% · 37.2ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
+| # | Slug | Title | Type | Size | QUBO Vars (d+s) | Density | Sense | Best Known | OR-Tools CP-SAT (solve) | D-Wave SA (20-seed median · classical software) | Solver Fit |
+|---:|---|---|---|---|---|---:|---|---:|---|---|---|
+| 1 | `const-bid-portfolio-12` | Construction Bid Portfolio (12 tenders, synergy) | Project Planning | Small | 19 (12+7) | 100.0% | Maximize | 323 | 323.0 (0.00% · 2.4ms) | med 314.0 (2.79%) · best 323.0 · 20/20 · 133.6ms | **Classical Wins** |
+| 2 | `const-trade-rostering-6x4` | Trade Crew Rostering (6 crews, 4 shifts) | Workforce Scheduling | Small | 24 (24+0) | 34.8% | Minimize | 141 | 141.0 (0.00% · 1.6ms) | med 141.0 (0.00%) · best 141.0 · 20/20 · 152.8ms | **Competitive** |
+| 3 | `const-time-cost-8x3` | Time-Cost Activity Crashing (8 activities, 3 modes) | Project Planning | Small | 31 (24+7) | 100.0% | Minimize | 411 | 411.0 (0.00% · 1.0ms) | med 438.5 (6.69%) · best 411.0 · 20/20 · 246.7ms | **Classical Wins** |
+| 4 | `const-site-layout-6x6` | Site Layout Planning (6 facilities, 6 zones) | Project Planning | Small | 36 (36+0) | 100.0% | Minimize | 611 | 611.0 (0.00% · 82.4ms) | med 611.0 (0.00%) · best 611.0 · 20/20 · 171.7ms | **Competitive** |
+| 5 | `const-crew-equip-8x6` | Crew & Heavy Equipment Co-Scheduling (8 tasks, 6 slots) | Equipment + Workforce | Medium | 48 (48+0) | 21.8% | Minimize | 258 | 258.0 (0.00% · 1.6ms) | med 258.0 (0.00%) · best 258.0 · 20/20 · 291.0ms | **Competitive** |
+| 6 | `const-subcontractor-6x10` | Subcontractor Package Assignment (6 crews, 10 packages) | Workforce Scheduling | Medium | 86 (60+26) | 19.8% | Minimize | 225 | 225.0 (0.00% · 1.4ms) | med 320.5 (42.44%) · best 268.0 · 20/20 · 546.0ms | **Classical Wins** |
+| 7 | `const-rcpsp-10x10` | Multi-Floor RCPSP Schedule (10 tasks, 10 weeks) | Project Planning | Large | 130 (100+30) | 20.0% | Minimize | 191 | 191.0 (0.00% · 3.1ms) | med 264.0 (38.22%) · best 222.0 · 15/20 · 897.2ms | **Classical Wins** |
+| 8 | `const-fleet-dispatch-12x14` | Multi-Site Fleet & Crew Dispatch (12 units, 14 sites) | Equipment + Workforce | Large | 180 (180+0) | 6.8% | Minimize | 327 | 327.0 (0.00% · 35.1ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
 
 ### Energy (8 problems)
 
-| # | Slug | Title | Type | Size | QUBO Vars | Sense | Best Known | OR-Tools CP-SAT | D-Wave SA (classical software) | Solver Fit |
-|---:|---|---|---|---|---:|---|---:|---|---|---|
-| 1 | `energy-maxcut-12` | Substation Phase Balancing (12 nodes) | Grid Partitioning (Max-Cut) | Small | 12 | Maximize | 128 | 128.0 (0.00% · 2.3ms) | 128.0 (0.00% · 5/5 feas · 59.1ms) | **Competitive** |
-| 2 | `energy-demand-12` | Demand-Response Load Shedding (12 feeders) | Demand Response | Small | 19 | Maximize | 355 | 355.0 (0.00% · 0.4ms) | 334.0 (5.92% · 5/5 feas · 141.8ms) | **Classical Wins** |
-| 3 | `energy-maxcut-20` | Transmission Grid Partitioning (20 nodes) | Grid Partitioning (Max-Cut) | Small | 20 | Maximize | 255 | 255.0 (0.00% · 24.7ms) | 255.0 (0.00% · 5/5 feas · 98.8ms) | **Competitive** |
-| 4 | `energy-uc-4x4` | Microgrid Unit Commitment (4 gens, 4 periods) | Unit Commitment | Small | 29 | Minimize | 158 | 158.0 (0.00% · 1.5ms) | 158.0 (0.00% · 5/5 feas · 153.9ms) | **Competitive** |
-| 5 | `energy-substation-cover` | Backup Generator Coverage (9 units, 12 zones) | Set Cover | Small | 30 | Minimize | 44 | 44.0 (0.00% · 0.6ms) | 44.0 (0.00% · 5/5 feas · 209.5ms) | **Competitive** |
-| 6 | `energy-uc-5x4` | Regional Unit Commitment (5 gens, 4 periods) | Unit Commitment | Small | 33 | Minimize | 188 | 188.0 (0.00% · 1.4ms) | 188.0 (0.00% · 5/5 feas · 183.3ms) | **Competitive** |
-| 7 | `energy-uc-6x5` | Thermal Fleet Dispatch (6 gens, 5 periods) | Unit Commitment | Small | 50 | Minimize | 277 | 277.0 (0.00% · 1.8ms) | 339.0 (22.38% · 5/5 feas · 279.4ms) | **Classical Wins** |
-| 8 | `energy-substation-12x14` | Regional Substation Expansion (12 sites, 14 zones) | Plant Location | Large | 180 | Minimize | 271 | 271.0 (0.00% · 18.9ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
+| # | Slug | Title | Type | Size | QUBO Vars (d+s) | Density | Sense | Best Known | OR-Tools CP-SAT (solve) | D-Wave SA (20-seed median · classical software) | Solver Fit |
+|---:|---|---|---|---|---|---:|---|---:|---|---|---|
+| 1 | `energy-maxcut-12` | Substation Phase Balancing (12 nodes) | Grid Partitioning (Max-Cut) | Small | 12 (12+0) | 51.5% | Maximize | 128 | 128.0 (0.00% · 1.6ms) | med 128.0 (0.00%) · best 128.0 · 20/20 · 53.0ms | **Competitive** |
+| 2 | `energy-demand-12` | Demand-Response Load Shedding (12 feeders) | Demand Response | Small | 19 (12+7) | 100.0% | Maximize | 355 | 355.0 (0.00% · 0.1ms) | med 325.0 (8.45%) · best 355.0 · 20/20 · 130.2ms | **Classical Wins** |
+| 3 | `energy-maxcut-20` | Transmission Grid Partitioning (20 nodes) | Grid Partitioning (Max-Cut) | Small | 20 (20+0) | 30.0% | Maximize | 255 | 255.0 (0.00% · 24.1ms) | med 255.0 (0.00%) · best 255.0 · 20/20 · 92.0ms | **Competitive** |
+| 4 | `energy-uc-4x4` | Microgrid Unit Commitment (4 gens, 4 periods) | Unit Commitment | Small | 29 (16+13) | 25.4% | Minimize | 158 | 158.0 (0.00% · 1.1ms) | med 158.0 (0.00%) · best 158.0 · 20/20 · 133.5ms | **Competitive** |
+| 5 | `energy-substation-cover` | Backup Generator Coverage (9 units, 12 zones) | Set Cover | Small | 30 (9+21) | 28.3% | Minimize | 44 | 44.0 (0.00% · 0.3ms) | med 44.0 (0.00%) · best 44.0 · 20/20 · 190.8ms | **Competitive** |
+| 6 | `energy-uc-5x4` | Regional Unit Commitment (5 gens, 4 periods) | Unit Commitment | Small | 33 (20+13) | 25.6% | Minimize | 188 | 188.0 (0.00% · 1.1ms) | med 193.0 (2.66%) · best 188.0 · 20/20 · 147.2ms | **Classical Wins** |
+| 7 | `energy-uc-6x5` | Thermal Fleet Dispatch (6 gens, 5 periods) | Unit Commitment | Small | 50 (30+20) | 20.3% | Minimize | 277 | 277.0 (0.00% · 1.3ms) | med 375.0 (35.38%) · best 339.0 · 20/20 · 238.5ms | **Classical Wins** |
+| 8 | `energy-substation-12x14` | Regional Substation Expansion (12 sites, 14 zones) | Plant Location | Large | 180 (180+0) | 6.8% | Minimize | 271 | 271.0 (0.00% · 17.3ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
 
 ### Finance (8 problems)
 
-| # | Slug | Title | Type | Size | QUBO Vars | Sense | Best Known | OR-Tools CP-SAT | D-Wave SA (classical software) | Solver Fit |
-|---:|---|---|---|---|---:|---|---:|---|---|---|
-| 1 | `finance-portfolio-8-k4` | Equity Portfolio Selection (8 assets, pick 4) | Portfolio Selection | Small | 8 | Maximize | 129 | 129.0 (0.00% · 2.4ms) | 129.0 (0.00% · 5/5 feas · 48.5ms) | **Competitive** |
-| 2 | `finance-portfolio-12-k5` | Equity Portfolio Selection (12 assets, pick 5) | Portfolio Selection | Small | 12 | Maximize | 123 | 123.0 (0.00% · 5.7ms) | 123.0 (0.00% · 5/5 feas · 127.6ms) | **Competitive** |
-| 3 | `finance-portfolio-16-k6` | Multi-Sector Portfolio (16 assets, pick 6) | Portfolio Selection | Small | 16 | Maximize | 180 | 180.0 (0.00% · 25.7ms) | 180.0 (0.00% · 5/5 feas · 193.8ms) | **Competitive** |
-| 4 | `finance-capex-10` | Capital Budgeting Allocation (10 projects) | Capital Budgeting | Small | 17 | Maximize | 316 | 316.0 (0.00% · 0.3ms) | 316.0 (0.00% · 5/5 feas · 121.2ms) | **Competitive** |
-| 5 | `finance-portfolio-20-k8` | Institutional Portfolio (20 assets, pick 8) | Portfolio Selection | Small | 20 | Maximize | 196 | 196.0 (0.00% · 337.6ms) | 196.0 (0.00% · 5/5 feas · 271.5ms) | **Competitive** |
-| 6 | `finance-capex-15` | R&D Portfolio Budgeting (15 projects) | Capital Budgeting | Small | 22 | Maximize | 411 | 411.0 (0.00% · 0.3ms) | 398.0 (3.16% · 5/5 feas · 166.7ms) | **Classical Wins** |
-| 7 | `finance-capex-22` | Corporate CapEx Selection (22 projects) | Capital Budgeting | Small | 30 | Maximize | 605 | 605.0 (0.00% · 0.5ms) | 538.0 (11.07% · 5/5 feas · 256.7ms) | **Classical Wins** |
-| 8 | `finance-clearing-13x13` | Large Clearing Desk Assignment (13x13) | Trade Matching | Large | 169 | Minimize | 148 | 148.0 (0.00% · 5.5ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
+| # | Slug | Title | Type | Size | QUBO Vars (d+s) | Density | Sense | Best Known | OR-Tools CP-SAT (solve) | D-Wave SA (20-seed median · classical software) | Solver Fit |
+|---:|---|---|---|---|---|---:|---|---:|---|---|---|
+| 1 | `finance-portfolio-8-k4` | Equity Portfolio Selection (8 assets, pick 4) | Portfolio Selection | Small | 8 (8+0) | 100.0% | Maximize | 129 | 129.0 (0.00% · 1.7ms) | med 129.0 (0.00%) · best 129.0 · 20/20 · 27.5ms | **Competitive** |
+| 2 | `finance-portfolio-12-k5` | Equity Portfolio Selection (12 assets, pick 5) | Portfolio Selection | Small | 12 (12+0) | 100.0% | Maximize | 123 | 123.0 (0.00% · 4.6ms) | med 123.0 (0.00%) · best 123.0 · 20/20 · 85.7ms | **Competitive** |
+| 3 | `finance-portfolio-16-k6` | Multi-Sector Portfolio (16 assets, pick 6) | Portfolio Selection | Small | 16 (16+0) | 100.0% | Maximize | 180 | 180.0 (0.00% · 24.8ms) | med 180.0 (0.00%) · best 180.0 · 20/20 · 125.0ms | **Competitive** |
+| 4 | `finance-capex-10` | Capital Budgeting Allocation (10 projects) | Capital Budgeting | Small | 17 (10+7) | 100.0% | Maximize | 316 | 316.0 (0.00% · 0.1ms) | med 316.0 (0.00%) · best 316.0 · 20/20 · 108.1ms | **Competitive** |
+| 5 | `finance-portfolio-20-k8` | Institutional Portfolio (20 assets, pick 8) | Portfolio Selection | Small | 20 (20+0) | 100.0% | Maximize | 196 | 196.0 (0.00% · 352.7ms) | med 189.0 (3.57%) · best 196.0 · 20/20 · 164.4ms | **Classical Wins** |
+| 6 | `finance-capex-15` | R&D Portfolio Budgeting (15 projects) | Capital Budgeting | Small | 22 (15+7) | 100.0% | Maximize | 411 | 411.0 (0.00% · 0.1ms) | med 386.0 (6.08%) · best 404.0 · 20/20 · 147.1ms | **Classical Wins** |
+| 7 | `finance-capex-22` | Corporate CapEx Selection (22 projects) | Capital Budgeting | Small | 30 (22+8) | 100.0% | Maximize | 605 | 605.0 (0.00% · 0.1ms) | med 526.0 (13.06%) · best 573.0 · 20/20 · 232.6ms | **Classical Wins** |
+| 8 | `finance-clearing-13x13` | Large Clearing Desk Assignment (13x13) | Trade Matching | Large | 169 (169+0) | 14.3% | Minimize | 148 | 148.0 (0.00% · 4.3ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
 
 ### Logistics (8 problems)
 
-| # | Slug | Title | Type | Size | QUBO Vars | Sense | Best Known | OR-Tools CP-SAT | D-Wave SA (classical software) | Solver Fit |
-|---:|---|---|---|---|---:|---|---:|---|---|---|
-| 1 | `cargo-knapsack-12` | Cargo Loading Knapsack (12 parcels) | Knapsack | Small | 18 | Maximize | 249 | 249.0 (0.00% · 0.6ms) | 249.0 (0.00% · 5/5 feas · 265.6ms) | **Competitive** |
-| 2 | `facility-location-3x6` | Warehouse Location (3 sites, 6 customers) | Facility Location | Small | 21 | Minimize | 144 | 144.0 (0.00% · 1.5ms) | 144.0 (0.00% · 5/5 feas · 231.7ms) | **Competitive** |
-| 3 | `tsp-5-city` | Courier Round Trip TSP (5 cities) | TSP | Small | 25 | Minimize | 115 | 115.0 (0.00% · 1.5ms) | 115.0 (0.00% · 5/5 feas · 302.1ms) | **Competitive** |
-| 4 | `set-cover-depots-10` | Depot Coverage Set Cover (7 depots, 10 regions) | Set Cover | Small | 25 | Minimize | 12 | 12.0 (0.00% · 0.8ms) | 12.0 (0.00% · 5/5 feas · 355.0ms) | **Competitive** |
-| 5 | `assignment-driver-route-6` | Driver-to-Route Assignment (6x6) | Assignment | Small | 36 | Minimize | 65 | 65.0 (0.00% · 7.0ms) | 65.0 (0.00% · 5/5 feas · 518.3ms) | **Competitive** |
-| 6 | `cvrp-6c-2v` | Capacitated Vehicle Routing (6 customers, 2 vans) | Vehicle Routing | Medium | 92 | Minimize | 138 | 138.0 (0.00% · 22.4ms) | 142.0 (2.90% · 5/5 feas · 1.58s) | **Classical Wins** |
-| 7 | `assignment-driver-route-10` | Driver-to-Route Assignment (10x10) | Assignment | Medium | 100 | Minimize | 94 | 94.0 (0.00% · 3.3ms) | 94.0 (0.00% · 5/5 feas · 1.46s) | **Competitive** |
-| 8 | `tsp-burma14` | Burma14 TSP (TSPLIB, 14 cities) | TSP | Large | 196 | Minimize | 3323 | 3323.0 (0.00% · 16.2ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
+| # | Slug | Title | Type | Size | QUBO Vars (d+s) | Density | Sense | Best Known | OR-Tools CP-SAT (solve) | D-Wave SA (20-seed median · classical software) | Solver Fit |
+|---:|---|---|---|---|---|---:|---|---:|---|---|---|
+| 1 | `cargo-knapsack-12` | Cargo Loading Knapsack (12 parcels) | Knapsack | Small | 18 (12+6) | 100.0% | Maximize | 249 | 249.0 (0.00% · 0.1ms) | med 249.0 (0.00%) · best 249.0 · 20/20 · 117.4ms | **Competitive** |
+| 2 | `facility-location-3x6` | Warehouse Location (3 sites, 6 customers) | Facility Location | Small | 21 (21+0) | 17.1% | Minimize | 144 | 144.0 (0.00% · 0.8ms) | med 144.0 (0.00%) · best 144.0 · 20/20 · 95.1ms | **Competitive** |
+| 3 | `tsp-5-city` | Courier Round Trip TSP (5 cities) | TSP | Small | 25 (25+0) | 66.7% | Minimize | 115 | 115.0 (0.00% · 0.7ms) | med 115.0 (0.00%) · best 115.0 · 20/20 · 128.6ms | **Competitive** |
+| 4 | `set-cover-depots-10` | Depot Coverage Set Cover (7 depots, 10 regions) | Set Cover | Small | 25 (7+18) | 33.0% | Minimize | 12 | 12.0 (0.00% · 0.3ms) | med 12.0 (0.00%) · best 12.0 · 20/20 · 160.9ms | **Competitive** |
+| 5 | `assignment-driver-route-6` | Driver-to-Route Assignment (6x6) | Assignment | Small | 36 (36+0) | 28.6% | Minimize | 65 | 65.0 (0.00% · 1.0ms) | med 65.0 (0.00%) · best 65.0 · 20/20 · 230.9ms | **Competitive** |
+| 6 | `cvrp-6c-2v` | Capacitated Vehicle Routing (6 customers, 2 vans) | Vehicle Routing | Medium | 92 (72+20) | 44.1% | Minimize | 138 | 138.0 (0.00% · 19.3ms) | med 155.0 (12.32%) · best 138.0 · 20/20 · 761.0ms | **Classical Wins** |
+| 7 | `assignment-driver-route-10` | Driver-to-Route Assignment (10x10) | Assignment | Medium | 100 (100+0) | 18.2% | Minimize | 94 | 94.0 (0.00% · 2.1ms) | med 94.0 (0.00%) · best 94.0 · 20/20 · 639.4ms | **Competitive** |
+| 8 | `tsp-burma14` | Burma14 TSP (TSPLIB, 14 cities) | TSP | Large | 196 (196+0) | 26.7% | Minimize | 3323 | 3323.0 (0.00% · 16.6ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
 
 ### Manufacturing (8 problems)
 
-| # | Slug | Title | Type | Size | QUBO Vars | Sense | Best Known | OR-Tools CP-SAT | D-Wave SA (classical software) | Solver Fit |
-|---:|---|---|---|---|---:|---|---:|---|---|---|
-| 1 | `mfg-batch-12` | Production Batch Selection (12 batches) | Batch Selection | Small | 19 | Maximize | 233 | 233.0 (0.00% · 0.3ms) | 233.0 (0.00% · 5/5 feas · 140.1ms) | **Competitive** |
-| 2 | `mfg-plant-3x6` | Factory Line Allocation (3 plants, 6 orders) | Plant Location | Small | 21 | Minimize | 159 | 159.0 (0.00% · 1.1ms) | 159.0 (0.00% · 5/5 feas · 115.2ms) | **Competitive** |
-| 3 | `mfg-machine-5x5` | CNC Machine-to-Job Assignment (5x5) | Machine Assignment | Small | 25 | Minimize | 109 | 109.0 (0.00% · 1.0ms) | 109.0 (0.00% · 5/5 feas · 179.9ms) | **Competitive** |
-| 4 | `mfg-batch-18` | High-Mix Production Selection (18 batches) | Batch Selection | Small | 25 | Maximize | 604 | 604.0 (0.00% · 0.4ms) | 570.0 (5.63% · 5/5 feas · 207.9ms) | **Classical Wins** |
-| 5 | `mfg-plant-4x8` | Regional Plant Allocation (4 plants, 8 orders) | Plant Location | Small | 36 | Minimize | 175 | 175.0 (0.00% · 1.6ms) | 175.0 (0.00% · 5/5 feas · 206.8ms) | **Competitive** |
-| 6 | `mfg-machine-7x7` | Assembly Cell Assignment (7x7) | Machine Assignment | Medium | 49 | Minimize | 97 | 97.0 (0.00% · 1.2ms) | 97.0 (0.00% · 5/5 feas · 349.4ms) | **Competitive** |
-| 7 | `mfg-machine-9x9` | SMT Line Assignment (9x9) | Machine Assignment | Medium | 81 | Minimize | 121 | 121.0 (0.00% · 2.4ms) | 121.0 (0.00% · 5/5 feas · 585.9ms) | **Competitive** |
-| 8 | `mfg-plant-12x14` | Global Supply Network Allocation (12 plants, 14 hubs) | Plant Location | Large | 180 | Minimize | 252 | 252.0 (0.00% · 50.0ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
+| # | Slug | Title | Type | Size | QUBO Vars (d+s) | Density | Sense | Best Known | OR-Tools CP-SAT (solve) | D-Wave SA (20-seed median · classical software) | Solver Fit |
+|---:|---|---|---|---|---|---:|---|---:|---|---|---|
+| 1 | `mfg-batch-12` | Production Batch Selection (12 batches) | Batch Selection | Small | 19 (12+7) | 100.0% | Maximize | 233 | 233.0 (0.00% · 0.1ms) | med 225.0 (3.43%) · best 233.0 · 20/20 · 120.7ms | **Classical Wins** |
+| 2 | `mfg-plant-3x6` | Factory Line Allocation (3 plants, 6 orders) | Plant Location | Small | 21 (21+0) | 17.1% | Minimize | 159 | 159.0 (0.00% · 0.7ms) | med 159.0 (0.00%) · best 159.0 · 20/20 · 95.7ms | **Competitive** |
+| 3 | `mfg-machine-5x5` | CNC Machine-to-Job Assignment (5x5) | Machine Assignment | Small | 25 (25+0) | 33.3% | Minimize | 109 | 109.0 (0.00% · 0.7ms) | med 109.0 (0.00%) · best 109.0 · 20/20 · 152.7ms | **Competitive** |
+| 4 | `mfg-batch-18` | High-Mix Production Selection (18 batches) | Batch Selection | Small | 25 (18+7) | 100.0% | Maximize | 604 | 604.0 (0.00% · 0.1ms) | med 536.0 (11.26%) · best 574.0 · 20/20 · 181.5ms | **Classical Wins** |
+| 5 | `mfg-plant-4x8` | Regional Plant Allocation (4 plants, 8 orders) | Plant Location | Small | 36 (36+0) | 12.7% | Minimize | 175 | 175.0 (0.00% · 1.2ms) | med 175.0 (0.00%) · best 175.0 · 20/20 · 166.2ms | **Competitive** |
+| 6 | `mfg-machine-7x7` | Assembly Cell Assignment (7x7) | Machine Assignment | Medium | 49 (49+0) | 25.0% | Minimize | 97 | 97.0 (0.00% · 0.8ms) | med 97.0 (0.00%) · best 97.0 · 20/20 · 306.0ms | **Competitive** |
+| 7 | `mfg-machine-9x9` | SMT Line Assignment (9x9) | Machine Assignment | Medium | 81 (81+0) | 20.0% | Minimize | 121 | 121.0 (0.00% · 1.7ms) | med 121.0 (0.00%) · best 121.0 · 20/20 · 510.7ms | **Competitive** |
+| 8 | `mfg-plant-12x14` | Global Supply Network Allocation (12 plants, 14 hubs) | Plant Location | Large | 180 (180+0) | 6.8% | Minimize | 252 | 252.0 (0.00% · 29.6ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
 
 ### Workforce Scheduling (8 problems)
 
-| # | Slug | Title | Type | Size | QUBO Vars | Sense | Best Known | OR-Tools CP-SAT | D-Wave SA (classical software) | Solver Fit |
-|---:|---|---|---|---|---:|---|---:|---|---|---|
-| 1 | `workforce-shifts-5x3` | Nurse Shift Rostering (5 staff, 3 shifts) | Shift Scheduling | Small | 15 | Minimize | 103 | 103.0 (0.00% · 0.8ms) | 103.0 (0.00% · 5/5 feas · 113.5ms) | **Competitive** |
-| 2 | `workforce-shifts-6x4` | Hospital Shift Rostering (6 staff, 4 shifts) | Shift Scheduling | Small | 24 | Minimize | 103 | 103.0 (0.00% · 1.1ms) | 103.0 (0.00% · 5/5 feas · 180.1ms) | **Competitive** |
-| 3 | `workforce-crew-5x5` | Field Technician Assignment (5x5) | Crew Assignment | Small | 25 | Minimize | 100 | 100.0 (0.00% · 0.9ms) | 100.0 (0.00% · 5/5 feas · 178.6ms) | **Competitive** |
-| 4 | `workforce-oncall-8x10` | On-Call Skill Coverage (8 engineers, 10 windows) | Set Cover | Small | 25 | Minimize | 34 | 34.0 (0.00% · 0.4ms) | 34.0 (0.00% · 5/5 feas · 178.2ms) | **Competitive** |
-| 5 | `workforce-shifts-9x4` | Operations Crew Rostering (9 staff, 4 shifts) | Shift Scheduling | Small | 36 | Minimize | 138 | 138.0 (0.00% · 1.5ms) | 138.0 (0.00% · 5/5 feas · 280.1ms) | **Competitive** |
-| 6 | `workforce-shifts-12x5` | Plant Shift Rostering (12 staff, 5 shifts) | Shift Scheduling | Medium | 60 | Minimize | 218 | 218.0 (0.00% · 2.4ms) | 218.0 (0.00% · 5/5 feas · 481.3ms) | **Competitive** |
-| 7 | `workforce-crew-8x8` | Flight Crew Pairing Assignment (8x8) | Crew Assignment | Medium | 64 | Minimize | 131 | 131.0 (0.00% · 1.6ms) | 131.0 (0.00% · 5/5 feas · 458.3ms) | **Competitive** |
-| 8 | `workforce-shifts-20x8` | Enterprise Multi-Site Roster (20 staff, 8 shifts) | Shift Scheduling | Large | 160 | Minimize | 274 | 274.0 (0.00% · 4.6ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
+| # | Slug | Title | Type | Size | QUBO Vars (d+s) | Density | Sense | Best Known | OR-Tools CP-SAT (solve) | D-Wave SA (20-seed median · classical software) | Solver Fit |
+|---:|---|---|---|---|---|---:|---|---:|---|---|---|
+| 1 | `workforce-shifts-5x3` | Nurse Shift Rostering (5 staff, 3 shifts) | Shift Scheduling | Small | 15 (15+0) | 42.9% | Minimize | 103 | 103.0 (0.00% · 0.4ms) | med 103.0 (0.00%) · best 103.0 · 20/20 · 93.2ms | **Competitive** |
+| 2 | `workforce-shifts-6x4` | Hospital Shift Rostering (6 staff, 4 shifts) | Shift Scheduling | Small | 24 (24+0) | 34.8% | Minimize | 103 | 103.0 (0.00% · 0.8ms) | med 103.0 (0.00%) · best 103.0 · 20/20 · 147.8ms | **Competitive** |
+| 3 | `workforce-crew-5x5` | Field Technician Assignment (5x5) | Crew Assignment | Small | 25 (25+0) | 33.3% | Minimize | 100 | 100.0 (0.00% · 0.6ms) | med 100.0 (0.00%) · best 100.0 · 20/20 · 151.9ms | **Competitive** |
+| 4 | `workforce-oncall-8x10` | On-Call Skill Coverage (8 engineers, 10 windows) | Set Cover | Small | 25 (8+17) | 32.7% | Minimize | 34 | 34.0 (0.00% · 0.2ms) | med 34.0 (0.00%) · best 34.0 · 20/20 · 164.2ms | **Competitive** |
+| 5 | `workforce-shifts-9x4` | Operations Crew Rostering (9 staff, 4 shifts) | Shift Scheduling | Small | 36 (36+0) | 31.4% | Minimize | 138 | 138.0 (0.00% · 1.0ms) | med 138.0 (0.00%) · best 138.0 · 20/20 · 230.6ms | **Competitive** |
+| 6 | `workforce-shifts-12x5` | Plant Shift Rostering (12 staff, 5 shifts) | Shift Scheduling | Medium | 60 (60+0) | 25.4% | Minimize | 218 | 218.0 (0.00% · 1.5ms) | med 219.0 (0.46%) · best 218.0 · 20/20 · 403.2ms | **Competitive** |
+| 7 | `workforce-crew-8x8` | Flight Crew Pairing Assignment (8x8) | Crew Assignment | Medium | 64 (64+0) | 22.2% | Minimize | 131 | 131.0 (0.00% · 1.0ms) | med 131.0 (0.00%) · best 131.0 · 20/20 · 404.1ms | **Competitive** |
+| 8 | `workforce-shifts-20x8` | Enterprise Multi-Site Roster (20 staff, 8 shifts) | Shift Scheduling | Large | 160 (160+0) | 16.4% | Minimize | 274 | 274.0 (0.00% · 3.1ms) | Skipped (>150 cap) | **Exceeds QUBO Limit** |
 
 ## Problem Descriptions & Prompts
 
 ### Construction
 
 #### Construction Bid Portfolio (12 tenders, synergy) (`const-bid-portfolio-12`)
-- **Type:** Project Planning · **Size:** Small (19 QUBO vars) · **Objective:** Maximize · **Best Known:** `323` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (323.0) (5/5 feasible SA runs at λ=60.0). OR-Tools CP-SAT solved in 5.9 ms vs. 159.3 ms for simulated annealing.
+- **Type:** Project Planning · **Size:** Small (19 QUBO vars: 12 decision + 7 slack, 171 couplings, 100.0% density, max deg 18, dynamic range 784.0×)
+- **Objective:** Maximize · **Best Known:** `323` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (323.0) in 2.4 ms solve, outperforming QUBO SA (median 314.0 [2.79% gap], best 323.0 [0.00% gap], 20/20 feasible at λ=120.0, 133.6 ms solve).
+- **20-Seed SA Distribution:** best `323.0` · median `314.0` · mean±std `314.55 ± 5.4358` · worst `308.0` · IQR `8.0` · timings build/tune/solve `0.1ms` / `761.0ms` / `133.6ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `323.0` · timings build/solve `0.5ms` / `2.4ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select from 12 construction tenders under a $65M bonding cap while capturing pairwise mobilization synergies.
 
@@ -118,8 +126,11 @@ Construction Bid Portfolio Selection: choose which of 12 construction tenders to
 ```
 
 #### Trade Crew Rostering (6 crews, 4 shifts) (`const-trade-rostering-6x4`)
-- **Type:** Workforce Scheduling · **Size:** Small (24 QUBO vars) · **Objective:** Minimize · **Best Known:** `141` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (141.0) (5/5 feasible SA runs at λ=72.0). OR-Tools CP-SAT solved in 2.2 ms vs. 187.0 ms for simulated annealing.
+- **Type:** Workforce Scheduling · **Size:** Small (24 QUBO vars: 24 decision + 0 slack, 96 couplings, 34.78% density, max deg 8, dynamic range 2.6×)
+- **Objective:** Minimize · **Best Known:** `141` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=72.0). Runtime: CP-SAT solve 1.6 ms vs. SA solve 152.8 ms (+ 991 ms λ-tuning).
+- **20-Seed SA Distribution:** best `141.0` · median `141.0` · mean±std `141.0 ± 0.0` · worst `141.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `991.1ms` / `152.8ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `141.0` · timings build/solve `0.6ms` / `1.6ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Roster 6 trade crews across 4 shifts while minimizing labor cost and quadratic trade-stacking congestion penalties.
 
@@ -130,8 +141,11 @@ Trade Crew Rostering with Congestion Penalties: assign 6 trade crews (Concrete, 
 ```
 
 #### Time-Cost Activity Crashing (8 activities, 3 modes) (`const-time-cost-8x3`)
-- **Type:** Project Planning · **Size:** Small (31 QUBO vars) · **Objective:** Minimize · **Best Known:** `411` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (411) in 1.3 ms, outperforming QUBO simulated annealing (best 420.0, 2.19% gap, 5/5 feasible at λ=81.0).
+- **Type:** Project Planning · **Size:** Small (31 QUBO vars: 24 decision + 7 slack, 465 couplings, 100.0% density, max deg 30, dynamic range 1184.0×)
+- **Objective:** Minimize · **Best Known:** `411` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (411.0) in 1.0 ms solve, outperforming QUBO SA (median 438.5 [6.69% gap], best 411.0 [0.00% gap], 20/20 feasible at λ=324.0, 246.7 ms solve).
+- **20-Seed SA Distribution:** best `411.0` · median `438.5` · mean±std `437.65 ± 14.3293` · worst `474.0` · IQR `19.0` · timings build/tune/solve `0.1ms` / `1.23s` / `246.7ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `411.0` · timings build/solve `0.4ms` / `1.0ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Choose Normal, Fast, or Crash execution modes across 8 critical-path activities to hit a 90-day deadline at minimum cost.
 
@@ -142,8 +156,11 @@ Construction Time-Cost Activity Crashing: select exactly one execution mode (0=N
 ```
 
 #### Site Layout Planning (6 facilities, 6 zones) (`const-site-layout-6x6`)
-- **Type:** Project Planning · **Size:** Small (36 QUBO vars) · **Objective:** Minimize · **Best Known:** `611` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (611.0) (5/5 feasible SA runs at λ=260.0). OR-Tools CP-SAT solved in 88.3 ms vs. 214.6 ms for simulated annealing.
+- **Type:** Project Planning · **Size:** Small (36 QUBO vars: 36 decision + 0 slack, 630 couplings, 100.0% density, max deg 35, dynamic range 346.67×)
+- **Objective:** Minimize · **Best Known:** `611` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=520.0). Runtime: CP-SAT solve 82.4 ms vs. SA solve 171.7 ms (+ 968 ms λ-tuning).
+- **20-Seed SA Distribution:** best `611.0` · median `611.0` · mean±std `613.6 ± 5.3703` · worst `629.0` · IQR `4.0` · timings build/tune/solve `0.6ms` / `968.0ms` / `171.7ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `611.0` · timings build/solve `5.4ms` / `82.4ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 6 temporary construction site facilities to 6 zones to minimize quadratic material-hauling flow × distance.
 
@@ -155,8 +172,11 @@ Construction Site Layout Planning (Quadratic Assignment): place 6 temporary site
 ```
 
 #### Crew & Heavy Equipment Co-Scheduling (8 tasks, 6 slots) (`const-crew-equip-8x6`)
-- **Type:** Equipment + Workforce · **Size:** Medium (48 QUBO vars) · **Objective:** Minimize · **Best Known:** `258` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (258.0) (5/5 feasible SA runs at λ=70.0). OR-Tools CP-SAT solved in 2.4 ms vs. 318.1 ms for simulated annealing.
+- **Type:** Equipment + Workforce · **Size:** Medium (48 QUBO vars: 48 decision + 0 slack, 246 couplings, 21.81% density, max deg 14, dynamic range 70.0×)
+- **Objective:** Minimize · **Best Known:** `258` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=70.0). Runtime: CP-SAT solve 1.6 ms vs. SA solve 291.0 ms (+ 1612 ms λ-tuning).
+- **20-Seed SA Distribution:** best `258.0` · median `258.0` · mean±std `258.0 ± 0.0` · worst `258.0` · IQR `0.0` · timings build/tune/solve `0.2ms` / `1.61s` / `291.0ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `258.0` · timings build/solve `0.8ms` / `1.6ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Co-schedule 8 site tasks across 6 shifts respecting shared tower crane, excavator, crew non-overlap, and precedence.
 
@@ -169,8 +189,11 @@ Crew & Heavy Equipment Co-Scheduling: schedule 8 construction tasks across 6 shi
 ```
 
 #### Subcontractor Package Assignment (6 crews, 10 packages) (`const-subcontractor-6x10`)
-- **Type:** Workforce Scheduling · **Size:** Medium (86 QUBO vars) · **Objective:** Minimize · **Best Known:** `225` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (225) in 2.1 ms, outperforming QUBO simulated annealing (best 290.0, 28.89% gap, 5/5 feasible at λ=130.0).
+- **Type:** Workforce Scheduling · **Size:** Medium (86 QUBO vars: 60 decision + 26 slack, 724 couplings, 19.81% density, max deg 19, dynamic range 52.39×)
+- **Objective:** Minimize · **Best Known:** `225` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (225.0) in 1.4 ms solve, outperforming QUBO SA (median 320.5 [42.44% gap], best 268.0 [19.11% gap], 20/20 feasible at λ=65.0, 546.0 ms solve).
+- **20-Seed SA Distribution:** best `268.0` · median `320.5` · mean±std `318.2 ± 22.9991` · worst `352.0` · IQR `33.25` · timings build/tune/solve `0.2ms` / `2.78s` / `546.0ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `225.0` · timings build/solve `0.6ms` / `1.4ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 10 construction work packages across 6 trade subcontractors under crew-day capacity caps.
 
@@ -183,8 +206,11 @@ Subcontractor Work-Package Assignment: assign 10 construction work packages to 6
 ```
 
 #### Multi-Floor RCPSP Schedule (10 tasks, 10 weeks) (`const-rcpsp-10x10`)
-- **Type:** Project Planning · **Size:** Large (130 QUBO vars) · **Objective:** Minimize · **Best Known:** `191` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (191) in 5.6 ms, outperforming QUBO simulated annealing (best 233.0, 21.99% gap, 4/5 feasible at λ=480.0).
+- **Type:** Project Planning · **Size:** Large (130 QUBO vars: 100 decision + 30 slack, 1680 couplings, 20.04% density, max deg 39, dynamic range 21.0×)
+- **Objective:** Minimize · **Best Known:** `191` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (191.0) in 3.1 ms solve, outperforming QUBO SA (median 264.0 [38.22% gap], best 222.0 [16.23% gap], 15/20 feasible at λ=480.0, 897.2 ms solve).
+- **20-Seed SA Distribution:** best `222.0` · median `264.0` · mean±std `265.2667 ± 26.9034` · worst `327.0` · IQR `40.0` · timings build/tune/solve `0.9ms` / `4.51s` / `897.2ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `191.0` · timings build/solve `2.1ms` / `3.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Schedule 10 multi-floor work packages over 10 weeks under precedence arcs and a 7-crew weekly cap.
 
@@ -197,8 +223,10 @@ Multi-Floor RCPSP Project Schedule: schedule 10 construction work packages acros
 ```
 
 #### Multi-Site Fleet & Crew Dispatch (12 units, 14 sites) (`const-fleet-dispatch-12x14`)
-- **Type:** Equipment + Workforce · **Size:** Large (180 QUBO vars) · **Objective:** Minimize · **Best Known:** `327` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 180 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (327) in 37.2 ms.
+- **Type:** Equipment + Workforce · **Size:** Large (180 QUBO vars: 180 decision + 0 slack, 1092 couplings, 6.78% density, max deg 14, dynamic range 48.8×)
+- **Objective:** Minimize · **Best Known:** `327` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 180 QUBO vars (180 decision + 0 slack, 1092 couplings), exceeding the 150-var interactive benchmark cap. QUBO equivalence verified (err=0.0); OR-Tools CP-SAT proved optimal (327.0) in 35.1 ms solve.
+- **20-Seed CP-SAT:** `OPTIMAL` `327.0` · timings build/solve `1.4ms` / `35.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Mobilize and dispatch 12 equipment-operator units across 14 active job sites at minimum mobilization + travel cost.
 
@@ -212,8 +240,11 @@ Multi-Site Fleet & Crew Dispatch: decide which of 12 heavy equipment + certified
 ### Energy
 
 #### Substation Phase Balancing (12 nodes) (`energy-maxcut-12`)
-- **Type:** Grid Partitioning (Max-Cut) · **Size:** Small (12 QUBO vars) · **Objective:** Maximize · **Best Known:** `128` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (128.0) (5/5 feasible SA runs at λ=10.0). OR-Tools CP-SAT solved in 2.3 ms vs. 59.1 ms for simulated annealing.
+- **Type:** Grid Partitioning (Max-Cut) · **Size:** Small (12 QUBO vars: 12 decision + 0 slack, 34 couplings, 51.52% density, max deg 9, dynamic range 24.0×)
+- **Objective:** Maximize · **Best Known:** `128` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=10.0). Runtime: CP-SAT solve 1.6 ms vs. SA solve 53.0 ms (+ 295 ms λ-tuning).
+- **20-Seed SA Distribution:** best `128.0` · median `128.0` · mean±std `128.0 ± 0.0` · worst `128.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `294.9ms` / `53.0ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `128.0` · timings build/solve `0.8ms` / `1.6ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Partition 12 grid substations across 34 weighted transmission links to maximize cut capacity.
 
@@ -222,8 +253,11 @@ Partition 12 electrical substations (0 to 11) into two balanced phase zones to m
 ```
 
 #### Demand-Response Load Shedding (12 feeders) (`energy-demand-12`)
-- **Type:** Demand Response · **Size:** Small (19 QUBO vars) · **Objective:** Maximize · **Best Known:** `355` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (355.0) in 0.4 ms, outperforming QUBO simulated annealing (best 334.0, 5.92% gap, 5/5 feasible at λ=74.0).
+- **Type:** Demand Response · **Size:** Small (19 QUBO vars: 12 decision + 7 slack, 171 couplings, 100.0% density, max deg 18, dynamic range 816.0×)
+- **Objective:** Maximize · **Best Known:** `355` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (355.0) in 0.1 ms solve, outperforming QUBO SA (median 325.0 [8.45% gap], best 355.0 [0.00% gap], 20/20 feasible at λ=296.0, 130.2 ms solve).
+- **20-Seed SA Distribution:** best `355.0` · median `325.0` · mean±std `324.75 ± 15.3423` · worst `297.0` · IQR `19.25` · timings build/tune/solve `0.1ms` / `690.1ms` / `130.2ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `355.0` · timings build/solve `0.2ms` / `0.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select feeders within a 67 curtailment (MW) limit to maximize grid stability score.
 
@@ -232,8 +266,11 @@ Select a subset of 12 feeders subject to a total curtailment (MW) cap of 67. Can
 ```
 
 #### Transmission Grid Partitioning (20 nodes) (`energy-maxcut-20`)
-- **Type:** Grid Partitioning (Max-Cut) · **Size:** Small (20 QUBO vars) · **Objective:** Maximize · **Best Known:** `255` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (255.0) (5/5 feasible SA runs at λ=10.0). OR-Tools CP-SAT solved in 24.7 ms vs. 98.8 ms for simulated annealing.
+- **Type:** Grid Partitioning (Max-Cut) · **Size:** Small (20 QUBO vars: 20 decision + 0 slack, 57 couplings, 30.0% density, max deg 11, dynamic range 28.0×)
+- **Objective:** Maximize · **Best Known:** `255` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=10.0). Runtime: CP-SAT solve 24.1 ms vs. SA solve 92.0 ms (+ 488 ms λ-tuning).
+- **20-Seed SA Distribution:** best `255.0` · median `255.0` · mean±std `255.0 ± 0.0` · worst `255.0` · IQR `0.0` · timings build/tune/solve `0.2ms` / `488.2ms` / `92.0ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `255.0` · timings build/solve `1.2ms` / `24.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Partition 20 grid substations across 57 weighted transmission links to maximize cut capacity.
 
@@ -242,8 +279,11 @@ Partition 20 electrical substations (0 to 19) into two balanced phase zones to m
 ```
 
 #### Microgrid Unit Commitment (4 gens, 4 periods) (`energy-uc-4x4`)
-- **Type:** Unit Commitment · **Size:** Small (29 QUBO vars) · **Objective:** Minimize · **Best Known:** `158` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (158.0) (5/5 feasible SA runs at λ=80.0). OR-Tools CP-SAT solved in 1.5 ms vs. 153.9 ms for simulated annealing.
+- **Type:** Unit Commitment · **Size:** Small (29 QUBO vars: 16 decision + 13 slack, 103 couplings, 25.37% density, max deg 9, dynamic range 384.0×)
+- **Objective:** Minimize · **Best Known:** `158` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=40.0). Runtime: CP-SAT solve 1.1 ms vs. SA solve 133.5 ms (+ 726 ms λ-tuning).
+- **20-Seed SA Distribution:** best `158.0` · median `158.0` · mean±std `158.15 ± 0.3571` · worst `159.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `725.5ms` / `133.5ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `158.0` · timings build/solve `0.3ms` / `1.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Dispatch 4 generators over 4 periods to satisfy demand [7, 4, 7, 8] MW at minimum cost.
 
@@ -252,8 +292,11 @@ Schedule 4 power generators across 4 time periods to meet hourly grid demand [7,
 ```
 
 #### Backup Generator Coverage (9 units, 12 zones) (`energy-substation-cover`)
-- **Type:** Set Cover · **Size:** Small (30 QUBO vars) · **Objective:** Minimize · **Best Known:** `44` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (44.0) (5/5 feasible SA runs at λ=20.0). OR-Tools CP-SAT solved in 0.6 ms vs. 209.5 ms for simulated annealing.
+- **Type:** Set Cover · **Size:** Small (30 QUBO vars: 9 decision + 21 slack, 123 couplings, 28.28% density, max deg 19, dynamic range 4.0×)
+- **Objective:** Minimize · **Best Known:** `44` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=20.0). Runtime: CP-SAT solve 0.3 ms vs. SA solve 190.8 ms (+ 1019 ms λ-tuning).
+- **20-Seed SA Distribution:** best `44.0` · median `44.0` · mean±std `44.0 ± 0.0` · worst `44.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `1.02s` / `190.8ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `44.0` · timings build/solve `0.2ms` / `0.3ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select the minimum-cost subset of 9 backup units covering all 12 grid zones.
 
@@ -262,8 +305,11 @@ Choose backup units to cover all 12 grid zones (0 to 11) at minimum cost. Option
 ```
 
 #### Regional Unit Commitment (5 gens, 4 periods) (`energy-uc-5x4`)
-- **Type:** Unit Commitment · **Size:** Small (33 QUBO vars) · **Objective:** Minimize · **Best Known:** `188` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (188.0) (5/5 feasible SA runs at λ=40.0). OR-Tools CP-SAT solved in 1.4 ms vs. 183.3 ms for simulated annealing.
+- **Type:** Unit Commitment · **Size:** Small (33 QUBO vars: 20 decision + 13 slack, 135 couplings, 25.57% density, max deg 10, dynamic range 428.57×)
+- **Objective:** Minimize · **Best Known:** `188` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (188.0) in 1.1 ms solve, outperforming QUBO SA (median 193.0 [2.66% gap], best 188.0 [0.00% gap], 20/20 feasible at λ=40.0, 147.2 ms solve).
+- **20-Seed SA Distribution:** best `188.0` · median `193.0` · mean±std `191.7 ± 3.8354` · worst `200.0` · IQR `5.0` · timings build/tune/solve `0.1ms` / `855.2ms` / `147.2ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `188.0` · timings build/solve `0.4ms` / `1.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Dispatch 5 generators over 4 periods to satisfy demand [11, 6, 11, 11] MW at minimum cost.
 
@@ -272,8 +318,11 @@ Schedule 5 power generators across 4 time periods to meet hourly grid demand [11
 ```
 
 #### Thermal Fleet Dispatch (6 gens, 5 periods) (`energy-uc-6x5`)
-- **Type:** Unit Commitment · **Size:** Small (50 QUBO vars) · **Objective:** Minimize · **Best Known:** `277` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (277.0) in 1.8 ms, outperforming QUBO simulated annealing (best 339.0, 22.38% gap, 5/5 feasible at λ=51.0).
+- **Type:** Unit Commitment · **Size:** Small (50 QUBO vars: 30 decision + 20 slack, 249 couplings, 20.33% density, max deg 11, dynamic range 1487.5×)
+- **Objective:** Minimize · **Best Known:** `277` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (277.0) in 1.3 ms solve, outperforming QUBO SA (median 375.0 [35.38% gap], best 339.0 [22.38% gap], 20/20 feasible at λ=51.0, 238.5 ms solve).
+- **20-Seed SA Distribution:** best `339.0` · median `375.0` · mean±std `372.5 ± 16.8656` · worst `401.0` · IQR `26.0` · timings build/tune/solve `0.2ms` / `1.28s` / `238.5ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `277.0` · timings build/solve `0.5ms` / `1.3ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Dispatch 6 generators over 5 periods to satisfy demand [14, 9, 9, 10, 9] MW at minimum cost.
 
@@ -282,8 +331,10 @@ Schedule 6 power generators across 5 time periods to meet hourly grid demand [14
 ```
 
 #### Regional Substation Expansion (12 sites, 14 zones) (`energy-substation-12x14`)
-- **Type:** Plant Location · **Size:** Large (180 QUBO vars) · **Objective:** Minimize · **Best Known:** `271` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 180 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (271.0) in 18.9 ms.
+- **Type:** Plant Location · **Size:** Large (180 QUBO vars: 180 decision + 0 slack, 1092 couplings, 6.78% density, max deg 14, dynamic range 74.67×)
+- **Objective:** Minimize · **Best Known:** `271` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 180 QUBO vars (180 decision + 0 slack, 1092 couplings), exceeding the 150-var interactive benchmark cap. QUBO equivalence verified (err=0.0); OR-Tools CP-SAT proved optimal (271.0) in 17.3 ms solve.
+- **20-Seed CP-SAT:** `OPTIMAL` `271.0` · timings build/solve `1.4ms` / `17.3ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Open a subset of 12 plants and assign 14 orders at minimum total cost.
 
@@ -294,8 +345,11 @@ Decide which of 12 production plants to open (fixed costs [79, 39, 65, 70, 82, 7
 ### Finance
 
 #### Equity Portfolio Selection (8 assets, pick 4) (`finance-portfolio-8-k4`)
-- **Type:** Portfolio Selection · **Size:** Small (8 QUBO vars) · **Objective:** Maximize · **Best Known:** `129` (Exact quadratic-linearized optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (129.0) (5/5 feasible SA runs at λ=94.0). OR-Tools CP-SAT solved in 2.4 ms vs. 48.5 ms for simulated annealing.
+- **Type:** Portfolio Selection · **Size:** Small (8 QUBO vars: 8 decision + 0 slack, 28 couplings, 100.0% density, max deg 7, dynamic range 3.73×)
+- **Objective:** Maximize · **Best Known:** `129` (Exact quadratic-linearized optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=94.0). Runtime: CP-SAT solve 1.7 ms vs. SA solve 27.5 ms (+ 225 ms λ-tuning).
+- **20-Seed SA Distribution:** best `129.0` · median `129.0` · mean±std `129.0 ± 0.0` · worst `129.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `225.1ms` / `27.5ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `129.0` · timings build/solve `0.6ms` / `1.7ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Pick exactly 4 of 8 assets to maximize expected return minus pairwise covariance risk.
 
@@ -304,8 +358,11 @@ Select exactly 4 assets out of 8 candidate equities to maximize risk-adjusted re
 ```
 
 #### Equity Portfolio Selection (12 assets, pick 5) (`finance-portfolio-12-k5`)
-- **Type:** Portfolio Selection · **Size:** Small (12 QUBO vars) · **Objective:** Maximize · **Best Known:** `123` (Exact quadratic-linearized optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (123.0) (5/5 feasible SA runs at λ=92.0). OR-Tools CP-SAT solved in 5.7 ms vs. 127.6 ms for simulated annealing.
+- **Type:** Portfolio Selection · **Size:** Small (12 QUBO vars: 12 decision + 0 slack, 66 couplings, 100.0% density, max deg 11, dynamic range 4.72×)
+- **Objective:** Maximize · **Best Known:** `123` (Exact quadratic-linearized optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=92.0). Runtime: CP-SAT solve 4.6 ms vs. SA solve 85.7 ms (+ 618 ms λ-tuning).
+- **20-Seed SA Distribution:** best `123.0` · median `123.0` · mean±std `123.0 ± 0.0` · worst `123.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `617.8ms` / `85.7ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `123.0` · timings build/solve `1.1ms` / `4.6ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Pick exactly 5 of 12 assets to maximize expected return minus pairwise covariance risk.
 
@@ -314,8 +371,11 @@ Select exactly 5 assets out of 12 candidate equities to maximize risk-adjusted r
 ```
 
 #### Multi-Sector Portfolio (16 assets, pick 6) (`finance-portfolio-16-k6`)
-- **Type:** Portfolio Selection · **Size:** Small (16 QUBO vars) · **Objective:** Maximize · **Best Known:** `180` (Exact quadratic-linearized optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (180.0) (5/5 feasible SA runs at λ=100.0). OR-Tools CP-SAT solved in 25.7 ms vs. 193.8 ms for simulated annealing.
+- **Type:** Portfolio Selection · **Size:** Small (16 QUBO vars: 16 decision + 0 slack, 120 couplings, 100.0% density, max deg 15, dynamic range 5.72×)
+- **Objective:** Maximize · **Best Known:** `180` (Exact quadratic-linearized optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=100.0). Runtime: CP-SAT solve 24.8 ms vs. SA solve 125.0 ms (+ 973 ms λ-tuning).
+- **20-Seed SA Distribution:** best `180.0` · median `180.0` · mean±std `179.15 ± 1.1948` · worst `177.0` · IQR `2.0` · timings build/tune/solve `0.2ms` / `972.6ms` / `125.0ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `180.0` · timings build/solve `1.9ms` / `24.8ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Pick exactly 6 of 16 assets to maximize expected return minus pairwise covariance risk.
 
@@ -324,8 +384,11 @@ Select exactly 6 assets out of 16 candidate equities to maximize risk-adjusted r
 ```
 
 #### Capital Budgeting Allocation (10 projects) (`finance-capex-10`)
-- **Type:** Capital Budgeting · **Size:** Small (17 QUBO vars) · **Objective:** Maximize · **Best Known:** `316` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (316.0) (5/5 feasible SA runs at λ=72.0). OR-Tools CP-SAT solved in 0.3 ms vs. 121.2 ms for simulated annealing.
+- **Type:** Capital Budgeting · **Size:** Small (17 QUBO vars: 10 decision + 7 slack, 136 couplings, 100.0% density, max deg 16, dynamic range 784.0×)
+- **Objective:** Maximize · **Best Known:** `316` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=72.0). Runtime: CP-SAT solve 0.1 ms vs. SA solve 108.1 ms (+ 585 ms λ-tuning).
+- **20-Seed SA Distribution:** best `316.0` · median `316.0` · mean±std `315.5 ± 1.5` · worst `311.0` · IQR `0.0` · timings build/tune/solve `0.0ms` / `585.1ms` / `108.1ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `316.0` · timings build/solve `0.2ms` / `0.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select projects within a 65 budget ($M) limit to maximize NPV ($M).
 
@@ -334,8 +397,11 @@ Select a subset of 10 projects subject to a total budget ($M) cap of 65. Candida
 ```
 
 #### Institutional Portfolio (20 assets, pick 8) (`finance-portfolio-20-k8`)
-- **Type:** Portfolio Selection · **Size:** Small (20 QUBO vars) · **Objective:** Maximize · **Best Known:** `196` (Exact quadratic-linearized optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (196.0) (5/5 feasible SA runs at λ=196.0). OR-Tools CP-SAT solved in 337.6 ms vs. 271.5 ms for simulated annealing.
+- **Type:** Portfolio Selection · **Size:** Small (20 QUBO vars: 20 decision + 0 slack, 190 couplings, 100.0% density, max deg 19, dynamic range 7.71×)
+- **Objective:** Maximize · **Best Known:** `196` (Exact quadratic-linearized optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (196.0) in 352.7 ms solve, outperforming QUBO SA (median 189.0 [3.57% gap], best 196.0 [0.00% gap], 20/20 feasible at λ=98.0, 164.4 ms solve).
+- **20-Seed SA Distribution:** best `196.0` · median `189.0` · mean±std `189.5 ± 3.7616` · worst `181.0` · IQR `3.25` · timings build/tune/solve `0.2ms` / `1.31s` / `164.4ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `196.0` · timings build/solve `2.7ms` / `352.7ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Pick exactly 8 of 20 assets to maximize expected return minus pairwise covariance risk.
 
@@ -344,8 +410,11 @@ Select exactly 8 assets out of 20 candidate equities to maximize risk-adjusted r
 ```
 
 #### R&D Portfolio Budgeting (15 projects) (`finance-capex-15`)
-- **Type:** Capital Budgeting · **Size:** Small (22 QUBO vars) · **Objective:** Maximize · **Best Known:** `411` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (411.0) in 0.3 ms, outperforming QUBO simulated annealing (best 398.0, 3.16% gap, 5/5 feasible at λ=74.0).
+- **Type:** Capital Budgeting · **Size:** Small (22 QUBO vars: 15 decision + 7 slack, 231 couplings, 100.0% density, max deg 21, dynamic range 1870.0×)
+- **Objective:** Maximize · **Best Known:** `411` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (411.0) in 0.1 ms solve, outperforming QUBO SA (median 386.0 [6.08% gap], best 404.0 [1.70% gap], 20/20 feasible at λ=74.0, 147.1 ms solve).
+- **20-Seed SA Distribution:** best `404.0` · median `386.0` · mean±std `385.25 ± 11.2822` · worst `364.0` · IQR `16.0` · timings build/tune/solve `0.1ms` / `798.8ms` / `147.1ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `411.0` · timings build/solve `0.2ms` / `0.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select projects within a 107 budget ($M) limit to maximize NPV ($M).
 
@@ -354,8 +423,11 @@ Select a subset of 15 projects subject to a total budget ($M) cap of 107. Candid
 ```
 
 #### Corporate CapEx Selection (22 projects) (`finance-capex-22`)
-- **Type:** Capital Budgeting · **Size:** Small (30 QUBO vars) · **Objective:** Maximize · **Best Known:** `605` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (605.0) in 0.5 ms, outperforming QUBO simulated annealing (best 538.0, 11.07% gap, 5/5 feasible at λ=284.0).
+- **Type:** Capital Budgeting · **Size:** Small (30 QUBO vars: 22 decision + 8 slack, 435 couplings, 100.0% density, max deg 29, dynamic range 4288.0×)
+- **Objective:** Maximize · **Best Known:** `605` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (605.0) in 0.1 ms solve, outperforming QUBO SA (median 526.0 [13.06% gap], best 573.0 [5.29% gap], 20/20 feasible at λ=568.0, 232.6 ms solve).
+- **20-Seed SA Distribution:** best `573.0` · median `526.0` · mean±std `526.15 ± 20.9076` · worst `491.0` · IQR `19.5` · timings build/tune/solve `0.1ms` / `1.24s` / `232.6ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `605.0` · timings build/solve `0.3ms` / `0.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select projects within a 166 budget ($M) limit to maximize NPV ($M).
 
@@ -364,8 +436,10 @@ Select a subset of 22 projects subject to a total budget ($M) cap of 166. Candid
 ```
 
 #### Large Clearing Desk Assignment (13x13) (`finance-clearing-13x13`)
-- **Type:** Trade Matching · **Size:** Large (169 QUBO vars) · **Objective:** Minimize · **Best Known:** `148` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 169 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (148.0) in 5.5 ms.
+- **Type:** Trade Matching · **Size:** Large (169 QUBO vars: 169 decision + 0 slack, 2028 couplings, 14.29% density, max deg 24, dynamic range 1.33×)
+- **Objective:** Minimize · **Best Known:** `148` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 169 QUBO vars (169 decision + 0 slack, 2028 couplings), exceeding the 150-var interactive benchmark cap. QUBO equivalence verified (err=0.0); OR-Tools CP-SAT proved optimal (148.0) in 4.3 ms solve.
+- **20-Seed CP-SAT:** `OPTIMAL` `148.0` · timings build/solve `1.1ms` / `4.3ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** One-to-one assignment of 13 desks to 13 portfolios at minimum cost.
 
@@ -376,8 +450,11 @@ Assign 13 desks to 13 portfolios one-to-one so every desk handles exactly one po
 ### Logistics
 
 #### Cargo Loading Knapsack (12 parcels) (`cargo-knapsack-12`)
-- **Type:** Knapsack · **Size:** Small (18 QUBO vars) · **Objective:** Maximize · **Best Known:** `249` (Dynamic programming and OR-Tools CP-SAT agree)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (249.0) (5/5 feasible SA runs at λ=114.0). OR-Tools CP-SAT solved in 0.6 ms vs. 265.6 ms for simulated annealing.
+- **Type:** Knapsack · **Size:** Small (18 QUBO vars: 12 decision + 6 slack, 153 couplings, 100.0% density, max deg 17, dynamic range 410.0×)
+- **Objective:** Maximize · **Best Known:** `249` (Dynamic programming and OR-Tools CP-SAT agree) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=114.0). Runtime: CP-SAT solve 0.1 ms vs. SA solve 117.4 ms (+ 642 ms λ-tuning).
+- **20-Seed SA Distribution:** best `249.0` · median `249.0` · mean±std `246.3 ± 4.755` · worst `232.0` · IQR `3.0` · timings build/tune/solve `0.1ms` / `641.7ms` / `117.4ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `249.0` · timings build/solve `0.2ms` / `0.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Pick parcels for a van with a 51 kg limit to maximize revenue.
 
@@ -386,8 +463,11 @@ A delivery van can carry at most 51 kg. There are 12 parcels to choose from: par
 ```
 
 #### Warehouse Location (3 sites, 6 customers) (`facility-location-3x6`)
-- **Type:** Facility Location · **Size:** Small (21 QUBO vars) · **Objective:** Minimize · **Best Known:** `144` (Exhaustive subset enumeration and OR-Tools CP-SAT agree)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (144.0) (5/5 feasible SA runs at λ=101.0). OR-Tools CP-SAT solved in 1.5 ms vs. 231.7 ms for simulated annealing.
+- **Type:** Facility Location · **Size:** Small (21 QUBO vars: 21 decision + 0 slack, 36 couplings, 17.14% density, max deg 6, dynamic range 40.4×)
+- **Objective:** Minimize · **Best Known:** `144` (Exhaustive subset enumeration and OR-Tools CP-SAT agree) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=101.0). Runtime: CP-SAT solve 0.8 ms vs. SA solve 95.1 ms (+ 562 ms λ-tuning).
+- **20-Seed SA Distribution:** best `144.0` · median `144.0` · mean±std `144.0 ± 0.0` · worst `144.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `562.4ms` / `95.1ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `144.0` · timings build/solve `0.3ms` / `0.8ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Open a subset of 3 warehouses and serve 6 customers at minimum total cost.
 
@@ -396,8 +476,11 @@ Choose which of 3 candidate warehouses to open and assign each of 6 customers to
 ```
 
 #### Courier Round Trip TSP (5 cities) (`tsp-5-city`)
-- **Type:** TSP · **Size:** Small (25 QUBO vars) · **Objective:** Minimize · **Best Known:** `115` (Exhaustive permutation search and OR-Tools CP-SAT circuit model agree)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (115.0) (5/5 feasible SA runs at λ=49.0). OR-Tools CP-SAT solved in 1.5 ms vs. 302.1 ms for simulated annealing.
+- **Type:** TSP · **Size:** Small (25 QUBO vars: 25 decision + 0 slack, 200 couplings, 66.67% density, max deg 16, dynamic range 12.25×)
+- **Objective:** Minimize · **Best Known:** `115` (Exhaustive permutation search and OR-Tools CP-SAT circuit model agree) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=49.0). Runtime: CP-SAT solve 0.7 ms vs. SA solve 128.6 ms (+ 657 ms λ-tuning).
+- **20-Seed SA Distribution:** best `115.0` · median `115.0` · mean±std `115.0 ± 0.0` · worst `115.0` · IQR `0.0` · timings build/tune/solve `0.2ms` / `656.7ms` / `128.6ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `115.0` · timings build/solve `0.3ms` / `0.7ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Shortest round trip through 5 cities starting and ending at city 0.
 
@@ -406,8 +489,11 @@ A courier must visit 5 cities (numbered 0 to 4) exactly once, starting and endin
 ```
 
 #### Depot Coverage Set Cover (7 depots, 10 regions) (`set-cover-depots-10`)
-- **Type:** Set Cover · **Size:** Small (25 QUBO vars) · **Objective:** Minimize · **Best Known:** `12` (Exhaustive subset enumeration and OR-Tools CP-SAT agree)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (12.0) (5/5 feasible SA runs at λ=9.0). OR-Tools CP-SAT solved in 0.8 ms vs. 355.0 ms for simulated annealing.
+- **Type:** Set Cover · **Size:** Small (25 QUBO vars: 7 decision + 18 slack, 99 couplings, 33.0% density, max deg 18, dynamic range 4.0×)
+- **Objective:** Minimize · **Best Known:** `12` (Exhaustive subset enumeration and OR-Tools CP-SAT agree) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=9.0). Runtime: CP-SAT solve 0.3 ms vs. SA solve 160.9 ms (+ 863 ms λ-tuning).
+- **20-Seed SA Distribution:** best `12.0` · median `12.0` · mean±std `12.0 ± 0.0` · worst `12.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `862.8ms` / `160.9ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `12.0` · timings build/solve `0.2ms` / `0.3ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Open the cheapest set of depots that covers all 10 regions.
 
@@ -416,8 +502,11 @@ Choose which depots to open so that every one of 10 regions (numbered 0 to 9) is
 ```
 
 #### Driver-to-Route Assignment (6x6) (`assignment-driver-route-6`)
-- **Type:** Assignment · **Size:** Small (36 QUBO vars) · **Objective:** Minimize · **Best Known:** `65` (Hungarian algorithm (SciPy) and OR-Tools CP-SAT agree)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (65.0) (5/5 feasible SA runs at λ=40.0). OR-Tools CP-SAT solved in 7.0 ms vs. 518.3 ms for simulated annealing.
+- **Type:** Assignment · **Size:** Small (36 QUBO vars: 36 decision + 0 slack, 180 couplings, 28.57% density, max deg 10, dynamic range 2.0×)
+- **Objective:** Minimize · **Best Known:** `65` (Hungarian algorithm (SciPy) and OR-Tools CP-SAT agree) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=40.0). Runtime: CP-SAT solve 1.0 ms vs. SA solve 230.9 ms (+ 1293 ms λ-tuning).
+- **20-Seed SA Distribution:** best `65.0` · median `65.0` · mean±std `65.0 ± 0.0` · worst `65.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `1.29s` / `230.9ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `65.0` · timings build/solve `0.4ms` / `1.0ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 6 drivers to 6 routes at minimum total cost (one-to-one).
 
@@ -426,8 +515,11 @@ Assign 6 drivers to 6 delivery routes. Each driver must be assigned to exactly o
 ```
 
 #### Capacitated Vehicle Routing (6 customers, 2 vans) (`cvrp-6c-2v`)
-- **Type:** Vehicle Routing · **Size:** Medium (92 QUBO vars) · **Objective:** Minimize · **Best Known:** `138` (Exhaustive enumeration of all customer orderings and 2-route splits)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (138.0) in 22.4 ms, outperforming QUBO simulated annealing (best 142.0, 2.90% gap, 5/5 feasible at λ=52.0).
+- **Type:** Vehicle Routing · **Size:** Medium (92 QUBO vars: 72 decision + 20 slack, 1848 couplings, 44.15% density, max deg 46, dynamic range 76.04×)
+- **Objective:** Minimize · **Best Known:** `138` (Exhaustive enumeration of all customer orderings and 2-route splits) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (138.0) in 19.3 ms solve, outperforming QUBO SA (median 155.0 [12.32% gap], best 138.0 [0.00% gap], 20/20 feasible at λ=52.0, 761.0 ms solve).
+- **20-Seed SA Distribution:** best `138.0` · median `155.0` · mean±std `164.95 ± 23.9259` · worst `213.0` · IQR `31.25` · timings build/tune/solve `1.2ms` / `3.81s` / `761.0ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `138.0` · timings build/solve `1.1ms` / `19.3ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Route 2 capacity-10 vans to serve 6 customers at minimum distance.
 
@@ -436,8 +528,11 @@ Assign 6 drivers to 6 delivery routes. Each driver must be assigned to exactly o
 ```
 
 #### Driver-to-Route Assignment (10x10) (`assignment-driver-route-10`)
-- **Type:** Assignment · **Size:** Medium (100 QUBO vars) · **Objective:** Minimize · **Best Known:** `94` (Hungarian algorithm (SciPy) and OR-Tools CP-SAT agree)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (94.0) (5/5 feasible SA runs at λ=40.0). OR-Tools CP-SAT solved in 3.3 ms vs. 1463.8 ms for simulated annealing.
+- **Type:** Assignment · **Size:** Medium (100 QUBO vars: 100 decision + 0 slack, 900 couplings, 18.18% density, max deg 18, dynamic range 2.0×)
+- **Objective:** Minimize · **Best Known:** `94` (Hungarian algorithm (SciPy) and OR-Tools CP-SAT agree) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=40.0). Runtime: CP-SAT solve 2.1 ms vs. SA solve 639.4 ms (+ 3558 ms λ-tuning).
+- **20-Seed SA Distribution:** best `94.0` · median `94.0` · mean±std `94.7 ± 1.1` · worst `97.0` · IQR `2.0` · timings build/tune/solve `0.2ms` / `3.56s` / `639.4ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `94.0` · timings build/solve `0.8ms` / `2.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 10 drivers to 10 routes at minimum total cost (one-to-one).
 
@@ -446,8 +541,10 @@ Assign 10 drivers to 10 delivery routes. Each driver must be assigned to exactly
 ```
 
 #### Burma14 TSP (TSPLIB, 14 cities) (`tsp-burma14`)
-- **Type:** TSP · **Size:** Large (196 QUBO vars) · **Objective:** Minimize · **Best Known:** `3323` (Published TSPLIB optimum (3323), independently re-proven with OR-Tools CP-SAT on the downloaded data)
-- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 196 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (3323.0) in 16.2 ms.
+- **Type:** TSP · **Size:** Large (196 QUBO vars: 196 decision + 0 slack, 5096 couplings, 26.67% density, max deg 52, dynamic range 265.47×)
+- **Objective:** Minimize · **Best Known:** `3323` (Published TSPLIB optimum (3323), independently re-proven with OR-Tools CP-SAT on the downloaded data) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 196 QUBO vars (196 decision + 0 slack, 5096 couplings), exceeding the 150-var interactive benchmark cap. QUBO equivalence verified (err=0.0); OR-Tools CP-SAT proved optimal (3323.0) in 16.6 ms solve.
+- **20-Seed CP-SAT:** `OPTIMAL` `3323.0` · timings build/solve `1.1ms` / `16.6ms`
 - **Source:** TSPLIB95 burma14 (Reinelt) (Freely available for research use (TSPLIB))
 - **Summary:** Classic public 14-city benchmark with a published optimal tour length of 3323.
 
@@ -458,8 +555,11 @@ A courier must visit 14 cities (numbered 0 to 13) exactly once, starting and end
 ### Manufacturing
 
 #### Production Batch Selection (12 batches) (`mfg-batch-12`)
-- **Type:** Batch Selection · **Size:** Small (19 QUBO vars) · **Objective:** Maximize · **Best Known:** `233` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (233.0) (5/5 feasible SA runs at λ=220.0). OR-Tools CP-SAT solved in 0.3 ms vs. 140.1 ms for simulated annealing.
+- **Type:** Batch Selection · **Size:** Small (19 QUBO vars: 12 decision + 7 slack, 171 couplings, 100.0% density, max deg 18, dynamic range 1104.0×)
+- **Objective:** Maximize · **Best Known:** `233` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (233.0) in 0.1 ms solve, outperforming QUBO SA (median 225.0 [3.43% gap], best 233.0 [0.00% gap], 20/20 feasible at λ=440.0, 120.7 ms solve).
+- **20-Seed SA Distribution:** best `233.0` · median `225.0` · mean±std `225.65 ± 6.5213` · worst `212.0` · IQR `12.0` · timings build/tune/solve `0.1ms` / `654.6ms` / `120.7ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `233.0` · timings build/solve `0.2ms` / `0.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select batchs within a 85 machine hours limit to maximize margin ($k).
 
@@ -468,8 +568,11 @@ Select a subset of 12 batchs subject to a total machine hours cap of 85. Candida
 ```
 
 #### Factory Line Allocation (3 plants, 6 orders) (`mfg-plant-3x6`)
-- **Type:** Plant Location · **Size:** Small (21 QUBO vars) · **Objective:** Minimize · **Best Known:** `159` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (159.0) (5/5 feasible SA runs at λ=99.0). OR-Tools CP-SAT solved in 1.1 ms vs. 115.2 ms for simulated annealing.
+- **Type:** Plant Location · **Size:** Small (21 QUBO vars: 21 decision + 0 slack, 36 couplings, 17.14% density, max deg 6, dynamic range 33.0×)
+- **Objective:** Minimize · **Best Known:** `159` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=99.0). Runtime: CP-SAT solve 0.7 ms vs. SA solve 95.7 ms (+ 556 ms λ-tuning).
+- **20-Seed SA Distribution:** best `159.0` · median `159.0` · mean±std `159.0 ± 0.0` · worst `159.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `555.8ms` / `95.7ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `159.0` · timings build/solve `0.3ms` / `0.7ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Open a subset of 3 plants and assign 6 orders at minimum total cost.
 
@@ -478,8 +581,11 @@ Decide which of 3 production plants to open (fixed costs [51, 72, 64]) and assig
 ```
 
 #### CNC Machine-to-Job Assignment (5x5) (`mfg-machine-5x5`)
-- **Type:** Machine Assignment · **Size:** Small (25 QUBO vars) · **Objective:** Minimize · **Best Known:** `109` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (109.0) (5/5 feasible SA runs at λ=49.0). OR-Tools CP-SAT solved in 1.0 ms vs. 179.9 ms for simulated annealing.
+- **Type:** Machine Assignment · **Size:** Small (25 QUBO vars: 25 decision + 0 slack, 100 couplings, 33.33% density, max deg 8, dynamic range 2.0×)
+- **Objective:** Minimize · **Best Known:** `109` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=49.0). Runtime: CP-SAT solve 0.7 ms vs. SA solve 152.7 ms (+ 868 ms λ-tuning).
+- **20-Seed SA Distribution:** best `109.0` · median `109.0` · mean±std `109.0 ± 0.0` · worst `109.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `868.1ms` / `152.7ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `109.0` · timings build/solve `0.3ms` / `0.7ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** One-to-one assignment of 5 machines to 5 jobs at minimum cost.
 
@@ -488,8 +594,11 @@ Assign 5 machines to 5 jobs one-to-one so every machine handles exactly one job.
 ```
 
 #### High-Mix Production Selection (18 batches) (`mfg-batch-18`)
-- **Type:** Batch Selection · **Size:** Small (25 QUBO vars) · **Objective:** Maximize · **Best Known:** `604` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved the optimum (604.0) in 0.4 ms, outperforming QUBO simulated annealing (best 570.0, 5.63% gap, 5/5 feasible at λ=576.0).
+- **Type:** Batch Selection · **Size:** Small (25 QUBO vars: 18 decision + 7 slack, 300 couplings, 100.0% density, max deg 24, dynamic range 2371.75×)
+- **Objective:** Maximize · **Best Known:** `604` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Classical Wins** — OR-Tools CP-SAT proved optimal (604.0) in 0.1 ms solve, outperforming QUBO SA (median 536.0 [11.26% gap], best 574.0 [4.97% gap], 20/20 feasible at λ=72.0, 181.5 ms solve).
+- **20-Seed SA Distribution:** best `574.0` · median `536.0` · mean±std `535.15 ± 19.7668` · worst `500.0` · IQR `28.5` · timings build/tune/solve `0.1ms` / `972.6ms` / `181.5ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `604.0` · timings build/solve `0.3ms` / `0.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select batchs within a 116 machine hours limit to maximize margin ($k).
 
@@ -498,8 +607,11 @@ Select a subset of 18 batchs subject to a total machine hours cap of 116. Candid
 ```
 
 #### Regional Plant Allocation (4 plants, 8 orders) (`mfg-plant-4x8`)
-- **Type:** Plant Location · **Size:** Small (36 QUBO vars) · **Objective:** Minimize · **Best Known:** `175` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (175.0) (5/5 feasible SA runs at λ=101.0). OR-Tools CP-SAT solved in 1.6 ms vs. 206.8 ms for simulated annealing.
+- **Type:** Plant Location · **Size:** Small (36 QUBO vars: 36 decision + 0 slack, 80 couplings, 12.7% density, max deg 8, dynamic range 33.67×)
+- **Objective:** Minimize · **Best Known:** `175` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=101.0). Runtime: CP-SAT solve 1.2 ms vs. SA solve 166.2 ms (+ 969 ms λ-tuning).
+- **20-Seed SA Distribution:** best `175.0` · median `175.0` · mean±std `175.0 ± 0.0` · worst `175.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `968.9ms` / `166.2ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `175.0` · timings build/solve `0.4ms` / `1.2ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Open a subset of 4 plants and assign 8 orders at minimum total cost.
 
@@ -508,8 +620,11 @@ Decide which of 4 production plants to open (fixed costs [74, 67, 61, 58]) and a
 ```
 
 #### Assembly Cell Assignment (7x7) (`mfg-machine-7x7`)
-- **Type:** Machine Assignment · **Size:** Medium (49 QUBO vars) · **Objective:** Minimize · **Best Known:** `97` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (97.0) (5/5 feasible SA runs at λ=50.0). OR-Tools CP-SAT solved in 1.2 ms vs. 349.4 ms for simulated annealing.
+- **Type:** Machine Assignment · **Size:** Medium (49 QUBO vars: 49 decision + 0 slack, 294 couplings, 25.0% density, max deg 12, dynamic range 2.0×)
+- **Objective:** Minimize · **Best Known:** `97` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=50.0). Runtime: CP-SAT solve 0.8 ms vs. SA solve 306.0 ms (+ 1733 ms λ-tuning).
+- **20-Seed SA Distribution:** best `97.0` · median `97.0` · mean±std `97.0 ± 0.0` · worst `97.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `1.73s` / `306.0ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `97.0` · timings build/solve `0.5ms` / `0.8ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** One-to-one assignment of 7 cells to 7 orders at minimum cost.
 
@@ -518,8 +633,11 @@ Assign 7 cells to 7 orders one-to-one so every cell handles exactly one order. C
 ```
 
 #### SMT Line Assignment (9x9) (`mfg-machine-9x9`)
-- **Type:** Machine Assignment · **Size:** Medium (81 QUBO vars) · **Objective:** Minimize · **Best Known:** `121` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (121.0) (5/5 feasible SA runs at λ=50.0). OR-Tools CP-SAT solved in 2.4 ms vs. 585.9 ms for simulated annealing.
+- **Type:** Machine Assignment · **Size:** Medium (81 QUBO vars: 81 decision + 0 slack, 648 couplings, 20.0% density, max deg 16, dynamic range 2.0×)
+- **Objective:** Minimize · **Best Known:** `121` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=50.0). Runtime: CP-SAT solve 1.7 ms vs. SA solve 510.7 ms (+ 2861 ms λ-tuning).
+- **20-Seed SA Distribution:** best `121.0` · median `121.0` · mean±std `121.65 ± 1.3883` · worst `126.0` · IQR `0.25` · timings build/tune/solve `0.2ms` / `2.86s` / `510.7ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `121.0` · timings build/solve `0.7ms` / `1.7ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** One-to-one assignment of 9 lines to 9 boards at minimum cost.
 
@@ -528,8 +646,10 @@ Assign 9 lines to 9 boards one-to-one so every line handles exactly one board. C
 ```
 
 #### Global Supply Network Allocation (12 plants, 14 hubs) (`mfg-plant-12x14`)
-- **Type:** Plant Location · **Size:** Large (180 QUBO vars) · **Objective:** Minimize · **Best Known:** `252` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 180 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (252.0) in 50.0 ms.
+- **Type:** Plant Location · **Size:** Large (180 QUBO vars: 180 decision + 0 slack, 1092 couplings, 6.78% density, max deg 14, dynamic range 74.0×)
+- **Objective:** Minimize · **Best Known:** `252` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 180 QUBO vars (180 decision + 0 slack, 1092 couplings), exceeding the 150-var interactive benchmark cap. QUBO equivalence verified (err=0.0); OR-Tools CP-SAT proved optimal (252.0) in 29.6 ms solve.
+- **20-Seed CP-SAT:** `OPTIMAL` `252.0` · timings build/solve `1.4ms` / `29.6ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Open a subset of 12 plants and assign 14 orders at minimum total cost.
 
@@ -540,8 +660,11 @@ Decide which of 12 production plants to open (fixed costs [80, 49, 70, 55, 73, 4
 ### Workforce Scheduling
 
 #### Nurse Shift Rostering (5 staff, 3 shifts) (`workforce-shifts-5x3`)
-- **Type:** Shift Scheduling · **Size:** Small (15 QUBO vars) · **Objective:** Minimize · **Best Known:** `103` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (103.0) (5/5 feasible SA runs at λ=44.0). OR-Tools CP-SAT solved in 0.8 ms vs. 113.5 ms for simulated annealing.
+- **Type:** Shift Scheduling · **Size:** Small (15 QUBO vars: 15 decision + 0 slack, 45 couplings, 42.86% density, max deg 6, dynamic range 2.32×)
+- **Objective:** Minimize · **Best Known:** `103` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=44.0). Runtime: CP-SAT solve 0.4 ms vs. SA solve 93.2 ms (+ 560 ms λ-tuning).
+- **20-Seed SA Distribution:** best `103.0` · median `103.0` · mean±std `103.0 ± 0.0` · worst `103.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `560.3ms` / `93.2ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `103.0` · timings build/solve `0.3ms` / `0.4ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 5 engineers across 3 shifts meeting exact coverage [2, 2, 1] at minimum wage cost.
 
@@ -550,8 +673,11 @@ Schedule 5 engineers across 3 shifts. Each engineer must be assigned to exactly 
 ```
 
 #### Hospital Shift Rostering (6 staff, 4 shifts) (`workforce-shifts-6x4`)
-- **Type:** Shift Scheduling · **Size:** Small (24 QUBO vars) · **Objective:** Minimize · **Best Known:** `103` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (103.0) (5/5 feasible SA runs at λ=43.0). OR-Tools CP-SAT solved in 1.1 ms vs. 180.1 ms for simulated annealing.
+- **Type:** Shift Scheduling · **Size:** Small (24 QUBO vars: 24 decision + 0 slack, 96 couplings, 34.78% density, max deg 8, dynamic range 3.43×)
+- **Objective:** Minimize · **Best Known:** `103` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=43.0). Runtime: CP-SAT solve 0.8 ms vs. SA solve 147.8 ms (+ 908 ms λ-tuning).
+- **20-Seed SA Distribution:** best `103.0` · median `103.0` · mean±std `103.0 ± 0.0` · worst `103.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `907.7ms` / `147.8ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `103.0` · timings build/solve `0.4ms` / `0.8ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 6 engineers across 4 shifts meeting exact coverage [2, 2, 1, 1] at minimum wage cost.
 
@@ -560,8 +686,11 @@ Schedule 6 engineers across 4 shifts. Each engineer must be assigned to exactly 
 ```
 
 #### Field Technician Assignment (5x5) (`workforce-crew-5x5`)
-- **Type:** Crew Assignment · **Size:** Small (25 QUBO vars) · **Objective:** Minimize · **Best Known:** `100` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (100.0) (5/5 feasible SA runs at λ=46.0). OR-Tools CP-SAT solved in 0.9 ms vs. 178.6 ms for simulated annealing.
+- **Type:** Crew Assignment · **Size:** Small (25 QUBO vars: 25 decision + 0 slack, 100 couplings, 33.33% density, max deg 8, dynamic range 2.0×)
+- **Objective:** Minimize · **Best Known:** `100` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=46.0). Runtime: CP-SAT solve 0.6 ms vs. SA solve 151.9 ms (+ 870 ms λ-tuning).
+- **20-Seed SA Distribution:** best `100.0` · median `100.0` · mean±std `100.0 ± 0.0` · worst `100.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `870.0ms` / `151.9ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `100.0` · timings build/solve `0.3ms` / `0.6ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** One-to-one assignment of 5 technicians to 5 sites at minimum cost.
 
@@ -570,8 +699,11 @@ Assign 5 technicians to 5 sites one-to-one so every technician handles exactly o
 ```
 
 #### On-Call Skill Coverage (8 engineers, 10 windows) (`workforce-oncall-8x10`)
-- **Type:** Set Cover · **Size:** Small (25 QUBO vars) · **Objective:** Minimize · **Best Known:** `34` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (34.0) (5/5 feasible SA runs at λ=20.0). OR-Tools CP-SAT solved in 0.4 ms vs. 178.2 ms for simulated annealing.
+- **Type:** Set Cover · **Size:** Small (25 QUBO vars: 8 decision + 17 slack, 98 couplings, 32.67% density, max deg 17, dynamic range 4.0×)
+- **Objective:** Minimize · **Best Known:** `34` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=20.0). Runtime: CP-SAT solve 0.2 ms vs. SA solve 164.2 ms (+ 885 ms λ-tuning).
+- **20-Seed SA Distribution:** best `34.0` · median `34.0` · mean±std `34.0 ± 0.0` · worst `34.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `885.2ms` / `164.2ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `34.0` · timings build/solve `0.2ms` / `0.2ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Select the minimum-cost subset of 8 engineers covering all 10 windows.
 
@@ -580,8 +712,11 @@ Choose engineers to cover all 10 windows (0 to 9) at minimum cost. Options: engi
 ```
 
 #### Operations Crew Rostering (9 staff, 4 shifts) (`workforce-shifts-9x4`)
-- **Type:** Shift Scheduling · **Size:** Small (36 QUBO vars) · **Objective:** Minimize · **Best Known:** `138` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (138.0) (5/5 feasible SA runs at λ=44.0). OR-Tools CP-SAT solved in 1.5 ms vs. 280.1 ms for simulated annealing.
+- **Type:** Shift Scheduling · **Size:** Small (36 QUBO vars: 36 decision + 0 slack, 198 couplings, 31.43% density, max deg 11, dynamic range 2.89×)
+- **Objective:** Minimize · **Best Known:** `138` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=44.0). Runtime: CP-SAT solve 1.0 ms vs. SA solve 230.6 ms (+ 1380 ms λ-tuning).
+- **20-Seed SA Distribution:** best `138.0` · median `138.0` · mean±std `138.0 ± 0.0` · worst `138.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `1.38s` / `230.6ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `138.0` · timings build/solve `0.5ms` / `1.0ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 9 engineers across 4 shifts meeting exact coverage [3, 2, 2, 2] at minimum wage cost.
 
@@ -590,8 +725,11 @@ Schedule 9 engineers across 4 shifts. Each engineer must be assigned to exactly 
 ```
 
 #### Plant Shift Rostering (12 staff, 5 shifts) (`workforce-shifts-12x5`)
-- **Type:** Shift Scheduling · **Size:** Medium (60 QUBO vars) · **Objective:** Minimize · **Best Known:** `218` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (218.0) (5/5 feasible SA runs at λ=45.0). OR-Tools CP-SAT solved in 2.4 ms vs. 481.3 ms for simulated annealing.
+- **Type:** Shift Scheduling · **Size:** Medium (60 QUBO vars: 60 decision + 0 slack, 450 couplings, 25.42% density, max deg 15, dynamic range 2.89×)
+- **Objective:** Minimize · **Best Known:** `218` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.46% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=45.0). Runtime: CP-SAT solve 1.5 ms vs. SA solve 403.2 ms (+ 2369 ms λ-tuning).
+- **20-Seed SA Distribution:** best `218.0` · median `219.0` · mean±std `221.35 ± 3.6094` · worst `229.0` · IQR `3.25` · timings build/tune/solve `0.2ms` / `2.37s` / `403.2ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `218.0` · timings build/solve `0.7ms` / `1.5ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 12 engineers across 5 shifts meeting exact coverage [3, 3, 2, 2, 2] at minimum wage cost.
 
@@ -600,8 +738,11 @@ Schedule 12 engineers across 5 shifts. Each engineer must be assigned to exactly
 ```
 
 #### Flight Crew Pairing Assignment (8x8) (`workforce-crew-8x8`)
-- **Type:** Crew Assignment · **Size:** Medium (64 QUBO vars) · **Objective:** Minimize · **Best Known:** `131` (Exact optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Competitive** — Both solvers reached within 0.00% of the proven optimum (131.0) (5/5 feasible SA runs at λ=50.0). OR-Tools CP-SAT solved in 1.6 ms vs. 458.3 ms for simulated annealing.
+- **Type:** Crew Assignment · **Size:** Medium (64 QUBO vars: 64 decision + 0 slack, 448 couplings, 22.22% density, max deg 14, dynamic range 2.0×)
+- **Objective:** Minimize · **Best Known:** `131` (Exact optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Competitive** — Quality competitive: SA achieved 0.00% median gap (best 0.00%, 20/20 held-out seeds feasible at λ=50.0). Runtime: CP-SAT solve 1.0 ms vs. SA solve 404.1 ms (+ 2238 ms λ-tuning).
+- **20-Seed SA Distribution:** best `131.0` · median `131.0` · mean±std `131.0 ± 0.0` · worst `131.0` · IQR `0.0` · timings build/tune/solve `0.1ms` / `2.24s` / `404.1ms`
+- **20-Seed CP-SAT:** `OPTIMAL` `131.0` · timings build/solve `0.6ms` / `1.0ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** One-to-one assignment of 8 crews to 8 flights at minimum cost.
 
@@ -610,8 +751,10 @@ Assign 8 crews to 8 flights one-to-one so every crew handles exactly one flight.
 ```
 
 #### Enterprise Multi-Site Roster (20 staff, 8 shifts) (`workforce-shifts-20x8`)
-- **Type:** Shift Scheduling · **Size:** Large (160 QUBO vars) · **Objective:** Minimize · **Best Known:** `274` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT)
-- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 160 QUBO variables, exceeding the 150-variable QUBO limit. Google OR-Tools CP-SAT proved the optimal objective (274.0) in 4.6 ms.
+- **Type:** Shift Scheduling · **Size:** Large (160 QUBO vars: 160 decision + 0 slack, 2080 couplings, 16.35% density, max deg 26, dynamic range 2.94×)
+- **Objective:** Minimize · **Best Known:** `274` (Exact branch-and-cut optimality proven by OR-Tools CP-SAT) · **QUBO≡Original:** `PASS` (max err `0.0`)
+- **Solver Fit:** **Exceeds QUBO Limit** — Formulation requires 160 QUBO vars (160 decision + 0 slack, 2080 couplings), exceeding the 150-var interactive benchmark cap. QUBO equivalence verified (err=0.0); OR-Tools CP-SAT proved optimal (274.0) in 3.1 ms solve.
+- **20-Seed CP-SAT:** `OPTIMAL` `274.0` · timings build/solve `1.5ms` / `3.1ms`
 - **Source:** Synthetic instance (fixed seed) (Original / CC0)
 - **Summary:** Assign 20 engineers across 8 shifts meeting exact coverage [3, 3, 3, 3, 2, 2, 2, 2] at minimum wage cost.
 

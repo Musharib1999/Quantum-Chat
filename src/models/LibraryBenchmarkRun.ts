@@ -12,9 +12,17 @@ const LibraryBenchmarkRunSchema = new mongoose.Schema(
     protocol: {
       repeats: { type: Number, required: true },
       seeds: { type: [Number], default: [] },
+      tuneSeeds: { type: [Number], default: [] },
+      quboSweepReads: { type: Number },
       quboReadsPerRepeat: { type: Number, required: true },
+      quboNumSweeps: { type: Number },
       maxQuboVars: { type: Number, required: true },
+      quboLimitRationale: { type: String },
     },
+    environment: { type: mongoose.Schema.Types.Mixed },
+    structure: { type: mongoose.Schema.Types.Mixed },
+    equivalenceCheck: { type: mongoose.Schema.Types.Mixed },
+    runtimeRatioSaVsCp: { type: Number },
     quboVars: { type: Number, required: true },
     verdict: {
       type: String,

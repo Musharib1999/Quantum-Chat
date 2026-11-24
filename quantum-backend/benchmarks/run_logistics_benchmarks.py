@@ -32,15 +32,16 @@ import dimod
 from neal import SimulatedAnnealingSampler
 from ortools.sat.python import cp_model
 
+from benchmark_harness import (
+    EVAL_SEEDS as SEEDS,
+    MAX_QUBO_VARS,
+    get_environment_manifest,
+    run_benchmark,
+)
+
 ROOT = Path(__file__).resolve().parents[2]
 LIB_IN = ROOT / "src" / "data" / "problemLibrary" / "logistics.json"
 BENCH_OUT = ROOT / "src" / "data" / "problemLibrary" / "logistics_benchmarks.json"
-
-MAX_QUBO_VARS = 150
-SEEDS = [101, 202, 303, 404, 505]
-SWEEP_READS = 300
-FINAL_READS = 1000
-SWEEP_MULTIPLIERS = [1.0, 2.0, 4.0, 8.0]
 
 
 def _normalize_json_numbers(v: Any) -> Any:
@@ -371,7 +372,20 @@ def build_tsp_models(p: Dict[str, Any]):
         ok = status in (cp_model.OPTIMAL, cp_model.FEASIBLE)
         return s.StatusName(status), (float(round(s.ObjectiveValue(), 6)) if ok else None), ms
 
-    return make_bqm, verify, solve_ortools, base_penalty
+    def map_cp_to_bqm(cp_sol: Dict[str, int]) -> Dict[str, int]:
+        nxt = {}
+        for i in range(n):
+            for j in range(n):
+                if i != j and cp_sol.get(f"a_{i}_{j}", 0) == 1:
+                    nxt[i] = j
+        out = {f"x_{i}_{t}": 0 for i in range(n) for t in range(n)}
+        cur = 0
+        for step in range(n):
+            out[f"x_{cur}_{step}"] = 1
+            cur = nxt[cur]
+        return out
+
+    return make_bqm, verify, solve_ortools, base_penalty, map_cp_to_bqm
 
 
 def build_cvrp_models(p: Dict[str, Any]):
@@ -497,7 +511,23 @@ def build_cvrp_models(p: Dict[str, Any]):
         ok = status in (cp_model.OPTIMAL, cp_model.FEASIBLE)
         return s.StatusName(status), (float(round(s.ObjectiveValue(), 6)) if ok else None), ms
 
-    return make_bqm, verify, solve_ortools, base_penalty
+    def map_cp_to_bqm(cp_sol: Dict[str, int]) -> Dict[str, int]:
+        out = {f"x_{v}_{c}_{s_idx}": 0 for v in range(vehicles) for c in range(1, n) for s_idx in range(customers)}
+        for v in range(vehicles):
+            nxt = {}
+            for i in range(n):
+                for j in range(n):
+                    if i != j and cp_sol.get(f"x_{v}_{i}_{j}", 0) == 1:
+                        nxt[i] = j
+            cur = nxt.get(0, 0)
+            slot = 0
+            while cur != 0 and slot < customers:
+                out[f"x_{v}_{cur}_{slot}"] = 1
+                cur = nxt.get(cur, 0)
+                slot += 1
+        return out
+
+    return make_bqm, verify, solve_ortools, base_penalty, map_cp_to_bqm
 
 
 BUILDERS = {
@@ -510,214 +540,45 @@ BUILDERS = {
 }
 
 
-def compute_gap_pct(obj: Optional[float], ref: Optional[float], sense: str) -> Optional[float]:
-    if obj is None or ref is None:
-        return None
-    if abs(ref) < 1e-9:
-        return 0.0 if abs(obj - ref) < 1e-6 else 100.0
-    if sense == "Maximize":
-        diff = max(0.0, ref - obj)
-    else:
-        diff = max(0.0, obj - ref)
-    return round((diff / abs(ref)) * 100.0, 2)
-
-
 def benchmark_problem(p: Dict[str, Any]) -> Dict[str, Any]:
-    slug = p["slug"]
-    sense = p["objectiveSense"]
-    best_known = float(p["bestKnown"]["value"])
     builder = BUILDERS[p["problemType"]]
-    make_bqm, verify, solve_ortools, base_penalty = builder(p)
-
-    # 1. Measure exact QUBO size (decision + slack vars)
-    probe_bqm = make_bqm(base_penalty)
-    qubo_vars = len(probe_bqm.variables)
-    exceeds_limit = qubo_vars > MAX_QUBO_VARS
-
-    # 2. Run Google OR-Tools CP-SAT across N=5 fixed seeds
-    c_objs: List[float] = []
-    c_times: List[float] = []
-    c_statuses: List[str] = []
-    for seed in SEEDS:
-        st, obj, ms = solve_ortools(seed)
-        c_statuses.append(st)
-        c_times.append(ms)
-        if obj is not None:
-            c_objs.append(obj)
-
-    c_feas_rate = round(len(c_objs) / len(SEEDS), 2)
-    c_best = (max(c_objs) if sense == "Maximize" else min(c_objs)) if c_objs else None
-    c_mean = round(statistics.mean(c_objs), 4) if c_objs else None
-    c_std = round(statistics.pstdev(c_objs), 4) if len(c_objs) > 1 else (0.0 if c_objs else None)
-    c_mean_ms = round(statistics.mean(c_times), 2)
-    c_gap_bk = compute_gap_pct(c_best, best_known, sense)
-    c_status = "OPTIMAL" if all(s == "OPTIMAL" for s in c_statuses) else (c_statuses[0] if c_statuses else "UNKNOWN")
-
-    # 3. Run D-Wave Simulated Annealing (classical software) if within QUBO size limit
-    sampler = SimulatedAnnealingSampler()
-    lambda_sweep: List[Dict[str, Any]] = []
-    best_lam: Optional[float] = None
-    q_objs: List[float] = []
-    q_times: List[float] = []
-
-    if not exceeds_limit:
-        # Step 3a: λ penalty sweep (2 seeds × SWEEP_READS per λ to select best penalty calibration)
-        sweep_candidates = [round(base_penalty * mult, 2) for mult in SWEEP_MULTIPLIERS]
-        best_score = None
-        for lam in sweep_candidates:
-            bqm = make_bqm(lam)
-            feas_objs = []
-            for seed in SEEDS[:2]:
-                ss = sampler.sample(bqm, num_reads=SWEEP_READS, seed=seed)
-                # Scan lowest-energy feasible sample across the reads (standard QUBO post-filtering)
-                best_sample_obj = None
-                for datum in ss.data(["sample", "energy"]):
-                    ok, val = verify(datum.sample)
-                    if ok:
-                        if best_sample_obj is None:
-                            best_sample_obj = val
-                        elif (sense == "Maximize" and val > best_sample_obj) or (sense == "Minimize" and val < best_sample_obj):
-                            best_sample_obj = val
-                if best_sample_obj is not None:
-                    feas_objs.append(best_sample_obj)
-            f_rate = round(len(feas_objs) / 2.0, 2)
-            b_obj = (max(feas_objs) if sense == "Maximize" else min(feas_objs)) if feas_objs else None
-            lambda_sweep.append({
-                "lambda": lam,
-                "feasibilityRate": f_rate,
-                "bestObjective": b_obj,
-            })
-            # Rank by highest feasibility rate first, then best objective
-            if b_obj is not None:
-                obj_key = b_obj if sense == "Maximize" else -b_obj
-            else:
-                obj_key = -1e18
-            score = (f_rate, obj_key)
-            if best_score is None or score > best_score:
-                best_score = score
-                best_lam = lam
-
-        # Step 3b: Final reproducible evaluation at best_lam across all 5 seeds × FINAL_READS
-        assert best_lam is not None
-        final_bqm = make_bqm(best_lam)
-        for seed in SEEDS:
-            t0 = time.perf_counter()
-            ss = sampler.sample(final_bqm, num_reads=FINAL_READS, seed=seed)
-            best_sample_obj = None
-            for datum in ss.data(["sample", "energy"]):
-                ok, val = verify(datum.sample)
-                if ok:
-                    if best_sample_obj is None:
-                        best_sample_obj = val
-                    elif (sense == "Maximize" and val > best_sample_obj) or (sense == "Minimize" and val < best_sample_obj):
-                        best_sample_obj = val
-            ms = (time.perf_counter() - t0) * 1000.0
-            q_times.append(ms)
-            if best_sample_obj is not None:
-                q_objs.append(best_sample_obj)
-
-    q_feas_rate = round(len(q_objs) / len(SEEDS), 2) if not exceeds_limit else 0.0
-    q_best = (max(q_objs) if sense == "Maximize" else min(q_objs)) if q_objs else None
-    q_mean = round(statistics.mean(q_objs), 4) if q_objs else None
-    q_std = round(statistics.pstdev(q_objs), 4) if len(q_objs) > 1 else (0.0 if q_objs else None)
-    q_mean_ms = round(statistics.mean(q_times), 2) if q_times else None
-    q_gap_bk = compute_gap_pct(q_best, best_known, sense)
-    q_gap_c = compute_gap_pct(q_best, c_best, sense)
-
-    # 4. Honest Solver-Fit Verdict
-    if exceeds_limit:
-        verdict = "exceeds_qubo_limit"
-        verdict_note = (
-            f"Formulation requires {qubo_vars} QUBO variables, exceeding the {MAX_QUBO_VARS}-variable QUBO limit. "
-            f"Google OR-Tools CP-SAT proved the optimal objective ({c_best}) in {c_mean_ms:.1f} ms."
-        )
-    elif q_feas_rate >= 0.8 and q_gap_bk is not None and q_gap_bk <= 1.0 and (q_gap_c is None or q_gap_c <= 1.0):
-        verdict = "competitive"
-        verdict_note = (
-            f"Both solvers reached within {q_gap_bk:.2f}% of the proven optimum ({best_known}) "
-            f"({int(q_feas_rate * len(SEEDS))}/{len(SEEDS)} feasible SA runs at λ={best_lam}). "
-            f"OR-Tools CP-SAT solved in {c_mean_ms:.1f} ms vs. {q_mean_ms:.1f} ms for simulated annealing."
-        )
+    res = builder(p)
+    if len(res) == 5:
+        make_bqm, verify, solve_ortools, base_penalty, map_cp_to_bqm = res
     else:
-        verdict = "classical_wins"
-        if q_best is None:
-            verdict_note = (
-                f"OR-Tools CP-SAT proved the optimum ({c_best}) in {c_mean_ms:.1f} ms, whereas QUBO simulated annealing "
-                f"found 0/{len(SEEDS)} feasible samples across the λ sweep ({qubo_vars} QUBO vars)."
-            )
-        else:
-            verdict_note = (
-                f"OR-Tools CP-SAT proved the optimum ({c_best}) in {c_mean_ms:.1f} ms, outperforming QUBO simulated annealing "
-                f"(best {q_best}, {q_gap_bk:.2f}% gap, {int(q_feas_rate * len(SEEDS))}/{len(SEEDS)} feasible at λ={best_lam})."
-            )
-
-    return {
-        "slug": slug,
-        "contentHash": stable_content_hash(p),
-        "runAt": datetime.now(timezone.utc).isoformat(),
-        "protocol": {
-            "repeats": len(SEEDS),
-            "seeds": SEEDS,
-            "quboReadsPerRepeat": FINAL_READS,
-            "maxQuboVars": MAX_QUBO_VARS,
-        },
-        "quboVars": qubo_vars,
-        "verdict": verdict,
-        "verdictNote": verdict_note,
-        "qubo": {
-            "backend": "D-Wave Simulated Annealing (dwave-neal · classical software)",
-            "exceedsLimit": exceeds_limit,
-            "bestLambda": best_lam,
-            "lambdaSweep": lambda_sweep,
-            "feasibilityRate": q_feas_rate,
-            "feasibleRuns": len(q_objs),
-            "totalRuns": 0 if exceeds_limit else len(SEEDS),
-            "bestObjective": q_best,
-            "meanObjective": q_mean,
-            "stdObjective": q_std,
-            "gapVsBestKnownPct": q_gap_bk,
-            "gapVsOrtoolsPct": q_gap_c,
-            "meanTimeMs": q_mean_ms,
-        },
-        "classical": {
-            "backend": "Google OR-Tools CP-SAT (classical exact)",
-            "status": c_status,
-            "feasibilityRate": c_feas_rate,
-            "feasibleRuns": len(c_objs),
-            "totalRuns": len(SEEDS),
-            "bestObjective": c_best,
-            "meanObjective": c_mean,
-            "stdObjective": c_std,
-            "gapVsBestKnownPct": c_gap_bk,
-            "meanTimeMs": c_mean_ms,
-        },
-    }
+        make_bqm, verify, solve_ortools, base_penalty = res
+        map_cp_to_bqm = None
+    return run_benchmark(p, make_bqm, verify, solve_ortools, base_penalty, map_cp_to_bqm=map_cp_to_bqm)
 
 
 def main():
     lib = json.loads(LIB_IN.read_text())
     results = []
-    print(f"Running Phase 1 benchmark protocol on {len(lib['problems'])} Logistics problems (N={len(SEEDS)} seeds)...\n")
+    print(f"Running hardened benchmark protocol on {len(lib['problems'])} Logistics problems (N={len(SEEDS)} held-out seeds)...\n")
     for p in lib["problems"]:
         r = benchmark_problem(p)
         results.append(r)
         q = r["qubo"]
         c = r["classical"]
+        eq = r["equivalenceCheck"]
+        st = r["structure"]
         print(
-            f"{r['slug']:28s} quboVars={r['quboVars']:4d}  "
-            f"OR-Tools={str(c['bestObjective']):6s} ({c['gapVsBestKnownPct']}%, {c['meanTimeMs']:6.1f}ms)  |  "
-            f"SA={str(q['bestObjective']):6s} ({q['gapVsBestKnownPct']}%, feas {q['feasibleRuns']}/{q['totalRuns']}, {str(q['meanTimeMs']):6s}ms)  "
-            f"=> {r['verdict']}"
+            f"{r['slug']:28s} vars={r['quboVars']:4d} (slk={st['slackVars']:2d}, dens={st['densityPct']:5.1f}%) "
+            f"eq={'OK' if eq['passed'] else 'FAIL'} | "
+            f"OR={str(c['bestObjective']):6s} ({c['solveTimeMs']:5.1f}ms) | "
+            f"SA med={str(q['medianObjective']):6s} ({q['medianGapVsBestKnownPct']}%) best={str(q['bestObjective']):6s} "
+            f"feas={q['feasibleRuns']}/{q['totalRuns']} ({str(q['solveTimeMs']):6s}ms) => {r['verdict']}"
         )
 
     out_payload = {
         "industry": lib["industry"],
         "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "environment": get_environment_manifest(),
         "maxQuboVars": MAX_QUBO_VARS,
         "benchmarks": results,
     }
     BENCH_OUT.write_text(json.dumps(out_payload, indent=2) + "\n")
-    print(f"\nWrote {len(results)} reproducible benchmarks -> {BENCH_OUT}")
+    print(f"\nWrote {len(results)} hardened benchmarks -> {BENCH_OUT}")
 
 
 if __name__ == "__main__":

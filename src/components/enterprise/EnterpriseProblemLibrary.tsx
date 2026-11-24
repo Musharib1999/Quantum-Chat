@@ -612,20 +612,20 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                             </div>
                           ) : (
                             <div className={textMuted}>
-                              Best <strong className={textMain}>{b.qubo.bestObjective}</strong> (
-                              {b.qubo.gapVsBestKnownPct?.toFixed(2)}% gap) · {b.qubo.feasibleRuns}/{b.qubo.totalRuns} feas ·{" "}
-                              {fmtMs(b.qubo.meanTimeMs)}
+                              Med <strong className={textMain}>{b.qubo.medianObjective ?? b.qubo.bestObjective}</strong> (
+                              {(b.qubo.medianGapVsBestKnownPct ?? b.qubo.gapVsBestKnownPct)?.toFixed(2)}% gap) ·{" "}
+                              {b.qubo.feasibleRuns}/{b.qubo.totalRuns} feas · {fmtMs(b.qubo.solveTimeMs ?? b.qubo.meanTimeMs)}
                             </div>
                           )}
                         </div>
                         <div className="px-3 py-2 space-y-0.5">
                           <div className={textFaint}>Google OR-Tools CP-SAT</div>
                           <div className={textMuted}>
-                            Best <strong className={textMain}>{b.classical.bestObjective ?? "—"}</strong> (
+                            Opt <strong className={textMain}>{b.classical.bestObjective ?? "—"}</strong> (
                             {typeof b.classical.gapVsBestKnownPct === "number"
                               ? `${b.classical.gapVsBestKnownPct.toFixed(2)}% gap`
                               : "—"}
-                            ) · {b.classical.status} · {fmtMs(b.classical.meanTimeMs)}
+                            ) · {b.classical.status} · {fmtMs(b.classical.solveTimeMs ?? b.classical.meanTimeMs)}
                           </div>
                         </div>
                       </div>
@@ -689,12 +689,13 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
 
                                 {/* λ Sweep Table */}
                                 {detail.benchmark.qubo.lambdaSweep.length > 0 && (
-                                  <div className={`rounded-lg border ${border} overflow-hidden max-w-md`}>
+                                  <div className={`rounded-lg border ${border} overflow-hidden max-w-lg`}>
                                     <table className="w-full text-left text-[11px] font-mono">
                                       <thead>
                                         <tr className={`border-b ${border} ${textFaint}`}>
-                                          <th className="py-1.5 px-3 font-medium">Penalty λ</th>
+                                          <th className="py-1.5 px-3 font-medium">Penalty λ (disjoint tune)</th>
                                           <th className="py-1.5 px-3 font-medium">Feasibility</th>
+                                          <th className="py-1.5 px-3 font-medium text-right">Median Obj</th>
                                           <th className="py-1.5 px-3 font-medium text-right">Best Obj</th>
                                         </tr>
                                       </thead>
@@ -713,6 +714,9 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                                               <td className={`py-1.5 px-3 ${textMuted}`}>
                                                 {Math.round(pt.feasibilityRate * 100)}%
                                               </td>
+                                              <td className={`py-1.5 px-3 text-right ${textMuted}`}>
+                                                {pt.medianObjective ?? "—"}
+                                              </td>
                                               <td className={`py-1.5 px-3 text-right ${textMain}`}>
                                                 {pt.bestObjective ?? "—"}
                                               </td>
@@ -724,16 +728,70 @@ export function EnterpriseProblemLibrary({ isDark, isDemo = false, onOpenProblem
                                   </div>
                                 )}
 
+                                {/* QUBO Structural Telemetry + Equivalence Proof */}
+                                {detail.benchmark.structure && (
+                                  <div className={`flex flex-wrap gap-x-4 gap-y-1 text-[10.5px] font-mono ${textMuted}`}>
+                                    <span>
+                                      QUBO structure: {detail.benchmark.structure.decisionVars} decision +{" "}
+                                      {detail.benchmark.structure.slackVars} slack vars
+                                    </span>
+                                    <span>{detail.benchmark.structure.quadraticCouplings.toLocaleString()} couplings</span>
+                                    <span>density {detail.benchmark.structure.densityPct}%</span>
+                                    <span>max deg {detail.benchmark.structure.maxDegree}</span>
+                                    <span>dynamic range {detail.benchmark.structure.dynamicRange}×</span>
+                                    {detail.benchmark.equivalenceCheck?.passed && (
+                                      <span className={isDark ? "text-emerald-400" : "text-emerald-700"}>
+                                        QUBO≡Original verified (err {detail.benchmark.equivalenceCheck.maxAbsError})
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Statistical Robustness & Separated Timings */}
                                 <div className={`flex flex-wrap gap-x-4 gap-y-1 text-[10.5px] font-mono ${textFaint}`}>
                                   <span>
-                                    Protocol: N={detail.benchmark.protocol.repeats} seeds (
-                                    {detail.benchmark.protocol.seeds.join(", ")})
+                                    Eval: N={detail.benchmark.protocol.repeats} held-out seeds
+                                    {detail.benchmark.protocol.tuneSeeds?.length
+                                      ? ` (tuned on ${detail.benchmark.protocol.tuneSeeds.length} disjoint seeds)`
+                                      : ""}
                                   </span>
-                                  <span>Reads: {detail.benchmark.protocol.quboReadsPerRepeat.toLocaleString()}</span>
+                                  <span>
+                                    Reads: {detail.benchmark.protocol.quboReadsPerRepeat.toLocaleString()}
+                                    {detail.benchmark.protocol.quboNumSweeps
+                                      ? ` × ${detail.benchmark.protocol.quboNumSweeps} sweeps`
+                                      : ""}
+                                  </span>
                                   {detail.benchmark.qubo.meanObjective !== null && (
                                     <span>
-                                      SA mean ± std: {detail.benchmark.qubo.meanObjective.toFixed(2)} ±{" "}
-                                      {(detail.benchmark.qubo.stdObjective ?? 0).toFixed(2)}
+                                      SA best/med/mean±std/worst: {detail.benchmark.qubo.bestObjective} /{" "}
+                                      {detail.benchmark.qubo.medianObjective ?? "—"} /{" "}
+                                      {detail.benchmark.qubo.meanObjective.toFixed(2)}±
+                                      {(detail.benchmark.qubo.stdObjective ?? 0).toFixed(2)} /{" "}
+                                      {detail.benchmark.qubo.worstObjective ?? "—"}
+                                      {typeof detail.benchmark.qubo.iqrObjective === "number"
+                                        ? ` (IQR ${detail.benchmark.qubo.iqrObjective})`
+                                        : ""}
+                                    </span>
+                                  )}
+                                  {typeof detail.benchmark.classical.buildTimeMs === "number" && (
+                                    <span>
+                                      CP-SAT build/solve: {fmtMs(detail.benchmark.classical.buildTimeMs)} /{" "}
+                                      {fmtMs(detail.benchmark.classical.solveTimeMs)}
+                                    </span>
+                                  )}
+                                  {!detail.benchmark.qubo.exceedsLimit &&
+                                    typeof detail.benchmark.qubo.buildTimeMs === "number" && (
+                                      <span>
+                                        SA build/tune/solve: {fmtMs(detail.benchmark.qubo.buildTimeMs)} /{" "}
+                                        {fmtMs(detail.benchmark.qubo.tuneTimeMs)} /{" "}
+                                        {fmtMs(detail.benchmark.qubo.solveTimeMs)}
+                                      </span>
+                                    )}
+                                  {detail.benchmark.environment && (
+                                    <span>
+                                      Env: Python {detail.benchmark.environment.pythonVersion} · OR-Tools{" "}
+                                      {detail.benchmark.environment.ortoolsVersion} · neal{" "}
+                                      {detail.benchmark.environment.nealVersion} ({detail.benchmark.environment.machine})
                                     </span>
                                   )}
                                 </div>

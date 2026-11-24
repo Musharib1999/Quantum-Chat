@@ -88,7 +88,7 @@ export function SolverFitMap({ isDark, problems, onSelectProblem }: SolverFitMap
     ...benchmarked.map((p) => p.benchmark?.quboVars ?? p.estimatedBinaryVars)
   );
   const finiteGaps = benchmarked
-    .map((p) => p.benchmark?.qubo?.gapVsBestKnownPct)
+    .map((p) => p.benchmark?.qubo?.medianGapVsBestKnownPct ?? p.benchmark?.qubo?.gapVsBestKnownPct)
     .filter((g): g is number => typeof g === "number");
   const maxGap = Math.max(10, Math.ceil((Math.max(0, ...finiteGaps) + 2) / 5) * 5);
 
@@ -308,14 +308,14 @@ export function SolverFitMap({ isDark, problems, onSelectProblem }: SolverFitMap
               fill={isDark ? "#A1A1AA" : "#475569"}
               transform={`rotate(-90 14 ${padT + plotH / 2})`}
             >
-              SA Gap vs. Best Known
+              SA Median Gap vs. Best Known
             </text>
 
             {/* Data points */}
             {benchmarked.map((p) => {
               const b = p.benchmark!;
               const cx = xScale(b.quboVars);
-              const cy = yScaleGap(b.qubo.gapVsBestKnownPct, b.qubo.exceedsLimit);
+              const cy = yScaleGap(b.qubo.medianGapVsBestKnownPct ?? b.qubo.gapVsBestKnownPct, b.qubo.exceedsLimit);
               const isSelected = activeProblem?.slug === p.slug;
               const fill = verdictColor(b.verdict);
               return (
@@ -365,6 +365,9 @@ export function SolverFitMap({ isDark, problems, onSelectProblem }: SolverFitMap
                 </span>
                 <span className={`text-[11px] font-mono ${textFaint}`}>
                   {activeProblem.benchmark.quboVars} QUBO vars
+                  {activeProblem.benchmark.structure
+                    ? ` (${activeProblem.benchmark.structure.decisionVars}d+${activeProblem.benchmark.structure.slackVars}s · ${activeProblem.benchmark.structure.densityPct}% dens)`
+                    : ""}
                 </span>
               </div>
               <p className={`text-[12px] font-sans line-clamp-2 ${textMuted}`}>{activeProblem.benchmark.verdictNote}</p>
@@ -423,17 +426,18 @@ export function SolverFitMap({ isDark, problems, onSelectProblem }: SolverFitMap
                           &gt; {b.protocol.maxQuboVars} var limit
                         </span>
                       ) : q.bestObjective === null ? (
-                        <span>0/{q.totalRuns} feasible · {fmtMs(q.meanTimeMs)}</span>
+                        <span>0/{q.totalRuns} feasible · {fmtMs(q.solveTimeMs ?? q.meanTimeMs)}</span>
                       ) : (
                         <span>
-                          <strong className={textMain}>{q.bestObjective}</strong> ({fmtGap(q.gapVsBestKnownPct)}) ·{" "}
-                          {q.feasibleRuns}/{q.totalRuns} feas · {fmtMs(q.meanTimeMs)}
+                          <strong className={textMain}>{q.medianObjective ?? q.bestObjective}</strong> (
+                          {fmtGap(q.medianGapVsBestKnownPct ?? q.gapVsBestKnownPct)}) ·{" "}
+                          {q.feasibleRuns}/{q.totalRuns} feas · {fmtMs(q.solveTimeMs ?? q.meanTimeMs)}
                         </span>
                       )}
                     </td>
                     <td className={`py-2.5 px-3 ${textMuted}`}>
                       <strong className={textMain}>{c.bestObjective ?? "—"}</strong> ({fmtGap(c.gapVsBestKnownPct)}) ·{" "}
-                      {fmtMs(c.meanTimeMs)}
+                      {fmtMs(c.solveTimeMs ?? c.meanTimeMs)}
                     </td>
                     <td className={`py-2.5 px-4 text-right font-medium ${verdictTextClass(b.verdict)}`}>
                       {VERDICT_LABEL[b.verdict] || b.verdict}
