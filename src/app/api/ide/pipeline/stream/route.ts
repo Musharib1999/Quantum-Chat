@@ -12,8 +12,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { problem, mode = 'qubo', penalty_choice = 3, penalty_lambda, session_id = 'studio_ide_session' } = body;
-    const activePenalty = typeof penalty_lambda === 'number' ? penalty_lambda : (typeof penalty_choice === 'number' ? penalty_choice : 3);
+    const { problem, mode = 'qubo', penalty_choice = 3, penalty_lambda = null, session_id = 'studio_ide_session' } = body;
+    const explicitLambda =
+      typeof penalty_lambda === 'number' && Number.isFinite(penalty_lambda) && penalty_lambda > 0
+        ? penalty_lambda
+        : null;
+    const resolvedChoice =
+      typeof penalty_choice === 'number' && Number.isFinite(penalty_choice) ? penalty_choice : 3;
 
     if (!problem || typeof problem !== 'string' || !problem.trim()) {
       return NextResponse.json({ error: 'Problem description cannot be empty.' }, { status: 400 });
@@ -44,8 +49,8 @@ export async function POST(req: NextRequest) {
               headers: { 'Content-Type': 'application/json', ...authRes.headers },
               body: JSON.stringify({
                 model_text: problem,
-                penalty_choice: activePenalty,
-                penalty_lambda: activePenalty,
+                penalty_choice: resolvedChoice,
+                penalty_lambda: explicitLambda,
                 session_id,
                 run_solver: true,
               }),
@@ -263,8 +268,8 @@ export async function POST(req: NextRequest) {
               unstructured_problem: problem,
               mode: mode || 'qubo',
               session_id,
-              penalty_choice: activePenalty,
-              penalty_lambda: activePenalty,
+              penalty_choice: resolvedChoice,
+              penalty_lambda: explicitLambda,
             }),
           });
 

@@ -415,16 +415,14 @@ async def run_direct_model_pipeline_stream(
     if penalty_lambda is not None:
         penalty_weight = float(penalty_lambda)
         penalty_label = f"Custom λ={penalty_weight}"
-    elif isinstance(penalty_choice, float) and penalty_choice not in (1, 2, 3, 4, 5, 6):
-        penalty_weight = float(penalty_choice)
-        penalty_label = f"Custom λ={penalty_weight}"
     elif penalty_choice not in (1, 2, 3, 4, 5, 6):
         penalty_weight = float(penalty_choice)
         penalty_label = f"Custom λ={penalty_weight}"
     else:
-        penalty_weight = resolve_penalty_weight(penalty_choice, om)
+        preset_int = int(penalty_choice)
+        penalty_weight = resolve_penalty_weight(preset_int, om)
         penalty_labels = {1: "Proposed Penalty 1 (Sum)", 2: "Proposed Penalty 2 (Moderate)", 3: "Proposed Penalty 3 (Verma-Lewis)", 4: "Adaptive L2 Norm", 5: "Lagrange Ratio", 6: "Active Density"}
-        penalty_label = penalty_labels.get(penalty_choice, f"Custom λ={penalty_weight}")
+        penalty_label = penalty_labels.get(preset_int, f"Custom λ={penalty_weight}")
 
     yield {
         "step": "q_matrix",
