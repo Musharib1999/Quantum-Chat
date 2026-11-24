@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
 
+export type StudioActivityStatus = "idle" | "running" | "optimal" | "warning";
+
 interface StudioHeaderProps {
   isDark: boolean;
   onToggleTheme: () => void;
@@ -34,6 +36,7 @@ interface StudioHeaderProps {
   onSync?: () => void;
   isRunningOrRecompiling: boolean;
   onRunOrRecompile: () => void;
+  activityStatus?: StudioActivityStatus;
   isModelDirty?: boolean;
   user: any;
   isAuthenticated: boolean;
@@ -63,6 +66,7 @@ export function StudioHeader({
   onSync,
   isRunningOrRecompiling,
   onRunOrRecompile,
+  activityStatus = "idle",
   isModelDirty = false,
   user,
   isAuthenticated,
@@ -81,8 +85,25 @@ export function StudioHeader({
   const [isAddingNewFile, setIsAddingNewFile] = useState(false);
   const [newFileNameInput, setNewFileNameInput] = useState("");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isCompletionFlash, setIsCompletionFlash] = useState(false);
+  const prevActivityRef = useRef<StudioActivityStatus>(activityStatus);
   const fileDropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Brief vivid completion flash when transitioning from running -> optimal / warning,
+  // then smoothly settles into a calm ambient hairline (matches EnterpriseHeader).
+  useEffect(() => {
+    const prev = prevActivityRef.current;
+    prevActivityRef.current = activityStatus;
+    if (prev === "running" && (activityStatus === "optimal" || activityStatus === "warning")) {
+      setIsCompletionFlash(true);
+      const t = setTimeout(() => setIsCompletionFlash(false), 3500);
+      return () => clearTimeout(t);
+    }
+    if (activityStatus === "running" || activityStatus === "idle") {
+      setIsCompletionFlash(false);
+    }
+  }, [activityStatus]);
 
   const currentFile =
     activeFile ||
@@ -152,7 +173,7 @@ export function StudioHeader({
   return (
     <header
       suppressHydrationWarning
-      className={`h-12 border-b pl-2 pr-3.5 flex items-center justify-between shrink-0 z-20 shadow-xs transition-colors ${
+      className={`relative h-12 border-b pl-2 pr-3.5 flex items-center justify-between shrink-0 z-20 shadow-xs transition-colors ${
         isDark
           ? "bg-[#0E0F13] border-white/[0.08]"
           : "bg-white border-slate-200"
@@ -648,6 +669,48 @@ export function StudioHeader({
             <LogIn className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-[11px]">Sign In</span>
           </Link>
+        )}
+      </div>
+
+      {/* ── QUANTUM GURU NAV-BAR BOTTOM PROGRESS & STATUS HAIRLINE ── */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] overflow-hidden"
+      >
+        {activityStatus === "running" && (
+          <div className="relative h-full w-full bg-[#2E65BF]/20">
+            <div
+              style={{
+                width: "32%",
+                background:
+                  "linear-gradient(90deg, transparent 0%, #2E65BF 20%, #1BB0CE 62%, #38BDF8 90%, transparent 100%)",
+                boxShadow: "0 0 12px rgba(27, 176, 206, 0.85)",
+              }}
+              className="h-full qg-nav-beam-sweep"
+            />
+          </div>
+        )}
+
+        {activityStatus === "optimal" && (
+          <div
+            style={{
+              background: "linear-gradient(90deg, #059669 0%, #10B981 50%, #34D399 100%)",
+              boxShadow: isCompletionFlash ? "0 0 10px rgba(16, 185, 129, 0.7)" : "none",
+              opacity: isCompletionFlash ? 1 : isDark ? 0.42 : 0.55,
+            }}
+            className="h-full w-full transition-opacity duration-700"
+          />
+        )}
+
+        {activityStatus === "warning" && (
+          <div
+            style={{
+              background: "linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FBBF24 100%)",
+              boxShadow: isCompletionFlash ? "0 0 10px rgba(245, 158, 11, 0.7)" : "none",
+              opacity: isCompletionFlash ? 1 : isDark ? 0.5 : 0.65,
+            }}
+            className="h-full w-full transition-opacity duration-700"
+          />
         )}
       </div>
     </header>

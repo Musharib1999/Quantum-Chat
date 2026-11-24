@@ -4585,6 +4585,15 @@ Diagnose the exact line number, root cause, and explain how to fix it conceptual
         onSync={handleSyncCodeAndCircuit}
         isRunningOrRecompiling={isRunningOrRecompiling}
         onRunOrRecompile={handleRunOrRecompile}
+        activityStatus={
+          isRunningOrRecompiling
+            ? "running"
+            : executionHistory.length === 0
+            ? "idle"
+            : executionHistory[0]?.status === "success"
+            ? "optimal"
+            : "warning"
+        }
         isModelDirty={isModelDirty}
         user={user}
         isAuthenticated={isAuthenticated}
