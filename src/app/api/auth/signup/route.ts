@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
@@ -10,20 +11,24 @@ export async function POST(req: Request) {
 
         const { firstName, lastName, email, company, password } = body;
 
-        // Basic validation
-        if (!email || !password || !firstName || !lastName) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        // Basic validation (password is optional for invite-only access requests)
+        if (!email || !firstName || !lastName) {
+            return NextResponse.json({ error: 'Please provide your first name, last name, and email.' }, { status: 400 });
         }
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return NextResponse.json({ error: 'Email already in use' }, { status: 409 });
+            return NextResponse.json({ error: 'An account or access request with this email already exists.' }, { status: 409 });
         }
 
-        // Hash password
+        // Hash provided password or a cryptographically random unguessable placeholder for invite-only requests
+        const secretToHash =
+            typeof password === 'string' && password.trim().length > 0
+                ? password
+                : crypto.randomBytes(32).toString('hex');
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(secretToHash, salt);
 
         // Create new user, explicitly setting isApproved to false and canonical 'learner' role
         const newUser = await User.create({
@@ -37,7 +42,10 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json(
-            { message: 'Registration successful. Your account is pending admin approval.', userId: newUser._id },
+            {
+                message: 'Access request submitted. Our team will review your request and share your credentials once approved.',
+                userId: newUser._id,
+            },
             { status: 201 }
         );
 
