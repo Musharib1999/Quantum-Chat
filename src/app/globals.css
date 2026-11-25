@@ -254,7 +254,8 @@ code, pre, kbd, samp, .font-mono {
   margin: 0.35em 0 !important;
 }
 
-.text-left .katex-display {
+.text-left .katex-display,
+.text-left .katex-display > .katex {
   text-align: left !important;
 }
 
