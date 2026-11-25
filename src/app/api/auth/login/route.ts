@@ -3,13 +3,25 @@ import dbConnect from '../../../../lib/db';
 import User from '../../../../models/User';
 import bcrypt from 'bcryptjs';
 import { normalizeRole } from '@/lib/roles';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(req: Request) {
     try {
-        await dbConnect();
-        const { email, password } = await req.json();
+        const ip = getClientIp(req);
+        const rl = checkRateLimit(`login:${ip}`, 15, 15 * 60 * 1000);
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'Too many sign-in attempts. Please wait a few minutes and try again.' },
+                { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+            );
+        }
 
-        if (!email || !password) {
+        await dbConnect();
+        const body = await req.json();
+        const email = typeof body.email === 'string' ? body.email.trim() : '';
+        const password = typeof body.password === 'string' ? body.password : '';
+
+        if (!email || !password || email.length > 254 || password.length > 128) {
             return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
         }
 
@@ -19,13 +31,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        // Compare password (assuming user password might be hashed from new signup flow, or plaintext from legacy)
-        // Since we introduced bcrypt in signup, we check for it here
+        // Compare password (bcrypt primary; auto-upgrade any legacy plaintext password on verified login)
         const isMatch = await bcrypt.compare(password, user.password).catch(() => false);
-        const legacyMatch = user.password === password;
+        const legacyMatch = !isMatch && user.password === password;
 
         if (!isMatch && !legacyMatch) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+        }
+
+        if (legacyMatch) {
+            try {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(password, salt);
+                await user.save();
+            } catch (upgradeErr) {
+                console.error('Failed to auto-upgrade legacy password hash:', upgradeErr);
+            }
         }
 
         // Check Admin Approval Status (Admin role bypasses this)

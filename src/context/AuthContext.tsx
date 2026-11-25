@@ -30,6 +30,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** Persist only non-sensitive display/UI profile fields to localStorage (never apiKey or secrets). */
+function persistSessionProfile(u: User) {
+    const { apiKey: _omitApiKey, ...safeProfile } = u;
+    localStorage.setItem('quantum_session', JSON.stringify({ ...safeProfile, timestamp: Date.now() }));
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -42,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const expTime = new Date(user.demoExpiresAt!).getTime();
             const now = Date.now();
             if (now >= expTime) {
-                console.log("Demo session expired, logging out...");
                 logout();
             }
         };
@@ -57,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
-                setUser({
+                const hydrated: User = {
                     email: parsed.email,
                     name: parsed.name || parsed.firstName || parsed.email.split('@')[0],
                     firstName: parsed.firstName || '',
@@ -69,12 +74,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     tokensUsed: parsed.tokensUsed,
                     simMinutesLimit: parsed.simMinutesLimit,
                     simMinutesUsed: parsed.simMinutesUsed,
-                    apiKey: parsed.apiKey || '',
-                });
+                    // Never trust or read apiKey from localStorage; populated in-memory from verified /api/auth/me
+                    apiKey: '',
+                };
+                // Scrub any legacy apiKey previously stored in localStorage
+                if (parsed.apiKey) {
+                    persistSessionProfile(hydrated);
+                }
+                setUser(hydrated);
                 setIsAuthenticated(true);
 
-                // Fetch fresh user data from the backend to keep token limits synced
-                fetch(`/api/auth/me?email=${encodeURIComponent(parsed.email)}`)
+                // Identity comes strictly from the verified HttpOnly user_session cookie (no ?email= param)
+                fetch('/api/auth/me')
                     .then(res => {
                         if (res.status === 401) {
                             logout();
@@ -94,15 +105,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                         // Demo expiration check on mount
                         if (isDemoRole(data.role) && data.demoExpiresAt && new Date() > new Date(data.demoExpiresAt)) {
-                            console.log("Demo expired on mount, logging out...");
                             logout();
                             return;
                         }
 
                         setUser(prev => {
                             if (!prev) return prev;
-                            const updated = {
+                            const updated: User = {
                                 ...prev,
+                                email: data.email || prev.email,
+                                firstName: data.firstName ?? prev.firstName,
+                                lastName: data.lastName ?? prev.lastName,
                                 tokenLimit: data.tokenLimit,
                                 tokensUsed: data.tokensUsed,
                                 simMinutesLimit: data.simMinutesLimit ?? 5,
@@ -111,11 +124,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                                 role: normalizeRole(data.role),
                                 demoExpiresAt: data.demoExpiresAt || undefined
                             };
-                            localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
+                            persistSessionProfile(updated);
                             return updated;
                         });
                     })
-                    .catch(err => console.error("Failed to refresh user tokens", err));
+                    .catch(err => console.error("Failed to refresh user session", err));
 
             } catch (e) {
                 console.error("Invalid session", e);
@@ -143,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUser(newUser);
         setIsAuthenticated(true);
-        localStorage.setItem('quantum_session', JSON.stringify({ ...newUser, timestamp: Date.now() }));
+        persistSessionProfile(newUser);
     };
 
     const logout = () => {
@@ -177,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(prev => {
             if (!prev) return prev;
             const updated = { ...prev, ...updates };
-            localStorage.setItem('quantum_session', JSON.stringify({ ...updated, timestamp: Date.now() }));
+            persistSessionProfile(updated);
             return updated;
         });
     };

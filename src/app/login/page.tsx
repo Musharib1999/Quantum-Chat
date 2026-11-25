@@ -16,6 +16,41 @@ import { LatexMath } from "@/components/optimization/LatexMath";
 const HERO_HAMILTONIAN_LATEX =
   "\\min_{\\mathbf{x} \\in \\{0,1\\}^{n}} \\;\\; \\mathcal{H}_{\\text{obj}}(\\mathbf{x}) + \\lambda \\sum_{k=1}^{m} P_k(\\mathbf{x})";
 
+const ALLOWED_REDIRECT_PREFIXES = ["/enterprise", "/ide", "/admin", "/industry"];
+
+function sanitizeRedirectPath(raw: string | null | undefined): string {
+  if (!raw || typeof raw !== "string") return "/";
+  const trimmed = raw.trim();
+  // Reject protocol-relative, backslash, encoded-slash/backslash, or control chars
+  if (
+    !trimmed.startsWith("/") ||
+    trimmed.startsWith("//") ||
+    trimmed.startsWith("/\\") ||
+    /[\\]|%2f|%5c|[\u0000-\u001f]/i.test(trimmed)
+  ) {
+    return "/";
+  }
+  try {
+    if (typeof window !== "undefined") {
+      const parsed = new URL(trimmed, window.location.origin);
+      if (parsed.origin !== window.location.origin) return "/";
+      const path = parsed.pathname;
+      if (
+        path === "/" ||
+        ALLOWED_REDIRECT_PREFIXES.some(
+          (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+        )
+      ) {
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+      return "/";
+    }
+  } catch {
+    return "/";
+  }
+  return "/";
+}
+
 function LoginForm() {
   const { login } = useAuth();
   const { showToast } = useToast();
@@ -74,7 +109,6 @@ function LoginForm() {
               lastName: lastName.trim(),
               company: company.trim(),
               email: email.trim(),
-              role: "learner",
             };
 
       const res = await fetch(endpoint, {
@@ -100,12 +134,7 @@ function LoginForm() {
             ? new URLSearchParams(window.location.search)
             : null;
         const rawRedirect = params?.get("redirect") || redirect;
-        const activeRedirect =
-          rawRedirect &&
-          rawRedirect.startsWith("/") &&
-          !rawRedirect.startsWith("//")
-            ? rawRedirect
-            : "/";
+        const activeRedirect = sanitizeRedirectPath(rawRedirect);
 
         const userRole = normalizeRole(data.role ?? data.user?.role);
         let targetRedirect = getDefaultRouteForRole(userRole);

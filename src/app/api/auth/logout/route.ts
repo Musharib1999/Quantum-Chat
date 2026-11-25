@@ -15,9 +15,11 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json({ success: true, message: 'Logged out successfully' });
     
-    // Clear user_session cookie
+    // Clear user_session cookie with matching security attributes
     response.cookies.set('user_session', '', {
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
         expires: new Date(0),
         path: '/'
     });
