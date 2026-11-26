@@ -194,6 +194,10 @@ export interface ProjectRecord {
   updatedAt: number;
   /** Last problem text submitted; used by Recompile & Solve. */
   lastProblemText: string;
+  /** Prompt text of the last SUCCESSFUL compile; used to skip UnderstandingAgent on identical recompile. */
+  lastCompiledPrompt?: string;
+  /** Parsed problem_specification JSON from the last SUCCESSFUL compile (cleared on error or Model edit). */
+  lastCompiledSpec?: Record<string, any> | null;
   messages: EnterpriseChatMessage[];
   /** Newest first. */
   runs: ExecutionRun[];

@@ -232,6 +232,7 @@ class PipelineRequest(BaseModel):
     session_id: Optional[str] = None
     penalty_choice: Optional[Union[float, int]] = 3  # 1-6 preset or custom raw value
     penalty_lambda: Optional[float] = None
+    cached_spec: Optional[Dict[str, Any]] = None
 
 
 class PipelineResponse(BaseModel):

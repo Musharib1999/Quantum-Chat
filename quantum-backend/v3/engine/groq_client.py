@@ -17,6 +17,7 @@ import json
 import re
 import urllib.request
 import urllib.error
+from typing import Optional
 from . import config
 
 
@@ -31,16 +32,15 @@ async def call_groq(
     max_tokens: int = 4096,
     temperature: float = 0.1,
     model: str = None,
+    _tried_models: set = None,
 ) -> str:
-    # For Groq on-demand free tier, OTPM limit is 1,000. Clamp max_tokens to 850 to prevent 429 rate limit.
-    effective_max_tokens = min(max_tokens, 2048) if max_tokens > 100 else max_tokens
     """
     Call Groq completions API with OpenAI-compatible payload.
 
     Args:
         system: System instructions
         user: User query / problem statement
-        max_tokens: Maximum tokens in response (includes hidden reasoning tokens)
+        max_tokens: Maximum tokens in response (includes hidden reasoning tokens for reasoning models)
         temperature: Sampling temperature
         model: Optional model override (defaults to GROQ_PRIMARY_MODEL)
 
@@ -52,6 +52,26 @@ async def call_groq(
         raise ValueError("GROQ_API_KEY environment variable is not set.")
 
     model_name = model or config.GROQ_PRIMARY_MODEL or "qwen/qwen3.8-27b"
+    tried = set(_tried_models) if _tried_models else set()
+    tried.add(model_name)
+
+    is_gpt_oss = "gpt-oss" in model_name.lower()
+    # Reasoning models (gpt-oss) consume hidden thinking tokens inside max_tokens; give them
+    # sufficient headroom + low reasoning effort so structured JSON is never truncated at 2048.
+    if is_gpt_oss:
+        effective_max_tokens = min(max(max_tokens, 6144), 8192) if max_tokens > 100 else max_tokens
+    else:
+        effective_max_tokens = min(max_tokens, 4096) if max_tokens > 100 else max_tokens
+
+    # Ordered fallback chain: prefer non-reasoning llama-3.3-70b-versatile first on 429/truncation,
+    # then openai/gpt-oss-120b with low reasoning effort.
+    FALLBACK_ORDER = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b"]
+
+    def _next_fallback() -> Optional[str]:
+        for candidate in FALLBACK_ORDER:
+            if candidate not in tried:
+                return candidate
+        return None
 
     url = "https://api.groq.com/openai/v1/chat/completions"
     payload = {
@@ -66,10 +86,11 @@ async def call_groq(
         "presence_penalty": 0.1
     }
 
-    # Suppress reasoning tokens for Qwen models on Groq to save output tokens and avoid rate limits
+    # Suppress/minimize reasoning tokens on Groq to avoid JSON truncation and save rate-limit quota
     if "qwen" in model_name.lower():
         payload["reasoning_effort"] = "none"
-    elif "gpt-oss" in model_name.lower():
+    elif is_gpt_oss:
+        payload["reasoning_effort"] = "low"
         payload["reasoning_format"] = "hidden"
 
     headers = {
@@ -98,18 +119,28 @@ async def call_groq(
         response_json = await loop.run_in_executor(None, do_request)
         data = json.loads(response_json)
         choice = data["choices"][0]
-        raw_content = choice["message"]["content"]
+        raw_content = choice["message"]["content"] or ""
         finish_reason = choice.get("finish_reason")
         
         if finish_reason == "length":
-            print(f"[groq_client] ⚠️ WARNING: Response TRUNCATED by max_tokens={effective_max_tokens} limit! finish_reason='length'")
-            # If a code block was cut open, gracefully close the markdown block so frontend rendering doesn't corrupt
+            print(f"[groq_client] ⚠️ WARNING: Response TRUNCATED on '{model_name}' by max_tokens={effective_max_tokens} limit! finish_reason='length'")
+            # If a reasoning model still truncated, retry once on non-reasoning llama-3.3-70b-versatile if untried
+            if is_gpt_oss and "llama-3.3-70b-versatile" not in tried:
+                print(f"[groq_client] Retrying truncated reasoning output with 'llama-3.3-70b-versatile'...")
+                return await call_groq(
+                    system=system,
+                    user=user,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    model="llama-3.3-70b-versatile",
+                    _tried_models=tried,
+                )
             cleaned = _strip_think_tags(raw_content)
             if cleaned.count("```") % 2 != 0:
                 cleaned += "\n```"
             return cleaned
         else:
-            print(f"[groq_client] Finish reason: {finish_reason} (tokens ok)")
+            print(f"[groq_client] Finish reason ({model_name}): {finish_reason} (tokens ok)")
 
         print(f"[groq_client] raw_content length: {len(raw_content)}")
         print(f"[groq_client] raw_content preview: {repr(raw_content[:200])}")
@@ -125,16 +156,31 @@ async def call_groq(
         except Exception:
             message = error_msg
 
+        next_model = _next_fallback()
         # Fallback if rate limited (429) or model unavailable (400, 404)
-        if e.code == 429 and model_name != "openai/gpt-oss-120b":
-            print(f"[groq_client] Rate limited on '{model_name}'. Retrying with 'openai/gpt-oss-120b'...")
+        if e.code == 429 and next_model:
+            print(f"[groq_client] Rate limited on '{model_name}'. Retrying with '{next_model}'...")
             import asyncio
-            await asyncio.sleep(1.0)
-            return await call_groq(system=system, user=user, max_tokens=max_tokens, temperature=temperature, model="openai/gpt-oss-120b")
+            await asyncio.sleep(0.6)
+            return await call_groq(
+                system=system,
+                user=user,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                model=next_model,
+                _tried_models=tried,
+            )
 
-        if (e.code in (400, 404)) and model_name != "openai/gpt-oss-120b":
-            print(f"[groq_client] Model '{model_name}' unavailable ({message}). Retrying with 'openai/gpt-oss-120b'...")
-            return await call_groq(system=system, user=user, max_tokens=max_tokens, temperature=temperature, model="openai/gpt-oss-120b")
+        if e.code in (400, 404) and next_model:
+            print(f"[groq_client] Model '{model_name}' unavailable ({message}). Retrying with '{next_model}'...")
+            return await call_groq(
+                system=system,
+                user=user,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                model=next_model,
+                _tried_models=tried,
+            )
 
         raise RuntimeError(f"Groq API Error {e.code}: {message}") from e
     except Exception as e:

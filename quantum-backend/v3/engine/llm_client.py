@@ -59,7 +59,8 @@ async def call_primary(
     system: str,
     user: str,
     max_tokens: int = 4096,
-    temperature: float = 0.1
+    temperature: float = 0.1,
+    user_id: str = None,
 ) -> str:
     """
     Call the primary reasoning model (Qwen 32B on RunPod, or GPT-OSS 120B on Groq).

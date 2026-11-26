@@ -48,6 +48,7 @@ class PipelineRequest(BaseModel):
     email: Optional[str] = None
     penalty_choice: Optional[Union[float, int]] = 3  # 1-6 preset or custom raw value
     penalty_lambda: Optional[float] = None
+    cached_spec: Optional[Dict[str, Any]] = None
 
 class AssistantChatRequest(BaseModel):
     message: str
@@ -119,6 +120,7 @@ async def engine_stream(request: PipelineRequest):
                 email=request.email,
                 penalty_choice=request.penalty_choice or 3,
                 penalty_lambda=request.penalty_lambda,
+                cached_spec=request.cached_spec,
             ):
                 yield f"data: {json.dumps(update)}\n\n"
         except Exception as err:

@@ -3,7 +3,7 @@ Optimization Pipeline — QuantumGuru Engine v3 (Multi-Agent V7 Core)
 Routes to SupervisorAgent orchestrator for E2E execution.
 """
 import json
-from typing import Optional
+from typing import Optional, Dict, Any
 from .multi_agent import SupervisorAgent
 
 def format_q_matrix_preview(Q, variable_map) -> str:
@@ -217,6 +217,7 @@ async def run_optimization_pipeline_stream(
     email: str = None,
     penalty_choice: int = 3,
     penalty_lambda: Optional[float] = None,
+    cached_spec: Optional[Dict[str, Any]] = None,
 ):
     """
     Streamed multi-agent optimization pipeline.
@@ -224,7 +225,15 @@ async def run_optimization_pipeline_stream(
     """
     try:
         supervisor = SupervisorAgent(mode=mode or "qubo")
-        async for update in supervisor.execute_stream(problem, mode, session_id, email=email, penalty_choice=penalty_choice, penalty_lambda=penalty_lambda):
+        async for update in supervisor.execute_stream(
+            problem,
+            mode,
+            session_id,
+            email=email,
+            penalty_choice=penalty_choice,
+            penalty_lambda=penalty_lambda,
+            cached_spec=cached_spec,
+        ):
             if update.get("step") == "complete":
                 workspace = update["workspace"]
                 

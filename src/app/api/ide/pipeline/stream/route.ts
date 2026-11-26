@@ -12,7 +12,18 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { problem, mode = 'qubo', penalty_choice = 3, penalty_lambda = null, session_id = 'studio_ide_session' } = body;
+    const {
+      problem,
+      mode = 'qubo',
+      penalty_choice = 3,
+      penalty_lambda = null,
+      session_id = 'studio_ide_session',
+      cached_spec = null,
+    } = body;
+    const validCachedSpec =
+      cached_spec && typeof cached_spec === 'object' && !Array.isArray(cached_spec)
+        ? cached_spec
+        : null;
     const explicitLambda =
       typeof penalty_lambda === 'number' && Number.isFinite(penalty_lambda) && penalty_lambda > 0
         ? penalty_lambda
@@ -270,6 +281,7 @@ export async function POST(req: NextRequest) {
               session_id,
               penalty_choice: resolvedChoice,
               penalty_lambda: explicitLambda,
+              cached_spec: validCachedSpec,
             }),
           });
 

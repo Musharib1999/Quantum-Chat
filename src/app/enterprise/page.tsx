@@ -580,6 +580,16 @@ export default function EnterpriseStudioPage() {
       return;
     }
 
+    const normText = text.trim();
+    const reusableSpec =
+      currentProject.lastCompiledSpec &&
+      typeof currentProject.lastCompiledSpec === "object" &&
+      Array.isArray(currentProject.lastCompiledSpec.variable_registry) &&
+      currentProject.lastCompiledSpec.variable_registry.length > 0 &&
+      currentProject.lastCompiledPrompt?.trim() === normText
+        ? currentProject.lastCompiledSpec
+        : null;
+
     const userMsgId = `usr_${Date.now()}`;
     const botMsgId = `bot_${Date.now()}`;
 
@@ -594,10 +604,20 @@ export default function EnterpriseStudioPage() {
       id: botMsgId,
       sender: "assistant",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      text: "Decomposing mathematical structure and constraints...",
+      text: reusableSpec
+        ? "Reusing verified formulation and recompiling QUBO Hamiltonian..."
+        : "Decomposing mathematical structure and constraints...",
       isStreaming: true,
       pipelineSteps: [
-        { id: "nlp", agent: "UnderstandingAgent", title: "Understanding agent", status: "running" },
+        reusableSpec
+          ? {
+              id: "nlp",
+              agent: "UnderstandingAgent",
+              title: "Understanding agent (cached)",
+              status: "done",
+              message: "Reused verified formulation",
+            }
+          : { id: "nlp", agent: "UnderstandingAgent", title: "Understanding agent", status: "running" },
       ],
     };
 
@@ -640,6 +660,7 @@ export default function EnterpriseStudioPage() {
     };
 
     setIsStreaming(true);
+    let completedSuccessfully = false;
 
     try {
       const hasExplicitPenalty = typeof penaltyOverride === "number" && Number.isFinite(penaltyOverride) && penaltyOverride > 0;
@@ -653,6 +674,7 @@ export default function EnterpriseStudioPage() {
           penalty_choice: hasExplicitPenalty ? penaltyOverride : 3,
           penalty_lambda: hasExplicitPenalty ? penaltyOverride : null,
           session_id: `enterprise_${Date.now()}`,
+          cached_spec: reusableSpec,
         }),
       });
 
@@ -692,13 +714,37 @@ export default function EnterpriseStudioPage() {
                 execution: null,
               };
 
+              let parsedSpec: Record<string, any> | null = null;
+              if (typeof res.parsed_math === "string" && res.parsed_math.trim()) {
+                try {
+                  const parsed = JSON.parse(res.parsed_math);
+                  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                    parsedSpec = parsed;
+                  }
+                } catch {
+                  parsedSpec = null;
+                }
+              } else if (res.parsed_math && typeof res.parsed_math === "object" && !Array.isArray(res.parsed_math)) {
+                parsedSpec = res.parsed_math;
+              }
+
+              const compileSucceeded =
+                nextWs.variables.length > 0 &&
+                Boolean(nextWs.code?.trim()) &&
+                !nextWs.code.trim().startsWith("# HALTED") &&
+                Array.isArray(parsedSpec?.variable_registry) &&
+                parsedSpec.variable_registry.length > 0;
+              completedSuccessfully = compileSucceeded;
+
               // Record compiled snapshot in run history
               const newRun = runFromWorkspace({
                 id: `run_${Date.now()}`,
                 runNumber: currentProject.runs.length + 1,
                 title: text.slice(0, 36) + "...",
                 runtimeMs: typeof res.runtime_ms === "number" ? res.runtime_ms : null,
-                changesSummary: "Model compiled — ready for solver execution",
+                changesSummary: reusableSpec
+                  ? "Model recompiled (cached formulation) — ready for solver execution"
+                  : "Model compiled — ready for solver execution",
                 workspace: nextWs,
               });
 
@@ -719,7 +765,9 @@ export default function EnterpriseStudioPage() {
                     const existingSteps = msg.pipelineSteps ? [...msg.pipelineSteps] : [];
                     return {
                       ...msg,
-                      text: "Model compiled — run a solver to evaluate optimality.",
+                      text: reusableSpec
+                        ? "Model recompiled with cached formulation — run a solver to evaluate optimality."
+                        : "Model compiled — run a solver to evaluate optimality.",
                       isStreaming: false,
                       executionResult: undefined,
                       compiledSummary,
@@ -730,6 +778,8 @@ export default function EnterpriseStudioPage() {
                   return {
                     ...proj,
                     updatedAt: Date.now(),
+                    lastCompiledPrompt: compileSucceeded ? normText : "",
+                    lastCompiledSpec: compileSucceeded ? parsedSpec : null,
                     workspace: nextWs,
                     runs: [newRun, ...proj.runs],
                     activeRunId: newRun.id,
@@ -753,7 +803,10 @@ export default function EnterpriseStudioPage() {
                   const updatedStep = {
                     id: stepId,
                     agent: data.agent || "Agent",
-                    title: data.title || (data.agent ? data.agent.replace("Agent", " agent") : "Pipeline step"),
+                    title:
+                      stepId === "nlp" && data.cached
+                        ? "Understanding agent (cached)"
+                        : data.title || (data.agent ? data.agent.replace("Agent", " agent") : "Pipeline step"),
                     status:
                       data.status === "done"
                         ? ("done" as const)
@@ -793,6 +846,27 @@ export default function EnterpriseStudioPage() {
           }
         }
       }
+
+      // If the stream closed without a valid successful compile (e.g. backend emitted failed step),
+      // invalidate cached spec so the next Compile runs UnderstandingAgent from scratch.
+      if (!completedSuccessfully) {
+        setProjects((prev) =>
+          prev.map((proj) =>
+            proj.id === activeProjectId
+              ? {
+                  ...proj,
+                  lastCompiledPrompt: "",
+                  lastCompiledSpec: null,
+                  messages: proj.messages.map((msg) =>
+                    msg.id === botMsgId && msg.isStreaming
+                      ? { ...msg, isStreaming: false }
+                      : msg
+                  ),
+                }
+              : proj
+          )
+        );
+      }
     } catch (err: any) {
       const isAbort = err?.name === "AbortError" || controller.signal.aborted;
       const stopNote = timedOutRef.current
@@ -805,6 +879,8 @@ export default function EnterpriseStudioPage() {
           if (proj.id !== activeProjectId) return proj;
           return {
             ...proj,
+            lastCompiledPrompt: "",
+            lastCompiledSpec: null,
             messages: proj.messages.map((msg) =>
               msg.id === botMsgId
                 ? {
@@ -1487,17 +1563,41 @@ export default function EnterpriseStudioPage() {
               isDark={isDark}
               mathModel={ws.mathModel}
               onUpdateMathModel={(updater) =>
-                updateActiveWorkspace((prev) => ({
-                  ...prev,
-                  mathModel: typeof updater === "function" ? updater(prev.mathModel) : updater,
-                }))
+                setProjects((prev) =>
+                  prev.map((proj) =>
+                    proj.id === activeProjectId
+                      ? {
+                          ...proj,
+                          updatedAt: Date.now(),
+                          lastCompiledPrompt: "",
+                          lastCompiledSpec: null,
+                          workspace: {
+                            ...proj.workspace,
+                            mathModel: typeof updater === "function" ? updater(proj.workspace.mathModel) : updater,
+                          },
+                        }
+                      : proj
+                  )
+                )
               }
               variables={ws.variables}
               onUpdateVariables={(updater) =>
-                updateActiveWorkspace((prev) => ({
-                  ...prev,
-                  variables: typeof updater === "function" ? updater(prev.variables) : updater,
-                }))
+                setProjects((prev) =>
+                  prev.map((proj) =>
+                    proj.id === activeProjectId
+                      ? {
+                          ...proj,
+                          updatedAt: Date.now(),
+                          lastCompiledPrompt: "",
+                          lastCompiledSpec: null,
+                          workspace: {
+                            ...proj.workspace,
+                            variables: typeof updater === "function" ? updater(proj.workspace.variables) : updater,
+                          },
+                        }
+                      : proj
+                  )
+                )
               }
               selectedSolver={ws.selectedSolver}
               onSelectSolver={(solver: SolverType) =>

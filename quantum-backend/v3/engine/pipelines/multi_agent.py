@@ -1072,7 +1072,16 @@ class SupervisorAgent:
 
         return workspace
 
-    async def execute_stream(self, problem_text: str, mode: str = "auto", session_id: str = None, email: str = None, penalty_choice: int = 3, penalty_lambda: Optional[float] = None):
+    async def execute_stream(
+        self,
+        problem_text: str,
+        mode: str = "auto",
+        session_id: str = None,
+        email: str = None,
+        penalty_choice: int = 3,
+        penalty_lambda: Optional[float] = None,
+        cached_spec: Optional[Dict[str, Any]] = None,
+    ):
         print(f"[Supervisor] Starting streamed shared workspace run...")
         
         # Extract large numeric arrays and run token budget guard
@@ -1157,22 +1166,38 @@ class SupervisorAgent:
         repair = RepairAgent()
         explanation = ExplanationAgent()
 
-        # Step 1 & 2: NLP & Modeling
-        yield {"step": "nlp", "status": "running", "message": "Parsing unstructured problem specs..."}
-        attempt = 0
-        while attempt < self.retry_limits["UnderstandingAgent"]:
-            attempt += 1
-            res = await understanding.run(workspace)
-            workspace.history.append({"agent": "UnderstandingAgent", "attempt": attempt, "result": asdict(res)})
-            if check_maintenance(res):
-                yield {"step": "nlp", "status": "failed", "message": "AI engine is under maintenance"}
-                return
-            if res.status == "PASS":
-                break
+        # Step 1 & 2: NLP & Modeling (Skip UnderstandingAgent when a valid cached_spec is provided for identical prompt)
+        used_cached_spec = (
+            isinstance(cached_spec, dict)
+            and isinstance(cached_spec.get("variable_registry"), list)
+            and len(cached_spec.get("variable_registry", [])) > 0
+        )
+        if used_cached_spec:
+            import copy
+            workspace.problem_specification = copy.deepcopy(cached_spec)
+            workspace.confidence["Understanding"] = 1.0
+            workspace.history.append({
+                "agent": "UnderstandingAgent",
+                "attempt": 0,
+                "result": asdict(AgentResult("PASS", 1.0, "Reused cached specification from previous successful compile.")),
+            })
+            print("[Supervisor] Reusing cached problem_specification (skipping UnderstandingAgent LLM call).")
         else:
-            trigger_maintenance("Understanding Agent failed parsing specs.")
-            yield {"step": "nlp", "status": "failed", "message": "Failed parsing specs"}
-            return
+            yield {"step": "nlp", "status": "running", "message": "Parsing unstructured problem specs..."}
+            attempt = 0
+            while attempt < self.retry_limits["UnderstandingAgent"]:
+                attempt += 1
+                res = await understanding.run(workspace)
+                workspace.history.append({"agent": "UnderstandingAgent", "attempt": attempt, "result": asdict(res)})
+                if check_maintenance(res):
+                    yield {"step": "nlp", "status": "failed", "message": "AI engine is under maintenance"}
+                    return
+                if res.status == "PASS":
+                    break
+            else:
+                trigger_maintenance("Understanding Agent failed parsing specs.")
+                yield {"step": "nlp", "status": "failed", "message": "Failed parsing specs"}
+                return
 
         # Modeling Agent
         res = await modeling.run(workspace)
@@ -1188,7 +1213,18 @@ class SupervisorAgent:
         parsed_math = json.dumps(workspace.problem_specification) if workspace.problem_specification else ""
         pat = workspace.problem_specification.get("problem_pattern", "unknown") if workspace.problem_specification else "unknown"
         update_session_steps({"nlp": parsed_math, "classifier": "Pattern: " + pat})
-        yield {"step": "nlp", "status": "done", "value": parsed_math, "classifier": "Pattern: " + pat}
+        yield {
+            "step": "nlp",
+            "status": "done",
+            "value": parsed_math,
+            "classifier": "Pattern: " + pat,
+            "cached": used_cached_spec,
+            **(
+                {"message": "Reused verified formulation (UnderstandingAgent skipped)"}
+                if used_cached_spec
+                else {}
+            ),
+        }
 
         # Step 3: Constraint Verification Agent
         yield {"step": "reasoner", "status": "running", "message": "Analyzing constraint feasibility bounds..."}
@@ -1389,13 +1425,23 @@ class SupervisorAgent:
         yield {"step": "solver", "status": "done", "value": "Generated Python optimization code"}
         yield {"step": "verifier", "status": "done", "value": verifier_text, "dcc": workspace.dcc_active}
 
-        # Step 6: Explanation Agent (Dual-layer business and quantum explanation)
-        yield {"step": "explanation", "status": "running", "message": "Translating mathematical representation back to business logic..."}
-        res = await explanation.run(workspace)
-        workspace.history.append({"agent": "ExplanationAgent", "attempt": 1, "result": asdict(res)})
-        if check_maintenance(res) and not workspace.execution_result:
-            yield {"step": "explanation", "status": "failed", "message": "AI engine is under maintenance"}
-            return
+        # Step 6: Explanation Agent (Zero-LLM deterministic summary on cached λ-recompile)
+        if used_cached_spec:
+            if not workspace.execution_result:
+                workspace.execution_result = {}
+            workspace.execution_result["interpretation"] = build_deterministic_qubo_explanation(workspace)
+            workspace.history.append({
+                "agent": "ExplanationAgent",
+                "attempt": 0,
+                "result": asdict(AgentResult("PASS", 1.0, "Recompiled deterministically using cached specification.")),
+            })
+        else:
+            yield {"step": "explanation", "status": "running", "message": "Translating mathematical representation back to business logic..."}
+            res = await explanation.run(workspace)
+            workspace.history.append({"agent": "ExplanationAgent", "attempt": 1, "result": asdict(res)})
+            if check_maintenance(res) and not workspace.execution_result:
+                yield {"step": "explanation", "status": "failed", "message": "AI engine is under maintenance"}
+                return
 
         # If solver strategy is QUBO/AutoQUBO, format Q-matrix and generated code block and update database
         if is_qubo:
