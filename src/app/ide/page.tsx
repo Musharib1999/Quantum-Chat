@@ -4616,7 +4616,7 @@ Diagnose the exact line number, root cause, and explain how to fix it conceptual
             ? "idle"
             : executionHistory[0]?.status === "success"
             ? "optimal"
-            : "warning"
+            : "error"
         }
         isModelDirty={isModelDirty}
         user={user}

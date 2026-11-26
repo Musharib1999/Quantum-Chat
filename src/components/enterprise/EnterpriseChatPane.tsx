@@ -13,6 +13,7 @@ import {
   Square,
 } from "lucide-react";
 import { EnterpriseChatMessage } from "./types";
+import { classifyOverallExecution } from "./adapters";
 
 interface EnterpriseChatPaneProps {
   isDark: boolean;
@@ -150,14 +151,9 @@ export function EnterpriseChatPane({
                 msg.pipelineSteps![msg.pipelineSteps!.length - 1]
               : null;
             const exec = msg.executionResult;
-            const hasRealExecution = Boolean(
-              exec &&
-                ((typeof exec.num_reads === "number" && exec.num_reads > 0) ||
-                  exec.solver_comparison != null ||
-                  (Array.isArray(exec.selected_variables) && exec.selected_variables.length > 0) ||
-                  (exec.solution && Object.keys(exec.solution).length > 0))
-            );
-            const isFeasible = hasRealExecution ? (exec!.feasible ?? true) : true;
+            const overallExec = classifyOverallExecution(exec);
+            const hasRealExecution = overallExec.tone !== "neutral";
+            const execTone = overallExec.tone;
 
             return (
               <div key={msg.id} className="animate-in fade-in duration-200">
@@ -332,23 +328,31 @@ export function EnterpriseChatPane({
                       </div>
                     )}
 
-                    {/* ── EXECUTIVE SOLUTION CARD (Shown ONLY after a real solver execution) ── */}
+                    {/* ── EXECUTIVE SOLUTION CARD (3-Color Option A: Green=Optimal, Amber=Feasible w/ gap or Non-Optimal, Red=Error/Failed) ── */}
                     {hasRealExecution && msg.executionResult && (
                       <div
                         style={{
                           backgroundColor: isDark
-                            ? isFeasible
+                            ? execTone === "optimal"
                               ? "rgba(16, 185, 129, 0.045)"
+                              : execTone === "error"
+                              ? "rgba(244, 63, 94, 0.05)"
                               : "rgba(245, 158, 11, 0.045)"
-                            : isFeasible
+                            : execTone === "optimal"
                             ? "#F0FDF4"
+                            : execTone === "error"
+                            ? "#FFF1F2"
                             : "#FFFBEB",
                         }}
                         className={`p-4 rounded-xl border font-mono space-y-3.5 ${
-                          isFeasible
+                          execTone === "optimal"
                             ? isDark
                               ? "border-emerald-500/25 border-l-[3px] border-l-emerald-400"
                               : "border-emerald-200 border-l-[3px] border-l-emerald-500"
+                            : execTone === "error"
+                            ? isDark
+                              ? "border-rose-500/25 border-l-[3px] border-l-rose-400"
+                              : "border-rose-200 border-l-[3px] border-l-rose-500"
                             : isDark
                             ? "border-amber-500/25 border-l-[3px] border-l-amber-400"
                             : "border-amber-200 border-l-[3px] border-l-amber-500"
@@ -359,15 +363,15 @@ export function EnterpriseChatPane({
                           isDark ? "border-white/[0.07]" : "border-slate-200/80"
                         }`}>
                           <div className="flex items-center space-x-2">
-                            {isFeasible ? (
+                            {execTone === "optimal" ? (
                               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            ) : execTone === "error" ? (
+                              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                             ) : (
                               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
                             )}
                             <span className={`text-xs font-semibold ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
-                              {isFeasible
-                                ? "Feasible solution found"
-                                : "Suboptimal or boundary violation"}
+                              {overallExec.label}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 text-[11px]">

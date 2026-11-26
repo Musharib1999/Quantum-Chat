@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { ProjectItem, HeroTabType } from "./types";
 
-export type StudioActivityStatus = "idle" | "running" | "optimal" | "warning";
+export type StudioActivityStatus = "idle" | "running" | "optimal" | "warning" | "error";
 
 interface StudioHeaderProps {
   isDark: boolean;
@@ -95,7 +95,10 @@ export function StudioHeader({
   useEffect(() => {
     const prev = prevActivityRef.current;
     prevActivityRef.current = activityStatus;
-    if (prev === "running" && (activityStatus === "optimal" || activityStatus === "warning")) {
+    if (
+      prev === "running" &&
+      (activityStatus === "optimal" || activityStatus === "warning" || activityStatus === "error")
+    ) {
       setIsCompletionFlash(true);
       const t = setTimeout(() => setIsCompletionFlash(false), 3500);
       return () => clearTimeout(t);
@@ -540,6 +543,17 @@ export function StudioHeader({
               background: "linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FBBF24 100%)",
               boxShadow: isCompletionFlash ? "0 0 10px rgba(245, 158, 11, 0.7)" : "none",
               opacity: isCompletionFlash ? 1 : isDark ? 0.5 : 0.65,
+            }}
+            className="h-full w-full transition-opacity duration-700"
+          />
+        )}
+
+        {activityStatus === "error" && (
+          <div
+            style={{
+              background: "linear-gradient(90deg, #E11D48 0%, #F43F5E 50%, #FB7185 100%)",
+              boxShadow: isCompletionFlash ? "0 0 10px rgba(244, 63, 94, 0.75)" : "none",
+              opacity: isCompletionFlash ? 1 : isDark ? 0.55 : 0.7,
             }}
             className="h-full w-full transition-opacity duration-700"
           />

@@ -33,6 +33,8 @@ import {
   computeSolverComparison,
   sanitizeLegacyQuboScript,
   sanitizeLegacyOrtoolsScript,
+  evaluateConstraintsForSolution,
+  classifyOverallExecution,
 } from "@/components/enterprise/adapters";
 
 const STORAGE_KEY = "qg_enterprise_studio_v1";
@@ -1022,41 +1024,78 @@ export default function EnterpriseStudioPage() {
           if (quboRes?.data) {
             const qOpt = quboRes.data.optimization_results;
             const qStdout = quboRes.data.stdout || "";
-            const sampleObj: Record<string, number> =
-              qOpt?.sample && typeof qOpt.sample === "object" ? qOpt.sample : {};
-            const nextSol: Record<string, number> = {};
-            for (const v of prev.variables) {
-              nextSol[v.name] = typeof sampleObj[v.name] === "number" ? sampleObj[v.name] : 0;
-            }
-            for (const [k, val] of Object.entries(sampleObj)) {
-              if (!k.startsWith("slack_")) {
-                nextSol[k] = Number(val);
+            const qStderr = quboRes.data.stderr || "";
+            const qFailed =
+              quboRes.data.success === false ||
+              Boolean(quboRes.data.error) ||
+              (Boolean(qStderr) && !qOpt?.sample);
+
+            if (qFailed) {
+              qFeasible = false;
+              qEnergy = null;
+              qObj = null;
+              qSelected = [];
+              qReads = null;
+              quantumSide = {
+                solver: "D-Wave Simulated Annealer (QUBO)",
+                status: "EXECUTION_FAILED",
+                feasible: false,
+                objective_value: null,
+                energy: null,
+                selected_variables: [],
+                constraints_satisfied: 0,
+                constraints_total: totalCons,
+                solve_time_ms: quboRes.ms,
+                logical_qubits: prev.qMatrix?.size || prev.variables.length,
+                penalty_lambda: prev.penaltyLambda,
+              };
+            } else {
+              const sampleObj: Record<string, number> =
+                qOpt?.sample && typeof qOpt.sample === "object" ? qOpt.sample : {};
+              const nextSol: Record<string, number> = {};
+              for (const v of prev.variables) {
+                nextSol[v.name] = typeof sampleObj[v.name] === "number" ? sampleObj[v.name] : 0;
               }
+              for (const [k, val] of Object.entries(sampleObj)) {
+                if (!k.startsWith("slack_")) {
+                  nextSol[k] = Number(val);
+                }
+              }
+              fullSolution = nextSol;
+              qSelected = Object.entries(fullSolution)
+                .filter(([, val]) => Number(val) > 0)
+                .map(([k]) => k);
+              const parsedEnergy = typeof qOpt?.energy === "number" ? qOpt.energy : 0;
+              qEnergy = parsedEnergy;
+              const penMatch = qStdout.match(/Total Penalty:\s*([-+]?\d+(?:\.\d+)?)/);
+              const totalPenalty = penMatch ? parseFloat(penMatch[1]) : 0;
+              const qEval = evaluateConstraintsForSolution(
+                prev.mathModel?.constraints || [],
+                prev.feasibility || [],
+                fullSolution
+              );
+              const evaluatedSatCount =
+                totalCons > 0 ? qEval.satisfiedCount : totalPenalty <= 1e-4 ? totalCons : 0;
+              qFeasible =
+                totalCons > 0
+                  ? totalPenalty <= 1e-4 && evaluatedSatCount === totalCons
+                  : totalPenalty <= 1e-4;
+              qObj = Math.round((parsedEnergy - totalPenalty) * 10000) / 10000;
+              qReads = typeof qOpt?.num_reads === "number" ? qOpt.num_reads : 1000;
+              quantumSide = {
+                solver: "D-Wave Simulated Annealer (QUBO)",
+                status: qFeasible ? "FEASIBLE" : "NON-OPTIMAL",
+                feasible: qFeasible,
+                objective_value: qObj,
+                energy: qEnergy,
+                selected_variables: qSelected,
+                constraints_satisfied: evaluatedSatCount,
+                constraints_total: totalCons,
+                solve_time_ms: quboRes.ms,
+                logical_qubits: prev.qMatrix?.size || prev.variables.length,
+                penalty_lambda: prev.penaltyLambda,
+              };
             }
-            fullSolution = nextSol;
-            qSelected = Object.entries(fullSolution)
-              .filter(([, val]) => Number(val) > 0)
-              .map(([k]) => k);
-            const parsedEnergy = typeof qOpt?.energy === "number" ? qOpt.energy : 0;
-            qEnergy = parsedEnergy;
-            const penMatch = qStdout.match(/Total Penalty:\s*([-+]?\d+(?:\.\d+)?)/);
-            const totalPenalty = penMatch ? parseFloat(penMatch[1]) : 0;
-            qFeasible = totalPenalty <= 1e-4;
-            qObj = Math.round((parsedEnergy - totalPenalty) * 10000) / 10000;
-            qReads = typeof qOpt?.num_reads === "number" ? qOpt.num_reads : 1000;
-            quantumSide = {
-              solver: "D-Wave Simulated Annealer (QUBO)",
-              status: qFeasible ? "FEASIBLE" : "SUBOPTIMAL",
-              feasible: qFeasible,
-              objective_value: qObj,
-              energy: qEnergy,
-              selected_variables: qSelected,
-              constraints_satisfied: qFeasible ? totalCons : 0,
-              constraints_total: totalCons,
-              solve_time_ms: quboRes.ms,
-              logical_qubits: prev.qMatrix?.size || prev.variables.length,
-              penalty_lambda: prev.penaltyLambda,
-            };
           }
 
           // Classical side: parse fresh run if OR-Tools ran, otherwise preserve previous
@@ -1074,10 +1113,19 @@ export default function EnterpriseStudioPage() {
 
           if (ortoolsRes?.data) {
             const cStdout = ortoolsRes.data.stdout || "";
+            const cStderr = ortoolsRes.data.stderr || "";
             const statusMatch = cStdout.match(/Google OR-Tools CP-SAT Status\s*:\s*([A-Z_]+)/);
             const objMatch = cStdout.match(/Exact Classical Objective\s*:\s*([-+]?\d+(?:\.\d+)?)/);
             const activeMatch = cStdout.match(/Active Decisions \(\d+\)\s*:\s*\[([^\]]*)\]/);
-            const cStatus = statusMatch ? statusMatch[1] : ortoolsRes.data.success ? "OPTIMAL" : "ERROR";
+            const cFailed =
+              ortoolsRes.data.success === false ||
+              Boolean(ortoolsRes.data.error) ||
+              (!statusMatch && Boolean(cStderr));
+            const cStatus = cFailed
+              ? "EXECUTION_FAILED"
+              : statusMatch
+              ? statusMatch[1]
+              : "OPTIMAL";
             const cFeasible = cStatus === "OPTIMAL" || cStatus === "FEASIBLE";
             const cObj = objMatch ? parseFloat(objMatch[1]) : null;
             const cSelected = activeMatch
@@ -1100,6 +1148,18 @@ export default function EnterpriseStudioPage() {
             };
           }
 
+          // Promote D-Wave status to OPTIMAL when it matches a proven OR-Tools OPTIMAL objective
+          if (
+            quantumSide.feasible === true &&
+            classicalSide.status === "OPTIMAL" &&
+            classicalSide.feasible === true &&
+            typeof quantumSide.objective_value === "number" &&
+            typeof classicalSide.objective_value === "number" &&
+            Math.abs(quantumSide.objective_value - classicalSide.objective_value) <= 1e-4
+          ) {
+            quantumSide = { ...quantumSide, status: "OPTIMAL" };
+          }
+
           const solverComparison = computeSolverComparison({
             quantum: quantumSide,
             classical: classicalSide,
@@ -1116,6 +1176,16 @@ export default function EnterpriseStudioPage() {
             Object.keys(fullSolution).length > 0
               ? fullSolution
               : Object.fromEntries((nextSelected || []).map((v) => [v, 1]));
+
+          // Evaluate every constraint against the active executed solution so Feasibility & Presolve updates live
+          const evaluatedFeasibility =
+            Object.keys(nextSolution).length > 0
+              ? evaluateConstraintsForSolution(
+                  prev.mathModel?.constraints || [],
+                  prev.feasibility || [],
+                  nextSolution
+                ).results
+              : prev.feasibility;
 
           const nextExecution = {
             feasible: nextFeasible,
@@ -1165,6 +1235,7 @@ export default function EnterpriseStudioPage() {
             workspace: {
               ...prev,
               terminal: [...prev.terminal, ...logLines],
+              feasibility: evaluatedFeasibility,
               execution: nextExecution,
             },
           };
@@ -1238,15 +1309,8 @@ export default function EnterpriseStudioPage() {
       };
     }
 
-    const exec = ws.execution;
-    const hasResult = Boolean(
-      exec &&
-        ((typeof exec.numReads === "number" && exec.numReads > 0) ||
-          exec.solverComparison != null ||
-          (Array.isArray(exec.selectedVariables) && exec.selectedVariables.length > 0) ||
-          (exec.solution && Object.keys(exec.solution).length > 0))
-    );
-    if (!hasResult || !exec) {
+    const overall = classifyOverallExecution(ws.execution);
+    if (overall.tone === "neutral") {
       return {
         headerActivityStatus: "idle",
         headerActivityProgress: null,
@@ -1254,12 +1318,8 @@ export default function EnterpriseStudioPage() {
       };
     }
 
-    const isFeasible = exec.feasible === true;
-    const gapPct = exec.solverComparison?.optimality_gap_pct;
-    const isOptimal = isFeasible && (gapPct == null || Math.abs(gapPct) <= 0.01);
-
     return {
-      headerActivityStatus: isOptimal ? "optimal" : "warning",
+      headerActivityStatus: overall.tone,
       headerActivityProgress: 100,
       headerActivityLabel: null,
     };

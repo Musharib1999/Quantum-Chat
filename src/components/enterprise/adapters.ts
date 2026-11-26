@@ -879,3 +879,321 @@ export function computeSolverComparison(args: {
     classical,
   };
 }
+
+/**
+ * 3-Color Semantic Status Standard (Option A — Strict Optimal Green):
+ * - "optimal" (Green): Proven global optimum ONLY (OPTIMAL / 0.00% gap)
+ * - "warning" (Amber/Yellow): Feasible (non-zero gap / heuristic) OR Non-Optimal / Suboptimal
+ * - "error"   (Red/Rose): Error, Execution Failed, Model Invalid, Infeasible, Timeout
+ * - "neutral" (Zinc): Pending / Not run
+ */
+export type SolutionStatusTone = "optimal" | "warning" | "error" | "neutral";
+
+const ERROR_STATUS_RE = /ERROR|FAIL|INVALID|INFEASIBLE|TIMEOUT|ABORT|CRASH/i;
+
+export function classifySolverSide(
+  side: SolverComparisonSide | null | undefined,
+  role: "quantum" | "classical",
+  comp?: SolverComparisonData | null
+): { tone: SolutionStatusTone; label: string } {
+  if (!side || !side.status || side.status === "NOT_RUN") {
+    return { tone: "neutral", label: "NOT RUN" };
+  }
+  const rawStatus = String(side.status).trim().toUpperCase();
+  if (ERROR_STATUS_RE.test(rawStatus)) {
+    const label = rawStatus.includes("EXECUTION_FAILED")
+      ? "EXECUTION FAILED"
+      : rawStatus.includes("INFEASIBLE")
+      ? "INFEASIBLE"
+      : rawStatus.includes("TIMEOUT")
+      ? "TIMEOUT"
+      : "ERROR";
+    return { tone: "error", label };
+  }
+
+  if (role === "classical") {
+    if (rawStatus === "OPTIMAL" && side.feasible !== false) {
+      return { tone: "optimal", label: "OPTIMAL" };
+    }
+    if (side.feasible === true || rawStatus === "FEASIBLE") {
+      return { tone: "warning", label: "FEASIBLE" };
+    }
+    return { tone: "warning", label: "NON-OPTIMAL" };
+  }
+
+  // Quantum / Simulated Annealing side
+  if (side.feasible === true) {
+    const classicalOptimal =
+      comp?.classical?.status?.toUpperCase() === "OPTIMAL" && comp?.classical?.feasible === true;
+    const gapZero =
+      comp?.optimality_gap_pct !== null &&
+      comp?.optimality_gap_pct !== undefined &&
+      Math.abs(comp.optimality_gap_pct) <= 0.01;
+    if (rawStatus === "OPTIMAL" || (classicalOptimal && gapZero)) {
+      return { tone: "optimal", label: "OPTIMAL" };
+    }
+    return { tone: "warning", label: "FEASIBLE" };
+  }
+
+  return { tone: "warning", label: "NON-OPTIMAL" };
+}
+
+export function classifyOverallExecution(
+  exec: {
+    feasible?: boolean | null;
+    energy?: number | null;
+    objectiveValue?: number | null;
+    solution?: Record<string, number>;
+    selectedVariables?: string[];
+    selected_variables?: string[];
+    numReads?: number | null;
+    num_reads?: number | null;
+    solverComparison?: SolverComparisonData | null;
+    solver_comparison?: SolverComparisonData | null;
+  } | null | undefined
+): { tone: SolutionStatusTone; label: string } {
+  if (!exec) return { tone: "neutral", label: "Pending" };
+  const comp = exec.solverComparison ?? exec.solver_comparison ?? null;
+  const numReads = exec.numReads ?? exec.num_reads ?? null;
+  const sel = exec.selectedVariables ?? exec.selected_variables ?? [];
+  const sol = exec.solution ?? {};
+  const hasReal =
+    (typeof numReads === "number" && numReads > 0) ||
+    comp != null ||
+    sel.length > 0 ||
+    Object.keys(sol).length > 0;
+  if (!hasReal) return { tone: "neutral", label: "Pending" };
+
+  if (comp) {
+    const qClass = classifySolverSide(comp.quantum, "quantum", comp);
+    const cClass = classifySolverSide(comp.classical, "classical", comp);
+    const qRan = qClass.tone !== "neutral";
+    const cRan = cClass.tone !== "neutral";
+
+    // Hard error if every solver that ran errored/failed
+    if ((qRan || cRan) && (!qRan || qClass.tone === "error") && (!cRan || cClass.tone === "error")) {
+      const errLabel =
+        qClass.label === "EXECUTION FAILED" || cClass.label === "EXECUTION FAILED"
+          ? "Execution failed"
+          : qClass.label === "INFEASIBLE" || cClass.label === "INFEASIBLE"
+          ? "Infeasible model"
+          : "Solver error";
+      return { tone: "error", label: errLabel };
+    }
+
+    // Strict Optimal Green:
+    // - Both ran: Green only if BOTH reached optimal (0.00% gap)
+    // - Only classical ran: Green if classical is OPTIMAL
+    // - Only quantum ran: Green only if quantum is explicitly OPTIMAL
+    if (qRan && cRan) {
+      if (qClass.tone === "optimal" && cClass.tone === "optimal") {
+        return { tone: "optimal", label: "Optimal solution verified" };
+      }
+      if (qClass.tone === "error" || cClass.tone === "error") {
+        return { tone: "error", label: "Partial execution error" };
+      }
+      if (comp.quantum.feasible || comp.classical.feasible) {
+        return { tone: "warning", label: "Feasible solution (non-optimal QUBO gap)" };
+      }
+      return { tone: "warning", label: "Non-optimal or boundary violation" };
+    }
+
+    const single = qRan ? qClass : cClass;
+    if (single.tone === "optimal") return { tone: "optimal", label: "Optimal solution found" };
+    if (single.tone === "error") return { tone: "error", label: single.label === "EXECUTION FAILED" ? "Execution failed" : "Solver error" };
+    return {
+      tone: "warning",
+      label: single.label === "FEASIBLE" ? "Feasible solution (unverified optimality)" : "Non-optimal or boundary violation",
+    };
+  }
+
+  return exec.feasible
+    ? { tone: "warning", label: "Feasible solution" }
+    : { tone: "warning", label: "Non-optimal or boundary violation" };
+}
+
+export function statusToneBadgeClass(tone: SolutionStatusTone, isDark: boolean = true): string {
+  if (tone === "optimal") {
+    return isDark
+      ? "bg-emerald-500/12 text-emerald-300 border-emerald-500/30"
+      : "bg-emerald-50 text-emerald-800 border-emerald-200";
+  }
+  if (tone === "warning") {
+    return isDark
+      ? "bg-amber-500/12 text-amber-300 border-amber-500/30"
+      : "bg-amber-50 text-amber-800 border-amber-200";
+  }
+  if (tone === "error") {
+    return isDark
+      ? "bg-rose-500/12 text-rose-300 border-rose-500/30"
+      : "bg-rose-50 text-rose-800 border-rose-200";
+  }
+  return isDark
+    ? "bg-white/[0.04] text-zinc-400 border-white/[0.1]"
+    : "bg-slate-100 text-slate-600 border-slate-200";
+}
+
+export function statusToneTextClass(tone: SolutionStatusTone): string {
+  if (tone === "optimal") return "text-emerald-400";
+  if (tone === "warning") return "text-amber-400";
+  if (tone === "error") return "text-rose-400";
+  return "text-zinc-500";
+}
+
+/** Safely evaluate a linear or quadratic algebraic expression against a variable assignment map. */
+export function evaluateAlgebraicExpression(
+  expr: string,
+  solution: Record<string, number>
+): number | null {
+  if (!expr || !expr.trim()) return null;
+  const s = expr.trim();
+  const terms: Array<{ sign: number; body: string }> = [];
+  let depth = 0;
+  let cur = "";
+  let curSign = 1;
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "(") {
+      depth++;
+      cur += ch;
+    } else if (ch === ")") {
+      depth = Math.max(0, depth - 1);
+      cur += ch;
+    } else if (depth === 0 && (ch === "+" || ch === "-")) {
+      const trimmed = cur.trim();
+      if (trimmed) {
+        terms.push({ sign: curSign, body: trimmed });
+        cur = "";
+        curSign = ch === "-" ? -1 : 1;
+      } else if (ch === "-") {
+        curSign *= -1;
+      }
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.trim()) {
+    terms.push({ sign: curSign, body: cur.trim() });
+  }
+  if (terms.length === 0) return null;
+
+  let total = 0;
+  for (const t of terms) {
+    let sign = t.sign;
+    let body = t.body.trim();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      if (body.startsWith("+")) {
+        body = body.slice(1).trim();
+        changed = true;
+      } else if (body.startsWith("-")) {
+        sign *= -1;
+        body = body.slice(1).trim();
+        changed = true;
+      } else if (body.startsWith("(") && body.endsWith(")")) {
+        let d = 0;
+        let wrapsAll = true;
+        for (let i = 0; i < body.length - 1; i++) {
+          if (body[i] === "(") d++;
+          else if (body[i] === ")") d--;
+          if (d === 0) {
+            wrapsAll = false;
+            break;
+          }
+        }
+        if (wrapsAll) {
+          body = body.slice(1, -1).trim();
+          changed = true;
+        }
+      }
+    }
+
+    const factors = body.split("*").map((f) => f.trim()).filter(Boolean);
+    if (factors.length === 0) return null;
+
+    let termVal = sign;
+    for (let f of factors) {
+      while (f.startsWith("(") && f.endsWith(")")) {
+        f = f.slice(1, -1).trim();
+      }
+      if (/^[+-]?\d+(?:\.\d+)?$/.test(f)) {
+        termVal *= parseFloat(f);
+      } else if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(f)) {
+        const val = solution[f];
+        termVal *= typeof val === "number" && Number.isFinite(val) ? val : 0;
+      } else if (/^-[A-Za-z_][A-Za-z0-9_]*$/.test(f)) {
+        const val = solution[f.slice(1)];
+        termVal *= -(typeof val === "number" && Number.isFinite(val) ? val : 0);
+      } else {
+        return null;
+      }
+    }
+    total += termVal;
+  }
+
+  return Math.round(total * 10000) / 10000;
+}
+
+/**
+ * Evaluate every constraint against an executed solution map so the Feasibility & Presolve tab
+ * shows live Evaluated LHS, Slack, and Satisfied/Violated status immediately after solver execution.
+ */
+export function evaluateConstraintsForSolution(
+  constraints: OptimizationConstraint[],
+  existingFeasibility: FeasibilityCheckResult[],
+  solution: Record<string, number>
+): { results: FeasibilityCheckResult[]; satisfiedCount: number } {
+  const existingByName = new Map<string, FeasibilityCheckResult>();
+  for (const f of existingFeasibility || []) {
+    existingByName.set(f.name, f);
+  }
+
+  const baseList: FeasibilityCheckResult[] =
+    constraints && constraints.length > 0
+      ? constraints.map((c) => {
+          const prev = existingByName.get(c.name);
+          return {
+            name: c.name,
+            lhsFormula: c.leftExpr || prev?.lhsFormula || "",
+            op: c.op,
+            rhs: c.rightVal ?? prev?.rhs ?? null,
+            computedLhs: null,
+            satisfied: null,
+            slack: null,
+            slackBits: prev?.slackBits ?? null,
+          };
+        })
+      : (existingFeasibility || []).map((f) => ({ ...f }));
+
+  let satisfiedCount = 0;
+  const results = baseList.map((row) => {
+    const lhs = evaluateAlgebraicExpression(row.lhsFormula, solution);
+    if (lhs === null || row.rhs === null) {
+      return row;
+    }
+    const rhs = row.rhs;
+    let satisfied = false;
+    let slack = 0;
+    if (row.op === "<=") {
+      satisfied = lhs <= rhs + 1e-4;
+      slack = Math.round((rhs - lhs) * 10000) / 10000;
+    } else if (row.op === ">=") {
+      satisfied = lhs >= rhs - 1e-4;
+      slack = Math.round((lhs - rhs) * 10000) / 10000;
+    } else {
+      satisfied = Math.abs(lhs - rhs) <= 1e-4;
+      slack = Math.round(Math.abs(lhs - rhs) * 10000) / 10000;
+    }
+    if (satisfied) satisfiedCount++;
+    return {
+      ...row,
+      computedLhs: lhs,
+      satisfied,
+      slack,
+    };
+  });
+
+  return { results, satisfiedCount };
+}

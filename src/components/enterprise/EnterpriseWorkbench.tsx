@@ -48,7 +48,16 @@ import {
   SolverRouting,
   LibraryReference,
 } from "./types";
-import { exprToLatex, termCount, buildFallbackOrtoolsCode } from "./adapters";
+import {
+  exprToLatex,
+  termCount,
+  buildFallbackOrtoolsCode,
+  classifySolverSide,
+  classifyOverallExecution,
+  statusToneBadgeClass,
+  statusToneTextClass,
+  evaluateConstraintsForSolution,
+} from "./adapters";
 
 // Dynamically import Monaco Editor to avoid SSR hydration mismatch
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -777,11 +786,30 @@ ${textToSend}
     });
   };
 
+  // Live-evaluated feasibility rows (auto-evaluates against execution.solution even for previously solved projects)
+  const resolvedFeasibilityResults = useMemo(() => {
+    const hasEvaluated = feasibilityResults.some((r) => r.computedLhs !== null);
+    if (hasEvaluated) return feasibilityResults;
+    const sol = execution?.solution;
+    const hasSol = Boolean(sol && Object.keys(sol).length > 0);
+    if (!hasSol || !sol) return feasibilityResults;
+    return evaluateConstraintsForSolution(
+      mathModel?.constraints || [],
+      feasibilityResults,
+      sol
+    ).results;
+  }, [feasibilityResults, execution?.solution, mathModel?.constraints]);
+
   // Feasibility status badge calculation
   const allConstraintsSatisfied =
-    feasibilityResults.length > 0 && feasibilityResults.every((r) => r.satisfied === true);
+    resolvedFeasibilityResults.length > 0 &&
+    resolvedFeasibilityResults.every((r) => r.satisfied === true);
   const anyConstraintViolated =
-    feasibilityResults.length > 0 && feasibilityResults.some((r) => r.satisfied === false);
+    resolvedFeasibilityResults.length > 0 &&
+    resolvedFeasibilityResults.some((r) => r.satisfied === false);
+  const satisfiedConstraintsCount = resolvedFeasibilityResults.filter(
+    (r) => r.satisfied === true
+  ).length;
 
   // Formatted LaTeX for objective & QUBO Hamiltonian
   const renderedObjectiveLatex = useMemo(() => {
@@ -1807,112 +1835,139 @@ ${textToSend}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.05]">
-                      <tr>
-                        <td className="p-3 text-zinc-400">Convergence Status</td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                              execution.solverComparison.quantum.feasible
-                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
-                                : "bg-amber-500/10 text-amber-300 border-amber-500/25"
-                            }`}
-                          >
-                            {execution.solverComparison.quantum.feasible ? "FEASIBLE" : "BOUNDARY VIOLATION"}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
-                              execution.solverComparison.classical.feasible
-                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25"
-                                : "bg-amber-500/10 text-amber-300 border-amber-500/25"
-                            }`}
-                          >
-                            {execution.solverComparison.classical.status}
-                          </span>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td className="p-3 text-zinc-400">Objective Value</td>
-                        <td className="p-3 font-semibold text-zinc-100">
-                          {execution.solverComparison.quantum.objective_value ?? "—"}
-                        </td>
-                        <td className="p-3 font-semibold text-zinc-100">
-                          {execution.solverComparison.classical.objective_value ?? "—"}
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td className="p-3 text-zinc-400">Constraints Satisfied</td>
-                        <td className="p-3 text-zinc-200">
-                          {execution.solverComparison.quantum.constraints_satisfied} /{" "}
-                          {execution.solverComparison.quantum.constraints_total}
-                        </td>
-                        <td className="p-3 text-zinc-200">
-                          {execution.solverComparison.classical.constraints_satisfied} /{" "}
-                          {execution.solverComparison.classical.constraints_total}
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td className="p-3 text-zinc-400">Execution Latency</td>
-                        <td className="p-3 text-zinc-200">
-                          {execution.solverComparison.quantum.solve_time_ms ?? "—"} ms{" "}
-                          <span className="text-zinc-500 text-[10px]">(1,000 annealing reads)</span>
-                        </td>
-                        <td className="p-3 text-zinc-200">
-                          {execution.solverComparison.classical.solve_time_ms ?? "—"} ms{" "}
-                          <span className="text-zinc-500 text-[10px]">(Branch-and-cut CP-SAT)</span>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td className="p-3 text-zinc-400">Formulation Mechanism</td>
-                        <td className="p-3 text-zinc-300 text-[11px]">
-                          Unconstrained Penalty QUBO (λ = {execution.solverComparison.quantum.penalty_lambda ?? penaltyLambda},{" "}
-                          {execution.solverComparison.quantum.logical_qubits ?? "—"} qubits)
-                        </td>
-                        <td className="p-3 text-zinc-300 text-[11px]">
-                          Hard Linear / Integer Constraints (0 slack bits)
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td className="p-3 text-zinc-400 align-top">Active Decisions (x = 1)</td>
-                        <td className="p-3">
-                          <div className="flex flex-wrap gap-1">
-                            {execution.solverComparison.quantum.selected_variables.length > 0 ? (
-                              execution.solverComparison.quantum.selected_variables.map((v, i) => (
+                      {(() => {
+                        const comp = execution.solverComparison!;
+                        const qStatus = classifySolverSide(comp.quantum, "quantum", comp);
+                        const cStatus = classifySolverSide(comp.classical, "classical", comp);
+                        const bothRanForDiff =
+                          comp.quantum.status !== "NOT_RUN" && comp.classical.status !== "NOT_RUN";
+                        const qSet = new Set(comp.quantum.selected_variables || []);
+                        const cSet = new Set(comp.classical.selected_variables || []);
+                        return (
+                          <>
+                            <tr>
+                              <td className="p-3 text-zinc-400">Convergence Status</td>
+                              <td className="p-3">
                                 <span
-                                  key={i}
-                                  className="px-2 py-0.5 rounded text-[10px] bg-white/[0.06] border border-white/[0.1] text-zinc-200"
+                                  className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${statusToneBadgeClass(
+                                    qStatus.tone,
+                                    isDark
+                                  )}`}
                                 >
-                                  {v}
+                                  {qStatus.label}
                                 </span>
-                              ))
-                            ) : (
-                              <span className="text-zinc-500 italic">None</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <div className="flex flex-wrap gap-1">
-                            {execution.solverComparison.classical.selected_variables.length > 0 ? (
-                              execution.solverComparison.classical.selected_variables.map((v, i) => (
+                              </td>
+                              <td className="p-3">
                                 <span
-                                  key={i}
-                                  className="px-2 py-0.5 rounded text-[10px] bg-white/[0.06] border border-white/[0.1] text-zinc-200"
+                                  className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${statusToneBadgeClass(
+                                    cStatus.tone,
+                                    isDark
+                                  )}`}
                                 >
-                                  {v}
+                                  {cStatus.label}
                                 </span>
-                              ))
-                            ) : (
-                              <span className="text-zinc-500 italic">None</span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+                              </td>
+                            </tr>
+
+                            <tr>
+                              <td className="p-3 text-zinc-400">Objective Value</td>
+                              <td className="p-3 font-semibold text-zinc-100">
+                                {comp.quantum.objective_value ?? "—"}
+                              </td>
+                              <td className="p-3 font-semibold text-zinc-100">
+                                {comp.classical.objective_value ?? "—"}
+                              </td>
+                            </tr>
+
+                            <tr>
+                              <td className="p-3 text-zinc-400">Constraints Satisfied</td>
+                              <td className="p-3 text-zinc-200">
+                                {comp.quantum.constraints_satisfied} / {comp.quantum.constraints_total}
+                              </td>
+                              <td className="p-3 text-zinc-200">
+                                {comp.classical.constraints_satisfied} / {comp.classical.constraints_total}
+                              </td>
+                            </tr>
+
+                            <tr>
+                              <td className="p-3 text-zinc-400">Execution Latency</td>
+                              <td className="p-3 text-zinc-200">
+                                {comp.quantum.solve_time_ms ?? "—"} ms{" "}
+                                <span className="text-zinc-500 text-[10px]">
+                                  ({(execution.numReads ?? 1000).toLocaleString()} annealing reads)
+                                </span>
+                              </td>
+                              <td className="p-3 text-zinc-200">
+                                {comp.classical.solve_time_ms ?? "—"} ms{" "}
+                                <span className="text-zinc-500 text-[10px]">(Branch-and-cut CP-SAT)</span>
+                              </td>
+                            </tr>
+
+                            <tr>
+                              <td className="p-3 text-zinc-400">Formulation Mechanism</td>
+                              <td className="p-3 text-zinc-300 text-[11px]">
+                                Unconstrained Penalty QUBO (λ = {comp.quantum.penalty_lambda ?? penaltyLambda},{" "}
+                                {comp.quantum.logical_qubits ?? "—"} qubits)
+                              </td>
+                              <td className="p-3 text-zinc-300 text-[11px]">
+                                Hard Linear / Integer Constraints (0 slack bits)
+                              </td>
+                            </tr>
+
+                            <tr>
+                              <td className="p-3 text-zinc-400 align-top">Active Decisions (x = 1)</td>
+                              <td className="p-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {comp.quantum.selected_variables.length > 0 ? (
+                                    comp.quantum.selected_variables.map((v, i) => {
+                                      const isDiff = bothRanForDiff && !cSet.has(v);
+                                      return (
+                                        <span
+                                          key={i}
+                                          title={isDiff ? "Differs from Google OR-Tools selection" : undefined}
+                                          className={`px-2 py-0.5 rounded text-[10px] border ${
+                                            isDiff
+                                              ? "bg-amber-500/12 border-amber-500/40 text-amber-200 font-medium"
+                                              : "bg-white/[0.06] border-white/[0.1] text-zinc-200"
+                                          }`}
+                                        >
+                                          {v}
+                                        </span>
+                                      );
+                                    })
+                                  ) : (
+                                    <span className="text-zinc-500 italic">None</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="p-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {comp.classical.selected_variables.length > 0 ? (
+                                    comp.classical.selected_variables.map((v, i) => {
+                                      const isDiff = bothRanForDiff && !qSet.has(v);
+                                      return (
+                                        <span
+                                          key={i}
+                                          title={isDiff ? "Differs from D-Wave QUBO selection" : undefined}
+                                          className={`px-2 py-0.5 rounded text-[10px] border ${
+                                            isDiff
+                                              ? "bg-emerald-500/12 border-emerald-500/40 text-emerald-200 font-medium"
+                                              : "bg-white/[0.06] border-white/[0.1] text-zinc-200"
+                                          }`}
+                                        >
+                                          {v}
+                                        </span>
+                                      );
+                                    })
+                                  ) : (
+                                    <span className="text-zinc-500 italic">None</span>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          </>
+                        );
+                      })()}
 
                       <tr>
                         <td className="p-3 text-zinc-400">Compiled Script</td>
@@ -1968,29 +2023,29 @@ ${textToSend}
                 Constraint Presolve
               </h3>
 
-              {feasibilityResults.length > 0 && (
+              {resolvedFeasibilityResults.length > 0 && (
                 <span
-                  className={`text-xs font-mono px-2.5 py-0.5 rounded-full flex items-center space-x-1.5 ${
+                  className={`text-xs font-mono px-2.5 py-0.5 rounded-full flex items-center space-x-1.5 border ${
                     allConstraintsSatisfied
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      ? "bg-emerald-500/12 text-emerald-300 border-emerald-500/30"
                       : anyConstraintViolated
-                      ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                      : "bg-white/[0.04] text-zinc-400 border border-white/[0.08]"
+                      ? "bg-amber-500/12 text-amber-300 border-amber-500/30"
+                      : "bg-white/[0.04] text-zinc-400 border-white/[0.08]"
                   }`}
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span>
                     {allConstraintsSatisfied
-                      ? "Feasible"
+                      ? `All ${resolvedFeasibilityResults.length}/${resolvedFeasibilityResults.length} Satisfied`
                       : anyConstraintViolated
-                      ? "Violated"
+                      ? `${satisfiedConstraintsCount}/${resolvedFeasibilityResults.length} Satisfied`
                       : "Pending"}
                   </span>
                 </span>
               )}
             </div>
 
-            {feasibilityResults.length === 0 ? (
+            {resolvedFeasibilityResults.length === 0 ? (
               <div
                 style={{
                   backgroundColor: isDark ? "#13141A" : "#F8FAFC",
@@ -2029,11 +2084,11 @@ ${textToSend}
                       backgroundColor: isDark ? "#13141A" : "#FFFFFF",
                     }}
                   >
-                    {feasibilityResults.map((r, i) => (
+                    {resolvedFeasibilityResults.map((r, i) => (
                       <tr
                         key={i}
                         className={`transition-colors hover:bg-white/[0.03] ${
-                          i !== feasibilityResults.length - 1 ? "border-b border-white/[0.04]" : ""
+                          i !== resolvedFeasibilityResults.length - 1 ? "border-b border-white/[0.04]" : ""
                         }`}
                       >
                         <td className="p-3">
@@ -2056,12 +2111,12 @@ ${textToSend}
                         </td>
                         <td className="p-3 text-right">
                           <span
-                            className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
+                            className={`px-2 py-0.5 rounded-md font-bold text-[11px] border ${
                               r.satisfied === true
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                ? "bg-emerald-500/12 text-emerald-300 border-emerald-500/30"
                                 : r.satisfied === false
-                                ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                                : "bg-white/[0.04] text-zinc-500 border border-white/[0.06]"
+                                ? "bg-amber-500/12 text-amber-300 border-amber-500/30"
+                                : "bg-white/[0.04] text-zinc-500 border-white/[0.06]"
                             }`}
                           >
                             {r.satisfied === true ? "Satisfied" : r.satisfied === false ? "Violated" : "Pending"}
@@ -2454,6 +2509,10 @@ ${textToSend}
                 return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
               };
 
+              const overallStatus = classifyOverallExecution(execution);
+              const qSideClass = classifySolverSide(comp?.quantum, "quantum", comp);
+              const cSideClass = classifySolverSide(comp?.classical, "classical", comp);
+
               return (
                 <>
                   {/* ── ZONE 1: SINGLE HERO VERDICT BANNER ── */}
@@ -2462,7 +2521,11 @@ ${textToSend}
                       <div className="flex items-center space-x-2.5">
                         <span
                           className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                            bothFeasible ? "bg-emerald-400" : "bg-amber-400"
+                            overallStatus.tone === "optimal"
+                              ? "bg-emerald-400"
+                              : overallStatus.tone === "error"
+                              ? "bg-rose-400"
+                              : "bg-amber-400"
                           }`}
                         />
                         <h3 className={`text-sm sm:text-base font-semibold font-sans tracking-tight ${isDark ? "text-zinc-100" : "text-slate-900"}`}>
@@ -2495,18 +2558,12 @@ ${textToSend}
                           className={`text-[11px] font-mono font-medium ${
                             qNotRun
                               ? "text-zinc-500"
-                              : (comp ? comp.quantum.feasible : execution.feasible) && !isTrivialZero
-                              ? "text-emerald-400"
-                              : "text-amber-400"
+                              : isTrivialZero
+                              ? "text-amber-400"
+                              : statusToneTextClass(qSideClass.tone)
                           }`}
                         >
-                          {qNotRun
-                            ? "Not run"
-                            : isTrivialZero
-                            ? "Unconstrained"
-                            : (comp ? comp.quantum.feasible : execution.feasible)
-                            ? "Feasible"
-                            : "Suboptimal"}
+                          {qNotRun ? "Not run" : isTrivialZero ? "Unconstrained" : qSideClass.label}
                         </span>
                       </div>
 
@@ -2548,14 +2605,14 @@ ${textToSend}
                         </span>
                         <span
                           className={`text-[11px] font-mono font-medium ${
-                            comp && !cNotRun
-                              ? comp.classical.feasible && !isTrivialZero
-                                ? "text-emerald-400"
-                                : "text-amber-400"
-                              : "text-zinc-500"
+                            cNotRun
+                              ? "text-zinc-500"
+                              : isTrivialZero
+                              ? "text-amber-400"
+                              : statusToneTextClass(cSideClass.tone)
                           }`}
                         >
-                          {comp && !cNotRun ? (isTrivialZero ? "Unconstrained" : comp.classical.status) : "Not run"}
+                          {cNotRun ? "Not run" : isTrivialZero ? "Unconstrained" : cSideClass.label}
                         </span>
                       </div>
 
